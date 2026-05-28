@@ -84,6 +84,91 @@ export type PublishResult = {
   published_at: string;
 };
 
+// ── Audits ───────────────────────────────────────────────────────────
+
+export type AuditSummary = {
+  id: number;
+  account_id: number;
+  period_start: string;
+  period_end: string;
+  posts_analyzed: number;
+  proposed_change_count: number;
+  decided_change_count: number;
+  status: string; // 'pending' | 'partial_approved' | 'fully_approved' | 'rejected'
+  week_over_week_delta_pct: number | null;
+  created_at: string;
+  applied_at: string | null;
+};
+
+export type AuditsList = {
+  audits: AuditSummary[];
+  count: number;
+};
+
+// proposed_changes are LLM-shaped JSON — we only rely on a few fields,
+// the rest passes through.
+export type ProposedChange = {
+  id: string;
+  kind: string; // 'role_book_edit' | 'post_prompt_edit' | ...
+  title: string;
+  detail?: string;
+  diff?: unknown;
+  target_section?: string;
+};
+
+export type AuditDecisionRow = {
+  id: number;
+  change_id: string;
+  kind: string;
+  approved: boolean;
+  user_comment: string | null;
+  decided_at: string;
+  applied_change: Record<string, unknown> | null;
+  rolled_back: boolean;
+  effect_pct: number | null;
+  engagement_before_pct: number | null;
+  engagement_after_pct: number | null;
+};
+
+export type AuditDetail = {
+  id: number;
+  account_id: number;
+  period_start: string;
+  period_end: string;
+  posts_analyzed: number;
+  metrics_summary: Record<string, unknown>;
+  week_over_week: Record<string, unknown> | null;
+  proposed_changes: ProposedChange[];
+  llm_reasoning: string | null;
+  llm_model: string | null;
+  status: string;
+  user_comments: Record<string, string>;
+  applied_at: string | null;
+  created_at: string;
+  decisions: AuditDecisionRow[];
+};
+
+export type DecisionInput = {
+  change_id: string;
+  approved: boolean;
+  user_comment?: string;
+};
+
+export type DecisionResult = {
+  change_id: string;
+  decision_id: number;
+  approved: boolean;
+  applied: boolean;
+  new_version_id: number | null;
+  error: string | null;
+};
+
+export type DecisionsResponse = {
+  audit_id: number;
+  final_status: string;
+  results: DecisionResult[];
+};
+
 export type Translation = {
   translated_text: string;
   target_lang: string;

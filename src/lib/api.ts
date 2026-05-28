@@ -13,6 +13,10 @@
 
 import type {
   ApprovalResult,
+  AuditDetail,
+  AuditsList,
+  DecisionInput,
+  DecisionsResponse,
   DraftsList,
   GeneratedDraft,
   LanguageCode,
@@ -243,6 +247,35 @@ export async function rejectDraft(draftId: number): Promise<ApprovalResult> {
 export async function publishDraft(draftId: number): Promise<PublishResult> {
   return fetchApi<PublishResult>(`/api/drafts/${draftId}/publish`, {
     method: "POST",
+  });
+}
+
+// ── Audits ───────────────────────────────────────────────────────
+
+export async function listAudits(opts?: {
+  accountId?: number;
+  status?: string;
+  limit?: number;
+}): Promise<AuditsList> {
+  const qs = new URLSearchParams();
+  if (opts?.accountId) qs.set("account_id", String(opts.accountId));
+  if (opts?.status) qs.set("status", opts.status);
+  if (opts?.limit) qs.set("limit", String(opts.limit));
+  const tail = qs.toString() ? `?${qs.toString()}` : "";
+  return fetchApi<AuditsList>(`/api/audits${tail}`);
+}
+
+export async function fetchAudit(auditId: number): Promise<AuditDetail> {
+  return fetchApi<AuditDetail>(`/api/audits/${auditId}`);
+}
+
+export async function submitAuditDecisions(
+  auditId: number,
+  decisions: DecisionInput[],
+): Promise<DecisionsResponse> {
+  return fetchApi<DecisionsResponse>(`/api/audits/${auditId}/decisions`, {
+    method: "POST",
+    body: JSON.stringify({ decisions }),
   });
 }
 

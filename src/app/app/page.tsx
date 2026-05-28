@@ -222,6 +222,12 @@ export default function Dashboard() {
             >
               voice
             </Link>
+            <Link
+              href="/app/audits"
+              className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
+            >
+              audits
+            </Link>
             <button
               onClick={onLogout}
               className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
