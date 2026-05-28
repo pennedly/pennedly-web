@@ -82,6 +82,32 @@ export type Translation = {
   cached: boolean;
 };
 
+// ── Voice lint ───────────────────────────────────────────────────────
+
+export type LintConflictItem = {
+  section: string;
+  text: string;
+};
+
+export type LintSeverity = "high" | "medium" | "low";
+
+export type LintConflict = {
+  severity: LintSeverity;
+  title: string;
+  description: string;
+  items: LintConflictItem[];
+  suggestion: string;
+};
+
+export type LintResult = {
+  conflicts: LintConflict[];
+  linted_sections: RoleBookSections;
+  llm_model: string;
+  prompt_tokens: number;
+  completion_tokens: number;
+  latency_ms: number;
+};
+
 export const SUPPORTED_LANGUAGES = [
   { code: "en", name: "English", flag: "🇬🇧" },
   { code: "ru", name: "Русский", flag: "🇷🇺" },

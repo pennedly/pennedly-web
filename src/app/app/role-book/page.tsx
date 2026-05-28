@@ -16,12 +16,14 @@ import {
   clearTokens,
   fetchRoleBook,
   getTokens,
+  lintRoleBook,
   patchRoleBook,
 } from "@/lib/api";
 import { captureEvent } from "@/lib/analytics";
+import { LintResults } from "@/components/LintResults";
 import { TagInput } from "@/components/TagInput";
 import { TranslateButton } from "@/components/TranslateButton";
-import type { RoleBook, RoleBookSections } from "@/lib/types";
+import type { LintResult, RoleBook, RoleBookSections } from "@/lib/types";
 
 const ACCOUNT_ID = 2; // hardcoded dogfooding account; lift to URL param later
 
@@ -82,6 +84,8 @@ export default function RoleBookEditor() {
   const [draft, setDraft] = useState<RoleBookSections>({});
   const [bootError, setBootError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [linting, setLinting] = useState(false);
+  const [lintResult, setLintResult] = useState<LintResult | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   function toast(message: string, tone: Toast["tone"] = "success") {
@@ -131,11 +135,38 @@ export default function RoleBookEditor() {
       const rb = await patchRoleBook(ACCOUNT_ID, draft);
       setBook(rb);
       setDraft({ ...(rb.sections ?? {}) });
+      // Conflicts shown referred to the previous sections; clear them so
+      // the user knows they need to re-lint the new saved version.
+      setLintResult(null);
       toast("saved · next generation uses the new voice");
     } catch (e) {
       toast(String(e), "error");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function onLint() {
+    setLinting(true);
+    captureEvent("ui.role_book_lint_clicked", { account_id: ACCOUNT_ID });
+    try {
+      const result = await lintRoleBook(ACCOUNT_ID, draft);
+      setLintResult(result);
+      const high = result.conflicts.filter((c) => c.severity === "high").length;
+      if (result.conflicts.length === 0) {
+        toast("no conflicts found");
+      } else if (high > 0) {
+        toast(
+          `${result.conflicts.length} conflict(s) · ${high} high — review below`,
+          "error",
+        );
+      } else {
+        toast(`${result.conflicts.length} conflict(s) — review below`);
+      }
+    } catch (e) {
+      toast(String(e), "error");
+    } finally {
+      setLinting(false);
     }
   }
 
@@ -246,11 +277,41 @@ export default function RoleBookEditor() {
           );
         })}
 
+        {/* Lint results — appears when the user has run the check */}
+        {lintResult && (
+          <section className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm">
+            <div className="flex items-baseline justify-between mb-3">
+              <h2 className="text-sm font-semibold">Conflict check</h2>
+              <button
+                onClick={() => setLintResult(null)}
+                className="text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+              >
+                hide
+              </button>
+            </div>
+            <LintResults result={lintResult} />
+          </section>
+        )}
+
         {/* Save action bar */}
         <div className="sticky bottom-4 flex items-center justify-end gap-3 bg-white/95 dark:bg-zinc-950/95 backdrop-blur border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 shadow-md">
           <span className="mr-auto text-xs text-zinc-500">
             New active version on save · old becomes parent
           </span>
+          <button
+            onClick={onLint}
+            disabled={linting || saving}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-700 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50 transition-colors"
+            title="Ask the AI to flag any pairs of rules / examples / characteristics that contradict each other"
+          >
+            {linting && (
+              <span
+                className="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"
+                aria-hidden
+              />
+            )}
+            {linting ? "checking…" : "check for conflicts"}
+          </button>
           <Link
             href="/app"
             className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors px-3 py-1.5"

@@ -7,6 +7,7 @@ import type {
   DraftsList,
   GeneratedDraft,
   LanguageCode,
+  LintResult,
   Me,
   RoleBook,
   RoleBookSections,
@@ -108,6 +109,18 @@ export async function patchRoleBook(
   return fetchApi<RoleBook>(`/api/accounts/${accountId}/role-book`, {
     method: "PATCH",
     body: JSON.stringify(patch),
+  });
+}
+
+// Lint the draft sections the user is currently editing (default), or
+// the saved active sections when `sections` is omitted.
+export async function lintRoleBook(
+  accountId: number,
+  sections?: Partial<RoleBookSections>
+): Promise<LintResult> {
+  return fetchApi<LintResult>(`/api/accounts/${accountId}/role-book/lint`, {
+    method: "POST",
+    body: JSON.stringify(sections ? { sections } : {}),
   });
 }
 
