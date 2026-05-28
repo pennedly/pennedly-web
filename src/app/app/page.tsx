@@ -18,9 +18,11 @@ import {
   generatePost,
   getTokens,
   listDrafts,
+  publishDraft,
   rejectDraft,
 } from "@/lib/api";
 import { captureEvent, identify, resetIdentity } from "@/lib/analytics";
+import { PublishConfirmModal } from "@/components/PublishConfirmModal";
 import { TranslateButton } from "@/components/TranslateButton";
 import type { DraftSummary, GeneratedDraft, Me } from "@/lib/types";
 
@@ -39,6 +41,13 @@ export default function Dashboard() {
   // still send it, the backend rejects empty). Undefined means "no
   // local edit yet" and we fall back to draft.generated_text.
   const [edits, setEdits] = useState<Record<number, string>>({});
+  // Publish modal state. `null` means closed; otherwise carries the
+  // draft id + text being confirmed.
+  const [publishTarget, setPublishTarget] = useState<{
+    draftId: number;
+    text: string;
+  } | null>(null);
+  const [publishing, setPublishing] = useState(false);
 
   function toast(message: string, tone: Toast["tone"] = "success") {
     const id = Date.now() + Math.random();
@@ -117,6 +126,49 @@ export default function Dashboard() {
     } catch (e) {
       toast(String(e), "error");
     }
+  }
+
+  function onPublishClick(draftId: number, text: string) {
+    captureEvent("ui.publish_clicked", { draft_id: draftId });
+    setPublishTarget({ draftId, text });
+  }
+
+  async function onPublishConfirm() {
+    if (publishTarget === null) return;
+    const { draftId } = publishTarget;
+    setPublishing(true);
+    captureEvent("ui.publish_confirmed", { draft_id: draftId });
+    try {
+      const result = await publishDraft(draftId);
+      toast(`#${draftId} published · ${result.threads_post_id}`);
+      setPublishTarget(null);
+      if (accountId !== null) {
+        const list = await listDrafts(accountId, { limit: 20 });
+        setDrafts(list.drafts);
+      }
+    } catch (e) {
+      let msg = String(e);
+      if (e instanceof ApiError) {
+        const detail =
+          typeof e.detail === "object" &&
+          e.detail !== null &&
+          "detail" in (e.detail as Record<string, unknown>)
+            ? (e.detail as { detail: unknown }).detail
+            : e.detail;
+        msg = `${e.status}: ${String(detail)}`;
+      }
+      toast(msg, "error");
+    } finally {
+      setPublishing(false);
+    }
+  }
+
+  function onPublishCancel() {
+    if (publishing) return;
+    captureEvent("ui.publish_cancelled", {
+      draft_id: publishTarget?.draftId,
+    });
+    setPublishTarget(null);
   }
 
   async function onReject(id: number) {
@@ -339,6 +391,28 @@ export default function Dashboard() {
                         )}
                       </>
                     )}
+                    {d.status === "approved" && (
+                      <button
+                        onClick={() => onPublishClick(d.id, d.generated_text)}
+                        className="text-xs px-3 py-1.5 rounded-md bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-white transition-colors inline-flex items-center gap-1.5"
+                      >
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden
+                        >
+                          <line x1="22" y1="2" x2="11" y2="13" />
+                          <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                        </svg>
+                        publish to Threads
+                      </button>
+                    )}
                     <div className="ml-auto">
                       <TranslateButton
                         text={currentText}
@@ -352,6 +426,15 @@ export default function Dashboard() {
           </ul>
         </section>
       </main>
+
+      {/* Publish confirmation modal */}
+      <PublishConfirmModal
+        open={publishTarget !== null}
+        text={publishTarget?.text ?? ""}
+        isPublishing={publishing}
+        onClose={onPublishCancel}
+        onConfirm={onPublishConfirm}
+      />
 
       {/* Toasts */}
       <div className="fixed bottom-6 right-6 z-30 space-y-2 pointer-events-none">

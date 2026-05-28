@@ -18,6 +18,7 @@ import type {
   LanguageCode,
   LintResult,
   Me,
+  PublishResult,
   RoleBook,
   RoleBookSections,
   TokenPair,
@@ -235,6 +236,12 @@ export async function approveDraft(
 
 export async function rejectDraft(draftId: number): Promise<ApprovalResult> {
   return fetchApi<ApprovalResult>(`/api/drafts/${draftId}/reject`, {
+    method: "POST",
+  });
+}
+
+export async function publishDraft(draftId: number): Promise<PublishResult> {
+  return fetchApi<PublishResult>(`/api/drafts/${draftId}/publish`, {
     method: "POST",
   });
 }

@@ -77,6 +77,13 @@ export type ApprovalResult = {
   edited?: boolean;
 };
 
+export type PublishResult = {
+  draft_id: number;
+  status: string;
+  threads_post_id: string;
+  published_at: string;
+};
+
 export type Translation = {
   translated_text: string;
   target_lang: string;
