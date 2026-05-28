@@ -20,12 +20,12 @@ import {
   patchRoleBook,
 } from "@/lib/api";
 import { captureEvent } from "@/lib/analytics";
+import { useSelectedAccountId } from "@/lib/account";
+import { AccountSwitcher } from "@/components/AccountSwitcher";
 import { LintResults } from "@/components/LintResults";
 import { TagInput } from "@/components/TagInput";
 import { TranslateButton } from "@/components/TranslateButton";
 import type { LintResult, RoleBook, RoleBookSections } from "@/lib/types";
-
-const ACCOUNT_ID = 2; // hardcoded dogfooding account; lift to URL param later
 
 type SectionKey = keyof Omit<RoleBookSections, "intro">;
 
@@ -80,6 +80,7 @@ type Toast = { id: number; message: string; tone: "success" | "error" };
 
 export default function RoleBookEditor() {
   const router = useRouter();
+  const accountId = useSelectedAccountId();
   const [book, setBook] = useState<RoleBook | null>(null);
   const [draft, setDraft] = useState<RoleBookSections>({});
   const [bootError, setBootError] = useState<string | null>(null);
@@ -99,9 +100,16 @@ export default function RoleBookEditor() {
       router.push("/app/login");
       return;
     }
+  }, [router]);
+
+  // Reload role_book whenever selected account changes (mount, switch).
+  useEffect(() => {
+    if (accountId === null) return;
+    setBook(null);
+    setLintResult(null);
     (async () => {
       try {
-        const rb = await fetchRoleBook(ACCOUNT_ID);
+        const rb = await fetchRoleBook(accountId);
         setBook(rb);
         setDraft({ ...(rb.sections ?? {}) });
       } catch (e) {
@@ -113,7 +121,7 @@ export default function RoleBookEditor() {
         setBootError(String(e));
       }
     })();
-  }, [router]);
+  }, [accountId, router]);
 
   // Any edit invalidates the previous lint — the flagged items might
   // already be fixed or replaced by new conflicts. Clear so the
@@ -152,9 +160,10 @@ export default function RoleBookEditor() {
   }
 
   async function onSave() {
+    if (accountId === null) return;
     setSaving(true);
     captureEvent("ui.role_book_save_clicked", {
-      account_id: ACCOUNT_ID,
+      account_id: accountId,
       fields_changed: Object.keys(draft),
       themes_exclude_count: draft.themes_exclude?.length ?? 0,
       themes_include_count: draft.themes_include?.length ?? 0,
@@ -163,8 +172,8 @@ export default function RoleBookEditor() {
     // Fire PATCH and lint in parallel — saving shouldn't be blocked
     // by lint latency, but the user always wants to know if the
     // version they just saved has internal contradictions.
-    const savePromise = patchRoleBook(ACCOUNT_ID, draft);
-    const lintPromise = lintRoleBook(ACCOUNT_ID, draft).catch(
+    const savePromise = patchRoleBook(accountId, draft);
+    const lintPromise = lintRoleBook(accountId, draft).catch(
       (e: unknown) => {
         // Lint failure shouldn't fail save UX. Log + continue.
         console.warn("lint failed during save", e);
@@ -207,10 +216,11 @@ export default function RoleBookEditor() {
   }
 
   async function onLint() {
+    if (accountId === null) return;
     setLinting(true);
-    captureEvent("ui.role_book_lint_clicked", { account_id: ACCOUNT_ID });
+    captureEvent("ui.role_book_lint_clicked", { account_id: accountId });
     try {
-      const result = await lintRoleBook(ACCOUNT_ID, draft);
+      const result = await lintRoleBook(accountId, draft);
       setLintResult(result);
       const high = result.conflicts.filter((c) => c.severity === "high").length;
       if (result.conflicts.length === 0) {
@@ -251,15 +261,18 @@ export default function RoleBookEditor() {
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
       <header className="sticky top-0 z-20 bg-white/90 dark:bg-zinc-950/90 backdrop-blur border-b border-zinc-200 dark:border-zinc-800">
-        <div className="max-w-3xl mx-auto px-6 py-3 flex items-center justify-between">
+        <div className="max-w-3xl mx-auto px-6 py-3 flex items-center justify-between gap-3">
           <Link href="/app" className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
             ← dashboard
           </Link>
-          <div className="text-xs text-zinc-500">
-            voice v{book.role_book_id}
-            {book.parent_id !== null && (
-              <span> · parent v{book.parent_id}</span>
-            )}
+          <div className="flex items-center gap-3">
+            <AccountSwitcher />
+            <div className="text-xs text-zinc-500">
+              voice v{book.role_book_id}
+              {book.parent_id !== null && (
+                <span> · parent v{book.parent_id}</span>
+              )}
+            </div>
           </div>
         </div>
       </header>

@@ -1,0 +1,125 @@
+"use client";
+
+// Header-level picker for which connected Threads account the user
+// is operating on. Shown across dashboard / role-book / audits.
+//
+// When the user has only one connected account, renders as a static
+// pill (no dropdown needed). When 2+, becomes a dropdown of
+// @username choices.
+//
+// Bootstraps from /api/me/accounts. If the persisted selection isn't
+// in the response (account disconnected, switched user, etc.) we
+// auto-select the first active one and persist that.
+
+import { useEffect, useState } from "react";
+
+import { fetchMyAccounts } from "@/lib/api";
+import {
+  setSelectedAccountId,
+  useSelectedAccountId,
+} from "@/lib/account";
+import { captureEvent } from "@/lib/analytics";
+import type { ConnectedAccount } from "@/lib/types";
+
+export function AccountSwitcher() {
+  const selected = useSelectedAccountId();
+  const [accounts, setAccounts] = useState<ConnectedAccount[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const list = await fetchMyAccounts();
+        const active = list.accounts.filter((a) => a.disconnected_at === null);
+        setAccounts(active);
+        // If the persisted id isn't in the active set, default to the
+        // first one. This handles fresh users, disconnected accounts,
+        // and switched logins gracefully.
+        if (
+          active.length > 0 &&
+          (selected === null || !active.some((a) => a.id === selected))
+        ) {
+          setSelectedAccountId(active[0].id);
+        }
+      } catch {
+        // Silent — switcher is a nice-to-have, dashboard handles its
+        // own auth errors.
+      } finally {
+        setLoaded(true);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (!loaded || accounts.length === 0) {
+    return null;
+  }
+
+  const selectedAccount =
+    accounts.find((a) => a.id === selected) ?? accounts[0];
+
+  // Only one account — render as a static pill, no dropdown.
+  if (accounts.length === 1) {
+    return (
+      <span className="inline-flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-400 px-2 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800">
+        <span aria-hidden>@</span>
+        {selectedAccount.username ?? `acct ${selectedAccount.id}`}
+      </span>
+    );
+  }
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="inline-flex items-center gap-1.5 text-xs text-zinc-700 dark:text-zinc-300 px-2.5 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+      >
+        <span aria-hidden>@</span>
+        <span className="font-medium">
+          {selectedAccount.username ?? `acct ${selectedAccount.id}`}
+        </span>
+        <span aria-hidden className="text-zinc-400">
+          ▾
+        </span>
+      </button>
+      {open && (
+        <div className="absolute right-0 mt-1 z-30 w-56 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-lg py-1">
+          {accounts.map((a) => {
+            const isSel = a.id === selectedAccount.id;
+            return (
+              <button
+                key={a.id}
+                type="button"
+                onClick={() => {
+                  setSelectedAccountId(a.id);
+                  setOpen(false);
+                  captureEvent("ui.account_switched", { account_id: a.id });
+                }}
+                className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 transition-colors ${
+                  isSel
+                    ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+                    : "text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
+                }`}
+              >
+                <span aria-hidden>@</span>
+                <span className="font-medium">
+                  {a.username ?? `acct ${a.id}`}
+                </span>
+                {a.display_name && (
+                  <span className="text-xs text-zinc-500 truncate">
+                    · {a.display_name}
+                  </span>
+                )}
+                {isSel && (
+                  <span className="ml-auto text-xs text-zinc-500">✓</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}

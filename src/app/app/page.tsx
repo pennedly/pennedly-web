@@ -19,9 +19,12 @@ import {
   getTokens,
   listDrafts,
   publishDraft,
+  refineDraft,
   rejectDraft,
 } from "@/lib/api";
 import { captureEvent, identify, resetIdentity } from "@/lib/analytics";
+import { useSelectedAccountId } from "@/lib/account";
+import { AccountSwitcher } from "@/components/AccountSwitcher";
 import { PublishConfirmModal } from "@/components/PublishConfirmModal";
 import { TranslateButton } from "@/components/TranslateButton";
 import type { DraftSummary, GeneratedDraft, Me } from "@/lib/types";
@@ -32,7 +35,7 @@ export default function Dashboard() {
   const router = useRouter();
   const [me, setMe] = useState<Me | null>(null);
   const [drafts, setDrafts] = useState<DraftSummary[]>([]);
-  const [accountId, setAccountId] = useState<number | null>(null);
+  const accountId = useSelectedAccountId();
   const [generating, setGenerating] = useState(false);
   const [lastDraft, setLastDraft] = useState<GeneratedDraft | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -41,6 +44,9 @@ export default function Dashboard() {
   // still send it, the backend rejects empty). Undefined means "no
   // local edit yet" and we fall back to draft.generated_text.
   const [edits, setEdits] = useState<Record<number, string>>({});
+  // Per-draft refine input + which draft id is currently in-flight.
+  const [refineInputs, setRefineInputs] = useState<Record<number, string>>({});
+  const [refiningId, setRefiningId] = useState<number | null>(null);
   // Publish modal state. `null` means closed; otherwise carries the
   // draft id + text being confirmed.
   const [publishTarget, setPublishTarget] = useState<{
@@ -65,11 +71,6 @@ export default function Dashboard() {
         const profile = await fetchMe();
         setMe(profile);
         identify(profile.user_id, profile.email, profile.tenant.id);
-        // Single connected account per tenant in Phase 1 — hardcode @reganomika1.
-        // Replace with an account picker once /api/me/accounts exists.
-        setAccountId(2);
-        const list = await listDrafts(2, { limit: 20 });
-        setDrafts(list.drafts);
       } catch (e) {
         if (e instanceof ApiError && e.status === 401) {
           clearTokens();
@@ -80,6 +81,29 @@ export default function Dashboard() {
       }
     })();
   }, [router]);
+
+  // Reload drafts whenever the selected account changes (initial mount,
+  // user clicks a different account in the switcher).
+  useEffect(() => {
+    if (accountId === null) return;
+    (async () => {
+      try {
+        const list = await listDrafts(accountId, { limit: 20 });
+        setDrafts(list.drafts);
+        // Clear the "last generated" preview when switching accounts —
+        // it belonged to the previous account.
+        setLastDraft(null);
+      } catch (e) {
+        if (e instanceof ApiError && e.status === 401) {
+          clearTokens();
+          router.push("/app/login");
+          return;
+        }
+        // Don't blow up the dashboard if drafts fail to load — show
+        // empty state instead.
+      }
+    })();
+  }, [accountId, router]);
 
   async function onGenerate() {
     if (accountId === null) return;
@@ -125,6 +149,56 @@ export default function Dashboard() {
       );
     } catch (e) {
       toast(String(e), "error");
+    }
+  }
+
+  async function onRefine(draftId: number, instructionOverride?: string) {
+    const instruction = (
+      instructionOverride ?? refineInputs[draftId] ?? ""
+    ).trim();
+    if (!instruction) {
+      toast("type a refine instruction first", "error");
+      return;
+    }
+    setRefiningId(draftId);
+    captureEvent("ui.refine_clicked", {
+      draft_id: draftId,
+      instruction_length: instruction.length,
+    });
+    try {
+      const result = await refineDraft(draftId, instruction);
+      // Reload the drafts list so the card shows the new generated_text.
+      if (accountId !== null) {
+        const list = await listDrafts(accountId, { limit: 20 });
+        setDrafts(list.drafts);
+      }
+      // Clear local edit (the refined text from server now wins) and
+      // the refine input itself.
+      setEdits((s) => {
+        const next = { ...s };
+        delete next[draftId];
+        return next;
+      });
+      setRefineInputs((s) => {
+        const next = { ...s };
+        delete next[draftId];
+        return next;
+      });
+      toast(`#${draftId} refined · ${result.latency_ms}ms`);
+    } catch (e) {
+      let msg = String(e);
+      if (e instanceof ApiError) {
+        const detail =
+          typeof e.detail === "object" &&
+          e.detail !== null &&
+          "detail" in (e.detail as Record<string, unknown>)
+            ? (e.detail as { detail: unknown }).detail
+            : e.detail;
+        msg = `${e.status}: ${String(detail)}`;
+      }
+      toast(msg, "error");
+    } finally {
+      setRefiningId(null);
     }
   }
 
@@ -216,6 +290,7 @@ export default function Dashboard() {
             )}
           </Link>
           <nav className="flex items-center gap-4 text-sm">
+            <AccountSwitcher />
             <Link
               href="/app/role-book"
               className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
@@ -364,6 +439,64 @@ export default function Dashboard() {
                     <p className="whitespace-pre-wrap text-sm leading-relaxed mb-3">
                       {d.generated_text}
                     </p>
+                  )}
+
+                  {d.status === "pending" && (
+                    <div className="flex flex-wrap items-stretch gap-2 mb-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                      <input
+                        type="text"
+                        value={refineInputs[d.id] ?? ""}
+                        onChange={(e) =>
+                          setRefineInputs((s) => ({
+                            ...s,
+                            [d.id]: e.target.value,
+                          }))
+                        }
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && refiningId === null) {
+                            e.preventDefault();
+                            onRefine(d.id);
+                          }
+                        }}
+                        placeholder="refine: 'make shorter', 'less formal', 'add a question'…"
+                        disabled={refiningId === d.id}
+                        className="flex-1 min-w-[180px] rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700 disabled:opacity-50"
+                      />
+                      <button
+                        onClick={() => onRefine(d.id)}
+                        disabled={
+                          refiningId !== null ||
+                          !(refineInputs[d.id] ?? "").trim()
+                        }
+                        className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50 transition-colors"
+                      >
+                        {refiningId === d.id && (
+                          <span
+                            className="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"
+                            aria-hidden
+                          />
+                        )}
+                        {refiningId === d.id ? "refining…" : "refine"}
+                      </button>
+                      <div className="basis-full flex flex-wrap gap-1.5 text-[10px] text-zinc-500">
+                        {[
+                          "make shorter",
+                          "less formal",
+                          "add a question",
+                          "punchier opening",
+                        ].map((preset) => (
+                          <button
+                            key={preset}
+                            type="button"
+                            onClick={() => onRefine(d.id, preset)}
+                            disabled={refiningId !== null}
+                            className="px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 disabled:opacity-50 transition-colors"
+                          >
+                            {preset}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   )}
 
                   <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">

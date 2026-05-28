@@ -21,6 +21,21 @@ export type Me = {
   tenant: Tenant;
 };
 
+export type ConnectedAccount = {
+  id: number;
+  tenant_id: number;
+  threads_user_id: string;
+  username: string | null;
+  display_name: string | null;
+  profile_picture_url: string | null;
+  connected_at: string;
+  disconnected_at: string | null;
+};
+
+export type AccountsList = {
+  accounts: ConnectedAccount[];
+};
+
 export type RoleBookSections = {
   intro?: string;
   themes_include?: string[];
@@ -82,6 +97,16 @@ export type PublishResult = {
   status: string;
   threads_post_id: string;
   published_at: string;
+};
+
+export type RefineResult = {
+  draft_id: number;
+  text: string;
+  instruction: string;
+  model: string;
+  prompt_tokens: number;
+  completion_tokens: number;
+  latency_ms: number;
 };
 
 // ── Audits ───────────────────────────────────────────────────────────

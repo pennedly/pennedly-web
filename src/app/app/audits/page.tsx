@@ -12,10 +12,13 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { ApiError, clearTokens, getTokens, listAudits } from "@/lib/api";
+import { useSelectedAccountId } from "@/lib/account";
+import { AccountSwitcher } from "@/components/AccountSwitcher";
 import type { AuditSummary } from "@/lib/types";
 
 export default function AuditsPage() {
   const router = useRouter();
+  const accountId = useSelectedAccountId();
   const [audits, setAudits] = useState<AuditSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [bootError, setBootError] = useState<string | null>(null);
@@ -25,9 +28,14 @@ export default function AuditsPage() {
       router.push("/app/login");
       return;
     }
+  }, [router]);
+
+  useEffect(() => {
+    if (accountId === null) return;
+    setLoading(true);
     (async () => {
       try {
-        const list = await listAudits({ limit: 50 });
+        const list = await listAudits({ accountId, limit: 50 });
         setAudits(list.audits);
       } catch (e) {
         if (e instanceof ApiError && e.status === 401) {
@@ -40,7 +48,7 @@ export default function AuditsPage() {
         setLoading(false);
       }
     })();
-  }, [router]);
+  }, [accountId, router]);
 
   if (bootError) {
     return (
@@ -55,16 +63,19 @@ export default function AuditsPage() {
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
       <header className="sticky top-0 z-20 bg-white/90 dark:bg-zinc-950/90 backdrop-blur border-b border-zinc-200 dark:border-zinc-800">
-        <div className="max-w-3xl mx-auto px-6 py-3 flex items-center justify-between">
+        <div className="max-w-3xl mx-auto px-6 py-3 flex items-center justify-between gap-3">
           <Link
             href="/app"
             className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
           >
             ← dashboard
           </Link>
-          <span className="text-xs text-zinc-500">
-            weekly audits · runs Mondays 09:00 UTC
-          </span>
+          <div className="flex items-center gap-3">
+            <AccountSwitcher />
+            <span className="text-xs text-zinc-500 hidden sm:inline">
+              Mondays 09:00 UTC
+            </span>
+          </div>
         </div>
       </header>
 

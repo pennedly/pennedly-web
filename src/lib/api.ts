@@ -12,6 +12,7 @@
 // failed requests don't trigger N parallel /refresh calls.
 
 import type {
+  AccountsList,
   ApprovalResult,
   AuditDetail,
   AuditsList,
@@ -23,6 +24,7 @@ import type {
   LintResult,
   Me,
   PublishResult,
+  RefineResult,
   RoleBook,
   RoleBookSections,
   TokenPair,
@@ -165,6 +167,10 @@ export async function fetchMe(): Promise<Me> {
   return fetchApi<Me>("/api/me");
 }
 
+export async function fetchMyAccounts(): Promise<AccountsList> {
+  return fetchApi<AccountsList>("/api/me/accounts");
+}
+
 // ── Role book ────────────────────────────────────────────────────
 
 export async function fetchRoleBook(accountId: number): Promise<RoleBook> {
@@ -247,6 +253,16 @@ export async function rejectDraft(draftId: number): Promise<ApprovalResult> {
 export async function publishDraft(draftId: number): Promise<PublishResult> {
   return fetchApi<PublishResult>(`/api/drafts/${draftId}/publish`, {
     method: "POST",
+  });
+}
+
+export async function refineDraft(
+  draftId: number,
+  instruction: string,
+): Promise<RefineResult> {
+  return fetchApi<RefineResult>(`/api/drafts/${draftId}/refine`, {
+    method: "POST",
+    body: JSON.stringify({ instruction }),
   });
 }
 
