@@ -115,12 +115,40 @@ export default function RoleBookEditor() {
     })();
   }, [router]);
 
+  // Any edit invalidates the previous lint — the flagged items might
+  // already be fixed or replaced by new conflicts. Clear so the
+  // inline pill markers don't lie about a stale snapshot.
   function updateList(key: SectionKey, items: string[]) {
     setDraft((d) => ({ ...d, [key]: items }));
+    setLintResult(null);
   }
 
   function updateIntro(text: string) {
     setDraft((d) => ({ ...d, intro: text }));
+    setLintResult(null);
+  }
+
+  // Build a per-section set of pill texts that the lint flagged, for
+  // inline ⚠ markers inside each TagInput.
+  const flaggedBySection: Partial<Record<SectionKey, Set<string>>> = {};
+  if (lintResult) {
+    for (const conflict of lintResult.conflicts) {
+      for (const item of conflict.items) {
+        const sec = item.section as SectionKey;
+        if (!flaggedBySection[sec]) flaggedBySection[sec] = new Set();
+        flaggedBySection[sec]!.add(item.text);
+      }
+    }
+  }
+
+  // Scroll to the lint results card and (briefly) highlight any
+  // conflict that mentions the clicked pill text. Cheap and effective:
+  // we don't need a tooltip system, just bring the relevant card into
+  // view.
+  function onFlaggedPillClick(text: string) {
+    const card = document.getElementById("lint-results-card");
+    if (card) card.scrollIntoView({ behavior: "smooth", block: "center" });
+    captureEvent("ui.flagged_pill_clicked", { text });
   }
 
   async function onSave() {
@@ -131,14 +159,46 @@ export default function RoleBookEditor() {
       themes_exclude_count: draft.themes_exclude?.length ?? 0,
       themes_include_count: draft.themes_include?.length ?? 0,
     });
+
+    // Fire PATCH and lint in parallel — saving shouldn't be blocked
+    // by lint latency, but the user always wants to know if the
+    // version they just saved has internal contradictions.
+    const savePromise = patchRoleBook(ACCOUNT_ID, draft);
+    const lintPromise = lintRoleBook(ACCOUNT_ID, draft).catch(
+      (e: unknown) => {
+        // Lint failure shouldn't fail save UX. Log + continue.
+        console.warn("lint failed during save", e);
+        return null;
+      },
+    );
+
     try {
-      const rb = await patchRoleBook(ACCOUNT_ID, draft);
+      const rb = await savePromise;
       setBook(rb);
       setDraft({ ...(rb.sections ?? {}) });
-      // Conflicts shown referred to the previous sections; clear them so
-      // the user knows they need to re-lint the new saved version.
-      setLintResult(null);
-      toast("saved · next generation uses the new voice");
+
+      // Await lint after save so the toast can describe the lint state.
+      const result = await lintPromise;
+      if (result === null) {
+        // Lint network error — save still succeeded.
+        setLintResult(null);
+        toast("saved · conflict check unavailable");
+      } else {
+        setLintResult(result);
+        const high = result.conflicts.filter(
+          (c) => c.severity === "high",
+        ).length;
+        if (result.conflicts.length === 0) {
+          toast("saved · no conflicts");
+        } else if (high > 0) {
+          toast(
+            `saved · ⚠ ${high} high-severity conflict(s) — see below`,
+            "error",
+          );
+        } else {
+          toast(`saved · ${result.conflicts.length} conflict(s) — see below`);
+        }
+      }
     } catch (e) {
       toast(String(e), "error");
     } finally {
@@ -264,6 +324,8 @@ export default function RoleBookEditor() {
                 onChange={(next) => updateList(section.key, next)}
                 placeholder={section.placeholder}
                 variant={section.variant}
+                flagged={flaggedBySection[section.key]}
+                onFlaggedClick={onFlaggedPillClick}
               />
               {sampleForTranslate && (
                 <div className="mt-3">
@@ -277,9 +339,14 @@ export default function RoleBookEditor() {
           );
         })}
 
-        {/* Lint results — appears when the user has run the check */}
+        {/* Lint results — appears when the user has run the check OR
+            after every save (auto-lint). Pills with conflicts also get
+            a ⚠ marker inline above — clicking it scrolls to this card. */}
         {lintResult && (
-          <section className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm">
+          <section
+            id="lint-results-card"
+            className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm scroll-mt-24"
+          >
             <div className="flex items-baseline justify-between mb-3">
               <h2 className="text-sm font-semibold">Conflict check</h2>
               <button
