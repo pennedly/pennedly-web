@@ -21,6 +21,7 @@ import type {
   DraftsList,
   GeneratedDraft,
   LanguageCode,
+  LintFix,
   LintResult,
   Me,
   PublishResult,
@@ -211,6 +212,21 @@ export async function lintRoleBook(
     method: "POST",
     body: JSON.stringify(sections ? { sections } : {}),
   });
+}
+
+// One-click apply a structured fix descriptor (returned by lint as
+// conflict.fix). Creates a new active role_book version, same as PATCH.
+export async function applyLintFix(
+  accountId: number,
+  fix: LintFix,
+): Promise<RoleBook> {
+  return fetchApi<RoleBook>(
+    `/api/accounts/${accountId}/role-book/apply-fix`,
+    {
+      method: "POST",
+      body: JSON.stringify({ fix }),
+    },
+  );
 }
 
 // ── Generation ───────────────────────────────────────────────────

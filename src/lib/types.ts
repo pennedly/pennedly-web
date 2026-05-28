@@ -209,12 +209,41 @@ export type LintConflictItem = {
 
 export type LintSeverity = "high" | "medium" | "low";
 
+// The structured fix descriptor mirrors role_book_lint.FIX_KINDS on
+// the backend. Exhaustive union so the UI can branch on `kind` with
+// full TypeScript checking.
+export type LintFix =
+  | {
+      kind: "remove_item";
+      section: string;
+      text: string;
+    }
+  | {
+      kind: "replace_item";
+      section: string;
+      from: string;
+      to: string;
+    }
+  | {
+      kind: "add_item";
+      section: string;
+      text: string;
+    }
+  | {
+      kind: "set_intro";
+      text: string;
+    };
+
 export type LintConflict = {
   severity: LintSeverity;
   title: string;
   description: string;
   items: LintConflictItem[];
   suggestion: string;
+  // Optional — present when the LLM produced a structured fix the UI
+  // can apply in one click. Absent when the suggestion is too complex
+  // and the user must edit manually.
+  fix?: LintFix | null;
 };
 
 export type LintResult = {

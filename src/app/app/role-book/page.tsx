@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 
 import {
   ApiError,
+  applyLintFix,
   clearTokens,
   fetchRoleBook,
   getTokens,
@@ -27,7 +28,12 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { LintResults } from "@/components/LintResults";
 import { TagInput } from "@/components/TagInput";
 import { TranslateButton } from "@/components/TranslateButton";
-import type { LintResult, RoleBook, RoleBookSections } from "@/lib/types";
+import type {
+  LintFix,
+  LintResult,
+  RoleBook,
+  RoleBookSections,
+} from "@/lib/types";
 
 type SectionKey = keyof Omit<RoleBookSections, "intro">;
 
@@ -92,6 +98,8 @@ export default function RoleBookEditor() {
   const [saving, setSaving] = useState(false);
   const [linting, setLinting] = useState(false);
   const [lintResult, setLintResult] = useState<LintResult | null>(null);
+  const [applyingFixIdx, setApplyingFixIdx] = useState<number | null>(null);
+  const [applyError, setApplyError] = useState<string | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   function toast(message: string, tone: Toast["tone"] = "success") {
@@ -162,6 +170,47 @@ export default function RoleBookEditor() {
     const card = document.getElementById("lint-results-card");
     if (card) card.scrollIntoView({ behavior: "smooth", block: "center" });
     captureEvent("ui.flagged_pill_clicked", { text });
+  }
+
+  async function onApplyLintFix(fix: LintFix, conflictIdx: number) {
+    if (accountId === null) return;
+    setApplyingFixIdx(conflictIdx);
+    setApplyError(null);
+    captureEvent("ui.lint_fix_applied", {
+      account_id: accountId,
+      fix_kind: fix.kind,
+    });
+    try {
+      const rb = await applyLintFix(accountId, fix);
+      setBook(rb);
+      setDraft({ ...(rb.sections ?? {}) });
+      // Re-lint immediately on the newly-saved version so the user
+      // can see whether the fix actually resolved everything (or
+      // introduced a new conflict).
+      setLintResult(null);
+      try {
+        const fresh = await lintRoleBook(accountId);
+        setLintResult(fresh);
+      } catch {
+        // Don't fail the apply UX if re-lint hiccups.
+      }
+      toast(`fix applied · ${fix.kind.replace(/_/g, " ")}`);
+    } catch (e) {
+      let msg = String(e);
+      if (e instanceof ApiError) {
+        const detail =
+          typeof e.detail === "object" &&
+          e.detail !== null &&
+          "detail" in (e.detail as Record<string, unknown>)
+            ? (e.detail as { detail: unknown }).detail
+            : e.detail;
+        msg = `${e.status}: ${String(detail)}`;
+      }
+      setApplyError(msg);
+      toast(msg, "error");
+    } finally {
+      setApplyingFixIdx(null);
+    }
   }
 
   async function onSave() {
@@ -381,7 +430,12 @@ export default function RoleBookEditor() {
                 {t("common.hide")}
               </button>
             </div>
-            <LintResults result={lintResult} />
+            <LintResults
+              result={lintResult}
+              onApplyFix={onApplyLintFix}
+              applyingFixIdx={applyingFixIdx}
+              applyError={applyError}
+            />
           </section>
         )}
 
