@@ -119,6 +119,13 @@ export const de: Partial<Record<MessageKey, string>> = {
   "rolebook.examples.helper": "Typische Sätze in deiner echten Stimme.",
   "rolebook.examples.placeholder":
     "z. B. i have burned water before. not metaphorically",
+  "rolebook.extract.button": "aus Beiträgen neu ableiten",
+  "rolebook.extract.extracting": "leite ab…",
+  "rolebook.extract.confirm_title": "Stimme aus aktuellen Beiträgen neu ableiten?",
+  "rolebook.extract.confirm_body":
+    "Analysiert deine meistgesehenen aktuellen Beiträge und ersetzt die aktuelle Stimme durch eine frische Ableitung. Die aktuelle Version wird als vorherige gespeichert — du kannst zurücksetzen. Manuelle Änderungen der aktuellen Version werden nicht übernommen.",
+  "rolebook.extract.confirm_cta": "neu ableiten",
+  "rolebook.extract.toast_done": "Stimme aus deinen Beiträgen neu abgeleitet",
   "rolebook.lint.button": "auf Konflikte prüfen",
   "rolebook.lint.checking": "prüfe…",
   "rolebook.lint.section_title": "Konfliktprüfung",

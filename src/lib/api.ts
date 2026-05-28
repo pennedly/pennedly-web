@@ -230,6 +230,21 @@ export async function applyLintFix(
   );
 }
 
+// Re-derive the role_book from the account's recent posts. Replaces
+// the active version (old becomes parent — revertible).
+export async function extractVoice(
+  accountId: number,
+  postLimit = 25,
+): Promise<RoleBook> {
+  return fetchApi<RoleBook>(
+    `/api/accounts/${accountId}/role-book/extract`,
+    {
+      method: "POST",
+      body: JSON.stringify({ post_limit: postLimit }),
+    },
+  );
+}
+
 // ── Generation ───────────────────────────────────────────────────
 
 export async function generatePost(

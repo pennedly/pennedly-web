@@ -15,6 +15,7 @@ import {
   ApiError,
   applyLintFix,
   clearTokens,
+  extractVoice,
   fetchRoleBook,
   getTokens,
   lintRoleBook,
@@ -100,6 +101,8 @@ export default function RoleBookEditor() {
   const [lintResult, setLintResult] = useState<LintResult | null>(null);
   const [applyingFixIdx, setApplyingFixIdx] = useState<number | null>(null);
   const [applyError, setApplyError] = useState<string | null>(null);
+  const [extractOpen, setExtractOpen] = useState(false);
+  const [extracting, setExtracting] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   function toast(message: string, tone: Toast["tone"] = "success") {
@@ -170,6 +173,34 @@ export default function RoleBookEditor() {
     const card = document.getElementById("lint-results-card");
     if (card) card.scrollIntoView({ behavior: "smooth", block: "center" });
     captureEvent("ui.flagged_pill_clicked", { text });
+  }
+
+  async function onExtractConfirm() {
+    if (accountId === null) return;
+    setExtracting(true);
+    captureEvent("ui.voice_reextract_confirmed", { account_id: accountId });
+    try {
+      const rb = await extractVoice(accountId);
+      setBook(rb);
+      setDraft({ ...(rb.sections ?? {}) });
+      setLintResult(null);
+      setExtractOpen(false);
+      toast(t("rolebook.extract.toast_done"));
+    } catch (e) {
+      let msg = String(e);
+      if (e instanceof ApiError) {
+        const detail =
+          typeof e.detail === "object" &&
+          e.detail !== null &&
+          "detail" in (e.detail as Record<string, unknown>)
+            ? (e.detail as { detail: unknown }).detail
+            : e.detail;
+        msg = `${e.status}: ${String(detail)}`;
+      }
+      toast(msg, "error");
+    } finally {
+      setExtracting(false);
+    }
   }
 
   async function onApplyLintFix(fix: LintFix, conflictIdx: number) {
@@ -445,6 +476,13 @@ export default function RoleBookEditor() {
             {t("rolebook.save.helper")}
           </span>
           <button
+            onClick={() => setExtractOpen(true)}
+            disabled={extracting || saving || linting}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-700 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50 transition-colors"
+          >
+            {t("rolebook.extract.button")}
+          </button>
+          <button
             onClick={onLint}
             disabled={linting || saving}
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-700 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50 transition-colors"
@@ -494,6 +532,48 @@ export default function RoleBookEditor() {
           </div>
         </details>
       </main>
+
+      {/* Re-extract confirmation modal */}
+      {extractOpen && (
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl p-6 space-y-4">
+            <h2 className="text-lg font-semibold tracking-tight">
+              {t("rolebook.extract.confirm_title")}
+            </h2>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+              {t("rolebook.extract.confirm_body")}
+            </p>
+            <div className="flex items-center justify-end gap-3 pt-1">
+              <button
+                onClick={() => setExtractOpen(false)}
+                disabled={extracting}
+                className="text-sm px-4 py-2 rounded-md text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50 transition-colors"
+              >
+                {t("common.cancel")}
+              </button>
+              <button
+                onClick={onExtractConfirm}
+                disabled={extracting}
+                className="inline-flex items-center gap-2 text-sm px-4 py-2 rounded-md bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-white disabled:opacity-50 transition-colors"
+              >
+                {extracting && (
+                  <span
+                    className="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"
+                    aria-hidden
+                  />
+                )}
+                {extracting
+                  ? t("rolebook.extract.extracting")
+                  : t("rolebook.extract.confirm_cta")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Toasts */}
       <div className="fixed bottom-6 right-6 z-30 space-y-2 pointer-events-none">

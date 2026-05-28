@@ -116,6 +116,13 @@ export const en = {
     "Representative phrases in your actual voice.",
   "rolebook.examples.placeholder":
     "e.g. i have burned water before. not metaphorically",
+  "rolebook.extract.button": "re-extract from posts",
+  "rolebook.extract.extracting": "extracting…",
+  "rolebook.extract.confirm_title": "Re-extract voice from recent posts?",
+  "rolebook.extract.confirm_body":
+    "This analyzes your most-viewed recent posts and replaces the current voice with a fresh extraction. Your current version is saved as the parent — you can revert. Manual edits to the current version will not carry over.",
+  "rolebook.extract.confirm_cta": "re-extract",
+  "rolebook.extract.toast_done": "voice re-extracted from your posts",
   "rolebook.lint.button": "check for conflicts",
   "rolebook.lint.checking": "checking…",
   "rolebook.lint.section_title": "Conflict check",

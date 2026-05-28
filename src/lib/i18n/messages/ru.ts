@@ -119,6 +119,13 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "rolebook.examples.helper": "Характерные фразы в твоём реальном голосе.",
   "rolebook.examples.placeholder":
     "например, i have burned water before. not metaphorically",
+  "rolebook.extract.button": "извлечь заново из постов",
+  "rolebook.extract.extracting": "извлекаю…",
+  "rolebook.extract.confirm_title": "Извлечь голос заново из последних постов?",
+  "rolebook.extract.confirm_body":
+    "Проанализирую твои самые просматриваемые недавние посты и заменю текущий голос свежим извлечением. Текущая версия сохранится как предыдущая — можно откатить. Ручные правки текущей версии не перенесутся.",
+  "rolebook.extract.confirm_cta": "извлечь заново",
+  "rolebook.extract.toast_done": "голос заново извлечён из твоих постов",
   "rolebook.lint.button": "проверить конфликты",
   "rolebook.lint.checking": "проверяю…",
   "rolebook.lint.section_title": "Проверка конфликтов",

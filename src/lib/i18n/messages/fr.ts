@@ -120,6 +120,13 @@ export const fr: Partial<Record<MessageKey, string>> = {
     "Phrases caractéristiques dans ta voix réelle.",
   "rolebook.examples.placeholder":
     "ex. i have burned water before. not metaphorically",
+  "rolebook.extract.button": "ré-extraire des posts",
+  "rolebook.extract.extracting": "extraction…",
+  "rolebook.extract.confirm_title": "Ré-extraire la voix de tes posts récents ?",
+  "rolebook.extract.confirm_body":
+    "Analyse tes posts récents les plus vus et remplace la voix actuelle par une extraction fraîche. La version actuelle est sauvegardée comme précédente — tu peux revenir en arrière. Les modifications manuelles de la version actuelle ne sont pas conservées.",
+  "rolebook.extract.confirm_cta": "ré-extraire",
+  "rolebook.extract.toast_done": "voix ré-extraite de tes posts",
   "rolebook.lint.button": "vérifier les conflits",
   "rolebook.lint.checking": "vérification…",
   "rolebook.lint.section_title": "Vérification de conflits",
