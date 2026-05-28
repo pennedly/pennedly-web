@@ -161,6 +161,20 @@ export async function devLogin(
   });
 }
 
+export async function requestMagicLink(email: string): Promise<void> {
+  await fetchApi<void>("/api/auth/magic-link/request", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+export async function consumeMagicLink(token: string): Promise<TokenPair> {
+  return fetchApi<TokenPair>("/api/auth/magic-link/consume", {
+    method: "POST",
+    body: JSON.stringify({ token }),
+  });
+}
+
 // ── Me ───────────────────────────────────────────────────────────
 
 export async function fetchMe(): Promise<Me> {
