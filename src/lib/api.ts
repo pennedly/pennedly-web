@@ -1,6 +1,15 @@
 // Thin fetch wrapper that reads/writes the JWT from localStorage and
-// always sends Bearer auth on subsequent calls. No refresh-token rotation
-// yet; access tokens are 60-minute-lived so re-login is fine for Phase 1.
+// always sends Bearer auth on subsequent calls.
+//
+// Silent refresh: when an authenticated request gets 401, we transparently
+// call /api/auth/refresh with the stored refresh token, persist the new
+// token pair, and retry the original request ONCE. Only if the refresh
+// itself also fails do we clear tokens and let the caller redirect to
+// /login. This means access tokens can expire mid-session (60-min TTL)
+// without bouncing the user.
+//
+// We share a single in-flight refresh promise so multiple concurrent
+// failed requests don't trigger N parallel /refresh calls.
 
 import type {
   ApprovalResult,
@@ -50,19 +59,74 @@ export class ApiError extends Error {
   }
 }
 
-async function fetchApi<T>(path: string, init?: RequestInit): Promise<T> {
-  if (!BASE_URL) {
-    throw new Error("NEXT_PUBLIC_API_URL is not configured");
-  }
-  const tokens = getTokens();
+// Shared in-flight refresh promise — coalesces concurrent 401s.
+let refreshPromise: Promise<TokenPair | null> | null = null;
+
+async function refreshTokensOnce(): Promise<TokenPair | null> {
+  if (refreshPromise) return refreshPromise;
+  const current = getTokens();
+  if (!current?.refresh_token) return null;
+
+  refreshPromise = (async () => {
+    try {
+      const res = await fetch(`${BASE_URL}/api/auth/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh_token: current.refresh_token }),
+      });
+      if (!res.ok) {
+        // Refresh token expired / revoked → caller will redirect.
+        clearTokens();
+        return null;
+      }
+      const pair = (await res.json()) as TokenPair;
+      setTokens(pair);
+      return pair;
+    } catch {
+      return null;
+    } finally {
+      // Release the lock on the next microtask so a follow-up call gets
+      // a fresh promise instead of the resolved one.
+      queueMicrotask(() => {
+        refreshPromise = null;
+      });
+    }
+  })();
+  return refreshPromise;
+}
+
+async function rawFetch(
+  path: string,
+  init: RequestInit | undefined,
+  accessToken: string | undefined,
+): Promise<Response> {
   const headers = new Headers(init?.headers);
-  if (tokens?.access_token) {
-    headers.set("Authorization", `Bearer ${tokens.access_token}`);
+  if (accessToken) {
+    headers.set("Authorization", `Bearer ${accessToken}`);
   }
   if (init?.body && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
-  const res = await fetch(`${BASE_URL}${path}`, { ...init, headers });
+  return fetch(`${BASE_URL}${path}`, { ...init, headers });
+}
+
+async function fetchApi<T>(path: string, init?: RequestInit): Promise<T> {
+  if (!BASE_URL) {
+    throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  }
+
+  // First attempt with current access token.
+  let res = await rawFetch(path, init, getTokens()?.access_token);
+
+  // If unauthorized and we have a refresh token, try to refresh once.
+  // Skip the refresh dance for the /refresh endpoint itself.
+  if (res.status === 401 && !path.startsWith("/api/auth/refresh")) {
+    const refreshed = await refreshTokensOnce();
+    if (refreshed) {
+      res = await rawFetch(path, init, refreshed.access_token);
+    }
+  }
+
   if (!res.ok) {
     let body: unknown = null;
     try {
