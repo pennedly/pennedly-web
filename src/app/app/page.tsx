@@ -35,6 +35,10 @@ export default function Dashboard() {
   const [lastDraft, setLastDraft] = useState<GeneratedDraft | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [bootError, setBootError] = useState<string | null>(null);
+  // Per-draft edited text. Empty string means "user cleared it" (we
+  // still send it, the backend rejects empty). Undefined means "no
+  // local edit yet" and we fall back to draft.generated_text.
+  const [edits, setEdits] = useState<Record<number, string>>({});
 
   function toast(message: string, tone: Toast["tone"] = "success") {
     const id = Date.now() + Math.random();
@@ -85,15 +89,31 @@ export default function Dashboard() {
     }
   }
 
-  async function onApprove(id: number) {
-    captureEvent("ui.approve_clicked", { draft_id: id });
+  async function onApprove(id: number, originalText: string) {
+    const localEdit = edits[id];
+    const wasEdited =
+      localEdit !== undefined && localEdit.trim() !== originalText.trim();
+    captureEvent("ui.approve_clicked", { draft_id: id, edited: wasEdited });
     try {
-      await approveDraft(id);
+      const result = await approveDraft(id, {
+        editedText: wasEdited ? localEdit : undefined,
+      });
       if (accountId !== null) {
         const list = await listDrafts(accountId, { limit: 20 });
         setDrafts(list.drafts);
       }
-      toast(`#${id} approved`);
+      // Clear local edit so the (now-approved) row shows the freshly
+      // fetched generated_text from the server.
+      setEdits((e) => {
+        const next = { ...e };
+        delete next[id];
+        return next;
+      });
+      toast(
+        result.edited
+          ? `#${id} approved with your edit`
+          : `#${id} approved as-is`,
+      );
     } catch (e) {
       toast(String(e), "error");
     }
@@ -235,52 +255,100 @@ export default function Dashboard() {
           )}
 
           <ul className="space-y-3">
-            {drafts.map((d) => (
-              <li
-                key={d.id}
-                className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
-              >
-                <div className="flex items-center justify-between mb-2 text-xs text-zinc-500">
-                  <div className="flex items-center gap-2">
-                    <StatusBadge status={d.status} />
-                    {d.topic_label && (
-                      <span className="text-zinc-600 dark:text-zinc-400">
-                        {d.topic_label}
-                      </span>
-                    )}
-                    <span className="text-zinc-400">·</span>
-                    <span>#{d.id}</span>
+            {drafts.map((d) => {
+              const localEdit = edits[d.id];
+              const currentText =
+                localEdit !== undefined ? localEdit : d.generated_text;
+              const isEdited =
+                localEdit !== undefined &&
+                localEdit.trim() !== d.generated_text.trim();
+              const editable = d.status === "pending";
+              return (
+                <li
+                  key={d.id}
+                  className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
+                >
+                  <div className="flex items-center justify-between mb-2 text-xs text-zinc-500">
+                    <div className="flex items-center gap-2">
+                      <StatusBadge status={d.status} />
+                      {d.topic_label && (
+                        <span className="text-zinc-600 dark:text-zinc-400">
+                          {d.topic_label}
+                        </span>
+                      )}
+                      <span className="text-zinc-400">·</span>
+                      <span>#{d.id}</span>
+                      {isEdited && (
+                        <>
+                          <span className="text-zinc-400">·</span>
+                          <span className="text-amber-600 dark:text-amber-400 font-medium">
+                            edited
+                          </span>
+                        </>
+                      )}
+                    </div>
+                    <span>{relativeTime(d.created_at)}</span>
                   </div>
-                  <span>{relativeTime(d.created_at)}</span>
-                </div>
 
-                <p className="whitespace-pre-wrap text-sm leading-relaxed mb-3">
-                  {d.generated_text}
-                </p>
-
-                <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
-                  {d.status === "pending" && (
-                    <>
-                      <button
-                        onClick={() => onApprove(d.id)}
-                        className="text-xs px-3 py-1.5 rounded-md bg-green-600 hover:bg-green-700 text-white transition-colors"
-                      >
-                        approve
-                      </button>
-                      <button
-                        onClick={() => onReject(d.id)}
-                        className="text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                      >
-                        reject
-                      </button>
-                    </>
+                  {editable ? (
+                    <textarea
+                      value={currentText}
+                      onChange={(e) =>
+                        setEdits((s) => ({ ...s, [d.id]: e.target.value }))
+                      }
+                      rows={Math.min(
+                        12,
+                        Math.max(3, currentText.split("\n").length + 1),
+                      )}
+                      className="w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 px-3 py-2 text-sm leading-relaxed font-sans focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700 resize-y mb-3"
+                    />
+                  ) : (
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed mb-3">
+                      {d.generated_text}
+                    </p>
                   )}
-                  <div className="ml-auto">
-                    <TranslateButton text={d.generated_text} source={`draft_${d.content_type}`} />
+
+                  <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                    {d.status === "pending" && (
+                      <>
+                        <button
+                          onClick={() => onApprove(d.id, d.generated_text)}
+                          className="text-xs px-3 py-1.5 rounded-md bg-green-600 hover:bg-green-700 text-white transition-colors"
+                        >
+                          {isEdited ? "approve edit" : "approve"}
+                        </button>
+                        <button
+                          onClick={() => onReject(d.id)}
+                          className="text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                        >
+                          reject
+                        </button>
+                        {isEdited && (
+                          <button
+                            onClick={() =>
+                              setEdits((s) => {
+                                const next = { ...s };
+                                delete next[d.id];
+                                return next;
+                              })
+                            }
+                            className="text-xs px-2 py-1 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
+                          >
+                            revert
+                          </button>
+                        )}
+                      </>
+                    )}
+                    <div className="ml-auto">
+                      <TranslateButton
+                        text={currentText}
+                        source={`draft_${d.content_type}`}
+                      />
+                    </div>
                   </div>
-                </div>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
         </section>
       </main>

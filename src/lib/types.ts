@@ -74,6 +74,7 @@ export type ApprovalResult = {
   draft_id: number;
   status: string;
   approved_content_id: number | null;
+  edited?: boolean;
 };
 
 export type Translation = {

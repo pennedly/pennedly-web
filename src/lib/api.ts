@@ -155,11 +155,17 @@ export async function listDrafts(
 
 export async function approveDraft(
   draftId: number,
-  categoryTags: string[] = []
+  opts: { categoryTags?: string[]; editedText?: string } = {}
 ): Promise<ApprovalResult> {
+  const body: Record<string, unknown> = {
+    category_tags: opts.categoryTags ?? [],
+  };
+  if (opts.editedText !== undefined) {
+    body.edited_text = opts.editedText;
+  }
   return fetchApi<ApprovalResult>(`/api/drafts/${draftId}/approve`, {
     method: "POST",
-    body: JSON.stringify({ category_tags: categoryTags }),
+    body: JSON.stringify(body),
   });
 }
 
