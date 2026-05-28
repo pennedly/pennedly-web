@@ -181,6 +181,28 @@ export const en = {
   "translate.button": "translate",
   "translate.cached": "cached",
   "translate.fresh": "fresh",
+
+  // ── Pattern Study ───────────────────────────────────────────────
+  "dashboard.nav.patterns": "patterns",
+  "patterns.back": "← dashboard",
+  "patterns.title": "Pattern study",
+  "patterns.subtitle":
+    "Paste the TEXT of posts you admire — Pennedly extracts the reusable techniques (how the hook is built, the rhythm, the structure) so you can apply the moves to your own voice.",
+  "patterns.disclaimer_title": "Paste text, not links",
+  "patterns.disclaimer_body":
+    "Copy the actual words of a post you're studying. Links and @profiles won't work — Pennedly never opens links or reads other people's accounts. And it extracts technique, never copies the content.",
+  "patterns.input_placeholder":
+    "Paste a post's text here. Add more posts separated by a blank line.\n\ne.g. i have burned water before. not metaphorically. actual water in a pot",
+  "patterns.analyze": "analyze patterns",
+  "patterns.analyzing": "analyzing…",
+  "patterns.empty_warning": "paste at least one post's text first",
+  "patterns.link_warning":
+    "That looks like a link or profile. Paste the post's TEXT instead — the words you see.",
+  "patterns.summary_label": "What these have in common",
+  "patterns.why_label": "why it works",
+  "patterns.example_label": "fresh example",
+  "patterns.add_to_voice": "add to my voice",
+  "patterns.added": "added to your do-list",
 } as const;
 
 export type MessageKey = keyof typeof en;

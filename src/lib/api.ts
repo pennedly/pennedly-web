@@ -25,6 +25,7 @@ import type {
   LintFix,
   LintResult,
   Me,
+  PatternStudyResult,
   PublishResult,
   RefineResult,
   RoleBook,
@@ -241,6 +242,23 @@ export async function extractVoice(
     {
       method: "POST",
       body: JSON.stringify({ post_limit: postLimit }),
+    },
+  );
+}
+
+// ── Pattern Study ────────────────────────────────────────────────
+
+// Analyze pasted post TEXTS (not links/handles — backend rejects those)
+// for reusable techniques.
+export async function analyzePatterns(
+  accountId: number,
+  samples: string[],
+): Promise<PatternStudyResult> {
+  return fetchApi<PatternStudyResult>(
+    `/api/accounts/${accountId}/patterns/analyze`,
+    {
+      method: "POST",
+      body: JSON.stringify({ samples }),
     },
   );
 }

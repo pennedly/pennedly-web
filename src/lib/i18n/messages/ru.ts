@@ -186,4 +186,26 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "translate.button": "перевести",
   "translate.cached": "из кэша",
   "translate.fresh": "свежий",
+
+  // ── Pattern Study ───────────────────────────────────────────────
+  "dashboard.nav.patterns": "паттерны",
+  "patterns.back": "← дашборд",
+  "patterns.title": "Изучение паттернов",
+  "patterns.subtitle":
+    "Вставь ТЕКСТ постов которые тебе нравятся — Pennedly вытащит переиспользуемые приёмы (как построен хук, ритм, структура), чтобы ты мог применить ходы в своём голосе.",
+  "patterns.disclaimer_title": "Вставляй текст, а не ссылки",
+  "patterns.disclaimer_body":
+    "Скопируй сами слова поста который изучаешь. Ссылки и @профили не сработают — Pennedly никогда не открывает ссылки и не читает чужие аккаунты. И извлекает приём, а не копирует контент.",
+  "patterns.input_placeholder":
+    "Вставь текст поста сюда. Несколько постов — разделяй пустой строкой.\n\nнапр. i have burned water before. not metaphorically. actual water in a pot",
+  "patterns.analyze": "разобрать паттерны",
+  "patterns.analyzing": "разбираю…",
+  "patterns.empty_warning": "сначала вставь текст хотя бы одного поста",
+  "patterns.link_warning":
+    "Похоже на ссылку или профиль. Вставь ТЕКСТ поста — сами слова которые ты видишь.",
+  "patterns.summary_label": "Что у них общего",
+  "patterns.why_label": "почему работает",
+  "patterns.example_label": "свежий пример",
+  "patterns.add_to_voice": "добавить в мой голос",
+  "patterns.added": "добавлено в твой do-list",
 };

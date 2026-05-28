@@ -121,6 +121,26 @@ export type RefineResult = {
   latency_ms: number;
 };
 
+// ── Pattern Study ────────────────────────────────────────────────────
+
+export type Pattern = {
+  name: string;
+  technique: string;
+  why_it_works: string;
+  example: string;
+  suggested_do_rule: string;
+};
+
+export type PatternStudyResult = {
+  patterns: Pattern[];
+  summary: string;
+  samples_analyzed: number;
+  llm_model: string;
+  prompt_tokens: number;
+  completion_tokens: number;
+  latency_ms: number;
+};
+
 // ── Audits ───────────────────────────────────────────────────────────
 
 export type AuditSummary = {

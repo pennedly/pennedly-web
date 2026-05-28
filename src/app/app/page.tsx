@@ -348,6 +348,12 @@ export default function Dashboard() {
             >
               {t("dashboard.nav.audits")}
             </Link>
+            <Link
+              href="/app/patterns"
+              className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
+            >
+              {t("dashboard.nav.patterns")}
+            </Link>
             <button
               onClick={onLogout}
               className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
