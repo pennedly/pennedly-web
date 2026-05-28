@@ -1,0 +1,120 @@
+"use client";
+
+// On-demand translation widget. Shows a globe button next to any text;
+// click opens a language menu; pick one → fetch → display the
+// translation below the original with a small toggle to hide it again.
+//
+// The translation is read-only commentary on the source — never replaces
+// it (the source is the canonical thing). Stays per-instance state so
+// two TranslateButtons on the same page operate independently.
+
+import { useState } from "react";
+
+import { translateText } from "@/lib/api";
+import { captureEvent } from "@/lib/analytics";
+import {
+  type LanguageCode,
+  SUPPORTED_LANGUAGES,
+  type Translation,
+} from "@/lib/types";
+
+type Props = {
+  text: string;
+  // Optional label for analytics (e.g. "draft" vs "role_book_intro")
+  source?: string;
+  // If you want to size the panel differently per call site
+  className?: string;
+};
+
+export function TranslateButton({ text, source = "unknown", className = "" }: Props) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [loading, setLoading] = useState<LanguageCode | null>(null);
+  const [result, setResult] = useState<Translation | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function onPick(lang: LanguageCode) {
+    setMenuOpen(false);
+    setLoading(lang);
+    setError(null);
+    captureEvent("ui.translate_clicked", { target_lang: lang, source });
+    try {
+      const t = await translateText(text, lang);
+      setResult(t);
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  function onClear() {
+    setResult(null);
+    setError(null);
+  }
+
+  return (
+    <div className={className}>
+      <div className="relative inline-block">
+        <button
+          type="button"
+          onClick={() => setMenuOpen((v) => !v)}
+          className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors"
+          aria-label="Translate"
+        >
+          <span aria-hidden>🌐</span>
+          <span>
+            {loading
+              ? "translating…"
+              : result
+              ? `translated to ${result.target_lang}`
+              : "translate"}
+          </span>
+        </button>
+        {menuOpen && (
+          <div className="absolute z-10 mt-1 w-44 rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-lg py-1">
+            {SUPPORTED_LANGUAGES.map((lang) => (
+              <button
+                key={lang.code}
+                type="button"
+                onClick={() => onPick(lang.code)}
+                className="w-full px-3 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-2"
+              >
+                <span className="text-base" aria-hidden>
+                  {lang.flag}
+                </span>
+                <span>{lang.name}</span>
+                <span className="ml-auto text-xs text-zinc-400">
+                  {lang.code}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {error && (
+        <p className="mt-2 text-xs text-red-600 dark:text-red-400">{error}</p>
+      )}
+
+      {result && (
+        <div className="mt-2 rounded border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 p-3">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[10px] uppercase tracking-wider text-zinc-500">
+              {result.target_lang} {result.cached ? "· cached" : "· fresh"}
+            </span>
+            <button
+              type="button"
+              onClick={onClear}
+              className="text-xs text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
+            >
+              hide
+            </button>
+          </div>
+          <p className="text-sm whitespace-pre-wrap leading-relaxed">
+            {result.translated_text}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}

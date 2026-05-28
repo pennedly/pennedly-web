@@ -75,3 +75,22 @@ export type ApprovalResult = {
   status: string;
   approved_content_id: number | null;
 };
+
+export type Translation = {
+  translated_text: string;
+  target_lang: string;
+  cached: boolean;
+};
+
+export const SUPPORTED_LANGUAGES = [
+  { code: "en", name: "English", flag: "🇬🇧" },
+  { code: "ru", name: "Русский", flag: "🇷🇺" },
+  { code: "uk", name: "Українська", flag: "🇺🇦" },
+  { code: "de", name: "Deutsch", flag: "🇩🇪" },
+  { code: "es", name: "Español", flag: "🇪🇸" },
+  { code: "fr", name: "Français", flag: "🇫🇷" },
+  { code: "it", name: "Italiano", flag: "🇮🇹" },
+  { code: "pt", name: "Português", flag: "🇵🇹" },
+] as const;
+
+export type LanguageCode = (typeof SUPPORTED_LANGUAGES)[number]["code"];

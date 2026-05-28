@@ -6,10 +6,12 @@ import type {
   ApprovalResult,
   DraftsList,
   GeneratedDraft,
+  LanguageCode,
   Me,
   RoleBook,
   RoleBookSections,
   TokenPair,
+  Translation,
 } from "./types";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
@@ -151,5 +153,17 @@ export async function approveDraft(
 export async function rejectDraft(draftId: number): Promise<ApprovalResult> {
   return fetchApi<ApprovalResult>(`/api/drafts/${draftId}/reject`, {
     method: "POST",
+  });
+}
+
+// ── Translation ──────────────────────────────────────────────────
+
+export async function translateText(
+  text: string,
+  targetLang: LanguageCode
+): Promise<Translation> {
+  return fetchApi<Translation>("/api/translate", {
+    method: "POST",
+    body: JSON.stringify({ text, target_lang: targetLang }),
   });
 }

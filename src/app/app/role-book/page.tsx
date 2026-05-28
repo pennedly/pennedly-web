@@ -1,10 +1,13 @@
 "use client";
 
-// Role-book editor placeholder. SKELETON ONLY — sections are rendered
-// as monospace JSON-style textareas, NOT as proper tag inputs / forms.
-// The real editor with friendly per-section UX (tag pills, drag-and-drop
-// ordering, validation feedback) lives in the live UI session.
+// Role-book editor — the surface where the user controls voice + topic
+// filters. Each section gets a proper tag-pill input (themes_exclude
+// in red so it visually communicates "the AI will not write about this"),
+// a TranslateButton for users running accounts in a non-native language,
+// and the assembled prompt is shown collapsed at the bottom for
+// transparency about what the LLM actually sees.
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -16,26 +19,76 @@ import {
   patchRoleBook,
 } from "@/lib/api";
 import { captureEvent } from "@/lib/analytics";
+import { TagInput } from "@/components/TagInput";
+import { TranslateButton } from "@/components/TranslateButton";
 import type { RoleBook, RoleBookSections } from "@/lib/types";
 
 const ACCOUNT_ID = 2; // hardcoded dogfooding account; lift to URL param later
 
-const LIST_FIELDS: (keyof RoleBookSections)[] = [
-  "themes_include",
-  "themes_exclude",
-  "voice_characteristics",
-  "do_list",
-  "dont_list",
-  "examples",
+type SectionKey = keyof Omit<RoleBookSections, "intro">;
+
+const LIST_SECTIONS: {
+  key: SectionKey;
+  label: string;
+  helper: string;
+  variant?: "default" | "danger";
+  placeholder?: string;
+}[] = [
+  {
+    key: "themes_exclude",
+    label: "Topics the AI must NEVER write about",
+    helper:
+      "If a requested topic falls here, the AI silently pivots to an allowed topic.",
+    variant: "danger",
+    placeholder: "e.g. app development",
+  },
+  {
+    key: "themes_include",
+    label: "Topics the AI writes about",
+    helper: "Be specific — 'kitchen failures' beats 'lifestyle'.",
+    placeholder: "e.g. kitchen failures and shortcuts",
+  },
+  {
+    key: "voice_characteristics",
+    label: "Voice characteristics",
+    helper: "Concrete observations: 'lowercase i', 'short sentences'.",
+    placeholder: "e.g. uses lowercase throughout",
+  },
+  {
+    key: "do_list",
+    label: "Do",
+    helper: "Specific moves to lean into.",
+    placeholder: "e.g. open with 'what's a...' questions",
+  },
+  {
+    key: "dont_list",
+    label: "Don't",
+    helper: "Specific moves to avoid.",
+    placeholder: "e.g. no hashtags or emojis",
+  },
+  {
+    key: "examples",
+    label: "Voice examples",
+    helper: "Representative phrases in your actual voice.",
+    placeholder: "e.g. i have burned water before. not metaphorically",
+  },
 ];
+
+type Toast = { id: number; message: string; tone: "success" | "error" };
 
 export default function RoleBookEditor() {
   const router = useRouter();
   const [book, setBook] = useState<RoleBook | null>(null);
   const [draft, setDraft] = useState<RoleBookSections>({});
-  const [error, setError] = useState<string | null>(null);
+  const [bootError, setBootError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [toasts, setToasts] = useState<Toast[]>([]);
+
+  function toast(message: string, tone: Toast["tone"] = "success") {
+    const id = Date.now() + Math.random();
+    setToasts((t) => [...t, { id, message, tone }]);
+    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3500);
+  }
 
   useEffect(() => {
     if (!getTokens()) {
@@ -53,17 +106,13 @@ export default function RoleBookEditor() {
           router.push("/app/login");
           return;
         }
-        setError(String(e));
+        setBootError(String(e));
       }
     })();
   }, [router]);
 
-  function updateList(field: keyof RoleBookSections, text: string) {
-    const items = text
-      .split("\n")
-      .map((s) => s.trim())
-      .filter(Boolean);
-    setDraft((d) => ({ ...d, [field]: items }));
+  function updateList(key: SectionKey, items: string[]) {
+    setDraft((d) => ({ ...d, [key]: items }));
   }
 
   function updateIntro(text: string) {
@@ -72,7 +121,6 @@ export default function RoleBookEditor() {
 
   async function onSave() {
     setSaving(true);
-    setError(null);
     captureEvent("ui.role_book_save_clicked", {
       account_id: ACCOUNT_ID,
       fields_changed: Object.keys(draft),
@@ -83,120 +131,179 @@ export default function RoleBookEditor() {
       const rb = await patchRoleBook(ACCOUNT_ID, draft);
       setBook(rb);
       setDraft({ ...(rb.sections ?? {}) });
-      setSavedAt(new Date().toISOString());
+      toast("saved · next generation uses the new voice");
     } catch (e) {
-      setError(String(e));
+      toast(String(e), "error");
     } finally {
       setSaving(false);
     }
   }
 
+  if (bootError) {
+    return (
+      <main className="max-w-2xl mx-auto px-6 py-16">
+        <div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 p-4 text-sm text-red-800 dark:text-red-200">
+          {bootError}
+        </div>
+      </main>
+    );
+  }
+
   if (!book) {
     return (
-      <main className="max-w-3xl mx-auto p-8 font-sans">
-        {error ? (
-          <p className="text-sm text-red-600">{error}</p>
-        ) : (
-          <p className="text-sm text-zinc-500">loading…</p>
-        )}
+      <main className="max-w-2xl mx-auto px-6 py-16 text-sm text-zinc-500">
+        loading…
       </main>
     );
   }
 
   return (
-    <main className="max-w-3xl mx-auto p-8 font-sans text-zinc-900 dark:text-zinc-100">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-semibold">role book</h1>
-          <p className="text-sm text-zinc-500">
-            v{book.role_book_id}{" "}
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+      <header className="sticky top-0 z-20 bg-white/90 dark:bg-zinc-950/90 backdrop-blur border-b border-zinc-200 dark:border-zinc-800">
+        <div className="max-w-3xl mx-auto px-6 py-3 flex items-center justify-between">
+          <Link href="/app" className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
+            ← dashboard
+          </Link>
+          <div className="text-xs text-zinc-500">
+            voice v{book.role_book_id}
             {book.parent_id !== null && (
-              <span>(parent #{book.parent_id})</span>
-            )}{" "}
-            · {book.created_by}
+              <span> · parent v{book.parent_id}</span>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-3xl mx-auto px-6 py-8 space-y-6">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Voice</h1>
+          <p className="text-sm text-zinc-500 mt-1">
+            Edit what the AI writes and how. Changes apply to the next generation.
           </p>
         </div>
-        <a
-          href="/app"
-          className="text-sm underline text-zinc-600 dark:text-zinc-400"
-        >
-          ← dashboard
-        </a>
-      </div>
 
-      <div className="space-y-5">
-        <label className="block">
-          <span className="text-sm font-medium">intro</span>
+        {/* Intro */}
+        <section className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm">
+          <div className="flex items-baseline justify-between mb-2">
+            <label className="text-sm font-semibold">Intro</label>
+            <span className="text-xs text-zinc-500">who&apos;s writing</span>
+          </div>
           <textarea
             value={draft.intro ?? ""}
             onChange={(e) => updateIntro(e.target.value)}
-            rows={4}
-            className="mt-1 w-full px-3 py-2 rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 font-sans"
+            rows={5}
+            placeholder="One paragraph in your own register: who you are, what you write about."
+            className="w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700"
           />
-        </label>
+          {draft.intro && (
+            <div className="mt-3">
+              <TranslateButton text={draft.intro} source="role_book_intro" />
+            </div>
+          )}
+        </section>
 
-        {LIST_FIELDS.map((field) => {
-          const items = (draft[field] as string[] | undefined) ?? [];
-          const isExclude = field === "themes_exclude";
+        {/* List sections */}
+        {LIST_SECTIONS.map((section) => {
+          const items = (draft[section.key] as string[] | undefined) ?? [];
+          const sampleForTranslate = items.length > 0 ? items.join("\n") : "";
+          const isDanger = section.variant === "danger";
           return (
-            <label key={field} className="block">
-              <span
-                className={`text-sm font-medium ${
-                  isExclude ? "text-red-700 dark:text-red-400" : ""
-                }`}
-              >
-                {field.replace(/_/g, " ")}
-                {isExclude && " (topics the AI must never write about)"}
-              </span>
-              <textarea
-                value={items.join("\n")}
-                onChange={(e) => updateList(field, e.target.value)}
-                rows={Math.max(3, items.length + 1)}
-                placeholder="one item per line"
-                className={`mt-1 w-full px-3 py-2 rounded border bg-white dark:bg-zinc-950 font-sans ${
-                  isExclude
-                    ? "border-red-300 dark:border-red-800"
-                    : "border-zinc-300 dark:border-zinc-700"
-                }`}
+            <section
+              key={section.key}
+              className={`rounded-xl border bg-white dark:bg-zinc-900 p-5 shadow-sm ${
+                isDanger
+                  ? "border-red-200 dark:border-red-900/50"
+                  : "border-zinc-200 dark:border-zinc-800"
+              }`}
+            >
+              <div className="flex items-baseline justify-between mb-1">
+                <label
+                  className={`text-sm font-semibold ${
+                    isDanger ? "text-red-700 dark:text-red-400" : ""
+                  }`}
+                >
+                  {section.label}
+                </label>
+                <span className="text-xs text-zinc-500">
+                  {items.length} {items.length === 1 ? "item" : "items"}
+                </span>
+              </div>
+              <p className="text-xs text-zinc-500 mb-3">{section.helper}</p>
+              <TagInput
+                items={items}
+                onChange={(next) => updateList(section.key, next)}
+                placeholder={section.placeholder}
+                variant={section.variant}
               />
-            </label>
+              {sampleForTranslate && (
+                <div className="mt-3">
+                  <TranslateButton
+                    text={sampleForTranslate}
+                    source={`role_book_${section.key}`}
+                  />
+                </div>
+              )}
+            </section>
           );
         })}
+
+        {/* Save action bar */}
+        <div className="sticky bottom-4 flex items-center justify-end gap-3 bg-white/95 dark:bg-zinc-950/95 backdrop-blur border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 shadow-md">
+          <span className="mr-auto text-xs text-zinc-500">
+            New active version on save · old becomes parent
+          </span>
+          <Link
+            href="/app"
+            className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors px-3 py-1.5"
+          >
+            cancel
+          </Link>
+          <button
+            onClick={onSave}
+            disabled={saving}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-md bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 text-sm font-medium hover:bg-zinc-700 dark:hover:bg-white disabled:opacity-50 transition-colors"
+          >
+            {saving && (
+              <span
+                className="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"
+                aria-hidden
+              />
+            )}
+            {saving ? "saving…" : "save"}
+          </button>
+        </div>
+
+        {/* Transparency: what the LLM actually sees */}
+        <details className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5">
+          <summary className="cursor-pointer text-sm font-semibold">
+            What the AI actually sees
+            <span className="ml-2 font-normal text-xs text-zinc-500">
+              · assembled from sections above
+            </span>
+          </summary>
+          <pre className="mt-3 whitespace-pre-wrap text-xs leading-relaxed text-zinc-700 dark:text-zinc-300 font-mono">
+            {book.prompt_text}
+          </pre>
+          <div className="mt-3">
+            <TranslateButton text={book.prompt_text} source="role_book_assembled" />
+          </div>
+        </details>
+      </main>
+
+      {/* Toasts */}
+      <div className="fixed bottom-6 right-6 z-30 space-y-2 pointer-events-none">
+        {toasts.map((t) => (
+          <div
+            key={t.id}
+            className={`px-4 py-2.5 rounded-lg shadow-lg text-sm font-medium pointer-events-auto ${
+              t.tone === "error"
+                ? "bg-red-600 text-white"
+                : "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
+            }`}
+          >
+            {t.message}
+          </div>
+        ))}
       </div>
-
-      {error && (
-        <p className="mt-4 text-sm text-red-600 dark:text-red-400">{error}</p>
-      )}
-      {savedAt && (
-        <p className="mt-4 text-sm text-green-700 dark:text-green-400">
-          saved at {new Date(savedAt).toLocaleTimeString()}
-        </p>
-      )}
-
-      <div className="mt-6 flex gap-3">
-        <button
-          onClick={onSave}
-          disabled={saving}
-          className="px-4 py-2 rounded bg-zinc-900 text-white dark:bg-zinc-100 dark:text-black disabled:opacity-50"
-        >
-          {saving ? "saving…" : "save"}
-        </button>
-        <a
-          href="/app"
-          className="px-4 py-2 rounded border border-zinc-300 dark:border-zinc-700"
-        >
-          back
-        </a>
-      </div>
-
-      <details className="mt-8 text-xs">
-        <summary className="cursor-pointer text-zinc-500">
-          assembled prompt_text (read-only — what the LLM actually sees)
-        </summary>
-        <pre className="mt-2 p-3 rounded border border-zinc-200 dark:border-zinc-800 whitespace-pre-wrap text-xs">
-          {book.prompt_text}
-        </pre>
-      </details>
-    </main>
+    </div>
   );
 }
