@@ -1,0 +1,179 @@
+// English — the canonical message catalog. Every key shipped in the
+// UI lives here first; other locales translate against this set and
+// fall back to en if a key is missing.
+//
+// Keep keys flat (one level deep) for fast lookup and easy diff. Use
+// dot-separated namespaces ('dashboard.generate.button') rather than
+// nested objects so missing-key fallback is a single string lookup.
+
+export const en = {
+  // ── Shared ─────────────────────────────────────────────────────
+  "app.brand": "Pennedly",
+  "app.tagline": "Drafting partner for your Threads voice.",
+  "common.loading": "loading…",
+  "common.saving": "saving…",
+  "common.save": "save",
+  "common.cancel": "cancel",
+  "common.hide": "hide",
+  "common.revert": "revert",
+  "common.signed_in_as": "signed in as",
+
+  // ── Landing ────────────────────────────────────────────────────
+  "landing.cta": "Get early access",
+
+  // ── Login ──────────────────────────────────────────────────────
+  "login.email_label": "email",
+  "login.email_placeholder": "you@example.com",
+  "login.submit": "send sign-in link",
+  "login.sending": "sending…",
+  "login.no_password": "We'll email you a one-time link. No password needed.",
+  "login.signing_in": "Signing you in…",
+  "login.sent_title": "Check your inbox",
+  "login.sent_to": "We sent a sign-in link to",
+  "login.sent_validity":
+    "The link is valid for 15 minutes and can only be used once.",
+  "login.use_different_email": "use a different email",
+  "login.link_invalid":
+    "This sign-in link is no longer valid. Request a new one below.",
+  "login.signin_failed": "Sign-in failed",
+  "login.rate_limited": "Too many sign-in attempts — wait an hour and try again.",
+  "login.email_down": "Email delivery is down right now. Try again in a minute.",
+  "login.dev_toggle_show": "developer mode",
+  "login.dev_toggle_hide": "hide developer mode",
+  "login.dev_explainer":
+    "Skips email verification. Only works when ALLOW_DEV_LOGIN=true is set on the backend.",
+  "login.dev_submit": "dev sign in",
+  "login.dev_signing_in": "signing in…",
+
+  // ── Dashboard ──────────────────────────────────────────────────
+  "dashboard.nav.voice": "voice",
+  "dashboard.nav.audits": "audits",
+  "dashboard.nav.logout": "logout",
+  "dashboard.generate.title": "Generate a post",
+  "dashboard.generate.subtitle":
+    "In your voice. Topic auto-picked round-robin from your topics.",
+  "dashboard.generate.button": "generate post",
+  "dashboard.generate.generating": "generating…",
+  "dashboard.generate.no_topic": "no topic",
+  "dashboard.feed.title": "Recent drafts",
+  "dashboard.feed.empty": "No drafts yet. Hit",
+  "dashboard.feed.empty_cta": "generate post",
+  "dashboard.feed.empty_after": "above to get started.",
+  "dashboard.feed.draft_singular": "draft",
+  "dashboard.feed.draft_plural": "drafts",
+  "dashboard.draft.edited": "edited",
+  "dashboard.draft.approve": "approve",
+  "dashboard.draft.approve_edited": "approve edit",
+  "dashboard.draft.reject": "reject",
+  "dashboard.draft.publish": "publish to Threads",
+  "dashboard.draft.refine_placeholder":
+    "refine: 'make shorter', 'less formal', 'add a question'…",
+  "dashboard.draft.refine": "refine",
+  "dashboard.draft.refining": "refining…",
+  "dashboard.draft.refine_preset_shorter": "make shorter",
+  "dashboard.draft.refine_preset_informal": "less formal",
+  "dashboard.draft.refine_preset_question": "add a question",
+  "dashboard.draft.refine_preset_punchier": "punchier opening",
+  "dashboard.toast.generated": "generated",
+  "dashboard.toast.approved_as_is": "approved as-is",
+  "dashboard.toast.approved_edited": "approved with your edit",
+  "dashboard.toast.rejected": "rejected",
+  "dashboard.toast.refined": "refined",
+  "dashboard.toast.published": "published",
+
+  // ── Role book ──────────────────────────────────────────────────
+  "rolebook.back_to_dashboard": "← dashboard",
+  "rolebook.version_label": "voice v",
+  "rolebook.parent_label": "parent v",
+  "rolebook.title": "Voice",
+  "rolebook.subtitle":
+    "Edit what the AI writes and how. Changes apply to the next generation.",
+  "rolebook.intro.label": "Intro",
+  "rolebook.intro.helper": "who's writing",
+  "rolebook.intro.placeholder":
+    "One paragraph in your own register: who you are, what you write about.",
+  "rolebook.themes_exclude.label": "Topics the AI must NEVER write about",
+  "rolebook.themes_exclude.helper":
+    "If a requested topic falls here, the AI silently pivots to an allowed topic.",
+  "rolebook.themes_exclude.placeholder": "e.g. app development",
+  "rolebook.themes_include.label": "Topics the AI writes about",
+  "rolebook.themes_include.helper":
+    "Be specific — 'kitchen failures' beats 'lifestyle'.",
+  "rolebook.themes_include.placeholder": "e.g. kitchen failures and shortcuts",
+  "rolebook.voice_characteristics.label": "Voice characteristics",
+  "rolebook.voice_characteristics.helper":
+    "Concrete observations: 'lowercase i', 'short sentences'.",
+  "rolebook.voice_characteristics.placeholder":
+    "e.g. uses lowercase throughout",
+  "rolebook.do_list.label": "Do",
+  "rolebook.do_list.helper": "Specific moves to lean into.",
+  "rolebook.do_list.placeholder": "e.g. open with 'what's a...' questions",
+  "rolebook.dont_list.label": "Don't",
+  "rolebook.dont_list.helper": "Specific moves to avoid.",
+  "rolebook.dont_list.placeholder": "e.g. no hashtags or emojis",
+  "rolebook.examples.label": "Voice examples",
+  "rolebook.examples.helper":
+    "Representative phrases in your actual voice.",
+  "rolebook.examples.placeholder":
+    "e.g. i have burned water before. not metaphorically",
+  "rolebook.lint.button": "check for conflicts",
+  "rolebook.lint.checking": "checking…",
+  "rolebook.lint.section_title": "Conflict check",
+  "rolebook.lint.no_conflicts": "no conflicts found",
+  "rolebook.save.helper": "New active version on save · old becomes parent",
+  "rolebook.save.toast_saved_clean": "saved · no conflicts",
+  "rolebook.save.toast_saved_check_unavailable":
+    "saved · conflict check unavailable",
+  "rolebook.transparency.title": "What the AI actually sees",
+  "rolebook.transparency.subtitle": "· assembled from sections above",
+  "rolebook.items_count_singular": "item",
+  "rolebook.items_count_plural": "items",
+
+  // ── Audits ─────────────────────────────────────────────────────
+  "audits.back": "← dashboard",
+  "audits.runs_at": "Mondays 09:00 UTC",
+  "audits.title": "Audits",
+  "audits.subtitle":
+    "Each week the coach reviews how your posts performed and proposes edits to your voice. Approve or reject each suggestion individually.",
+  "audits.empty":
+    "No audits yet. The first one runs the Monday after you have at least a week of published posts with metrics.",
+  "audits.posts_analyzed": "posts analyzed",
+  "audits.decided_of_total": "decided",
+  "audits.pending_review": "pending your review",
+  "audits.detail.back": "← audits",
+  "audits.detail.proposed_changes": "Proposed changes",
+  "audits.detail.no_changes":
+    "The coach didn't propose any changes for this period.",
+  "audits.detail.reasoning": "Why the coach proposed these changes",
+  "audits.detail.suggested_fix": "Suggested fix",
+  "audits.detail.your_note": "Your note",
+  "audits.detail.note_placeholder": "Optional note about this decision…",
+  "audits.detail.approve": "approve",
+  "audits.detail.reject": "reject",
+  "audits.detail.clear": "clear",
+  "audits.detail.submit": "submit decisions",
+  "audits.detail.submitting": "submitting…",
+  "audits.detail.ready_to_submit": "ready to submit",
+  "audits.detail.applied": "applied",
+  "audits.detail.rejected_label": "rejected",
+  "audits.detail.rolled_back": "rolled back",
+  "audits.detail.effect": "effect",
+
+  // ── Publish modal ──────────────────────────────────────────────
+  "publish.title": "Publish to Threads",
+  "publish.subtitle":
+    "This is the exact text that will appear on your Threads account. It cannot be edited or unpublished from here.",
+  "publish.char_count": "chars",
+  "publish.over_limit":
+    "Threads will reject text-only posts over the limit.",
+  "publish.cancel": "cancel",
+  "publish.confirm": "publish to Threads",
+  "publish.publishing": "publishing…",
+
+  // ── Translation widget ─────────────────────────────────────────
+  "translate.button": "translate",
+  "translate.cached": "cached",
+  "translate.fresh": "fresh",
+} as const;
+
+export type MessageKey = keyof typeof en;

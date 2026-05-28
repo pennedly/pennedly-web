@@ -13,11 +13,14 @@ import { useRouter } from "next/navigation";
 
 import { ApiError, clearTokens, getTokens, listAudits } from "@/lib/api";
 import { useSelectedAccountId } from "@/lib/account";
+import { useTranslation } from "@/lib/i18n";
 import { AccountSwitcher } from "@/components/AccountSwitcher";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import type { AuditSummary } from "@/lib/types";
 
 export default function AuditsPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const accountId = useSelectedAccountId();
   const [audits, setAudits] = useState<AuditSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,12 +71,13 @@ export default function AuditsPage() {
             href="/app"
             className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
           >
-            ← dashboard
+            {t("audits.back")}
           </Link>
           <div className="flex items-center gap-3">
             <AccountSwitcher />
+            <LanguageSwitcher />
             <span className="text-xs text-zinc-500 hidden sm:inline">
-              Mondays 09:00 UTC
+              {t("audits.runs_at")}
             </span>
           </div>
         </div>
@@ -81,24 +85,17 @@ export default function AuditsPage() {
 
       <main className="max-w-3xl mx-auto px-6 py-8 space-y-6">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Audits</h1>
-          <p className="text-sm text-zinc-500 mt-1">
-            Each week the coach reviews how your posts performed and
-            proposes edits to your voice. Approve or reject each
-            suggestion individually.
-          </p>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {t("audits.title")}
+          </h1>
+          <p className="text-sm text-zinc-500 mt-1">{t("audits.subtitle")}</p>
         </div>
 
-        {loading && (
-          <p className="text-sm text-zinc-500">loading…</p>
-        )}
+        {loading && <p className="text-sm text-zinc-500">{t("common.loading")}</p>}
 
         {!loading && audits.length === 0 && (
           <div className="rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700 p-8 text-center">
-            <p className="text-sm text-zinc-500">
-              No audits yet. The first one runs the Monday after you have
-              at least a week of published posts with metrics.
-            </p>
+            <p className="text-sm text-zinc-500">{t("audits.empty")}</p>
           </div>
         )}
 
@@ -125,19 +122,19 @@ export default function AuditsPage() {
                 <div className="flex items-center gap-4 text-sm text-zinc-700 dark:text-zinc-300 flex-wrap">
                   <span>
                     <span className="font-medium">{a.posts_analyzed}</span>{" "}
-                    posts analyzed
+                    {t("audits.posts_analyzed")}
                   </span>
                   <span className="text-zinc-400">·</span>
                   <span>
                     <span className="font-medium">
                       {a.decided_change_count}
                     </span>
-                    /{a.proposed_change_count} decided
+                    /{a.proposed_change_count} {t("audits.decided_of_total")}
                   </span>
                   {a.proposed_change_count > a.decided_change_count && (
                     <span className="text-amber-600 dark:text-amber-400 text-xs font-medium">
                       → {a.proposed_change_count - a.decided_change_count}{" "}
-                      pending your review
+                      {t("audits.pending_review")}
                     </span>
                   )}
                 </div>

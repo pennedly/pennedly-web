@@ -25,9 +25,12 @@ import {
   setTokens,
 } from "@/lib/api";
 import { captureEvent, identify } from "@/lib/analytics";
+import { useTranslation } from "@/lib/i18n";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 function LoginPageInner() {
   const router = useRouter();
+  const { t } = useTranslation();
   const searchParams = useSearchParams();
   const incomingToken = searchParams.get("token");
 
@@ -64,8 +67,8 @@ function LoginPageInner() {
         if (e instanceof ApiError) {
           setConsumeError(
             e.status === 410
-              ? "This sign-in link is no longer valid. Request a new one below."
-              : `Sign-in failed (${e.status}). Try again below.`,
+              ? t("login.link_invalid")
+              : `${t("login.signin_failed")} (${e.status}).`,
           );
         } else {
           setConsumeError(String(e));
@@ -87,11 +90,11 @@ function LoginPageInner() {
     } catch (e) {
       if (e instanceof ApiError) {
         if (e.status === 429) {
-          setError("Too many sign-in attempts — wait an hour and try again.");
+          setError(t("login.rate_limited"));
         } else if (e.status === 503) {
-          setError("Email delivery is down right now. Try again in a minute.");
+          setError(t("login.email_down"));
         } else {
-          setError(`Sign-in failed (${e.status}).`);
+          setError(`${t("login.signin_failed")} (${e.status}).`);
         }
       } else {
         setError(String(e));
@@ -121,9 +124,9 @@ function LoginPageInner() {
         if (e.status === 404) {
           setError("dev-login is disabled on the backend.");
         } else if (e.status === 429) {
-          setError("Too many sign-in attempts — wait an hour.");
+          setError(t("login.rate_limited"));
         } else {
-          setError(`Sign-in failed (${e.status}).`);
+          setError(`${t("login.signin_failed")} (${e.status}).`);
         }
       } else {
         setError(String(e));
@@ -135,10 +138,13 @@ function LoginPageInner() {
 
   return (
     <main className="max-w-md mx-auto px-6 py-12 font-sans text-zinc-900 dark:text-zinc-100">
-      <h1 className="text-2xl font-semibold tracking-tight mb-1">Pennedly</h1>
-      <p className="text-sm text-zinc-500 mb-8">
-        Drafting partner for your Threads voice.
-      </p>
+      <div className="flex items-start justify-between mb-1">
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {t("app.brand")}
+        </h1>
+        <LanguageSwitcher />
+      </div>
+      <p className="text-sm text-zinc-500 mb-8">{t("app.tagline")}</p>
 
       {/* Magic-link consume state */}
       {consumeState === "consuming" && (
@@ -148,7 +154,7 @@ function LoginPageInner() {
               className="inline-block w-3 h-3 border-2 border-zinc-400 border-t-transparent rounded-full animate-spin"
               aria-hidden
             />
-            Signing you in…
+            {t("login.signing_in")}
           </div>
         </div>
       )}
@@ -166,12 +172,12 @@ function LoginPageInner() {
           {sent ? (
             <div className="rounded-xl border border-green-300 dark:border-green-900/60 bg-green-50 dark:bg-green-950/30 p-5 space-y-3">
               <h2 className="text-base font-semibold text-green-900 dark:text-green-200">
-                Check your inbox
+                {t("login.sent_title")}
               </h2>
               <p className="text-sm text-green-800 dark:text-green-200">
-                We sent a sign-in link to{" "}
-                <span className="font-medium">{email}</span>. The link is
-                valid for 15 minutes and can only be used once.
+                {t("login.sent_to")}{" "}
+                <span className="font-medium">{email}</span>.{" "}
+                {t("login.sent_validity")}
               </p>
               <button
                 type="button"
@@ -181,14 +187,14 @@ function LoginPageInner() {
                 }}
                 className="text-xs text-green-800 dark:text-green-300 underline hover:text-green-900 dark:hover:text-green-200"
               >
-                use a different email
+                {t("login.use_different_email")}
               </button>
             </div>
           ) : (
             <form onSubmit={onMagicSubmit} className="space-y-3">
               <label className="block">
                 <span className="text-sm text-zinc-600 dark:text-zinc-400">
-                  email
+                  {t("login.email_label")}
                 </span>
                 <input
                   type="email"
@@ -197,7 +203,7 @@ function LoginPageInner() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="mt-1 w-full px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700"
-                  placeholder="you@example.com"
+                  placeholder={t("login.email_placeholder")}
                 />
               </label>
 
@@ -212,11 +218,11 @@ function LoginPageInner() {
                 disabled={pending || !email}
                 className="w-full px-4 py-2 rounded-md bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 text-sm font-medium hover:bg-zinc-700 dark:hover:bg-white disabled:opacity-50 transition-colors"
               >
-                {pending ? "sending…" : "send sign-in link"}
+                {pending ? t("login.sending") : t("login.submit")}
               </button>
 
               <p className="text-xs text-zinc-500 leading-relaxed pt-2">
-                We&apos;ll email you a one-time link. No password needed.
+                {t("login.no_password")}
               </p>
             </form>
           )}
@@ -230,20 +236,16 @@ function LoginPageInner() {
           onClick={() => setDevOpen((o) => !o)}
           className="text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
         >
-          {devOpen ? "hide developer mode" : "developer mode"}
+          {devOpen ? t("login.dev_toggle_hide") : t("login.dev_toggle_show")}
         </button>
         {devOpen && (
           <form onSubmit={onDevSubmit} className="mt-3 space-y-2">
-            <p className="text-xs text-zinc-500">
-              Skips email verification. Only works when{" "}
-              <code className="font-mono">ALLOW_DEV_LOGIN=true</code> is set on
-              the backend.
-            </p>
+            <p className="text-xs text-zinc-500">{t("login.dev_explainer")}</p>
             <input
               type="email"
               value={devEmail}
               onChange={(e) => setDevEmail(e.target.value)}
-              placeholder="you@example.com"
+              placeholder={t("login.email_placeholder")}
               className="w-full px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-xs focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700"
             />
             <button
@@ -251,7 +253,7 @@ function LoginPageInner() {
               disabled={pending || !devEmail}
               className="text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50 transition-colors"
             >
-              {pending ? "signing in…" : "dev sign in"}
+              {pending ? t("login.dev_signing_in") : t("login.dev_submit")}
             </button>
           </form>
         )}

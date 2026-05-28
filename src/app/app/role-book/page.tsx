@@ -21,7 +21,9 @@ import {
 } from "@/lib/api";
 import { captureEvent } from "@/lib/analytics";
 import { useSelectedAccountId } from "@/lib/account";
+import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { AccountSwitcher } from "@/components/AccountSwitcher";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { LintResults } from "@/components/LintResults";
 import { TagInput } from "@/components/TagInput";
 import { TranslateButton } from "@/components/TranslateButton";
@@ -29,50 +31,52 @@ import type { LintResult, RoleBook, RoleBookSections } from "@/lib/types";
 
 type SectionKey = keyof Omit<RoleBookSections, "intro">;
 
+// Per-section i18n keys + visual variant. Resolved to actual strings
+// at render time via the t() hook so locale switches re-render the
+// labels without rebuilding this table.
 const LIST_SECTIONS: {
   key: SectionKey;
-  label: string;
-  helper: string;
+  labelKey: MessageKey;
+  helperKey: MessageKey;
+  placeholderKey: MessageKey;
   variant?: "default" | "danger";
-  placeholder?: string;
 }[] = [
   {
     key: "themes_exclude",
-    label: "Topics the AI must NEVER write about",
-    helper:
-      "If a requested topic falls here, the AI silently pivots to an allowed topic.",
+    labelKey: "rolebook.themes_exclude.label",
+    helperKey: "rolebook.themes_exclude.helper",
+    placeholderKey: "rolebook.themes_exclude.placeholder",
     variant: "danger",
-    placeholder: "e.g. app development",
   },
   {
     key: "themes_include",
-    label: "Topics the AI writes about",
-    helper: "Be specific — 'kitchen failures' beats 'lifestyle'.",
-    placeholder: "e.g. kitchen failures and shortcuts",
+    labelKey: "rolebook.themes_include.label",
+    helperKey: "rolebook.themes_include.helper",
+    placeholderKey: "rolebook.themes_include.placeholder",
   },
   {
     key: "voice_characteristics",
-    label: "Voice characteristics",
-    helper: "Concrete observations: 'lowercase i', 'short sentences'.",
-    placeholder: "e.g. uses lowercase throughout",
+    labelKey: "rolebook.voice_characteristics.label",
+    helperKey: "rolebook.voice_characteristics.helper",
+    placeholderKey: "rolebook.voice_characteristics.placeholder",
   },
   {
     key: "do_list",
-    label: "Do",
-    helper: "Specific moves to lean into.",
-    placeholder: "e.g. open with 'what's a...' questions",
+    labelKey: "rolebook.do_list.label",
+    helperKey: "rolebook.do_list.helper",
+    placeholderKey: "rolebook.do_list.placeholder",
   },
   {
     key: "dont_list",
-    label: "Don't",
-    helper: "Specific moves to avoid.",
-    placeholder: "e.g. no hashtags or emojis",
+    labelKey: "rolebook.dont_list.label",
+    helperKey: "rolebook.dont_list.helper",
+    placeholderKey: "rolebook.dont_list.placeholder",
   },
   {
     key: "examples",
-    label: "Voice examples",
-    helper: "Representative phrases in your actual voice.",
-    placeholder: "e.g. i have burned water before. not metaphorically",
+    labelKey: "rolebook.examples.label",
+    helperKey: "rolebook.examples.helper",
+    placeholderKey: "rolebook.examples.placeholder",
   },
 ];
 
@@ -80,6 +84,7 @@ type Toast = { id: number; message: string; tone: "success" | "error" };
 
 export default function RoleBookEditor() {
   const router = useRouter();
+  const { t } = useTranslation();
   const accountId = useSelectedAccountId();
   const [book, setBook] = useState<RoleBook | null>(null);
   const [draft, setDraft] = useState<RoleBookSections>({});
@@ -191,21 +196,18 @@ export default function RoleBookEditor() {
       if (result === null) {
         // Lint network error — save still succeeded.
         setLintResult(null);
-        toast("saved · conflict check unavailable");
+        toast(t("rolebook.save.toast_saved_check_unavailable"));
       } else {
         setLintResult(result);
         const high = result.conflicts.filter(
           (c) => c.severity === "high",
         ).length;
         if (result.conflicts.length === 0) {
-          toast("saved · no conflicts");
+          toast(t("rolebook.save.toast_saved_clean"));
         } else if (high > 0) {
-          toast(
-            `saved · ⚠ ${high} high-severity conflict(s) — see below`,
-            "error",
-          );
+          toast(`⚠ ${high}`, "error");
         } else {
-          toast(`saved · ${result.conflicts.length} conflict(s) — see below`);
+          toast(`${result.conflicts.length}`);
         }
       }
     } catch (e) {
@@ -224,10 +226,10 @@ export default function RoleBookEditor() {
       setLintResult(result);
       const high = result.conflicts.filter((c) => c.severity === "high").length;
       if (result.conflicts.length === 0) {
-        toast("no conflicts found");
+        toast(t("rolebook.lint.no_conflicts"));
       } else if (high > 0) {
         toast(
-          `${result.conflicts.length} conflict(s) · ${high} high — review below`,
+          `${result.conflicts.length} · ${high} high`,
           "error",
         );
       } else {
@@ -253,7 +255,7 @@ export default function RoleBookEditor() {
   if (!book) {
     return (
       <main className="max-w-2xl mx-auto px-6 py-16 text-sm text-zinc-500">
-        loading…
+        {t("common.loading")}
       </main>
     );
   }
@@ -263,14 +265,15 @@ export default function RoleBookEditor() {
       <header className="sticky top-0 z-20 bg-white/90 dark:bg-zinc-950/90 backdrop-blur border-b border-zinc-200 dark:border-zinc-800">
         <div className="max-w-3xl mx-auto px-6 py-3 flex items-center justify-between gap-3">
           <Link href="/app" className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
-            ← dashboard
+            {t("rolebook.back_to_dashboard")}
           </Link>
           <div className="flex items-center gap-3">
             <AccountSwitcher />
+            <LanguageSwitcher />
             <div className="text-xs text-zinc-500">
-              voice v{book.role_book_id}
+              {t("rolebook.version_label")}{book.role_book_id}
               {book.parent_id !== null && (
-                <span> · parent v{book.parent_id}</span>
+                <span> · {t("rolebook.parent_label")}{book.parent_id}</span>
               )}
             </div>
           </div>
@@ -279,23 +282,27 @@ export default function RoleBookEditor() {
 
       <main className="max-w-3xl mx-auto px-6 py-8 space-y-6">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Voice</h1>
-          <p className="text-sm text-zinc-500 mt-1">
-            Edit what the AI writes and how. Changes apply to the next generation.
-          </p>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {t("rolebook.title")}
+          </h1>
+          <p className="text-sm text-zinc-500 mt-1">{t("rolebook.subtitle")}</p>
         </div>
 
         {/* Intro */}
         <section className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm">
           <div className="flex items-baseline justify-between mb-2">
-            <label className="text-sm font-semibold">Intro</label>
-            <span className="text-xs text-zinc-500">who&apos;s writing</span>
+            <label className="text-sm font-semibold">
+              {t("rolebook.intro.label")}
+            </label>
+            <span className="text-xs text-zinc-500">
+              {t("rolebook.intro.helper")}
+            </span>
           </div>
           <textarea
             value={draft.intro ?? ""}
             onChange={(e) => updateIntro(e.target.value)}
             rows={5}
-            placeholder="One paragraph in your own register: who you are, what you write about."
+            placeholder={t("rolebook.intro.placeholder")}
             className="w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700"
           />
           {draft.intro && (
@@ -325,17 +332,20 @@ export default function RoleBookEditor() {
                     isDanger ? "text-red-700 dark:text-red-400" : ""
                   }`}
                 >
-                  {section.label}
+                  {t(section.labelKey)}
                 </label>
                 <span className="text-xs text-zinc-500">
-                  {items.length} {items.length === 1 ? "item" : "items"}
+                  {items.length}{" "}
+                  {items.length === 1
+                    ? t("rolebook.items_count_singular")
+                    : t("rolebook.items_count_plural")}
                 </span>
               </div>
-              <p className="text-xs text-zinc-500 mb-3">{section.helper}</p>
+              <p className="text-xs text-zinc-500 mb-3">{t(section.helperKey)}</p>
               <TagInput
                 items={items}
                 onChange={(next) => updateList(section.key, next)}
-                placeholder={section.placeholder}
+                placeholder={t(section.placeholderKey)}
                 variant={section.variant}
                 flagged={flaggedBySection[section.key]}
                 onFlaggedClick={onFlaggedPillClick}
@@ -361,12 +371,14 @@ export default function RoleBookEditor() {
             className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm scroll-mt-24"
           >
             <div className="flex items-baseline justify-between mb-3">
-              <h2 className="text-sm font-semibold">Conflict check</h2>
+              <h2 className="text-sm font-semibold">
+                {t("rolebook.lint.section_title")}
+              </h2>
               <button
                 onClick={() => setLintResult(null)}
                 className="text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
               >
-                hide
+                {t("common.hide")}
               </button>
             </div>
             <LintResults result={lintResult} />
@@ -376,13 +388,12 @@ export default function RoleBookEditor() {
         {/* Save action bar */}
         <div className="sticky bottom-4 flex items-center justify-end gap-3 bg-white/95 dark:bg-zinc-950/95 backdrop-blur border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 shadow-md">
           <span className="mr-auto text-xs text-zinc-500">
-            New active version on save · old becomes parent
+            {t("rolebook.save.helper")}
           </span>
           <button
             onClick={onLint}
             disabled={linting || saving}
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-700 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50 transition-colors"
-            title="Ask the AI to flag any pairs of rules / examples / characteristics that contradict each other"
           >
             {linting && (
               <span
@@ -390,13 +401,13 @@ export default function RoleBookEditor() {
                 aria-hidden
               />
             )}
-            {linting ? "checking…" : "check for conflicts"}
+            {linting ? t("rolebook.lint.checking") : t("rolebook.lint.button")}
           </button>
           <Link
             href="/app"
             className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors px-3 py-1.5"
           >
-            cancel
+            {t("common.cancel")}
           </Link>
           <button
             onClick={onSave}
@@ -409,16 +420,16 @@ export default function RoleBookEditor() {
                 aria-hidden
               />
             )}
-            {saving ? "saving…" : "save"}
+            {saving ? t("common.saving") : t("common.save")}
           </button>
         </div>
 
         {/* Transparency: what the LLM actually sees */}
         <details className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5">
           <summary className="cursor-pointer text-sm font-semibold">
-            What the AI actually sees
+            {t("rolebook.transparency.title")}
             <span className="ml-2 font-normal text-xs text-zinc-500">
-              · assembled from sections above
+              {t("rolebook.transparency.subtitle")}
             </span>
           </summary>
           <pre className="mt-3 whitespace-pre-wrap text-xs leading-relaxed text-zinc-700 dark:text-zinc-300 font-mono">

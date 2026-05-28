@@ -24,7 +24,9 @@ import {
 } from "@/lib/api";
 import { captureEvent, identify, resetIdentity } from "@/lib/analytics";
 import { useSelectedAccountId } from "@/lib/account";
+import { useTranslation } from "@/lib/i18n";
 import { AccountSwitcher } from "@/components/AccountSwitcher";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { PublishConfirmModal } from "@/components/PublishConfirmModal";
 import { TranslateButton } from "@/components/TranslateButton";
 import type { DraftSummary, GeneratedDraft, Me } from "@/lib/types";
@@ -33,6 +35,7 @@ type Toast = { id: number; message: string; tone: "success" | "error" };
 
 export default function Dashboard() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [me, setMe] = useState<Me | null>(null);
   const [drafts, setDrafts] = useState<DraftSummary[]>([]);
   const accountId = useSelectedAccountId();
@@ -114,7 +117,7 @@ export default function Dashboard() {
       setLastDraft(draft);
       const list = await listDrafts(accountId, { limit: 20 });
       setDrafts(list.drafts);
-      toast(`generated · ${draft.text.length} chars · ${draft.latency_ms}ms`);
+      toast(`${t("dashboard.toast.generated")} · ${draft.text.length} · ${draft.latency_ms}ms`);
     } catch (e) {
       toast(String(e), "error");
     } finally {
@@ -144,8 +147,8 @@ export default function Dashboard() {
       });
       toast(
         result.edited
-          ? `#${id} approved with your edit`
-          : `#${id} approved as-is`,
+          ? `#${id} ${t("dashboard.toast.approved_edited")}`
+          : `#${id} ${t("dashboard.toast.approved_as_is")}`,
       );
     } catch (e) {
       toast(String(e), "error");
@@ -184,7 +187,7 @@ export default function Dashboard() {
         delete next[draftId];
         return next;
       });
-      toast(`#${draftId} refined · ${result.latency_ms}ms`);
+      toast(`#${draftId} ${t("dashboard.toast.refined")} · ${result.latency_ms}ms`);
     } catch (e) {
       let msg = String(e);
       if (e instanceof ApiError) {
@@ -214,7 +217,7 @@ export default function Dashboard() {
     captureEvent("ui.publish_confirmed", { draft_id: draftId });
     try {
       const result = await publishDraft(draftId);
-      toast(`#${draftId} published · ${result.threads_post_id}`);
+      toast(`#${draftId} ${t("dashboard.toast.published")} · ${result.threads_post_id}`);
       setPublishTarget(null);
       if (accountId !== null) {
         const list = await listDrafts(accountId, { limit: 20 });
@@ -253,7 +256,7 @@ export default function Dashboard() {
         const list = await listDrafts(accountId, { limit: 20 });
         setDrafts(list.drafts);
       }
-      toast(`#${id} rejected`);
+      toast(`#${id} ${t("dashboard.toast.rejected")}`);
     } catch (e) {
       toast(String(e), "error");
     }
@@ -291,23 +294,24 @@ export default function Dashboard() {
           </Link>
           <nav className="flex items-center gap-4 text-sm">
             <AccountSwitcher />
+            <LanguageSwitcher />
             <Link
               href="/app/role-book"
               className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
             >
-              voice
+              {t("dashboard.nav.voice")}
             </Link>
             <Link
               href="/app/audits"
               className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
             >
-              audits
+              {t("dashboard.nav.audits")}
             </Link>
             <button
               onClick={onLogout}
               className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
             >
-              logout
+              {t("dashboard.nav.logout")}
             </button>
           </nav>
         </div>
@@ -317,7 +321,7 @@ export default function Dashboard() {
         {/* Identity strip */}
         {me && (
           <p className="text-xs text-zinc-500 sm:hidden">
-            signed in as {me.email}
+            {t("common.signed_in_as")} {me.email}
           </p>
         )}
 
@@ -325,9 +329,11 @@ export default function Dashboard() {
         <section className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm">
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div>
-              <h2 className="text-base font-semibold">Generate a post</h2>
+              <h2 className="text-base font-semibold">
+                {t("dashboard.generate.title")}
+              </h2>
               <p className="text-xs text-zinc-500 mt-0.5">
-                In your voice. Topic auto-picked round-robin from your topics.
+                {t("dashboard.generate.subtitle")}
               </p>
             </div>
             <button
@@ -341,7 +347,9 @@ export default function Dashboard() {
                   aria-hidden
                 />
               )}
-              {generating ? "generating…" : "generate post"}
+              {generating
+                ? t("dashboard.generate.generating")
+                : t("dashboard.generate.button")}
             </button>
           </div>
 
@@ -350,7 +358,7 @@ export default function Dashboard() {
               <div className="flex items-center justify-between mb-2 text-xs text-zinc-500">
                 <span>
                   <span className="font-medium text-zinc-700 dark:text-zinc-300">
-                    {lastDraft.topic_label ?? "no topic"}
+                    {lastDraft.topic_label ?? t("dashboard.generate.no_topic")}
                   </span>{" "}
                   · {lastDraft.text.length} chars · {lastDraft.latency_ms}ms ·{" "}
                   {lastDraft.prompt_tokens + lastDraft.completion_tokens} tok
@@ -369,20 +377,23 @@ export default function Dashboard() {
         {/* Drafts feed */}
         <section>
           <div className="flex items-baseline justify-between mb-3">
-            <h2 className="text-base font-semibold">Recent drafts</h2>
+            <h2 className="text-base font-semibold">{t("dashboard.feed.title")}</h2>
             <span className="text-xs text-zinc-500">
-              {drafts.length} {drafts.length === 1 ? "draft" : "drafts"}
+              {drafts.length}{" "}
+              {drafts.length === 1
+                ? t("dashboard.feed.draft_singular")
+                : t("dashboard.feed.draft_plural")}
             </span>
           </div>
 
           {drafts.length === 0 && (
             <div className="rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700 p-8 text-center">
               <p className="text-sm text-zinc-500">
-                No drafts yet. Hit{" "}
+                {t("dashboard.feed.empty")}{" "}
                 <span className="font-medium text-zinc-700 dark:text-zinc-300">
-                  generate post
+                  {t("dashboard.feed.empty_cta")}
                 </span>{" "}
-                above to get started.
+                {t("dashboard.feed.empty_after")}
               </p>
             </div>
           )}
@@ -415,7 +426,7 @@ export default function Dashboard() {
                         <>
                           <span className="text-zinc-400">·</span>
                           <span className="text-amber-600 dark:text-amber-400 font-medium">
-                            edited
+                            {t("dashboard.draft.edited")}
                           </span>
                         </>
                       )}
@@ -458,7 +469,7 @@ export default function Dashboard() {
                             onRefine(d.id);
                           }
                         }}
-                        placeholder="refine: 'make shorter', 'less formal', 'add a question'…"
+                        placeholder={t("dashboard.draft.refine_placeholder")}
                         disabled={refiningId === d.id}
                         className="flex-1 min-w-[180px] rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700 disabled:opacity-50"
                       />
@@ -476,23 +487,40 @@ export default function Dashboard() {
                             aria-hidden
                           />
                         )}
-                        {refiningId === d.id ? "refining…" : "refine"}
+                        {refiningId === d.id
+                          ? t("dashboard.draft.refining")
+                          : t("dashboard.draft.refine")}
                       </button>
                       <div className="basis-full flex flex-wrap gap-1.5 text-[10px] text-zinc-500">
                         {[
-                          "make shorter",
-                          "less formal",
-                          "add a question",
-                          "punchier opening",
-                        ].map((preset) => (
+                          {
+                            label: t("dashboard.draft.refine_preset_shorter"),
+                            // Always send English to the LLM regardless of UI
+                            // locale — the model performs better with English
+                            // instructions and Zakhar's role_book is English.
+                            instruction: "make shorter",
+                          },
+                          {
+                            label: t("dashboard.draft.refine_preset_informal"),
+                            instruction: "less formal",
+                          },
+                          {
+                            label: t("dashboard.draft.refine_preset_question"),
+                            instruction: "add a question",
+                          },
+                          {
+                            label: t("dashboard.draft.refine_preset_punchier"),
+                            instruction: "punchier opening",
+                          },
+                        ].map(({ label, instruction }) => (
                           <button
-                            key={preset}
+                            key={instruction}
                             type="button"
-                            onClick={() => onRefine(d.id, preset)}
+                            onClick={() => onRefine(d.id, instruction)}
                             disabled={refiningId !== null}
                             className="px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 disabled:opacity-50 transition-colors"
                           >
-                            {preset}
+                            {label}
                           </button>
                         ))}
                       </div>
@@ -506,13 +534,15 @@ export default function Dashboard() {
                           onClick={() => onApprove(d.id, d.generated_text)}
                           className="text-xs px-3 py-1.5 rounded-md bg-green-600 hover:bg-green-700 text-white transition-colors"
                         >
-                          {isEdited ? "approve edit" : "approve"}
+                          {isEdited
+                            ? t("dashboard.draft.approve_edited")
+                            : t("dashboard.draft.approve")}
                         </button>
                         <button
                           onClick={() => onReject(d.id)}
                           className="text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                         >
-                          reject
+                          {t("dashboard.draft.reject")}
                         </button>
                         {isEdited && (
                           <button
@@ -525,7 +555,7 @@ export default function Dashboard() {
                             }
                             className="text-xs px-2 py-1 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
                           >
-                            revert
+                            {t("common.revert")}
                           </button>
                         )}
                       </>
@@ -549,7 +579,7 @@ export default function Dashboard() {
                           <line x1="22" y1="2" x2="11" y2="13" />
                           <polygon points="22 2 15 22 11 13 2 9 22 2" />
                         </svg>
-                        publish to Threads
+                        {t("dashboard.draft.publish")}
                       </button>
                     )}
                     <div className="ml-auto">

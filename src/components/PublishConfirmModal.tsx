@@ -20,6 +20,8 @@
 
 import { useEffect, useRef } from "react";
 
+import { useTranslation } from "@/lib/i18n";
+
 const THREADS_TEXT_LIMIT = 500;
 
 type Props = {
@@ -37,6 +39,7 @@ export function PublishConfirmModal({
   onClose,
   onConfirm,
 }: Props) {
+  const { t } = useTranslation();
   const cancelRef = useRef<HTMLButtonElement | null>(null);
 
   // When the modal opens, default focus to Cancel — so an accidental
@@ -75,12 +78,9 @@ export function PublishConfirmModal({
             id="publish-modal-title"
             className="text-lg font-semibold tracking-tight"
           >
-            Publish to Threads
+            {t("publish.title")}
           </h2>
-          <p className="text-xs text-zinc-500 mt-1">
-            This is the exact text that will appear on your Threads account.
-            It cannot be edited or unpublished from here.
-          </p>
+          <p className="text-xs text-zinc-500 mt-1">{t("publish.subtitle")}</p>
         </div>
 
         <div className="mx-6 mb-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 p-4">
@@ -97,11 +97,11 @@ export function PublishConfirmModal({
                 : "text-zinc-500"
             }
           >
-            {len} / {THREADS_TEXT_LIMIT} chars
+            {len} / {THREADS_TEXT_LIMIT} {t("publish.char_count")}
           </span>
           {overLimit && (
             <span className="ml-2 text-red-600 dark:text-red-400">
-              · Threads will reject text-only posts over {THREADS_TEXT_LIMIT}
+              · {t("publish.over_limit")}
             </span>
           )}
         </div>
@@ -113,7 +113,7 @@ export function PublishConfirmModal({
             disabled={isPublishing}
             className="text-sm px-4 py-2 rounded-md text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50 transition-colors"
           >
-            cancel
+            {t("publish.cancel")}
           </button>
           <button
             onClick={onConfirm}
@@ -126,7 +126,7 @@ export function PublishConfirmModal({
                 aria-hidden
               />
             )}
-            {isPublishing ? "publishing…" : "publish to Threads"}
+            {isPublishing ? t("publish.publishing") : t("publish.confirm")}
           </button>
         </div>
       </div>
