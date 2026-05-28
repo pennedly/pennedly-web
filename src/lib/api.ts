@@ -16,6 +16,7 @@ import type {
   ApprovalResult,
   AuditDetail,
   AuditsList,
+  BatchGenerateResult,
   DecisionInput,
   DecisionsResponse,
   DraftsList,
@@ -239,6 +240,21 @@ export async function generatePost(
     method: "POST",
     body: JSON.stringify({
       account_id: accountId,
+      topic_id: topicId ?? null,
+    }),
+  });
+}
+
+export async function generatePostBatch(
+  accountId: number,
+  count: number,
+  topicId?: number,
+): Promise<BatchGenerateResult> {
+  return fetchApi<BatchGenerateResult>("/api/generation/posts/batch", {
+    method: "POST",
+    body: JSON.stringify({
+      account_id: accountId,
+      count,
       topic_id: topicId ?? null,
     }),
   });

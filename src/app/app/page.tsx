@@ -16,6 +16,7 @@ import {
   clearTokens,
   fetchMe,
   generatePost,
+  generatePostBatch,
   getTokens,
   listDrafts,
   publishDraft,
@@ -40,6 +41,14 @@ export default function Dashboard() {
   const [drafts, setDrafts] = useState<DraftSummary[]>([]);
   const accountId = useSelectedAccountId();
   const [generating, setGenerating] = useState(false);
+  // How many drafts to generate per click. Persists in localStorage so
+  // the user's preference sticks across reloads. 1..5.
+  const [batchCount, setBatchCount] = useState<number>(() => {
+    if (typeof window === "undefined") return 1;
+    const raw = window.localStorage.getItem("pennedly.batchCount");
+    const n = raw ? Number(raw) : 1;
+    return Number.isFinite(n) && n >= 1 && n <= 5 ? n : 1;
+  });
   const [lastDraft, setLastDraft] = useState<GeneratedDraft | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [bootError, setBootError] = useState<string | null>(null);
@@ -108,16 +117,48 @@ export default function Dashboard() {
     })();
   }, [accountId, router]);
 
+  function persistBatchCount(n: number) {
+    setBatchCount(n);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("pennedly.batchCount", String(n));
+    }
+  }
+
   async function onGenerate() {
     if (accountId === null) return;
     setGenerating(true);
-    captureEvent("ui.generate_clicked", { account_id: accountId });
+    captureEvent("ui.generate_clicked", {
+      account_id: accountId,
+      batch_count: batchCount,
+    });
     try {
-      const draft = await generatePost(accountId);
-      setLastDraft(draft);
+      if (batchCount === 1) {
+        const draft = await generatePost(accountId);
+        setLastDraft(draft);
+        toast(
+          `${t("dashboard.toast.generated")} · ${draft.text.length} · ${draft.latency_ms}ms`,
+        );
+      } else {
+        const result = await generatePostBatch(accountId, batchCount);
+        // Show the LAST successful draft in the preview slot (most
+        // recent generation feels right); all of them land in the
+        // feed below.
+        if (result.drafts.length > 0) {
+          setLastDraft(result.drafts[result.drafts.length - 1]);
+        }
+        if (result.errors.length === 0) {
+          toast(
+            `${t("dashboard.toast.generated")} · ${result.succeeded}/${result.requested}`,
+          );
+        } else {
+          toast(
+            `${result.succeeded}/${result.requested} · ${result.errors[0].detail}`,
+            result.succeeded > 0 ? "success" : "error",
+          );
+        }
+      }
       const list = await listDrafts(accountId, { limit: 20 });
       setDrafts(list.drafts);
-      toast(`${t("dashboard.toast.generated")} · ${draft.text.length} · ${draft.latency_ms}ms`);
     } catch (e) {
       toast(String(e), "error");
     } finally {
@@ -336,21 +377,46 @@ export default function Dashboard() {
                 {t("dashboard.generate.subtitle")}
               </p>
             </div>
-            <button
-              onClick={onGenerate}
-              disabled={generating || accountId === null}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 text-sm font-medium hover:bg-zinc-700 dark:hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {generating && (
-                <span
-                  className="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"
-                  aria-hidden
-                />
-              )}
-              {generating
-                ? t("dashboard.generate.generating")
-                : t("dashboard.generate.button")}
-            </button>
+            <div className="flex items-center gap-2">
+              {/* Batch count stepper. Click ×N to flip between values. */}
+              <div className="inline-flex items-center rounded-md border border-zinc-300 dark:border-zinc-700 overflow-hidden text-xs">
+                {[1, 2, 3, 5].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => persistBatchCount(n)}
+                    disabled={generating}
+                    className={`px-2.5 py-1 transition-colors ${
+                      batchCount === n
+                        ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-medium"
+                        : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    }`}
+                    title={
+                      n === 1
+                        ? "Single draft"
+                        : `Generate ${n} drafts in parallel`
+                    }
+                  >
+                    ×{n}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={onGenerate}
+                disabled={generating || accountId === null}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 text-sm font-medium hover:bg-zinc-700 dark:hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {generating && (
+                  <span
+                    className="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"
+                    aria-hidden
+                  />
+                )}
+                {generating
+                  ? t("dashboard.generate.generating")
+                  : t("dashboard.generate.button")}
+              </button>
+            </div>
           </div>
 
           {lastDraft && (

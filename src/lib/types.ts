@@ -68,6 +68,18 @@ export type GeneratedDraft = {
   latency_ms: number;
 };
 
+export type BatchGenerateError = {
+  error_kind: "quota" | "generation" | "unknown";
+  detail: string;
+};
+
+export type BatchGenerateResult = {
+  drafts: GeneratedDraft[];
+  errors: BatchGenerateError[];
+  requested: number;
+  succeeded: number;
+};
+
 export type DraftSummary = {
   id: number;
   account_id: number;
