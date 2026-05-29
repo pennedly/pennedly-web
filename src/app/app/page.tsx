@@ -6,7 +6,6 @@
 // the user out of context. TranslateButton inline on every draft for
 // users running accounts in a non-native language.
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -24,12 +23,10 @@ import {
   refineDraft,
   rejectDraft,
 } from "@/lib/api";
-import { captureEvent, identify, resetIdentity } from "@/lib/analytics";
+import { captureEvent, identify } from "@/lib/analytics";
 import { useSelectedAccountId } from "@/lib/account";
 import { useTranslation } from "@/lib/i18n";
-import { AccountSwitcher } from "@/components/AccountSwitcher";
 import { ConnectThreadsButton } from "@/components/ConnectThreadsButton";
-import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { PublishConfirmModal } from "@/components/PublishConfirmModal";
 import { TranslateButton } from "@/components/TranslateButton";
 import type { DraftSummary, GeneratedDraft, Me } from "@/lib/types";
@@ -364,13 +361,6 @@ export default function Dashboard() {
     }
   }
 
-  function onLogout() {
-    captureEvent("ui.logout_clicked");
-    resetIdentity();
-    clearTokens();
-    router.push("/app/login");
-  }
-
   // Feed split into status groups. "approved" = approved but not yet
   // published; "published" = has gone live (manual or autopilot).
   const draftCounts = {
@@ -399,90 +389,8 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
-      {/* Sticky header */}
-      <header className="sticky top-0 z-20 bg-white/90 dark:bg-zinc-950/90 backdrop-blur border-b border-zinc-200 dark:border-zinc-800">
-        <div className="max-w-3xl mx-auto px-6 py-3 flex items-center justify-between">
-          <Link href="/app" className="flex items-baseline gap-3">
-            <span className="text-lg font-semibold tracking-tight">Pennedly</span>
-            {me && (
-              <span className="hidden sm:inline text-xs text-zinc-500">
-                {me.tenant.name} · {me.tenant.plan_tier}
-              </span>
-            )}
-          </Link>
-          <nav className="flex items-center gap-4 text-sm">
-            <AccountSwitcher />
-            <LanguageSwitcher />
-            <Link
-              href="/app/feed"
-              className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
-            >
-              {t("dashboard.nav.feed")}
-            </Link>
-            <Link
-              href="/app/role-book"
-              className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
-            >
-              {t("dashboard.nav.voice")}
-            </Link>
-            {/* Round-2 surfaces — tester-only until Meta approves the
-                scopes. Hidden from the public + the App Review reviewer. */}
-            {me?.is_tester && (
-              <>
-                <Link
-                  href="/app/replies"
-                  className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
-                >
-                  {t("dashboard.nav.replies")}
-                </Link>
-                <Link
-                  href="/app/mentions"
-                  className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
-                >
-                  {t("dashboard.nav.mentions")}
-                </Link>
-                <Link
-                  href="/app/posts"
-                  className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
-                >
-                  {t("dashboard.nav.posts")}
-                </Link>
-                <Link
-                  href="/app/autopilot"
-                  className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
-                >
-                  {t("dashboard.nav.autopilot")}
-                </Link>
-              </>
-            )}
-            <Link
-              href="/app/style-rules"
-              className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
-            >
-              {t("dashboard.nav.style_rules")}
-            </Link>
-            <Link
-              href="/app/audits"
-              className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
-            >
-              {t("dashboard.nav.audits")}
-            </Link>
-            <Link
-              href="/app/patterns"
-              className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
-            >
-              {t("dashboard.nav.patterns")}
-            </Link>
-            <button
-              onClick={onLogout}
-              className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
-            >
-              {t("dashboard.nav.logout")}
-            </button>
-          </nav>
-        </div>
-      </header>
-
+      {/* Nav + account + language + logout now live in the sidebar
+          (src/app/app/layout.tsx → Sidebar). */}
       <main className="max-w-3xl mx-auto px-6 py-8 space-y-8">
         {/* Identity strip */}
         {me && (

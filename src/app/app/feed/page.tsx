@@ -1,22 +1,29 @@
 "use client";
 
-// My Feed — the account's own posts, Threads-style, but every card carries
-// inline analytics: views / likes / comments / reposts, plus a "how viral
-// vs my usual" badge (vs_avg_views = this post's views ÷ the account's
-// recent-average views). A reference header shows that baseline. Read-only,
-// main tab (no tester gate) — it only reads metrics we already snapshot.
+// My Feed — the account's own posts, Threads-style, with inline analytics
+// (views / likes / comments / reposts + a "how viral vs my usual" badge)
+// AND, for testers, a delete action (folds in the old /app/posts screen —
+// best of both: analytics + management). Main tab; delete is tester-gated
+// since it uses the round-2 threads_delete scope.
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { ApiError, clearTokens, fetchFeed, getTokens } from "@/lib/api";
+import {
+  ApiError,
+  clearTokens,
+  deletePost,
+  fetchFeed,
+  fetchMe,
+  getTokens,
+} from "@/lib/api";
+import { captureEvent } from "@/lib/analytics";
 import { useSelectedAccountId } from "@/lib/account";
 import { useTranslation } from "@/lib/i18n";
-import { AccountSwitcher } from "@/components/AccountSwitcher";
-import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { TranslateButton } from "@/components/TranslateButton";
 import type { FeedPost, FeedReference } from "@/lib/types";
+
+type Toast = { id: number; message: string; tone: "success" | "error" };
 
 function num(n: number): string {
   return n.toLocaleString();
@@ -74,10 +81,54 @@ export default function FeedPage() {
   const [reference, setReference] = useState<FeedReference | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [bootError, setBootError] = useState<string | null>(null);
+  const [isTester, setIsTester] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<FeedPost | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [toasts, setToasts] = useState<Toast[]>([]);
+
+  function toast(message: string, tone: Toast["tone"] = "success") {
+    const id = Date.now() + Math.random();
+    setToasts((s) => [...s, { id, message, tone }]);
+    setTimeout(() => setToasts((s) => s.filter((x) => x.id !== id)), 3500);
+  }
 
   useEffect(() => {
     if (!getTokens()) router.push("/app/login");
   }, [router]);
+
+  // Delete is a tester-only (round-2) action; gate the button on is_tester.
+  useEffect(() => {
+    fetchMe()
+      .then((m) => setIsTester(m.is_tester))
+      .catch(() => {});
+  }, []);
+
+  async function onDeleteConfirm() {
+    if (deleteTarget === null) return;
+    const id = deleteTarget.id;
+    setDeleting(true);
+    captureEvent("ui.post_delete_confirmed", { post_id: id });
+    try {
+      await deletePost(id);
+      setPosts((p) => p.filter((x) => x.id !== id));
+      setDeleteTarget(null);
+      toast(t("posts.toast_deleted"));
+    } catch (e) {
+      let msg = String(e);
+      if (e instanceof ApiError) {
+        const detail =
+          typeof e.detail === "object" &&
+          e.detail !== null &&
+          "detail" in (e.detail as Record<string, unknown>)
+            ? (e.detail as { detail: unknown }).detail
+            : e.detail;
+        msg = `${e.status}: ${String(detail)}`;
+      }
+      toast(msg, "error");
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   useEffect(() => {
     if (accountId === null) return;
@@ -114,21 +165,6 @@ export default function FeedPage() {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
-      <header className="sticky top-0 z-20 bg-white/90 dark:bg-zinc-950/90 backdrop-blur border-b border-zinc-200 dark:border-zinc-800">
-        <div className="max-w-3xl mx-auto px-6 py-3 flex items-center justify-between gap-3">
-          <Link
-            href="/app"
-            className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
-          >
-            {t("feed.back")}
-          </Link>
-          <div className="flex items-center gap-3">
-            <AccountSwitcher />
-            <LanguageSwitcher />
-          </div>
-        </div>
-      </header>
-
       <main className="max-w-3xl mx-auto px-6 py-8 space-y-6">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
@@ -222,6 +258,14 @@ export default function FeedPage() {
                       {t("feed.open")}
                     </a>
                   )}
+                  {isTester && (
+                    <button
+                      onClick={() => setDeleteTarget(p)}
+                      className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
+                    >
+                      {t("posts.delete")}
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -234,6 +278,66 @@ export default function FeedPage() {
           ))}
         </ul>
       </main>
+
+      {/* Delete confirmation (tester-only) */}
+      {deleteTarget && (
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl p-6 space-y-4">
+            <h2 className="text-lg font-semibold tracking-tight">
+              {t("posts.confirm_title")}
+            </h2>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+              {t("posts.confirm_body")}
+            </p>
+            <p className="text-sm text-zinc-500 line-clamp-3 whitespace-pre-wrap border-l-2 border-zinc-200 dark:border-zinc-700 pl-3">
+              {deleteTarget.text ?? ""}
+            </p>
+            <div className="flex items-center justify-end gap-3 pt-1">
+              <button
+                onClick={() => {
+                  if (!deleting) setDeleteTarget(null);
+                }}
+                disabled={deleting}
+                className="text-sm px-4 py-2 rounded-md text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50 transition-colors"
+              >
+                {t("common.cancel")}
+              </button>
+              <button
+                onClick={onDeleteConfirm}
+                disabled={deleting}
+                className="inline-flex items-center gap-2 text-sm px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+              >
+                {deleting && (
+                  <span
+                    className="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"
+                    aria-hidden
+                  />
+                )}
+                {deleting ? t("posts.deleting") : t("posts.confirm_cta")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="fixed bottom-6 right-6 z-30 space-y-2 pointer-events-none">
+        {toasts.map((tt) => (
+          <div
+            key={tt.id}
+            className={`px-4 py-2.5 rounded-lg shadow-lg text-sm font-medium pointer-events-auto ${
+              tt.tone === "error"
+                ? "bg-red-600 text-white"
+                : "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
+            }`}
+          >
+            {tt.message}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

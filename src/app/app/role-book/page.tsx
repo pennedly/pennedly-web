@@ -25,8 +25,6 @@ import {
 import { captureEvent } from "@/lib/analytics";
 import { useSelectedAccountId } from "@/lib/account";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
-import { AccountSwitcher } from "@/components/AccountSwitcher";
-import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { LintResults } from "@/components/LintResults";
 import { TagInput } from "@/components/TagInput";
 import { TranslateButton } from "@/components/TranslateButton";
@@ -450,24 +448,6 @@ export default function RoleBookEditor() {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
-      <header className="sticky top-0 z-20 bg-white/90 dark:bg-zinc-950/90 backdrop-blur border-b border-zinc-200 dark:border-zinc-800">
-        <div className="max-w-3xl mx-auto px-6 py-3 flex items-center justify-between gap-3">
-          <Link href="/app" className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
-            {t("rolebook.back_to_dashboard")}
-          </Link>
-          <div className="flex items-center gap-3">
-            <AccountSwitcher />
-            <LanguageSwitcher />
-            <div className="text-xs text-zinc-500">
-              {t("rolebook.version_label")}{book.role_book_id}
-              {book.parent_id !== null && (
-                <span> · {t("rolebook.parent_label")}{book.parent_id}</span>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
-
       <main className="max-w-3xl mx-auto px-6 py-8 space-y-6">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">

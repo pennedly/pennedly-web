@@ -313,6 +313,10 @@ export const ru: Partial<Record<MessageKey, string>> = {
 
   // ── Моя лента (посты + аналитика) ─────────────────────────────
   "dashboard.nav.feed": "лента",
+  "nav.studio": "Студия",
+  "nav.group.content": "Контент",
+  "nav.group.growth": "Рост",
+  "nav.group.voice": "Голос",
   "feed.back": "← дашборд",
   "feed.title": "Моя лента",
   "feed.subtitle":
