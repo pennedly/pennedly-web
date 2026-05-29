@@ -155,6 +155,14 @@ export function TagInput({
           className="flex-1 min-w-[140px] bg-transparent text-sm outline-none py-0.5 px-1"
         />
       )}
+      {readOnly && items.length === 0 && (
+        // Read-only mode has no input, so an empty section would render
+        // as a blank box. Show the (already-translated) placeholder as
+        // muted static text — same hint the editor shows, same position.
+        <span className="text-sm text-zinc-400 dark:text-zinc-500 py-0.5 px-1">
+          {placeholder}
+        </span>
+      )}
     </div>
   );
 }
