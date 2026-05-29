@@ -408,6 +408,18 @@ export type AutopostActivity = {
   posts: AutopostActivityPost[];
 };
 
+// The account's own manual generation rules (layered over the role_book +
+// the built-in default rules). kind ∈ {"post","reply"}.
+export type UserRule = {
+  id: number;
+  kind: string;
+  body: string;
+  enabled: boolean;
+  sort_order: number;
+};
+
+export type UserRulesResponse = { rules: UserRule[] };
+
 export type RefineResult = {
   draft_id: number;
   text: string;

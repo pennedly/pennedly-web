@@ -246,6 +246,18 @@ export const en = {
   "style_rules.kind.reply": "replies only",
   "style_rules.on": "on",
   "style_rules.off": "off",
+  "style_rules.defaults_title": "Built-in rules",
+  "user_rules.title": "Your rules",
+  "user_rules.subtitle":
+    "Your own instructions, layered on top of the built-in rules below. Applied every time the AI writes.",
+  "user_rules.empty": "No custom rules yet.",
+  "user_rules.kind_post": "for posts",
+  "user_rules.kind_reply": "for replies",
+  "user_rules.add": "+ add rule",
+  "user_rules.placeholder":
+    "e.g. always name a concrete tool or number; never start with a question",
+  "user_rules.delete": "delete",
+  "user_rules.confirm_delete": "Delete?",
   "style_rules.punctuation_note":
     "While on, em dashes and «guillemets» are rewritten to a plain hyphen and straight quotes — both in the prompt and the automatic cleanup. Turn it off to keep native typography.",
   "style_rules.toast.enabled": "rule on",
