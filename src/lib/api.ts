@@ -14,6 +14,7 @@
 import type {
   AccountsList,
   ApprovalResult,
+  AutopilotConfig,
   AuditDetail,
   AuditsList,
   BatchGenerateResult,
@@ -413,6 +414,24 @@ export async function fetchPosts(
 export async function deletePost(postId: number): Promise<DeletePostResult> {
   return fetchApi<DeletePostResult>(`/api/posts/${postId}`, {
     method: "DELETE",
+  });
+}
+
+// ── Autopilot ────────────────────────────────────────────────────
+
+export async function fetchAutopilot(
+  accountId: number,
+): Promise<AutopilotConfig> {
+  return fetchApi<AutopilotConfig>(`/api/accounts/${accountId}/autopilot`);
+}
+
+export async function updateAutopilot(
+  accountId: number,
+  config: AutopilotConfig,
+): Promise<AutopilotConfig> {
+  return fetchApi<AutopilotConfig>(`/api/accounts/${accountId}/autopilot`, {
+    method: "PUT",
+    body: JSON.stringify(config),
   });
 }
 

@@ -273,6 +273,30 @@ export const en = {
     "This permanently removes the post from your Threads account. It can't be undone.",
   "posts.confirm_cta": "delete from Threads",
   "posts.toast_deleted": "post deleted",
+
+  // ── Autopilot ──────────────────────────────────────────────────
+  "dashboard.nav.autopilot": "autopilot",
+  "autopilot.back": "← dashboard",
+  "autopilot.title": "Autopilot",
+  "autopilot.subtitle":
+    "Off by default. Turn on only what you want — Pennedly posts and replies in your voice, on your terms. Pause anytime.",
+  "autopilot.master": "Autopilot enabled",
+  "autopilot.posts_title": "Auto-post",
+  "autopilot.post_enabled": "Generate and publish posts automatically",
+  "autopilot.posts_per_day": "Posts per day",
+  "autopilot.quiet_hours": "Quiet hours (don't post)",
+  "autopilot.quiet_off": "off",
+  "autopilot.replies_title": "Auto-reply to comments",
+  "autopilot.reply_enabled": "Reply to comments automatically",
+  "autopilot.reply_audience": "Reply to",
+  "autopilot.audience_fans": "fans / positive only",
+  "autopilot.audience_all_except_trolls": "everyone except trolls",
+  "autopilot.audience_questions": "questions only",
+  "autopilot.replies_per_day": "Replies per day",
+  "autopilot.uses_voice": "Autopilot follows your Voice and Style rules.",
+  "autopilot.safety":
+    "Only drafts that pass quality checks are published; daily limits apply; everything is logged and can be undone.",
+  "autopilot.saved": "autopilot saved",
 } as const;
 
 export type MessageKey = keyof typeof en;
