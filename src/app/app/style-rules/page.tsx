@@ -19,18 +19,25 @@ import { useRouter } from "next/navigation";
 import {
   ApiError,
   clearTokens,
+  createUserRule,
+  deleteUserRule,
   fetchStyleRules,
+  fetchUserRules,
   getTokens,
   updateStyleRule,
+  updateUserRule,
 } from "@/lib/api";
 import { captureEvent } from "@/lib/analytics";
 import { useSelectedAccountId } from "@/lib/account";
 import { useTranslation } from "@/lib/i18n";
-import type { StyleRule } from "@/lib/types";
+import type { StyleRule, UserRule } from "@/lib/types";
 
 // Mirrors generation/default_rules.PUNCTUATION_RULE_KEY — the one rule
 // whose toggle also gates output_guard's typographic stripper.
 const PUNCTUATION_RULE_KEY = "human_punctuation";
+
+const SELECT_CLS =
+  "rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700";
 
 type Toast = { id: number; message: string; tone: "success" | "error" };
 
@@ -39,6 +46,10 @@ export default function StyleRulesEditor() {
   const { t } = useTranslation();
   const accountId = useSelectedAccountId();
   const [rules, setRules] = useState<StyleRule[] | null>(null);
+  const [userRules, setUserRules] = useState<UserRule[] | null>(null);
+  const [newBody, setNewBody] = useState("");
+  const [newKind, setNewKind] = useState("post");
+  const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
   const [bootError, setBootError] = useState<string | null>(null);
   const [pending, setPending] = useState<Set<string>>(new Set());
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -60,6 +71,9 @@ export default function StyleRulesEditor() {
   useEffect(() => {
     if (accountId === null) return;
     setRules(null);
+    fetchUserRules(accountId)
+      .then((r) => setUserRules(r.rules))
+      .catch(() => setUserRules([]));
     (async () => {
       try {
         const list = await fetchStyleRules(accountId);
@@ -125,6 +139,45 @@ export default function StyleRulesEditor() {
     }
   }
 
+  async function onAddRule() {
+    if (accountId === null || !newBody.trim()) return;
+    try {
+      const r = await createUserRule(accountId, {
+        kind: newKind,
+        body: newBody.trim(),
+      });
+      setUserRules((rs) => [...(rs ?? []), r]);
+      setNewBody("");
+    } catch (e) {
+      toast(String(e), "error");
+    }
+  }
+
+  function editUserRuleLocal(id: number, patch: Partial<UserRule>) {
+    setUserRules((rs) =>
+      rs ? rs.map((r) => (r.id === id ? { ...r, ...patch } : r)) : rs,
+    );
+  }
+
+  async function saveUserRule(id: number, patch: Partial<UserRule>) {
+    editUserRuleLocal(id, patch);
+    try {
+      await updateUserRule(id, patch);
+    } catch (e) {
+      toast(String(e), "error");
+    }
+  }
+
+  async function onDeleteRule(id: number) {
+    try {
+      await deleteUserRule(id);
+      setUserRules((rs) => (rs ? rs.filter((r) => r.id !== id) : rs));
+      setConfirmDelete(null);
+    } catch (e) {
+      toast(String(e), "error");
+    }
+  }
+
   if (bootError) {
     return (
       <main className="max-w-2xl mx-auto px-6 py-16">
@@ -156,6 +209,119 @@ export default function StyleRulesEditor() {
             {t("style_rules.subtitle")}
           </p>
         </div>
+
+        {/* Your own rules — freeform, layered on top of the defaults below */}
+        <section className="space-y-3">
+          <div>
+            <h2 className="text-base font-semibold">{t("user_rules.title")}</h2>
+            <p className="text-xs text-zinc-500 mt-0.5 max-w-2xl">
+              {t("user_rules.subtitle")}
+            </p>
+          </div>
+
+          {userRules?.map((r) => (
+            <div
+              key={r.id}
+              className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3 shadow-sm space-y-2"
+            >
+              <textarea
+                value={r.body}
+                onChange={(e) =>
+                  editUserRuleLocal(r.id, { body: e.target.value })
+                }
+                onBlur={(e) => {
+                  const v = e.target.value.trim();
+                  if (v) updateUserRule(r.id, { body: v }).catch(() => {});
+                }}
+                rows={2}
+                className="w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700 resize-y"
+              />
+              <div className="flex items-center gap-3 flex-wrap text-sm">
+                <select
+                  value={r.kind}
+                  onChange={(e) => saveUserRule(r.id, { kind: e.target.value })}
+                  className={SELECT_CLS}
+                >
+                  <option value="post">{t("user_rules.kind_post")}</option>
+                  <option value="reply">{t("user_rules.kind_reply")}</option>
+                </select>
+                <label className="inline-flex items-center gap-1.5 text-xs text-zinc-500">
+                  <input
+                    type="checkbox"
+                    checked={r.enabled}
+                    onChange={(e) =>
+                      saveUserRule(r.id, { enabled: e.target.checked })
+                    }
+                  />
+                  {r.enabled ? t("style_rules.on") : t("style_rules.off")}
+                </label>
+                <div className="ml-auto">
+                  {confirmDelete === r.id ? (
+                    <span className="inline-flex items-center gap-2 text-xs">
+                      <span className="text-zinc-500">
+                        {t("user_rules.confirm_delete")}
+                      </span>
+                      <button
+                        onClick={() => onDeleteRule(r.id)}
+                        className="text-red-600 dark:text-red-400 font-medium"
+                      >
+                        {t("user_rules.delete")}
+                      </button>
+                      <button
+                        onClick={() => setConfirmDelete(null)}
+                        className="text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                      >
+                        {t("common.cancel")}
+                      </button>
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmDelete(r.id)}
+                      className="text-xs text-zinc-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                    >
+                      {t("user_rules.delete")}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {userRules && userRules.length === 0 && (
+            <p className="text-xs text-zinc-500">{t("user_rules.empty")}</p>
+          )}
+
+          <div className="rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700 p-3 space-y-2">
+            <textarea
+              value={newBody}
+              onChange={(e) => setNewBody(e.target.value)}
+              rows={2}
+              placeholder={t("user_rules.placeholder")}
+              className="w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700 resize-y"
+            />
+            <div className="flex items-center gap-3">
+              <select
+                value={newKind}
+                onChange={(e) => setNewKind(e.target.value)}
+                className={SELECT_CLS}
+              >
+                <option value="post">{t("user_rules.kind_post")}</option>
+                <option value="reply">{t("user_rules.kind_reply")}</option>
+              </select>
+              <button
+                onClick={onAddRule}
+                disabled={!newBody.trim()}
+                className="inline-flex items-center px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-700 text-sm font-medium text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50 transition-colors"
+              >
+                {t("user_rules.add")}
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <h2 className="text-base font-semibold pt-2">
+          {t("style_rules.defaults_title")}
+        </h2>
 
         <ul className="space-y-3">
           {rules.map((rule) => {

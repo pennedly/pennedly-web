@@ -251,6 +251,18 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "style_rules.kind.reply": "только ответы",
   "style_rules.on": "вкл",
   "style_rules.off": "выкл",
+  "style_rules.defaults_title": "Встроенные правила",
+  "user_rules.title": "Твои правила",
+  "user_rules.subtitle":
+    "Твои собственные инструкции поверх встроенных правил ниже. Применяются каждый раз при генерации.",
+  "user_rules.empty": "Своих правил пока нет.",
+  "user_rules.kind_post": "для постов",
+  "user_rules.kind_reply": "для ответов",
+  "user_rules.add": "+ добавить правило",
+  "user_rules.placeholder":
+    "напр. всегда называй конкретный инструмент или цифру; не начинай с вопроса",
+  "user_rules.delete": "удалить",
+  "user_rules.confirm_delete": "Удалить?",
   "style_rules.punctuation_note":
     "Пока включено, длинные тире и кавычки-ёлочки заменяются на обычный дефис и прямые кавычки — и в подсказке для AI, и при автоматической чистке текста. Выключи, чтобы оставить привычную типографику.",
   "style_rules.toast.enabled": "правило включено",

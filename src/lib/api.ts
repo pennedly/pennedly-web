@@ -52,6 +52,8 @@ import type {
   ThreadsConnectStart,
   TokenPair,
   Translation,
+  UserRule,
+  UserRulesResponse,
 } from "./types";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
@@ -661,6 +663,39 @@ export async function updateStyleRule(
       body: JSON.stringify({ enabled }),
     },
   );
+}
+
+// ── User rules (the account's own manual rules) ──────────────────
+export async function fetchUserRules(
+  accountId: number,
+): Promise<UserRulesResponse> {
+  return fetchApi<UserRulesResponse>(`/api/accounts/${accountId}/user-rules`);
+}
+
+export async function createUserRule(
+  accountId: number,
+  input: { kind: string; body: string; enabled?: boolean },
+): Promise<UserRule> {
+  return fetchApi<UserRule>(`/api/accounts/${accountId}/user-rules`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function updateUserRule(
+  ruleId: number,
+  patch: Partial<Pick<UserRule, "body" | "enabled" | "kind" | "sort_order">>,
+): Promise<UserRule> {
+  return fetchApi<UserRule>(`/api/user-rules/${ruleId}`, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+}
+
+export async function deleteUserRule(
+  ruleId: number,
+): Promise<{ id: number; status: string }> {
+  return fetchApi(`/api/user-rules/${ruleId}`, { method: "DELETE" });
 }
 
 // ── Translation ──────────────────────────────────────────────────
