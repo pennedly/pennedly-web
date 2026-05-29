@@ -37,23 +37,25 @@ function bucketLabel(iso: string): string {
 function BarChart({ bars }: { bars: { label: string; value: number }[] }) {
   const max = Math.max(1, ...bars.map((b) => b.value));
   return (
-    <div className="flex items-end gap-1.5 h-32">
+    <div className="flex items-end gap-1.5">
       {bars.map((b, i) => (
         <div
           key={i}
-          className="flex-1 flex flex-col items-center justify-end gap-1 group min-w-[8px]"
-          title={`${b.label}: ${fmt(b.value)}`}
+          className="flex-1 flex flex-col items-center gap-1 group min-w-[8px]"
         >
-          <span className="text-[9px] text-zinc-500 opacity-0 group-hover:opacity-100 transition-opacity">
-            {fmt(b.value)}
-          </span>
+          {/* Fixed-height track so the bar's % height has a definite base */}
           <div
-            className="w-full rounded-t bg-zinc-800 dark:bg-zinc-200"
-            style={{
-              height: `${(b.value / max) * 100}%`,
-              minHeight: b.value > 0 ? "2px" : "0",
-            }}
-          />
+            className="w-full h-32 flex items-end"
+            title={`${b.label}: ${fmt(b.value)}`}
+          >
+            <div
+              className="w-full rounded-t bg-zinc-800 dark:bg-zinc-200 transition-all"
+              style={{
+                height: `${(b.value / max) * 100}%`,
+                minHeight: b.value > 0 ? "3px" : "0",
+              }}
+            />
+          </div>
           <span className="text-[9px] text-zinc-400">{b.label}</span>
         </div>
       ))}

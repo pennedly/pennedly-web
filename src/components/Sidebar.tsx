@@ -13,14 +13,7 @@ import { useEffect, useState } from "react";
 
 import { clearTokens, fetchMe, getTokens } from "@/lib/api";
 import { captureEvent, resetIdentity } from "@/lib/analytics";
-import {
-  LOCALES,
-  setLocale,
-  useLocale,
-  useTranslation,
-  type LocaleCode,
-  type MessageKey,
-} from "@/lib/i18n";
+import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { AccountSwitcher } from "@/components/AccountSwitcher";
 import type { Me } from "@/lib/types";
 
@@ -223,7 +216,6 @@ function ProfileMenu({
   onLogout: () => void;
 }) {
   const { t } = useTranslation();
-  const locale = useLocale();
   const [open, setOpen] = useState(false);
   const initial = (me?.email?.[0] ?? "?").toUpperCase();
 
@@ -266,32 +258,6 @@ function ProfileMenu({
             >
               {t("nav.settings")}
             </Link>
-            <div className="my-1 border-t border-zinc-200 dark:border-zinc-800" />
-            <p className="px-3 pt-1 pb-0.5 text-[10px] uppercase tracking-wider text-zinc-400">
-              {t("settings.language")}
-            </p>
-            {LOCALES.map((l) => (
-              <button
-                key={l.code}
-                type="button"
-                onClick={() => {
-                  setLocale(l.code as LocaleCode);
-                  captureEvent("ui.locale_switched", { locale: l.code });
-                  setOpen(false);
-                }}
-                className={`w-full text-left px-3 py-1.5 text-sm flex items-center gap-2 transition-colors ${
-                  l.code === locale
-                    ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
-                    : "text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
-                }`}
-              >
-                <span aria-hidden>{l.flag}</span>
-                <span>{l.name}</span>
-                {l.code === locale && (
-                  <span className="ml-auto text-xs text-zinc-500">✓</span>
-                )}
-              </button>
-            ))}
             <div className="my-1 border-t border-zinc-200 dark:border-zinc-800" />
             <button
               type="button"
