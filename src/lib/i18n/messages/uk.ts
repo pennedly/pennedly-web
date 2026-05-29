@@ -12,6 +12,12 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "common.save": "зберегти",
   "common.cancel": "скасувати",
   "common.hide": "сховати",
+  "common.translate_content": "Перекласти вміст",
+  "common.translating": "Перекладаю…",
+  "common.hide_translation": "Сховати переклад",
+  "common.translation": "Переклад",
+  "common.view_original": "Переглянути оригінал",
+  "common.view_translation": "Показати переклад",
   "common.revert": "повернути",
   "common.signed_in_as": "увійшов як",
 
@@ -139,6 +145,8 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "rolebook.transparency.subtitle": "· зібрано з секцій вище",
   "rolebook.items_count_singular": "елемент",
   "rolebook.items_count_plural": "елементів",
+  "rolebook.translated_empty":
+    "Поки порожньо — відкрий оригінал, щоб заповнити голос.",
 
   // ── Audits ─────────────────────────────────────────────────────
   "audits.back": "← дашборд",

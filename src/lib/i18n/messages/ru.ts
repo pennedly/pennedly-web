@@ -13,6 +13,12 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "common.save": "сохранить",
   "common.cancel": "отмена",
   "common.hide": "скрыть",
+  "common.translate_content": "Перевести содержимое",
+  "common.translating": "Перевожу…",
+  "common.hide_translation": "Скрыть перевод",
+  "common.translation": "Перевод",
+  "common.view_original": "Посмотреть оригинал",
+  "common.view_translation": "Показать перевод",
   "common.revert": "вернуть",
   "common.signed_in_as": "вошёл как",
 
@@ -139,6 +145,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "rolebook.transparency.subtitle": "· собрано из секций выше",
   "rolebook.items_count_singular": "элемент",
   "rolebook.items_count_plural": "элементов",
+  "rolebook.translated_empty":
+    "Пока пусто — открой оригинал, чтобы заполнить голос.",
 
   // ── Audits ─────────────────────────────────────────────────────
   "audits.back": "← дашборд",

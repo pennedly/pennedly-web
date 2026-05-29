@@ -20,6 +20,7 @@ import {
   getTokens,
   lintRoleBook,
   patchRoleBook,
+  translateText,
 } from "@/lib/api";
 import { captureEvent } from "@/lib/analytics";
 import { useSelectedAccountId } from "@/lib/account";
@@ -91,7 +92,7 @@ type Toast = { id: number; message: string; tone: "success" | "error" };
 
 export default function RoleBookEditor() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const accountId = useSelectedAccountId();
   const [book, setBook] = useState<RoleBook | null>(null);
   const [draft, setDraft] = useState<RoleBookSections>({});
@@ -104,6 +105,17 @@ export default function RoleBookEditor() {
   const [extractOpen, setExtractOpen] = useState(false);
   const [extracting, setExtracting] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
+  // Two-mode voice view. By default we show everything translated into
+  // the user's UI language (read-only); "view original" flips to the
+  // editable source. Translation is a disposable reading layer — the
+  // stored original is always what generation uses, so untranslatable
+  // words in the source are never a problem.
+  const [view, setView] = useState<"translated" | "original">("translated");
+  const [translating, setTranslating] = useState(false);
+  const [translations, setTranslations] = useState<
+    { label: string; text: string }[] | null
+  >(null);
+  const [translateError, setTranslateError] = useState<string | null>(null);
 
   function toast(message: string, tone: Toast["tone"] = "success") {
     const id = Date.now() + Math.random();
@@ -138,6 +150,57 @@ export default function RoleBookEditor() {
       }
     })();
   }, [accountId, router]);
+
+  // Translate the voice into the UI language whenever we're in the
+  // translated view, the locale changes, or the draft changes. Each
+  // non-empty section becomes one translate call (items joined by
+  // newlines — the backend preserves them). Same-language text comes
+  // back verbatim, so users whose content matches their UI see no
+  // change. The `cancelled` flag drops stale responses on fast toggles.
+  const draftKey = JSON.stringify(draft);
+  useEffect(() => {
+    if (view !== "translated") return;
+    const blocks: { label: string; text: string }[] = [];
+    if ((draft.intro ?? "").trim()) {
+      blocks.push({ label: t("rolebook.intro.label"), text: draft.intro! });
+    }
+    for (const section of LIST_SECTIONS) {
+      const items = (draft[section.key] as string[] | undefined) ?? [];
+      if (items.length > 0) {
+        blocks.push({ label: t(section.labelKey), text: items.join("\n") });
+      }
+    }
+    if (blocks.length === 0) {
+      setTranslations([]);
+      setTranslateError(null);
+      return;
+    }
+    let cancelled = false;
+    setTranslating(true);
+    setTranslateError(null);
+    (async () => {
+      try {
+        const results = await Promise.all(
+          blocks.map((b) => translateText(b.text, locale)),
+        );
+        if (cancelled) return;
+        setTranslations(
+          blocks.map((b, i) => ({
+            label: b.label,
+            text: results[i].translated_text,
+          })),
+        );
+      } catch (e) {
+        if (!cancelled) setTranslateError(String(e));
+      } finally {
+        if (!cancelled) setTranslating(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, locale, draftKey]);
 
   // Any edit invalidates the previous lint — the flagged items might
   // already be fixed or replaced by new conflicts. Clear so the
@@ -366,8 +429,37 @@ export default function RoleBookEditor() {
             {t("rolebook.title")}
           </h1>
           <p className="text-sm text-zinc-500 mt-1">{t("rolebook.subtitle")}</p>
+          <div className="mt-3">
+            <button
+              onClick={() =>
+                setView((v) => (v === "translated" ? "original" : "translated"))
+              }
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-700 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M2 12h20" />
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+              </svg>
+              {view === "translated"
+                ? t("common.view_original")
+                : t("common.view_translation")}
+            </button>
+          </div>
         </div>
 
+        {view === "original" ? (
+          <>
         {/* Intro */}
         <section className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm">
           <div className="flex items-baseline justify-between mb-2">
@@ -385,17 +477,11 @@ export default function RoleBookEditor() {
             placeholder={t("rolebook.intro.placeholder")}
             className="w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700"
           />
-          {draft.intro && (
-            <div className="mt-3">
-              <TranslateButton text={draft.intro} source="role_book_intro" />
-            </div>
-          )}
         </section>
 
         {/* List sections */}
         {LIST_SECTIONS.map((section) => {
           const items = (draft[section.key] as string[] | undefined) ?? [];
-          const sampleForTranslate = items.length > 0 ? items.join("\n") : "";
           const isDanger = section.variant === "danger";
           return (
             <section
@@ -430,14 +516,6 @@ export default function RoleBookEditor() {
                 flagged={flaggedBySection[section.key]}
                 onFlaggedClick={onFlaggedPillClick}
               />
-              {sampleForTranslate && (
-                <div className="mt-3">
-                  <TranslateButton
-                    text={sampleForTranslate}
-                    source={`role_book_${section.key}`}
-                  />
-                </div>
-              )}
             </section>
           );
         })}
@@ -531,6 +609,48 @@ export default function RoleBookEditor() {
             <TranslateButton text={book.prompt_text} source="role_book_assembled" />
           </div>
         </details>
+          </>
+        ) : (
+          <>
+            {translating && (
+              <div className="flex items-center gap-2 text-sm text-zinc-500">
+                <span
+                  className="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"
+                  aria-hidden
+                />
+                {t("common.translating")}
+              </div>
+            )}
+            {translateError && (
+              <div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 p-4 text-sm text-red-800 dark:text-red-200">
+                {translateError}
+              </div>
+            )}
+            {!translating &&
+              !translateError &&
+              translations &&
+              translations.length === 0 && (
+                <p className="text-sm text-zinc-500">
+                  {t("rolebook.translated_empty")}
+                </p>
+              )}
+            {!translating &&
+              !translateError &&
+              translations?.map((block) => (
+                <section
+                  key={block.label}
+                  className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm"
+                >
+                  <div className="text-sm font-semibold mb-2">
+                    {block.label}
+                  </div>
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap text-zinc-700 dark:text-zinc-300">
+                    {block.text}
+                  </p>
+                </section>
+              ))}
+          </>
+        )}
       </main>
 
       {/* Re-extract confirmation modal */}

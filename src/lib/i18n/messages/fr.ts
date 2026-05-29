@@ -12,6 +12,12 @@ export const fr: Partial<Record<MessageKey, string>> = {
   "common.save": "enregistrer",
   "common.cancel": "annuler",
   "common.hide": "masquer",
+  "common.translate_content": "Traduire le contenu",
+  "common.translating": "Traduction…",
+  "common.hide_translation": "Masquer la traduction",
+  "common.translation": "Traduction",
+  "common.view_original": "Voir l'original",
+  "common.view_translation": "Afficher la traduction",
   "common.revert": "revenir",
   "common.signed_in_as": "connecté en tant que",
 
@@ -140,6 +146,8 @@ export const fr: Partial<Record<MessageKey, string>> = {
   "rolebook.transparency.subtitle": "· assemblé depuis les sections",
   "rolebook.items_count_singular": "élément",
   "rolebook.items_count_plural": "éléments",
+  "rolebook.translated_empty":
+    "Rien à afficher pour l'instant — ouvre l'original pour remplir ta voix.",
 
   // ── Audits ─────────────────────────────────────────────────────
   "audits.back": "← tableau de bord",

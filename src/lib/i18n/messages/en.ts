@@ -15,6 +15,12 @@ export const en = {
   "common.save": "save",
   "common.cancel": "cancel",
   "common.hide": "hide",
+  "common.translate_content": "Translate content",
+  "common.translating": "Translating…",
+  "common.hide_translation": "Hide translation",
+  "common.translation": "Translation",
+  "common.view_original": "View original",
+  "common.view_translation": "Show translation",
   "common.revert": "revert",
   "common.signed_in_as": "signed in as",
 
@@ -135,6 +141,8 @@ export const en = {
   "rolebook.transparency.subtitle": "· assembled from sections above",
   "rolebook.items_count_singular": "item",
   "rolebook.items_count_plural": "items",
+  "rolebook.translated_empty":
+    "Nothing to show yet — open the original to fill in your voice.",
 
   // ── Audits ─────────────────────────────────────────────────────
   "audits.back": "← dashboard",
