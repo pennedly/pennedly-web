@@ -159,6 +159,52 @@ export type GeneratedReply = {
   latency_ms: number;
 };
 
+// A standalone Threads post elsewhere that @-mentions the account
+// (filled by the ingest_mentions worker). Read-only for now.
+export type MentionSummary = {
+  id: number;
+  account_id: number;
+  threads_mention_id: string;
+  author_username: string | null;
+  text: string | null;
+  permalink: string | null;
+  status: string;
+  published_at: string | null;
+  created_at: string;
+};
+
+export type MentionsList = {
+  mentions: MentionSummary[];
+  count: number;
+};
+
+// A live published post on the account (for the published-posts list +
+// delete action).
+export type PostSummary = {
+  id: number;
+  account_id: number;
+  threads_post_id: string;
+  threads_url: string | null;
+  text: string | null;
+  published_at: string | null;
+  views: number;
+  likes: number;
+  replies_count: number;
+  viral_tier: string | null;
+};
+
+export type PostsList = {
+  posts: PostSummary[];
+  count: number;
+};
+
+export type DeletePostResult = {
+  post_id: number;
+  status: string;
+  threads_post_id: string;
+  deleted_at: string;
+};
+
 export type RefineResult = {
   draft_id: number;
   text: string;

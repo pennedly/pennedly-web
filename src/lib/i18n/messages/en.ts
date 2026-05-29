@@ -249,6 +249,30 @@ export const en = {
   "replies.skipped":
     "skipped — the AI judged this comment not worth replying to",
   "replies.replied": "replied",
+
+  // ── Mentions ───────────────────────────────────────────────────
+  "dashboard.nav.mentions": "mentions",
+  "mentions.back": "← dashboard",
+  "mentions.title": "Mentions",
+  "mentions.subtitle":
+    "Posts elsewhere on Threads that @-mention you. Updated hourly.",
+  "mentions.empty": "No mentions yet.",
+  "mentions.view": "view on Threads",
+
+  // ── Posts (published) ──────────────────────────────────────────
+  "dashboard.nav.posts": "posts",
+  "posts.back": "← dashboard",
+  "posts.title": "Published posts",
+  "posts.subtitle":
+    "Your posts on Threads. Deleting removes a post from Threads — it can't be undone.",
+  "posts.empty": "No published posts yet.",
+  "posts.delete": "delete",
+  "posts.deleting": "deleting…",
+  "posts.confirm_title": "Delete this post from Threads?",
+  "posts.confirm_body":
+    "This permanently removes the post from your Threads account. It can't be undone.",
+  "posts.confirm_cta": "delete from Threads",
+  "posts.toast_deleted": "post deleted",
 } as const;
 
 export type MessageKey = keyof typeof en;

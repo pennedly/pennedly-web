@@ -20,6 +20,7 @@ import type {
   CommentsList,
   DecisionInput,
   DecisionsResponse,
+  DeletePostResult,
   DraftsList,
   GeneratedDraft,
   GeneratedReply,
@@ -27,7 +28,9 @@ import type {
   LintFix,
   LintResult,
   Me,
+  MentionsList,
   PatternStudyResult,
+  PostsList,
   PublishResult,
   RefineResult,
   RoleBook,
@@ -375,6 +378,41 @@ export async function generateReply(
   return fetchApi<GeneratedReply>("/api/generation/replies", {
     method: "POST",
     body: JSON.stringify({ comment_id: commentId }),
+  });
+}
+
+// ── Mentions ─────────────────────────────────────────────────────
+
+export async function fetchMentions(
+  accountId: number,
+  params?: { limit?: number; status?: string },
+): Promise<MentionsList> {
+  const qs = new URLSearchParams();
+  if (params?.limit) qs.set("limit", String(params.limit));
+  if (params?.status) qs.set("status", params.status);
+  const suffix = qs.toString() ? `?${qs.toString()}` : "";
+  return fetchApi<MentionsList>(
+    `/api/accounts/${accountId}/mentions${suffix}`,
+  );
+}
+
+// ── Posts ────────────────────────────────────────────────────────
+
+export async function fetchPosts(
+  accountId: number,
+  params?: { limit?: number },
+): Promise<PostsList> {
+  const qs = new URLSearchParams();
+  if (params?.limit) qs.set("limit", String(params.limit));
+  const suffix = qs.toString() ? `?${qs.toString()}` : "";
+  return fetchApi<PostsList>(`/api/accounts/${accountId}/posts${suffix}`);
+}
+
+// Delete a published post from Threads (irreversible). Soft-deletes our
+// row server-side so metrics history survives.
+export async function deletePost(postId: number): Promise<DeletePostResult> {
+  return fetchApi<DeletePostResult>(`/api/posts/${postId}`, {
+    method: "DELETE",
   });
 }
 

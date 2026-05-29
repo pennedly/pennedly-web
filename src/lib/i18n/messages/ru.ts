@@ -254,4 +254,28 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "replies.skipped":
     "пропущено — AI решил, что на этот комментарий отвечать не стоит",
   "replies.replied": "отвечено",
+
+  // ── Mentions ───────────────────────────────────────────────────
+  "dashboard.nav.mentions": "упоминания",
+  "mentions.back": "← дашборд",
+  "mentions.title": "Упоминания",
+  "mentions.subtitle":
+    "Посты в Threads, где тебя упоминают (@). Обновляется раз в час.",
+  "mentions.empty": "Упоминаний пока нет.",
+  "mentions.view": "открыть в Threads",
+
+  // ── Posts (published) ──────────────────────────────────────────
+  "dashboard.nav.posts": "посты",
+  "posts.back": "← дашборд",
+  "posts.title": "Опубликованные посты",
+  "posts.subtitle":
+    "Твои посты в Threads. Удаление убирает пост из Threads — отменить нельзя.",
+  "posts.empty": "Опубликованных постов пока нет.",
+  "posts.delete": "удалить",
+  "posts.deleting": "удаляю…",
+  "posts.confirm_title": "Удалить этот пост из Threads?",
+  "posts.confirm_body":
+    "Пост будет навсегда удалён из твоего аккаунта Threads. Отменить нельзя.",
+  "posts.confirm_cta": "удалить из Threads",
+  "posts.toast_deleted": "пост удалён",
 };
