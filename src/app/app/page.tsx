@@ -74,6 +74,14 @@ export default function Dashboard() {
   // act on it once accountsLoaded flips true, to avoid a flash.
   const [accountsLoaded, setAccountsLoaded] = useState(false);
   const [hasAccounts, setHasAccounts] = useState(false);
+  // Which status group the feed is showing. Splits the old single endless
+  // column into scannable tabs (drafts / ready / published / rejected).
+  const [tab, setTab] = useState<
+    "pending" | "approved" | "published" | "rejected"
+  >("pending");
+  // Per-draft: is the refine ("tweak") panel expanded? Collapsed by
+  // default so a pending card isn't dominated by refine controls.
+  const [refineOpen, setRefineOpen] = useState<Record<number, boolean>>({});
 
   function toast(message: string, tone: Toast["tone"] = "success") {
     const id = Date.now() + Math.random();
@@ -153,7 +161,7 @@ export default function Dashboard() {
     if (accountId === null) return;
     (async () => {
       try {
-        const list = await listDrafts(accountId, { limit: 20 });
+        const list = await listDrafts(accountId, { limit: 50 });
         setDrafts(list.drafts);
         // Clear the "last generated" preview when switching accounts —
         // it belonged to the previous account.
@@ -210,7 +218,7 @@ export default function Dashboard() {
           );
         }
       }
-      const list = await listDrafts(accountId, { limit: 20 });
+      const list = await listDrafts(accountId, { limit: 50 });
       setDrafts(list.drafts);
     } catch (e) {
       toast(String(e), "error");
@@ -229,7 +237,7 @@ export default function Dashboard() {
         editedText: wasEdited ? localEdit : undefined,
       });
       if (accountId !== null) {
-        const list = await listDrafts(accountId, { limit: 20 });
+        const list = await listDrafts(accountId, { limit: 50 });
         setDrafts(list.drafts);
       }
       // Clear local edit so the (now-approved) row shows the freshly
@@ -266,7 +274,7 @@ export default function Dashboard() {
       const result = await refineDraft(draftId, instruction);
       // Reload the drafts list so the card shows the new generated_text.
       if (accountId !== null) {
-        const list = await listDrafts(accountId, { limit: 20 });
+        const list = await listDrafts(accountId, { limit: 50 });
         setDrafts(list.drafts);
       }
       // Clear local edit (the refined text from server now wins) and
@@ -314,7 +322,7 @@ export default function Dashboard() {
       toast(`#${draftId} ${t("dashboard.toast.published")} · ${result.threads_post_id}`);
       setPublishTarget(null);
       if (accountId !== null) {
-        const list = await listDrafts(accountId, { limit: 20 });
+        const list = await listDrafts(accountId, { limit: 50 });
         setDrafts(list.drafts);
       }
     } catch (e) {
@@ -347,7 +355,7 @@ export default function Dashboard() {
     try {
       await rejectDraft(id);
       if (accountId !== null) {
-        const list = await listDrafts(accountId, { limit: 20 });
+        const list = await listDrafts(accountId, { limit: 50 });
         setDrafts(list.drafts);
       }
       toast(`#${id} ${t("dashboard.toast.rejected")}`);
@@ -362,6 +370,22 @@ export default function Dashboard() {
     clearTokens();
     router.push("/app/login");
   }
+
+  // Feed split into status groups. "approved" = approved but not yet
+  // published; "published" = has gone live (manual or autopilot).
+  const draftCounts = {
+    pending: drafts.filter((d) => d.status === "pending").length,
+    approved: drafts.filter((d) => d.status === "approved" && !d.published)
+      .length,
+    published: drafts.filter((d) => d.published).length,
+    rejected: drafts.filter((d) => d.status === "rejected").length,
+  };
+  const visibleDrafts = drafts.filter((d) => {
+    if (tab === "pending") return d.status === "pending";
+    if (tab === "approved") return d.status === "approved" && !d.published;
+    if (tab === "published") return d.published;
+    return d.status === "rejected";
+  });
 
   if (bootError) {
     return (
@@ -558,30 +582,61 @@ export default function Dashboard() {
 
         {/* Drafts feed */}
         <section>
-          <div className="flex items-baseline justify-between mb-3">
-            <h2 className="text-base font-semibold">{t("dashboard.feed.title")}</h2>
-            <span className="text-xs text-zinc-500">
-              {drafts.length}{" "}
-              {drafts.length === 1
-                ? t("dashboard.feed.draft_singular")
-                : t("dashboard.feed.draft_plural")}
-            </span>
+          <h2 className="text-base font-semibold mb-3">
+            {t("dashboard.feed.title")}
+          </h2>
+
+          {/* Status tabs — show one scannable group at a time instead of
+              one endless mixed column. */}
+          <div className="flex items-center gap-1 mb-4 border-b border-zinc-200 dark:border-zinc-800 overflow-x-auto">
+            {(
+              [
+                ["pending", t("dashboard.tab.pending"), draftCounts.pending],
+                ["approved", t("dashboard.tab.approved"), draftCounts.approved],
+                ["published", t("dashboard.tab.published"), draftCounts.published],
+                ["rejected", t("dashboard.tab.rejected"), draftCounts.rejected],
+              ] as const
+            ).map(([key, label, count]) => (
+              <button
+                key={key}
+                onClick={() => setTab(key)}
+                className={`relative px-3 py-2 text-sm whitespace-nowrap transition-colors ${
+                  tab === key
+                    ? "text-zinc-900 dark:text-zinc-100 font-medium"
+                    : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                }`}
+              >
+                {label}
+                {count > 0 && (
+                  <span className="ml-1.5 text-xs text-zinc-400">{count}</span>
+                )}
+                {tab === key && (
+                  <span className="absolute left-0 right-0 -bottom-px h-0.5 bg-zinc-900 dark:bg-zinc-100" />
+                )}
+              </button>
+            ))}
           </div>
 
-          {drafts.length === 0 && (
+          {visibleDrafts.length === 0 && (
             <div className="rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700 p-8 text-center">
               <p className="text-sm text-zinc-500">
-                {t("dashboard.feed.empty")}{" "}
-                <span className="font-medium text-zinc-700 dark:text-zinc-300">
-                  {t("dashboard.feed.empty_cta")}
-                </span>{" "}
-                {t("dashboard.feed.empty_after")}
+                {tab === "pending" ? (
+                  <>
+                    {t("dashboard.feed.empty")}{" "}
+                    <span className="font-medium text-zinc-700 dark:text-zinc-300">
+                      {t("dashboard.feed.empty_cta")}
+                    </span>{" "}
+                    {t("dashboard.feed.empty_after")}
+                  </>
+                ) : (
+                  t("dashboard.tab.empty")
+                )}
               </p>
             </div>
           )}
 
           <ul className="space-y-3">
-            {drafts.map((d) => {
+            {visibleDrafts.map((d) => {
               const localEdit = edits[d.id];
               const currentText =
                 localEdit !== undefined ? localEdit : d.generated_text;
@@ -634,7 +689,7 @@ export default function Dashboard() {
                     </p>
                   )}
 
-                  {d.status === "pending" && (
+                  {d.status === "pending" && refineOpen[d.id] && (
                     <div className="flex flex-wrap items-stretch gap-2 mb-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
                       <input
                         type="text"
@@ -726,6 +781,18 @@ export default function Dashboard() {
                         >
                           {t("dashboard.draft.reject")}
                         </button>
+                        <button
+                          onClick={() =>
+                            setRefineOpen((s) => ({ ...s, [d.id]: !s[d.id] }))
+                          }
+                          className={`text-xs px-3 py-1.5 rounded-md border transition-colors ${
+                            refineOpen[d.id]
+                              ? "border-zinc-400 dark:border-zinc-600 bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200"
+                              : "border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                          }`}
+                        >
+                          {t("dashboard.draft.tweak")} {refineOpen[d.id] ? "▴" : "▾"}
+                        </button>
                         {isEdited && (
                           <button
                             onClick={() =>
@@ -742,7 +809,8 @@ export default function Dashboard() {
                         )}
                       </>
                     )}
-                    {d.status === "approved" && (
+                    {/* Publish only when approved AND not yet live. */}
+                    {d.status === "approved" && !d.published && (
                       <button
                         onClick={() => onPublishClick(d.id, d.generated_text)}
                         className="text-xs px-3 py-1.5 rounded-md bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-white transition-colors inline-flex items-center gap-1.5"
@@ -763,6 +831,37 @@ export default function Dashboard() {
                         </svg>
                         {t("dashboard.draft.publish")}
                       </button>
+                    )}
+                    {/* Already live — no publish button, link out instead. */}
+                    {d.published && (
+                      <span className="inline-flex items-center gap-2 text-xs">
+                        <span className="inline-flex items-center gap-1 text-green-600 dark:text-green-400 font-medium">
+                          <svg
+                            width="13"
+                            height="13"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            aria-hidden
+                          >
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                          {t("dashboard.draft.published")}
+                        </span>
+                        {d.threads_url && (
+                          <a
+                            href={d.threads_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 underline-offset-2 hover:underline"
+                          >
+                            {t("dashboard.draft.open_threads")}
+                          </a>
+                        )}
+                      </span>
                     )}
                     <div className="ml-auto">
                       <TranslateButton

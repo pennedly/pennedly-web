@@ -101,6 +101,10 @@ export type DraftSummary = {
   topic_label: string | null;
   is_skip: boolean | null;
   created_at: string;
+  // Publish state — a published draft (manual or autopilot) has a posts
+  // row behind it. Lets the dashboard hide "Publish" + link out instead.
+  published: boolean;
+  threads_url: string | null;
 };
 
 export type DraftsList = {
