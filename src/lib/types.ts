@@ -212,6 +212,10 @@ export type CommentSummary = {
   status: string; // "new" | "drafted" | "replied"
   published_at: string | null;
   created_at: string;
+  // The post this comment is under (context for the reply UI).
+  post_text: string | null;
+  post_published_at: string | null;
+  post_threads_url: string | null;
   ai_draft_id: number | null;
   draft_text: string | null;
   draft_status: string | null; // "pending" | "approved" | "rejected"
@@ -283,6 +287,11 @@ export type DeletePostResult = {
   status: string;
   threads_post_id: string;
   deleted_at: string;
+};
+
+export type DeleteDraftResult = {
+  draft_id: number;
+  status: string;
 };
 
 // ── My Feed (posts + inline analytics) ───────────────────────────────

@@ -230,14 +230,48 @@ export default function RepliesPage() {
                 key={c.id}
                 className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
               >
+                {/* Which post this comment is under */}
+                {c.post_text && (
+                  <div className="mb-2 flex items-center gap-1.5 text-xs text-zinc-500 min-w-0">
+                    <span className="shrink-0 text-zinc-400">
+                      {t("replies.under_post")}
+                    </span>
+                    {c.post_threads_url ? (
+                      <a
+                        href={c.post_threads_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="truncate text-zinc-600 dark:text-zinc-400 hover:underline"
+                      >
+                        {c.post_text}
+                      </a>
+                    ) : (
+                      <span className="truncate text-zinc-600 dark:text-zinc-400">
+                        {c.post_text}
+                      </span>
+                    )}
+                    {c.post_published_at && (
+                      <span className="shrink-0 text-zinc-400">
+                        · {fmtDate(c.post_published_at)}
+                      </span>
+                    )}
+                  </div>
+                )}
+
                 {/* The original comment */}
                 <div className="flex items-center justify-between mb-2 text-xs text-zinc-500">
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="font-medium text-zinc-700 dark:text-zinc-300 truncate">
                       @{c.author_username ?? "—"}
                     </span>
-                    <span className="text-zinc-400">·</span>
-                    <span className="truncate">{t("replies.on_post")}</span>
+                    {c.published_at && (
+                      <>
+                        <span className="text-zinc-400">·</span>
+                        <span className="truncate">
+                          {fmtDate(c.published_at)}
+                        </span>
+                      </>
+                    )}
                   </div>
                   {c.comment_url && (
                     <a
@@ -263,10 +297,25 @@ export default function RepliesPage() {
                 <div className="mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
                   {isReplied ? (
                     <div>
-                      <div className="flex items-center gap-2 mb-1.5">
+                      <div className="flex items-center gap-2 mb-1.5 text-xs">
                         <span className="px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wide bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300">
                           {t("replies.replied")}
                         </span>
+                        {c.replied_at && (
+                          <span className="text-zinc-400">
+                            {fmtDate(c.replied_at)}
+                          </span>
+                        )}
+                        {(c.comment_url || c.post_threads_url) && (
+                          <a
+                            href={(c.comment_url || c.post_threads_url)!}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="ml-auto text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:underline"
+                          >
+                            {t("replies.open_thread")}
+                          </a>
+                        )}
                       </div>
                       <p className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
                         {c.draft_text ?? ""}
@@ -421,6 +470,11 @@ export default function RepliesPage() {
       </div>
     </div>
   );
+}
+
+function fmtDate(iso: string | null): string {
+  if (!iso) return "";
+  return new Date(iso).toLocaleDateString();
 }
 
 function errMsg(e: unknown): string {
