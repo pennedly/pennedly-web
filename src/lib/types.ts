@@ -208,6 +208,42 @@ export type DeletePostResult = {
   deleted_at: string;
 };
 
+// ── My Feed (posts + inline analytics) ───────────────────────────────
+// Mirrors api/feed.py. The account's own posts, each with how it did
+// relative to the account's recent average (vs_avg_views = "N× your
+// usual"), plus a reference baseline block for the header.
+
+export type FeedPost = {
+  id: number;
+  threads_post_id: string;
+  threads_url: string | null;
+  text: string | null;
+  published_at: string | null;
+  views: number;
+  likes: number;
+  reposts: number;
+  comments_count: number;
+  viral_tier: string | null; // viral / good / mid / flop
+  viral_score: number | null;
+  vs_avg_views: number | null; // views ÷ recent-average views
+  is_fresh: boolean; // published < 24h ago — still settling
+};
+
+export type FeedReference = {
+  window_days: number; // 7, or 30 if the week was too sparse
+  posts_counted: number;
+  avg_views: number;
+  avg_likes: number;
+  avg_comments: number;
+  median_views: number;
+};
+
+export type FeedResponse = {
+  reference: FeedReference;
+  posts: FeedPost[];
+  count: number;
+};
+
 // Per-account autopilot config. Default off; the user assembles their own
 // from a few clear controls. The autopilot worker reads this to decide
 // what to post / reply automatically.

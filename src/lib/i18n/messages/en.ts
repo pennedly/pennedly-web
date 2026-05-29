@@ -297,6 +297,26 @@ export const en = {
   "autopilot.safety":
     "Only drafts that pass quality checks are published; daily limits apply; everything is logged and can be undone.",
   "autopilot.saved": "autopilot saved",
+
+  // ── My Feed (posts + analytics) ───────────────────────────────
+  "dashboard.nav.feed": "feed",
+  "feed.back": "← dashboard",
+  "feed.title": "My Feed",
+  "feed.subtitle": "Your posts — each with how it did versus your usual.",
+  "feed.empty":
+    "No posts yet. Once you publish on Threads, they'll show up here with analytics.",
+  "feed.ref_week": "Your weekly average",
+  "feed.ref_30d": "Your 30-day average",
+  "feed.ref_none":
+    "Not enough posts yet to compare against your average — keep posting.",
+  "feed.posts_word": "posts",
+  "feed.views": "views",
+  "feed.likes": "likes",
+  "feed.comments": "comments",
+  "feed.reposts": "reposts",
+  "feed.vs_avg": "× your average",
+  "feed.fresh": "still settling",
+  "feed.open": "open in Threads ↗",
 } as const;
 
 export type MessageKey = keyof typeof en;
