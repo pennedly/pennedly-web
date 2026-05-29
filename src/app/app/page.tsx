@@ -395,24 +395,30 @@ export default function Dashboard() {
             >
               {t("dashboard.nav.voice")}
             </Link>
-            <Link
-              href="/app/replies"
-              className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
-            >
-              {t("dashboard.nav.replies")}
-            </Link>
-            <Link
-              href="/app/mentions"
-              className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
-            >
-              {t("dashboard.nav.mentions")}
-            </Link>
-            <Link
-              href="/app/posts"
-              className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
-            >
-              {t("dashboard.nav.posts")}
-            </Link>
+            {/* Round-2 surfaces — tester-only until Meta approves the
+                scopes. Hidden from the public + the App Review reviewer. */}
+            {me?.is_tester && (
+              <>
+                <Link
+                  href="/app/replies"
+                  className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
+                >
+                  {t("dashboard.nav.replies")}
+                </Link>
+                <Link
+                  href="/app/mentions"
+                  className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
+                >
+                  {t("dashboard.nav.mentions")}
+                </Link>
+                <Link
+                  href="/app/posts"
+                  className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
+                >
+                  {t("dashboard.nav.posts")}
+                </Link>
+              </>
+            )}
             <Link
               href="/app/style-rules"
               className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"

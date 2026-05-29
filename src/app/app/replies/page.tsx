@@ -28,6 +28,7 @@ import { AccountSwitcher } from "@/components/AccountSwitcher";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { PublishConfirmModal } from "@/components/PublishConfirmModal";
 import { TranslateButton } from "@/components/TranslateButton";
+import { useTesterGuard } from "@/lib/tester";
 import type { CommentSummary } from "@/lib/types";
 
 type Toast = { id: number; message: string; tone: "success" | "error" };
@@ -35,6 +36,7 @@ type Toast = { id: number; message: string; tone: "success" | "error" };
 export default function RepliesPage() {
   const router = useRouter();
   const { t } = useTranslation();
+  const { checking } = useTesterGuard();
   const accountId = useSelectedAccountId();
   const [comments, setComments] = useState<CommentSummary[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -177,6 +179,8 @@ export default function RepliesPage() {
       setPublishing(false);
     }
   }
+
+  if (checking) return null;
 
   if (bootError) {
     return (

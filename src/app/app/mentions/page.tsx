@@ -15,11 +15,13 @@ import { useTranslation } from "@/lib/i18n";
 import { AccountSwitcher } from "@/components/AccountSwitcher";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { TranslateButton } from "@/components/TranslateButton";
+import { useTesterGuard } from "@/lib/tester";
 import type { MentionSummary } from "@/lib/types";
 
 export default function MentionsPage() {
   const router = useRouter();
   const { t } = useTranslation();
+  const { checking } = useTesterGuard();
   const accountId = useSelectedAccountId();
   const [mentions, setMentions] = useState<MentionSummary[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -48,6 +50,8 @@ export default function MentionsPage() {
       }
     })();
   }, [accountId, router]);
+
+  if (checking) return null;
 
   if (bootError) {
     return (

@@ -19,6 +19,9 @@ export type Me = {
   email: string;
   display_name: string | null;
   tenant: Tenant;
+  // Allowlisted tester accounts see the round-2 UIs (replies / mentions /
+  // posts) and get the full Threads scope set. Everyone else sees round-1.
+  is_tester: boolean;
 };
 
 export type ConnectedAccount = {

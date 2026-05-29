@@ -22,6 +22,7 @@ import { useTranslation } from "@/lib/i18n";
 import { AccountSwitcher } from "@/components/AccountSwitcher";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { TranslateButton } from "@/components/TranslateButton";
+import { useTesterGuard } from "@/lib/tester";
 import type { PostSummary } from "@/lib/types";
 
 type Toast = { id: number; message: string; tone: "success" | "error" };
@@ -29,6 +30,7 @@ type Toast = { id: number; message: string; tone: "success" | "error" };
 export default function PostsPage() {
   const router = useRouter();
   const { t } = useTranslation();
+  const { checking } = useTesterGuard();
   const accountId = useSelectedAccountId();
   const [posts, setPosts] = useState<PostSummary[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -93,6 +95,8 @@ export default function PostsPage() {
       setDeleting(false);
     }
   }
+
+  if (checking) return null;
 
   if (bootError) {
     return (
