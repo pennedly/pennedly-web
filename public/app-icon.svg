@@ -1,0 +1,17 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="512" y1="0" x2="512" y2="1024" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2a2a30"/>
+      <stop offset="1" stop-color="#0a0a0c"/>
+    </linearGradient>
+    <linearGradient id="nib" x1="512" y1="296" x2="512" y2="748" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#dcdce1"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <!-- fountain-pen nib: white teardrop with a central slit + vent hole -->
+  <path d="M512 296 C 656 330 678 476 512 748 C 346 476 368 330 512 296 Z" fill="url(#nib)"/>
+  <path d="M512 700 L 512 512" stroke="#0a0a0c" stroke-width="18" stroke-linecap="round"/>
+  <circle cx="512" cy="492" r="32" fill="#0a0a0c"/>
+</svg>
