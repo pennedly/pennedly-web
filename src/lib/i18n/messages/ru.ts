@@ -380,6 +380,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "feed.vs_avg": "× от среднего",
   "feed.fresh": "ещё набирает",
   "feed.open": "открыть в Threads ↗",
+  "feed.growth": "рост",
+  "feed.growth_none": "пока мало замеров для графика",
 
   // ── Онбординг ─────────────────────────────────────────────────
   "onboarding.title": "Настроим твой голос",

@@ -420,6 +420,20 @@ export type UserRule = {
 
 export type UserRulesResponse = { rules: UserRule[] };
 
+// A single post's metrics over time (growth curve).
+export type MetricsSnapshot = {
+  snapshot_at: string;
+  views: number | null;
+  likes: number | null;
+  comments: number | null;
+  reposts: number | null;
+};
+
+export type PostGrowth = {
+  post_id: number;
+  series: MetricsSnapshot[];
+};
+
 export type RefineResult = {
   draft_id: number;
   text: string;

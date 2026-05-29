@@ -15,13 +15,14 @@ import {
   deletePost,
   fetchFeed,
   fetchMe,
+  fetchPostMetricsHistory,
   getTokens,
 } from "@/lib/api";
 import { captureEvent } from "@/lib/analytics";
 import { useSelectedAccountId } from "@/lib/account";
 import { useTranslation } from "@/lib/i18n";
 import { TranslateButton } from "@/components/TranslateButton";
-import type { FeedPost, FeedReference } from "@/lib/types";
+import type { FeedPost, FeedReference, MetricsSnapshot } from "@/lib/types";
 
 type Toast = { id: number; message: string; tone: "success" | "error" };
 
@@ -84,7 +85,25 @@ export default function FeedPage() {
   const [isTester, setIsTester] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<FeedPost | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [growthOpen, setGrowthOpen] = useState<number | null>(null);
+  const [growth, setGrowth] = useState<Record<number, MetricsSnapshot[]>>({});
   const [toasts, setToasts] = useState<Toast[]>([]);
+
+  async function toggleGrowth(postId: number) {
+    if (growthOpen === postId) {
+      setGrowthOpen(null);
+      return;
+    }
+    setGrowthOpen(postId);
+    if (!growth[postId]) {
+      try {
+        const data = await fetchPostMetricsHistory(postId);
+        setGrowth((g) => ({ ...g, [postId]: data.series }));
+      } catch {
+        setGrowth((g) => ({ ...g, [postId]: [] }));
+      }
+    }
+  }
 
   function toast(message: string, tone: Toast["tone"] = "success") {
     const id = Date.now() + Math.random();
@@ -248,6 +267,16 @@ export default function FeedPage() {
                       {new Date(p.published_at).toLocaleDateString()}
                     </span>
                   )}
+                  <button
+                    onClick={() => toggleGrowth(p.id)}
+                    className={`hover:text-zinc-700 dark:hover:text-zinc-300 underline-offset-2 hover:underline ${
+                      growthOpen === p.id
+                        ? "text-zinc-700 dark:text-zinc-300 font-medium"
+                        : ""
+                    }`}
+                  >
+                    {t("feed.growth")}
+                  </button>
                   {p.threads_url && (
                     <a
                       href={p.threads_url}
@@ -268,6 +297,10 @@ export default function FeedPage() {
                   )}
                 </div>
               </div>
+
+              {growthOpen === p.id && (
+                <GrowthChart series={growth[p.id]} label={t("feed.growth_none")} />
+              )}
 
               {p.text && (
                 <div className="mt-2">
@@ -337,6 +370,58 @@ export default function FeedPage() {
             {tt.message}
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// Hand-rolled SVG sparkline of a post's views over time (no chart lib).
+function GrowthChart({
+  series,
+  label,
+}: {
+  series: MetricsSnapshot[] | undefined;
+  label: string;
+}) {
+  if (series === undefined) {
+    return <div className="mt-3 h-14" aria-hidden />; // loading placeholder
+  }
+  const pts = series.filter((s) => s.views !== null);
+  if (pts.length < 2) {
+    return <p className="mt-3 text-xs text-zinc-400">{label}</p>;
+  }
+  const vals = pts.map((s) => s.views ?? 0);
+  const max = Math.max(...vals);
+  const min = Math.min(...vals);
+  const range = max - min || 1;
+  const W = 300;
+  const H = 56;
+  const coords = pts
+    .map((s, i) => {
+      const x = (i / (pts.length - 1)) * W;
+      const y = H - (((s.views ?? 0) - min) / range) * H;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
+  return (
+    <div className="mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        className="w-full h-14 text-green-500 dark:text-green-400"
+        preserveAspectRatio="none"
+        aria-hidden
+      >
+        <polyline
+          points={coords}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          vectorEffect="non-scaling-stroke"
+        />
+      </svg>
+      <div className="flex justify-between text-[10px] text-zinc-400 mt-0.5">
+        <span>{num(min)} 👁</span>
+        <span>{num(max)} 👁</span>
       </div>
     </div>
   );

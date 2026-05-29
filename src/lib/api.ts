@@ -33,6 +33,7 @@ import type {
   OnboardingPreview,
   OnboardingResult,
   OnboardingStatus,
+  PostGrowth,
   StatsPeriod,
   StatsResponse,
   GeneratedReply,
@@ -562,6 +563,13 @@ export async function fetchAutopostActivity(
   return fetchApi<AutopostActivity>(
     `/api/accounts/${accountId}/autopost-activity`,
   );
+}
+
+// A single post's metrics over time (for the growth curve on the feed).
+export async function fetchPostMetricsHistory(
+  postId: number,
+): Promise<PostGrowth> {
+  return fetchApi<PostGrowth>(`/api/posts/${postId}/metrics-history`);
 }
 
 export async function setAutopilotMaster(

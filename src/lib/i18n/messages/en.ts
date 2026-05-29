@@ -374,6 +374,8 @@ export const en = {
   "feed.vs_avg": "× your average",
   "feed.fresh": "still settling",
   "feed.open": "open in Threads ↗",
+  "feed.growth": "growth",
+  "feed.growth_none": "not enough snapshots yet for a curve",
 
   // ── Onboarding ────────────────────────────────────────────────
   "onboarding.title": "Set up your voice",
