@@ -261,6 +261,9 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "replies.open_thread": "открыть в Threads ↗",
   "replies.replied_on": "отвечено",
   "replies.view_comment": "открыть в Threads",
+  "replies.dismiss": "убрать из очереди",
+  "replies.confirm_dismiss": "Убрать?",
+  "replies.toast_dismissed": "Убрано из очереди",
   "replies.generate": "сгенерировать ответ",
   "replies.skipped":
     "пропущено — AI решил, что на этот комментарий отвечать не стоит",
@@ -406,8 +409,14 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "stats.period.90d": "3 месяца",
   "stats.period.all": "Всё время",
   "stats.vs_prev": "к прошлому периоду",
-  "stats.chart_avg_views": "Средние просмотры",
+  "stats.chart_avg_views": "Средние просмотры на пост",
   "stats.chart_posts": "Посты",
+  "stats.chart_avg_line": "среднее",
+  "stats.chart_above_avg": "выше среднего",
+  "stats.chart_below_avg": "ниже среднего",
+  "stats.gran_day": "по дням",
+  "stats.gran_week": "по неделям",
+  "stats.gran_month": "по месяцам",
 
   // ── Виджет перевода (button/cached/fresh уже заданы выше) ──────
   "translate.translating": "перевожу…",

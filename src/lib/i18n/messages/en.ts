@@ -256,6 +256,9 @@ export const en = {
   "replies.open_thread": "open in Threads ↗",
   "replies.replied_on": "replied",
   "replies.view_comment": "view on Threads",
+  "replies.dismiss": "remove from queue",
+  "replies.confirm_dismiss": "Remove?",
+  "replies.toast_dismissed": "Removed from queue",
   "replies.generate": "generate reply",
   "replies.skipped":
     "skipped — the AI judged this comment not worth replying to",
@@ -400,8 +403,14 @@ export const en = {
   "stats.period.90d": "3 months",
   "stats.period.all": "All time",
   "stats.vs_prev": "vs previous",
-  "stats.chart_avg_views": "Avg views",
+  "stats.chart_avg_views": "Avg. views per post",
   "stats.chart_posts": "Posts",
+  "stats.chart_avg_line": "average",
+  "stats.chart_above_avg": "above average",
+  "stats.chart_below_avg": "below average",
+  "stats.gran_day": "by day",
+  "stats.gran_week": "by week",
+  "stats.gran_month": "by month",
 
   // ── Translate widget (button/cached/fresh already defined above) ──
   "translate.translating": "translating…",
