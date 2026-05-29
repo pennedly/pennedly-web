@@ -24,7 +24,10 @@ import type {
   DeletePostResult,
   DraftsList,
   FeedResponse,
+  FromScratchInput,
   GeneratedDraft,
+  OnboardingResult,
+  OnboardingStatus,
   GeneratedReply,
   LanguageCode,
   LintFix,
@@ -427,6 +430,33 @@ export async function fetchFeed(
   if (params?.limit) qs.set("limit", String(params.limit));
   const suffix = qs.toString() ? `?${qs.toString()}` : "";
   return fetchApi<FeedResponse>(`/api/accounts/${accountId}/feed${suffix}`);
+}
+
+// ── Onboarding ───────────────────────────────────────────────────
+export async function fetchOnboardingStatus(
+  accountId: number,
+): Promise<OnboardingStatus> {
+  return fetchApi<OnboardingStatus>(`/api/accounts/${accountId}/onboarding`);
+}
+
+export async function onboardingAnalyze(
+  accountId: number,
+  postLimit = 25,
+): Promise<OnboardingResult> {
+  return fetchApi<OnboardingResult>(
+    `/api/accounts/${accountId}/onboarding/analyze`,
+    { method: "POST", body: JSON.stringify({ post_limit: postLimit }) },
+  );
+}
+
+export async function onboardingFromScratch(
+  accountId: number,
+  input: FromScratchInput,
+): Promise<OnboardingResult> {
+  return fetchApi<OnboardingResult>(
+    `/api/accounts/${accountId}/onboarding/from-scratch`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
 }
 
 // ── Autopilot ────────────────────────────────────────────────────

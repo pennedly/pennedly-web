@@ -67,6 +67,34 @@ export type RoleBook = {
   activated_at: string | null;
 };
 
+// ── Onboarding ───────────────────────────────────────────────────────
+// Mirrors api/onboarding.py. First-run setup: an account with no active
+// role_book needs_onboarding; can_analyze gates the "analyze my posts"
+// branch (needs ≥5 usable posts).
+
+export type OnboardingStatus = {
+  needs_onboarding: boolean;
+  has_role_book: boolean;
+  post_count: number;
+  can_analyze: boolean;
+};
+
+export type FromScratchInput = {
+  intro: string;
+  themes_include: string[];
+  themes_exclude: string[];
+  voice_characteristics?: string[];
+  do_list?: string[];
+  dont_list?: string[];
+  examples?: string[];
+};
+
+export type OnboardingResult = {
+  role_book_id: number;
+  needs_onboarding: boolean;
+  posts_analyzed: number | null;
+};
+
 export type GeneratedDraft = {
   draft_id: number;
   text: string;

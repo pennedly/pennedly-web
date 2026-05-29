@@ -329,6 +329,36 @@ export const en = {
   "feed.vs_avg": "× your average",
   "feed.fresh": "still settling",
   "feed.open": "open in Threads ↗",
+
+  // ── Onboarding ────────────────────────────────────────────────
+  "onboarding.title": "Set up your voice",
+  "onboarding.subtitle":
+    "Pennedly writes in your voice. Let's define it — pick how to start.",
+  "onboarding.connect_title": "First, connect your Threads account",
+  "onboarding.connect_body":
+    "Pennedly drafts for a connected account. Connect one to begin.",
+  "onboarding.analyze_title": "Analyze my posts",
+  "onboarding.analyze_body":
+    "Pennedly reads your recent Threads posts and builds your voice automatically.",
+  "onboarding.analyze_cta": "Analyze my posts",
+  "onboarding.analyze_count": "posts ready to analyze",
+  "onboarding.analyze_none": "No posts yet — build from scratch instead.",
+  "onboarding.analyzing": "Analyzing your posts…",
+  "onboarding.scratch_title": "Build from scratch",
+  "onboarding.scratch_body":
+    "New account? Describe your voice and topics, and start posting right away.",
+  "onboarding.scratch_cta": "Build from scratch",
+  "onboarding.form_intro_label": "Describe your voice",
+  "onboarding.form_intro_ph":
+    "Who you are, what your account is about, your tone. Write in the language you post in.",
+  "onboarding.form_themes_label": "Topics you want to post about",
+  "onboarding.form_themes_ph": "add a topic and press enter",
+  "onboarding.form_exclude_label": "Topics to avoid (optional)",
+  "onboarding.form_exclude_ph": "add a topic to avoid",
+  "onboarding.create_cta": "Create my voice",
+  "onboarding.creating": "Creating…",
+  "onboarding.back": "← back",
+  "onboarding.error_empty": "Add at least a voice description or one topic.",
 } as const;
 
 export type MessageKey = keyof typeof en;
