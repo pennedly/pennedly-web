@@ -11,8 +11,8 @@ import { useRouter } from "next/navigation";
 
 import { ApiError, clearTokens, fetchStats, getTokens } from "@/lib/api";
 import { useSelectedAccountId } from "@/lib/account";
-import { useTranslation, type MessageKey } from "@/lib/i18n";
-import type { StatsPeriod, StatsResponse } from "@/lib/types";
+import { useLocale, useTranslation, type MessageKey } from "@/lib/i18n";
+import type { StatsBucket, StatsPeriod, StatsResponse } from "@/lib/types";
 
 const PERIODS: StatsPeriod[] = ["today", "yesterday", "7d", "30d", "90d", "all"];
 
@@ -29,36 +29,126 @@ function fmt(n: number): string {
   return Math.round(n).toLocaleString();
 }
 
-function bucketLabel(iso: string): string {
+type Granularity = "day" | "week" | "month";
+
+const GRANULARITY: Record<StatsPeriod, Granularity> = {
+  today: "day",
+  yesterday: "day",
+  "7d": "day",
+  "30d": "week",
+  "90d": "week",
+  all: "month",
+};
+
+// A human, localized label for a bucket's start date — month+year for
+// monthly buckets, day+month otherwise.
+function bucketLabel(iso: string, locale: string, gran: Granularity): string {
   const d = new Date(iso);
-  return `${d.getDate()}.${d.getMonth() + 1}`;
+  const loc = locale === "ru" ? "ru-RU" : "en-US";
+  if (gran === "month") {
+    return d.toLocaleDateString(loc, { month: "short", year: "2-digit" });
+  }
+  return d.toLocaleDateString(loc, { day: "numeric", month: "short" });
 }
 
-function BarChart({ bars }: { bars: { label: string; value: number }[] }) {
-  const max = Math.max(1, ...bars.map((b) => b.value));
+// Trend chart: one bar per time bucket (avg views per post). A dashed line
+// marks the period average; bars at/above it are highlighted (green) so
+// you can see at a glance which periods beat your norm. Y-axis shows the
+// scale; hover a bar for exact numbers. Hand-rolled (no chart library).
+function TrendChart({
+  series,
+  locale,
+  gran,
+  t,
+}: {
+  series: StatsBucket[];
+  locale: string;
+  gran: Granularity;
+  t: (k: MessageKey) => string;
+}) {
+  const values = series.map((b) => b.avg_views);
+  const max = Math.max(1, ...values);
+  const avg = values.reduce((a, b) => a + b, 0) / (values.length || 1);
+  // Thin out x-labels when there are many buckets, so they don't overlap.
+  const step = Math.ceil(series.length / 8);
+
   return (
-    <div className="flex items-end gap-1.5">
-      {bars.map((b, i) => (
-        <div
-          key={i}
-          className="flex-1 flex flex-col items-center gap-1 group min-w-[8px]"
-        >
-          {/* Fixed-height track so the bar's % height has a definite base */}
-          <div
-            className="w-full h-32 flex items-end"
-            title={`${b.label}: ${fmt(b.value)}`}
-          >
-            <div
-              className="w-full rounded-t bg-zinc-800 dark:bg-zinc-200 transition-all"
-              style={{
-                height: `${(b.value / max) * 100}%`,
-                minHeight: b.value > 0 ? "3px" : "0",
-              }}
-            />
-          </div>
-          <span className="text-[9px] text-zinc-400">{b.label}</span>
+    <div>
+      <div className="flex gap-2">
+        {/* Y-axis scale */}
+        <div className="flex flex-col justify-between items-end h-32 w-9 shrink-0 text-[9px] text-zinc-400 tabular-nums">
+          <span>{fmt(max)}</span>
+          <span>0</span>
         </div>
-      ))}
+        {/* Plot area: bars + average line overlay (same h-32 base) */}
+        <div className="relative flex-1 h-32">
+          <div
+            className="absolute left-0 right-0 border-t border-dashed border-zinc-400/70 dark:border-zinc-500/70 z-10 pointer-events-none"
+            style={{ bottom: `${(avg / max) * 100}%` }}
+          >
+            <span className="absolute right-0 -top-2.5 text-[9px] px-1 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-500 tabular-nums">
+              {t("stats.chart_avg_line")} {fmt(avg)}
+            </span>
+          </div>
+          <div className="absolute inset-0 flex items-end gap-1.5">
+            {series.map((b, i) => {
+              const aboveAvg = b.avg_views >= avg && b.avg_views > 0;
+              return (
+                <div
+                  key={i}
+                  className="flex-1 h-full flex items-end min-w-[6px]"
+                  title={`${bucketLabel(b.bucket_start, locale, gran)} · ${fmt(
+                    b.avg_views,
+                  )} ${t("stats.card_avg_views")} · ${b.posts} ${t(
+                    "stats.card_posts",
+                  )}`}
+                >
+                  <div
+                    className={`w-full rounded-t transition-all ${
+                      aboveAvg
+                        ? "bg-green-500 dark:bg-green-400"
+                        : "bg-zinc-300 dark:bg-zinc-600"
+                    }`}
+                    style={{
+                      height: `${(b.avg_views / max) * 100}%`,
+                      minHeight: b.avg_views > 0 ? "3px" : "0",
+                    }}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+      {/* X-axis date labels, aligned under the plot */}
+      <div className="flex gap-2 mt-1">
+        <div className="w-9 shrink-0" />
+        <div className="flex-1 flex gap-1.5">
+          {series.map((b, i) => (
+            <div
+              key={i}
+              className="flex-1 min-w-[6px] text-center text-[9px] text-zinc-400 leading-tight overflow-hidden"
+            >
+              {i % step === 0 ? bucketLabel(b.bucket_start, locale, gran) : ""}
+            </div>
+          ))}
+        </div>
+      </div>
+      {/* Legend */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-[10px] text-zinc-500">
+        <span className="inline-flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-sm bg-green-500 dark:bg-green-400" />
+          {t("stats.chart_above_avg")}
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-sm bg-zinc-300 dark:bg-zinc-600" />
+          {t("stats.chart_below_avg")}
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="inline-block w-3.5 border-t border-dashed border-zinc-400" />
+          {t("stats.chart_avg_line")}
+        </span>
+      </div>
     </div>
   );
 }
@@ -73,6 +163,7 @@ const TIERS = [
 export default function StatsPage() {
   const router = useRouter();
   const { t } = useTranslation();
+  const locale = useLocale();
   const accountId = useSelectedAccountId();
   const [period, setPeriod] = useState<StatsPeriod>("7d");
   const [stats, setStats] = useState<StatsResponse | null>(null);
@@ -260,14 +351,19 @@ export default function StatsPage() {
             {/* Trend chart */}
             {stats.series.length >= 2 && (
               <section className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm">
-                <h2 className="text-sm font-semibold mb-4">
-                  {t("stats.chart_avg_views")}
-                </h2>
-                <BarChart
-                  bars={stats.series.map((b) => ({
-                    label: bucketLabel(b.bucket_start),
-                    value: b.avg_views,
-                  }))}
+                <div className="flex items-baseline justify-between gap-2 mb-4">
+                  <h2 className="text-sm font-semibold">
+                    {t("stats.chart_avg_views")}
+                  </h2>
+                  <span className="text-xs text-zinc-400">
+                    {t(`stats.gran_${GRANULARITY[period]}` as MessageKey)}
+                  </span>
+                </div>
+                <TrendChart
+                  series={stats.series}
+                  locale={locale}
+                  gran={GRANULARITY[period]}
+                  t={t}
                 />
               </section>
             )}

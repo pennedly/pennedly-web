@@ -15,6 +15,7 @@ import {
   ApiError,
   approveDraft,
   clearTokens,
+  dismissComment,
   fetchComments,
   generateReply,
   getTokens,
@@ -47,6 +48,7 @@ export default function RepliesPage() {
     text: string;
   } | null>(null);
   const [publishing, setPublishing] = useState(false);
+  const [confirmDismissId, setConfirmDismissId] = useState<number | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   function toast(message: string, tone: Toast["tone"] = "success") {
@@ -178,6 +180,20 @@ export default function RepliesPage() {
     }
   }
 
+  async function onDismiss(comment: CommentSummary) {
+    setConfirmDismissId(null);
+    const prev = comments;
+    setComments((s) => s.filter((x) => x.id !== comment.id)); // optimistic
+    captureEvent("ui.reply_dismiss_clicked", { comment_id: comment.id });
+    try {
+      await dismissComment(comment.id);
+      toast(t("replies.toast_dismissed"));
+    } catch (e) {
+      setComments(prev); // restore on failure
+      toast(errMsg(e), "error");
+    }
+  }
+
   if (checking) return null;
 
   if (bootError) {
@@ -273,16 +289,46 @@ export default function RepliesPage() {
                       </>
                     )}
                   </div>
-                  {c.comment_url && (
-                    <a
-                      href={c.comment_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="shrink-0 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 underline-offset-2 hover:underline"
-                    >
-                      {t("replies.view_comment")} ↗
-                    </a>
-                  )}
+                  <div className="flex items-center gap-3 shrink-0">
+                    {c.comment_url && (
+                      <a
+                        href={c.comment_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 underline-offset-2 hover:underline"
+                      >
+                        {t("replies.view_comment")} ↗
+                      </a>
+                    )}
+                    {confirmDismissId === c.id ? (
+                      <span className="flex items-center gap-2">
+                        <span className="text-zinc-500">
+                          {t("replies.confirm_dismiss")}
+                        </span>
+                        <button
+                          onClick={() => onDismiss(c)}
+                          className="text-red-600 dark:text-red-400 font-medium hover:underline"
+                        >
+                          {t("replies.dismiss")}
+                        </button>
+                        <button
+                          onClick={() => setConfirmDismissId(null)}
+                          className="text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                        >
+                          {t("common.cancel")}
+                        </button>
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => setConfirmDismissId(c.id)}
+                        title={t("replies.dismiss")}
+                        aria-label={t("replies.dismiss")}
+                        className="text-zinc-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <blockquote className="border-l-2 border-zinc-200 dark:border-zinc-700 pl-3 text-sm leading-relaxed text-zinc-800 dark:text-zinc-200 whitespace-pre-wrap">
                   {c.text ?? ""}

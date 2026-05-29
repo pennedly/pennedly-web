@@ -390,6 +390,14 @@ export async function fetchComments(
   );
 }
 
+// Remove a comment from the reply queue (won't-reply / stale / test data).
+// Only clears it from our queue — does not touch the comment on Threads.
+export async function dismissComment(
+  commentId: number,
+): Promise<{ comment_id: number; status: string }> {
+  return fetchApi(`/api/comments/${commentId}`, { method: "DELETE" });
+}
+
 // Generate an AI reply draft for a comment. The backend may decline
 // (is_skip) if the comment isn't worth replying to.
 export async function generateReply(
