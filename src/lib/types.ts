@@ -98,6 +98,8 @@ export type OnboardingResult = {
 // ── Stats (analytics dashboard) ──────────────────────────────────────
 // Mirrors api/stats.py.
 
+export type StatsPeriod = "today" | "yesterday" | "7d" | "30d" | "90d" | "all";
+
 export type TierCounts = {
   viral: number;
   good: number;
@@ -105,32 +107,37 @@ export type TierCounts = {
   flop: number;
 };
 
-export type StatsSummary = {
+export type PeriodSummary = {
   posts: number;
-  total_views: number;
-  total_likes: number;
-  total_comments: number;
+  views: number;
+  likes: number;
+  comments: number;
   avg_views: number;
   avg_likes: number;
   avg_comments: number;
   tier_counts: TierCounts;
-  wow_views_pct: number | null;
-  wow_posts_delta: number | null;
 };
 
-export type StatsWeek = {
-  week_start: string;
+export type StatsDeltas = {
+  views_pct: number | null;
+  posts_pct: number | null;
+  likes_pct: number | null;
+  comments_pct: number | null;
+};
+
+export type StatsBucket = {
+  bucket_start: string;
   posts: number;
   avg_views: number;
   sum_views: number;
-  avg_likes: number;
-  avg_comments: number;
 };
 
 export type StatsResponse = {
-  weeks: number;
-  summary: StatsSummary;
-  weekly: StatsWeek[];
+  period: string;
+  current: PeriodSummary;
+  previous: PeriodSummary | null;
+  deltas: StatsDeltas | null;
+  series: StatsBucket[];
 };
 
 export type GeneratedDraft = {
