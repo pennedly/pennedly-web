@@ -378,6 +378,15 @@ export const en = {
   "stats.tier_flop": "weak",
   "stats.weekly_views_title": "Average views per week",
   "stats.weekly_posts_title": "Posts per week",
+  "stats.period.today": "Today",
+  "stats.period.yesterday": "Yesterday",
+  "stats.period.7d": "7 days",
+  "stats.period.30d": "Month",
+  "stats.period.90d": "3 months",
+  "stats.period.all": "All time",
+  "stats.vs_prev": "vs previous",
+  "stats.chart_avg_views": "Avg views",
+  "stats.chart_posts": "Posts",
 
   // ── Translate widget (button/cached/fresh already defined above) ──
   "translate.translating": "translating…",

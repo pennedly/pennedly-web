@@ -28,6 +28,7 @@ import type {
   GeneratedDraft,
   OnboardingResult,
   OnboardingStatus,
+  StatsPeriod,
   StatsResponse,
   GeneratedReply,
   LanguageCode,
@@ -463,10 +464,10 @@ export async function onboardingFromScratch(
 // ── Stats ─────────────────────────────────────────────────────────
 export async function fetchStats(
   accountId: number,
-  weeks = 12,
+  period: StatsPeriod = "7d",
 ): Promise<StatsResponse> {
   return fetchApi<StatsResponse>(
-    `/api/accounts/${accountId}/stats?weeks=${weeks}`,
+    `/api/accounts/${accountId}/stats?period=${period}`,
   );
 }
 

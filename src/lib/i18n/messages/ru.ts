@@ -384,6 +384,15 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "stats.tier_flop": "слабые",
   "stats.weekly_views_title": "Средние просмотры по неделям",
   "stats.weekly_posts_title": "Постов по неделям",
+  "stats.period.today": "Сегодня",
+  "stats.period.yesterday": "Вчера",
+  "stats.period.7d": "7 дней",
+  "stats.period.30d": "Месяц",
+  "stats.period.90d": "3 месяца",
+  "stats.period.all": "Всё время",
+  "stats.vs_prev": "к прошлому периоду",
+  "stats.chart_avg_views": "Средние просмотры",
+  "stats.chart_posts": "Посты",
 
   // ── Виджет перевода (button/cached/fresh уже заданы выше) ──────
   "translate.translating": "перевожу…",
