@@ -139,12 +139,22 @@ export default function SettingsPage() {
               <p className="text-xs text-zinc-500 mb-3">
                 {t("onboarding.subtitle")}
               </p>
-              <Link
-                href="/app/onboarding"
-                className="inline-flex items-center px-4 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 text-sm font-medium text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-              >
-                {t("settings.voice_setup_cta")}
-              </Link>
+              <div className="flex flex-wrap items-center gap-3">
+                <Link
+                  href="/app/onboarding"
+                  className="inline-flex items-center px-4 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 text-sm font-medium text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                >
+                  {t("settings.voice_setup_cta")}
+                </Link>
+                {me.is_tester && (
+                  <Link
+                    href="/app/onboarding?preview=1"
+                    className="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium text-blue-700 dark:text-blue-400 hover:underline"
+                  >
+                    {t("settings.voice_preview_cta")}
+                  </Link>
+                )}
+              </div>
             </section>
           </>
         )}

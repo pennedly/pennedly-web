@@ -437,8 +437,26 @@ export const en = {
   "settings.logout": "Log out",
   "settings.voice_setup": "Voice setup",
   "settings.voice_setup_cta": "Open setup",
+  "settings.voice_preview_cta": "Preview (nothing saved)",
   "onboarding.already_setup":
     "Your voice is already set up — going through this again replaces it (the previous version is kept).",
+  "onboarding.preview_banner":
+    "Preview mode — nothing is saved to your account. Run it for real, see the result, then it's discarded.",
+  "onboarding.preview_result_title": "Voice preview",
+  "onboarding.preview_not_saved":
+    "This is only a preview — nothing was saved to your account.",
+  "onboarding.preview_posts_analyzed": "Posts analyzed:",
+  "onboarding.preview_would_topics": "Topics that would be created:",
+  "onboarding.preview_full_rolebook":
+    "Full role-book (what generation would use)",
+  "onboarding.preview_back": "← Back / run again",
+  "onboarding.sec_intro": "Intro",
+  "onboarding.sec_themes": "Topics",
+  "onboarding.sec_exclude": "Avoid",
+  "onboarding.sec_voice": "Voice",
+  "onboarding.sec_do": "Do",
+  "onboarding.sec_dont": "Don't",
+  "onboarding.sec_examples": "Examples",
 } as const;
 
 export type MessageKey = keyof typeof en;

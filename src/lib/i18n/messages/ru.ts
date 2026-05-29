@@ -443,6 +443,24 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "settings.logout": "Выйти",
   "settings.voice_setup": "Настройка голоса",
   "settings.voice_setup_cta": "Открыть настройку",
+  "settings.voice_preview_cta": "Режим просмотра (без сохранения)",
   "onboarding.already_setup":
     "Твой голос уже настроен — повторная настройка заменит его (старая версия сохранится).",
+  "onboarding.preview_banner":
+    "Режим просмотра — в аккаунт ничего не сохраняется. Прогон настоящий, результат показывается и сбрасывается.",
+  "onboarding.preview_result_title": "Предпросмотр голоса",
+  "onboarding.preview_not_saved":
+    "Это только предпросмотр — в аккаунт ничего не сохранилось.",
+  "onboarding.preview_posts_analyzed": "Проанализировано постов:",
+  "onboarding.preview_would_topics": "Будут созданы темы:",
+  "onboarding.preview_full_rolebook":
+    "Полный роль-бук (что использует генерация)",
+  "onboarding.preview_back": "← Назад / прогнать снова",
+  "onboarding.sec_intro": "Вступление",
+  "onboarding.sec_themes": "Темы",
+  "onboarding.sec_exclude": "Избегать",
+  "onboarding.sec_voice": "Голос",
+  "onboarding.sec_do": "Делать",
+  "onboarding.sec_dont": "Не делать",
+  "onboarding.sec_examples": "Примеры",
 };
