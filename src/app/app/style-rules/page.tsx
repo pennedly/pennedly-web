@@ -26,8 +26,6 @@ import {
 import { captureEvent } from "@/lib/analytics";
 import { useSelectedAccountId } from "@/lib/account";
 import { useTranslation } from "@/lib/i18n";
-import { AccountSwitcher } from "@/components/AccountSwitcher";
-import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import type { StyleRule } from "@/lib/types";
 
 // Mirrors generation/default_rules.PUNCTUATION_RULE_KEY — the one rule
@@ -149,24 +147,6 @@ export default function StyleRulesEditor() {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
-      <header className="sticky top-0 z-20 bg-white/90 dark:bg-zinc-950/90 backdrop-blur border-b border-zinc-200 dark:border-zinc-800">
-        <div className="max-w-3xl mx-auto px-6 py-3 flex items-center justify-between gap-3">
-          <Link
-            href="/app"
-            className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
-          >
-            {t("style_rules.back")}
-          </Link>
-          <div className="flex items-center gap-3">
-            <AccountSwitcher />
-            <LanguageSwitcher />
-            <div className="text-xs text-zinc-500">
-              {onCount} / {rules.length} {t("style_rules.count_on")}
-            </div>
-          </div>
-        </div>
-      </header>
-
       <main className="max-w-3xl mx-auto px-6 py-8 space-y-6">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">

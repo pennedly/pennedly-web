@@ -308,6 +308,10 @@ export const en = {
 
   // ── My Feed (posts + analytics) ───────────────────────────────
   "dashboard.nav.feed": "feed",
+  "nav.studio": "Studio",
+  "nav.group.content": "Content",
+  "nav.group.growth": "Growth",
+  "nav.group.voice": "Voice",
   "feed.back": "← dashboard",
   "feed.title": "My Feed",
   "feed.subtitle": "Your posts — each with how it did versus your usual.",
