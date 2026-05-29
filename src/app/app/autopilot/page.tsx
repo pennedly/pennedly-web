@@ -15,6 +15,7 @@ import {
   clearTokens,
   createAutopostRule,
   deleteAutopostRule,
+  fetchAutopostActivity,
   fetchAutopostRules,
   getTokens,
   setAutopilotMaster,
@@ -24,7 +25,7 @@ import { captureEvent } from "@/lib/analytics";
 import { useSelectedAccountId } from "@/lib/account";
 import { useTranslation } from "@/lib/i18n";
 import { useTesterGuard } from "@/lib/tester";
-import type { AutopostRule, TopicOption } from "@/lib/types";
+import type { AutopostActivity, AutopostRule, TopicOption } from "@/lib/types";
 
 type Toast = { id: number; message: string; tone: "success" | "error" };
 
@@ -74,6 +75,7 @@ export default function AutopilotPage() {
   const [master, setMaster] = useState(false);
   const [rules, setRules] = useState<AutopostRule[]>([]);
   const [topics, setTopics] = useState<TopicOption[]>([]);
+  const [activity, setActivity] = useState<AutopostActivity | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [bootError, setBootError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
@@ -98,6 +100,8 @@ export default function AutopilotPage() {
         setMaster(data.master_enabled);
         setRules(data.rules);
         setTopics(data.topics);
+        // Activity is secondary — never let it block the editor.
+        fetchAutopostActivity(accountId).then(setActivity).catch(() => {});
       } catch (e) {
         if (e instanceof ApiError && e.status === 401) {
           clearTokens();
@@ -370,6 +374,88 @@ export default function AutopilotPage() {
               </button>
             </section>
 
+            {/* Activity — what autopilot actually did (read-only) */}
+            {activity && rules.length > 0 && (
+              <section className="space-y-3">
+                <h2 className="text-base font-semibold">
+                  {t("autopilot.activity_title")}
+                </h2>
+                {activity.posts.length === 0 &&
+                !activity.rules.some(
+                  (r) => r.last_post_at || r.last_reply_at,
+                ) ? (
+                  <div className="rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700 p-6 text-center">
+                    <p className="text-sm text-zinc-500">
+                      {t("autopilot.activity_empty")}
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm space-y-1.5">
+                      {activity.rules.map((r) => (
+                        <div
+                          key={r.id}
+                          className="flex flex-wrap items-center gap-x-3 text-sm"
+                        >
+                          <span className="font-medium">
+                            {r.name || `#${r.id}`}
+                          </span>
+                          <span className="text-xs text-zinc-500">
+                            {t("autopilot.activity_today")}: {r.posts_today}{" "}
+                            {t("autopilot.activity_posts")} · {r.replies_today}{" "}
+                            {t("autopilot.activity_replies")}
+                          </span>
+                          {r.last_post_at && (
+                            <span className="text-xs text-zinc-400">
+                              · {t("autopilot.activity_last_post")}{" "}
+                              {fmtDate(r.last_post_at)}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    {activity.posts.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-xs text-zinc-500">
+                          {t("autopilot.activity_recent")}
+                        </p>
+                        {activity.posts.map((p) => (
+                          <div
+                            key={p.post_id}
+                            className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3"
+                          >
+                            <div className="flex items-center justify-between gap-2 text-xs text-zinc-500 mb-1">
+                              <span className="truncate">
+                                {p.rule_name ? `${p.rule_name} · ` : ""}
+                                {fmtDate(p.published_at)}
+                              </span>
+                              {p.threads_url && (
+                                <a
+                                  href={p.threads_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="shrink-0 hover:underline"
+                                >
+                                  ↗
+                                </a>
+                              )}
+                            </div>
+                            <p className="text-sm text-zinc-700 dark:text-zinc-300 line-clamp-2 whitespace-pre-wrap">
+                              {p.text}
+                            </p>
+                            <p className="text-xs text-zinc-400 mt-1">
+                              {p.views ?? 0} · {p.likes ?? 0} ♥ ·{" "}
+                              {p.comments ?? 0} 💬
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </section>
+            )}
+
             <div className="text-xs text-zinc-500 space-y-1">
               <p>
                 {t("autopilot.uses_voice")}{" "}
@@ -403,4 +489,9 @@ export default function AutopilotPage() {
       </div>
     </div>
   );
+}
+
+function fmtDate(iso: string | null): string {
+  if (!iso) return "";
+  return new Date(iso).toLocaleDateString();
 }

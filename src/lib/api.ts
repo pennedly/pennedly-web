@@ -15,6 +15,7 @@ import type {
   AccountsList,
   ApprovalResult,
   AutopilotConfig,
+  AutopostActivity,
   AutopostRule,
   AutopostRulesResponse,
   AuditDetail,
@@ -550,6 +551,14 @@ export async function fetchAutopostRules(
 ): Promise<AutopostRulesResponse> {
   return fetchApi<AutopostRulesResponse>(
     `/api/accounts/${accountId}/autopost-rules`,
+  );
+}
+
+export async function fetchAutopostActivity(
+  accountId: number,
+): Promise<AutopostActivity> {
+  return fetchApi<AutopostActivity>(
+    `/api/accounts/${accountId}/autopost-activity`,
   );
 }
 

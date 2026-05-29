@@ -380,6 +380,34 @@ export type AutopostRulesResponse = {
   topics: TopicOption[];
 };
 
+// What autopilot actually did (read-only activity log).
+export type AutopostActivityRule = {
+  id: number;
+  name: string | null;
+  enabled: boolean;
+  last_post_at: string | null;
+  posts_today: number;
+  last_reply_at: string | null;
+  replies_today: number;
+};
+
+export type AutopostActivityPost = {
+  post_id: number;
+  rule_id: number | null;
+  rule_name: string | null;
+  text: string | null;
+  published_at: string | null;
+  views: number | null;
+  likes: number | null;
+  comments: number | null;
+  threads_url: string | null;
+};
+
+export type AutopostActivity = {
+  rules: AutopostActivityRule[];
+  posts: AutopostActivityPost[];
+};
+
 export type RefineResult = {
   draft_id: number;
   text: string;
