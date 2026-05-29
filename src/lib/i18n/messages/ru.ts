@@ -456,6 +456,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "onboarding.preview_full_rolebook":
     "Полный роль-бук (что использует генерация)",
   "onboarding.preview_back": "← Назад / прогнать снова",
+  "onboarding.exit": "Назад",
   "onboarding.sec_intro": "Вступление",
   "onboarding.sec_themes": "Темы",
   "onboarding.sec_exclude": "Избегать",

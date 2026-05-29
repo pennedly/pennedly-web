@@ -450,6 +450,7 @@ export const en = {
   "onboarding.preview_full_rolebook":
     "Full role-book (what generation would use)",
   "onboarding.preview_back": "← Back / run again",
+  "onboarding.exit": "Back",
   "onboarding.sec_intro": "Intro",
   "onboarding.sec_themes": "Topics",
   "onboarding.sec_exclude": "Avoid",
