@@ -208,6 +208,20 @@ export type DeletePostResult = {
   deleted_at: string;
 };
 
+// Per-account autopilot config. Default off; the user assembles their own
+// from a few clear controls. The autopilot worker reads this to decide
+// what to post / reply automatically.
+export type AutopilotConfig = {
+  enabled: boolean;
+  post_enabled: boolean;
+  posts_per_day: number;
+  quiet_start_hour: number | null;
+  quiet_end_hour: number | null;
+  reply_enabled: boolean;
+  reply_audience: string; // "fans" | "all_except_trolls" | "questions"
+  replies_per_day: number;
+};
+
 export type RefineResult = {
   draft_id: number;
   text: string;

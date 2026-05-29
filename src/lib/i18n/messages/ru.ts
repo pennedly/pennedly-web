@@ -278,4 +278,28 @@ export const ru: Partial<Record<MessageKey, string>> = {
     "Пост будет навсегда удалён из твоего аккаунта Threads. Отменить нельзя.",
   "posts.confirm_cta": "удалить из Threads",
   "posts.toast_deleted": "пост удалён",
+
+  // ── Autopilot ──────────────────────────────────────────────────
+  "dashboard.nav.autopilot": "автопилот",
+  "autopilot.back": "← дашборд",
+  "autopilot.title": "Автопилот",
+  "autopilot.subtitle":
+    "По умолчанию выключен. Включай только то, что хочешь — Pennedly постит и отвечает в твоём голосе, на твоих условиях. Паузу можно в любой момент.",
+  "autopilot.master": "Автопилот включён",
+  "autopilot.posts_title": "Авто-постинг",
+  "autopilot.post_enabled": "Генерировать и публиковать посты автоматически",
+  "autopilot.posts_per_day": "Постов в день",
+  "autopilot.quiet_hours": "Тихие часы (не постить)",
+  "autopilot.quiet_off": "выкл",
+  "autopilot.replies_title": "Авто-ответы на комментарии",
+  "autopilot.reply_enabled": "Отвечать на комментарии автоматически",
+  "autopilot.reply_audience": "Кому отвечать",
+  "autopilot.audience_fans": "только фанаты / позитив",
+  "autopilot.audience_all_except_trolls": "всем, кроме троллей",
+  "autopilot.audience_questions": "только на вопросы",
+  "autopilot.replies_per_day": "Ответов в день",
+  "autopilot.uses_voice": "Автопилот следует твоему «Голосу» и правилам стиля.",
+  "autopilot.safety":
+    "Публикуется только то, что прошло проверку качества; действуют дневные лимиты; всё логируется и обратимо.",
+  "autopilot.saved": "автопилот сохранён",
 };
