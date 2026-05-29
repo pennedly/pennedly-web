@@ -1,10 +1,10 @@
 "use client";
 
-// Autopilot settings — opt-in, OFF by default. A few clear controls to
-// assemble your own autopilot: auto-post cadence + quiet hours, and
-// auto-reply audience + daily cap. Tester-gated. The autopilot worker
-// reads this config; this screen only edits it. Voice/style come from
-// the existing Voice + Style screens (linked, not duplicated here).
+// Autopilot — opt-in, OFF by default. A global master switch + a list of
+// "autopost objects": each posts once a day at its hour (optionally on a
+// topic) and carries its own auto-reply toggle (replies to comments under
+// THAT object's posts). Add / edit / delete objects freely. Tester-gated.
+// The autopilot_tick worker reads these; this screen only edits them.
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -13,15 +13,18 @@ import { useRouter } from "next/navigation";
 import {
   ApiError,
   clearTokens,
-  fetchAutopilot,
+  createAutopostRule,
+  deleteAutopostRule,
+  fetchAutopostRules,
   getTokens,
-  updateAutopilot,
+  setAutopilotMaster,
+  updateAutopostRule,
 } from "@/lib/api";
 import { captureEvent } from "@/lib/analytics";
 import { useSelectedAccountId } from "@/lib/account";
 import { useTranslation } from "@/lib/i18n";
 import { useTesterGuard } from "@/lib/tester";
-import type { AutopilotConfig } from "@/lib/types";
+import type { AutopostRule, TopicOption } from "@/lib/types";
 
 type Toast = { id: number; message: string; tone: "success" | "error" };
 
@@ -40,7 +43,8 @@ function Toggle({
     <button
       type="button"
       onClick={() => onChange(!on)}
-      className="flex items-center gap-3 text-left"
+      className="flex items-center gap-2.5 text-left"
+      aria-label={label || "toggle"}
     >
       <span
         className={`relative inline-flex h-5 w-9 shrink-0 rounded-full transition-colors ${
@@ -54,20 +58,25 @@ function Toggle({
           }`}
         />
       </span>
-      <span className="text-sm">{label}</span>
+      {label && <span className="text-sm">{label}</span>}
     </button>
   );
 }
+
+const SELECT =
+  "rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700";
 
 export default function AutopilotPage() {
   const router = useRouter();
   const { t } = useTranslation();
   const { checking } = useTesterGuard();
   const accountId = useSelectedAccountId();
-  const [config, setConfig] = useState<AutopilotConfig | null>(null);
+  const [master, setMaster] = useState(false);
+  const [rules, setRules] = useState<AutopostRule[]>([]);
+  const [topics, setTopics] = useState<TopicOption[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [bootError, setBootError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   function toast(message: string, tone: Toast["tone"] = "success") {
@@ -85,7 +94,10 @@ export default function AutopilotPage() {
     setLoaded(false);
     (async () => {
       try {
-        setConfig(await fetchAutopilot(accountId));
+        const data = await fetchAutopostRules(accountId);
+        setMaster(data.master_enabled);
+        setRules(data.rules);
+        setTopics(data.topics);
       } catch (e) {
         if (e instanceof ApiError && e.status === 401) {
           clearTokens();
@@ -99,27 +111,45 @@ export default function AutopilotPage() {
     })();
   }, [accountId, router]);
 
-  function update<K extends keyof AutopilotConfig>(
-    key: K,
-    value: AutopilotConfig[K],
-  ) {
-    setConfig((c) => (c ? { ...c, [key]: value } : c));
+  async function onMaster(v: boolean) {
+    if (accountId === null) return;
+    setMaster(v);
+    captureEvent("ui.autopilot_master", { account_id: accountId, enabled: v });
+    try {
+      await setAutopilotMaster(accountId, v);
+    } catch (e) {
+      setMaster(!v);
+      toast(String(e), "error");
+    }
   }
 
-  async function onSave() {
-    if (config === null || accountId === null) return;
-    setSaving(true);
-    captureEvent("ui.autopilot_save", {
-      account_id: accountId,
-      enabled: config.enabled,
-    });
+  async function onAdd() {
+    if (accountId === null) return;
+    captureEvent("ui.autopilot_add_object", { account_id: accountId });
     try {
-      setConfig(await updateAutopilot(accountId, config));
-      toast(t("autopilot.saved"));
+      const rule = await createAutopostRule(accountId, { post_hour: 9 });
+      setRules((rs) => [...rs, rule]);
     } catch (e) {
       toast(String(e), "error");
-    } finally {
-      setSaving(false);
+    }
+  }
+
+  async function patchRule(id: number, patch: Partial<AutopostRule>) {
+    setRules((rs) => rs.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+    try {
+      await updateAutopostRule(id, patch);
+    } catch (e) {
+      toast(String(e), "error");
+    }
+  }
+
+  async function onDelete(id: number) {
+    try {
+      await deleteAutopostRule(id);
+      setRules((rs) => rs.filter((r) => r.id !== id));
+      setConfirmDelete(null);
+    } catch (e) {
+      toast(String(e), "error");
     }
   }
 
@@ -135,9 +165,6 @@ export default function AutopilotPage() {
     );
   }
 
-  const selectCls =
-    "rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700";
-
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
       <main className="max-w-3xl mx-auto px-6 py-8 space-y-6">
@@ -148,132 +175,201 @@ export default function AutopilotPage() {
           <p className="text-sm text-zinc-500 mt-1">{t("autopilot.subtitle")}</p>
         </div>
 
-        {!loaded || config === null ? (
+        {!loaded ? (
           <p className="text-sm text-zinc-500">{t("common.loading")}</p>
         ) : (
           <>
             {/* Master switch */}
             <section className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm">
-              <Toggle
-                on={config.enabled}
-                onChange={(v) => update("enabled", v)}
-                label={t("autopilot.master")}
-              />
+              <Toggle on={master} onChange={onMaster} label={t("autopilot.master")} />
             </section>
 
-            {/* Auto-post */}
-            <section className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm space-y-4">
-              <h2 className="text-sm font-semibold">
-                {t("autopilot.posts_title")}
-              </h2>
-              <Toggle
-                on={config.post_enabled}
-                onChange={(v) => update("post_enabled", v)}
-                label={t("autopilot.post_enabled")}
-              />
-              <div className="flex items-center justify-between gap-3 text-sm">
-                <span>{t("autopilot.posts_per_day")}</span>
-                <select
-                  value={config.posts_per_day}
-                  onChange={(e) =>
-                    update("posts_per_day", Number(e.target.value))
-                  }
-                  className={selectCls}
-                >
-                  {[1, 2, 3, 5].map((n) => (
-                    <option key={n} value={n}>
-                      {n}
-                    </option>
-                  ))}
-                </select>
+            {/* Autopost objects */}
+            <section className="space-y-3">
+              <div>
+                <h2 className="text-base font-semibold">
+                  {t("autopilot.objects_title")}
+                </h2>
+                <p className="text-xs text-zinc-500 mt-0.5">
+                  {t("autopilot.objects_subtitle")}
+                </p>
               </div>
-              <div className="flex items-center justify-between gap-3 text-sm">
-                <span>{t("autopilot.quiet_hours")}</span>
-                <div className="flex items-center gap-2">
-                  <select
-                    value={config.quiet_start_hour ?? ""}
-                    onChange={(e) =>
-                      update(
-                        "quiet_start_hour",
-                        e.target.value === "" ? null : Number(e.target.value),
-                      )
-                    }
-                    className={selectCls}
-                  >
-                    <option value="">{t("autopilot.quiet_off")}</option>
-                    {HOURS.map((h) => (
-                      <option key={h} value={h}>
-                        {String(h).padStart(2, "0")}:00
-                      </option>
-                    ))}
-                  </select>
-                  <span className="text-zinc-400">→</span>
-                  <select
-                    value={config.quiet_end_hour ?? ""}
-                    onChange={(e) =>
-                      update(
-                        "quiet_end_hour",
-                        e.target.value === "" ? null : Number(e.target.value),
-                      )
-                    }
-                    className={selectCls}
-                  >
-                    <option value="">{t("autopilot.quiet_off")}</option>
-                    {HOURS.map((h) => (
-                      <option key={h} value={h}>
-                        {String(h).padStart(2, "0")}:00
-                      </option>
-                    ))}
-                  </select>
+
+              {rules.length === 0 && (
+                <div className="rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700 p-6 text-center">
+                  <p className="text-sm text-zinc-500">
+                    {t("autopilot.no_objects")}
+                  </p>
                 </div>
-              </div>
+              )}
+
+              {rules.map((r) => (
+                <div
+                  key={r.id}
+                  className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm space-y-3"
+                >
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="text"
+                      value={r.name ?? ""}
+                      onChange={(e) =>
+                        setRules((rs) =>
+                          rs.map((x) =>
+                            x.id === r.id ? { ...x, name: e.target.value } : x,
+                          ),
+                        )
+                      }
+                      onBlur={(e) =>
+                        patchRule(r.id, { name: e.target.value.trim() || null })
+                      }
+                      placeholder={t("autopilot.object_name_ph")}
+                      className="flex-1 bg-transparent text-sm font-medium focus:outline-none border-b border-transparent focus:border-zinc-300 dark:focus:border-zinc-700"
+                    />
+                    <Toggle
+                      on={r.enabled}
+                      onChange={(v) => patchRule(r.id, { enabled: v })}
+                      label=""
+                    />
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+                    <label className="inline-flex items-center gap-2">
+                      <span className="text-zinc-500">
+                        {t("autopilot.object_time")}
+                      </span>
+                      <select
+                        value={r.post_hour}
+                        onChange={(e) =>
+                          patchRule(r.id, { post_hour: Number(e.target.value) })
+                        }
+                        className={SELECT}
+                      >
+                        {HOURS.map((h) => (
+                          <option key={h} value={h}>
+                            {String(h).padStart(2, "0")}:00
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="inline-flex items-center gap-2">
+                      <span className="text-zinc-500">
+                        {t("autopilot.object_topic")}
+                      </span>
+                      <select
+                        value={r.topic_id ?? ""}
+                        onChange={(e) =>
+                          patchRule(r.id, {
+                            topic_id:
+                              e.target.value === ""
+                                ? null
+                                : Number(e.target.value),
+                          })
+                        }
+                        className={SELECT}
+                      >
+                        <option value="">{t("autopilot.any_topic")}</option>
+                        {topics.map((tp) => (
+                          <option key={tp.id} value={tp.id}>
+                            {tp.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+
+                  <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 space-y-3">
+                    <Toggle
+                      on={r.auto_reply}
+                      onChange={(v) => patchRule(r.id, { auto_reply: v })}
+                      label={t("autopilot.object_autoreply")}
+                    />
+                    {r.auto_reply && (
+                      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm pl-11">
+                        <label className="inline-flex items-center gap-2">
+                          <span className="text-zinc-500">
+                            {t("autopilot.reply_audience")}
+                          </span>
+                          <select
+                            value={r.reply_audience}
+                            onChange={(e) =>
+                              patchRule(r.id, { reply_audience: e.target.value })
+                            }
+                            className={SELECT}
+                          >
+                            <option value="fans">
+                              {t("autopilot.audience_fans")}
+                            </option>
+                            <option value="all_except_trolls">
+                              {t("autopilot.audience_all_except_trolls")}
+                            </option>
+                            <option value="questions">
+                              {t("autopilot.audience_questions")}
+                            </option>
+                          </select>
+                        </label>
+                        <label className="inline-flex items-center gap-2">
+                          <span className="text-zinc-500">
+                            {t("autopilot.replies_per_day")}
+                          </span>
+                          <select
+                            value={r.replies_per_day}
+                            onChange={(e) =>
+                              patchRule(r.id, {
+                                replies_per_day: Number(e.target.value),
+                              })
+                            }
+                            className={SELECT}
+                          >
+                            {[1, 3, 5, 10].map((n) => (
+                              <option key={n} value={n}>
+                                {n}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex justify-end pt-1">
+                    {confirmDelete === r.id ? (
+                      <span className="inline-flex items-center gap-2 text-xs">
+                        <span className="text-zinc-500">
+                          {t("autopilot.confirm_delete_object")}
+                        </span>
+                        <button
+                          onClick={() => onDelete(r.id)}
+                          className="text-red-600 dark:text-red-400 hover:text-red-700 font-medium"
+                        >
+                          {t("autopilot.delete_object")}
+                        </button>
+                        <button
+                          onClick={() => setConfirmDelete(null)}
+                          className="text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                        >
+                          {t("common.cancel")}
+                        </button>
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => setConfirmDelete(r.id)}
+                        className="text-xs text-zinc-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                      >
+                        {t("autopilot.delete_object")}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+
+              <button
+                onClick={onAdd}
+                className="inline-flex items-center px-4 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 text-sm font-medium text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              >
+                {t("autopilot.add_object")}
+              </button>
             </section>
 
-            {/* Auto-reply */}
-            <section className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm space-y-4">
-              <h2 className="text-sm font-semibold">
-                {t("autopilot.replies_title")}
-              </h2>
-              <Toggle
-                on={config.reply_enabled}
-                onChange={(v) => update("reply_enabled", v)}
-                label={t("autopilot.reply_enabled")}
-              />
-              <div className="flex items-center justify-between gap-3 text-sm">
-                <span>{t("autopilot.reply_audience")}</span>
-                <select
-                  value={config.reply_audience}
-                  onChange={(e) => update("reply_audience", e.target.value)}
-                  className={selectCls}
-                >
-                  <option value="fans">{t("autopilot.audience_fans")}</option>
-                  <option value="all_except_trolls">
-                    {t("autopilot.audience_all_except_trolls")}
-                  </option>
-                  <option value="questions">
-                    {t("autopilot.audience_questions")}
-                  </option>
-                </select>
-              </div>
-              <div className="flex items-center justify-between gap-3 text-sm">
-                <span>{t("autopilot.replies_per_day")}</span>
-                <select
-                  value={config.replies_per_day}
-                  onChange={(e) =>
-                    update("replies_per_day", Number(e.target.value))
-                  }
-                  className={selectCls}
-                >
-                  {[1, 3, 5, 10].map((n) => (
-                    <option key={n} value={n}>
-                      {n}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </section>
-
-            {/* Notes */}
             <div className="text-xs text-zinc-500 space-y-1">
               <p>
                 {t("autopilot.uses_voice")}{" "}
@@ -286,23 +382,6 @@ export default function AutopilotPage() {
                 </Link>
               </p>
               <p>{t("autopilot.safety")}</p>
-            </div>
-
-            {/* Save bar */}
-            <div className="sticky bottom-4 flex items-center justify-end gap-3 bg-white/95 dark:bg-zinc-950/95 backdrop-blur border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 shadow-md">
-              <button
-                onClick={onSave}
-                disabled={saving}
-                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-md bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 text-sm font-medium hover:bg-zinc-700 dark:hover:bg-white disabled:opacity-50 transition-colors"
-              >
-                {saving && (
-                  <span
-                    className="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"
-                    aria-hidden
-                  />
-                )}
-                {saving ? t("common.saving") : t("common.save")}
-              </button>
             </div>
           </>
         )}

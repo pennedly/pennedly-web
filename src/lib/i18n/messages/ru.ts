@@ -313,6 +313,18 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "autopilot.safety":
     "Публикуется только то, что прошло проверку качества; действуют дневные лимиты; всё логируется и обратимо.",
   "autopilot.saved": "автопилот сохранён",
+  "autopilot.objects_title": "Объекты автопостинга",
+  "autopilot.objects_subtitle":
+    "Каждый постит раз в день в своё время. Больше постов в день — больше объектов.",
+  "autopilot.add_object": "+ добавить объект",
+  "autopilot.no_objects": "Объектов пока нет. Добавь первый, чтобы начать.",
+  "autopilot.object_name_ph": "название (необязательно)",
+  "autopilot.object_topic": "Тема",
+  "autopilot.any_topic": "любая (по очереди)",
+  "autopilot.object_time": "Постить в",
+  "autopilot.object_autoreply": "Авто-ответы на его комментарии",
+  "autopilot.delete_object": "удалить",
+  "autopilot.confirm_delete_object": "Удалить этот объект?",
 
   // ── Моя лента (посты + аналитика) ─────────────────────────────
   "dashboard.nav.feed": "лента",

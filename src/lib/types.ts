@@ -344,6 +344,29 @@ export type AutopilotConfig = {
   replies_per_day: number;
 };
 
+// ── Autopost objects (autopilot redesign) ────────────────────────────
+// Mirrors api/autopost_rules.py. Each object = one daily auto-post at
+// post_hour, optional topic, with its own auto-reply toggle.
+
+export type AutopostRule = {
+  id: number;
+  name: string | null;
+  topic_id: number | null;
+  post_hour: number;
+  enabled: boolean;
+  auto_reply: boolean;
+  reply_audience: string;
+  replies_per_day: number;
+};
+
+export type TopicOption = { id: number; label: string };
+
+export type AutopostRulesResponse = {
+  master_enabled: boolean;
+  rules: AutopostRule[];
+  topics: TopicOption[];
+};
+
 export type RefineResult = {
   draft_id: number;
   text: string;

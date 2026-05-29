@@ -15,6 +15,8 @@ import type {
   AccountsList,
   ApprovalResult,
   AutopilotConfig,
+  AutopostRule,
+  AutopostRulesResponse,
   AuditDetail,
   AuditsList,
   BatchGenerateResult,
@@ -498,6 +500,51 @@ export async function updateAutopilot(
     method: "PUT",
     body: JSON.stringify(config),
   });
+}
+
+// ── Autopost objects (autopilot redesign) ─────────────────────────
+export async function fetchAutopostRules(
+  accountId: number,
+): Promise<AutopostRulesResponse> {
+  return fetchApi<AutopostRulesResponse>(
+    `/api/accounts/${accountId}/autopost-rules`,
+  );
+}
+
+export async function setAutopilotMaster(
+  accountId: number,
+  enabled: boolean,
+): Promise<{ master_enabled: boolean }> {
+  return fetchApi(`/api/accounts/${accountId}/autopost-rules/master`, {
+    method: "PUT",
+    body: JSON.stringify({ enabled }),
+  });
+}
+
+export async function createAutopostRule(
+  accountId: number,
+  body: Partial<Omit<AutopostRule, "id" | "enabled">>,
+): Promise<AutopostRule> {
+  return fetchApi<AutopostRule>(`/api/accounts/${accountId}/autopost-rules`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function updateAutopostRule(
+  ruleId: number,
+  patch: Partial<Omit<AutopostRule, "id">>,
+): Promise<AutopostRule> {
+  return fetchApi<AutopostRule>(`/api/autopost-rules/${ruleId}`, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+}
+
+export async function deleteAutopostRule(
+  ruleId: number,
+): Promise<{ id: number; status: string }> {
+  return fetchApi(`/api/autopost-rules/${ruleId}`, { method: "DELETE" });
 }
 
 export async function refineDraft(

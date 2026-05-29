@@ -308,6 +308,18 @@ export const en = {
   "autopilot.safety":
     "Only drafts that pass quality checks are published; daily limits apply; everything is logged and can be undone.",
   "autopilot.saved": "autopilot saved",
+  "autopilot.objects_title": "Autopost objects",
+  "autopilot.objects_subtitle":
+    "Each posts once a day at its time. More posts a day = more objects.",
+  "autopilot.add_object": "+ add object",
+  "autopilot.no_objects": "No objects yet. Add one to start.",
+  "autopilot.object_name_ph": "name (optional)",
+  "autopilot.object_topic": "Topic",
+  "autopilot.any_topic": "any (round-robin)",
+  "autopilot.object_time": "Post at",
+  "autopilot.object_autoreply": "Auto-reply to its comments",
+  "autopilot.delete_object": "delete",
+  "autopilot.confirm_delete_object": "Delete this object?",
 
   // ── My Feed (posts + analytics) ───────────────────────────────
   "dashboard.nav.feed": "feed",
