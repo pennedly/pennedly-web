@@ -359,6 +359,25 @@ export const en = {
   "onboarding.creating": "Creating…",
   "onboarding.back": "← back",
   "onboarding.error_empty": "Add at least a voice description or one topic.",
+
+  // ── Stats (analytics) ─────────────────────────────────────────
+  "dashboard.nav.stats": "stats",
+  "stats.title": "Statistics",
+  "stats.subtitle": "How your account is doing over recent weeks.",
+  "stats.empty": "No posts yet. Stats appear here as you publish.",
+  "stats.card_posts": "Posts",
+  "stats.card_views": "Total views",
+  "stats.card_avg_views": "Avg views / post",
+  "stats.card_avg_likes": "Avg likes / post",
+  "stats.card_avg_comments": "Avg comments / post",
+  "stats.vs_last_week": "vs last week",
+  "stats.tiers_title": "How viral your posts were",
+  "stats.tier_viral": "viral",
+  "stats.tier_good": "good",
+  "stats.tier_mid": "average",
+  "stats.tier_flop": "weak",
+  "stats.weekly_views_title": "Average views per week",
+  "stats.weekly_posts_title": "Posts per week",
 } as const;
 
 export type MessageKey = keyof typeof en;

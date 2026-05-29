@@ -365,4 +365,23 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "onboarding.creating": "Создаю…",
   "onboarding.back": "← назад",
   "onboarding.error_empty": "Добавь хотя бы описание голоса или одну тему.",
+
+  // ── Статистика ────────────────────────────────────────────────
+  "dashboard.nav.stats": "статистика",
+  "stats.title": "Статистика",
+  "stats.subtitle": "Как идут дела у аккаунта за последние недели.",
+  "stats.empty": "Постов пока нет. Статистика появится здесь, как начнёшь публиковать.",
+  "stats.card_posts": "Постов",
+  "stats.card_views": "Всего просмотров",
+  "stats.card_avg_views": "Просмотров на пост",
+  "stats.card_avg_likes": "Лайков на пост",
+  "stats.card_avg_comments": "Комментариев на пост",
+  "stats.vs_last_week": "к прошлой неделе",
+  "stats.tiers_title": "Насколько вирусными были посты",
+  "stats.tier_viral": "вирусные",
+  "stats.tier_good": "хорошие",
+  "stats.tier_mid": "средние",
+  "stats.tier_flop": "слабые",
+  "stats.weekly_views_title": "Средние просмотры по неделям",
+  "stats.weekly_posts_title": "Постов по неделям",
 };

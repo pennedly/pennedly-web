@@ -28,6 +28,7 @@ import type {
   GeneratedDraft,
   OnboardingResult,
   OnboardingStatus,
+  StatsResponse,
   GeneratedReply,
   LanguageCode,
   LintFix,
@@ -456,6 +457,16 @@ export async function onboardingFromScratch(
   return fetchApi<OnboardingResult>(
     `/api/accounts/${accountId}/onboarding/from-scratch`,
     { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+// ── Stats ─────────────────────────────────────────────────────────
+export async function fetchStats(
+  accountId: number,
+  weeks = 12,
+): Promise<StatsResponse> {
+  return fetchApi<StatsResponse>(
+    `/api/accounts/${accountId}/stats?weeks=${weeks}`,
   );
 }
 
