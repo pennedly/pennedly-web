@@ -95,6 +95,44 @@ export type OnboardingResult = {
   posts_analyzed: number | null;
 };
 
+// ── Stats (analytics dashboard) ──────────────────────────────────────
+// Mirrors api/stats.py.
+
+export type TierCounts = {
+  viral: number;
+  good: number;
+  mid: number;
+  flop: number;
+};
+
+export type StatsSummary = {
+  posts: number;
+  total_views: number;
+  total_likes: number;
+  total_comments: number;
+  avg_views: number;
+  avg_likes: number;
+  avg_comments: number;
+  tier_counts: TierCounts;
+  wow_views_pct: number | null;
+  wow_posts_delta: number | null;
+};
+
+export type StatsWeek = {
+  week_start: string;
+  posts: number;
+  avg_views: number;
+  sum_views: number;
+  avg_likes: number;
+  avg_comments: number;
+};
+
+export type StatsResponse = {
+  weeks: number;
+  summary: StatsSummary;
+  weekly: StatsWeek[];
+};
+
 export type GeneratedDraft = {
   draft_id: number;
   text: string;

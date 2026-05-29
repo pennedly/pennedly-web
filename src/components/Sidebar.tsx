@@ -38,6 +38,7 @@ const GROUPS: { title: MessageKey; items: NavItem[] }[] = [
   {
     title: "nav.group.growth",
     items: [
+      { href: "/app/stats", label: "dashboard.nav.stats" },
       { href: "/app/audits", label: "dashboard.nav.audits" },
       { href: "/app/patterns", label: "dashboard.nav.patterns" },
       {
