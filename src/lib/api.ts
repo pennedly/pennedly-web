@@ -17,10 +17,12 @@ import type {
   AuditDetail,
   AuditsList,
   BatchGenerateResult,
+  CommentsList,
   DecisionInput,
   DecisionsResponse,
   DraftsList,
   GeneratedDraft,
+  GeneratedReply,
   LanguageCode,
   LintFix,
   LintResult,
@@ -347,6 +349,32 @@ export async function rejectDraft(draftId: number): Promise<ApprovalResult> {
 export async function publishDraft(draftId: number): Promise<PublishResult> {
   return fetchApi<PublishResult>(`/api/drafts/${draftId}/publish`, {
     method: "POST",
+  });
+}
+
+// ── Comments / replies ───────────────────────────────────────────
+
+export async function fetchComments(
+  accountId: number,
+  params?: { limit?: number; status?: string },
+): Promise<CommentsList> {
+  const qs = new URLSearchParams();
+  if (params?.limit) qs.set("limit", String(params.limit));
+  if (params?.status) qs.set("status", params.status);
+  const suffix = qs.toString() ? `?${qs.toString()}` : "";
+  return fetchApi<CommentsList>(
+    `/api/accounts/${accountId}/comments${suffix}`,
+  );
+}
+
+// Generate an AI reply draft for a comment. The backend may decline
+// (is_skip) if the comment isn't worth replying to.
+export async function generateReply(
+  commentId: number,
+): Promise<GeneratedReply> {
+  return fetchApi<GeneratedReply>("/api/generation/replies", {
+    method: "POST",
+    body: JSON.stringify({ comment_id: commentId }),
   });
 }
 

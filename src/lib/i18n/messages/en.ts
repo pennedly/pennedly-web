@@ -234,6 +234,21 @@ export const en = {
     "While on, em dashes and «guillemets» are rewritten to a plain hyphen and straight quotes — both in the prompt and the automatic cleanup. Turn it off to keep native typography.",
   "style_rules.toast.enabled": "rule on",
   "style_rules.toast.disabled": "rule off",
+
+  // ── Replies ────────────────────────────────────────────────────
+  "dashboard.nav.replies": "replies",
+  "replies.back": "← dashboard",
+  "replies.title": "Replies",
+  "replies.subtitle":
+    "Comments under your posts. Generate a reply in your voice, review it, then publish.",
+  "replies.empty":
+    "No comments yet. The reply queue fills hourly from your recent posts.",
+  "replies.on_post": "on your post",
+  "replies.view_comment": "view on Threads",
+  "replies.generate": "generate reply",
+  "replies.skipped":
+    "skipped — the AI judged this comment not worth replying to",
+  "replies.replied": "replied",
 } as const;
 
 export type MessageKey = keyof typeof en;

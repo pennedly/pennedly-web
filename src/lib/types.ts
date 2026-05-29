@@ -119,6 +119,46 @@ export type PublishResult = {
   published_at: string;
 };
 
+// A comment under one of the user's posts (the reply queue), with its
+// linked AI reply draft joined in (present once a reply is generated).
+export type CommentSummary = {
+  id: number;
+  account_id: number;
+  post_id: number;
+  threads_comment_id: string;
+  author_username: string | null;
+  text: string | null;
+  comment_url: string | null;
+  status: string; // "new" | "drafted" | "replied"
+  published_at: string | null;
+  created_at: string;
+  ai_draft_id: number | null;
+  draft_text: string | null;
+  draft_status: string | null; // "pending" | "approved" | "rejected"
+  draft_is_skip: boolean | null;
+  replied_at: string | null;
+  reply_threads_post_id: string | null;
+};
+
+export type CommentsList = {
+  comments: CommentSummary[];
+  count: number;
+};
+
+export type GeneratedReply = {
+  draft_id: number;
+  text: string;
+  model: string;
+  // The reply generator may decide a comment isn't worth replying to
+  // (spam, trolling, nothing to add) — then is_skip is true and no real
+  // reply is produced.
+  is_skip: boolean;
+  examples_used: number;
+  prompt_tokens: number;
+  completion_tokens: number;
+  latency_ms: number;
+};
+
 export type RefineResult = {
   draft_id: number;
   text: string;

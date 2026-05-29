@@ -396,6 +396,12 @@ export default function Dashboard() {
               {t("dashboard.nav.voice")}
             </Link>
             <Link
+              href="/app/replies"
+              className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
+            >
+              {t("dashboard.nav.replies")}
+            </Link>
+            <Link
               href="/app/style-rules"
               className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
             >
