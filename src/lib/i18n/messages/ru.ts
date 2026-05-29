@@ -335,4 +335,34 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "feed.vs_avg": "× от среднего",
   "feed.fresh": "ещё набирает",
   "feed.open": "открыть в Threads ↗",
+
+  // ── Онбординг ─────────────────────────────────────────────────
+  "onboarding.title": "Настроим твой голос",
+  "onboarding.subtitle":
+    "Pennedly пишет в твоём голосе. Давай его зададим — выбери, с чего начать.",
+  "onboarding.connect_title": "Сначала подключи аккаунт Threads",
+  "onboarding.connect_body":
+    "Pennedly создаёт черновики для подключённого аккаунта. Подключи один, чтобы начать.",
+  "onboarding.analyze_title": "Разобрать мои посты",
+  "onboarding.analyze_body":
+    "Pennedly прочитает твои недавние посты в Threads и соберёт твой голос автоматически.",
+  "onboarding.analyze_cta": "Разобрать мои посты",
+  "onboarding.analyze_count": "постов готово к разбору",
+  "onboarding.analyze_none": "Постов пока нет — начни с нуля.",
+  "onboarding.analyzing": "Разбираю твои посты…",
+  "onboarding.scratch_title": "Создать с нуля",
+  "onboarding.scratch_body":
+    "Новый аккаунт? Опиши свой голос и темы — и сразу начинай постить.",
+  "onboarding.scratch_cta": "Создать с нуля",
+  "onboarding.form_intro_label": "Опиши свой голос",
+  "onboarding.form_intro_ph":
+    "Кто ты, о чём твой аккаунт, какой у тебя тон. Пиши на том языке, на котором постишь.",
+  "onboarding.form_themes_label": "Темы, о которых хочешь писать",
+  "onboarding.form_themes_ph": "добавь тему и нажми enter",
+  "onboarding.form_exclude_label": "Темы, которых избегать (необязательно)",
+  "onboarding.form_exclude_ph": "добавь нежелательную тему",
+  "onboarding.create_cta": "Создать мой голос",
+  "onboarding.creating": "Создаю…",
+  "onboarding.back": "← назад",
+  "onboarding.error_empty": "Добавь хотя бы описание голоса или одну тему.",
 };

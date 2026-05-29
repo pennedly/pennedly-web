@@ -15,7 +15,8 @@ export default function AppLayout({
 }) {
   const pathname = usePathname();
 
-  if (pathname === "/app/login") {
+  // Pre-app focused flows opt out of the sidebar shell.
+  if (pathname === "/app/login" || pathname === "/app/onboarding") {
     return <>{children}</>;
   }
 

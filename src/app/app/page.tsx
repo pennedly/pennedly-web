@@ -15,6 +15,7 @@ import {
   clearTokens,
   fetchMe,
   fetchMyAccounts,
+  fetchOnboardingStatus,
   generatePost,
   generatePostBatch,
   getTokens,
@@ -158,6 +159,12 @@ export default function Dashboard() {
     if (accountId === null) return;
     (async () => {
       try {
+        // New / un-set-up account → send to the onboarding wizard first.
+        const ob = await fetchOnboardingStatus(accountId);
+        if (ob.needs_onboarding) {
+          router.replace("/app/onboarding");
+          return;
+        }
         const list = await listDrafts(accountId, { limit: 50 });
         setDrafts(list.drafts);
         // Clear the "last generated" preview when switching accounts —
