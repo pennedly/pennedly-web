@@ -208,4 +208,20 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "patterns.example_label": "свежий пример",
   "patterns.add_to_voice": "добавить в мой голос",
   "patterns.added": "добавлено в твой do-list",
+
+  // ── Style rules ────────────────────────────────────────────────
+  "dashboard.nav.style_rules": "стиль",
+  "style_rules.back": "← дашборд",
+  "style_rules.title": "Правила стиля",
+  "style_rules.subtitle":
+    "Встроенные правила, чтобы AI не писал как AI. Все включены по умолчанию — выключи те, что не нужны для этого аккаунта.",
+  "style_rules.count_on": "включено",
+  "style_rules.kind.post": "только посты",
+  "style_rules.kind.reply": "только ответы",
+  "style_rules.on": "вкл",
+  "style_rules.off": "выкл",
+  "style_rules.punctuation_note":
+    "Пока включено, длинные тире и кавычки-ёлочки заменяются на обычный дефис и прямые кавычки — и в подсказке для AI, и при автоматической чистке текста. Выключи, чтобы оставить привычную типографику.",
+  "style_rules.toast.enabled": "правило включено",
+  "style_rules.toast.disabled": "правило выключено",
 };

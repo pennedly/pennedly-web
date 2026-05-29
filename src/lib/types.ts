@@ -232,6 +232,25 @@ export type Translation = {
   cached: boolean;
 };
 
+// ── Style rules (built-in anti-AI-tell defaults) ─────────────────────
+// Mirrors api/style_rules.py. The catalog is code-level on the backend;
+// every rule is ON by default, the per-account opt-outs are persisted in
+// account_disabled_default_rules. `enabled` reflects that account's state.
+
+export type StyleRuleKind = "post" | "reply" | "both";
+
+export type StyleRule = {
+  key: string;
+  kind: StyleRuleKind;
+  title: string;
+  body: string;
+  enabled: boolean;
+};
+
+export type StyleRulesList = {
+  rules: StyleRule[];
+};
+
 // ── Voice lint ───────────────────────────────────────────────────────
 
 export type LintConflictItem = {

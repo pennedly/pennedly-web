@@ -203,6 +203,22 @@ export const en = {
   "patterns.example_label": "fresh example",
   "patterns.add_to_voice": "add to my voice",
   "patterns.added": "added to your do-list",
+
+  // ── Style rules ────────────────────────────────────────────────
+  "dashboard.nav.style_rules": "style",
+  "style_rules.back": "← dashboard",
+  "style_rules.title": "Style rules",
+  "style_rules.subtitle":
+    "Built-in rules that keep the AI from writing like AI. All on by default — turn off any you don't want for this account.",
+  "style_rules.count_on": "on",
+  "style_rules.kind.post": "posts only",
+  "style_rules.kind.reply": "replies only",
+  "style_rules.on": "on",
+  "style_rules.off": "off",
+  "style_rules.punctuation_note":
+    "While on, em dashes and «guillemets» are rewritten to a plain hyphen and straight quotes — both in the prompt and the automatic cleanup. Turn it off to keep native typography.",
+  "style_rules.toast.enabled": "rule on",
+  "style_rules.toast.disabled": "rule off",
 } as const;
 
 export type MessageKey = keyof typeof en;

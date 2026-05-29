@@ -30,6 +30,8 @@ import type {
   RefineResult,
   RoleBook,
   RoleBookSections,
+  StyleRule,
+  StyleRulesList,
   TokenPair,
   Translation,
 } from "./types";
@@ -372,6 +374,32 @@ export async function submitAuditDecisions(
     method: "POST",
     body: JSON.stringify({ decisions }),
   });
+}
+
+// ── Style rules (built-in anti-AI-tell defaults) ─────────────────
+
+// Read the full catalog of built-in default rules with this account's
+// on/off state. Every rule is ON unless the account opted out.
+export async function fetchStyleRules(
+  accountId: number,
+): Promise<StyleRulesList> {
+  return fetchApi<StyleRulesList>(`/api/accounts/${accountId}/style-rules`);
+}
+
+// Flip one rule on/off for this account. enabled=true removes the
+// opt-out row, enabled=false inserts it. Returns the rule's new state.
+export async function updateStyleRule(
+  accountId: number,
+  ruleKey: string,
+  enabled: boolean,
+): Promise<StyleRule> {
+  return fetchApi<StyleRule>(
+    `/api/accounts/${accountId}/style-rules/${ruleKey}`,
+    {
+      method: "PUT",
+      body: JSON.stringify({ enabled }),
+    },
+  );
 }
 
 // ── Translation ──────────────────────────────────────────────────
