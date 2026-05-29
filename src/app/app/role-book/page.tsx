@@ -90,6 +90,29 @@ const LIST_SECTIONS: {
 
 type Toast = { id: number; message: string; tone: "success" | "error" };
 
+// Run an async fn over items with at most `limit` in flight at once. A
+// voice book can hold a couple dozen items; each is its own translate
+// request, and we don't want to fire all of them at the API at once on
+// first open.
+async function mapLimit<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let next = 0;
+  async function worker() {
+    while (next < items.length) {
+      const i = next++;
+      results[i] = await fn(items[i]);
+    }
+  }
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, () => worker()),
+  );
+  return results;
+}
+
 export default function RoleBookEditor() {
   const router = useRouter();
   const { t, locale } = useTranslation();
@@ -112,10 +135,11 @@ export default function RoleBookEditor() {
   // words in the source are never a problem.
   const [view, setView] = useState<"translated" | "original">("translated");
   const [translating, setTranslating] = useState(false);
-  // Map of block key ("intro" or a section key) → translated text. List
-  // sections are translated as one newline-joined block and split back
-  // into pills for display, so the translated view reuses the exact same
-  // section cards + TagInput as the editor.
+  // Map of original source text → its translation. We translate each
+  // item (and the intro) individually, so the translated view maps 1:1
+  // back onto the same pills — no fragile newline-splitting of a joined
+  // block (an LLM reflows lists, inserts blank lines, etc.). An item the
+  // model leaves untranslated simply falls back to its original.
   const [translations, setTranslations] = useState<Record<
     string,
     string
@@ -157,25 +181,25 @@ export default function RoleBookEditor() {
   }, [accountId, router]);
 
   // Translate the voice into the UI language whenever we're in the
-  // translated view, the locale changes, or the draft changes. Each
-  // non-empty section becomes one translate call (items joined by
-  // newlines — the backend preserves them). Same-language text comes
-  // back verbatim, so users whose content matches their UI see no
-  // change. The `cancelled` flag drops stale responses on fast toggles.
+  // translated view, the locale changes, or the draft changes. Same-
+  // language text comes back verbatim, so users whose content matches
+  // their UI see no change. The `cancelled` flag drops stale responses
+  // on fast toggles.
   const draftKey = JSON.stringify(draft);
   useEffect(() => {
     if (view !== "translated") return;
-    const blocks: { key: string; text: string }[] = [];
-    if ((draft.intro ?? "").trim()) {
-      blocks.push({ key: "intro", text: draft.intro! });
-    }
+    // Collect every distinct text to translate — the intro plus each
+    // individual item across all sections. Per-item (not per-section)
+    // so each result maps straight back onto its own pill.
+    const texts = new Set<string>();
+    if ((draft.intro ?? "").trim()) texts.add(draft.intro!);
     for (const section of LIST_SECTIONS) {
-      const items = (draft[section.key] as string[] | undefined) ?? [];
-      if (items.length > 0) {
-        blocks.push({ key: section.key, text: items.join("\n") });
+      for (const item of (draft[section.key] as string[] | undefined) ?? []) {
+        if (item.trim()) texts.add(item);
       }
     }
-    if (blocks.length === 0) {
+    const list = [...texts];
+    if (list.length === 0) {
       setTranslations({});
       setTranslateError(null);
       return;
@@ -185,15 +209,12 @@ export default function RoleBookEditor() {
     setTranslateError(null);
     (async () => {
       try {
-        const results = await Promise.all(
-          blocks.map((b) => translateText(b.text, locale)),
-        );
+        const entries = await mapLimit(list, 6, async (text) => {
+          const r = await translateText(text, locale);
+          return [text, r.translated_text] as const;
+        });
         if (cancelled) return;
-        setTranslations(
-          Object.fromEntries(
-            blocks.map((b, i) => [b.key, results[i].translated_text]),
-          ),
-        );
+        setTranslations(Object.fromEntries(entries));
       } catch (e) {
         if (!cancelled) setTranslateError(String(e));
       } finally {
@@ -415,15 +436,16 @@ export default function RoleBookEditor() {
   const isTranslated = view === "translated";
   const transMap = translations ?? {};
   const displayIntro = isTranslated
-    ? transMap.intro ?? draft.intro ?? ""
+    ? draft.intro
+      ? transMap[draft.intro] ?? draft.intro
+      : ""
     : draft.intro ?? "";
   function displayItems(key: SectionKey): string[] {
     const original = (draft[key] as string[] | undefined) ?? [];
     if (!isTranslated) return original;
-    const translated = transMap[key];
-    if (translated == null) return original;
-    const lines = translated.split("\n");
-    return lines.length === original.length ? lines : original;
+    // Each item shows its own translation, or itself if the model left
+    // it untranslated / it hasn't loaded yet. 1:1, so counts never drift.
+    return original.map((item) => transMap[item] ?? item);
   }
 
   return (
