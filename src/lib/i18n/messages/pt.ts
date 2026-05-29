@@ -147,8 +147,6 @@ export const pt: Partial<Record<MessageKey, string>> = {
   "rolebook.transparency.subtitle": "· montado a partir das seções",
   "rolebook.items_count_singular": "item",
   "rolebook.items_count_plural": "itens",
-  "rolebook.translated_empty":
-    "Nada para mostrar ainda — abra o original para preencher sua voz.",
 
   // ── Audits ─────────────────────────────────────────────────────
   "audits.back": "← painel",

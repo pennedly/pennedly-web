@@ -27,6 +27,11 @@ type Props = {
   // page can scroll to the matching conflict card.
   flagged?: Set<string>;
   onFlaggedClick?: (item: string) => void;
+  // Read-only: render the pills exactly as normal (same colors, same
+  // danger variant) but drop the text input and the per-pill remove
+  // button. Used by the role-book translated view so the read mode
+  // looks identical to the editor, minus editing affordances.
+  readOnly?: boolean;
 };
 
 export function TagInput({
@@ -37,6 +42,7 @@ export function TagInput({
   commitOnComma = true,
   flagged,
   onFlaggedClick,
+  readOnly = false,
 }: Props) {
   const [input, setInput] = useState("");
 
@@ -122,29 +128,33 @@ export function TagInput({
               </button>
             )}
             <span className="whitespace-pre-wrap">{item}</span>
-            <button
-              type="button"
-              onClick={() => removeAt(idx)}
-              className="ml-0.5 text-current opacity-50 hover:opacity-100 text-xs leading-none"
-              aria-label={`remove ${item}`}
-            >
-              ×
-            </button>
+            {!readOnly && (
+              <button
+                type="button"
+                onClick={() => removeAt(idx)}
+                className="ml-0.5 text-current opacity-50 hover:opacity-100 text-xs leading-none"
+                aria-label={`remove ${item}`}
+              >
+                ×
+              </button>
+            )}
           </span>
         );
       })}
-      <input
-        type="text"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        onKeyDown={onKey}
-        onPaste={(e) => {
-          const t = e.clipboardData.getData("text");
-          if (onPaste(t)) e.preventDefault();
-        }}
-        placeholder={items.length === 0 ? placeholder : ""}
-        className="flex-1 min-w-[140px] bg-transparent text-sm outline-none py-0.5 px-1"
-      />
+      {!readOnly && (
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={onKey}
+          onPaste={(e) => {
+            const t = e.clipboardData.getData("text");
+            if (onPaste(t)) e.preventDefault();
+          }}
+          placeholder={items.length === 0 ? placeholder : ""}
+          className="flex-1 min-w-[140px] bg-transparent text-sm outline-none py-0.5 px-1"
+        />
+      )}
     </div>
   );
 }

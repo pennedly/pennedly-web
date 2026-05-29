@@ -145,8 +145,6 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "rolebook.transparency.subtitle": "· собрано из секций выше",
   "rolebook.items_count_singular": "элемент",
   "rolebook.items_count_plural": "элементов",
-  "rolebook.translated_empty":
-    "Пока пусто — открой оригинал, чтобы заполнить голос.",
 
   // ── Audits ─────────────────────────────────────────────────────
   "audits.back": "← дашборд",

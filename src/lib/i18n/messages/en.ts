@@ -141,8 +141,6 @@ export const en = {
   "rolebook.transparency.subtitle": "· assembled from sections above",
   "rolebook.items_count_singular": "item",
   "rolebook.items_count_plural": "items",
-  "rolebook.translated_empty":
-    "Nothing to show yet — open the original to fill in your voice.",
 
   // ── Audits ─────────────────────────────────────────────────────
   "audits.back": "← dashboard",

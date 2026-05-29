@@ -112,9 +112,14 @@ export default function RoleBookEditor() {
   // words in the source are never a problem.
   const [view, setView] = useState<"translated" | "original">("translated");
   const [translating, setTranslating] = useState(false);
-  const [translations, setTranslations] = useState<
-    { label: string; text: string }[] | null
-  >(null);
+  // Map of block key ("intro" or a section key) → translated text. List
+  // sections are translated as one newline-joined block and split back
+  // into pills for display, so the translated view reuses the exact same
+  // section cards + TagInput as the editor.
+  const [translations, setTranslations] = useState<Record<
+    string,
+    string
+  > | null>(null);
   const [translateError, setTranslateError] = useState<string | null>(null);
 
   function toast(message: string, tone: Toast["tone"] = "success") {
@@ -160,18 +165,18 @@ export default function RoleBookEditor() {
   const draftKey = JSON.stringify(draft);
   useEffect(() => {
     if (view !== "translated") return;
-    const blocks: { label: string; text: string }[] = [];
+    const blocks: { key: string; text: string }[] = [];
     if ((draft.intro ?? "").trim()) {
-      blocks.push({ label: t("rolebook.intro.label"), text: draft.intro! });
+      blocks.push({ key: "intro", text: draft.intro! });
     }
     for (const section of LIST_SECTIONS) {
       const items = (draft[section.key] as string[] | undefined) ?? [];
       if (items.length > 0) {
-        blocks.push({ label: t(section.labelKey), text: items.join("\n") });
+        blocks.push({ key: section.key, text: items.join("\n") });
       }
     }
     if (blocks.length === 0) {
-      setTranslations([]);
+      setTranslations({});
       setTranslateError(null);
       return;
     }
@@ -185,10 +190,9 @@ export default function RoleBookEditor() {
         );
         if (cancelled) return;
         setTranslations(
-          blocks.map((b, i) => ({
-            label: b.label,
-            text: results[i].translated_text,
-          })),
+          Object.fromEntries(
+            blocks.map((b, i) => [b.key, results[i].translated_text]),
+          ),
         );
       } catch (e) {
         if (!cancelled) setTranslateError(String(e));
@@ -403,6 +407,25 @@ export default function RoleBookEditor() {
     );
   }
 
+  // Translated mode shows the exact same editor UI, but fed translated
+  // values and read-only. Sections are translated as one newline-joined
+  // block; we split it back into pills. If a translation isn't ready yet
+  // — or the line count doesn't match (rare LLM hiccup) — fall back to
+  // the original items so the UI never breaks or shows a wrong count.
+  const isTranslated = view === "translated";
+  const transMap = translations ?? {};
+  const displayIntro = isTranslated
+    ? transMap.intro ?? draft.intro ?? ""
+    : draft.intro ?? "";
+  function displayItems(key: SectionKey): string[] {
+    const original = (draft[key] as string[] | undefined) ?? [];
+    if (!isTranslated) return original;
+    const translated = transMap[key];
+    if (translated == null) return original;
+    const lines = translated.split("\n");
+    return lines.length === original.length ? lines : original;
+  }
+
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
       <header className="sticky top-0 z-20 bg-white/90 dark:bg-zinc-950/90 backdrop-blur border-b border-zinc-200 dark:border-zinc-800">
@@ -456,10 +479,22 @@ export default function RoleBookEditor() {
                 : t("common.view_translation")}
             </button>
           </div>
+          {isTranslated && translating && (
+            <p className="mt-2 flex items-center gap-2 text-xs text-zinc-500">
+              <span
+                className="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"
+                aria-hidden
+              />
+              {t("common.translating")}
+            </p>
+          )}
+          {isTranslated && translateError && (
+            <p className="mt-2 text-xs text-red-600 dark:text-red-400">
+              {translateError}
+            </p>
+          )}
         </div>
 
-        {view === "original" ? (
-          <>
         {/* Intro */}
         <section className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm">
           <div className="flex items-baseline justify-between mb-2">
@@ -471,8 +506,9 @@ export default function RoleBookEditor() {
             </span>
           </div>
           <textarea
-            value={draft.intro ?? ""}
+            value={displayIntro}
             onChange={(e) => updateIntro(e.target.value)}
+            readOnly={isTranslated}
             rows={5}
             placeholder={t("rolebook.intro.placeholder")}
             className="w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700"
@@ -481,7 +517,7 @@ export default function RoleBookEditor() {
 
         {/* List sections */}
         {LIST_SECTIONS.map((section) => {
-          const items = (draft[section.key] as string[] | undefined) ?? [];
+          const items = displayItems(section.key);
           const isDanger = section.variant === "danger";
           return (
             <section
@@ -513,7 +549,10 @@ export default function RoleBookEditor() {
                 onChange={(next) => updateList(section.key, next)}
                 placeholder={t(section.placeholderKey)}
                 variant={section.variant}
-                flagged={flaggedBySection[section.key]}
+                readOnly={isTranslated}
+                flagged={
+                  isTranslated ? undefined : flaggedBySection[section.key]
+                }
                 onFlaggedClick={onFlaggedPillClick}
               />
             </section>
@@ -523,7 +562,7 @@ export default function RoleBookEditor() {
         {/* Lint results — appears when the user has run the check OR
             after every save (auto-lint). Pills with conflicts also get
             a ⚠ marker inline above — clicking it scrolls to this card. */}
-        {lintResult && (
+        {!isTranslated && lintResult && (
           <section
             id="lint-results-card"
             className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm scroll-mt-24"
@@ -555,14 +594,14 @@ export default function RoleBookEditor() {
           </span>
           <button
             onClick={() => setExtractOpen(true)}
-            disabled={extracting || saving || linting}
+            disabled={extracting || saving || linting || isTranslated}
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-700 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50 transition-colors"
           >
             {t("rolebook.extract.button")}
           </button>
           <button
             onClick={onLint}
-            disabled={linting || saving}
+            disabled={linting || saving || isTranslated}
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-700 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50 transition-colors"
           >
             {linting && (
@@ -581,7 +620,7 @@ export default function RoleBookEditor() {
           </Link>
           <button
             onClick={onSave}
-            disabled={saving}
+            disabled={saving || isTranslated}
             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-md bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 text-sm font-medium hover:bg-zinc-700 dark:hover:bg-white disabled:opacity-50 transition-colors"
           >
             {saving && (
@@ -609,48 +648,6 @@ export default function RoleBookEditor() {
             <TranslateButton text={book.prompt_text} source="role_book_assembled" />
           </div>
         </details>
-          </>
-        ) : (
-          <>
-            {translating && (
-              <div className="flex items-center gap-2 text-sm text-zinc-500">
-                <span
-                  className="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"
-                  aria-hidden
-                />
-                {t("common.translating")}
-              </div>
-            )}
-            {translateError && (
-              <div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 p-4 text-sm text-red-800 dark:text-red-200">
-                {translateError}
-              </div>
-            )}
-            {!translating &&
-              !translateError &&
-              translations &&
-              translations.length === 0 && (
-                <p className="text-sm text-zinc-500">
-                  {t("rolebook.translated_empty")}
-                </p>
-              )}
-            {!translating &&
-              !translateError &&
-              translations?.map((block) => (
-                <section
-                  key={block.label}
-                  className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm"
-                >
-                  <div className="text-sm font-semibold mb-2">
-                    {block.label}
-                  </div>
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap text-zinc-700 dark:text-zinc-300">
-                    {block.text}
-                  </p>
-                </section>
-              ))}
-          </>
-        )}
       </main>
 
       {/* Re-extract confirmation modal */}
