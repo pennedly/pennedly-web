@@ -456,6 +456,17 @@ export async function fetchFeed(
   return fetchApi<FeedResponse>(`/api/accounts/${accountId}/feed${suffix}`);
 }
 
+// Persist the user's UI language server-side so server-generated copy
+// (the weekly audit) is written in it. Fire-and-forget from the UI.
+export async function setMyLocale(
+  locale: string,
+): Promise<{ locale: string }> {
+  return fetchApi(`/api/me/locale`, {
+    method: "PUT",
+    body: JSON.stringify({ locale }),
+  });
+}
+
 // ── Onboarding ───────────────────────────────────────────────────
 export async function fetchOnboardingStatus(
   accountId: number,

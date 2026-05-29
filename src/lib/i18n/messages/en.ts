@@ -188,6 +188,14 @@ export const en = {
   "audits.detail.rejected_label": "rejected",
   "audits.detail.rolled_back": "rolled back",
   "audits.detail.effect": "effect",
+  "audits.detail.title": "Weekly audit",
+  "audits.detail.changes_count": "proposed change(s)",
+  "audits.detail.status_label": "status",
+  "audits.detail.view_diff": "View raw diff",
+  "audits.detail.approved": "approved",
+  "audits.detail.toast_nothing":
+    "nothing to submit — approve or reject at least one",
+  "audits.detail.toast_submitted": "decisions submitted",
 
   // ── Publish modal ──────────────────────────────────────────────
   "publish.title": "Publish to Threads",

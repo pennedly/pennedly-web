@@ -14,6 +14,7 @@ import {
   fetchMe,
   fetchMyAccounts,
   getTokens,
+  setMyLocale,
 } from "@/lib/api";
 import {
   LOCALES,
@@ -94,6 +95,7 @@ export default function SettingsPage() {
                     onClick={() => {
                       setLocale(l.code as LocaleCode);
                       captureEvent("ui.locale_switched", { locale: l.code });
+                      setMyLocale(l.code).catch(() => {});
                     }}
                     className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md border text-sm transition-colors ${
                       l.code === locale
