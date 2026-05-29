@@ -23,6 +23,7 @@ import type {
   DecisionsResponse,
   DeletePostResult,
   DraftsList,
+  FeedResponse,
   GeneratedDraft,
   GeneratedReply,
   LanguageCode,
@@ -415,6 +416,17 @@ export async function deletePost(postId: number): Promise<DeletePostResult> {
   return fetchApi<DeletePostResult>(`/api/posts/${postId}`, {
     method: "DELETE",
   });
+}
+
+// ── My Feed (posts + inline analytics) ───────────────────────────
+export async function fetchFeed(
+  accountId: number,
+  params?: { limit?: number },
+): Promise<FeedResponse> {
+  const qs = new URLSearchParams();
+  if (params?.limit) qs.set("limit", String(params.limit));
+  const suffix = qs.toString() ? `?${qs.toString()}` : "";
+  return fetchApi<FeedResponse>(`/api/accounts/${accountId}/feed${suffix}`);
 }
 
 // ── Autopilot ────────────────────────────────────────────────────
