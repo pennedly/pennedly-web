@@ -12,6 +12,7 @@ import { useState } from "react";
 
 import { translateText } from "@/lib/api";
 import { captureEvent } from "@/lib/analytics";
+import { useTranslation } from "@/lib/i18n";
 import {
   type LanguageCode,
   SUPPORTED_LANGUAGES,
@@ -27,6 +28,7 @@ type Props = {
 };
 
 export function TranslateButton({ text, source = "unknown", className = "" }: Props) {
+  const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState<LanguageCode | null>(null);
   const [result, setResult] = useState<Translation | null>(null);
@@ -64,10 +66,10 @@ export function TranslateButton({ text, source = "unknown", className = "" }: Pr
           <span aria-hidden>🌐</span>
           <span>
             {loading
-              ? "translating…"
+              ? t("translate.translating")
               : result
-              ? `translated to ${result.target_lang}`
-              : "translate"}
+              ? `${t("translate.translated")} · ${result.target_lang}`
+              : t("translate.button")}
           </span>
         </button>
         {menuOpen && (
@@ -100,14 +102,15 @@ export function TranslateButton({ text, source = "unknown", className = "" }: Pr
         <div className="mt-2 rounded border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 p-3">
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-[10px] uppercase tracking-wider text-zinc-500">
-              {result.target_lang} {result.cached ? "· cached" : "· fresh"}
+              {result.target_lang} ·{" "}
+              {result.cached ? t("translate.cached") : t("translate.fresh")}
             </span>
             <button
               type="button"
               onClick={onClear}
               className="text-xs text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
             >
-              hide
+              {t("translate.hide")}
             </button>
           </div>
           <p className="text-sm whitespace-pre-wrap leading-relaxed">

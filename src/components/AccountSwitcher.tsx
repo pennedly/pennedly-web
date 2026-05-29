@@ -72,18 +72,18 @@ export function AccountSwitcher() {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="inline-flex items-center gap-1.5 text-xs text-zinc-700 dark:text-zinc-300 px-2.5 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+        className="w-full inline-flex items-center gap-1.5 text-xs text-zinc-700 dark:text-zinc-300 px-2 py-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
       >
         <span aria-hidden>@</span>
-        <span className="font-medium">
+        <span className="font-medium truncate flex-1 text-left">
           {selectedAccount.username ?? `acct ${selectedAccount.id}`}
         </span>
-        <span aria-hidden className="text-zinc-400">
+        <span aria-hidden className="text-zinc-400 shrink-0">
           ▾
         </span>
       </button>
       {open && (
-        <div className="absolute right-0 mt-1 z-30 w-56 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-lg py-1">
+        <div className="absolute bottom-full mb-1 left-0 right-0 z-40 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-lg py-1">
           {accounts.map((a) => {
             const isSel = a.id === selectedAccount.id;
             return (
