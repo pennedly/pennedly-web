@@ -21,6 +21,7 @@ import type {
   CommentsList,
   DecisionInput,
   DecisionsResponse,
+  DeleteDraftResult,
   DeletePostResult,
   DraftsList,
   FeedResponse,
@@ -353,6 +354,16 @@ export async function approveDraft(
 export async function rejectDraft(draftId: number): Promise<ApprovalResult> {
   return fetchApi<ApprovalResult>(`/api/drafts/${draftId}/reject`, {
     method: "POST",
+  });
+}
+
+// Permanently remove a draft (queue cleanup). 409 if it's already
+// published — manage live posts from the feed.
+export async function deleteDraft(
+  draftId: number,
+): Promise<DeleteDraftResult> {
+  return fetchApi<DeleteDraftResult>(`/api/drafts/${draftId}`, {
+    method: "DELETE",
   });
 }
 

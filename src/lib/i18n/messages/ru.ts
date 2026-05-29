@@ -257,6 +257,9 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "replies.empty":
     "Комментариев пока нет. Очередь наполняется раз в час из твоих недавних постов.",
   "replies.on_post": "под твоим постом",
+  "replies.under_post": "Под твоим постом:",
+  "replies.open_thread": "открыть в Threads ↗",
+  "replies.replied_on": "отвечено",
   "replies.view_comment": "открыть в Threads",
   "replies.generate": "сгенерировать ответ",
   "replies.skipped":

@@ -13,6 +13,7 @@ import {
   ApiError,
   approveDraft,
   clearTokens,
+  deleteDraft,
   fetchMe,
   fetchMyAccounts,
   fetchOnboardingStatus,
@@ -80,6 +81,8 @@ export default function Dashboard() {
   // Per-draft: is the refine ("tweak") panel expanded? Collapsed by
   // default so a pending card isn't dominated by refine controls.
   const [refineOpen, setRefineOpen] = useState<Record<number, boolean>>({});
+  // Inline "delete draft?" confirm — which draft id is awaiting confirm.
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
   function toast(message: string, tone: Toast["tone"] = "success") {
     const id = Date.now() + Math.random();
@@ -365,6 +368,28 @@ export default function Dashboard() {
       toast(`#${id} ${t("dashboard.toast.rejected")}`);
     } catch (e) {
       toast(String(e), "error");
+    }
+  }
+
+  async function onDeleteDraft(id: number) {
+    captureEvent("ui.draft_delete_confirmed", { draft_id: id });
+    try {
+      await deleteDraft(id);
+      setDrafts((p) => p.filter((x) => x.id !== id));
+      setConfirmDeleteId(null);
+      toast(t("dashboard.draft.toast_deleted"));
+    } catch (e) {
+      let msg = String(e);
+      if (e instanceof ApiError) {
+        const detail =
+          typeof e.detail === "object" &&
+          e.detail !== null &&
+          "detail" in (e.detail as Record<string, unknown>)
+            ? (e.detail as { detail: unknown }).detail
+            : e.detail;
+        msg = `${e.status}: ${String(detail)}`;
+      }
+      toast(msg, "error");
     }
   }
 
@@ -778,7 +803,34 @@ export default function Dashboard() {
                         )}
                       </span>
                     )}
-                    <div className="ml-auto">
+                    <div className="ml-auto flex items-center gap-3">
+                      {!d.published &&
+                        (confirmDeleteId === d.id ? (
+                          <span className="inline-flex items-center gap-2 text-xs">
+                            <span className="text-zinc-500">
+                              {t("dashboard.draft.confirm_delete")}
+                            </span>
+                            <button
+                              onClick={() => onDeleteDraft(d.id)}
+                              className="text-red-600 dark:text-red-400 hover:text-red-700 font-medium"
+                            >
+                              {t("dashboard.draft.delete")}
+                            </button>
+                            <button
+                              onClick={() => setConfirmDeleteId(null)}
+                              className="text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                            >
+                              {t("common.cancel")}
+                            </button>
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => setConfirmDeleteId(d.id)}
+                            className="text-xs text-zinc-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                          >
+                            {t("dashboard.draft.delete")}
+                          </button>
+                        ))}
                       <TranslateButton
                         text={currentText}
                         source={`draft_${d.content_type}`}

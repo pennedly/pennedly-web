@@ -252,6 +252,9 @@ export const en = {
   "replies.empty":
     "No comments yet. The reply queue fills hourly from your recent posts.",
   "replies.on_post": "on your post",
+  "replies.under_post": "Under your post:",
+  "replies.open_thread": "open in Threads ↗",
+  "replies.replied_on": "replied",
   "replies.view_comment": "view on Threads",
   "replies.generate": "generate reply",
   "replies.skipped":
