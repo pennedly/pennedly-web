@@ -16,15 +16,17 @@ import {
   fetchOnboardingStatus,
   getTokens,
   onboardingAnalyze,
+  onboardingAnalyzePreview,
   onboardingFromScratch,
+  onboardingFromScratchPreview,
 } from "@/lib/api";
 import { captureEvent } from "@/lib/analytics";
 import { getSelectedAccountId, setSelectedAccountId } from "@/lib/account";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { ConnectThreadsButton } from "@/components/ConnectThreadsButton";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { TagInput } from "@/components/TagInput";
-import type { OnboardingStatus } from "@/lib/types";
+import type { OnboardingPreview, OnboardingStatus } from "@/lib/types";
 
 type Step = "loading" | "connect" | "choose" | "form";
 
@@ -53,6 +55,12 @@ export default function OnboardingPage() {
   // Already-onboarded users can still open this page to re-run / test the
   // flow; we show a heads-up that submitting replaces their current voice.
   const [alreadySetUp, setAlreadySetUp] = useState(false);
+  // Preview mode (tester-only, via ?preview=1): run for real but persist
+  // nothing — show the voice that *would* be built. Set on mount.
+  const [preview, setPreview] = useState(false);
+  const [previewResult, setPreviewResult] = useState<OnboardingPreview | null>(
+    null,
+  );
 
   // From-scratch form
   const [intro, setIntro] = useState("");
@@ -64,6 +72,9 @@ export default function OnboardingPage() {
       router.replace("/app/login");
       return;
     }
+    setPreview(
+      new URLSearchParams(window.location.search).get("preview") === "1",
+    );
     (async () => {
       try {
         const list = await fetchMyAccounts();
@@ -101,8 +112,16 @@ export default function OnboardingPage() {
     if (accountId === null) return;
     setBusy("analyze");
     setError(null);
-    captureEvent("ui.onboarding_analyze", { account_id: accountId });
+    captureEvent("ui.onboarding_analyze", {
+      account_id: accountId,
+      preview,
+    });
     try {
+      if (preview) {
+        setPreviewResult(await onboardingAnalyzePreview(accountId));
+        setBusy(null);
+        return;
+      }
       await onboardingAnalyze(accountId);
       router.replace("/app");
     } catch (e) {
@@ -125,13 +144,22 @@ export default function OnboardingPage() {
     }
     setBusy("create");
     setError(null);
-    captureEvent("ui.onboarding_from_scratch", { account_id: accountId });
+    captureEvent("ui.onboarding_from_scratch", {
+      account_id: accountId,
+      preview,
+    });
+    const payload = {
+      intro: intro.trim(),
+      themes_include: themes,
+      themes_exclude: excludes,
+    };
     try {
-      await onboardingFromScratch(accountId, {
-        intro: intro.trim(),
-        themes_include: themes,
-        themes_exclude: excludes,
-      });
+      if (preview) {
+        setPreviewResult(await onboardingFromScratchPreview(accountId, payload));
+        setBusy(null);
+        return;
+      }
+      await onboardingFromScratch(accountId, payload);
       router.replace("/app");
     } catch (e) {
       setError(errMsg(e));
@@ -154,10 +182,16 @@ export default function OnboardingPage() {
           <p className="text-sm text-zinc-500 mt-1">{t("onboarding.subtitle")}</p>
         </div>
 
-        {alreadySetUp && (
-          <div className="rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm text-amber-800 dark:text-amber-200">
-            {t("onboarding.already_setup")}
+        {preview ? (
+          <div className="rounded-lg border border-blue-300 bg-blue-50 dark:bg-blue-950/40 p-3 text-sm text-blue-800 dark:text-blue-200">
+            {t("onboarding.preview_banner")}
           </div>
+        ) : (
+          alreadySetUp && (
+            <div className="rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm text-amber-800 dark:text-amber-200">
+              {t("onboarding.already_setup")}
+            </div>
+          )
         )}
 
         {error && (
@@ -166,9 +200,20 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {step === "loading" && (
-          <p className="text-sm text-zinc-500">{t("common.loading")}</p>
-        )}
+        {previewResult ? (
+          <PreviewResultPanel
+            result={previewResult}
+            t={t}
+            onBack={() => {
+              setPreviewResult(null);
+              setError(null);
+            }}
+          />
+        ) : (
+          <>
+            {step === "loading" && (
+              <p className="text-sm text-zinc-500">{t("common.loading")}</p>
+            )}
 
         {step === "connect" && (
           <section className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 text-center shadow-sm">
@@ -313,8 +358,110 @@ export default function OnboardingPage() {
                 : t("onboarding.create_cta")}
             </button>
           </section>
+            )}
+          </>
         )}
       </main>
     </div>
+  );
+}
+
+// The voice a preview run produced — shown but never saved. Renders the
+// structured sections, the topics that would be seeded, and (collapsed)
+// the full assembled role-book that generation would actually use.
+function PreviewResultPanel({
+  result,
+  t,
+  onBack,
+}: {
+  result: OnboardingPreview;
+  t: (k: MessageKey) => string;
+  onBack: () => void;
+}) {
+  const s = result.sections;
+  const lists: { key: MessageKey; items?: string[] }[] = [
+    { key: "onboarding.sec_themes", items: s.themes_include },
+    { key: "onboarding.sec_exclude", items: s.themes_exclude },
+    { key: "onboarding.sec_voice", items: s.voice_characteristics },
+    { key: "onboarding.sec_do", items: s.do_list },
+    { key: "onboarding.sec_dont", items: s.dont_list },
+    { key: "onboarding.sec_examples", items: s.examples },
+  ];
+  return (
+    <section className="rounded-xl border border-blue-200 dark:border-blue-900 bg-white dark:bg-zinc-900 p-5 shadow-sm space-y-5">
+      <div>
+        <h2 className="text-base font-semibold">
+          {t("onboarding.preview_result_title")}
+        </h2>
+        <p className="text-xs text-zinc-500 mt-1">
+          {t("onboarding.preview_not_saved")}
+        </p>
+        {result.posts_analyzed !== null && (
+          <p className="text-xs text-zinc-500 mt-1">
+            {t("onboarding.preview_posts_analyzed")} {result.posts_analyzed}
+          </p>
+        )}
+      </div>
+
+      {s.intro && (
+        <div>
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-1">
+            {t("onboarding.sec_intro")}
+          </h3>
+          <p className="text-sm leading-relaxed whitespace-pre-wrap text-zinc-700 dark:text-zinc-300">
+            {s.intro}
+          </p>
+        </div>
+      )}
+
+      {lists.map(({ key, items }) =>
+        items && items.length > 0 ? (
+          <div key={key}>
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-1.5">
+              {t(key)}
+            </h3>
+            <ul className="list-disc list-inside space-y-0.5 text-sm text-zinc-700 dark:text-zinc-300">
+              {items.map((it, i) => (
+                <li key={i}>{it}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null,
+      )}
+
+      {result.would_seed_topics.length > 0 && (
+        <div>
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-1.5">
+            {t("onboarding.preview_would_topics")}
+          </h3>
+          <div className="flex flex-wrap gap-1.5">
+            {result.would_seed_topics.map((tp, i) => (
+              <span
+                key={i}
+                className="px-2 py-0.5 rounded-full text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
+              >
+                {tp}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <details className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-3">
+        <summary className="text-xs font-medium text-zinc-500 cursor-pointer">
+          {t("onboarding.preview_full_rolebook")}
+        </summary>
+        <pre className="mt-2 whitespace-pre-wrap text-xs leading-relaxed text-zinc-600 dark:text-zinc-400 font-mono">
+          {result.prompt_text}
+        </pre>
+      </details>
+
+      <button
+        onClick={onBack}
+        className="inline-flex items-center px-4 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 text-sm font-medium text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+      >
+        {t("onboarding.preview_back")}
+      </button>
+    </section>
   );
 }

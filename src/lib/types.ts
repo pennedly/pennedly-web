@@ -95,6 +95,16 @@ export type OnboardingResult = {
   posts_analyzed: number | null;
 };
 
+// Tester-only "preview": the voice an onboarding run would produce,
+// computed but NOT saved (saved === false always).
+export type OnboardingPreview = {
+  saved: boolean;
+  sections: RoleBookSections;
+  prompt_text: string;
+  posts_analyzed: number | null;
+  would_seed_topics: string[];
+};
+
 // ── Stats (analytics dashboard) ──────────────────────────────────────
 // Mirrors api/stats.py.
 

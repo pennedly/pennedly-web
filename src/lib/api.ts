@@ -29,6 +29,7 @@ import type {
   FeedResponse,
   FromScratchInput,
   GeneratedDraft,
+  OnboardingPreview,
   OnboardingResult,
   OnboardingStatus,
   StatsPeriod,
@@ -478,6 +479,28 @@ export async function onboardingFromScratch(
 ): Promise<OnboardingResult> {
   return fetchApi<OnboardingResult>(
     `/api/accounts/${accountId}/onboarding/from-scratch`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+// Tester-only preview variants — run for real, return the result, save
+// nothing (the account's voice/topics/prompts are untouched).
+export async function onboardingAnalyzePreview(
+  accountId: number,
+  postLimit = 25,
+): Promise<OnboardingPreview> {
+  return fetchApi<OnboardingPreview>(
+    `/api/accounts/${accountId}/onboarding/analyze/preview`,
+    { method: "POST", body: JSON.stringify({ post_limit: postLimit }) },
+  );
+}
+
+export async function onboardingFromScratchPreview(
+  accountId: number,
+  input: FromScratchInput,
+): Promise<OnboardingPreview> {
+  return fetchApi<OnboardingPreview>(
+    `/api/accounts/${accountId}/onboarding/from-scratch/preview`,
     { method: "POST", body: JSON.stringify(input) },
   );
 }
