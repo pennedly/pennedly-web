@@ -15,13 +15,21 @@ import {
   fetchMyAccounts,
   getTokens,
 } from "@/lib/api";
-import { useTranslation } from "@/lib/i18n";
+import {
+  LOCALES,
+  setLocale,
+  useLocale,
+  useTranslation,
+  type LocaleCode,
+} from "@/lib/i18n";
+import { captureEvent } from "@/lib/analytics";
 import { ConnectThreadsButton } from "@/components/ConnectThreadsButton";
 import type { ConnectedAccount, Me } from "@/lib/types";
 
 export default function SettingsPage() {
   const router = useRouter();
   const { t } = useTranslation();
+  const locale = useLocale();
   const [me, setMe] = useState<Me | null>(null);
   const [accounts, setAccounts] = useState<ConnectedAccount[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -73,6 +81,31 @@ export default function SettingsPage() {
                   <dd className="capitalize">{me.tenant.plan_tier}</dd>
                 </div>
               </dl>
+            </section>
+
+            <section className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm">
+              <h2 className="text-sm font-semibold mb-3">
+                {t("settings.language")}
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {LOCALES.map((l) => (
+                  <button
+                    key={l.code}
+                    onClick={() => {
+                      setLocale(l.code as LocaleCode);
+                      captureEvent("ui.locale_switched", { locale: l.code });
+                    }}
+                    className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md border text-sm transition-colors ${
+                      l.code === locale
+                        ? "border-zinc-400 dark:border-zinc-500 bg-zinc-100 dark:bg-zinc-800"
+                        : "border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    }`}
+                  >
+                    <span aria-hidden>{l.flag}</span>
+                    <span>{l.name}</span>
+                  </button>
+                ))}
+              </div>
             </section>
 
             <section className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm">
