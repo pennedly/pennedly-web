@@ -23,6 +23,7 @@ import {
   submitAuditDecisions,
 } from "@/lib/api";
 import { captureEvent } from "@/lib/analytics";
+import { useTranslation } from "@/lib/i18n";
 import type {
   AuditDecisionRow,
   AuditDetail,
@@ -40,6 +41,7 @@ type Toast = { id: number; message: string; tone: "success" | "error" };
 
 export default function AuditDetailPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const params = useParams<{ id: string }>();
   const auditId = Number(params.id);
 
@@ -92,7 +94,7 @@ export default function AuditDetailPage() {
   if (!audit) {
     return (
       <main className="max-w-3xl mx-auto px-6 py-16 text-sm text-zinc-500">
-        loading…
+        {t("common.loading")}
       </main>
     );
   }
@@ -126,7 +128,7 @@ export default function AuditDetailPage() {
     }
 
     if (decisions.length === 0) {
-      toast("nothing to submit — pick approve or reject on at least one", "error");
+      toast(t("audits.detail.toast_nothing"), "error");
       return;
     }
 
@@ -140,9 +142,8 @@ export default function AuditDetailPage() {
     try {
       const res = await submitAuditDecisions(auditId, decisions);
       const applied = res.results.filter((r) => r.applied).length;
-      const rejected = res.results.filter((r) => !r.approved).length;
       toast(
-        `submitted ${res.results.length} · ${applied} applied · ${rejected} rejected`,
+        `${t("audits.detail.toast_submitted")} · ${applied}/${res.results.length}`,
       );
       // Refetch to show the applied state.
       const fresh = await fetchAudit(auditId);
@@ -180,12 +181,13 @@ export default function AuditDetailPage() {
       <main className="max-w-3xl mx-auto px-6 py-8 space-y-6">
         <section>
           <h1 className="text-2xl font-semibold tracking-tight">
-            Weekly audit · {fmtDate(audit.period_start)} →{" "}
+            {t("audits.detail.title")} · {fmtDate(audit.period_start)} →{" "}
             {fmtDate(audit.period_end)}
           </h1>
           <p className="text-sm text-zinc-500 mt-1">
-            {audit.posts_analyzed} posts analyzed ·{" "}
-            {audit.proposed_changes.length} proposed change(s) · status{" "}
+            {audit.posts_analyzed} {t("audits.posts_analyzed")} ·{" "}
+            {audit.proposed_changes.length} {t("audits.detail.changes_count")} ·{" "}
+            {t("audits.detail.status_label")}{" "}
             <span className="font-medium text-zinc-700 dark:text-zinc-300">
               {audit.status.replace(/_/g, " ")}
             </span>
@@ -195,7 +197,7 @@ export default function AuditDetailPage() {
         {audit.llm_reasoning && (
           <details className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5">
             <summary className="cursor-pointer text-sm font-semibold">
-              Why the coach proposed these changes
+              {t("audits.detail.reasoning")}
               {audit.llm_model && (
                 <span className="ml-2 font-normal text-xs text-zinc-500">
                   · {audit.llm_model}
@@ -209,11 +211,13 @@ export default function AuditDetailPage() {
         )}
 
         <section className="space-y-3">
-          <h2 className="text-base font-semibold">Proposed changes</h2>
+          <h2 className="text-base font-semibold">
+            {t("audits.detail.proposed_changes")}
+          </h2>
 
           {audit.proposed_changes.length === 0 && (
             <div className="rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700 p-6 text-center text-sm text-zinc-500">
-              The coach didn&apos;t propose any changes for this period.
+              {t("audits.detail.no_changes")}
             </div>
           )}
 
@@ -235,8 +239,9 @@ export default function AuditDetailPage() {
         {audit.proposed_changes.length > 0 && (
           <div className="sticky bottom-4 flex items-center justify-end gap-3 bg-white/95 dark:bg-zinc-950/95 backdrop-blur border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 shadow-md">
             <span className="mr-auto text-xs text-zinc-500">
-              {readyToSubmit} of {audit.proposed_changes.length - decidedByChangeId.size}{" "}
-              pending change(s) ready to submit
+              {readyToSubmit} /{" "}
+              {audit.proposed_changes.length - decidedByChangeId.size}{" "}
+              {t("audits.detail.ready_to_submit")}
             </span>
             <button
               onClick={onSubmitAll}
@@ -249,23 +254,25 @@ export default function AuditDetailPage() {
                   aria-hidden
                 />
               )}
-              {submitting ? "submitting…" : "submit decisions"}
+              {submitting
+                ? t("audits.detail.submitting")
+                : t("audits.detail.submit")}
             </button>
           </div>
         )}
       </main>
 
       <div className="fixed bottom-6 right-6 z-30 space-y-2 pointer-events-none">
-        {toasts.map((t) => (
+        {toasts.map((tt) => (
           <div
-            key={t.id}
+            key={tt.id}
             className={`px-4 py-2.5 rounded-lg shadow-lg text-sm font-medium pointer-events-auto ${
-              t.tone === "error"
+              tt.tone === "error"
                 ? "bg-red-600 text-white"
                 : "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
             }`}
           >
-            {t.message}
+            {tt.message}
           </div>
         ))}
       </div>
@@ -284,6 +291,7 @@ function ChangeCard({
   draft: DraftDecision | undefined;
   onDraftChange: (partial: Partial<DraftDecision>) => void;
 }) {
+  const { t } = useTranslation();
   const decided = existing !== undefined;
   const localApproved = draft?.approved ?? null;
 
@@ -324,7 +332,7 @@ function ChangeCard({
       {change.diff !== undefined && change.diff !== null && (
         <details>
           <summary className="cursor-pointer text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300">
-            View raw diff
+            {t("audits.detail.view_diff")}
           </summary>
           <pre className="mt-2 text-xs font-mono p-3 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md overflow-x-auto whitespace-pre-wrap">
             {JSON.stringify(change.diff, null, 2)}
@@ -335,7 +343,7 @@ function ChangeCard({
       {decided && existing ? (
         existing.user_comment && (
           <p className="text-xs text-zinc-500 italic">
-            Your note: {existing.user_comment}
+            {t("audits.detail.your_note")}: {existing.user_comment}
           </p>
         )
       ) : (
@@ -343,7 +351,7 @@ function ChangeCard({
           <textarea
             value={draft?.comment ?? ""}
             onChange={(e) => onDraftChange({ comment: e.target.value })}
-            placeholder="Optional note about this decision…"
+            placeholder={t("audits.detail.note_placeholder")}
             rows={2}
             className="w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700"
           />
@@ -357,7 +365,7 @@ function ChangeCard({
                   : "border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-green-50 dark:hover:bg-green-950/30"
               }`}
             >
-              approve
+              {t("audits.detail.approve")}
             </button>
             <button
               type="button"
@@ -368,7 +376,7 @@ function ChangeCard({
                   : "border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-red-50 dark:hover:bg-red-950/30"
               }`}
             >
-              reject
+              {t("audits.detail.reject")}
             </button>
             {localApproved !== null && (
               <button
@@ -376,7 +384,7 @@ function ChangeCard({
                 onClick={() => onDraftChange({ approved: null })}
                 className="text-xs px-2 py-1 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
               >
-                clear
+                {t("audits.detail.clear")}
               </button>
             )}
           </div>
@@ -395,25 +403,29 @@ function KindBadge({ kind }: { kind: string }) {
 }
 
 function DecisionStatus({ row }: { row: AuditDecisionRow }) {
+  const { t } = useTranslation();
   if (row.rolled_back) {
     return (
       <span className="text-xs text-red-700 dark:text-red-400 font-medium">
-        rolled back · effect {fmtEffect(row.effect_pct)}
+        {t("audits.detail.rolled_back")} · {t("audits.detail.effect")}{" "}
+        {fmtEffect(row.effect_pct)}
       </span>
     );
   }
   if (!row.approved) {
     return (
-      <span className="text-xs text-zinc-500 font-medium">rejected</span>
+      <span className="text-xs text-zinc-500 font-medium">
+        {t("audits.detail.rejected_label")}
+      </span>
     );
   }
   if (row.applied_change) {
     return (
       <span className="text-xs text-green-700 dark:text-green-400 font-medium">
-        approved · applied
+        {t("audits.detail.approved")} · {t("audits.detail.applied")}
         {row.effect_pct !== null && (
           <span className="ml-2 text-zinc-500 font-normal">
-            effect {fmtEffect(row.effect_pct)}
+            {t("audits.detail.effect")} {fmtEffect(row.effect_pct)}
           </span>
         )}
       </span>
@@ -421,7 +433,7 @@ function DecisionStatus({ row }: { row: AuditDecisionRow }) {
   }
   return (
     <span className="text-xs text-green-700 dark:text-green-400 font-medium">
-      approved
+      {t("audits.detail.approved")}
     </span>
   );
 }

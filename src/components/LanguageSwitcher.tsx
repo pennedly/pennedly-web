@@ -14,6 +14,7 @@ import {
   useLocale,
   type LocaleCode,
 } from "@/lib/i18n";
+import { getTokens, setMyLocale } from "@/lib/api";
 import { captureEvent } from "@/lib/analytics";
 
 export function LanguageSwitcher() {
@@ -50,6 +51,7 @@ export function LanguageSwitcher() {
                   setLocale(l.code as LocaleCode);
                   setOpen(false);
                   captureEvent("ui.locale_switched", { locale: l.code });
+                  if (getTokens()) setMyLocale(l.code).catch(() => {});
                 }}
                 className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2.5 transition-colors ${
                   isSel

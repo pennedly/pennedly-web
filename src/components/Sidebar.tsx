@@ -11,9 +11,9 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { clearTokens, fetchMe, getTokens } from "@/lib/api";
+import { clearTokens, fetchMe, getTokens, setMyLocale } from "@/lib/api";
 import { captureEvent, resetIdentity } from "@/lib/analytics";
-import { useTranslation, type MessageKey } from "@/lib/i18n";
+import { getLocale, useTranslation, type MessageKey } from "@/lib/i18n";
 import { AccountSwitcher } from "@/components/AccountSwitcher";
 import type { Me } from "@/lib/types";
 
@@ -71,7 +71,14 @@ export function Sidebar() {
   useEffect(() => {
     if (!getTokens()) return;
     fetchMe()
-      .then(setMe)
+      .then((m) => {
+        setMe(m);
+        // One-way sync: the browser's UI language is the source of truth;
+        // mirror it to the server so cron-time copy (the weekly audit)
+        // is written in the same language without the user re-picking it.
+        const active = getLocale();
+        if (m.locale !== active) setMyLocale(active).catch(() => {});
+      })
       .catch(() => {});
   }, []);
 

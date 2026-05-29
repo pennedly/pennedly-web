@@ -193,6 +193,14 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "audits.detail.rejected_label": "отклонено",
   "audits.detail.rolled_back": "откачено",
   "audits.detail.effect": "эффект",
+  "audits.detail.title": "Еженедельный аудит",
+  "audits.detail.changes_count": "предложений",
+  "audits.detail.status_label": "статус",
+  "audits.detail.view_diff": "Показать diff",
+  "audits.detail.approved": "одобрено",
+  "audits.detail.toast_nothing":
+    "нечего отправлять — одобри или отклони хотя бы одно",
+  "audits.detail.toast_submitted": "решения отправлены",
 
   // ── Publish modal ──────────────────────────────────────────────
   "publish.title": "Опубликовать в Threads",

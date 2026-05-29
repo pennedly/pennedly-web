@@ -22,6 +22,9 @@ export type Me = {
   // Allowlisted tester accounts see the round-2 UIs (replies / mentions /
   // posts) and get the full Threads scope set. Everyone else sees round-1.
   is_tester: boolean;
+  // Persisted UI language (one of the 8 codes), or null if never set.
+  // Server-generated copy (weekly audit) is written in it.
+  locale: string | null;
 };
 
 export type ConnectedAccount = {
