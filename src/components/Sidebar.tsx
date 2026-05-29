@@ -13,9 +13,15 @@ import { useEffect, useState } from "react";
 
 import { clearTokens, fetchMe, getTokens } from "@/lib/api";
 import { captureEvent, resetIdentity } from "@/lib/analytics";
-import { useTranslation, type MessageKey } from "@/lib/i18n";
+import {
+  LOCALES,
+  setLocale,
+  useLocale,
+  useTranslation,
+  type LocaleCode,
+  type MessageKey,
+} from "@/lib/i18n";
 import { AccountSwitcher } from "@/components/AccountSwitcher";
-import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import type { Me } from "@/lib/types";
 
 type NavItem = {
@@ -116,7 +122,7 @@ export function Sidebar() {
                   <li key={it.href}>
                     <Link
                       href={it.href}
-                      className={`block rounded-md px-2.5 py-1.5 text-sm transition-colors ${
+                      className={`block rounded-md px-2.5 py-1.5 text-sm capitalize transition-colors ${
                         active
                           ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-medium"
                           : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100"
@@ -135,24 +141,11 @@ export function Sidebar() {
   );
 
   const bottom = (
-    <div className="border-t border-zinc-200 dark:border-zinc-800 px-3 py-3 space-y-2 shrink-0">
-      <div className="px-1">
-        <AccountSwitcher />
-      </div>
-      <div className="flex items-center justify-between px-1">
-        <LanguageSwitcher />
-        <button
-          onClick={onLogout}
-          className="text-xs text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors"
-        >
-          {t("dashboard.nav.logout")}
-        </button>
-      </div>
-      {me && (
-        <p className="px-1 text-[10px] text-zinc-400 dark:text-zinc-600 truncate">
-          {me.email} · {me.tenant.plan_tier}
-        </p>
-      )}
+    <div className="border-t border-zinc-200 dark:border-zinc-800 px-2 py-2 space-y-1 shrink-0">
+      {/* Account switcher — opens upward (it sits at the very bottom) */}
+      <AccountSwitcher />
+      {/* Profile / settings / language / logout */}
+      <ProfileMenu me={me} onLogout={onLogout} />
     </div>
   );
 
@@ -217,5 +210,99 @@ export function Sidebar() {
         </div>
       )}
     </>
+  );
+}
+
+// The bottom-left user area: profile (who's logged in), language, settings,
+// and log out — in one menu that opens UPWARD (it sits at the very bottom).
+function ProfileMenu({
+  me,
+  onLogout,
+}: {
+  me: Me | null;
+  onLogout: () => void;
+}) {
+  const { t } = useTranslation();
+  const locale = useLocale();
+  const [open, setOpen] = useState(false);
+  const initial = (me?.email?.[0] ?? "?").toUpperCase();
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+      >
+        <span className="w-7 h-7 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center text-xs font-semibold shrink-0">
+          {initial}
+        </span>
+        <span className="flex-1 min-w-0">
+          <span className="block text-xs font-medium truncate">
+            {me?.email ?? "…"}
+          </span>
+          {me && (
+            <span className="block text-[10px] text-zinc-500 truncate">
+              {me.tenant.plan_tier}
+            </span>
+          )}
+        </span>
+        <span className="text-zinc-400 text-xs" aria-hidden>
+          ⋯
+        </span>
+      </button>
+      {open && (
+        <>
+          <div
+            className="fixed inset-0 z-30"
+            onClick={() => setOpen(false)}
+            aria-hidden
+          />
+          <div className="absolute bottom-full mb-1 left-0 right-0 z-40 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-lg py-1">
+            <Link
+              href="/app/settings"
+              onClick={() => setOpen(false)}
+              className="block px-3 py-1.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            >
+              {t("nav.settings")}
+            </Link>
+            <div className="my-1 border-t border-zinc-200 dark:border-zinc-800" />
+            <p className="px-3 pt-1 pb-0.5 text-[10px] uppercase tracking-wider text-zinc-400">
+              {t("settings.language")}
+            </p>
+            {LOCALES.map((l) => (
+              <button
+                key={l.code}
+                type="button"
+                onClick={() => {
+                  setLocale(l.code as LocaleCode);
+                  captureEvent("ui.locale_switched", { locale: l.code });
+                  setOpen(false);
+                }}
+                className={`w-full text-left px-3 py-1.5 text-sm flex items-center gap-2 transition-colors ${
+                  l.code === locale
+                    ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+                    : "text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
+                }`}
+              >
+                <span aria-hidden>{l.flag}</span>
+                <span>{l.name}</span>
+                {l.code === locale && (
+                  <span className="ml-auto text-xs text-zinc-500">✓</span>
+                )}
+              </button>
+            ))}
+            <div className="my-1 border-t border-zinc-200 dark:border-zinc-800" />
+            <button
+              type="button"
+              onClick={onLogout}
+              className="w-full text-left px-3 py-1.5 text-sm text-red-600 dark:text-red-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            >
+              {t("dashboard.nav.logout")}
+            </button>
+          </div>
+        </>
+      )}
+    </div>
   );
 }

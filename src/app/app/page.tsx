@@ -26,7 +26,7 @@ import {
 } from "@/lib/api";
 import { captureEvent, identify } from "@/lib/analytics";
 import { useSelectedAccountId } from "@/lib/account";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { ConnectThreadsButton } from "@/components/ConnectThreadsButton";
 import { PublishConfirmModal } from "@/components/PublishConfirmModal";
 import { TranslateButton } from "@/components/TranslateButton";
@@ -266,7 +266,7 @@ export default function Dashboard() {
       instructionOverride ?? refineInputs[draftId] ?? ""
     ).trim();
     if (!instruction) {
-      toast("type a refine instruction first", "error");
+      toast(t("dashboard.draft.refine_empty"), "error");
       return;
     }
     setRefiningId(draftId);
@@ -822,16 +822,27 @@ export default function Dashboard() {
   );
 }
 
+const STATUS_LABEL: Record<string, MessageKey> = {
+  pending: "dashboard.status.pending",
+  approved: "dashboard.status.approved",
+  rejected: "dashboard.status.rejected",
+  published: "dashboard.status.published",
+};
+
 function StatusBadge({ status }: { status: string }) {
+  const { t } = useTranslation();
   const styles =
     status === "approved"
       ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300"
+      : status === "published"
+      ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
       : status === "rejected"
       ? "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 line-through"
       : "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300";
+  const key = STATUS_LABEL[status];
   return (
     <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wide ${styles}`}>
-      {status}
+      {key ? t(key) : status}
     </span>
   );
 }

@@ -378,6 +378,30 @@ export const en = {
   "stats.tier_flop": "weak",
   "stats.weekly_views_title": "Average views per week",
   "stats.weekly_posts_title": "Posts per week",
+
+  // ── Translate widget (button/cached/fresh already defined above) ──
+  "translate.translating": "translating…",
+  "translate.translated": "translated",
+  "translate.hide": "hide",
+
+  // ── Draft status badge ────────────────────────────────────────
+  "dashboard.status.pending": "draft",
+  "dashboard.status.approved": "approved",
+  "dashboard.status.rejected": "rejected",
+  "dashboard.status.published": "published",
+  "dashboard.draft.refine_empty": "type a tweak instruction first",
+  "dashboard.draft.delete": "delete",
+  "dashboard.draft.confirm_delete": "Delete this draft?",
+  "dashboard.draft.toast_deleted": "draft deleted",
+
+  // ── Sidebar bottom + Settings ─────────────────────────────────
+  "nav.settings": "Settings",
+  "settings.title": "Settings",
+  "settings.account": "Account",
+  "settings.plan": "Plan",
+  "settings.language": "Interface language",
+  "settings.accounts": "Connected Threads accounts",
+  "settings.logout": "Log out",
 } as const;
 
 export type MessageKey = keyof typeof en;

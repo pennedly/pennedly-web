@@ -384,4 +384,28 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "stats.tier_flop": "слабые",
   "stats.weekly_views_title": "Средние просмотры по неделям",
   "stats.weekly_posts_title": "Постов по неделям",
+
+  // ── Виджет перевода (button/cached/fresh уже заданы выше) ──────
+  "translate.translating": "перевожу…",
+  "translate.translated": "переведено",
+  "translate.hide": "скрыть",
+
+  // ── Статус черновика ──────────────────────────────────────────
+  "dashboard.status.pending": "черновик",
+  "dashboard.status.approved": "одобрено",
+  "dashboard.status.rejected": "отклонено",
+  "dashboard.status.published": "опубликовано",
+  "dashboard.draft.refine_empty": "сначала впиши, что доработать",
+  "dashboard.draft.delete": "удалить",
+  "dashboard.draft.confirm_delete": "Удалить этот черновик?",
+  "dashboard.draft.toast_deleted": "черновик удалён",
+
+  // ── Низ сайдбара + Настройки ──────────────────────────────────
+  "nav.settings": "Настройки",
+  "settings.title": "Настройки",
+  "settings.account": "Аккаунт",
+  "settings.plan": "Тариф",
+  "settings.language": "Язык интерфейса",
+  "settings.accounts": "Подключённые аккаунты Threads",
+  "settings.logout": "Выйти",
 };
