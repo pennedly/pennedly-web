@@ -19,6 +19,7 @@ import {
   useSelectedAccountId,
 } from "@/lib/account";
 import { captureEvent } from "@/lib/analytics";
+import { ConnectThreadsButton } from "@/components/ConnectThreadsButton";
 import type { ConnectedAccount } from "@/lib/types";
 
 export function AccountSwitcher() {
@@ -52,22 +53,19 @@ export function AccountSwitcher() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (!loaded || accounts.length === 0) {
+  if (!loaded) {
     return null;
+  }
+
+  // No connected account yet (brand-new user, or a fresh Meta reviewer).
+  // This is the entry point to the whole product — surface the connect
+  // button right in the header so there's always a way in.
+  if (accounts.length === 0) {
+    return <ConnectThreadsButton variant="primary" />;
   }
 
   const selectedAccount =
     accounts.find((a) => a.id === selected) ?? accounts[0];
-
-  // Only one account — render as a static pill, no dropdown.
-  if (accounts.length === 1) {
-    return (
-      <span className="inline-flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-400 px-2 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800">
-        <span aria-hidden>@</span>
-        {selectedAccount.username ?? `acct ${selectedAccount.id}`}
-      </span>
-    );
-  }
 
   return (
     <div className="relative">
@@ -118,6 +116,8 @@ export function AccountSwitcher() {
               </button>
             );
           })}
+          <div className="my-1 border-t border-zinc-200 dark:border-zinc-800" />
+          <ConnectThreadsButton variant="menu" />
         </div>
       )}
     </div>

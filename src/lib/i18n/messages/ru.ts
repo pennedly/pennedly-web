@@ -22,6 +22,15 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "common.revert": "вернуть",
   "common.signed_in_as": "вошёл как",
 
+  // ── Accounts / connect ─────────────────────────────────────────
+  "accounts.connect": "Подключить аккаунт Threads",
+  "accounts.connect_another": "Подключить ещё аккаунт",
+  "accounts.connecting": "Подключаю…",
+  "accounts.connect_error": "Не удалось подключить. Попробуй ещё раз.",
+  "accounts.connected": "подключён",
+  "accounts.connect_cta_body":
+    "Pennedly пишет в твоём голосе — подключи аккаунт Threads, чтобы начать.",
+
   // ── Landing ────────────────────────────────────────────────────
   "landing.cta": "Запросить ранний доступ",
 

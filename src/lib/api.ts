@@ -32,6 +32,7 @@ import type {
   RoleBookSections,
   StyleRule,
   StyleRulesList,
+  ThreadsConnectStart,
   TokenPair,
   Translation,
 } from "./types";
@@ -188,6 +189,18 @@ export async function fetchMe(): Promise<Me> {
 
 export async function fetchMyAccounts(): Promise<AccountsList> {
   return fetchApi<AccountsList>("/api/me/accounts");
+}
+
+// Kick off the Threads OAuth connect. Returns the Meta authorize URL the
+// caller should navigate the browser to. `returnTo` is where Meta's
+// callback will 302 us back (must be an allowlisted web origin).
+export async function startThreadsConnect(
+  returnTo: string,
+): Promise<ThreadsConnectStart> {
+  const qs = new URLSearchParams({ return_to: returnTo });
+  return fetchApi<ThreadsConnectStart>(
+    `/api/threads/oauth/start?${qs.toString()}`,
+  );
 }
 
 // ── Role book ────────────────────────────────────────────────────

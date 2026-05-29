@@ -21,6 +21,15 @@ export const it: Partial<Record<MessageKey, string>> = {
   "common.revert": "ripristina",
   "common.signed_in_as": "accesso effettuato come",
 
+  // ── Accounts / connect ─────────────────────────────────────────
+  "accounts.connect": "Collega un account Threads",
+  "accounts.connect_another": "Collega un altro account",
+  "accounts.connecting": "Collego…",
+  "accounts.connect_error": "Connessione non riuscita. Riprova.",
+  "accounts.connected": "collegato",
+  "accounts.connect_cta_body":
+    "Pennedly scrive nella tua voce — collega un account Threads per iniziare.",
+
   // ── Landing ────────────────────────────────────────────────────
   "landing.cta": "Richiedi accesso anticipato",
 

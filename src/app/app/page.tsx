@@ -15,6 +15,7 @@ import {
   approveDraft,
   clearTokens,
   fetchMe,
+  fetchMyAccounts,
   generatePost,
   generatePostBatch,
   getTokens,
@@ -27,6 +28,7 @@ import { captureEvent, identify, resetIdentity } from "@/lib/analytics";
 import { useSelectedAccountId } from "@/lib/account";
 import { useTranslation } from "@/lib/i18n";
 import { AccountSwitcher } from "@/components/AccountSwitcher";
+import { ConnectThreadsButton } from "@/components/ConnectThreadsButton";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { PublishConfirmModal } from "@/components/PublishConfirmModal";
 import { TranslateButton } from "@/components/TranslateButton";
@@ -66,6 +68,12 @@ export default function Dashboard() {
     text: string;
   } | null>(null);
   const [publishing, setPublishing] = useState(false);
+  // Whether the user has any connected Threads account. Drives the
+  // zero-account "connect" CTA (a brand-new user / Meta reviewer lands
+  // here with nothing connected). Default hasAccounts=false but we only
+  // act on it once accountsLoaded flips true, to avoid a flash.
+  const [accountsLoaded, setAccountsLoaded] = useState(false);
+  const [hasAccounts, setHasAccounts] = useState(false);
 
   function toast(message: string, tone: Toast["tone"] = "success") {
     const id = Date.now() + Math.random();
@@ -93,6 +101,51 @@ export default function Dashboard() {
       }
     })();
   }, [router]);
+
+  // Do we have any connected Threads account? Decides whether to show the
+  // work surface or the "connect your account" CTA. On error we assume
+  // yes, so a transient failure never blocks an existing user with a
+  // spurious connect prompt.
+  useEffect(() => {
+    if (!getTokens()) return;
+    (async () => {
+      try {
+        const list = await fetchMyAccounts();
+        setHasAccounts(
+          list.accounts.some((a) => a.disconnected_at === null),
+        );
+      } catch {
+        setHasAccounts(true);
+      } finally {
+        setAccountsLoaded(true);
+      }
+    })();
+  }, []);
+
+  // Post-OAuth landing: the Threads callback 302s back here with
+  // ?threads_connected=1 (or ?threads_error=…). Show a toast, then strip
+  // the params so a refresh doesn't replay it.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const connected = params.get("threads_connected");
+    const err = params.get("threads_error");
+    if (!connected && !err) return;
+    if (connected === "1") {
+      const u = params.get("username");
+      toast(u ? `@${u} · ${t("accounts.connected")}` : t("accounts.connected"));
+      captureEvent("threads.connect_succeeded");
+    } else if (err) {
+      toast(t("accounts.connect_error"), "error");
+      captureEvent("threads.connect_failed", { reason: err });
+    }
+    const url = new URL(window.location.href);
+    url.searchParams.delete("threads_connected");
+    url.searchParams.delete("threads_error");
+    url.searchParams.delete("username");
+    window.history.replaceState({}, "", url.pathname + url.search + url.hash);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Reload drafts whenever the selected account changes (initial mount,
   // user clicks a different account in the switcher).
@@ -378,6 +431,21 @@ export default function Dashboard() {
           </p>
         )}
 
+        {accountsLoaded && !hasAccounts ? (
+          /* No Threads account connected yet — the product can't draft
+             without one, so replace the work surface with a single clear
+             call to action (also the path a fresh Meta reviewer takes). */
+          <section className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-8 text-center shadow-sm">
+            <h2 className="text-lg font-semibold">{t("accounts.connect")}</h2>
+            <p className="text-sm text-zinc-500 mt-1 mb-4 max-w-md mx-auto">
+              {t("accounts.connect_cta_body")}
+            </p>
+            <div className="flex justify-center">
+              <ConnectThreadsButton variant="primary" />
+            </div>
+          </section>
+        ) : (
+          <>
         {/* Generate panel */}
         <section className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm">
           <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -672,6 +740,8 @@ export default function Dashboard() {
             })}
           </ul>
         </section>
+          </>
+        )}
       </main>
 
       {/* Publish confirmation modal */}

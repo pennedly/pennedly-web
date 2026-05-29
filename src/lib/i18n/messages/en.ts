@@ -24,6 +24,15 @@ export const en = {
   "common.revert": "revert",
   "common.signed_in_as": "signed in as",
 
+  // ── Accounts / connect ─────────────────────────────────────────
+  "accounts.connect": "Connect Threads account",
+  "accounts.connect_another": "Connect another account",
+  "accounts.connecting": "Connecting…",
+  "accounts.connect_error": "Couldn't connect. Try again.",
+  "accounts.connected": "connected",
+  "accounts.connect_cta_body":
+    "Pennedly drafts in your voice — connect a Threads account to start.",
+
   // ── Landing ────────────────────────────────────────────────────
   "landing.cta": "Get early access",
 

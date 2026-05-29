@@ -36,6 +36,14 @@ export type AccountsList = {
   accounts: ConnectedAccount[];
 };
 
+// Response from GET /api/threads/oauth/start — the Meta authorize URL the
+// browser should navigate to, plus the CSRF state (already persisted
+// server-side; returned for debugging/telemetry only).
+export type ThreadsConnectStart = {
+  authorize_url: string;
+  state: string;
+};
+
 export type RoleBookSections = {
   intro?: string;
   themes_include?: string[];
