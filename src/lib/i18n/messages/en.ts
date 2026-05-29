@@ -402,6 +402,10 @@ export const en = {
   "settings.language": "Interface language",
   "settings.accounts": "Connected Threads accounts",
   "settings.logout": "Log out",
+  "settings.voice_setup": "Voice setup",
+  "settings.voice_setup_cta": "Open setup",
+  "onboarding.already_setup":
+    "Your voice is already set up — going through this again replaces it (the previous version is kept).",
 } as const;
 
 export type MessageKey = keyof typeof en;

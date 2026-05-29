@@ -408,4 +408,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "settings.language": "Язык интерфейса",
   "settings.accounts": "Подключённые аккаунты Threads",
   "settings.logout": "Выйти",
+  "settings.voice_setup": "Настройка голоса",
+  "settings.voice_setup_cta": "Открыть настройку",
+  "onboarding.already_setup":
+    "Твой голос уже настроен — повторная настройка заменит его (старая версия сохранится).",
 };
