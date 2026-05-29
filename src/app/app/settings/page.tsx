@@ -4,6 +4,7 @@
 // the connected Threads accounts (with a "connect another"). Language +
 // log out live in the sidebar profile menu. In the shell (has the sidebar).
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -96,6 +97,21 @@ export default function SettingsPage() {
                 ))}
               </ul>
               <ConnectThreadsButton variant="primary" />
+            </section>
+
+            <section className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm">
+              <h2 className="text-sm font-semibold mb-1">
+                {t("settings.voice_setup")}
+              </h2>
+              <p className="text-xs text-zinc-500 mb-3">
+                {t("onboarding.subtitle")}
+              </p>
+              <Link
+                href="/app/onboarding"
+                className="inline-flex items-center px-4 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 text-sm font-medium text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              >
+                {t("settings.voice_setup_cta")}
+              </Link>
             </section>
           </>
         )}

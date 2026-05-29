@@ -50,6 +50,9 @@ export default function OnboardingPage() {
   const [status, setStatus] = useState<OnboardingStatus | null>(null);
   const [busy, setBusy] = useState<null | "analyze" | "create">(null);
   const [error, setError] = useState<string | null>(null);
+  // Already-onboarded users can still open this page to re-run / test the
+  // flow; we show a heads-up that submitting replaces their current voice.
+  const [alreadySetUp, setAlreadySetUp] = useState(false);
 
   // From-scratch form
   const [intro, setIntro] = useState("");
@@ -76,11 +79,10 @@ export default function OnboardingPage() {
         }
         setAccountId(acc);
         const st = await fetchOnboardingStatus(acc);
-        if (!st.needs_onboarding) {
-          router.replace("/app"); // already set up
-          return;
-        }
         setStatus(st);
+        // Don't bounce already-set-up users away — let them re-run / test
+        // the flow (with a heads-up). New accounts have needs_onboarding.
+        setAlreadySetUp(!st.needs_onboarding);
         setStep("choose");
       } catch (e) {
         if (e instanceof ApiError && e.status === 401) {
@@ -151,6 +153,12 @@ export default function OnboardingPage() {
           </h1>
           <p className="text-sm text-zinc-500 mt-1">{t("onboarding.subtitle")}</p>
         </div>
+
+        {alreadySetUp && (
+          <div className="rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm text-amber-800 dark:text-amber-200">
+            {t("onboarding.already_setup")}
+          </div>
+        )}
 
         {error && (
           <div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 p-3 text-sm text-red-800 dark:text-red-200">
