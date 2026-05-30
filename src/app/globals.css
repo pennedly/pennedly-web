@@ -1,26 +1,194 @@
+/* ============================================================================
+   PENNEDLY — globals.css
+   Design tokens for Next.js 16 / React 19 / Tailwind CSS 4 (CSS-first @theme).
+   Brand DNA: "ink on paper" — anchored on the Drafting Line app icon.
+   Ink #171717 · Paper #ededed · deepest ink #0a0a0a · white #ffffff.
+
+   DARK MODE: class-based. `.dark` on <html> (set by the no-FOUC script in
+   layout.tsx, following localStorage `theme` or the OS preference). The
+   SEMANTIC tokens below flip inside `.dark`, so components written against
+   semantic tokens (bg-surface, text-text, border-border, …) need NO dark:
+   duplicates. The `dark:` variant is still wired (via @custom-variant) for
+   the rare one-off override.
+   ========================================================================== */
+
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Make `dark:` utilities resolve from a `.dark` class (and its subtree). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ----------------------------------------------------------------------------
+   THEME — generates utilities AND emits the CSS variables to :root.
+   Values here are the LIGHT defaults; semantic tokens are overridden in .dark.
+   ---------------------------------------------------------------------------- */
+@theme {
+  /* ---- Spacing: 4px base grid (Tailwind default; restated for clarity) ---- */
+  --spacing: 0.25rem; /* 1 unit = 4px → p-2 = 8px, gap-4 = 16px, etc. */
+
+  /* ---- Type family — wired to the app's next/font Geist variables --------- */
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", Menlo,
+    Consolas, monospace;
+
+  /* ---- Type scale (size / line-height / weight / tracking) ----------------- */
+  --text-display: 3rem;            /* 48px */
+  --text-display--line-height: 1.05;
+  --text-display--font-weight: 600;
+  --text-display--letter-spacing: -0.02em;
+
+  --text-h1: 2rem;                 /* 32px */
+  --text-h1--line-height: 1.15;
+  --text-h1--font-weight: 600;
+  --text-h1--letter-spacing: -0.015em;
+
+  --text-h2: 1.5rem;               /* 24px */
+  --text-h2--line-height: 1.2;
+  --text-h2--font-weight: 600;
+  --text-h2--letter-spacing: -0.01em;
+
+  --text-h3: 1.1875rem;            /* 19px */
+  --text-h3--line-height: 1.3;
+  --text-h3--font-weight: 600;
+  --text-h3--letter-spacing: -0.006em;
+
+  --text-body: 0.9375rem;          /* 15px */
+  --text-body--line-height: 1.6;
+  --text-body--font-weight: 400;
+
+  --text-small: 0.8125rem;         /* 13px */
+  --text-small--line-height: 1.5;
+  --text-small--font-weight: 400;
+
+  --text-caption: 0.75rem;         /* 12px */
+  --text-caption--line-height: 1.4;
+  --text-caption--font-weight: 500;
+  --text-caption--letter-spacing: 0.02em;
+
+  /* ---- Ink scale (the only hue: warm-neutral ink on paper) ----------------- */
+  --color-ink-50:  #f9f8f6;
+  --color-ink-100: #ededed;        /* paper — the icon surface */
+  --color-ink-200: #ddddda;
+  --color-ink-300: #c8c7c3;
+  --color-ink-400: #a2a19c;
+  --color-ink-500: #7b7a74;
+  --color-ink-600: #565550;
+  --color-ink-700: #3c3b37;
+  --color-ink-800: #262521;
+  --color-ink-900: #171717;        /* ink — text + marks */
+  --color-ink-950: #0a0a0a;        /* deepest ink — dark bg */
+
+  /* ---- Semantic roles (LIGHT) — flipped in .dark --------------------------- */
+  --color-bg:                 #efedea;   /* page = warm paper */
+  --color-surface:            #ffffff;   /* cards / panels */
+  --color-surface-2:          #f6f5f2;   /* inset / alt rows / hover */
+  --color-border:             #dcd9d2;   /* hairlines, input outlines */
+  --color-text:               #171717;   /* ink-900 */
+  --color-text-muted:         #565550;   /* ink-600 — secondary text */
+  --color-text-subtle:        #6f6e69;   /* placeholders, captions (AA) */
+
+  --color-primary:            #171717;   /* primary action = ink */
+  --color-primary-foreground: #ededed;   /* paper on ink */
+
+  --color-accent:             #2f4cc4;   /* the ONE accent: ink blue */
+  --color-accent-foreground:  #ffffff;
+
+  --color-success:            #2c7350;
+  --color-success-foreground: #ffffff;
+  --color-warning:            #8a5b16;
+  --color-warning-foreground: #ffffff;
+  --color-danger:             #b23b30;
+  --color-danger-foreground:  #ffffff;
+
+  /* ---- Radius — generous/soft, echoing the icon's ~22% rounding ------------ */
+  --radius-sm:  6px;   /* chips, small inputs */
+  --radius-md:  10px;  /* buttons, inputs, sm cards */
+  --radius-lg:  14px;  /* cards, panels */
+  --radius-xl:  20px;  /* large panels, popovers */
+  --radius-2xl: 28px;  /* modals, hero surfaces (most "icon-like") */
+  --radius-full: 9999px;
+
+  /* ---- Elevation — soft, low, inky (calm; never floaty) -------------------- */
+  --shadow-sm: 0 1px 2px 0 rgb(23 23 23 / 0.06);
+  --shadow-md: 0 4px 12px -2px rgb(23 23 23 / 0.08), 0 2px 6px -3px rgb(23 23 23 / 0.06);
+  --shadow-lg: 0 16px 40px -12px rgb(23 23 23 / 0.16), 0 6px 14px -8px rgb(23 23 23 / 0.08);
+
+  /* ---- Motion -------------------------------------------------------------- */
+  --ease-standard: cubic-bezier(0.2, 0.7, 0.3, 1);   /* most transitions */
+  --ease-entrance: cubic-bezier(0.16, 1, 0.3, 1);    /* enters / overlays */
+  --duration-fast: 120ms;
+  --duration-base: 180ms;
+  --duration-slow: 240ms;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ----------------------------------------------------------------------------
+   DARK — override ONLY the semantic tokens + elevation. Components don't change.
+   ---------------------------------------------------------------------------- */
+.dark {
+  --color-bg:                 #0a0a0a;
+  --color-surface:            #171717;
+  --color-surface-2:          #201f1d;
+  --color-border:             #2b2a27;
+  --color-text:               #ededed;
+  --color-text-muted:         #a2a19c;
+  --color-text-subtle:        #898882;
+
+  --color-primary:            #ededed;   /* primary action = paper on dark */
+  --color-primary-foreground: #171717;
+
+  --color-accent:             #9aacff;   /* lighter ink blue for AA on ink */
+  --color-accent-foreground:  #0a0a0a;
+
+  --color-success:            #5fbf8d;
+  --color-success-foreground: #0a0a0a;
+  --color-warning:            #d8a754;
+  --color-warning-foreground: #0a0a0a;
+  --color-danger:             #ef8a80;
+  --color-danger-foreground:  #0a0a0a;
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.5);
+  --shadow-md: 0 6px 16px -4px rgb(0 0 0 / 0.6);
+  --shadow-lg: 0 20px 48px -16px rgb(0 0 0 / 0.7);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* ----------------------------------------------------------------------------
+   BASE — sensible app defaults built on the tokens.
+   ---------------------------------------------------------------------------- */
+@layer base {
+  /* Tailwind 4 resets border color to currentColor — pin it to our hairline. */
+  *, ::after, ::before { border-color: var(--color-border); }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
-}
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  /* Calm, on-brand text selection (ink-blue tint). */
+  ::selection {
+    background-color: color-mix(in srgb, var(--color-accent) 22%, transparent);
+  }
+
+  /* One focus-ring rule for the whole app: 2px accent ring, 2px gap. */
+  :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  /* Respect reduced motion everywhere. */
+  @media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
