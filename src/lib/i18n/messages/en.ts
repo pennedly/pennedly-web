@@ -283,6 +283,11 @@ export const en = {
   "replies.skipped":
     "skipped — the AI judged this comment not worth replying to",
   "replies.replied": "replied",
+  "replies.filter_all": "All",
+  "replies.filter_new": "Needs reply",
+  "replies.filter_drafted": "Draft",
+  "replies.filter_replied": "Replied",
+  "replies.filter_skipped": "Skipped",
 
   // ── Mentions ───────────────────────────────────────────────────
   "dashboard.nav.mentions": "mentions",

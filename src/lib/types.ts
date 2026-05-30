@@ -240,6 +240,9 @@ export type CommentSummary = {
 export type CommentsList = {
   comments: CommentSummary[];
   count: number;
+  // Account-wide totals per comment status (new / drafted / replied /
+  // skipped), for the reply-queue filter tabs.
+  status_counts: Record<string, number>;
 };
 
 export type GeneratedReply = {

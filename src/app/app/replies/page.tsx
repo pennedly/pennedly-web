@@ -32,12 +32,25 @@ import type { CommentSummary } from "@/lib/types";
 
 type Toast = { id: number; message: string; tone: "success" | "error" };
 
+// Reply-queue filter tabs. `key` is the comment `status` passed to the API
+// (null = all). new = needs a reply, drafted = AI reply awaiting review,
+// replied = answered, skipped = autopilot/generator blocked it.
+const FILTER_TABS = [
+  { key: null, labelKey: "replies.filter_all" },
+  { key: "new", labelKey: "replies.filter_new" },
+  { key: "drafted", labelKey: "replies.filter_drafted" },
+  { key: "replied", labelKey: "replies.filter_replied" },
+  { key: "skipped", labelKey: "replies.filter_skipped" },
+] as const;
+
 export default function RepliesPage() {
   const router = useRouter();
   const { t } = useTranslation();
   const { checking } = useTesterGuard();
   const accountId = useSelectedAccountId();
   const [comments, setComments] = useState<CommentSummary[]>([]);
+  const [filter, setFilter] = useState<string | null>(null);
+  const [counts, setCounts] = useState<Record<string, number>>({});
   const [loaded, setLoaded] = useState(false);
   const [bootError, setBootError] = useState<string | null>(null);
   const [generatingId, setGeneratingId] = useState<number | null>(null);
@@ -66,8 +79,12 @@ export default function RepliesPage() {
     setLoaded(false);
     (async () => {
       try {
-        const list = await fetchComments(accountId, { limit: 50 });
+        const list = await fetchComments(accountId, {
+          limit: 50,
+          status: filter ?? undefined,
+        });
         setComments(list.comments);
+        setCounts(list.status_counts ?? {});
       } catch (e) {
         if (e instanceof ApiError && e.status === 401) {
           clearTokens();
@@ -79,13 +96,17 @@ export default function RepliesPage() {
         setLoaded(true);
       }
     })();
-  }, [accountId, router]);
+  }, [accountId, filter, router]);
 
   async function reload() {
     if (accountId === null) return;
     try {
-      const list = await fetchComments(accountId, { limit: 50 });
+      const list = await fetchComments(accountId, {
+        limit: 50,
+        status: filter ?? undefined,
+      });
       setComments(list.comments);
+      setCounts(list.status_counts ?? {});
     } catch {
       // keep current list on a transient failure
     }
@@ -214,6 +235,30 @@ export default function RepliesPage() {
             {t("replies.title")}
           </h1>
           <p className="text-sm text-zinc-500 mt-1">{t("replies.subtitle")}</p>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {FILTER_TABS.map((tab) => {
+            const n =
+              tab.key === null
+                ? Object.values(counts).reduce((a, b) => a + b, 0)
+                : counts[tab.key] ?? 0;
+            const active = filter === tab.key;
+            return (
+              <button
+                key={tab.key ?? "all"}
+                onClick={() => setFilter(tab.key)}
+                className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                  active
+                    ? "bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 dark:border-zinc-100"
+                    : "border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                }`}
+              >
+                {t(tab.labelKey)}
+                {n > 0 && <span className="ml-1.5 opacity-60">{n}</span>}
+              </button>
+            );
+          })}
         </div>
 
         {!loaded && (
