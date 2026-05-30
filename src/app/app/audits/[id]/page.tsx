@@ -24,6 +24,7 @@ import {
 } from "@/lib/api";
 import { captureEvent } from "@/lib/analytics";
 import { useTranslation } from "@/lib/i18n";
+import { localUtcOffsetLabel, utcHourToLocal } from "@/lib/timezone";
 import type {
   AuditDecisionRow,
   AuditDetail,
@@ -337,9 +338,9 @@ function ChangeCard({
         <p className="text-sm font-mono text-zinc-700 dark:text-zinc-300">
           🕐{" "}
           {autopilotHours
-            .map((h) => `${String(h).padStart(2, "0")}:00`)
+            .map((h) => `${String(utcHourToLocal(h)).padStart(2, "0")}:00`)
             .join(" · ")}{" "}
-          UTC
+          ({localUtcOffsetLabel()})
         </p>
       )}
 
