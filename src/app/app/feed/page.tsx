@@ -264,7 +264,10 @@ export default function FeedPage() {
                 <div className="ml-auto flex items-center gap-3">
                   {p.published_at && (
                     <span>
-                      {new Date(p.published_at).toLocaleDateString()}
+                      {new Date(p.published_at).toLocaleString(undefined, {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      })}
                     </span>
                   )}
                   <button
