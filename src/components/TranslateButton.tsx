@@ -73,13 +73,13 @@ export function TranslateButton({ text, source = "unknown", className = "" }: Pr
           </span>
         </button>
         {menuOpen && (
-          <div className="absolute z-10 mt-1 w-44 rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-lg py-1">
+          <div className="absolute z-10 mt-1 w-44 rounded-md border border-border bg-surface shadow-lg py-1">
             {SUPPORTED_LANGUAGES.map((lang) => (
               <button
                 key={lang.code}
                 type="button"
                 onClick={() => onPick(lang.code)}
-                className="w-full px-3 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-2"
+                className="w-full px-3 py-1.5 text-left text-sm hover:bg-surface-2 flex items-center gap-2"
               >
                 <span className="text-base" aria-hidden>
                   {lang.flag}
@@ -99,7 +99,7 @@ export function TranslateButton({ text, source = "unknown", className = "" }: Pr
       )}
 
       {result && (
-        <div className="mt-2 rounded border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 p-3">
+        <div className="mt-2 rounded border border-border bg-bg p-3">
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-[10px] uppercase tracking-wider text-zinc-500">
               {result.target_lang} ·{" "}

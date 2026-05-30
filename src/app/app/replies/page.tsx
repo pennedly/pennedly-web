@@ -228,7 +228,7 @@ export default function RepliesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+    <div className="min-h-screen bg-bg text-text">
       <main className="max-w-3xl mx-auto px-6 py-8 space-y-6">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
@@ -251,7 +251,7 @@ export default function RepliesPage() {
                 className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
                   active
                     ? "bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 dark:border-zinc-100"
-                    : "border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    : "border-border text-text-muted hover:bg-surface-2"
                 }`}
               >
                 {t(tab.labelKey)}
@@ -266,7 +266,7 @@ export default function RepliesPage() {
         )}
 
         {loaded && comments.length === 0 && (
-          <div className="rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700 p-8 text-center">
+          <div className="rounded-xl border border-dashed border-border p-8 text-center">
             <p className="text-sm text-zinc-500">{t("replies.empty")}</p>
           </div>
         )}
@@ -289,7 +289,7 @@ export default function RepliesPage() {
             return (
               <li
                 key={c.id}
-                className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
+                className="rounded-xl border border-border bg-surface p-4 shadow-sm"
               >
                 {/* Which post this comment is under */}
                 {c.post_text && (
@@ -302,12 +302,12 @@ export default function RepliesPage() {
                         href={c.post_threads_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="truncate text-zinc-600 dark:text-zinc-400 hover:underline"
+                        className="truncate text-text-muted hover:underline"
                       >
                         {c.post_text}
                       </a>
                     ) : (
-                      <span className="truncate text-zinc-600 dark:text-zinc-400">
+                      <span className="truncate text-text-muted">
                         {c.post_text}
                       </span>
                     )}
@@ -322,7 +322,7 @@ export default function RepliesPage() {
                 {/* The original comment */}
                 <div className="flex items-center justify-between mb-2 text-xs text-zinc-500">
                   <div className="flex items-center gap-2 min-w-0">
-                    <span className="font-medium text-zinc-700 dark:text-zinc-300 truncate">
+                    <span className="font-medium text-text truncate">
                       @{c.author_username ?? "—"}
                     </span>
                     {c.published_at && (
@@ -375,7 +375,7 @@ export default function RepliesPage() {
                     )}
                   </div>
                 </div>
-                <blockquote className="border-l-2 border-zinc-200 dark:border-zinc-700 pl-3 text-sm leading-relaxed text-zinc-800 dark:text-zinc-200 whitespace-pre-wrap">
+                <blockquote className="border-l-2 border-border pl-3 text-sm leading-relaxed text-text whitespace-pre-wrap">
                   {c.text ?? ""}
                 </blockquote>
                 {c.text && (
@@ -385,7 +385,7 @@ export default function RepliesPage() {
                 )}
 
                 {/* Reply workflow */}
-                <div className="mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                <div className="mt-3 pt-3 border-t border-border">
                   {isReplied ? (
                     <div>
                       <div className="flex items-center gap-2 mb-1.5 text-xs">
@@ -408,7 +408,7 @@ export default function RepliesPage() {
                           </a>
                         )}
                       </div>
-                      <p className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
+                      <p className="whitespace-pre-wrap text-sm leading-relaxed text-text">
                         {c.draft_text ?? ""}
                       </p>
                     </div>
@@ -429,7 +429,7 @@ export default function RepliesPage() {
                               text: c.draft_text ?? "",
                             })
                           }
-                          className="text-xs px-3 py-1.5 rounded-md bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-white transition-colors"
+                          className="text-xs px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
                         >
                           {t("dashboard.draft.publish")}
                         </button>
@@ -445,7 +445,7 @@ export default function RepliesPage() {
                     <button
                       onClick={() => onGenerate(c)}
                       disabled={generatingId === c.id}
-                      className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50 transition-colors"
+                      className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-md border border-border text-text hover:bg-surface-2 disabled:opacity-50 transition-colors"
                     >
                       {generatingId === c.id && (
                         <span
@@ -469,7 +469,7 @@ export default function RepliesPage() {
                           10,
                           Math.max(2, currentText.split("\n").length + 1),
                         )}
-                        className="w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700 resize-y mb-2"
+                        className="w-full rounded-md border border-border bg-bg px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700 resize-y mb-2"
                       />
                       <div className="flex flex-wrap items-center gap-3">
                         <button
@@ -484,7 +484,7 @@ export default function RepliesPage() {
                         <button
                           onClick={() => onReject(c)}
                           disabled={busy}
-                          className="text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50 transition-colors"
+                          className="text-xs px-3 py-1.5 rounded-md border border-border text-text hover:bg-surface-2 disabled:opacity-50 transition-colors"
                         >
                           {t("dashboard.draft.reject")}
                         </button>
@@ -515,7 +515,7 @@ export default function RepliesPage() {
                     <button
                       onClick={() => onGenerate(c)}
                       disabled={generatingId === c.id}
-                      className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-md bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-white disabled:opacity-50 transition-colors"
+                      className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
                     >
                       {generatingId === c.id && (
                         <span

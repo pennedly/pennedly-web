@@ -72,7 +72,7 @@ export function AccountSwitcher() {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="w-full inline-flex items-center gap-1.5 text-xs text-zinc-700 dark:text-zinc-300 px-2 py-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+        className="w-full inline-flex items-center gap-1.5 text-xs text-text px-2 py-1.5 rounded-md hover:bg-surface-2 transition-colors"
       >
         <span aria-hidden>@</span>
         <span className="font-medium truncate flex-1 text-left">
@@ -83,7 +83,7 @@ export function AccountSwitcher() {
         </span>
       </button>
       {open && (
-        <div className="absolute bottom-full mb-1 left-0 right-0 z-40 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-lg py-1">
+        <div className="absolute bottom-full mb-1 left-0 right-0 z-40 rounded-lg border border-border bg-surface shadow-lg py-1">
           {accounts.map((a) => {
             const isSel = a.id === selectedAccount.id;
             return (
@@ -97,8 +97,8 @@ export function AccountSwitcher() {
                 }}
                 className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 transition-colors ${
                   isSel
-                    ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
-                    : "text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
+                    ? "bg-surface-2 text-text"
+                    : "text-text hover:bg-surface-2/60"
                 }`}
               >
                 <span aria-hidden>@</span>
@@ -116,7 +116,7 @@ export function AccountSwitcher() {
               </button>
             );
           })}
-          <div className="my-1 border-t border-zinc-200 dark:border-zinc-800" />
+          <div className="my-1 border-t border-border" />
           <ConnectThreadsButton variant="menu" />
         </div>
       )}

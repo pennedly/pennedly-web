@@ -72,7 +72,7 @@ export function PublishConfirmModal({
       aria-modal="true"
       aria-labelledby="publish-modal-title"
     >
-      <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl overflow-hidden">
+      <div className="w-full max-w-lg rounded-2xl bg-surface border border-border shadow-xl overflow-hidden">
         <div className="px-6 pt-6 pb-3">
           <h2
             id="publish-modal-title"
@@ -83,7 +83,7 @@ export function PublishConfirmModal({
           <p className="text-xs text-zinc-500 mt-1">{t("publish.subtitle")}</p>
         </div>
 
-        <div className="mx-6 mb-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 p-4">
+        <div className="mx-6 mb-4 rounded-xl border border-border bg-bg p-4">
           <p className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-800 dark:text-zinc-100">
             {text}
           </p>
@@ -106,19 +106,19 @@ export function PublishConfirmModal({
           )}
         </div>
 
-        <div className="px-6 py-4 bg-zinc-50 dark:bg-zinc-950/60 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-end gap-3">
+        <div className="px-6 py-4 bg-bg/60 border-t border-border flex items-center justify-end gap-3">
           <button
             ref={cancelRef}
             onClick={onClose}
             disabled={isPublishing}
-            className="text-sm px-4 py-2 rounded-md text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50 transition-colors"
+            className="text-sm px-4 py-2 rounded-md text-text hover:bg-surface-2 disabled:opacity-50 transition-colors"
           >
             {t("publish.cancel")}
           </button>
           <button
             onClick={onConfirm}
             disabled={isPublishing || overLimit || len === 0}
-            className="inline-flex items-center gap-2 text-sm px-4 py-2 rounded-md bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="inline-flex items-center gap-2 text-sm px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {isPublishing && (
               <span

@@ -99,7 +99,7 @@ export function Sidebar() {
   const brand = (
     <Link
       href="/app"
-      className="flex items-center gap-2 px-4 h-14 shrink-0 border-b border-zinc-200 dark:border-zinc-800"
+      className="flex items-center gap-2 px-4 h-14 shrink-0 border-b border-border"
     >
       <span className="text-lg font-semibold tracking-tight">Pennedly</span>
     </Link>
@@ -112,7 +112,7 @@ export function Sidebar() {
         if (items.length === 0) return null;
         return (
           <div key={group.title}>
-            <p className="px-2 mb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-600">
+            <p className="px-2 mb-1 text-[10px] font-semibold uppercase tracking-wider text-text-subtle">
               {t(group.title)}
             </p>
             <ul className="space-y-0.5">
@@ -124,8 +124,8 @@ export function Sidebar() {
                       href={it.href}
                       className={`block rounded-md px-2.5 py-1.5 text-sm capitalize transition-colors ${
                         active
-                          ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-medium"
-                          : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100"
+                          ? "bg-primary text-primary-foreground font-medium"
+                          : "text-text-muted hover:bg-surface-2 hover:text-zinc-900 dark:hover:text-zinc-100"
                       }`}
                     >
                       {t(it.label)}
@@ -141,7 +141,7 @@ export function Sidebar() {
   );
 
   const bottom = (
-    <div className="border-t border-zinc-200 dark:border-zinc-800 px-2 py-2 space-y-1 shrink-0">
+    <div className="border-t border-border px-2 py-2 space-y-1 shrink-0">
       {/* Account switcher — opens upward (it sits at the very bottom) */}
       <AccountSwitcher />
       {/* Profile / settings / language / logout */}
@@ -152,21 +152,21 @@ export function Sidebar() {
   return (
     <>
       {/* Desktop: fixed left column */}
-      <aside className="hidden md:flex md:flex-col md:fixed md:inset-y-0 md:left-0 md:w-56 z-30 bg-white dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800">
+      <aside className="hidden md:flex md:flex-col md:fixed md:inset-y-0 md:left-0 md:w-56 z-30 bg-surface border-r border-border">
         {brand}
         {nav}
         {bottom}
       </aside>
 
       {/* Mobile: top bar */}
-      <div className="md:hidden sticky top-0 z-30 flex items-center justify-between h-14 px-4 bg-white/90 dark:bg-zinc-950/90 backdrop-blur border-b border-zinc-200 dark:border-zinc-800">
+      <div className="md:hidden sticky top-0 z-30 flex items-center justify-between h-14 px-4 bg-surface/90 backdrop-blur border-b border-border">
         <Link href="/app" className="text-lg font-semibold tracking-tight">
           Pennedly
         </Link>
         <button
           onClick={() => setMobileOpen((o) => !o)}
           aria-label="menu"
-          className="p-2 -mr-2 text-zinc-600 dark:text-zinc-300"
+          className="p-2 -mr-2 text-text-muted"
         >
           <svg
             width="22"
@@ -202,7 +202,7 @@ export function Sidebar() {
             onClick={() => setMobileOpen(false)}
             aria-hidden
           />
-          <aside className="relative flex flex-col w-64 max-w-[80%] bg-white dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800 shadow-xl">
+          <aside className="relative flex flex-col w-64 max-w-[80%] bg-surface border-r border-border shadow-xl">
             {brand}
             {nav}
             {bottom}
@@ -231,9 +231,9 @@ function ProfileMenu({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+        className="w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-surface-2 transition-colors"
       >
-        <span className="w-7 h-7 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center text-xs font-semibold shrink-0">
+        <span className="w-7 h-7 rounded-full bg-surface-2 flex items-center justify-center text-xs font-semibold shrink-0">
           {initial}
         </span>
         <span className="flex-1 min-w-0">
@@ -257,19 +257,19 @@ function ProfileMenu({
             onClick={() => setOpen(false)}
             aria-hidden
           />
-          <div className="absolute bottom-full mb-1 left-0 right-0 z-40 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-lg py-1">
+          <div className="absolute bottom-full mb-1 left-0 right-0 z-40 rounded-lg border border-border bg-surface shadow-lg py-1">
             <Link
               href="/app/settings"
               onClick={() => setOpen(false)}
-              className="block px-3 py-1.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              className="block px-3 py-1.5 text-sm text-text hover:bg-surface-2 transition-colors"
             >
               {t("nav.settings")}
             </Link>
-            <div className="my-1 border-t border-zinc-200 dark:border-zinc-800" />
+            <div className="my-1 border-t border-border" />
             <button
               type="button"
               onClick={onLogout}
-              className="w-full text-left px-3 py-1.5 text-sm text-red-600 dark:text-red-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              className="w-full text-left px-3 py-1.5 text-sm text-red-600 dark:text-red-400 hover:bg-surface-2 transition-colors"
             >
               {t("dashboard.nav.logout")}
             </button>

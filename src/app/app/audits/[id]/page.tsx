@@ -178,7 +178,7 @@ export default function AuditDetailPage() {
   ).length;
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+    <div className="min-h-screen bg-bg text-text">
       <main className="max-w-3xl mx-auto px-6 py-8 space-y-6">
         <section>
           <h1 className="text-2xl font-semibold tracking-tight">
@@ -189,14 +189,14 @@ export default function AuditDetailPage() {
             {audit.posts_analyzed} {t("audits.posts_analyzed")} ·{" "}
             {audit.proposed_changes.length} {t("audits.detail.changes_count")} ·{" "}
             {t("audits.detail.status_label")}{" "}
-            <span className="font-medium text-zinc-700 dark:text-zinc-300">
+            <span className="font-medium text-text">
               {audit.status.replace(/_/g, " ")}
             </span>
           </p>
         </section>
 
         {audit.llm_reasoning && (
-          <details className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5">
+          <details className="rounded-xl border border-border bg-surface p-5">
             <summary className="cursor-pointer text-sm font-semibold">
               {t("audits.detail.reasoning")}
               {audit.llm_model && (
@@ -205,7 +205,7 @@ export default function AuditDetailPage() {
                 </span>
               )}
             </summary>
-            <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
+            <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-text">
               {audit.llm_reasoning}
             </p>
           </details>
@@ -217,7 +217,7 @@ export default function AuditDetailPage() {
           </h2>
 
           {audit.proposed_changes.length === 0 && (
-            <div className="rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700 p-6 text-center text-sm text-zinc-500">
+            <div className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-zinc-500">
               {t("audits.detail.no_changes")}
             </div>
           )}
@@ -238,7 +238,7 @@ export default function AuditDetailPage() {
 
         {/* Submit bar */}
         {audit.proposed_changes.length > 0 && (
-          <div className="sticky bottom-4 flex items-center justify-end gap-3 bg-white/95 dark:bg-zinc-950/95 backdrop-blur border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 shadow-md">
+          <div className="sticky bottom-4 flex items-center justify-end gap-3 bg-white/95 dark:bg-zinc-950/95 backdrop-blur border border-border rounded-xl px-4 py-3 shadow-md">
             <span className="mr-auto text-xs text-zinc-500">
               {readyToSubmit} /{" "}
               {audit.proposed_changes.length - decidedByChangeId.size}{" "}
@@ -247,7 +247,7 @@ export default function AuditDetailPage() {
             <button
               onClick={onSubmitAll}
               disabled={submitting || readyToSubmit === 0}
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-md bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 text-sm font-medium hover:bg-zinc-700 dark:hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {submitting && (
                 <span
@@ -302,21 +302,21 @@ function ChangeCard({
 
   return (
     <article
-      className={`rounded-xl border bg-white dark:bg-zinc-900 p-5 shadow-sm space-y-3 ${
+      className={`rounded-xl border bg-surface p-5 shadow-sm space-y-3 ${
         decided
-          ? "border-zinc-200 dark:border-zinc-800 opacity-90"
+          ? "border-border opacity-90"
           : localApproved === true
             ? "border-green-300 dark:border-green-900/60"
             : localApproved === false
               ? "border-red-300 dark:border-red-900/60"
-              : "border-zinc-200 dark:border-zinc-800"
+              : "border-border"
       }`}
     >
       <header className="flex items-baseline justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2 text-xs text-zinc-500">
           <KindBadge kind={change.kind} />
           {change.target_section && (
-            <span className="text-zinc-600 dark:text-zinc-400 font-mono">
+            <span className="text-text-muted font-mono">
               {change.target_section}
             </span>
           )}
@@ -329,13 +329,13 @@ function ChangeCard({
       <h3 className="text-base font-semibold leading-tight">{change.title}</h3>
 
       {change.detail && (
-        <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap">
+        <p className="text-sm leading-relaxed text-text whitespace-pre-wrap">
           {change.detail}
         </p>
       )}
 
       {autopilotHours && autopilotHours.length > 0 && (
-        <p className="text-sm font-mono text-zinc-700 dark:text-zinc-300">
+        <p className="text-sm font-mono text-text">
           🕐{" "}
           {autopilotHours
             .map((h) => `${String(utcHourToLocal(h)).padStart(2, "0")}:00`)
@@ -349,7 +349,7 @@ function ChangeCard({
           <summary className="cursor-pointer text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300">
             {t("audits.detail.view_diff")}
           </summary>
-          <pre className="mt-2 text-xs font-mono p-3 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md overflow-x-auto whitespace-pre-wrap">
+          <pre className="mt-2 text-xs font-mono p-3 bg-bg border border-border rounded-md overflow-x-auto whitespace-pre-wrap">
             {JSON.stringify(change.diff, null, 2)}
           </pre>
         </details>
@@ -368,7 +368,7 @@ function ChangeCard({
             onChange={(e) => onDraftChange({ comment: e.target.value })}
             placeholder={t("audits.detail.note_placeholder")}
             rows={2}
-            className="w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700"
+            className="w-full rounded-md border border-border bg-bg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700"
           />
           <div className="flex items-center gap-2">
             <button
@@ -377,7 +377,7 @@ function ChangeCard({
               className={`text-xs px-3 py-1.5 rounded-md font-medium transition-colors ${
                 localApproved === true
                   ? "bg-green-600 text-white"
-                  : "border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-green-50 dark:hover:bg-green-950/30"
+                  : "border border-border text-text hover:bg-green-50 dark:hover:bg-green-950/30"
               }`}
             >
               {t("audits.detail.approve")}
@@ -388,7 +388,7 @@ function ChangeCard({
               className={`text-xs px-3 py-1.5 rounded-md font-medium transition-colors ${
                 localApproved === false
                   ? "bg-red-600 text-white"
-                  : "border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-red-50 dark:hover:bg-red-950/30"
+                  : "border border-border text-text hover:bg-red-50 dark:hover:bg-red-950/30"
               }`}
             >
               {t("audits.detail.reject")}

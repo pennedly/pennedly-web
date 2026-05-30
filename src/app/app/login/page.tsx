@@ -137,7 +137,7 @@ function LoginPageInner() {
   }
 
   return (
-    <main className="max-w-md mx-auto px-6 py-12 font-sans text-zinc-900 dark:text-zinc-100">
+    <main className="max-w-md mx-auto px-6 py-12 font-sans text-text">
       <div className="flex items-start justify-between mb-1">
         <h1 className="text-2xl font-semibold tracking-tight">
           {t("app.brand")}
@@ -148,7 +148,7 @@ function LoginPageInner() {
 
       {/* Magic-link consume state */}
       {consumeState === "consuming" && (
-        <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 text-sm">
+        <div className="rounded-lg border border-border bg-surface p-5 text-sm">
           <div className="flex items-center gap-2">
             <span
               className="inline-block w-3 h-3 border-2 border-zinc-400 border-t-transparent rounded-full animate-spin"
@@ -193,7 +193,7 @@ function LoginPageInner() {
           ) : (
             <form onSubmit={onMagicSubmit} className="space-y-3">
               <label className="block">
-                <span className="text-sm text-zinc-600 dark:text-zinc-400">
+                <span className="text-sm text-text-muted">
                   {t("login.email_label")}
                 </span>
                 <input
@@ -202,7 +202,7 @@ function LoginPageInner() {
                   autoFocus
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="mt-1 w-full px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700"
+                  className="mt-1 w-full px-3 py-2 rounded-md border border-border bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700"
                   placeholder={t("login.email_placeholder")}
                 />
               </label>
@@ -216,7 +216,7 @@ function LoginPageInner() {
               <button
                 type="submit"
                 disabled={pending || !email}
-                className="w-full px-4 py-2 rounded-md bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 text-sm font-medium hover:bg-zinc-700 dark:hover:bg-white disabled:opacity-50 transition-colors"
+                className="w-full px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
               >
                 {pending ? t("login.sending") : t("login.submit")}
               </button>
@@ -230,7 +230,7 @@ function LoginPageInner() {
       )}
 
       {/* Dev-login drawer */}
-      <div className="mt-12 pt-6 border-t border-zinc-200 dark:border-zinc-800">
+      <div className="mt-12 pt-6 border-t border-border">
         <button
           type="button"
           onClick={() => setDevOpen((o) => !o)}
@@ -246,12 +246,12 @@ function LoginPageInner() {
               value={devEmail}
               onChange={(e) => setDevEmail(e.target.value)}
               placeholder={t("login.email_placeholder")}
-              className="w-full px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-xs focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700"
+              className="w-full px-3 py-1.5 rounded-md border border-border bg-surface text-xs focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700"
             />
             <button
               type="submit"
               disabled={pending || !devEmail}
-              className="text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50 transition-colors"
+              className="text-xs px-3 py-1.5 rounded-md border border-border text-text hover:bg-surface-2 disabled:opacity-50 transition-colors"
             >
               {pending ? t("login.dev_signing_in") : t("login.dev_submit")}
             </button>

@@ -420,7 +420,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+    <div className="min-h-screen bg-bg text-text">
       {/* Nav + account + language + logout now live in the sidebar
           (src/app/app/layout.tsx → Sidebar). */}
       <main className="max-w-3xl mx-auto px-6 py-8 space-y-8">
@@ -435,7 +435,7 @@ export default function Dashboard() {
           /* No Threads account connected yet — the product can't draft
              without one, so replace the work surface with a single clear
              call to action (also the path a fresh Meta reviewer takes). */
-          <section className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-8 text-center shadow-sm">
+          <section className="rounded-xl border border-border bg-surface p-8 text-center shadow-sm">
             <h2 className="text-lg font-semibold">{t("accounts.connect")}</h2>
             <p className="text-sm text-zinc-500 mt-1 mb-4 max-w-md mx-auto">
               {t("accounts.connect_cta_body")}
@@ -447,7 +447,7 @@ export default function Dashboard() {
         ) : (
           <>
         {/* Generate panel */}
-        <section className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm">
+        <section className="rounded-xl border border-border bg-surface p-5 shadow-sm">
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div>
               <h2 className="text-base font-semibold">
@@ -459,7 +459,7 @@ export default function Dashboard() {
             </div>
             <div className="flex items-center gap-2">
               {/* Batch count stepper. Click ×N to flip between values. */}
-              <div className="inline-flex items-center rounded-md border border-zinc-300 dark:border-zinc-700 overflow-hidden text-xs">
+              <div className="inline-flex items-center rounded-md border border-border overflow-hidden text-xs">
                 {[1, 2, 3, 5].map((n) => (
                   <button
                     key={n}
@@ -468,8 +468,8 @@ export default function Dashboard() {
                     disabled={generating}
                     className={`px-2.5 py-1 transition-colors ${
                       batchCount === n
-                        ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-medium"
-                        : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                        ? "bg-primary text-primary-foreground font-medium"
+                        : "text-text-muted hover:bg-surface-2"
                     }`}
                     title={
                       n === 1
@@ -484,7 +484,7 @@ export default function Dashboard() {
               <button
                 onClick={onGenerate}
                 disabled={generating || accountId === null}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 text-sm font-medium hover:bg-zinc-700 dark:hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {generating && (
                   <span
@@ -500,10 +500,10 @@ export default function Dashboard() {
           </div>
 
           {lastDraft && (
-            <div className="mt-4 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+            <div className="mt-4 pt-4 border-t border-border">
               <div className="flex items-center justify-between mb-2 text-xs text-zinc-500">
                 <span>
-                  <span className="font-medium text-zinc-700 dark:text-zinc-300">
+                  <span className="font-medium text-text">
                     {lastDraft.topic_label ?? t("dashboard.generate.no_topic")}
                   </span>{" "}
                   · {lastDraft.text.length} chars · {lastDraft.latency_ms}ms ·{" "}
@@ -528,7 +528,7 @@ export default function Dashboard() {
 
           {/* Status tabs — show one scannable group at a time instead of
               one endless mixed column. */}
-          <div className="flex items-center gap-1 mb-4 border-b border-zinc-200 dark:border-zinc-800 overflow-x-auto">
+          <div className="flex items-center gap-1 mb-4 border-b border-border overflow-x-auto">
             {(
               [
                 ["pending", t("dashboard.tab.pending"), draftCounts.pending],
@@ -542,7 +542,7 @@ export default function Dashboard() {
                 onClick={() => setTab(key)}
                 className={`relative px-3 py-2 text-sm whitespace-nowrap transition-colors ${
                   tab === key
-                    ? "text-zinc-900 dark:text-zinc-100 font-medium"
+                    ? "text-text font-medium"
                     : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
                 }`}
               >
@@ -558,12 +558,12 @@ export default function Dashboard() {
           </div>
 
           {visibleDrafts.length === 0 && (
-            <div className="rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700 p-8 text-center">
+            <div className="rounded-xl border border-dashed border-border p-8 text-center">
               <p className="text-sm text-zinc-500">
                 {tab === "pending" ? (
                   <>
                     {t("dashboard.feed.empty")}{" "}
-                    <span className="font-medium text-zinc-700 dark:text-zinc-300">
+                    <span className="font-medium text-text">
                       {t("dashboard.feed.empty_cta")}
                     </span>{" "}
                     {t("dashboard.feed.empty_after")}
@@ -587,13 +587,13 @@ export default function Dashboard() {
               return (
                 <li
                   key={d.id}
-                  className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
+                  className="rounded-xl border border-border bg-surface p-4 shadow-sm"
                 >
                   <div className="flex items-center justify-between mb-2 text-xs text-zinc-500">
                     <div className="flex items-center gap-2">
                       <StatusBadge status={d.status} />
                       {d.topic_label && (
-                        <span className="text-zinc-600 dark:text-zinc-400">
+                        <span className="text-text-muted">
                           {d.topic_label}
                         </span>
                       )}
@@ -621,7 +621,7 @@ export default function Dashboard() {
                         12,
                         Math.max(3, currentText.split("\n").length + 1),
                       )}
-                      className="w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 px-3 py-2 text-sm leading-relaxed font-sans focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700 resize-y mb-3"
+                      className="w-full rounded-md border border-border bg-bg px-3 py-2 text-sm leading-relaxed font-sans focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700 resize-y mb-3"
                     />
                   ) : (
                     <p className="whitespace-pre-wrap text-sm leading-relaxed mb-3">
@@ -630,7 +630,7 @@ export default function Dashboard() {
                   )}
 
                   {d.status === "pending" && refineOpen[d.id] && (
-                    <div className="flex flex-wrap items-stretch gap-2 mb-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                    <div className="flex flex-wrap items-stretch gap-2 mb-3 pt-3 border-t border-border">
                       <input
                         type="text"
                         value={refineInputs[d.id] ?? ""}
@@ -648,7 +648,7 @@ export default function Dashboard() {
                         }}
                         placeholder={t("dashboard.draft.refine_placeholder")}
                         disabled={refiningId === d.id}
-                        className="flex-1 min-w-[180px] rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700 disabled:opacity-50"
+                        className="flex-1 min-w-[180px] rounded-md border border-border bg-bg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700 disabled:opacity-50"
                       />
                       <button
                         onClick={() => onRefine(d.id)}
@@ -656,7 +656,7 @@ export default function Dashboard() {
                           refiningId !== null ||
                           !(refineInputs[d.id] ?? "").trim()
                         }
-                        className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50 transition-colors"
+                        className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border border-border text-text hover:bg-surface-2 disabled:opacity-50 transition-colors"
                       >
                         {refiningId === d.id && (
                           <span
@@ -695,7 +695,7 @@ export default function Dashboard() {
                             type="button"
                             onClick={() => onRefine(d.id, instruction)}
                             disabled={refiningId !== null}
-                            className="px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 disabled:opacity-50 transition-colors"
+                            className="px-2 py-0.5 rounded-full bg-surface-2 hover:bg-surface-2 disabled:opacity-50 transition-colors"
                           >
                             {label}
                           </button>
@@ -704,7 +704,7 @@ export default function Dashboard() {
                     </div>
                   )}
 
-                  <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                  <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-border">
                     {d.status === "pending" && (
                       <>
                         <button
@@ -717,7 +717,7 @@ export default function Dashboard() {
                         </button>
                         <button
                           onClick={() => onReject(d.id)}
-                          className="text-xs px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                          className="text-xs px-3 py-1.5 rounded-md border border-border text-text hover:bg-surface-2 transition-colors"
                         >
                           {t("dashboard.draft.reject")}
                         </button>
@@ -727,8 +727,8 @@ export default function Dashboard() {
                           }
                           className={`text-xs px-3 py-1.5 rounded-md border transition-colors ${
                             refineOpen[d.id]
-                              ? "border-zinc-400 dark:border-zinc-600 bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200"
-                              : "border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                              ? "border-zinc-400 dark:border-zinc-600 bg-surface-2 text-text"
+                              : "border-border text-text hover:bg-surface-2"
                           }`}
                         >
                           {t("dashboard.draft.tweak")} {refineOpen[d.id] ? "▴" : "▾"}
@@ -753,7 +753,7 @@ export default function Dashboard() {
                     {d.status === "approved" && !d.published && (
                       <button
                         onClick={() => onPublishClick(d.id, d.generated_text)}
-                        className="text-xs px-3 py-1.5 rounded-md bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-white transition-colors inline-flex items-center gap-1.5"
+                        className="text-xs px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors inline-flex items-center gap-1.5"
                       >
                         <svg
                           width="12"
@@ -887,7 +887,7 @@ function StatusBadge({ status }: { status: string }) {
     status === "approved"
       ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300"
       : status === "published"
-      ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+      ? "bg-primary text-primary-foreground"
       : status === "rejected"
       ? "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 line-through"
       : "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300";

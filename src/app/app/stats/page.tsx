@@ -86,7 +86,7 @@ function TrendChart({
             className="absolute left-0 right-0 border-t border-dashed border-zinc-400/70 dark:border-zinc-500/70 z-10 pointer-events-none"
             style={{ bottom: `${(avg / max) * 100}%` }}
           >
-            <span className="absolute right-0 -top-2.5 text-[9px] px-1 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-500 tabular-nums">
+            <span className="absolute right-0 -top-2.5 text-[9px] px-1 rounded bg-surface-2 text-zinc-500 tabular-nums">
               {t("stats.chart_avg_line")} {fmt(avg)}
             </span>
           </div>
@@ -229,7 +229,7 @@ export default function StatsPage() {
     : 0;
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+    <div className="min-h-screen bg-bg text-text">
       <main className="max-w-3xl mx-auto px-6 py-8 space-y-6">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
@@ -239,14 +239,14 @@ export default function StatsPage() {
         </div>
 
         {/* Period selector */}
-        <div className="flex flex-wrap gap-1 border-b border-zinc-200 dark:border-zinc-800 pb-px">
+        <div className="flex flex-wrap gap-1 border-b border-border pb-px">
           {PERIODS.map((p) => (
             <button
               key={p}
               onClick={() => setPeriod(p)}
               className={`relative px-3 py-1.5 text-sm whitespace-nowrap transition-colors ${
                 period === p
-                  ? "text-zinc-900 dark:text-zinc-100 font-medium"
+                  ? "text-text font-medium"
                   : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
               }`}
             >
@@ -261,7 +261,7 @@ export default function StatsPage() {
         {!loaded && <p className="text-sm text-zinc-500">{t("common.loading")}</p>}
 
         {loaded && cur && cur.posts === 0 && (
-          <div className="rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700 p-8 text-center">
+          <div className="rounded-xl border border-dashed border-border p-8 text-center">
             <p className="text-sm text-zinc-500">{t("stats.empty")}</p>
           </div>
         )}
@@ -270,21 +270,21 @@ export default function StatsPage() {
           <>
             {/* Summary cards with vs-previous deltas */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm">
+              <div className="rounded-xl border border-border bg-surface p-4 shadow-sm">
                 <p className="text-xs text-zinc-500">{t("stats.card_posts")}</p>
                 <p className="text-2xl font-semibold tracking-tight mt-1">
                   {fmt(cur.posts)}
                 </p>
                 <Delta pct={deltas?.posts_pct} />
               </div>
-              <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm">
+              <div className="rounded-xl border border-border bg-surface p-4 shadow-sm">
                 <p className="text-xs text-zinc-500">{t("stats.card_views")}</p>
                 <p className="text-2xl font-semibold tracking-tight mt-1">
                   {fmt(cur.views)}
                 </p>
                 <Delta pct={deltas?.views_pct} />
               </div>
-              <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm">
+              <div className="rounded-xl border border-border bg-surface p-4 shadow-sm">
                 <p className="text-xs text-zinc-500">
                   {t("stats.card_avg_views")}
                 </p>
@@ -292,14 +292,14 @@ export default function StatsPage() {
                   {fmt(cur.avg_views)}
                 </p>
               </div>
-              <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm">
+              <div className="rounded-xl border border-border bg-surface p-4 shadow-sm">
                 <p className="text-xs text-zinc-500">{t("stats.card_avg_likes")}</p>
                 <p className="text-2xl font-semibold tracking-tight mt-1">
                   {fmt(cur.likes)}
                 </p>
                 <Delta pct={deltas?.likes_pct} />
               </div>
-              <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm">
+              <div className="rounded-xl border border-border bg-surface p-4 shadow-sm">
                 <p className="text-xs text-zinc-500">
                   {t("stats.card_avg_comments")}
                 </p>
@@ -312,7 +312,7 @@ export default function StatsPage() {
 
             {/* Viral-tier distribution */}
             {tierTotal > 0 && (
-              <section className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm">
+              <section className="rounded-xl border border-border bg-surface p-5 shadow-sm">
                 <h2 className="text-sm font-semibold mb-3">
                   {t("stats.tiers_title")}
                 </h2>
@@ -336,7 +336,7 @@ export default function StatsPage() {
                       className="inline-flex items-center gap-1.5"
                     >
                       <span className={`w-2.5 h-2.5 rounded-full ${tier.color}`} />
-                      <span className="text-zinc-600 dark:text-zinc-400">
+                      <span className="text-text-muted">
                         {t(`stats.tier_${tier.key}` as MessageKey)}
                       </span>
                       <span className="font-medium">
@@ -350,7 +350,7 @@ export default function StatsPage() {
 
             {/* Trend chart */}
             {stats.series.length >= 2 && (
-              <section className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm">
+              <section className="rounded-xl border border-border bg-surface p-5 shadow-sm">
                 <div className="flex items-baseline justify-between gap-2 mb-4">
                   <h2 className="text-sm font-semibold">
                     {t("stats.chart_avg_views")}
