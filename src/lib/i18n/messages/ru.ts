@@ -387,6 +387,12 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "feed.open": "открыть в Threads ↗",
   "feed.growth": "рост",
   "feed.growth_none": "пока мало замеров для графика",
+  "feed.autoreply_on": "автоответы вкл",
+  "feed.autoreply_off": "автоответы выкл",
+  "feed.autoreply_hint":
+    "Когда включено, Pennedly сам отвечает на новые комментарии под этим постом (по вашей аудитории и дневному лимиту).",
+  "feed.autoreply_toast_on": "Автоответы включены для этого поста",
+  "feed.autoreply_toast_off": "Автоответы выключены для этого поста",
 
   // ── Онбординг ─────────────────────────────────────────────────
   "onboarding.title": "Настроим твой голос",

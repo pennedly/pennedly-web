@@ -329,6 +329,7 @@ export type FeedPost = {
   viral_score: number | null;
   vs_avg_views: number | null; // views ÷ recent-average views
   is_fresh: boolean; // published < 24h ago — still settling
+  auto_reply: boolean; // per-post: does the auto-reply sweep answer comments here
 };
 
 export type FeedReference = {

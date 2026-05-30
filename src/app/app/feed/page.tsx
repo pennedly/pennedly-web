@@ -17,6 +17,7 @@ import {
   fetchMe,
   fetchPostMetricsHistory,
   getTokens,
+  setPostAutoReply,
 } from "@/lib/api";
 import { captureEvent } from "@/lib/analytics";
 import { useSelectedAccountId } from "@/lib/account";
@@ -149,6 +150,30 @@ export default function FeedPage() {
     }
   }
 
+  // Per-post auto-reply toggle (optimistic; revert on error). Works on any
+  // post — the auto-reply sweep keys off this flag, not the post's origin.
+  async function onToggleAutoReply(p: FeedPost) {
+    const next = !p.auto_reply;
+    setPosts((ps) =>
+      ps.map((x) => (x.id === p.id ? { ...x, auto_reply: next } : x)),
+    );
+    captureEvent("ui.post_autoreply_toggle", {
+      post_id: p.id,
+      auto_reply: next,
+    });
+    try {
+      await setPostAutoReply(p.id, next);
+      toast(
+        next ? t("feed.autoreply_toast_on") : t("feed.autoreply_toast_off"),
+      );
+    } catch (e) {
+      setPosts((ps) =>
+        ps.map((x) => (x.id === p.id ? { ...x, auto_reply: !next } : x)),
+      );
+      toast(String(e), "error");
+    }
+  }
+
   useEffect(() => {
     if (accountId === null) return;
     setLoaded(false);
@@ -260,6 +285,23 @@ export default function FeedPage() {
                     </span>
                   )
                 )}
+
+                {/* Per-post auto-reply toggle + indicator */}
+                <button
+                  onClick={() => onToggleAutoReply(p)}
+                  title={t("feed.autoreply_hint")}
+                  aria-pressed={p.auto_reply}
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium transition-colors ${
+                    p.auto_reply
+                      ? "bg-accent/10 text-accent hover:bg-accent/20"
+                      : "bg-surface-2 text-text-subtle hover:bg-surface-2/70"
+                  }`}
+                >
+                  <span aria-hidden>{p.auto_reply ? "↩︎" : "○"}</span>
+                  {p.auto_reply
+                    ? t("feed.autoreply_on")
+                    : t("feed.autoreply_off")}
+                </button>
 
                 <div className="ml-auto flex items-center gap-3">
                   {p.published_at && (

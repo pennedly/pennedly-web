@@ -381,6 +381,12 @@ export const en = {
   "feed.open": "open in Threads ↗",
   "feed.growth": "growth",
   "feed.growth_none": "not enough snapshots yet for a curve",
+  "feed.autoreply_on": "auto-replies on",
+  "feed.autoreply_off": "auto-replies off",
+  "feed.autoreply_hint":
+    "When on, Pennedly auto-replies to new comments under this post (your audience + daily cap).",
+  "feed.autoreply_toast_on": "Auto-replies on for this post",
+  "feed.autoreply_toast_off": "Auto-replies off for this post",
 
   // ── Onboarding ────────────────────────────────────────────────
   "onboarding.title": "Set up your voice",
