@@ -294,6 +294,10 @@ function ChangeCard({
   const { t } = useTranslation();
   const decided = existing !== undefined;
   const localApproved = draft?.approved ?? null;
+  const autopilotHours =
+    change.kind === "autopilot_config" && Array.isArray(change.payload?.post_hours)
+      ? change.payload!.post_hours!
+      : null;
 
   return (
     <article
@@ -326,6 +330,16 @@ function ChangeCard({
       {change.detail && (
         <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap">
           {change.detail}
+        </p>
+      )}
+
+      {autopilotHours && autopilotHours.length > 0 && (
+        <p className="text-sm font-mono text-zinc-700 dark:text-zinc-300">
+          🕐{" "}
+          {autopilotHours
+            .map((h) => `${String(h).padStart(2, "0")}:00`)
+            .join(" · ")}{" "}
+          UTC
         </p>
       )}
 
