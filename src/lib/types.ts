@@ -489,10 +489,12 @@ export type AuditsList = {
 // the rest passes through.
 export type ProposedChange = {
   id: string;
-  kind: string; // 'role_book_edit' | 'post_prompt_edit' | ...
+  kind: string; // 'role_book_edit' | 'post_prompt_edit' | 'autopilot_config' | ...
   title: string;
   detail?: string;
   diff?: unknown;
+  // autopilot_config changes carry post_hours (UTC) instead of a diff.
+  payload?: { post_hours?: number[] } | null;
   target_section?: string;
 };
 
