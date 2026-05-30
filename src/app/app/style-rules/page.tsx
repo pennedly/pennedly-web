@@ -37,7 +37,7 @@ import type { StyleRule, UserRule } from "@/lib/types";
 const PUNCTUATION_RULE_KEY = "human_punctuation";
 
 const SELECT_CLS =
-  "rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700";
+  "rounded-md border border-border bg-surface px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700";
 
 type Toast = { id: number; message: string; tone: "success" | "error" };
 
@@ -199,7 +199,7 @@ export default function StyleRulesEditor() {
   const onCount = rules.filter((r) => r.enabled).length;
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+    <div className="min-h-screen bg-bg text-text">
       <main className="max-w-3xl mx-auto px-6 py-8 space-y-6">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
@@ -222,7 +222,7 @@ export default function StyleRulesEditor() {
           {userRules?.map((r) => (
             <div
               key={r.id}
-              className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3 shadow-sm space-y-2"
+              className="rounded-xl border border-border bg-surface p-3 shadow-sm space-y-2"
             >
               <textarea
                 value={r.body}
@@ -234,7 +234,7 @@ export default function StyleRulesEditor() {
                   if (v) updateUserRule(r.id, { body: v }).catch(() => {});
                 }}
                 rows={2}
-                className="w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700 resize-y"
+                className="w-full rounded-md border border-border bg-bg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700 resize-y"
               />
               <div className="flex items-center gap-3 flex-wrap text-sm">
                 <select
@@ -291,13 +291,13 @@ export default function StyleRulesEditor() {
             <p className="text-xs text-zinc-500">{t("user_rules.empty")}</p>
           )}
 
-          <div className="rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700 p-3 space-y-2">
+          <div className="rounded-xl border border-dashed border-border p-3 space-y-2">
             <textarea
               value={newBody}
               onChange={(e) => setNewBody(e.target.value)}
               rows={2}
               placeholder={t("user_rules.placeholder")}
-              className="w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700 resize-y"
+              className="w-full rounded-md border border-border bg-bg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700 resize-y"
             />
             <div className="flex items-center gap-3">
               <select
@@ -311,7 +311,7 @@ export default function StyleRulesEditor() {
               <button
                 onClick={onAddRule}
                 disabled={!newBody.trim()}
-                className="inline-flex items-center px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-700 text-sm font-medium text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50 transition-colors"
+                className="inline-flex items-center px-3 py-1.5 rounded-md border border-border text-sm font-medium text-text hover:bg-surface-2 disabled:opacity-50 transition-colors"
               >
                 {t("user_rules.add")}
               </button>
@@ -329,7 +329,7 @@ export default function StyleRulesEditor() {
             return (
               <li
                 key={rule.key}
-                className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm flex items-start justify-between gap-4"
+                className="rounded-xl border border-border bg-surface p-4 shadow-sm flex items-start justify-between gap-4"
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">

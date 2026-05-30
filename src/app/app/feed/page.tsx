@@ -183,7 +183,7 @@ export default function FeedPage() {
   const hasBaseline = reference !== null && reference.posts_counted > 0;
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+    <div className="min-h-screen bg-bg text-text">
       <main className="max-w-3xl mx-auto px-6 py-8 space-y-6">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
@@ -194,7 +194,7 @@ export default function FeedPage() {
 
         {/* Reference baseline */}
         {loaded && reference && (
-          <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm">
+          <div className="rounded-xl border border-border bg-surface p-4 shadow-sm">
             {hasBaseline ? (
               <>
                 <p className="text-xs font-medium text-zinc-500 mb-2">
@@ -203,7 +203,7 @@ export default function FeedPage() {
                     : t("feed.ref_30d")}{" "}
                   · {reference.posts_counted} {t("feed.posts_word")}
                 </p>
-                <div className="flex flex-wrap items-center gap-4 text-sm text-zinc-700 dark:text-zinc-300">
+                <div className="flex flex-wrap items-center gap-4 text-sm text-text">
                   <Stat icon={ICON.views} value={Math.round(reference.avg_views)} />
                   <Stat icon={ICON.likes} value={Math.round(reference.avg_likes)} />
                   <Stat icon={ICON.comments} value={Math.round(reference.avg_comments)} />
@@ -220,7 +220,7 @@ export default function FeedPage() {
         )}
 
         {loaded && posts.length === 0 && (
-          <div className="rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700 p-8 text-center">
+          <div className="rounded-xl border border-dashed border-border p-8 text-center">
             <p className="text-sm text-zinc-500">{t("feed.empty")}</p>
           </div>
         )}
@@ -229,13 +229,13 @@ export default function FeedPage() {
           {posts.map((p) => (
             <li
               key={p.id}
-              className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
+              className="rounded-xl border border-border bg-surface p-4 shadow-sm"
             >
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-800 dark:text-zinc-200">
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-text">
                 {p.text ?? ""}
               </p>
 
-              <div className="mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800 flex flex-wrap items-center gap-3 text-xs text-zinc-500">
+              <div className="mt-3 pt-3 border-t border-border flex flex-wrap items-center gap-3 text-xs text-zinc-500">
                 <span className="inline-flex items-center gap-3">
                   <Stat icon={ICON.views} value={p.views} />
                   <Stat icon={ICON.likes} value={p.likes} />
@@ -274,7 +274,7 @@ export default function FeedPage() {
                     onClick={() => toggleGrowth(p.id)}
                     className={`hover:text-zinc-700 dark:hover:text-zinc-300 underline-offset-2 hover:underline ${
                       growthOpen === p.id
-                        ? "text-zinc-700 dark:text-zinc-300 font-medium"
+                        ? "text-text font-medium"
                         : ""
                     }`}
                   >
@@ -322,14 +322,14 @@ export default function FeedPage() {
           role="dialog"
           aria-modal="true"
         >
-          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl p-6 space-y-4">
+          <div className="w-full max-w-lg rounded-2xl bg-surface border border-border shadow-xl p-6 space-y-4">
             <h2 className="text-lg font-semibold tracking-tight">
               {t("posts.confirm_title")}
             </h2>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+            <p className="text-sm text-text-muted leading-relaxed">
               {t("posts.confirm_body")}
             </p>
-            <p className="text-sm text-zinc-500 line-clamp-3 whitespace-pre-wrap border-l-2 border-zinc-200 dark:border-zinc-700 pl-3">
+            <p className="text-sm text-zinc-500 line-clamp-3 whitespace-pre-wrap border-l-2 border-border pl-3">
               {deleteTarget.text ?? ""}
             </p>
             <div className="flex items-center justify-end gap-3 pt-1">
@@ -338,7 +338,7 @@ export default function FeedPage() {
                   if (!deleting) setDeleteTarget(null);
                 }}
                 disabled={deleting}
-                className="text-sm px-4 py-2 rounded-md text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50 transition-colors"
+                className="text-sm px-4 py-2 rounded-md text-text hover:bg-surface-2 disabled:opacity-50 transition-colors"
               >
                 {t("common.cancel")}
               </button>
@@ -407,7 +407,7 @@ function GrowthChart({
     })
     .join(" ");
   return (
-    <div className="mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+    <div className="mt-3 pt-3 border-t border-border">
       <svg
         viewBox={`0 0 ${W} ${H}`}
         className="w-full h-14 text-green-500 dark:text-green-400"

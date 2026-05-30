@@ -30,7 +30,7 @@ export function LanguageSwitcher() {
         onClick={() => setOpen((o) => !o)}
         aria-label="change language"
         title="change language"
-        className="inline-flex items-center gap-1 text-xs text-zinc-600 dark:text-zinc-400 px-2 py-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+        className="inline-flex items-center gap-1 text-xs text-text-muted px-2 py-1 rounded-md hover:bg-surface-2 transition-colors"
       >
         <span className="text-base leading-none" aria-hidden>
           {selected.flag}
@@ -40,7 +40,7 @@ export function LanguageSwitcher() {
         </span>
       </button>
       {open && (
-        <div className="absolute right-0 mt-1 z-30 w-44 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-lg py-1">
+        <div className="absolute right-0 mt-1 z-30 w-44 rounded-lg border border-border bg-surface shadow-lg py-1">
           {LOCALES.map((l) => {
             const isSel = l.code === current;
             return (
@@ -55,8 +55,8 @@ export function LanguageSwitcher() {
                 }}
                 className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2.5 transition-colors ${
                   isSel
-                    ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
-                    : "text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
+                    ? "bg-surface-2 text-text"
+                    : "text-text hover:bg-surface-2/60"
                 }`}
               >
                 <span className="text-base leading-none" aria-hidden>

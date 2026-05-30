@@ -62,7 +62,7 @@ export default function AuditsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+    <div className="min-h-screen bg-bg text-text">
       <main className="max-w-3xl mx-auto px-6 py-8 space-y-6">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
@@ -74,7 +74,7 @@ export default function AuditsPage() {
         {loading && <p className="text-sm text-zinc-500">{t("common.loading")}</p>}
 
         {!loading && audits.length === 0 && (
-          <div className="rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700 p-8 text-center">
+          <div className="rounded-xl border border-dashed border-border p-8 text-center">
             <p className="text-sm text-zinc-500">{t("audits.empty")}</p>
           </div>
         )}
@@ -84,7 +84,7 @@ export default function AuditsPage() {
             <li key={a.id}>
               <Link
                 href={`/app/audits/${a.id}`}
-                className="block rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors"
+                className="block rounded-xl border border-border bg-surface p-4 shadow-sm hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors"
               >
                 <div className="flex items-baseline justify-between gap-3 mb-2 flex-wrap">
                   <div className="flex items-center gap-2 text-xs text-zinc-500">
@@ -99,7 +99,7 @@ export default function AuditsPage() {
                     <DeltaBadge pct={a.week_over_week_delta_pct} />
                   )}
                 </div>
-                <div className="flex items-center gap-4 text-sm text-zinc-700 dark:text-zinc-300 flex-wrap">
+                <div className="flex items-center gap-4 text-sm text-text flex-wrap">
                   <span>
                     <span className="font-medium">{a.posts_analyzed}</span>{" "}
                     {t("audits.posts_analyzed")}

@@ -62,7 +62,7 @@ export default function MentionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+    <div className="min-h-screen bg-bg text-text">
       <main className="max-w-3xl mx-auto px-6 py-8 space-y-6">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
@@ -76,7 +76,7 @@ export default function MentionsPage() {
         )}
 
         {loaded && mentions.length === 0 && (
-          <div className="rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700 p-8 text-center">
+          <div className="rounded-xl border border-dashed border-border p-8 text-center">
             <p className="text-sm text-zinc-500">{t("mentions.empty")}</p>
           </div>
         )}
@@ -85,10 +85,10 @@ export default function MentionsPage() {
           {mentions.map((m) => (
             <li
               key={m.id}
-              className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
+              className="rounded-xl border border-border bg-surface p-4 shadow-sm"
             >
               <div className="flex items-center justify-between mb-2 text-xs text-zinc-500">
-                <span className="font-medium text-zinc-700 dark:text-zinc-300 truncate">
+                <span className="font-medium text-text truncate">
                   @{m.author_username ?? "—"}
                 </span>
                 {m.permalink && (
@@ -102,7 +102,7 @@ export default function MentionsPage() {
                   </a>
                 )}
               </div>
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-800 dark:text-zinc-200">
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-text">
                 {m.text ?? ""}
               </p>
               {m.text && (

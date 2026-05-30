@@ -90,7 +90,7 @@ export function TagInput({
   const pillColors =
     variant === "danger"
       ? "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900 text-red-900 dark:text-red-200"
-      : "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200";
+      : "bg-surface-2 border-border text-text";
 
   // When a pill is flagged as part of a conflict, we override the
   // normal colors with a stronger amber treatment — distinct from
@@ -103,11 +103,11 @@ export function TagInput({
   const containerBorder =
     variant === "danger"
       ? "border-red-300 dark:border-red-900"
-      : "border-zinc-300 dark:border-zinc-700";
+      : "border-border";
 
   return (
     <div
-      className={`flex flex-wrap gap-1.5 items-center rounded-md border px-2 py-2 bg-white dark:bg-zinc-950 focus-within:ring-2 focus-within:ring-zinc-300 dark:focus-within:ring-zinc-700 ${containerBorder}`}
+      className={`flex flex-wrap gap-1.5 items-center rounded-md border px-2 py-2 bg-surface focus-within:ring-2 focus-within:ring-zinc-300 dark:focus-within:ring-zinc-700 ${containerBorder}`}
     >
       {items.map((item, idx) => {
         const isFlagged = flagged?.has(item) ?? false;
@@ -159,7 +159,7 @@ export function TagInput({
         // Read-only mode has no input, so an empty section would render
         // as a blank box. Show the (already-translated) placeholder as
         // muted static text — same hint the editor shows, same position.
-        <span className="text-sm text-zinc-400 dark:text-zinc-500 py-0.5 px-1">
+        <span className="text-sm text-text-subtle py-0.5 px-1">
           {placeholder}
         </span>
       )}

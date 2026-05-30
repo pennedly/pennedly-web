@@ -447,7 +447,7 @@ export default function RoleBookEditor() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+    <div className="min-h-screen bg-bg text-text">
       <main className="max-w-3xl mx-auto px-6 py-8 space-y-6">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
@@ -459,7 +459,7 @@ export default function RoleBookEditor() {
               onClick={() =>
                 setView((v) => (v === "translated" ? "original" : "translated"))
               }
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-700 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-border text-sm text-text hover:bg-surface-2 transition-colors"
             >
               <svg
                 width="14"
@@ -498,7 +498,7 @@ export default function RoleBookEditor() {
         </div>
 
         {/* Intro */}
-        <section className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm">
+        <section className="rounded-xl border border-border bg-surface p-5 shadow-sm">
           <div className="flex items-baseline justify-between mb-2">
             <label className="text-sm font-semibold">
               {t("rolebook.intro.label")}
@@ -513,7 +513,7 @@ export default function RoleBookEditor() {
             readOnly={isTranslated}
             rows={5}
             placeholder={t("rolebook.intro.placeholder")}
-            className="w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700"
+            className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700"
           />
         </section>
 
@@ -524,10 +524,10 @@ export default function RoleBookEditor() {
           return (
             <section
               key={section.key}
-              className={`rounded-xl border bg-white dark:bg-zinc-900 p-5 shadow-sm ${
+              className={`rounded-xl border bg-surface p-5 shadow-sm ${
                 isDanger
                   ? "border-red-200 dark:border-red-900/50"
-                  : "border-zinc-200 dark:border-zinc-800"
+                  : "border-border"
               }`}
             >
               <div className="flex items-baseline justify-between mb-1">
@@ -567,7 +567,7 @@ export default function RoleBookEditor() {
         {!isTranslated && lintResult && (
           <section
             id="lint-results-card"
-            className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm scroll-mt-24"
+            className="rounded-xl border border-border bg-surface p-5 shadow-sm scroll-mt-24"
           >
             <div className="flex items-baseline justify-between mb-3">
               <h2 className="text-sm font-semibold">
@@ -590,21 +590,21 @@ export default function RoleBookEditor() {
         )}
 
         {/* Save action bar */}
-        <div className="sticky bottom-4 flex items-center justify-end gap-3 bg-white/95 dark:bg-zinc-950/95 backdrop-blur border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 shadow-md">
+        <div className="sticky bottom-4 flex items-center justify-end gap-3 bg-white/95 dark:bg-zinc-950/95 backdrop-blur border border-border rounded-xl px-4 py-3 shadow-md">
           <span className="mr-auto text-xs text-zinc-500">
             {t("rolebook.save.helper")}
           </span>
           <button
             onClick={() => setExtractOpen(true)}
             disabled={extracting || saving || linting || isTranslated}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-700 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50 transition-colors"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-border text-sm text-text hover:bg-surface-2 disabled:opacity-50 transition-colors"
           >
             {t("rolebook.extract.button")}
           </button>
           <button
             onClick={onLint}
             disabled={linting || saving || isTranslated}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-700 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50 transition-colors"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-border text-sm text-text hover:bg-surface-2 disabled:opacity-50 transition-colors"
           >
             {linting && (
               <span
@@ -616,14 +616,14 @@ export default function RoleBookEditor() {
           </button>
           <Link
             href="/app"
-            className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors px-3 py-1.5"
+            className="text-sm text-text-muted hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors px-3 py-1.5"
           >
             {t("common.cancel")}
           </Link>
           <button
             onClick={onSave}
             disabled={saving || isTranslated}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-md bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 text-sm font-medium hover:bg-zinc-700 dark:hover:bg-white disabled:opacity-50 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
           >
             {saving && (
               <span
@@ -636,14 +636,14 @@ export default function RoleBookEditor() {
         </div>
 
         {/* Transparency: what the LLM actually sees */}
-        <details className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5">
+        <details className="rounded-xl border border-border bg-surface p-5">
           <summary className="cursor-pointer text-sm font-semibold">
             {t("rolebook.transparency.title")}
             <span className="ml-2 font-normal text-xs text-zinc-500">
               {t("rolebook.transparency.subtitle")}
             </span>
           </summary>
-          <pre className="mt-3 whitespace-pre-wrap text-xs leading-relaxed text-zinc-700 dark:text-zinc-300 font-mono">
+          <pre className="mt-3 whitespace-pre-wrap text-xs leading-relaxed text-text font-mono">
             {book.prompt_text}
           </pre>
           <div className="mt-3">
@@ -659,25 +659,25 @@ export default function RoleBookEditor() {
           role="dialog"
           aria-modal="true"
         >
-          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl p-6 space-y-4">
+          <div className="w-full max-w-lg rounded-2xl bg-surface border border-border shadow-xl p-6 space-y-4">
             <h2 className="text-lg font-semibold tracking-tight">
               {t("rolebook.extract.confirm_title")}
             </h2>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+            <p className="text-sm text-text-muted leading-relaxed">
               {t("rolebook.extract.confirm_body")}
             </p>
             <div className="flex items-center justify-end gap-3 pt-1">
               <button
                 onClick={() => setExtractOpen(false)}
                 disabled={extracting}
-                className="text-sm px-4 py-2 rounded-md text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50 transition-colors"
+                className="text-sm px-4 py-2 rounded-md text-text hover:bg-surface-2 disabled:opacity-50 transition-colors"
               >
                 {t("common.cancel")}
               </button>
               <button
                 onClick={onExtractConfirm}
                 disabled={extracting}
-                className="inline-flex items-center gap-2 text-sm px-4 py-2 rounded-md bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-white disabled:opacity-50 transition-colors"
+                className="inline-flex items-center gap-2 text-sm px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
               >
                 {extracting && (
                   <span

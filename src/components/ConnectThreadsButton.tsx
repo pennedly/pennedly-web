@@ -49,8 +49,8 @@ export function ConnectThreadsButton({ variant = "primary" }: Props) {
 
   const className =
     variant === "menu"
-      ? "w-full text-left px-3 py-2 text-sm flex items-center gap-2 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/60 disabled:opacity-50 transition-colors"
-      : "inline-flex items-center gap-2 px-4 py-2 rounded-md bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 text-sm font-medium hover:bg-zinc-700 dark:hover:bg-white disabled:opacity-50 transition-colors";
+      ? "w-full text-left px-3 py-2 text-sm flex items-center gap-2 text-text hover:bg-surface-2/60 disabled:opacity-50 transition-colors"
+      : "inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors";
 
   const icon = loading ? (
     <span

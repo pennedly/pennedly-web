@@ -70,7 +70,7 @@ function Toggle({
 }
 
 const SELECT =
-  "rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700";
+  "rounded-md border border-border bg-surface px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700";
 
 export default function AutopilotPage() {
   const router = useRouter();
@@ -177,7 +177,7 @@ export default function AutopilotPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+    <div className="min-h-screen bg-bg text-text">
       <main className="max-w-3xl mx-auto px-6 py-8 space-y-6">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
@@ -191,7 +191,7 @@ export default function AutopilotPage() {
         ) : (
           <>
             {/* Master switch */}
-            <section className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm">
+            <section className="rounded-xl border border-border bg-surface p-5 shadow-sm">
               <Toggle on={master} onChange={onMaster} label={t("autopilot.master")} />
             </section>
 
@@ -207,7 +207,7 @@ export default function AutopilotPage() {
               </div>
 
               {rules.length === 0 && (
-                <div className="rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700 p-6 text-center">
+                <div className="rounded-xl border border-dashed border-border p-6 text-center">
                   <p className="text-sm text-zinc-500">
                     {t("autopilot.no_objects")}
                   </p>
@@ -217,7 +217,7 @@ export default function AutopilotPage() {
               {rules.map((r) => (
                 <div
                   key={r.id}
-                  className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm space-y-3"
+                  className="rounded-xl border border-border bg-surface p-4 shadow-sm space-y-3"
                 >
                   <div className="flex items-center gap-3">
                     <input
@@ -311,7 +311,7 @@ export default function AutopilotPage() {
                     </label>
                   </div>
 
-                  <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 space-y-3">
+                  <div className="pt-3 border-t border-border space-y-3">
                     <Toggle
                       on={r.auto_reply}
                       onChange={(v) => patchRule(r.id, { auto_reply: v })}
@@ -398,7 +398,7 @@ export default function AutopilotPage() {
 
               <button
                 onClick={onAdd}
-                className="inline-flex items-center px-4 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 text-sm font-medium text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                className="inline-flex items-center px-4 py-2 rounded-md border border-border text-sm font-medium text-text hover:bg-surface-2 transition-colors"
               >
                 {t("autopilot.add_object")}
               </button>
@@ -414,14 +414,14 @@ export default function AutopilotPage() {
                 !activity.rules.some(
                   (r) => r.last_post_at || r.last_reply_at,
                 ) ? (
-                  <div className="rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700 p-6 text-center">
+                  <div className="rounded-xl border border-dashed border-border p-6 text-center">
                     <p className="text-sm text-zinc-500">
                       {t("autopilot.activity_empty")}
                     </p>
                   </div>
                 ) : (
                   <>
-                    <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm space-y-1.5">
+                    <div className="rounded-xl border border-border bg-surface p-4 shadow-sm space-y-1.5">
                       {activity.rules.map((r) => (
                         <div
                           key={r.id}
@@ -452,7 +452,7 @@ export default function AutopilotPage() {
                         {activity.posts.map((p) => (
                           <div
                             key={p.post_id}
-                            className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3"
+                            className="rounded-lg border border-border bg-surface p-3"
                           >
                             <div className="flex items-center justify-between gap-2 text-xs text-zinc-500 mb-1">
                               <span className="truncate">
@@ -470,7 +470,7 @@ export default function AutopilotPage() {
                                 </a>
                               )}
                             </div>
-                            <p className="text-sm text-zinc-700 dark:text-zinc-300 line-clamp-2 whitespace-pre-wrap">
+                            <p className="text-sm text-text line-clamp-2 whitespace-pre-wrap">
                               {p.text}
                             </p>
                             <p className="text-xs text-zinc-400 mt-1">

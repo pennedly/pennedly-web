@@ -169,7 +169,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+    <div className="min-h-screen bg-bg text-text">
       <header className="max-w-xl mx-auto px-6 pt-6 flex items-center justify-between">
         <div className="flex items-center gap-4 min-w-0">
           {(alreadySetUp || preview) && (
@@ -227,7 +227,7 @@ export default function OnboardingPage() {
             )}
 
         {step === "connect" && (
-          <section className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 text-center shadow-sm">
+          <section className="rounded-xl border border-border bg-surface p-6 text-center shadow-sm">
             <h2 className="text-base font-semibold">
               {t("onboarding.connect_title")}
             </h2>
@@ -246,8 +246,8 @@ export default function OnboardingPage() {
             <section
               className={`rounded-xl border p-5 shadow-sm ${
                 status?.can_analyze
-                  ? "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900"
-                  : "border-zinc-200 dark:border-zinc-800 bg-zinc-100/60 dark:bg-zinc-900/40"
+                  ? "border-border bg-surface"
+                  : "border-border bg-zinc-100/60 dark:bg-zinc-900/40"
               }`}
             >
               <h2 className="text-base font-semibold">
@@ -261,7 +261,7 @@ export default function OnboardingPage() {
                   <button
                     onClick={onAnalyze}
                     disabled={busy !== null}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 text-sm font-medium hover:bg-zinc-700 dark:hover:bg-white disabled:opacity-50 transition-colors"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
                   >
                     {busy === "analyze" && (
                       <span
@@ -285,7 +285,7 @@ export default function OnboardingPage() {
             </section>
 
             {/* Build from scratch */}
-            <section className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm">
+            <section className="rounded-xl border border-border bg-surface p-5 shadow-sm">
               <h2 className="text-base font-semibold">
                 {t("onboarding.scratch_title")}
               </h2>
@@ -298,7 +298,7 @@ export default function OnboardingPage() {
                   setStep("form");
                 }}
                 disabled={busy !== null}
-                className="mt-4 inline-flex items-center px-4 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 text-sm font-medium text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50 transition-colors"
+                className="mt-4 inline-flex items-center px-4 py-2 rounded-md border border-border text-sm font-medium text-text hover:bg-surface-2 disabled:opacity-50 transition-colors"
               >
                 {t("onboarding.scratch_cta")}
               </button>
@@ -307,7 +307,7 @@ export default function OnboardingPage() {
         )}
 
         {step === "form" && (
-          <section className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm space-y-5">
+          <section className="rounded-xl border border-border bg-surface p-5 shadow-sm space-y-5">
             <button
               onClick={() => {
                 setError(null);
@@ -327,7 +327,7 @@ export default function OnboardingPage() {
                 onChange={(e) => setIntro(e.target.value)}
                 rows={5}
                 placeholder={t("onboarding.form_intro_ph")}
-                className="w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700 resize-y"
+                className="w-full rounded-md border border-border bg-bg px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700 resize-y"
               />
             </div>
 
@@ -356,7 +356,7 @@ export default function OnboardingPage() {
             <button
               onClick={onCreate}
               disabled={busy !== null}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 text-sm font-medium hover:bg-zinc-700 dark:hover:bg-white disabled:opacity-50 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
             >
               {busy === "create" && (
                 <span
@@ -399,7 +399,7 @@ function PreviewResultPanel({
     { key: "onboarding.sec_examples", items: s.examples },
   ];
   return (
-    <section className="rounded-xl border border-blue-200 dark:border-blue-900 bg-white dark:bg-zinc-900 p-5 shadow-sm space-y-5">
+    <section className="rounded-xl border border-blue-200 dark:border-blue-900 bg-surface p-5 shadow-sm space-y-5">
       <div>
         <h2 className="text-base font-semibold">
           {t("onboarding.preview_result_title")}
@@ -419,7 +419,7 @@ function PreviewResultPanel({
           <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-1">
             {t("onboarding.sec_intro")}
           </h3>
-          <p className="text-sm leading-relaxed whitespace-pre-wrap text-zinc-700 dark:text-zinc-300">
+          <p className="text-sm leading-relaxed whitespace-pre-wrap text-text">
             {s.intro}
           </p>
         </div>
@@ -431,7 +431,7 @@ function PreviewResultPanel({
             <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-1.5">
               {t(key)}
             </h3>
-            <ul className="list-disc list-inside space-y-0.5 text-sm text-zinc-700 dark:text-zinc-300">
+            <ul className="list-disc list-inside space-y-0.5 text-sm text-text">
               {items.map((it, i) => (
                 <li key={i}>{it}</li>
               ))}
@@ -449,7 +449,7 @@ function PreviewResultPanel({
             {result.would_seed_topics.map((tp, i) => (
               <span
                 key={i}
-                className="px-2 py-0.5 rounded-full text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
+                className="px-2 py-0.5 rounded-full text-xs bg-surface-2 text-text"
               >
                 {tp}
               </span>
@@ -458,18 +458,18 @@ function PreviewResultPanel({
         </div>
       )}
 
-      <details className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-3">
+      <details className="rounded-lg border border-border p-3">
         <summary className="text-xs font-medium text-zinc-500 cursor-pointer">
           {t("onboarding.preview_full_rolebook")}
         </summary>
-        <pre className="mt-2 whitespace-pre-wrap text-xs leading-relaxed text-zinc-600 dark:text-zinc-400 font-mono">
+        <pre className="mt-2 whitespace-pre-wrap text-xs leading-relaxed text-text-muted font-mono">
           {result.prompt_text}
         </pre>
       </details>
 
       <button
         onClick={onBack}
-        className="inline-flex items-center px-4 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 text-sm font-medium text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+        className="inline-flex items-center px-4 py-2 rounded-md border border-border text-sm font-medium text-text hover:bg-surface-2 transition-colors"
       >
         {t("onboarding.preview_back")}
       </button>

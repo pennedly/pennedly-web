@@ -58,7 +58,7 @@ export default function SettingsPage() {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+    <div className="min-h-screen bg-bg text-text">
       <main className="max-w-2xl mx-auto px-6 py-8 space-y-6">
         <h1 className="text-2xl font-semibold tracking-tight">
           {t("settings.title")}
@@ -68,7 +68,7 @@ export default function SettingsPage() {
 
         {loaded && me && (
           <>
-            <section className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm">
+            <section className="rounded-xl border border-border bg-surface p-5 shadow-sm">
               <h2 className="text-sm font-semibold mb-3">
                 {t("settings.account")}
               </h2>
@@ -84,7 +84,7 @@ export default function SettingsPage() {
               </dl>
             </section>
 
-            <section className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm">
+            <section className="rounded-xl border border-border bg-surface p-5 shadow-sm">
               <h2 className="text-sm font-semibold mb-3">
                 {t("settings.language")}
               </h2>
@@ -99,8 +99,8 @@ export default function SettingsPage() {
                     }}
                     className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md border text-sm transition-colors ${
                       l.code === locale
-                        ? "border-zinc-400 dark:border-zinc-500 bg-zinc-100 dark:bg-zinc-800"
-                        : "border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                        ? "border-zinc-400 dark:border-zinc-500 bg-surface-2"
+                        : "border-border hover:bg-surface-2"
                     }`}
                   >
                     <span aria-hidden>{l.flag}</span>
@@ -110,7 +110,7 @@ export default function SettingsPage() {
               </div>
             </section>
 
-            <section className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm">
+            <section className="rounded-xl border border-border bg-surface p-5 shadow-sm">
               <h2 className="text-sm font-semibold mb-3">
                 {t("settings.accounts")}
               </h2>
@@ -134,7 +134,7 @@ export default function SettingsPage() {
               <ConnectThreadsButton variant="primary" />
             </section>
 
-            <section className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm">
+            <section className="rounded-xl border border-border bg-surface p-5 shadow-sm">
               <h2 className="text-sm font-semibold mb-1">
                 {t("settings.voice_setup")}
               </h2>
@@ -144,7 +144,7 @@ export default function SettingsPage() {
               <div className="flex flex-wrap items-center gap-3">
                 <Link
                   href="/app/onboarding"
-                  className="inline-flex items-center px-4 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 text-sm font-medium text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                  className="inline-flex items-center px-4 py-2 rounded-md border border-border text-sm font-medium text-text hover:bg-surface-2 transition-colors"
                 >
                   {t("settings.voice_setup_cta")}
                 </Link>
