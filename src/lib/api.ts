@@ -449,6 +449,17 @@ export async function deletePost(postId: number): Promise<DeletePostResult> {
   });
 }
 
+// Toggle whether the auto-reply sweep answers new comments under this post.
+export async function setPostAutoReply(
+  postId: number,
+  autoReply: boolean,
+): Promise<{ post_id: number; auto_reply: boolean }> {
+  return fetchApi(`/api/posts/${postId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ auto_reply: autoReply }),
+  });
+}
+
 // ── My Feed (posts + inline analytics) ───────────────────────────
 export async function fetchFeed(
   accountId: number,
