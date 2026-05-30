@@ -366,6 +366,7 @@ export type AutopostRule = {
   name: string | null;
   topic_id: number | null;
   post_hour: number;
+  jitter_minutes: number;
   enabled: boolean;
   auto_reply: boolean;
   reply_audience: string;

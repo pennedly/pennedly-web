@@ -264,6 +264,27 @@ export default function AutopilotPage() {
                         ))}
                       </select>
                     </label>
+                    <label
+                      className="inline-flex items-center gap-2"
+                      title="random spread around the post time (0 = exact)"
+                    >
+                      <span className="text-zinc-500">±</span>
+                      <select
+                        value={r.jitter_minutes}
+                        onChange={(e) =>
+                          patchRule(r.id, {
+                            jitter_minutes: Number(e.target.value),
+                          })
+                        }
+                        className={SELECT}
+                      >
+                        {[0, 5, 10, 15, 30, 45, 60].map((m) => (
+                          <option key={m} value={m}>
+                            {m === 0 ? "0" : `${m} min`}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
                     <label className="inline-flex items-center gap-2">
                       <span className="text-zinc-500">
                         {t("autopilot.object_topic")}
