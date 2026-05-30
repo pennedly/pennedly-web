@@ -25,6 +25,11 @@ import { captureEvent } from "@/lib/analytics";
 import { useSelectedAccountId } from "@/lib/account";
 import { useTranslation } from "@/lib/i18n";
 import { useTesterGuard } from "@/lib/tester";
+import {
+  localHourToUtc,
+  localUtcOffsetLabel,
+  utcHourToLocal,
+} from "@/lib/timezone";
 import type { AutopostActivity, AutopostRule, TopicOption } from "@/lib/types";
 
 type Toast = { id: number; message: string; tone: "success" | "error" };
@@ -131,7 +136,9 @@ export default function AutopilotPage() {
     if (accountId === null) return;
     captureEvent("ui.autopilot_add_object", { account_id: accountId });
     try {
-      const rule = await createAutopostRule(accountId, { post_hour: 9 });
+      const rule = await createAutopostRule(accountId, {
+        post_hour: localHourToUtc(9),
+      });
       setRules((rs) => [...rs, rule]);
     } catch (e) {
       toast(String(e), "error");
@@ -239,12 +246,14 @@ export default function AutopilotPage() {
                   <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
                     <label className="inline-flex items-center gap-2">
                       <span className="text-zinc-500">
-                        {t("autopilot.object_time")}
+                        {t("autopilot.object_time")} ({localUtcOffsetLabel()})
                       </span>
                       <select
-                        value={r.post_hour}
+                        value={utcHourToLocal(r.post_hour)}
                         onChange={(e) =>
-                          patchRule(r.id, { post_hour: Number(e.target.value) })
+                          patchRule(r.id, {
+                            post_hour: localHourToUtc(Number(e.target.value)),
+                          })
                         }
                         className={SELECT}
                       >
