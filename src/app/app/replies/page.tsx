@@ -7,8 +7,7 @@
 // threads_manage_replies permission. Mirrors the dashboard draft flow:
 // generate → edit → approve → publish.
 
-import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -31,6 +30,23 @@ import { useTesterGuard } from "@/lib/tester";
 import type { CommentSummary } from "@/lib/types";
 
 type Toast = { id: number; message: string; tone: "success" | "error" };
+
+// E: one post + every comment sitting under it (master-detail grouping).
+type PostGroup = {
+  postId: number;
+  postText: string | null;
+  postPublishedAt: string | null;
+  postThreadsUrl: string | null;
+  comments: CommentSummary[];
+};
+
+// Comments still awaiting action (a fresh comment or an AI draft to review).
+// Drives the unanswered-count badge on each post in the picker.
+function pendingCount(comments: CommentSummary[]): number {
+  return comments.filter(
+    (c) => c.status === "new" || c.status === "drafted",
+  ).length;
+}
 
 // Reply-queue filter tabs. `key` is the comment `status` passed to the API
 // (null = all). new = needs a reply, drafted = AI reply awaiting review,
@@ -63,6 +79,8 @@ export default function RepliesPage() {
   const [publishing, setPublishing] = useState(false);
   const [confirmDismissId, setConfirmDismissId] = useState<number | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
+  // E: master-detail — which post's replies the right column shows.
+  const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
 
   function toast(message: string, tone: Toast["tone"] = "success") {
     const id = Date.now() + Math.random();
@@ -111,6 +129,49 @@ export default function RepliesPage() {
       // keep current list on a transient failure
     }
   }
+
+  // E: group the flat comment list by the post each comment sits under, so
+  // the UI can show a post picker (left) → that post's replies (right)
+  // instead of one undifferentiated column. Posts sort newest-first.
+  const postGroups = useMemo<PostGroup[]>(() => {
+    const map = new Map<number, PostGroup>();
+    for (const c of comments) {
+      let g = map.get(c.post_id);
+      if (!g) {
+        g = {
+          postId: c.post_id,
+          postText: c.post_text,
+          postPublishedAt: c.post_published_at,
+          postThreadsUrl: c.post_threads_url,
+          comments: [],
+        };
+        map.set(c.post_id, g);
+      }
+      g.comments.push(c);
+    }
+    return [...map.values()].sort((a, b) => {
+      const ta = a.postPublishedAt ? Date.parse(a.postPublishedAt) : 0;
+      const tb = b.postPublishedAt ? Date.parse(b.postPublishedAt) : 0;
+      return tb - ta;
+    });
+  }, [comments]);
+
+  // Keep a valid post selected as the (filtered) group list changes.
+  useEffect(() => {
+    if (postGroups.length === 0) {
+      if (selectedPostId !== null) setSelectedPostId(null);
+      return;
+    }
+    if (
+      selectedPostId === null ||
+      !postGroups.some((g) => g.postId === selectedPostId)
+    ) {
+      setSelectedPostId(postGroups[0].postId);
+    }
+  }, [postGroups, selectedPostId]);
+
+  const selectedGroup =
+    postGroups.find((g) => g.postId === selectedPostId) ?? null;
 
   async function onGenerate(comment: CommentSummary) {
     setGeneratingId(comment.id);
@@ -271,8 +332,91 @@ export default function RepliesPage() {
           </div>
         )}
 
-        <ul className="space-y-4">
-          {comments.map((c) => {
+        {loaded && comments.length > 0 && (
+          <div className="grid gap-6 md:grid-cols-[300px_1fr] items-start">
+            {/* Post picker (master) — select a post to see its replies */}
+            <aside className="md:sticky md:top-6 space-y-2">
+              <p className="px-1 text-xs font-medium uppercase tracking-wide text-zinc-400">
+                {t("replies.posts_column")}
+              </p>
+              {postGroups.length === 0 ? (
+                <p className="px-1 text-sm text-zinc-500">
+                  {t("replies.no_posts")}
+                </p>
+              ) : (
+                <ul className="space-y-1.5 pr-1 md:max-h-[calc(100vh-12rem)] md:overflow-auto">
+                  {postGroups.map((g) => {
+                    const active = g.postId === selectedPostId;
+                    const pending = pendingCount(g.comments);
+                    return (
+                      <li key={g.postId}>
+                        <button
+                          onClick={() => setSelectedPostId(g.postId)}
+                          className={`w-full rounded-lg border px-3 py-2 text-left transition-colors ${
+                            active
+                              ? "border-primary bg-surface-2"
+                              : "border-border bg-surface hover:bg-surface-2"
+                          }`}
+                        >
+                          <p className="line-clamp-2 text-sm text-text">
+                            {g.postText || `#${g.postId}`}
+                          </p>
+                          <div className="mt-1 flex items-center gap-2 text-xs text-zinc-400">
+                            <span className="truncate">
+                              {fmtDateTime(g.postPublishedAt)}
+                            </span>
+                            <span className="ml-auto shrink-0">
+                              {g.comments.length} 💬
+                            </span>
+                            {pending > 0 && (
+                              <span className="inline-flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
+                                {pending}
+                              </span>
+                            )}
+                          </div>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </aside>
+
+            {/* Selected post's replies (detail) */}
+            <section className="min-w-0 space-y-4">
+              {selectedGroup === null ? (
+                <p className="text-sm text-zinc-500">
+                  {t("replies.select_post")}
+                </p>
+              ) : (
+                <>
+                  {/* Parent post context — text, publish time, open link */}
+                  <div className="rounded-xl border border-border bg-surface-2 p-4">
+                    <div className="mb-1.5 flex items-center gap-2 text-xs text-zinc-400">
+                      <span className="shrink-0">{t("replies.under_post")}</span>
+                      {selectedGroup.postPublishedAt && (
+                        <span className="shrink-0">
+                          · {fmtDateTime(selectedGroup.postPublishedAt)}
+                        </span>
+                      )}
+                      {selectedGroup.postThreadsUrl && (
+                        <a
+                          href={selectedGroup.postThreadsUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ml-auto shrink-0 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:underline"
+                        >
+                          {t("feed.open")}
+                        </a>
+                      )}
+                    </div>
+                    <p className="whitespace-pre-wrap text-sm text-text">
+                      {selectedGroup.postText || `#${selectedGroup.postId}`}
+                    </p>
+                  </div>
+
+                  <ul className="space-y-4">
+                    {selectedGroup.comments.map((c) => {
             const draftId = c.ai_draft_id;
             const isReplied = c.status === "replied";
             const isSkip = c.draft_is_skip === true;
@@ -291,34 +435,6 @@ export default function RepliesPage() {
                 key={c.id}
                 className="rounded-xl border border-border bg-surface p-4 shadow-sm"
               >
-                {/* Which post this comment is under */}
-                {c.post_text && (
-                  <div className="mb-2 flex items-center gap-1.5 text-xs text-zinc-500 min-w-0">
-                    <span className="shrink-0 text-zinc-400">
-                      {t("replies.under_post")}
-                    </span>
-                    {c.post_threads_url ? (
-                      <a
-                        href={c.post_threads_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="truncate text-text-muted hover:underline"
-                      >
-                        {c.post_text}
-                      </a>
-                    ) : (
-                      <span className="truncate text-text-muted">
-                        {c.post_text}
-                      </span>
-                    )}
-                    {c.post_published_at && (
-                      <span className="shrink-0 text-zinc-400">
-                        · {fmtDate(c.post_published_at)}
-                      </span>
-                    )}
-                  </div>
-                )}
-
                 {/* The original comment */}
                 <div className="flex items-center justify-between mb-2 text-xs text-zinc-500">
                   <div className="flex items-center gap-2 min-w-0">
@@ -329,7 +445,7 @@ export default function RepliesPage() {
                       <>
                         <span className="text-zinc-400">·</span>
                         <span className="truncate">
-                          {fmtDate(c.published_at)}
+                          {fmtDateTime(c.published_at)}
                         </span>
                       </>
                     )}
@@ -394,7 +510,7 @@ export default function RepliesPage() {
                         </span>
                         {c.replied_at && (
                           <span className="text-zinc-400">
-                            {fmtDate(c.replied_at)}
+                            {fmtDateTime(c.replied_at)}
                           </span>
                         )}
                         {(c.comment_url || c.post_threads_url) && (
@@ -529,10 +645,15 @@ export default function RepliesPage() {
                     </button>
                   )}
                 </div>
-              </li>
-            );
-          })}
-        </ul>
+                      </li>
+                      );
+                    })}
+                  </ul>
+                </>
+              )}
+            </section>
+          </div>
+        )}
       </main>
 
       <PublishConfirmModal
@@ -563,9 +684,14 @@ export default function RepliesPage() {
   );
 }
 
-function fmtDate(iso: string | null): string {
+// D: date AND time (the reply queue previously showed date only). Matches
+// the feed's format for consistency.
+function fmtDateTime(iso: string | null): string {
   if (!iso) return "";
-  return new Date(iso).toLocaleDateString();
+  return new Date(iso).toLocaleString(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
 }
 
 function errMsg(e: unknown): string {

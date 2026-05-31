@@ -299,6 +299,9 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "replies.filter_drafted": "Черновик",
   "replies.filter_replied": "Отвечено",
   "replies.filter_skipped": "Пропущено",
+  "replies.posts_column": "Посты",
+  "replies.select_post": "Выбери пост слева, чтобы увидеть ответы к нему.",
+  "replies.no_posts": "Пока нет постов с комментариями.",
 
   // ── Mentions ───────────────────────────────────────────────────
   "dashboard.nav.mentions": "упоминания",

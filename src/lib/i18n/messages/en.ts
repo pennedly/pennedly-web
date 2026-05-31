@@ -294,6 +294,9 @@ export const en = {
   "replies.filter_drafted": "Draft",
   "replies.filter_replied": "Replied",
   "replies.filter_skipped": "Skipped",
+  "replies.posts_column": "Posts",
+  "replies.select_post": "Pick a post on the left to see its replies.",
+  "replies.no_posts": "No posts with comments yet.",
 
   // ── Mentions ───────────────────────────────────────────────────
   "dashboard.nav.mentions": "mentions",

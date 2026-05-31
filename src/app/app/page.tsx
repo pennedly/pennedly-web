@@ -68,9 +68,11 @@ export default function Dashboard() {
   const [publishing, setPublishing] = useState(false);
   // Which status group the feed is showing. Splits the old single endless
   // column into scannable tabs (drafts / ready / published / rejected).
+  // Default to "ready to publish" (approved) — the most actionable group —
+  // shown first in the tab row too.
   const [tab, setTab] = useState<
     "pending" | "approved" | "published" | "rejected"
-  >("pending");
+  >("approved");
   // Per-draft: is the refine ("tweak") panel expanded? Collapsed by
   // default so a pending card isn't dominated by refine controls.
   const [refineOpen, setRefineOpen] = useState<Record<number, boolean>>({});
@@ -323,10 +325,9 @@ export default function Dashboard() {
       const result = await publishDraft(draftId);
       toast(`#${draftId} ${t("dashboard.toast.published")} · ${result.threads_post_id}`);
       setPublishTarget(null);
-      if (accountId !== null) {
-        const list = await listDrafts(accountId, { limit: 50 });
-        setDrafts(list.drafts);
-      }
+      // Jump to the feed so the freshly-published post is right there at the
+      // top (newest first).
+      router.push("/app/feed");
     } catch (e) {
       let msg = String(e);
       if (e instanceof ApiError) {
@@ -533,8 +534,8 @@ export default function Dashboard() {
           <div className="flex items-center gap-1 mb-4 border-b border-border overflow-x-auto">
             {(
               [
-                ["pending", t("dashboard.tab.pending"), draftCounts.pending],
                 ["approved", t("dashboard.tab.approved"), draftCounts.approved],
+                ["pending", t("dashboard.tab.pending"), draftCounts.pending],
                 ["published", t("dashboard.tab.published"), draftCounts.published],
                 ["rejected", t("dashboard.tab.rejected"), draftCounts.rejected],
               ] as const
