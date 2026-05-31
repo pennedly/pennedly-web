@@ -20,7 +20,9 @@ import {
   ApiError,
   consumeMagicLink,
   devLogin,
+  exchangeGoogleHandoff,
   fetchMe,
+  googleSignInUrl,
   requestEmailCode,
   setTokens,
   verifyEmailCode,
@@ -34,6 +36,8 @@ function LoginPageInner() {
   const { t, locale } = useTranslation();
   const searchParams = useSearchParams();
   const incomingToken = searchParams.get("token");
+  const incomingHandoff = searchParams.get("handoff");
+  const authErrorParam = searchParams.get("auth_error");
 
   const [email, setEmail] = useState("");
   const [pending, setPending] = useState(false);
@@ -51,7 +55,7 @@ function LoginPageInner() {
   // Magic-link consume on mount when ?token=xxx is present.
   const [consumeState, setConsumeState] = useState<
     "idle" | "consuming" | "failed"
-  >(incomingToken ? "consuming" : "idle");
+  >(incomingToken || incomingHandoff ? "consuming" : "idle");
   const [consumeError, setConsumeError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -78,6 +82,38 @@ function LoginPageInner() {
         } else {
           setConsumeError(String(e));
         }
+        setConsumeState("failed");
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Google sign-in returns here: ?handoff=… → swap for a session;
+  // ?auth_error=… → show a generic error on the form.
+  useEffect(() => {
+    if (authErrorParam) {
+      setError(t("login.google_error"));
+      return;
+    }
+    if (!incomingHandoff) return;
+    (async () => {
+      try {
+        const pair = await exchangeGoogleHandoff(incomingHandoff);
+        setTokens(pair);
+        try {
+          const me = await fetchMe();
+          identify(me.user_id, me.email, me.tenant.id);
+          captureEvent("ui.login_succeeded", { method: "google" });
+        } catch {
+          // identity hydration is best-effort
+        }
+        router.push("/app");
+      } catch (e) {
+        setConsumeError(
+          e instanceof ApiError && e.status === 410
+            ? t("login.google_error")
+            : `${t("login.signin_failed")}.`,
+        );
         setConsumeState("failed");
       }
     })();
@@ -253,6 +289,27 @@ function LoginPageInner() {
             </form>
           ) : (
             <form onSubmit={onRequestCode} className="space-y-3">
+              {/* Continue with Google — full-page nav to the backend, which
+                  redirects to Google's consent screen. */}
+              <a
+                href={googleSignInUrl()}
+                className="flex w-full items-center justify-center gap-2 rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium text-text hover:bg-surface-2 transition-colors"
+              >
+                <svg width="16" height="16" viewBox="0 0 18 18" aria-hidden>
+                  <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.49h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.63Z" />
+                  <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18Z" />
+                  <path fill="#FBBC05" d="M3.97 10.72a5.41 5.41 0 0 1 0-3.44V4.95H.96a9 9 0 0 0 0 8.1l3.01-2.33Z" />
+                  <path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58Z" />
+                </svg>
+                {t("login.google_button")}
+              </a>
+
+              <div className="flex items-center gap-3 py-1">
+                <span className="h-px flex-1 bg-border" />
+                <span className="text-xs text-zinc-400">{t("login.or")}</span>
+                <span className="h-px flex-1 bg-border" />
+              </div>
+
               <label className="block">
                 <span className="text-sm text-text-muted">
                   {t("login.email_label")}

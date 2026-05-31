@@ -48,6 +48,9 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "login.tab_link": "Ссылка",
   "login.no_password_code":
     "Пришлём одноразовый код на почту. Пароль не нужен.",
+  "login.google_button": "Войти через Google",
+  "login.or": "или",
+  "login.google_error": "Не удалось войти через Google. Попробуй ещё раз.",
   "login.code_sent_to": "Введи код, отправленный на",
   "login.code_label": "Код из письма",
   "login.code_placeholder": "123456",
