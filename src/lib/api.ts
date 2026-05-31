@@ -201,6 +201,23 @@ export async function consumeMagicLink(token: string): Promise<TokenPair> {
   });
 }
 
+export async function requestEmailCode(email: string): Promise<void> {
+  await fetchApi<void>("/api/auth/email-code/request", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+export async function verifyEmailCode(
+  email: string,
+  code: string,
+): Promise<TokenPair> {
+  return fetchApi<TokenPair>("/api/auth/email-code/verify", {
+    method: "POST",
+    body: JSON.stringify({ email, code }),
+  });
+}
+
 // ── Me ───────────────────────────────────────────────────────────
 
 export async function fetchMe(): Promise<Me> {

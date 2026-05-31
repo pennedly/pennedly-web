@@ -21,8 +21,10 @@ import {
   consumeMagicLink,
   devLogin,
   fetchMe,
+  requestEmailCode,
   requestMagicLink,
   setTokens,
+  verifyEmailCode,
 } from "@/lib/api";
 import { captureEvent, identify } from "@/lib/analytics";
 import { useTranslation } from "@/lib/i18n";
@@ -38,6 +40,12 @@ function LoginPageInner() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
+
+  // Sign-in method: a clicked link (default) or a typed 6-digit code.
+  const [method, setMethod] = useState<"link" | "code">("link");
+  const [code, setCode] = useState("");
+  const [codeSent, setCodeSent] = useState(false);
+  const [verifying, setVerifying] = useState(false);
 
   // Dev-login bottom drawer (hidden by default)
   const [devOpen, setDevOpen] = useState(false);
@@ -79,14 +87,22 @@ function LoginPageInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function onMagicSubmit(e: React.FormEvent) {
+  async function onEmailSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setPending(true);
-    captureEvent("ui.magic_link_requested", { email_length: email.length });
+    captureEvent("ui.signin_requested", {
+      method,
+      email_length: email.length,
+    });
     try {
-      await requestMagicLink(email);
-      setSent(true);
+      if (method === "code") {
+        await requestEmailCode(email);
+        setCodeSent(true);
+      } else {
+        await requestMagicLink(email);
+        setSent(true);
+      }
     } catch (e) {
       if (e instanceof ApiError) {
         if (e.status === 429) {
@@ -101,6 +117,39 @@ function LoginPageInner() {
       }
     } finally {
       setPending(false);
+    }
+  }
+
+  async function onVerifyCode(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setVerifying(true);
+    captureEvent("ui.email_code_verify", { email_length: email.length });
+    try {
+      const pair = await verifyEmailCode(email, code.trim());
+      setTokens(pair);
+      try {
+        const me = await fetchMe();
+        identify(me.user_id, me.email, me.tenant.id);
+        captureEvent("ui.login_succeeded", { method: "email_code" });
+      } catch {
+        // identity hydration is best-effort
+      }
+      router.push("/app");
+    } catch (e) {
+      if (e instanceof ApiError) {
+        setError(
+          e.status === 410
+            ? t("login.code_invalid")
+            : e.status === 429
+              ? t("login.rate_limited")
+              : `${t("login.signin_failed")} (${e.status}).`,
+        );
+      } else {
+        setError(String(e));
+      }
+    } finally {
+      setVerifying(false);
     }
   }
 
@@ -190,8 +239,52 @@ function LoginPageInner() {
                 {t("login.use_different_email")}
               </button>
             </div>
+          ) : codeSent ? (
+            <form onSubmit={onVerifyCode} className="space-y-3">
+              <div className="rounded-lg border border-border bg-surface-2 p-3 text-sm text-text-muted">
+                {t("login.code_sent_to")}{" "}
+                <span className="font-medium text-text">{email}</span>
+              </div>
+              <label className="block">
+                <span className="text-sm text-text-muted">
+                  {t("login.code_label")}
+                </span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  required
+                  autoFocus
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  placeholder={t("login.code_placeholder")}
+                  className="mt-1 w-full px-3 py-2 rounded-md border border-border bg-surface text-sm tracking-[0.3em] focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700"
+                />
+              </label>
+              {error && (
+                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+              )}
+              <button
+                type="submit"
+                disabled={verifying || !code}
+                className="w-full px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
+              >
+                {verifying ? t("login.verifying") : t("login.verify")}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setCodeSent(false);
+                  setCode("");
+                  setError(null);
+                }}
+                className="text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 underline"
+              >
+                {t("login.use_different_email")}
+              </button>
+            </form>
           ) : (
-            <form onSubmit={onMagicSubmit} className="space-y-3">
+            <form onSubmit={onEmailSubmit} className="space-y-3">
               <label className="block">
                 <span className="text-sm text-text-muted">
                   {t("login.email_label")}
@@ -218,7 +311,24 @@ function LoginPageInner() {
                 disabled={pending || !email}
                 className="w-full px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
               >
-                {pending ? t("login.sending") : t("login.submit")}
+                {pending
+                  ? t("login.sending")
+                  : method === "code"
+                    ? t("login.submit_code")
+                    : t("login.submit")}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setMethod((m) => (m === "code" ? "link" : "code"));
+                  setError(null);
+                }}
+                className="block w-full text-center text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 underline-offset-2 hover:underline"
+              >
+                {method === "code"
+                  ? t("login.method_link")
+                  : t("login.method_code")}
               </button>
 
               <p className="text-xs text-zinc-500 leading-relaxed pt-2">
