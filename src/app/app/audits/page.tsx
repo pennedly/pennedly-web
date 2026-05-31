@@ -13,8 +13,15 @@ import { useRouter } from "next/navigation";
 
 import { ApiError, clearTokens, getTokens, listAudits } from "@/lib/api";
 import { useSelectedAccountId } from "@/lib/account";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, type MessageKey } from "@/lib/i18n";
 import type { AuditSummary } from "@/lib/types";
+
+const STATUS_LABEL_KEY: Record<string, MessageKey> = {
+  pending: "audits.status.pending",
+  partial_approved: "audits.status.partial_approved",
+  fully_approved: "audits.status.fully_approved",
+  rejected: "audits.status.rejected",
+};
 
 export default function AuditsPage() {
   const router = useRouter();
@@ -128,6 +135,7 @@ export default function AuditsPage() {
 }
 
 function StatusBadge({ status }: { status: string }) {
+  const { t } = useTranslation();
   const map: Record<string, string> = {
     pending:
       "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
@@ -139,16 +147,18 @@ function StatusBadge({ status }: { status: string }) {
       "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400",
   };
   const cls = map[status] ?? map["pending"];
+  const labelKey = STATUS_LABEL_KEY[status];
   return (
     <span
       className={`px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wide ${cls}`}
     >
-      {status.replace(/_/g, " ")}
+      {labelKey ? t(labelKey) : status.replace(/_/g, " ")}
     </span>
   );
 }
 
 function DeltaBadge({ pct }: { pct: number }) {
+  const { t } = useTranslation();
   const up = pct >= 0;
   return (
     <span
@@ -158,7 +168,7 @@ function DeltaBadge({ pct }: { pct: number }) {
           : "text-red-700 dark:text-red-400"
       }`}
     >
-      {up ? "▲" : "▼"} {Math.abs(pct).toFixed(1)}% wow
+      {up ? "▲" : "▼"} {Math.abs(pct).toFixed(1)}% {t("audits.delta_wow")}
     </span>
   );
 }

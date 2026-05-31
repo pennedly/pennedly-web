@@ -23,7 +23,7 @@ import {
   submitAuditDecisions,
 } from "@/lib/api";
 import { captureEvent } from "@/lib/analytics";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { localUtcOffsetLabel, utcHourToLocal } from "@/lib/timezone";
 import type {
   AuditDecisionRow,
@@ -409,10 +409,17 @@ function ChangeCard({
   );
 }
 
+const KIND_LABEL_KEY: Record<string, MessageKey> = {
+  prompt_edit: "audits.kind.prompt_edit",
+  autopilot_config: "audits.kind.autopilot_config",
+};
+
 function KindBadge({ kind }: { kind: string }) {
+  const { t } = useTranslation();
+  const labelKey = KIND_LABEL_KEY[kind];
   return (
     <span className="px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wide bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-      {kind.replace(/_/g, " ")}
+      {labelKey ? t(labelKey) : kind.replace(/_/g, " ")}
     </span>
   );
 }
@@ -423,7 +430,7 @@ function DecisionStatus({ row }: { row: AuditDecisionRow }) {
     return (
       <span className="text-xs text-red-700 dark:text-red-400 font-medium">
         {t("audits.detail.rolled_back")} · {t("audits.detail.effect")}{" "}
-        {fmtEffect(row.effect_pct)}
+        {fmtEffect(row.effect_pct, t("audits.detail.effect_pending"))}
       </span>
     );
   }
@@ -440,7 +447,8 @@ function DecisionStatus({ row }: { row: AuditDecisionRow }) {
         {t("audits.detail.approved")} · {t("audits.detail.applied")}
         {row.effect_pct !== null && (
           <span className="ml-2 text-zinc-500 font-normal">
-            {t("audits.detail.effect")} {fmtEffect(row.effect_pct)}
+            {t("audits.detail.effect")}{" "}
+            {fmtEffect(row.effect_pct, t("audits.detail.effect_pending"))}
           </span>
         )}
       </span>
@@ -453,8 +461,8 @@ function DecisionStatus({ row }: { row: AuditDecisionRow }) {
   );
 }
 
-function fmtEffect(pct: number | null): string {
-  if (pct === null) return "pending";
+function fmtEffect(pct: number | null, pendingLabel: string): string {
+  if (pct === null) return pendingLabel;
   const sign = pct >= 0 ? "+" : "";
   return `${sign}${pct.toFixed(1)}%`;
 }
