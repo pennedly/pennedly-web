@@ -15,10 +15,12 @@ import {
   clearTokens,
   createAutopostRule,
   deleteAutopostRule,
+  fetchAutopilot,
   fetchAutopostActivity,
   fetchAutopostRules,
   getTokens,
   setAutopilotMaster,
+  updateAutopilot,
   updateAutopostRule,
 } from "@/lib/api";
 import { captureEvent } from "@/lib/analytics";
@@ -30,7 +32,12 @@ import {
   localUtcOffsetLabel,
   utcHourToLocal,
 } from "@/lib/timezone";
-import type { AutopostActivity, AutopostRule, TopicOption } from "@/lib/types";
+import type {
+  AutopilotConfig,
+  AutopostActivity,
+  AutopostRule,
+  TopicOption,
+} from "@/lib/types";
 
 type Toast = { id: number; message: string; tone: "success" | "error" };
 
@@ -78,6 +85,10 @@ export default function AutopilotPage() {
   const { checking } = useTesterGuard();
   const accountId = useSelectedAccountId();
   const [master, setMaster] = useState(false);
+  // Account-level autopilot config — drives the auto-reply policy
+  // (reply_enabled / reply_audience / replies_per_day) the worker's sweep
+  // actually reads. Posting cadence lives in the per-object rules below.
+  const [config, setConfig] = useState<AutopilotConfig | null>(null);
   const [rules, setRules] = useState<AutopostRule[]>([]);
   const [topics, setTopics] = useState<TopicOption[]>([]);
   const [activity, setActivity] = useState<AutopostActivity | null>(null);
@@ -101,8 +112,12 @@ export default function AutopilotPage() {
     setLoaded(false);
     (async () => {
       try {
-        const data = await fetchAutopostRules(accountId);
+        const [data, cfg] = await Promise.all([
+          fetchAutopostRules(accountId),
+          fetchAutopilot(accountId),
+        ]);
         setMaster(data.master_enabled);
+        setConfig(cfg);
         setRules(data.rules);
         setTopics(data.topics);
         // Activity is secondary — never let it block the editor.
@@ -123,11 +138,35 @@ export default function AutopilotPage() {
   async function onMaster(v: boolean) {
     if (accountId === null) return;
     setMaster(v);
+    // Keep the local config's `enabled` in sync so a later reply-policy PUT
+    // (which sends the whole config) can't revert the master.
+    setConfig((c) => (c ? { ...c, enabled: v } : c));
     captureEvent("ui.autopilot_master", { account_id: accountId, enabled: v });
     try {
       await setAutopilotMaster(accountId, v);
     } catch (e) {
       setMaster(!v);
+      setConfig((c) => (c ? { ...c, enabled: !v } : c));
+      toast(String(e), "error");
+    }
+  }
+
+  // Account-level auto-reply policy. PUT sends the whole AutopilotConfig, so
+  // we merge the patch onto the current config and round-trip the rest
+  // (posting fields) unchanged.
+  async function onReply(patch: Partial<AutopilotConfig>) {
+    if (accountId === null || config === null) return;
+    const prev = config;
+    const next = { ...config, ...patch };
+    setConfig(next);
+    captureEvent("ui.autopilot_reply_policy", {
+      account_id: accountId,
+      ...patch,
+    });
+    try {
+      await updateAutopilot(accountId, next);
+    } catch (e) {
+      setConfig(prev);
       toast(String(e), "error");
     }
   }
@@ -311,58 +350,15 @@ export default function AutopilotPage() {
                     </label>
                   </div>
 
-                  <div className="pt-3 border-t border-border space-y-3">
+                  <div className="pt-3 border-t border-border space-y-1.5">
                     <Toggle
                       on={r.auto_reply}
                       onChange={(v) => patchRule(r.id, { auto_reply: v })}
                       label={t("autopilot.object_autoreply")}
                     />
-                    {r.auto_reply && (
-                      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm pl-11">
-                        <label className="inline-flex items-center gap-2">
-                          <span className="text-zinc-500">
-                            {t("autopilot.reply_audience")}
-                          </span>
-                          <select
-                            value={r.reply_audience}
-                            onChange={(e) =>
-                              patchRule(r.id, { reply_audience: e.target.value })
-                            }
-                            className={SELECT}
-                          >
-                            <option value="fans">
-                              {t("autopilot.audience_fans")}
-                            </option>
-                            <option value="all_except_trolls">
-                              {t("autopilot.audience_all_except_trolls")}
-                            </option>
-                            <option value="questions">
-                              {t("autopilot.audience_questions")}
-                            </option>
-                          </select>
-                        </label>
-                        <label className="inline-flex items-center gap-2">
-                          <span className="text-zinc-500">
-                            {t("autopilot.replies_per_day")}
-                          </span>
-                          <select
-                            value={r.replies_per_day}
-                            onChange={(e) =>
-                              patchRule(r.id, {
-                                replies_per_day: Number(e.target.value),
-                              })
-                            }
-                            className={SELECT}
-                          >
-                            {[1, 3, 5, 10].map((n) => (
-                              <option key={n} value={n}>
-                                {n}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                      </div>
-                    )}
+                    <p className="pl-11 text-xs text-zinc-500">
+                      {t("autopilot.object_autoreply_hint")}
+                    </p>
                   </div>
 
                   <div className="flex justify-end pt-1">
@@ -403,6 +399,76 @@ export default function AutopilotPage() {
                 {t("autopilot.add_object")}
               </button>
             </section>
+
+            {/* Auto-reply policy (account-level) — what the worker's reply
+                sweep actually reads: on/off + audience + daily cap. */}
+            {config && (
+              <section className="space-y-3">
+                <div>
+                  <h2 className="text-base font-semibold">
+                    {t("autopilot.replies_title")}
+                  </h2>
+                  <p className="text-xs text-zinc-500 mt-0.5">
+                    {t("autopilot.replies_subtitle")}
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-border bg-surface p-4 shadow-sm space-y-3">
+                  <Toggle
+                    on={config.reply_enabled}
+                    onChange={(v) => onReply({ reply_enabled: v })}
+                    label={t("autopilot.reply_enabled")}
+                  />
+                  {config.reply_enabled && (
+                    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm pl-11">
+                      <label className="inline-flex items-center gap-2">
+                        <span className="text-zinc-500">
+                          {t("autopilot.reply_audience")}
+                        </span>
+                        <select
+                          value={config.reply_audience}
+                          onChange={(e) =>
+                            onReply({ reply_audience: e.target.value })
+                          }
+                          className={SELECT}
+                        >
+                          <option value="fans">
+                            {t("autopilot.audience_fans")}
+                          </option>
+                          <option value="all_except_trolls">
+                            {t("autopilot.audience_all_except_trolls")}
+                          </option>
+                          <option value="questions">
+                            {t("autopilot.audience_questions")}
+                          </option>
+                        </select>
+                      </label>
+                      <label className="inline-flex items-center gap-2">
+                        <span className="text-zinc-500">
+                          {t("autopilot.replies_per_day")}
+                        </span>
+                        <select
+                          value={config.replies_per_day}
+                          onChange={(e) =>
+                            onReply({ replies_per_day: Number(e.target.value) })
+                          }
+                          className={SELECT}
+                        >
+                          {[1, 3, 5, 10, 20].map((n) => (
+                            <option key={n} value={n}>
+                              {n}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                  )}
+                  <p className="text-xs text-zinc-500">
+                    {t("autopilot.replies_policy_hint")}
+                  </p>
+                </div>
+              </section>
+            )}
 
             {/* Activity — what autopilot actually did (read-only) */}
             {activity && rules.length > 0 && (

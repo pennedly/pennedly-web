@@ -340,6 +340,10 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "autopilot.quiet_hours": "Тихие часы (не постить)",
   "autopilot.quiet_off": "выкл",
   "autopilot.replies_title": "Авто-ответы на комментарии",
+  "autopilot.replies_subtitle":
+    "Автоматически отвечать на комментарии под твоими постами — в твоём голосе.",
+  "autopilot.replies_policy_hint":
+    "Настройки действуют на все авто-ответы аккаунта. На какие именно посты отвечать — переключай у каждого поста в Ленте.",
   "autopilot.reply_enabled": "Отвечать на комментарии автоматически",
   "autopilot.reply_audience": "Кому отвечать",
   "autopilot.audience_fans": "только фанаты / позитив",
@@ -367,6 +371,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "autopilot.any_topic": "любая (по очереди)",
   "autopilot.object_time": "Постить в",
   "autopilot.object_autoreply": "Авто-ответы на его комментарии",
+  "autopilot.object_autoreply_hint":
+    "Новые посты этого объекта будут отвечать на комментарии (если авто-ответы аккаунта включены ниже). Кому и сколько — в общих настройках авто-ответов.",
   "autopilot.delete_object": "удалить",
   "autopilot.confirm_delete_object": "Удалить этот объект?",
 

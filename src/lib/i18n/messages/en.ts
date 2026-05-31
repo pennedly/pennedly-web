@@ -335,6 +335,10 @@ export const en = {
   "autopilot.quiet_hours": "Quiet hours (don't post)",
   "autopilot.quiet_off": "off",
   "autopilot.replies_title": "Auto-reply to comments",
+  "autopilot.replies_subtitle":
+    "Automatically reply to comments under your posts — in your voice.",
+  "autopilot.replies_policy_hint":
+    "These settings apply to all of the account's auto-replies. Which posts get answered is toggled per post in the Feed.",
   "autopilot.reply_enabled": "Reply to comments automatically",
   "autopilot.reply_audience": "Reply to",
   "autopilot.audience_fans": "fans / positive only",
@@ -362,6 +366,8 @@ export const en = {
   "autopilot.any_topic": "any (round-robin)",
   "autopilot.object_time": "Post at",
   "autopilot.object_autoreply": "Auto-reply to its comments",
+  "autopilot.object_autoreply_hint":
+    "New posts from this object will answer comments (if the account's auto-replies are on below). Who and how many is set in the shared auto-reply settings.",
   "autopilot.delete_object": "delete",
   "autopilot.confirm_delete_object": "Delete this object?",
 
