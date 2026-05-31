@@ -179,6 +179,15 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "rolebook.lint.checking": "проверяю…",
   "rolebook.lint.section_title": "Проверка конфликтов",
   "rolebook.lint.no_conflicts": "конфликтов не найдено",
+  "rolebook.lint.no_conflicts_title": "Конфликтов не найдено",
+  "rolebook.lint.no_conflicts_body":
+    "Разделы непротиворечивы. Генератор должен соблюдать каждое явное правило.",
+  "rolebook.lint.suggested_fix": "Предлагаемое исправление",
+  "rolebook.lint.apply_fix": "применить исправление",
+  "rolebook.lint.applying": "применяю…",
+  "rolebook.lint.severity_high": "высокая",
+  "rolebook.lint.severity_medium": "средняя",
+  "rolebook.lint.severity_low": "низкая",
   "rolebook.save.helper":
     "Новая активная версия при сохранении · старая становится предыдущей",
   "rolebook.save.toast_saved_clean": "сохранено · без конфликтов",

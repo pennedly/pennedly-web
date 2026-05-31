@@ -13,6 +13,7 @@
 // The parent owns the lint state (loading / result / error) and passes
 // the result in. Empty results render a green "no conflicts" banner.
 
+import { useTranslation, type MessageKey } from "@/lib/i18n";
 import type {
   LintConflict,
   LintFix,
@@ -20,10 +21,10 @@ import type {
   LintSeverity,
 } from "@/lib/types";
 
-const SEVERITY_LABEL: Record<LintSeverity, string> = {
-  high: "high",
-  medium: "medium",
-  low: "low",
+const SEVERITY_LABEL_KEY: Record<LintSeverity, MessageKey> = {
+  high: "rolebook.lint.severity_high",
+  medium: "rolebook.lint.severity_medium",
+  low: "rolebook.lint.severity_low",
 };
 
 function severityClasses(s: LintSeverity): {
@@ -83,6 +84,7 @@ function ConflictCard({
   applyingFix: boolean;
   applyError: string | null;
 }) {
+  const { t } = useTranslation();
   const c = severityClasses(conflict.severity);
   const fix = conflict.fix ?? null;
   return (
@@ -95,7 +97,7 @@ function ConflictCard({
         <span
           className={`text-[10px] uppercase tracking-wide font-semibold ${c.text}`}
         >
-          {SEVERITY_LABEL[conflict.severity]}
+          {t(SEVERITY_LABEL_KEY[conflict.severity])}
         </span>
         <span className={`text-sm font-semibold ${c.text}`}>
           {conflict.title}
@@ -122,7 +124,7 @@ function ConflictCard({
       {conflict.suggestion && (
         <div className="rounded-md border border-border bg-surface px-3 py-2 space-y-2">
           <div className="text-[10px] uppercase tracking-wide text-zinc-500">
-            Suggested fix
+            {t("rolebook.lint.suggested_fix")}
           </div>
           <div className="text-sm text-text">
             {conflict.suggestion}
@@ -141,7 +143,9 @@ function ConflictCard({
                     aria-hidden
                   />
                 )}
-                {applyingFix ? "applying…" : "apply this fix"}
+                {applyingFix
+                  ? t("rolebook.lint.applying")
+                  : t("rolebook.lint.apply_fix")}
               </button>
               <span className="text-xs text-zinc-500 font-mono">
                 {fixPreview(fix)}
@@ -174,6 +178,7 @@ export function LintResults({
   applyingFixIdx?: number | null;
   applyError?: string | null;
 }) {
+  const { t } = useTranslation();
   if (result.conflicts.length === 0) {
     return (
       <div className="rounded-lg border border-green-300 dark:border-green-900/60 bg-green-50 dark:bg-green-950/30 p-4">
@@ -183,12 +188,11 @@ export function LintResults({
             aria-hidden
           />
           <span className="text-sm font-semibold text-green-800 dark:text-green-200">
-            No conflicts found
+            {t("rolebook.lint.no_conflicts_title")}
           </span>
         </div>
         <p className="text-xs text-green-700 dark:text-green-300 mt-1.5">
-          The sections look consistent. The generator should honor every
-          explicit rule.
+          {t("rolebook.lint.no_conflicts_body")}
         </p>
       </div>
     );

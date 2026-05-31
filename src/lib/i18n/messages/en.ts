@@ -176,6 +176,15 @@ export const en = {
   "rolebook.lint.checking": "checking…",
   "rolebook.lint.section_title": "Conflict check",
   "rolebook.lint.no_conflicts": "no conflicts found",
+  "rolebook.lint.no_conflicts_title": "No conflicts found",
+  "rolebook.lint.no_conflicts_body":
+    "The sections look consistent. The generator should honor every explicit rule.",
+  "rolebook.lint.suggested_fix": "Suggested fix",
+  "rolebook.lint.apply_fix": "apply this fix",
+  "rolebook.lint.applying": "applying…",
+  "rolebook.lint.severity_high": "high",
+  "rolebook.lint.severity_medium": "medium",
+  "rolebook.lint.severity_low": "low",
   "rolebook.save.helper": "New active version on save · old becomes parent",
   "rolebook.save.toast_saved_clean": "saved · no conflicts",
   "rolebook.save.toast_saved_check_unavailable":
