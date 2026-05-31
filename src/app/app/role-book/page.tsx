@@ -458,6 +458,18 @@ export default function RoleBookEditor() {
             {t("rolebook.title")}
           </h1>
           <p className="text-sm text-zinc-500 mt-1">{t("rolebook.subtitle")}</p>
+          {book && (
+            <p className="text-xs text-zinc-400 mt-1 tabular-nums">
+              {t("rolebook.version_label")}
+              {book.role_book_id}
+              {book.parent_id !== null && (
+                <span className="ml-2">
+                  · {t("rolebook.parent_label")}
+                  {book.parent_id}
+                </span>
+              )}
+            </p>
+          )}
           <div className="mt-3">
             <button
               onClick={() =>
