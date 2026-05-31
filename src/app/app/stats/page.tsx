@@ -44,7 +44,10 @@ const GRANULARITY: Record<StatsPeriod, Granularity> = {
 // monthly buckets, day+month otherwise.
 function bucketLabel(iso: string, locale: string, gran: Granularity): string {
   const d = new Date(iso);
-  const loc = locale === "ru" ? "ru-RU" : "en-US";
+  // Intl accepts the bare locale code for all 8 locales (de, fr, …);
+  // keep the regional tags only where they read nicer.
+  const loc =
+    locale === "ru" ? "ru-RU" : locale === "en" ? "en-US" : locale;
   if (gran === "month") {
     return d.toLocaleDateString(loc, { month: "short", year: "2-digit" });
   }
