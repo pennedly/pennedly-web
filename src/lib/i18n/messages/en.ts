@@ -50,6 +50,9 @@ export const en = {
   "login.tab_link": "Magic link",
   "login.no_password_code":
     "We'll email you a one-time code. No password needed.",
+  "login.google_button": "Continue with Google",
+  "login.or": "or",
+  "login.google_error": "Couldn't sign in with Google. Try again.",
   "login.code_sent_to": "Enter the code we sent to",
   "login.code_label": "Code from the email",
   "login.code_placeholder": "123456",

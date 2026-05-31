@@ -221,6 +221,20 @@ export async function verifyEmailCode(
   });
 }
 
+/** Absolute backend URL to begin Google sign-in (a full-page navigation). */
+export function googleSignInUrl(): string {
+  return `${BASE_URL}/api/auth/google/start`;
+}
+
+/** Swap the one-time handoff token (from the Google callback redirect) for a
+ * session pair. */
+export async function exchangeGoogleHandoff(handoff: string): Promise<TokenPair> {
+  return fetchApi<TokenPair>("/api/auth/google/exchange", {
+    method: "POST",
+    body: JSON.stringify({ handoff }),
+  });
+}
+
 // ── Me ───────────────────────────────────────────────────────────
 
 export async function fetchMe(): Promise<Me> {
