@@ -201,10 +201,13 @@ export async function consumeMagicLink(token: string): Promise<TokenPair> {
   });
 }
 
-export async function requestEmailCode(email: string): Promise<void> {
+export async function requestEmailCode(
+  email: string,
+  locale?: string,
+): Promise<void> {
   await fetchApi<void>("/api/auth/email-code/request", {
     method: "POST",
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ email, locale }),
   });
 }
 
