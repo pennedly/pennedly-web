@@ -408,9 +408,19 @@ export type AutopostActivityPost = {
   threads_url: string | null;
 };
 
+export type AutopostActivityReply = {
+  comment_id: number;
+  author_username: string | null;
+  comment_text: string | null;
+  reply_text: string | null;
+  replied_at: string | null;
+  post_threads_url: string | null;
+};
+
 export type AutopostActivity = {
   rules: AutopostActivityRule[];
   posts: AutopostActivityPost[];
+  replies: AutopostActivityReply[];
 };
 
 // The account's own manual generation rules (layered over the role_book +
