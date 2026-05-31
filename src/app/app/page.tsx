@@ -36,7 +36,7 @@ type Toast = { id: number; message: string; tone: "success" | "error" };
 
 export default function Dashboard() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [me, setMe] = useState<Me | null>(null);
   const [drafts, setDrafts] = useState<DraftSummary[]>([]);
   const accountId = useSelectedAccountId();
@@ -611,7 +611,7 @@ export default function Dashboard() {
                         </>
                       )}
                     </div>
-                    <span>{relativeTime(d.created_at)}</span>
+                    <span>{relativeTime(d.created_at, locale)}</span>
                   </div>
 
                   {editable ? (
@@ -902,14 +902,17 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function relativeTime(iso: string): string {
+// Locale-aware relative time. Intl.RelativeTimeFormat renders correctly in
+// every supported locale (incl. plurals) with no manual translation strings.
+function relativeTime(iso: string, locale: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+  if (mins < 1) return rtf.format(0, "minute");
+  if (mins < 60) return rtf.format(-mins, "minute");
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return rtf.format(-hours, "hour");
   const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
-  return new Date(iso).toLocaleDateString();
+  if (days < 7) return rtf.format(-days, "day");
+  return new Date(iso).toLocaleDateString(locale);
 }

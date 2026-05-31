@@ -18,14 +18,15 @@ export default function Landing() {
         </h1>
 
         <p className="text-xl text-zinc-500 mb-8">
-          AI co-pilot for Threads creators.
+          Your drafting partner for Threads.
         </p>
 
         <p className="text-base text-zinc-700 leading-relaxed mb-8 max-w-prose">
-          Pennedly helps creators and agencies manage multiple Threads accounts
-          — drafting posts in your voice, suggesting replies you can approve
-          before publishing, and tracking what actually drives engagement.
-          Human in the loop. Always.
+          Pennedly drafts posts in your voice and suggests replies — you review,
+          edit, and decide what goes live. It also helps creators and agencies
+          run several Threads accounts and see what actually resonates. A
+          partner that does the legwork, not an autopilot that posts for you.
+          You stay in control. Always.
         </p>
 
         <p className="text-base text-zinc-500">
@@ -43,7 +44,7 @@ export default function Landing() {
             href="/app/login"
             className="inline-block px-5 py-2.5 rounded bg-zinc-900 text-white font-medium hover:bg-zinc-700 transition-colors"
           >
-            Sign in (dev)
+            Sign in
           </Link>
         </div>
       </main>
