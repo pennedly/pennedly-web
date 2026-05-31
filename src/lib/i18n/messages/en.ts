@@ -263,6 +263,8 @@ export const en = {
   "patterns.example_label": "fresh example",
   "patterns.add_to_voice": "add to my voice",
   "patterns.added": "added to your do-list",
+  "patterns.footer_disclaimer":
+    "Pennedly extracts reusable technique, never copies your source material. Paste text you have the rights to study.",
 
   // ── Style rules ────────────────────────────────────────────────
   "dashboard.nav.style_rules": "style",

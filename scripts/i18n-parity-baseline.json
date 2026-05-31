@@ -58,6 +58,7 @@
     "patterns.example_label",
     "patterns.add_to_voice",
     "patterns.added",
+    "patterns.footer_disclaimer",
     "dashboard.nav.style_rules",
     "style_rules.back",
     "style_rules.title",
@@ -348,6 +349,7 @@
     "patterns.example_label",
     "patterns.add_to_voice",
     "patterns.added",
+    "patterns.footer_disclaimer",
     "dashboard.nav.style_rules",
     "style_rules.back",
     "style_rules.title",
@@ -638,6 +640,7 @@
     "patterns.example_label",
     "patterns.add_to_voice",
     "patterns.added",
+    "patterns.footer_disclaimer",
     "dashboard.nav.style_rules",
     "style_rules.back",
     "style_rules.title",
@@ -928,6 +931,7 @@
     "patterns.example_label",
     "patterns.add_to_voice",
     "patterns.added",
+    "patterns.footer_disclaimer",
     "dashboard.nav.style_rules",
     "style_rules.back",
     "style_rules.title",
@@ -1218,6 +1222,7 @@
     "patterns.example_label",
     "patterns.add_to_voice",
     "patterns.added",
+    "patterns.footer_disclaimer",
     "dashboard.nav.style_rules",
     "style_rules.back",
     "style_rules.title",
@@ -1453,7 +1458,8 @@
   "ru": [
     "rolebook.lint.severity_error",
     "rolebook.lint.severity_warning",
-    "rolebook.lint.severity_info"
+    "rolebook.lint.severity_info",
+    "patterns.footer_disclaimer"
   ],
   "uk": [
     "accounts.connect_limit",
@@ -1513,6 +1519,7 @@
     "patterns.example_label",
     "patterns.add_to_voice",
     "patterns.added",
+    "patterns.footer_disclaimer",
     "dashboard.nav.style_rules",
     "style_rules.back",
     "style_rules.title",
