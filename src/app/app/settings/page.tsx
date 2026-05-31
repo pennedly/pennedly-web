@@ -18,6 +18,7 @@ import {
   setMyLocale,
 } from "@/lib/api";
 import { getSelectedAccountId, setSelectedAccountId } from "@/lib/account";
+import { refreshAccountsPresence } from "@/lib/accounts";
 import {
   LOCALES,
   setLocale,
@@ -50,6 +51,9 @@ export default function SettingsPage() {
       // If the disconnected account was the active one, clear the selection
       // so the rest of the app falls back to connect / another account.
       if (getSelectedAccountId() === id) setSelectedAccountId(null);
+      // Tell the shell to re-check presence — if that was the last account,
+      // it flips to the full-screen connect flow (sidebar vanishes).
+      refreshAccountsPresence();
       setConfirmId(null);
     } catch (e) {
       setErr(

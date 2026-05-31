@@ -1,12 +1,28 @@
 "use client";
 
 // Shell for the whole authenticated /app area: a fixed left Sidebar
-// (desktop) / top bar (mobile) + the page content to its right. The
-// login screen is pre-auth, so it opts out of the shell.
+// (desktop) / top bar (mobile) + the page content to its right.
+//
+// Two opt-outs from the shell:
+//  1. Pre-app focused flows (login, onboarding) render bare.
+//  2. ZERO connected Threads accounts → there is nothing to do but connect,
+//     so we send the user to the dedicated full-screen connect flow
+//     (/app/onboarding's connect step) and never render the sidebar. This is
+//     shell-level (not per-page) so it holds on settings/feed/etc. too — a
+//     user who disconnects their last account anywhere lands on the connect
+//     screen, not a half-empty app with a dead sidebar.
 
-import { usePathname } from "next/navigation";
+import { useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 
 import { Sidebar } from "@/components/Sidebar";
+import { getTokens } from "@/lib/api";
+import {
+  refreshAccountsPresence,
+  useHasConnectedAccounts,
+} from "@/lib/accounts";
+
+const SHELL_EXEMPT = new Set(["/app/login", "/app/onboarding"]);
 
 export default function AppLayout({
   children,
@@ -14,10 +30,42 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const exempt = SHELL_EXEMPT.has(pathname);
+  const hasAccounts = useHasConnectedAccounts();
 
-  // Pre-app focused flows opt out of the sidebar shell.
-  if (pathname === "/app/login" || pathname === "/app/onboarding") {
+  // Check connected-account presence once we enter the shell area. The store
+  // persists across SPA navigations, so this only fetches on first entry;
+  // connect/disconnect call refreshAccountsPresence() to flip it live.
+  useEffect(() => {
+    if (!exempt && getTokens()) {
+      refreshAccountsPresence();
+    }
+  }, [exempt]);
+
+  // Zero connected accounts → the dedicated full-screen connect flow.
+  useEffect(() => {
+    if (!exempt && hasAccounts === false) {
+      router.replace("/app/onboarding");
+    }
+  }, [exempt, hasAccounts, router]);
+
+  // Pre-app focused flows (login, onboarding) render bare — no sidebar.
+  if (exempt) {
     return <>{children}</>;
+  }
+
+  // Still checking, or zero accounts (about to redirect) → render bare with a
+  // quiet loader, so the sidebar never flashes before the connect screen.
+  if (hasAccounts !== true) {
+    return (
+      <div className="min-h-screen bg-bg flex items-center justify-center">
+        <span
+          className="inline-block w-5 h-5 border-2 border-text-subtle border-t-transparent rounded-full animate-spin"
+          aria-label="Loading"
+        />
+      </div>
+    );
   }
 
   return (
