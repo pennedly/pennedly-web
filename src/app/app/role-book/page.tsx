@@ -311,7 +311,9 @@ export default function RoleBookEditor() {
       } catch {
         // Don't fail the apply UX if re-lint hiccups.
       }
-      toast(`fix applied · ${fix.kind.replace(/_/g, " ")}`);
+      toast(
+        `${t("rolebook.lint.toast_fix_applied")} · ${fix.kind.replace(/_/g, " ")}`,
+      );
     } catch (e) {
       let msg = String(e);
       if (e instanceof ApiError) {
@@ -395,11 +397,13 @@ export default function RoleBookEditor() {
         toast(t("rolebook.lint.no_conflicts"));
       } else if (high > 0) {
         toast(
-          `${result.conflicts.length} · ${high} high`,
+          `${result.conflicts.length} · ${high} ${t("rolebook.lint.severity_high")}`,
           "error",
         );
       } else {
-        toast(`${result.conflicts.length} conflict(s) — review below`);
+        toast(
+          `${result.conflicts.length} · ${t("rolebook.lint.toast_review_below")}`,
+        );
       }
     } catch (e) {
       toast(String(e), "error");

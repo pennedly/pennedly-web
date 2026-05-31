@@ -186,6 +186,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "rolebook.lint.suggested_fix": "Предлагаемое исправление",
   "rolebook.lint.apply_fix": "применить исправление",
   "rolebook.lint.applying": "применяю…",
+  "rolebook.lint.toast_fix_applied": "исправление применено",
+  "rolebook.lint.toast_review_below": "ниже — детали",
   "rolebook.lint.severity_high": "высокая",
   "rolebook.lint.severity_medium": "средняя",
   "rolebook.lint.severity_low": "низкая",

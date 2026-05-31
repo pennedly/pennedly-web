@@ -183,6 +183,8 @@ export const en = {
   "rolebook.lint.suggested_fix": "Suggested fix",
   "rolebook.lint.apply_fix": "apply this fix",
   "rolebook.lint.applying": "applying…",
+  "rolebook.lint.toast_fix_applied": "fix applied",
+  "rolebook.lint.toast_review_below": "review below",
   "rolebook.lint.severity_high": "high",
   "rolebook.lint.severity_medium": "medium",
   "rolebook.lint.severity_low": "low",
