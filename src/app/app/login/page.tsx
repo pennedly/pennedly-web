@@ -22,7 +22,6 @@ import {
   devLogin,
   fetchMe,
   requestEmailCode,
-  requestMagicLink,
   setTokens,
   verifyEmailCode,
 } from "@/lib/api";
@@ -39,10 +38,8 @@ function LoginPageInner() {
   const [email, setEmail] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [sent, setSent] = useState(false);
 
-  // Sign-in method: a typed 6-digit code (default) or a clicked link.
-  const [method, setMethod] = useState<"link" | "code">("code");
+  // Sign-in is by an emailed 6-digit code (the only method).
   const [code, setCode] = useState("");
   const [codeSent, setCodeSent] = useState(false);
   const [verifying, setVerifying] = useState(false);
@@ -87,22 +84,14 @@ function LoginPageInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function onEmailSubmit(e: React.FormEvent) {
+  async function onRequestCode(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setPending(true);
-    captureEvent("ui.signin_requested", {
-      method,
-      email_length: email.length,
-    });
+    captureEvent("ui.signin_requested", { email_length: email.length });
     try {
-      if (method === "code") {
-        await requestEmailCode(email);
-        setCodeSent(true);
-      } else {
-        await requestMagicLink(email);
-        setSent(true);
-      }
+      await requestEmailCode(email);
+      setCodeSent(true);
     } catch (e) {
       if (e instanceof ApiError) {
         if (e.status === 429) {
@@ -218,28 +207,7 @@ function LoginPageInner() {
           to avoid flashing the form mid-redirect. */}
       {consumeState !== "consuming" && (
         <>
-          {sent ? (
-            <div className="rounded-xl border border-green-300 dark:border-green-900/60 bg-green-50 dark:bg-green-950/30 p-5 space-y-3">
-              <h2 className="text-base font-semibold text-green-900 dark:text-green-200">
-                {t("login.sent_title")}
-              </h2>
-              <p className="text-sm text-green-800 dark:text-green-200">
-                {t("login.sent_to")}{" "}
-                <span className="font-medium">{email}</span>.{" "}
-                {t("login.sent_validity")}
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  setSent(false);
-                  setError(null);
-                }}
-                className="text-xs text-green-800 dark:text-green-300 underline hover:text-green-900 dark:hover:text-green-200"
-              >
-                {t("login.use_different_email")}
-              </button>
-            </div>
-          ) : codeSent ? (
+          {codeSent ? (
             <form onSubmit={onVerifyCode} className="space-y-3">
               <div className="rounded-lg border border-border bg-surface-2 p-3 text-sm text-text-muted">
                 {t("login.code_sent_to")}{" "}
@@ -284,28 +252,7 @@ function LoginPageInner() {
               </button>
             </form>
           ) : (
-            <form onSubmit={onEmailSubmit} className="space-y-3">
-              {/* Method selector — prominent so the choice is unmissable. */}
-              <div className="grid grid-cols-2 gap-1 rounded-lg border border-border bg-surface-2 p-1">
-                {(["code", "link"] as const).map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    onClick={() => {
-                      setMethod(m);
-                      setError(null);
-                    }}
-                    className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                      method === m
-                        ? "bg-primary text-primary-foreground"
-                        : "text-text-muted hover:text-text"
-                    }`}
-                  >
-                    {m === "code" ? t("login.tab_code") : t("login.tab_link")}
-                  </button>
-                ))}
-              </div>
-
+            <form onSubmit={onRequestCode} className="space-y-3">
               <label className="block">
                 <span className="text-sm text-text-muted">
                   {t("login.email_label")}
@@ -332,17 +279,11 @@ function LoginPageInner() {
                 disabled={pending || !email}
                 className="w-full px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
               >
-                {pending
-                  ? t("login.sending")
-                  : method === "code"
-                    ? t("login.submit_code")
-                    : t("login.submit")}
+                {pending ? t("login.sending") : t("login.submit_code")}
               </button>
 
               <p className="text-xs text-zinc-500 leading-relaxed pt-2">
-                {method === "code"
-                  ? t("login.no_password_code")
-                  : t("login.no_password")}
+                {t("login.no_password_code")}
               </p>
             </form>
           )}
