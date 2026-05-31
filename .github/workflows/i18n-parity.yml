@@ -1,0 +1,33 @@
+name: i18n parity
+
+# Guardrail: fail CI if any locale drifts from the `en` reference catalog
+# (a new key untranslated and not recorded as a known gap, a stale/extra
+# key, or a duplicate). This is the check whose absence let six locales
+# fall ~285 keys behind without any error. See scripts/check-i18n-parity.mjs.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/lib/i18n/**"
+      - "scripts/check-i18n-parity.mjs"
+      - "scripts/i18n-parity-baseline.json"
+      - ".github/workflows/i18n-parity.yml"
+  pull_request:
+    paths:
+      - "src/lib/i18n/**"
+      - "scripts/check-i18n-parity.mjs"
+      - "scripts/i18n-parity-baseline.json"
+      - ".github/workflows/i18n-parity.yml"
+
+jobs:
+  parity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+      - run: npm ci
+      - run: npm run check:i18n
