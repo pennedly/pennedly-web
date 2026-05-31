@@ -64,6 +64,10 @@ export const en = {
   "dashboard.nav.voice": "voice",
   "dashboard.nav.audits": "audits",
   "dashboard.nav.logout": "logout",
+  "dashboard.voice_setup_title": "Set up your voice first",
+  "dashboard.voice_setup_body":
+    "Pennedly drafts in your voice — set it up so we know how you write before generating posts.",
+  "dashboard.voice_setup_cta": "Set up your voice",
   "dashboard.generate.title": "Generate a post",
   "dashboard.generate.subtitle":
     "In your voice. Topic auto-picked round-robin from your topics.",
@@ -406,6 +410,7 @@ export const en = {
   "onboarding.scratch_body":
     "New account? Describe your voice and topics, and start posting right away.",
   "onboarding.scratch_cta": "Build from scratch",
+  "onboarding.skip": "Skip for now — set up my voice later",
   "onboarding.form_intro_label": "Describe your voice",
   "onboarding.form_intro_ph":
     "Who you are, what your account is about, your tone. Write in the language you post in.",

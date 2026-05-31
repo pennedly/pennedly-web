@@ -22,7 +22,11 @@ import {
   onboardingFromScratchPreview,
 } from "@/lib/api";
 import { captureEvent } from "@/lib/analytics";
-import { getSelectedAccountId, setSelectedAccountId } from "@/lib/account";
+import {
+  getSelectedAccountId,
+  setOnboardingSkipped,
+  setSelectedAccountId,
+} from "@/lib/account";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { ConnectThreadsButton } from "@/components/ConnectThreadsButton";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -135,6 +139,16 @@ export default function OnboardingPage() {
       }
       setBusy(null);
     }
+  }
+
+  function onSkip() {
+    // Let the user into the app without setting up a voice yet. We flag the
+    // account as skipped so the dashboard doesn't bounce them straight back
+    // here; generation stays gated (needs a role_book) behind a "set up your
+    // voice" prompt until they return and finish.
+    if (accountId !== null) setOnboardingSkipped(accountId);
+    captureEvent("ui.onboarding_skipped", { account_id: accountId });
+    router.replace("/app");
   }
 
   async function onCreate() {
@@ -303,6 +317,21 @@ export default function OnboardingPage() {
                 {t("onboarding.scratch_cta")}
               </button>
             </section>
+
+            {/* Skip voice setup for now. Only on a genuine first-run — an
+                already-set-up user uses the "back" link instead. Generation
+                stays gated until they finish, but they can look around. */}
+            {!preview && !alreadySetUp && (
+              <div className="text-center pt-1">
+                <button
+                  onClick={onSkip}
+                  disabled={busy !== null}
+                  className="text-sm text-text-muted hover:text-text underline-offset-2 hover:underline disabled:opacity-50"
+                >
+                  {t("onboarding.skip")}
+                </button>
+              </div>
+            )}
           </div>
         )}
 

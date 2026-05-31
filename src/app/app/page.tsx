@@ -26,9 +26,9 @@ import {
   rejectDraft,
 } from "@/lib/api";
 import { captureEvent, identify } from "@/lib/analytics";
-import { useSelectedAccountId } from "@/lib/account";
+import { isOnboardingSkipped, useSelectedAccountId } from "@/lib/account";
+import Link from "next/link";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
-import { ConnectThreadsButton } from "@/components/ConnectThreadsButton";
 import { PublishConfirmModal } from "@/components/PublishConfirmModal";
 import { TranslateButton } from "@/components/TranslateButton";
 import type { DraftSummary, GeneratedDraft, Me } from "@/lib/types";
@@ -83,6 +83,11 @@ export default function Dashboard() {
   const [refineOpen, setRefineOpen] = useState<Record<number, boolean>>({});
   // Inline "delete draft?" confirm — which draft id is awaiting confirm.
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  // The selected account has no voice yet (needs_onboarding) but the user
+  // chose "skip for now" in onboarding — so instead of bouncing them back to
+  // the wizard we show a gentle "set up your voice" prompt where the generate
+  // panel would be (generation needs a role_book, so we don't offer it yet).
+  const [needsVoiceSetup, setNeedsVoiceSetup] = useState(false);
 
   function toast(message: string, tone: Toast["tone"] = "success") {
     const id = Date.now() + Math.random();
@@ -131,6 +136,16 @@ export default function Dashboard() {
     })();
   }, []);
 
+  // No connected account at all → send to the dedicated connect screen
+  // (the onboarding wizard's "connect" step renders full-screen, outside
+  // the sidebar shell). Covers both a brand-new user and an existing user
+  // who just disconnected their last account.
+  useEffect(() => {
+    if (accountsLoaded && !hasAccounts) {
+      router.replace("/app/onboarding");
+    }
+  }, [accountsLoaded, hasAccounts, router]);
+
   // Post-OAuth landing: the Threads callback 302s back here with
   // ?threads_connected=1 (or ?threads_error=…). Show a toast, then strip
   // the params so a refresh doesn't replay it.
@@ -162,12 +177,19 @@ export default function Dashboard() {
     if (accountId === null) return;
     (async () => {
       try {
-        // New / un-set-up account → send to the onboarding wizard first.
+        // New / un-set-up account → send to the onboarding wizard first,
+        // UNLESS the user explicitly skipped voice setup for this account
+        // (then we show a "set up your voice" prompt instead of looping).
         const ob = await fetchOnboardingStatus(accountId);
         if (ob.needs_onboarding) {
-          router.replace("/app/onboarding");
+          if (!isOnboardingSkipped(accountId)) {
+            router.replace("/app/onboarding");
+            return;
+          }
+          setNeedsVoiceSetup(true);
           return;
         }
+        setNeedsVoiceSetup(false);
         const list = await listDrafts(accountId, { limit: 50 });
         setDrafts(list.drafts);
         // Clear the "last generated" preview when switching accounts —
@@ -432,16 +454,28 @@ export default function Dashboard() {
         )}
 
         {accountsLoaded && !hasAccounts ? (
-          /* No Threads account connected yet — the product can't draft
-             without one, so replace the work surface with a single clear
-             call to action (also the path a fresh Meta reviewer takes). */
+          /* No account connected → we redirect to the dedicated connect
+             screen (/app/onboarding, full-screen). Brief placeholder shown
+             only for the frame before the redirect fires. */
+          <p className="text-sm text-zinc-500">{t("common.loading")}</p>
+        ) : needsVoiceSetup ? (
+          /* Account connected, but the user skipped voice setup. Generation
+             needs a role_book, so prompt to finish setup rather than offer a
+             generate button that would just error. */
           <section className="rounded-xl border border-border bg-surface p-8 text-center shadow-sm">
-            <h2 className="text-lg font-semibold">{t("accounts.connect")}</h2>
+            <h2 className="text-lg font-semibold">
+              {t("dashboard.voice_setup_title")}
+            </h2>
             <p className="text-sm text-zinc-500 mt-1 mb-4 max-w-md mx-auto">
-              {t("accounts.connect_cta_body")}
+              {t("dashboard.voice_setup_body")}
             </p>
             <div className="flex justify-center">
-              <ConnectThreadsButton variant="primary" />
+              <Link
+                href="/app/onboarding"
+                className="inline-flex items-center px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+              >
+                {t("dashboard.voice_setup_cta")}
+              </Link>
             </div>
           </section>
         ) : (
