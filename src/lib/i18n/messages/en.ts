@@ -46,6 +46,10 @@ export const en = {
   "login.sending": "sending…",
   "login.method_code": "email me a code instead",
   "login.method_link": "email me a link instead",
+  "login.tab_code": "Email code",
+  "login.tab_link": "Magic link",
+  "login.no_password_code":
+    "We'll email you a one-time code. No password needed.",
   "login.code_sent_to": "Enter the code we sent to",
   "login.code_label": "Code from the email",
   "login.code_placeholder": "123456",

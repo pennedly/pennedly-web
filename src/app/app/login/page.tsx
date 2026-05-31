@@ -41,8 +41,8 @@ function LoginPageInner() {
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
 
-  // Sign-in method: a clicked link (default) or a typed 6-digit code.
-  const [method, setMethod] = useState<"link" | "code">("link");
+  // Sign-in method: a typed 6-digit code (default) or a clicked link.
+  const [method, setMethod] = useState<"link" | "code">("code");
   const [code, setCode] = useState("");
   const [codeSent, setCodeSent] = useState(false);
   const [verifying, setVerifying] = useState(false);
@@ -285,6 +285,27 @@ function LoginPageInner() {
             </form>
           ) : (
             <form onSubmit={onEmailSubmit} className="space-y-3">
+              {/* Method selector — prominent so the choice is unmissable. */}
+              <div className="grid grid-cols-2 gap-1 rounded-lg border border-border bg-surface-2 p-1">
+                {(["code", "link"] as const).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => {
+                      setMethod(m);
+                      setError(null);
+                    }}
+                    className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                      method === m
+                        ? "bg-primary text-primary-foreground"
+                        : "text-text-muted hover:text-text"
+                    }`}
+                  >
+                    {m === "code" ? t("login.tab_code") : t("login.tab_link")}
+                  </button>
+                ))}
+              </div>
+
               <label className="block">
                 <span className="text-sm text-text-muted">
                   {t("login.email_label")}
@@ -318,21 +339,10 @@ function LoginPageInner() {
                     : t("login.submit")}
               </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setMethod((m) => (m === "code" ? "link" : "code"));
-                  setError(null);
-                }}
-                className="block w-full text-center text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 underline-offset-2 hover:underline"
-              >
-                {method === "code"
-                  ? t("login.method_link")
-                  : t("login.method_code")}
-              </button>
-
               <p className="text-xs text-zinc-500 leading-relaxed pt-2">
-                {t("login.no_password")}
+                {method === "code"
+                  ? t("login.no_password_code")
+                  : t("login.no_password")}
               </p>
             </form>
           )}

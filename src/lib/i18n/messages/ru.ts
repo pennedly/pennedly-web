@@ -44,6 +44,10 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "login.sending": "отправляю…",
   "login.method_code": "получить код на почту вместо ссылки",
   "login.method_link": "прислать ссылку вместо кода",
+  "login.tab_code": "Код на почту",
+  "login.tab_link": "Ссылка",
+  "login.no_password_code":
+    "Пришлём одноразовый код на почту. Пароль не нужен.",
   "login.code_sent_to": "Введи код, отправленный на",
   "login.code_label": "Код из письма",
   "login.code_placeholder": "123456",
