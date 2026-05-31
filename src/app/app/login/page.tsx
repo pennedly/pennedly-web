@@ -344,6 +344,29 @@ function LoginPageInner() {
               </p>
             </form>
           )}
+
+          {/* Consent — applies to every sign-in method (Google + code). */}
+          <p className="mt-5 text-center text-xs leading-relaxed text-zinc-400">
+            {t("login.consent_prefix")}{" "}
+            <a
+              href="/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-zinc-600 dark:hover:text-zinc-300"
+            >
+              {t("login.consent_terms")}
+            </a>{" "}
+            {t("login.consent_and")}{" "}
+            <a
+              href="/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-zinc-600 dark:hover:text-zinc-300"
+            >
+              {t("login.consent_privacy")}
+            </a>
+            .
+          </p>
         </>
       )}
 
