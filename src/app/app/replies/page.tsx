@@ -290,7 +290,7 @@ export default function RepliesPage() {
 
   return (
     <div className="min-h-screen bg-bg text-text">
-      <main className="max-w-3xl mx-auto px-6 py-8 space-y-6">
+      <main className="max-w-6xl mx-auto px-6 py-8 space-y-6">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
             {t("replies.title")}
@@ -333,7 +333,7 @@ export default function RepliesPage() {
         )}
 
         {loaded && comments.length > 0 && (
-          <div className="grid gap-6 md:grid-cols-[300px_1fr] items-start">
+          <div className="grid gap-6 md:grid-cols-[300px_minmax(0,1fr)] lg:grid-cols-[340px_minmax(0,1fr)] items-start">
             {/* Post picker (master) — select a post to see its replies */}
             <aside className="md:sticky md:top-6 space-y-2">
               <p className="px-1 text-xs font-medium uppercase tracking-wide text-zinc-400">
