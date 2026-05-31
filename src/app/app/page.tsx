@@ -15,7 +15,6 @@ import {
   clearTokens,
   deleteDraft,
   fetchMe,
-  fetchMyAccounts,
   fetchOnboardingStatus,
   generatePost,
   generatePostBatch,
@@ -67,12 +66,6 @@ export default function Dashboard() {
     text: string;
   } | null>(null);
   const [publishing, setPublishing] = useState(false);
-  // Whether the user has any connected Threads account. Drives the
-  // zero-account "connect" CTA (a brand-new user / Meta reviewer lands
-  // here with nothing connected). Default hasAccounts=false but we only
-  // act on it once accountsLoaded flips true, to avoid a flash.
-  const [accountsLoaded, setAccountsLoaded] = useState(false);
-  const [hasAccounts, setHasAccounts] = useState(false);
   // Which status group the feed is showing. Splits the old single endless
   // column into scannable tabs (drafts / ready / published / rejected).
   const [tab, setTab] = useState<
@@ -116,35 +109,10 @@ export default function Dashboard() {
     })();
   }, [router]);
 
-  // Do we have any connected Threads account? Decides whether to show the
-  // work surface or the "connect your account" CTA. On error we assume
-  // yes, so a transient failure never blocks an existing user with a
-  // spurious connect prompt.
-  useEffect(() => {
-    if (!getTokens()) return;
-    (async () => {
-      try {
-        const list = await fetchMyAccounts();
-        setHasAccounts(
-          list.accounts.some((a) => a.disconnected_at === null),
-        );
-      } catch {
-        setHasAccounts(true);
-      } finally {
-        setAccountsLoaded(true);
-      }
-    })();
-  }, []);
-
-  // No connected account at all → send to the dedicated connect screen
-  // (the onboarding wizard's "connect" step renders full-screen, outside
-  // the sidebar shell). Covers both a brand-new user and an existing user
-  // who just disconnected their last account.
-  useEffect(() => {
-    if (accountsLoaded && !hasAccounts) {
-      router.replace("/app/onboarding");
-    }
-  }, [accountsLoaded, hasAccounts, router]);
+  // Zero-account gating now lives in the shell (src/app/app/layout.tsx):
+  // it shows the dedicated full-screen connect flow before any /app page
+  // renders, so by the time the dashboard mounts there is ≥1 connected
+  // account. We only handle the post-connect / voice-setup states here.
 
   // Post-OAuth landing: the Threads callback 302s back here with
   // ?threads_connected=1 (or ?threads_error=…). Show a toast, then strip
@@ -453,12 +421,7 @@ export default function Dashboard() {
           </p>
         )}
 
-        {accountsLoaded && !hasAccounts ? (
-          /* No account connected → we redirect to the dedicated connect
-             screen (/app/onboarding, full-screen). Brief placeholder shown
-             only for the frame before the redirect fires. */
-          <p className="text-sm text-zinc-500">{t("common.loading")}</p>
-        ) : needsVoiceSetup ? (
+        {needsVoiceSetup ? (
           /* Account connected, but the user skipped voice setup. Generation
              needs a role_book, so prompt to finish setup rather than offer a
              generate button that would just error. */
