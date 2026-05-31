@@ -82,6 +82,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
     "Без проверки email. Работает только если на бэке ALLOW_DEV_LOGIN=true.",
   "login.dev_submit": "войти (dev)",
   "login.dev_signing_in": "вход…",
+  "login.dev_disabled": "dev-вход отключён на бэкенде.",
 
   // ── Dashboard ──────────────────────────────────────────────────
   "dashboard.nav.voice": "голос",
@@ -524,6 +525,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "nav.settings": "Настройки",
   "settings.title": "Настройки",
   "settings.account": "Аккаунт",
+  "settings.email": "Email",
   "settings.plan": "Тариф",
   "settings.language": "Язык интерфейса",
   "settings.accounts": "Подключённые аккаунты Threads",

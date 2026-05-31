@@ -196,7 +196,7 @@ function LoginPageInner() {
     } catch (e) {
       if (e instanceof ApiError) {
         if (e.status === 404) {
-          setError("dev-login is disabled on the backend.");
+          setError(t("login.dev_disabled"));
         } else if (e.status === 429) {
           setError(t("login.rate_limited"));
         } else {

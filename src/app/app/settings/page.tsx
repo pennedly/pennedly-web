@@ -103,7 +103,7 @@ export default function SettingsPage() {
               </h2>
               <dl className="text-sm space-y-2">
                 <div className="flex justify-between gap-3">
-                  <dt className="text-zinc-500">Email</dt>
+                  <dt className="text-zinc-500">{t("settings.email")}</dt>
                   <dd className="truncate">{me.email}</dd>
                 </div>
                 <div className="flex justify-between gap-3">

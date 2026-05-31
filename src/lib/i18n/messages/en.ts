@@ -81,6 +81,7 @@ export const en = {
     "Skips email verification. Only works when ALLOW_DEV_LOGIN=true is set on the backend.",
   "login.dev_submit": "dev sign in",
   "login.dev_signing_in": "signing in…",
+  "login.dev_disabled": "dev-login is disabled on the backend.",
 
   // ── Dashboard ──────────────────────────────────────────────────
   "dashboard.nav.voice": "voice",
@@ -518,6 +519,7 @@ export const en = {
   "nav.settings": "Settings",
   "settings.title": "Settings",
   "settings.account": "Account",
+  "settings.email": "Email",
   "settings.plan": "Plan",
   "settings.language": "Interface language",
   "settings.accounts": "Connected Threads accounts",
