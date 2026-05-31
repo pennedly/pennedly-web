@@ -176,6 +176,9 @@ export const en = {
   "rolebook.lint.checking": "checking…",
   "rolebook.lint.section_title": "Conflict check",
   "rolebook.lint.no_conflicts": "no conflicts found",
+  "rolebook.lint.severity_error": "conflict",
+  "rolebook.lint.severity_warning": "tension",
+  "rolebook.lint.severity_info": "note",
   "rolebook.save.helper": "New active version on save · old becomes parent",
   "rolebook.save.toast_saved_clean": "saved · no conflicts",
   "rolebook.save.toast_saved_check_unavailable":
