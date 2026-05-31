@@ -474,6 +474,12 @@ export const en = {
   "settings.plan": "Plan",
   "settings.language": "Interface language",
   "settings.accounts": "Connected Threads accounts",
+  "settings.disconnect": "disconnect",
+  "settings.disconnect_confirm": "Disconnect?",
+  "settings.disconnect_yes": "Yes, disconnect",
+  "settings.disconnecting": "disconnecting…",
+  "settings.disconnect_hint":
+    "Disconnecting removes the stored access token; your posts and stats are kept. You can reconnect anytime via OAuth.",
   "settings.logout": "Log out",
   "settings.voice_setup": "Voice setup",
   "settings.voice_setup_cta": "Open setup",

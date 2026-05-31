@@ -480,6 +480,12 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "settings.plan": "Тариф",
   "settings.language": "Язык интерфейса",
   "settings.accounts": "Подключённые аккаунты Threads",
+  "settings.disconnect": "отключить",
+  "settings.disconnect_confirm": "Отключить?",
+  "settings.disconnect_yes": "Да, отключить",
+  "settings.disconnecting": "отключаю…",
+  "settings.disconnect_hint":
+    "Отключение удаляет сохранённый токен доступа; твои посты и статистика остаются. Переподключиться можно в любой момент через OAuth.",
   "settings.logout": "Выйти",
   "settings.voice_setup": "Настройка голоса",
   "settings.voice_setup_cta": "Открыть настройку",

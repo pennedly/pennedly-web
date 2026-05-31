@@ -211,6 +211,15 @@ export async function fetchMyAccounts(): Promise<AccountsList> {
   return fetchApi<AccountsList>("/api/me/accounts");
 }
 
+// Disconnect a connected Threads account: drops the stored token + marks it
+// disconnected server-side, but keeps the account's content. Reconnect via
+// OAuth restores it.
+export async function disconnectAccount(
+  accountId: number,
+): Promise<{ account_id: number; status: string; disconnected_at: string }> {
+  return fetchApi(`/api/accounts/${accountId}/disconnect`, { method: "POST" });
+}
+
 // Kick off the Threads OAuth connect. Returns the Meta authorize URL the
 // caller should navigate the browser to. `returnTo` is where Meta's
 // callback will 302 us back (must be an allowlisted web origin).
