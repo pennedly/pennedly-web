@@ -366,6 +366,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "autopilot.activity_replies": "ответов",
   "autopilot.activity_last_post": "последний пост",
   "autopilot.activity_recent": "Недавние авто-посты",
+  "autopilot.activity_replies_recent": "Недавние авто-ответы",
+  "autopilot.activity_reply_to": "ответ",
   "autopilot.object_name_ph": "название (необязательно)",
   "autopilot.object_topic": "Тема",
   "autopilot.any_topic": "любая (по очереди)",

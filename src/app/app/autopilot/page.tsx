@@ -471,12 +471,13 @@ export default function AutopilotPage() {
             )}
 
             {/* Activity — what autopilot actually did (read-only) */}
-            {activity && rules.length > 0 && (
+            {activity && (rules.length > 0 || activity.replies.length > 0) && (
               <section className="space-y-3">
                 <h2 className="text-base font-semibold">
                   {t("autopilot.activity_title")}
                 </h2>
                 {activity.posts.length === 0 &&
+                activity.replies.length === 0 &&
                 !activity.rules.some(
                   (r) => r.last_post_at || r.last_reply_at,
                 ) ? (
@@ -542,6 +543,47 @@ export default function AutopilotPage() {
                             <p className="text-xs text-zinc-400 mt-1">
                               {p.views ?? 0} · {p.likes ?? 0} ♥ ·{" "}
                               {p.comments ?? 0} 💬
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {activity.replies.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-xs text-zinc-500">
+                          {t("autopilot.activity_replies_recent")}
+                        </p>
+                        {activity.replies.map((rep) => (
+                          <div
+                            key={rep.comment_id}
+                            className="rounded-lg border border-border bg-surface p-3"
+                          >
+                            <div className="flex items-center justify-between gap-2 text-xs text-zinc-500 mb-1">
+                              <span className="truncate">
+                                {t("autopilot.activity_reply_to")} @
+                                {rep.author_username ?? "—"}
+                                {rep.replied_at
+                                  ? ` · ${fmtDate(rep.replied_at)}`
+                                  : ""}
+                              </span>
+                              {rep.post_threads_url && (
+                                <a
+                                  href={rep.post_threads_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="shrink-0 hover:underline"
+                                >
+                                  ↗
+                                </a>
+                              )}
+                            </div>
+                            {rep.comment_text && (
+                              <p className="mb-1 line-clamp-1 text-xs italic text-zinc-500">
+                                {rep.comment_text}
+                              </p>
+                            )}
+                            <p className="text-sm text-text line-clamp-2 whitespace-pre-wrap">
+                              {rep.reply_text}
                             </p>
                           </div>
                         ))}

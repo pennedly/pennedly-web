@@ -361,6 +361,8 @@ export const en = {
   "autopilot.activity_replies": "replies",
   "autopilot.activity_last_post": "last post",
   "autopilot.activity_recent": "Recent auto-posts",
+  "autopilot.activity_replies_recent": "Recent auto-replies",
+  "autopilot.activity_reply_to": "replied to",
   "autopilot.object_name_ph": "name (optional)",
   "autopilot.object_topic": "Topic",
   "autopilot.any_topic": "any (round-robin)",
