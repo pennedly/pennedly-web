@@ -29,6 +29,8 @@ export const en = {
   "accounts.connect_another": "Connect another account",
   "accounts.connecting": "Connecting…",
   "accounts.connect_error": "Couldn't connect. Try again.",
+  "accounts.connect_limit":
+    "You've reached your connected-account limit. Disconnect one first, or upgrade.",
   "accounts.connected": "connected",
   "accounts.connect_cta_body":
     "Pennedly drafts in your voice — connect a Threads account to start.",

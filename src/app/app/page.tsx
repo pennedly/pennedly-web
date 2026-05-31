@@ -128,7 +128,12 @@ export default function Dashboard() {
       toast(u ? `@${u} · ${t("accounts.connected")}` : t("accounts.connected"));
       captureEvent("threads.connect_succeeded");
     } else if (err) {
-      toast(t("accounts.connect_error"), "error");
+      toast(
+        err === "account_limit"
+          ? t("accounts.connect_limit")
+          : t("accounts.connect_error"),
+        "error",
+      );
       captureEvent("threads.connect_failed", { reason: err });
     }
     const url = new URL(window.location.href);

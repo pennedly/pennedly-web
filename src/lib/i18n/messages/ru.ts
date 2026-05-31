@@ -27,6 +27,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "accounts.connect_another": "Подключить ещё аккаунт",
   "accounts.connecting": "Подключаю…",
   "accounts.connect_error": "Не удалось подключить. Попробуй ещё раз.",
+  "accounts.connect_limit":
+    "Достигнут лимит подключённых аккаунтов. Отключи один или повысь тариф.",
   "accounts.connected": "подключён",
   "accounts.connect_cta_body":
     "Pennedly пишет в твоём голосе — подключи аккаунт Threads, чтобы начать.",
