@@ -11,11 +11,13 @@ import { useRouter } from "next/navigation";
 import {
   ApiError,
   clearTokens,
+  disconnectAccount,
   fetchMe,
   fetchMyAccounts,
   getTokens,
   setMyLocale,
 } from "@/lib/api";
+import { getSelectedAccountId, setSelectedAccountId } from "@/lib/account";
 import {
   LOCALES,
   setLocale,
@@ -34,6 +36,29 @@ export default function SettingsPage() {
   const [me, setMe] = useState<Me | null>(null);
   const [accounts, setAccounts] = useState<ConnectedAccount[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [confirmId, setConfirmId] = useState<number | null>(null);
+  const [busyId, setBusyId] = useState<number | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function onDisconnect(id: number) {
+    setBusyId(id);
+    setErr(null);
+    captureEvent("ui.account_disconnect", { account_id: id });
+    try {
+      await disconnectAccount(id);
+      setAccounts((list) => list.filter((a) => a.id !== id));
+      // If the disconnected account was the active one, clear the selection
+      // so the rest of the app falls back to connect / another account.
+      if (getSelectedAccountId() === id) setSelectedAccountId(null);
+      setConfirmId(null);
+    } catch (e) {
+      setErr(
+        e instanceof ApiError ? `${e.status}: ${String(e.detail)}` : String(e),
+      );
+    } finally {
+      setBusyId(null);
+    }
+  }
 
   useEffect(() => {
     if (!getTokens()) {
@@ -114,7 +139,7 @@ export default function SettingsPage() {
               <h2 className="text-sm font-semibold mb-3">
                 {t("settings.accounts")}
               </h2>
-              <ul className="space-y-2 mb-4">
+              <ul className="space-y-2 mb-3">
                 {accounts.length === 0 && (
                   <li className="text-sm text-zinc-500">—</li>
                 )}
@@ -128,9 +153,46 @@ export default function SettingsPage() {
                         · {a.display_name}
                       </span>
                     )}
+                    {confirmId === a.id ? (
+                      <span className="ml-auto flex items-center gap-3 shrink-0">
+                        <span className="text-text-muted">
+                          {t("settings.disconnect_confirm")}
+                        </span>
+                        <button
+                          onClick={() => onDisconnect(a.id)}
+                          disabled={busyId === a.id}
+                          className="font-medium text-red-600 dark:text-red-400 hover:underline disabled:opacity-50"
+                        >
+                          {busyId === a.id
+                            ? t("settings.disconnecting")
+                            : t("settings.disconnect_yes")}
+                        </button>
+                        <button
+                          onClick={() => setConfirmId(null)}
+                          disabled={busyId === a.id}
+                          className="text-text-muted hover:underline disabled:opacity-50"
+                        >
+                          {t("common.cancel")}
+                        </button>
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setErr(null);
+                          setConfirmId(a.id);
+                        }}
+                        className="ml-auto shrink-0 text-text-muted hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                      >
+                        {t("settings.disconnect")}
+                      </button>
+                    )}
                   </li>
                 ))}
               </ul>
+              {err && <p className="text-sm text-red-600 dark:text-red-400 mb-2">{err}</p>}
+              <p className="text-xs text-text-subtle mb-4">
+                {t("settings.disconnect_hint")}
+              </p>
               <ConnectThreadsButton variant="primary" />
             </section>
 
