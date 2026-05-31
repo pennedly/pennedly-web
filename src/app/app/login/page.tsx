@@ -31,7 +31,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 function LoginPageInner() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const searchParams = useSearchParams();
   const incomingToken = searchParams.get("token");
 
@@ -90,7 +90,7 @@ function LoginPageInner() {
     setPending(true);
     captureEvent("ui.signin_requested", { email_length: email.length });
     try {
-      await requestEmailCode(email);
+      await requestEmailCode(email, locale);
       setCodeSent(true);
     } catch (e) {
       if (e instanceof ApiError) {
