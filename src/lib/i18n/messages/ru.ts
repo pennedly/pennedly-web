@@ -65,6 +65,10 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "dashboard.nav.voice": "голос",
   "dashboard.nav.audits": "аудиты",
   "dashboard.nav.logout": "выйти",
+  "dashboard.voice_setup_title": "Сначала настройте голос",
+  "dashboard.voice_setup_body":
+    "Pennedly пишет в вашем голосе — настройте его, чтобы мы знали вашу манеру, прежде чем генерировать посты.",
+  "dashboard.voice_setup_cta": "Настроить голос",
   "dashboard.generate.title": "Сгенерировать пост",
   "dashboard.generate.subtitle":
     "В твоём голосе. Тема выбирается по кругу из твоих тем.",
@@ -412,6 +416,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "onboarding.scratch_body":
     "Новый аккаунт? Опиши свой голос и темы — и сразу начинай постить.",
   "onboarding.scratch_cta": "Создать с нуля",
+  "onboarding.skip": "Пропустить — настрою голос позже",
   "onboarding.form_intro_label": "Опиши свой голос",
   "onboarding.form_intro_ph":
     "Кто ты, о чём твой аккаунт, какой у тебя тон. Пиши на том языке, на котором постишь.",
