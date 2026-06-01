@@ -21,6 +21,8 @@
 import { useEffect, useRef } from "react";
 
 import { useTranslation } from "@/lib/i18n";
+import { Button, buttonClasses } from "@/components/ui/button";
+import { cn } from "@/lib/cn";
 
 const THREADS_TEXT_LIMIT = 500;
 
@@ -67,67 +69,57 @@ export function PublishConfirmModal({
 
   return (
     <div
-      className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+      className="fixed inset-0 z-40 grid place-items-center bg-ink-950/55 p-6 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-labelledby="publish-modal-title"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget && !isPublishing) onClose();
+      }}
     >
-      <div className="w-full max-w-lg rounded-2xl bg-surface border border-border shadow-xl overflow-hidden">
-        <div className="px-6 pt-6 pb-3">
-          <h2
-            id="publish-modal-title"
-            className="text-lg font-semibold tracking-tight"
-          >
-            {t("publish.title")}
-          </h2>
-          <p className="text-xs text-zinc-500 mt-1">{t("publish.subtitle")}</p>
+      <div className="w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-lg">
+        <h2 id="publish-modal-title" className="text-h3 font-semibold">
+          {t("publish.title")}
+        </h2>
+        <p className="mt-1 text-small leading-relaxed text-text-muted">
+          {t("publish.subtitle")}
+        </p>
+
+        <div className="mt-4 max-h-[220px] overflow-y-auto whitespace-pre-wrap rounded-md border border-border bg-surface-2 p-3.5 text-body leading-relaxed text-text">
+          {text}
         </div>
 
-        <div className="mx-6 mb-4 rounded-xl border border-border bg-bg p-4">
-          <p className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-800 dark:text-zinc-100">
-            {text}
-          </p>
-        </div>
-
-        <div className="px-6 pb-3 flex items-center text-xs">
+        <div className="mt-2.5 flex items-center gap-2">
           <span
-            className={
-              overLimit
-                ? "text-red-600 dark:text-red-400 font-medium"
-                : "text-zinc-500"
-            }
+            className={cn(
+              "text-caption tabular-nums",
+              overLimit ? "font-semibold text-danger" : "text-text-subtle",
+            )}
           >
             {len} / {THREADS_TEXT_LIMIT} {t("publish.char_count")}
           </span>
           {overLimit && (
-            <span className="ml-2 text-red-600 dark:text-red-400">
-              · {t("publish.over_limit")}
-            </span>
+            <span className="text-caption text-danger">· {t("publish.over_limit")}</span>
           )}
         </div>
 
-        <div className="px-6 py-4 bg-bg/60 border-t border-border flex items-center justify-end gap-3">
+        <div className="mt-5 flex items-center justify-end gap-2.5">
           <button
             ref={cancelRef}
             onClick={onClose}
             disabled={isPublishing}
-            className="text-sm px-4 py-2 rounded-md text-text hover:bg-surface-2 disabled:opacity-50 transition-colors"
+            className={buttonClasses({ variant: "ghost" })}
           >
             {t("publish.cancel")}
           </button>
-          <button
+          <Button
+            variant="primary"
             onClick={onConfirm}
+            loading={isPublishing}
             disabled={isPublishing || overLimit || len === 0}
-            className="inline-flex items-center gap-2 text-sm px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {isPublishing && (
-              <span
-                className="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"
-                aria-hidden
-              />
-            )}
             {isPublishing ? t("publish.publishing") : t("publish.confirm")}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

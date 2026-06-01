@@ -43,6 +43,37 @@ const ACCOUNTS = [
   },
 ];
 
+const DRAFTS = [
+  {
+    id: 142,
+    account_id: 1,
+    content_type: "post",
+    status: "approved",
+    generated_text:
+      "The fastest way to find your voice online: publish the thing you're slightly embarrassed by. The polished version is everyone's. The embarrassing one is yours.",
+    llm_model: "claude",
+    topic_label: "Writing",
+    is_skip: false,
+    created_at: "2026-05-31T19:30:00Z",
+    published: false,
+    threads_url: null,
+  },
+  {
+    id: 141,
+    account_id: 1,
+    content_type: "post",
+    status: "approved",
+    generated_text:
+      "Nobody tells you that consistency beats intensity until you've burned out twice trying to prove otherwise. Three small posts a week out-compound one viral month.",
+    llm_model: "claude",
+    topic_label: "Habits",
+    is_skip: false,
+    created_at: "2026-05-31T16:10:00Z",
+    published: false,
+    threads_url: null,
+  },
+];
+
 async function setup(page: Page): Promise<void> {
   // Seed a token + selected account + locale before any app code runs.
   await page.addInitScript(() => {
@@ -67,7 +98,7 @@ async function setup(page: Page): Promise<void> {
     if (p.endsWith("/api/me")) return json(ME);
     if (p.endsWith("/api/me/accounts")) return json({ accounts: ACCOUNTS });
     if (p.includes("/onboarding")) return json({ needs_onboarding: false, has_role_book: true });
-    if (p.includes("/drafts")) return json({ drafts: [] });
+    if (p.includes("/drafts")) return json({ drafts: DRAFTS, count: DRAFTS.length });
     // Safe default — most list endpoints tolerate an empty array.
     return json([]);
   });

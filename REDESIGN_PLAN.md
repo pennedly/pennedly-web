@@ -36,7 +36,7 @@ presentation-слой.
 
 - **Фаза 0 — Фундамент:** `[~]` (0a+0b готовы; 0c сайдбар готов и **проверен визуально light+dark**; Topbar → Фаза 1; build+smoke зелёные)
 - **Mock-auth harness:** `[x]` готов — `tests/visual/screens.spec.ts` (route-mock + light/dark снимки)
-- **Фаза 1 — Studio:** `[~]` (топбар+тема+композер-hero готовы и на проде; табы/карточки/тосты — дальше)
+- **Фаза 1 — Studio:** `[x]` основное на проде (топбар, тема, композер, табы, карточки, тосты, диалог публикации); опц. скелетоны/first-run позже
 - **Фаза 2 — Контент (feed/replies/mentions):** `[ ]`
 - **Фаза 3 — Рост (stats/audits/patterns/autopilot):** `[ ]`
 - **Фаза 4 — Голос (voice/style-rules):** `[ ]`

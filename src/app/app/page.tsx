@@ -33,7 +33,9 @@ import { TranslateButton } from "@/components/TranslateButton";
 import { AppTopbar } from "@/components/AppTopbar";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Mono } from "@/components/ui/mono";
-import { IcNib } from "@/components/icons";
+import { Badge, type BadgeTone } from "@/components/ui/badge";
+import { Toast, ToastHost } from "@/components/ui/toast";
+import { IcCheck, IcExternal, IcNib, IcStudio, IcTrash, IcTweak } from "@/components/icons";
 import { cn } from "@/lib/cn";
 import type { DraftSummary, GeneratedDraft, Me } from "@/lib/types";
 
@@ -534,44 +536,38 @@ export default function Dashboard() {
 
         {/* Drafts feed */}
         <section>
-          <h2 className="text-base font-semibold mb-3">
-            {t("dashboard.feed.title")}
-          </h2>
-
-          {/* Status tabs — show one scannable group at a time instead of
-              one endless mixed column. */}
-          <div className="flex items-center gap-1 mb-4 border-b border-border overflow-x-auto">
+          {/* Sticky status filter — a colored dot + count per group. */}
+          <div className="sticky top-15 z-[5] mb-3.5 flex items-center gap-1 rounded-md border border-border bg-surface-2 p-1">
             {(
               [
-                ["approved", t("dashboard.tab.approved"), draftCounts.approved],
-                ["pending", t("dashboard.tab.pending"), draftCounts.pending],
-                ["published", t("dashboard.tab.published"), draftCounts.published],
-                ["rejected", t("dashboard.tab.rejected"), draftCounts.rejected],
+                ["approved", t("dashboard.tab.approved"), draftCounts.approved, "bg-accent"],
+                ["pending", t("dashboard.tab.pending"), draftCounts.pending, "bg-ink-400"],
+                ["published", t("dashboard.tab.published"), draftCounts.published, "bg-success"],
+                ["rejected", t("dashboard.tab.rejected"), draftCounts.rejected, "bg-danger"],
               ] as const
-            ).map(([key, label, count]) => (
+            ).map(([key, label, count, dot]) => (
               <button
                 key={key}
+                type="button"
                 onClick={() => setTab(key)}
-                className={`relative px-3 py-2 text-sm whitespace-nowrap transition-colors ${
+                aria-selected={tab === key}
+                className={cn(
+                  "flex flex-1 items-center justify-center gap-2 rounded-sm px-2.5 py-1.5 text-small font-medium transition-colors",
                   tab === key
-                    ? "text-text font-medium"
-                    : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-                }`}
+                    ? "bg-surface text-text shadow-sm"
+                    : "text-text-muted hover:text-text",
+                )}
               >
-                {label}
-                {count > 0 && (
-                  <span className="ml-1.5 text-xs text-zinc-400">{count}</span>
-                )}
-                {tab === key && (
-                  <span className="absolute left-0 right-0 -bottom-px h-0.5 bg-zinc-900 dark:bg-zinc-100" />
-                )}
+                <span className={cn("h-[7px] w-[7px] shrink-0 rounded-full", dot)} />
+                <span className="truncate">{label}</span>
+                <span className="text-caption tabular-nums text-text-subtle">{count}</span>
               </button>
             ))}
           </div>
 
           {visibleDrafts.length === 0 && (
-            <div className="rounded-xl border border-dashed border-border p-8 text-center">
-              <p className="text-sm text-zinc-500">
+            <div className="flex flex-col items-center rounded-lg border border-dashed border-border px-6 py-14 text-center">
+              <p className="max-w-[42ch] text-small leading-relaxed text-text-muted">
                 {tab === "pending" ? (
                   <>
                     {t("dashboard.feed.empty")}{" "}
@@ -599,28 +595,23 @@ export default function Dashboard() {
               return (
                 <li
                   key={d.id}
-                  className="rounded-xl border border-border bg-surface p-4 shadow-sm"
+                  className="rounded-lg border border-border bg-surface p-4 shadow-sm transition-colors hover:border-text/15"
+                  style={{ animation: "card-in 240ms var(--ease-entrance) both" }}
                 >
-                  <div className="flex items-center justify-between mb-2 text-xs text-zinc-500">
-                    <div className="flex items-center gap-2">
-                      <StatusBadge status={d.status} />
-                      {d.topic_label && (
-                        <span className="text-text-muted">
-                          {d.topic_label}
+                  <div className="mb-2.5 flex items-center gap-2 text-caption text-text-subtle">
+                    <StatusBadge status={d.status} />
+                    {d.topic_label && <span className="text-text-muted">{d.topic_label}</span>}
+                    <span>·</span>
+                    <span>#{d.id}</span>
+                    {isEdited && (
+                      <>
+                        <span>·</span>
+                        <span className="font-medium text-warning">
+                          {t("dashboard.draft.edited")}
                         </span>
-                      )}
-                      <span className="text-zinc-400">·</span>
-                      <span>#{d.id}</span>
-                      {isEdited && (
-                        <>
-                          <span className="text-zinc-400">·</span>
-                          <span className="text-amber-600 dark:text-amber-400 font-medium">
-                            {t("dashboard.draft.edited")}
-                          </span>
-                        </>
-                      )}
-                    </div>
-                    <span>{relativeTime(d.created_at, locale)}</span>
+                      </>
+                    )}
+                    <span className="ml-auto">{relativeTime(d.created_at, locale)}</span>
                   </div>
 
                   {editable ? (
@@ -633,54 +624,52 @@ export default function Dashboard() {
                         12,
                         Math.max(3, currentText.split("\n").length + 1),
                       )}
-                      className="w-full rounded-md border border-border bg-bg px-3 py-2 text-sm leading-relaxed font-sans focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700 resize-y mb-3"
+                      className="mb-3 w-full resize-y rounded-md border border-accent bg-surface px-3 py-2.5 text-body leading-relaxed text-text ring-[3px] ring-accent/20 focus:outline-none"
                     />
                   ) : (
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed mb-3">
+                    <p className="mb-3 whitespace-pre-wrap text-body leading-relaxed">
                       {d.generated_text}
                     </p>
                   )}
 
                   {d.status === "pending" && refineOpen[d.id] && (
-                    <div className="flex flex-wrap items-stretch gap-2 mb-3 pt-3 border-t border-border">
-                      <input
-                        type="text"
-                        value={refineInputs[d.id] ?? ""}
-                        onChange={(e) =>
-                          setRefineInputs((s) => ({
-                            ...s,
-                            [d.id]: e.target.value,
-                          }))
-                        }
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && refiningId === null) {
-                            e.preventDefault();
-                            onRefine(d.id);
+                    <div className="mb-3 border-t border-border pt-3">
+                      <div className="flex items-center gap-2 rounded-md border border-accent/40 bg-surface-2 px-2.5 py-2">
+                        <IcTweak size={16} className="shrink-0 text-accent" />
+                        <input
+                          type="text"
+                          value={refineInputs[d.id] ?? ""}
+                          onChange={(e) =>
+                            setRefineInputs((s) => ({
+                              ...s,
+                              [d.id]: e.target.value,
+                            }))
                           }
-                        }}
-                        placeholder={t("dashboard.draft.refine_placeholder")}
-                        disabled={refiningId === d.id}
-                        className="flex-1 min-w-[180px] rounded-md border border-border bg-bg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700 disabled:opacity-50"
-                      />
-                      <button
-                        onClick={() => onRefine(d.id)}
-                        disabled={
-                          refiningId !== null ||
-                          !(refineInputs[d.id] ?? "").trim()
-                        }
-                        className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border border-border text-text hover:bg-surface-2 disabled:opacity-50 transition-colors"
-                      >
-                        {refiningId === d.id && (
-                          <span
-                            className="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"
-                            aria-hidden
-                          />
-                        )}
-                        {refiningId === d.id
-                          ? t("dashboard.draft.refining")
-                          : t("dashboard.draft.refine")}
-                      </button>
-                      <div className="basis-full flex flex-wrap gap-1.5 text-[10px] text-zinc-500">
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && refiningId === null) {
+                              e.preventDefault();
+                              onRefine(d.id);
+                            }
+                          }}
+                          placeholder={t("dashboard.draft.refine_placeholder")}
+                          disabled={refiningId === d.id}
+                          className="min-w-0 flex-1 bg-transparent text-small text-text placeholder:text-text-subtle focus:outline-none disabled:opacity-50"
+                        />
+                        <Button
+                          size="sm"
+                          variant="primary"
+                          onClick={() => onRefine(d.id)}
+                          loading={refiningId === d.id}
+                          disabled={
+                            refiningId !== null || !(refineInputs[d.id] ?? "").trim()
+                          }
+                        >
+                          {refiningId === d.id
+                            ? t("dashboard.draft.refining")
+                            : t("dashboard.draft.refine")}
+                        </Button>
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-1.5">
                         {[
                           {
                             label: t("dashboard.draft.refine_preset_shorter"),
@@ -707,7 +696,7 @@ export default function Dashboard() {
                             type="button"
                             onClick={() => onRefine(d.id, instruction)}
                             disabled={refiningId !== null}
-                            className="px-2 py-0.5 rounded-full bg-surface-2 hover:bg-surface-2 disabled:opacity-50 transition-colors"
+                            className="rounded-full border border-border bg-surface px-2.5 py-1 text-caption text-text-muted transition-colors hover:bg-surface-2 hover:text-text disabled:opacity-50"
                           >
                             {label}
                           </button>
@@ -716,37 +705,36 @@ export default function Dashboard() {
                     </div>
                   )}
 
-                  <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-border">
+                  <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
                     {d.status === "pending" && (
                       <>
-                        <button
+                        <Button
+                          size="sm"
+                          variant="primary"
+                          icon={<IcCheck size={15} />}
                           onClick={() => onApprove(d.id, d.generated_text)}
-                          className="text-xs px-3 py-1.5 rounded-md bg-green-600 hover:bg-green-700 text-white transition-colors"
                         >
                           {isEdited
                             ? t("dashboard.draft.approve_edited")
                             : t("dashboard.draft.approve")}
-                        </button>
-                        <button
-                          onClick={() => onReject(d.id)}
-                          className="text-xs px-3 py-1.5 rounded-md border border-border text-text hover:bg-surface-2 transition-colors"
-                        >
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => onReject(d.id)}>
                           {t("dashboard.draft.reject")}
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant={refineOpen[d.id] ? "secondary" : "ghost"}
+                          icon={<IcTweak size={15} />}
                           onClick={() =>
                             setRefineOpen((s) => ({ ...s, [d.id]: !s[d.id] }))
                           }
-                          className={`text-xs px-3 py-1.5 rounded-md border transition-colors ${
-                            refineOpen[d.id]
-                              ? "border-zinc-400 dark:border-zinc-600 bg-surface-2 text-text"
-                              : "border-border text-text hover:bg-surface-2"
-                          }`}
                         >
-                          {t("dashboard.draft.tweak")} {refineOpen[d.id] ? "▴" : "▾"}
-                        </button>
+                          {t("dashboard.draft.tweak")}
+                        </Button>
                         {isEdited && (
-                          <button
+                          <Button
+                            size="sm"
+                            variant="ghost"
                             onClick={() =>
                               setEdits((s) => {
                                 const next = { ...s };
@@ -754,53 +742,28 @@ export default function Dashboard() {
                                 return next;
                               })
                             }
-                            className="text-xs px-2 py-1 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
                           >
                             {t("common.revert")}
-                          </button>
+                          </Button>
                         )}
                       </>
                     )}
                     {/* Publish only when approved AND not yet live. */}
                     {d.status === "approved" && !d.published && (
-                      <button
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        icon={<IcStudio size={15} />}
                         onClick={() => onPublishClick(d.id, d.generated_text)}
-                        className="text-xs px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors inline-flex items-center gap-1.5"
                       >
-                        <svg
-                          width="12"
-                          height="12"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          aria-hidden
-                        >
-                          <line x1="22" y1="2" x2="11" y2="13" />
-                          <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                        </svg>
                         {t("dashboard.draft.publish")}
-                      </button>
+                      </Button>
                     )}
                     {/* Already live — no publish button, link out instead. */}
                     {d.published && (
-                      <span className="inline-flex items-center gap-2 text-xs">
-                        <span className="inline-flex items-center gap-1 text-green-600 dark:text-green-400 font-medium">
-                          <svg
-                            width="13"
-                            height="13"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            aria-hidden
-                          >
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
+                      <span className="inline-flex items-center gap-2.5 text-small">
+                        <span className="inline-flex items-center gap-1.5 font-medium text-success">
+                          <IcCheck size={15} />
                           {t("dashboard.draft.published")}
                         </span>
                         {d.threads_url && (
@@ -808,29 +771,30 @@ export default function Dashboard() {
                             href={d.threads_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 underline-offset-2 hover:underline"
+                            className="inline-flex items-center gap-1 text-text-subtle underline-offset-2 hover:text-text hover:underline"
                           >
+                            <IcExternal size={14} />
                             {t("dashboard.draft.open_threads")}
                           </a>
                         )}
                       </span>
                     )}
-                    <div className="ml-auto flex items-center gap-3">
+                    <div className="ml-auto flex items-center gap-1.5">
                       {!d.published &&
                         (confirmDeleteId === d.id ? (
-                          <span className="inline-flex items-center gap-2 text-xs">
-                            <span className="text-zinc-500">
+                          <span className="inline-flex items-center gap-2 text-small">
+                            <span className="text-text-subtle">
                               {t("dashboard.draft.confirm_delete")}
                             </span>
                             <button
                               onClick={() => onDeleteDraft(d.id)}
-                              className="text-red-600 dark:text-red-400 hover:text-red-700 font-medium"
+                              className="font-medium text-danger hover:underline"
                             >
                               {t("dashboard.draft.delete")}
                             </button>
                             <button
                               onClick={() => setConfirmDeleteId(null)}
-                              className="text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                              className="text-text-subtle hover:text-text"
                             >
                               {t("common.cancel")}
                             </button>
@@ -838,9 +802,10 @@ export default function Dashboard() {
                         ) : (
                           <button
                             onClick={() => setConfirmDeleteId(d.id)}
-                            className="text-xs text-zinc-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                            aria-label={t("dashboard.draft.delete")}
+                            className="grid h-8 w-8 place-items-center rounded-md text-text-subtle transition-colors hover:bg-surface-2 hover:text-danger"
                           >
-                            {t("dashboard.draft.delete")}
+                            <IcTrash size={15} />
                           </button>
                         ))}
                       <TranslateButton
@@ -868,20 +833,11 @@ export default function Dashboard() {
       />
 
       {/* Toasts */}
-      <div className="fixed bottom-6 right-6 z-30 space-y-2 pointer-events-none">
-        {toasts.map((t) => (
-          <div
-            key={t.id}
-            className={`px-4 py-2.5 rounded-lg shadow-lg text-sm font-medium pointer-events-auto ${
-              t.tone === "error"
-                ? "bg-red-600 text-white"
-                : "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
-            }`}
-          >
-            {t.message}
-          </div>
+      <ToastHost>
+        {toasts.map((to) => (
+          <Toast key={to.id} tone={to.tone} title={to.message} />
         ))}
-      </div>
+      </ToastHost>
     </div>
   );
 }
@@ -895,19 +851,19 @@ const STATUS_LABEL: Record<string, MessageKey> = {
 
 function StatusBadge({ status }: { status: string }) {
   const { t } = useTranslation();
-  const styles =
+  const tone: BadgeTone =
     status === "approved"
-      ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300"
+      ? "accent"
       : status === "published"
-      ? "bg-primary text-primary-foreground"
-      : status === "rejected"
-      ? "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 line-through"
-      : "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300";
+        ? "good"
+        : status === "rejected"
+          ? "bad"
+          : "neutral";
   const key = STATUS_LABEL[status];
   return (
-    <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wide ${styles}`}>
+    <Badge tone={tone} dot className="uppercase">
       {key ? t(key) : status}
-    </span>
+    </Badge>
   );
 }
 
