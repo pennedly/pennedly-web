@@ -30,6 +30,11 @@ import Link from "next/link";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { PublishConfirmModal } from "@/components/PublishConfirmModal";
 import { TranslateButton } from "@/components/TranslateButton";
+import { AppTopbar } from "@/components/AppTopbar";
+import { Button, buttonClasses } from "@/components/ui/button";
+import { Mono } from "@/components/ui/mono";
+import { IcNib } from "@/components/icons";
+import { cn } from "@/lib/cn";
 import type { DraftSummary, GeneratedDraft, Me } from "@/lib/types";
 
 type Toast = { id: number; message: string; tone: "success" | "error" };
@@ -408,7 +413,7 @@ export default function Dashboard() {
   if (bootError) {
     return (
       <main className="max-w-2xl mx-auto px-6 py-16">
-        <div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 p-4 text-sm text-red-800 dark:text-red-200">
+        <div className="rounded-lg border border-danger/40 bg-danger/10 p-4 text-small text-danger">
           {bootError}
         </div>
       </main>
@@ -417,109 +422,113 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-bg text-text">
-      {/* Nav + account + language + logout now live in the sidebar
-          (src/app/app/layout.tsx → Sidebar). */}
-      <main className="max-w-3xl mx-auto px-6 py-8 space-y-8">
-        {/* Identity strip */}
-        {me && (
-          <p className="text-xs text-zinc-500 sm:hidden">
-            {t("common.signed_in_as")} {me.email}
-          </p>
-        )}
-
+      <AppTopbar title={t("nav.studio")} />
+      <main className="mx-auto max-w-[712px] space-y-5 px-5 py-7 md:px-6">
         {needsVoiceSetup ? (
           /* Account connected, but the user skipped voice setup. Generation
              needs a role_book, so prompt to finish setup rather than offer a
              generate button that would just error. */
-          <section className="rounded-xl border border-border bg-surface p-8 text-center shadow-sm">
-            <h2 className="text-lg font-semibold">
+          <section className="rounded-lg border border-border bg-surface p-8 text-center shadow-sm">
+            <h2 className="text-h3 font-semibold">
               {t("dashboard.voice_setup_title")}
             </h2>
-            <p className="text-sm text-zinc-500 mt-1 mb-4 max-w-md mx-auto">
+            <p className="mx-auto mb-5 mt-1.5 max-w-md text-small text-text-muted">
               {t("dashboard.voice_setup_body")}
             </p>
             <div className="flex justify-center">
-              <Link
-                href="/app/onboarding"
-                className="inline-flex items-center px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
-              >
+              <Link href="/app/onboarding" className={buttonClasses({ variant: "primary" })}>
                 {t("dashboard.voice_setup_cta")}
               </Link>
             </div>
           </section>
         ) : (
           <>
-        {/* Generate panel */}
-        <section className="rounded-xl border border-border bg-surface p-5 shadow-sm">
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <div>
-              <h2 className="text-base font-semibold">
-                {t("dashboard.generate.title")}
-              </h2>
-              <p className="text-xs text-zinc-500 mt-0.5">
-                {t("dashboard.generate.subtitle")}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              {/* Batch count stepper. Click ×N to flip between values. */}
-              <div className="inline-flex items-center rounded-md border border-border overflow-hidden text-xs">
-                {[1, 2, 3, 5].map((n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() => persistBatchCount(n)}
-                    disabled={generating}
-                    className={`px-2.5 py-1 transition-colors ${
-                      batchCount === n
-                        ? "bg-primary text-primary-foreground font-medium"
-                        : "text-text-muted hover:bg-surface-2"
-                    }`}
-                    title={
-                      n === 1
-                        ? "Single draft"
-                        : `Generate ${n} drafts in parallel`
-                    }
-                  >
-                    ×{n}
-                  </button>
-                ))}
-              </div>
-              <button
-                onClick={onGenerate}
-                disabled={generating || accountId === null}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        {/* Generate hero — Pennedly auto-picks the topic (round-robin from the
+            account's configured topics); the user chooses how many. */}
+        <section className="rounded-xl border border-border bg-surface p-4 shadow-sm">
+          {generating ? (
+            <div className="flex items-center gap-3 px-1 py-2">
+              <span
+                className="text-text"
+                style={{ animation: "nib-write 1.5s var(--ease-standard) infinite" }}
               >
-                {generating && (
-                  <span
-                    className="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"
-                    aria-hidden
-                  />
-                )}
-                {generating
-                  ? t("dashboard.generate.generating")
-                  : t("dashboard.generate.button")}
-              </button>
-            </div>
-          </div>
-
-          {lastDraft && (
-            <div className="mt-4 pt-4 border-t border-border">
-              <div className="flex items-center justify-between mb-2 text-xs text-zinc-500">
-                <span>
-                  <span className="font-medium text-text">
-                    {lastDraft.topic_label ?? t("dashboard.generate.no_topic")}
-                  </span>{" "}
-                  · {lastDraft.text.length} chars · {lastDraft.latency_ms}ms ·{" "}
-                  {lastDraft.prompt_tokens + lastDraft.completion_tokens} tok
+                <IcNib size={22} />
+              </span>
+              <span className="text-h3 text-text">
+                {t("dashboard.generate.generating")}
+                <span className="ml-1.5 inline-flex items-end gap-1 align-middle">
+                  {[0, 0.18, 0.36].map((d) => (
+                    <i
+                      key={d}
+                      className="inline-block h-1 w-1 rounded-full bg-text-subtle"
+                      style={{ animation: `dot-pulse 1.2s var(--ease-standard) ${d}s infinite` }}
+                    />
+                  ))}
                 </span>
-              </div>
-              <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                {lastDraft.text}
-              </p>
-              <div className="mt-3">
-                <TranslateButton text={lastDraft.text} source="generated_draft_preview" />
-              </div>
+              </span>
             </div>
+          ) : (
+            <>
+              <div className="flex items-start gap-3">
+                <Mono
+                  text={(me?.display_name?.[0] ?? me?.email?.[0] ?? "?").toUpperCase()}
+                  size={36}
+                />
+                <div className="min-w-0">
+                  <h2 className="text-h3 font-semibold">{t("dashboard.generate.title")}</h2>
+                  <p className="mt-0.5 text-small text-text-muted">
+                    {t("dashboard.generate.subtitle")}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-3 flex items-center gap-2 border-t border-border pt-3">
+                <div className="inline-flex items-center gap-1 rounded-md border border-border bg-surface-2 p-1">
+                  {[1, 2, 3, 5].map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => persistBatchCount(n)}
+                      className={cn(
+                        "rounded-sm px-2.5 py-1 text-small font-medium transition-colors",
+                        batchCount === n
+                          ? "bg-surface text-text shadow-sm"
+                          : "text-text-muted hover:text-text",
+                      )}
+                      title={n === 1 ? "Single draft" : `Generate ${n} drafts in parallel`}
+                    >
+                      ×{n}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex-1" />
+                <Button
+                  variant="primary"
+                  onClick={onGenerate}
+                  disabled={accountId === null}
+                  icon={<IcNib size={16} />}
+                >
+                  {t("dashboard.generate.button")}
+                </Button>
+              </div>
+
+              {lastDraft && (
+                <div className="mt-3 border-t border-border pt-3">
+                  <div className="mb-2 text-caption text-text-subtle">
+                    <span className="font-medium text-text">
+                      {lastDraft.topic_label ?? t("dashboard.generate.no_topic")}
+                    </span>{" "}
+                    · {lastDraft.text.length} · {lastDraft.latency_ms}ms ·{" "}
+                    {lastDraft.prompt_tokens + lastDraft.completion_tokens} tok
+                  </div>
+                  <p className="whitespace-pre-wrap text-body leading-relaxed">
+                    {lastDraft.text}
+                  </p>
+                  <div className="mt-3">
+                    <TranslateButton text={lastDraft.text} source="generated_draft_preview" />
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </section>
 

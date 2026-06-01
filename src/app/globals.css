@@ -192,3 +192,22 @@
     }
   }
 }
+
+/* ----------------------------------------------------------------------------
+   KEYFRAMES — screen motion (card entrance, composer "drafting" pen + dots).
+   Token-driven easing/duration; globally disabled by the reduced-motion rule
+   above (its `animation-duration: 0.001ms !important` wins over inline use).
+   ---------------------------------------------------------------------------- */
+@keyframes card-in {
+  from { transform: translateY(10px); }
+  to   { transform: none; }
+}
+@keyframes nib-write {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  35%      { transform: translateX(3px) rotate(-7deg); }
+  70%      { transform: translateX(-2px) rotate(4deg); }
+}
+@keyframes dot-pulse {
+  0%, 100% { opacity: 0.25; }
+  50%      { opacity: 1; }
+}
