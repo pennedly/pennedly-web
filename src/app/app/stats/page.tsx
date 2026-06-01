@@ -1,174 +1,59 @@
 "use client";
 
-// Statistics — the analytics dashboard. Pick a period (today / yesterday /
-// 7d / month / 3 months / all time); see totals + per-post averages + the
-// viral-tier breakdown, each compared to the previous equal-length period
-// (↑/↓ %), plus a trend bar chart over the period. Charts hand-rolled (CSS,
-// no charting dependency). Reads GET /accounts/{id}/stats?period=.
+// Statistics — the aggregate-performance dashboard. Pick a range (4 / 8 / 12
+// weeks); see weekly summary cards (totals + per-post / per-week averages, each
+// vs the previous equal span), two weekly column charts (avg views/week, posts/
+// week), and the viral-tier distribution. Charts are hand-rolled CSS (no chart
+// dependency). Reads GET /accounts/{id}/stats?weeks=N. Layout per
+// design-export/PennedlyDesign/stats-*.
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 
 import { ApiError, clearTokens, fetchStats, getTokens } from "@/lib/api";
 import { useSelectedAccountId } from "@/lib/account";
-import { useLocale, useTranslation, type MessageKey } from "@/lib/i18n";
-import type { StatsBucket, StatsPeriod, StatsResponse } from "@/lib/types";
+import { useLocale, useTranslation } from "@/lib/i18n";
+import { AppTopbar } from "@/components/AppTopbar";
+import { Skeleton } from "@/components/ui/feedback";
+import { cn } from "@/lib/cn";
+import {
+  IcArrowDown,
+  IcArrowUp,
+  IcBubble,
+  IcChart,
+  IcEye,
+  IcHeart,
+  IcNib,
+} from "@/components/icons";
+import type { StatsBucket, StatsResponse } from "@/lib/types";
 
-const PERIODS: StatsPeriod[] = ["today", "yesterday", "7d", "30d", "90d", "all"];
+const RANGES = [4, 8, 12] as const;
 
-const PERIOD_LABEL: Record<StatsPeriod, MessageKey> = {
-  today: "stats.period.today",
-  yesterday: "stats.period.yesterday",
-  "7d": "stats.period.7d",
-  "30d": "stats.period.30d",
-  "90d": "stats.period.90d",
-  all: "stats.period.all",
-};
-
-function fmt(n: number): string {
+// 22400 -> "22.4K", 1205 -> "1,205" (we keep <10k exact).
+function sfmt(n: number): string {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
+  if (n >= 10_000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "K";
   return Math.round(n).toLocaleString();
 }
 
-type Granularity = "day" | "week" | "month";
-
-const GRANULARITY: Record<StatsPeriod, Granularity> = {
-  today: "day",
-  yesterday: "day",
-  "7d": "day",
-  "30d": "week",
-  "90d": "week",
-  all: "month",
-};
-
-// A human, localized label for a bucket's start date — month+year for
-// monthly buckets, day+month otherwise.
-function bucketLabel(iso: string, locale: string, gran: Granularity): string {
-  const d = new Date(iso);
-  // Intl accepts the bare locale code for all 8 locales (de, fr, …);
-  // keep the regional tags only where they read nicer.
-  const loc =
-    locale === "ru" ? "ru-RU" : locale === "en" ? "en-US" : locale;
-  if (gran === "month") {
-    return d.toLocaleDateString(loc, { month: "short", year: "2-digit" });
-  }
-  return d.toLocaleDateString(loc, { day: "numeric", month: "short" });
+// % change, null when the base is non-positive (matches the backend's _pct).
+function pct(cur: number, prev: number): number | null {
+  if (prev <= 0) return null;
+  return Math.round(((cur - prev) / prev) * 100 * 10) / 10;
 }
 
-// Trend chart: one bar per time bucket (avg views per post). A dashed line
-// marks the period average; bars at/above it are highlighted (green) so
-// you can see at a glance which periods beat your norm. Y-axis shows the
-// scale; hover a bar for exact numbers. Hand-rolled (no chart library).
-function TrendChart({
-  series,
-  locale,
-  gran,
-  t,
-}: {
-  series: StatsBucket[];
-  locale: string;
-  gran: Granularity;
-  t: (k: MessageKey) => string;
-}) {
-  const values = series.map((b) => b.avg_views);
-  const max = Math.max(1, ...values);
-  const avg = values.reduce((a, b) => a + b, 0) / (values.length || 1);
-  // Thin out x-labels when there are many buckets, so they don't overlap.
-  const step = Math.ceil(series.length / 8);
-
-  return (
-    <div>
-      <div className="flex gap-2">
-        {/* Y-axis scale */}
-        <div className="flex flex-col justify-between items-end h-32 w-9 shrink-0 text-[9px] text-zinc-400 tabular-nums">
-          <span>{fmt(max)}</span>
-          <span>0</span>
-        </div>
-        {/* Plot area: bars + average line overlay (same h-32 base) */}
-        <div className="relative flex-1 h-32">
-          <div
-            className="absolute left-0 right-0 border-t border-dashed border-zinc-400/70 dark:border-zinc-500/70 z-10 pointer-events-none"
-            style={{ bottom: `${(avg / max) * 100}%` }}
-          >
-            <span className="absolute right-0 -top-2.5 text-[9px] px-1 rounded bg-surface-2 text-zinc-500 tabular-nums">
-              {t("stats.chart_avg_line")} {fmt(avg)}
-            </span>
-          </div>
-          <div className="absolute inset-0 flex items-end gap-1.5">
-            {series.map((b, i) => {
-              const aboveAvg = b.avg_views >= avg && b.avg_views > 0;
-              return (
-                <div
-                  key={i}
-                  className="flex-1 h-full flex items-end min-w-[6px]"
-                  title={`${bucketLabel(b.bucket_start, locale, gran)} · ${fmt(
-                    b.avg_views,
-                  )} ${t("stats.card_avg_views")} · ${b.posts} ${t(
-                    "stats.card_posts",
-                  )}`}
-                >
-                  <div
-                    className={`w-full rounded-t transition-all ${
-                      aboveAvg
-                        ? "bg-green-500 dark:bg-green-400"
-                        : "bg-zinc-300 dark:bg-zinc-600"
-                    }`}
-                    style={{
-                      height: `${(b.avg_views / max) * 100}%`,
-                      minHeight: b.avg_views > 0 ? "3px" : "0",
-                    }}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-      {/* X-axis date labels, aligned under the plot */}
-      <div className="flex gap-2 mt-1">
-        <div className="w-9 shrink-0" />
-        <div className="flex-1 flex gap-1.5">
-          {series.map((b, i) => (
-            <div
-              key={i}
-              className="flex-1 min-w-[6px] text-center text-[9px] text-zinc-400 leading-tight overflow-hidden"
-            >
-              {i % step === 0 ? bucketLabel(b.bucket_start, locale, gran) : ""}
-            </div>
-          ))}
-        </div>
-      </div>
-      {/* Legend */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-[10px] text-zinc-500">
-        <span className="inline-flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-sm bg-green-500 dark:bg-green-400" />
-          {t("stats.chart_above_avg")}
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-sm bg-zinc-300 dark:bg-zinc-600" />
-          {t("stats.chart_below_avg")}
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="inline-block w-3.5 border-t border-dashed border-zinc-400" />
-          {t("stats.chart_avg_line")}
-        </span>
-      </div>
-    </div>
-  );
+// A week-bucket's start date as a short "16 Mar" / "Mar 16" label.
+function weekLabel(iso: string, locale: string): string {
+  const loc = locale === "ru" ? "ru-RU" : locale === "en" ? "en-US" : locale;
+  return new Date(iso).toLocaleDateString(loc, { day: "numeric", month: "short" });
 }
-
-const TIERS = [
-  { key: "viral", color: "bg-green-500" },
-  { key: "good", color: "bg-blue-500" },
-  { key: "mid", color: "bg-amber-400" },
-  { key: "flop", color: "bg-zinc-400" },
-] as const;
 
 export default function StatsPage() {
   const router = useRouter();
   const { t } = useTranslation();
   const locale = useLocale();
   const accountId = useSelectedAccountId();
-  const [period, setPeriod] = useState<StatsPeriod>("7d");
+  const [range, setRange] = useState<(typeof RANGES)[number]>(8);
   const [stats, setStats] = useState<StatsResponse | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [bootError, setBootError] = useState<string | null>(null);
@@ -182,7 +67,7 @@ export default function StatsPage() {
     setLoaded(false);
     (async () => {
       try {
-        setStats(await fetchStats(accountId, period));
+        setStats(await fetchStats(accountId, { weeks: range }));
       } catch (e) {
         if (e instanceof ApiError && e.status === 401) {
           clearTokens();
@@ -194,185 +79,351 @@ export default function StatsPage() {
         setLoaded(true);
       }
     })();
-  }, [accountId, period, router]);
+  }, [accountId, range, router]);
 
-  function Delta({ pct }: { pct: number | null | undefined }) {
-    if (pct === null || pct === undefined) return null;
-    const up = pct >= 0;
-    return (
-      <p
-        className={`text-xs mt-1 ${
-          up
-            ? "text-green-600 dark:text-green-400"
-            : "text-red-600 dark:text-red-400"
-        }`}
-      >
-        {up ? "↑" : "↓"} {Math.abs(pct)}% {t("stats.vs_prev")}
-      </p>
-    );
-  }
+  const cur = stats?.current ?? null;
+  const deltas = stats?.deltas ?? null;
+  const series = stats?.series ?? [];
+  const last = series[series.length - 1];
+  const prev = series[series.length - 2];
+  const weeksUnit = t("stats.weeks_unit");
 
-  if (bootError) {
-    return (
-      <main className="max-w-2xl mx-auto px-6 py-16">
-        <div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 p-4 text-sm text-red-800 dark:text-red-200">
-          {bootError}
-        </div>
-      </main>
-    );
-  }
+  const cards = cur
+    ? [
+        {
+          icon: <IcNib size={14} />,
+          label: t("stats.card_posts"),
+          num: sfmt(cur.posts),
+          sub: `${(cur.posts / range).toFixed(1)} ${t("stats.sub_per_week")}`,
+          delta: deltas?.posts_pct,
+        },
+        {
+          icon: <IcEye size={14} />,
+          label: t("stats.card_views"),
+          num: sfmt(cur.views),
+          sub: `${sfmt(cur.posts ? cur.views / cur.posts : 0)} ${t("stats.sub_per_post")}`,
+          delta: deltas?.views_pct,
+        },
+        {
+          icon: <IcHeart size={14} />,
+          label: t("stats.card_likes"),
+          num: sfmt(cur.likes),
+          sub: `${Math.round(cur.posts ? cur.likes / cur.posts : 0)} ${t("stats.sub_per_post")}`,
+          delta: deltas?.likes_pct,
+        },
+        {
+          icon: <IcBubble size={14} />,
+          label: t("stats.card_comments"),
+          num: sfmt(cur.comments),
+          sub: `${(cur.posts ? cur.comments / cur.posts : 0).toFixed(1)} ${t("stats.sub_per_post")}`,
+          delta: deltas?.comments_pct,
+        },
+      ]
+    : [];
 
-  const cur = stats?.current;
-  const deltas = stats?.deltas;
-  const tierTotal = cur
-    ? cur.tier_counts.viral +
-      cur.tier_counts.good +
-      cur.tier_counts.mid +
-      cur.tier_counts.flop
-    : 0;
+  const tierRows = cur
+    ? [
+        { name: t("stats.tier_viral"), sub: t("stats.tier_viral_sub"), n: cur.tier_counts.viral, ramp: "var(--color-accent)" },
+        { name: t("stats.tier_good"), sub: t("stats.tier_good_sub"), n: cur.tier_counts.good, ramp: "color-mix(in srgb, var(--color-text) 52%, var(--color-surface))" },
+        { name: t("stats.tier_mid"), sub: t("stats.tier_mid_sub"), n: cur.tier_counts.mid, ramp: "color-mix(in srgb, var(--color-text) 32%, var(--color-surface))" },
+        { name: t("stats.tier_flop"), sub: t("stats.tier_flop_sub"), n: cur.tier_counts.flop, ramp: "color-mix(in srgb, var(--color-text) 16%, var(--color-surface))" },
+      ]
+    : [];
+  const tierTotal = tierRows.reduce((a, r) => a + r.n, 0);
+  const tierMax = Math.max(1, ...tierRows.map((r) => r.n));
+  const lastRange = `${t("stats.cap_last")} ${range} ${weeksUnit}`;
 
   return (
     <div className="min-h-screen bg-bg text-text">
-      <main className="max-w-3xl mx-auto px-6 py-8 space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {t("stats.title")}
-          </h1>
-          <p className="text-sm text-zinc-500 mt-1">{t("stats.subtitle")}</p>
-        </div>
-
-        {/* Period selector */}
-        <div className="flex flex-wrap gap-1 border-b border-border pb-px">
-          {PERIODS.map((p) => (
-            <button
-              key={p}
-              onClick={() => setPeriod(p)}
-              className={`relative px-3 py-1.5 text-sm whitespace-nowrap transition-colors ${
-                period === p
-                  ? "text-text font-medium"
-                  : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-              }`}
+      <AppTopbar title={t("stats.title")} />
+      <main className="mx-auto max-w-[928px] space-y-4 px-5 py-7 md:px-6">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <p className="text-small text-text-muted">{t("stats.subtitle")}</p>
+          {loaded && cur && cur.posts > 0 && (
+            <div
+              role="tablist"
+              aria-label={t("stats.title")}
+              className="inline-flex shrink-0 gap-[3px] rounded-md border border-border bg-surface-2 p-[3px]"
             >
-              {t(PERIOD_LABEL[p])}
-              {period === p && (
-                <span className="absolute left-0 right-0 -bottom-px h-0.5 bg-zinc-900 dark:bg-zinc-100" />
-              )}
-            </button>
-          ))}
+              {RANGES.map((r) => (
+                <button
+                  key={r}
+                  role="tab"
+                  aria-selected={range === r}
+                  onClick={() => setRange(r)}
+                  className={cn(
+                    "h-8 rounded-sm border px-3.5 text-small font-medium whitespace-nowrap transition-colors",
+                    range === r
+                      ? "border-border bg-surface font-semibold text-text shadow-sm"
+                      : "border-transparent text-text-muted hover:text-text",
+                  )}
+                >
+                  {r} {weeksUnit}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        {!loaded && <p className="text-sm text-zinc-500">{t("common.loading")}</p>}
-
-        {loaded && cur && cur.posts === 0 && (
-          <div className="rounded-xl border border-dashed border-border p-8 text-center">
-            <p className="text-sm text-zinc-500">{t("stats.empty")}</p>
+        {bootError && (
+          <div className="rounded-lg border border-danger/40 bg-danger/10 p-4 text-small text-danger">
+            {bootError}
           </div>
         )}
 
-        {loaded && cur && cur.posts > 0 && stats && (
+        {!loaded && !bootError && <SkeletonDash />}
+
+        {loaded && !bootError && cur && cur.posts === 0 && (
+          <div className="flex flex-col items-center rounded-lg border border-dashed border-border px-7 py-16 text-center">
+            <span className="mb-4 grid h-[54px] w-[54px] place-items-center rounded-lg border border-border bg-surface-2 text-text-subtle">
+              <IcChart size={26} />
+            </span>
+            <p className="text-h2 font-semibold tracking-tight">{t("stats.empty_title")}</p>
+            <p className="mt-2 max-w-[44ch] text-body leading-relaxed text-text-muted">
+              {t("stats.empty")}
+            </p>
+          </div>
+        )}
+
+        {loaded && !bootError && cur && cur.posts > 0 && (
           <>
-            {/* Summary cards with vs-previous deltas */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              <div className="rounded-xl border border-border bg-surface p-4 shadow-sm">
-                <p className="text-xs text-zinc-500">{t("stats.card_posts")}</p>
-                <p className="text-2xl font-semibold tracking-tight mt-1">
-                  {fmt(cur.posts)}
-                </p>
-                <Delta pct={deltas?.posts_pct} />
-              </div>
-              <div className="rounded-xl border border-border bg-surface p-4 shadow-sm">
-                <p className="text-xs text-zinc-500">{t("stats.card_views")}</p>
-                <p className="text-2xl font-semibold tracking-tight mt-1">
-                  {fmt(cur.views)}
-                </p>
-                <Delta pct={deltas?.views_pct} />
-              </div>
-              <div className="rounded-xl border border-border bg-surface p-4 shadow-sm">
-                <p className="text-xs text-zinc-500">
-                  {t("stats.card_avg_views")}
-                </p>
-                <p className="text-2xl font-semibold tracking-tight mt-1">
-                  {fmt(cur.avg_views)}
-                </p>
-              </div>
-              <div className="rounded-xl border border-border bg-surface p-4 shadow-sm">
-                <p className="text-xs text-zinc-500">{t("stats.card_avg_likes")}</p>
-                <p className="text-2xl font-semibold tracking-tight mt-1">
-                  {fmt(cur.likes)}
-                </p>
-                <Delta pct={deltas?.likes_pct} />
-              </div>
-              <div className="rounded-xl border border-border bg-surface p-4 shadow-sm">
-                <p className="text-xs text-zinc-500">
-                  {t("stats.card_avg_comments")}
-                </p>
-                <p className="text-2xl font-semibold tracking-tight mt-1">
-                  {fmt(cur.comments)}
-                </p>
-                <Delta pct={deltas?.comments_pct} />
-              </div>
+            {/* summary cards */}
+            <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-4">
+              {cards.map((c) => (
+                <div key={c.label} className="rounded-lg border border-border bg-surface p-4 shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="grid h-[26px] w-[26px] shrink-0 place-items-center rounded-sm border border-border bg-surface-2 text-text-muted">
+                      {c.icon}
+                    </span>
+                    <span className="truncate text-caption font-semibold uppercase tracking-wide text-text-subtle">
+                      {c.label}
+                    </span>
+                  </div>
+                  <div className="mt-3 text-h1 font-semibold leading-[1.1] tracking-tight tabular-nums">
+                    {c.num}
+                  </div>
+                  <div className="mt-2 flex items-center justify-between gap-2.5">
+                    <span className="truncate text-caption text-text-subtle">{c.sub}</span>
+                    <Delta pct={c.delta} flat={t("stats.delta_flat")} />
+                  </div>
+                </div>
+              ))}
             </div>
 
-            {/* Viral-tier distribution */}
-            {tierTotal > 0 && (
-              <section className="rounded-xl border border-border bg-surface p-5 shadow-sm">
-                <h2 className="text-sm font-semibold mb-3">
-                  {t("stats.tiers_title")}
-                </h2>
-                <div className="flex h-3 rounded-full overflow-hidden">
-                  {TIERS.map((tier) => {
-                    const n = cur.tier_counts[tier.key];
-                    if (n === 0) return null;
+            {/* average views per week — hero panel */}
+            <Panel
+              title={t("stats.weekly_views_title")}
+              cap={`${t("stats.cap_avg_views")} · ${lastRange}`}
+              headlineNum={last ? sfmt(last.avg_views) : undefined}
+              headlineDelta={last && prev ? pct(last.avg_views, prev.avg_views) : null}
+              flat={t("stats.delta_flat")}
+            >
+              <ColumnChart
+                series={series}
+                field="avg_views"
+                locale={locale}
+                fmtVal={sfmt}
+              />
+            </Panel>
+
+            {/* posts per week + performance spread */}
+            <div className="grid gap-3.5 md:grid-cols-2">
+              <Panel
+                title={t("stats.weekly_posts_title")}
+                cap={`${t("stats.cap_cadence")} · ${lastRange}`}
+                headlineNum={last ? String(last.posts) : undefined}
+                headlineDelta={last && prev ? pct(last.posts, prev.posts) : null}
+                flat={t("stats.delta_flat")}
+              >
+                <ColumnChart
+                  series={series}
+                  field="posts"
+                  locale={locale}
+                  fmtVal={(n) => `${n} ${t("stats.posts_word")}`}
+                />
+              </Panel>
+
+              <Panel
+                title={t("stats.spread_title")}
+                cap={`${cur.posts} ${t("stats.posts_word")} ${t("stats.spread_cap")}`}
+              >
+                <div className="flex flex-col gap-3.5">
+                  {tierRows.map((row) => {
+                    const share = Math.round((row.n / (tierTotal || 1)) * 100);
                     return (
-                      <div
-                        key={tier.key}
-                        className={tier.color}
-                        style={{ width: `${(n / tierTotal) * 100}%` }}
-                      />
+                      <div key={row.name} className="flex flex-col gap-1.5">
+                        <div className="flex items-center justify-between gap-2.5">
+                          <span className="flex min-w-0 items-center gap-2 whitespace-nowrap text-small text-text">
+                            <span
+                              className="h-[9px] w-[9px] shrink-0 rounded-[3px]"
+                              style={{ background: row.ramp }}
+                            />
+                            {row.name}
+                            <span className="truncate text-caption text-text-subtle">· {row.sub}</span>
+                          </span>
+                          <span className="whitespace-nowrap text-small font-semibold tabular-nums">
+                            {row.n} {t("stats.posts_word")}
+                            <span className="ml-1.5 font-normal text-text-subtle">{share}%</span>
+                          </span>
+                        </div>
+                        <div className="h-2 overflow-hidden rounded-full border border-border bg-surface-2">
+                          <div
+                            className="h-full rounded-full transition-[width]"
+                            style={{ width: `${(row.n / tierMax) * 100}%`, background: row.ramp }}
+                          />
+                        </div>
+                      </div>
                     );
                   })}
                 </div>
-                <div className="flex flex-wrap gap-4 mt-3 text-xs">
-                  {TIERS.map((tier) => (
-                    <span
-                      key={tier.key}
-                      className="inline-flex items-center gap-1.5"
-                    >
-                      <span className={`w-2.5 h-2.5 rounded-full ${tier.color}`} />
-                      <span className="text-text-muted">
-                        {t(`stats.tier_${tier.key}` as MessageKey)}
-                      </span>
-                      <span className="font-medium">
-                        {cur.tier_counts[tier.key]}
-                      </span>
-                    </span>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* Trend chart */}
-            {stats.series.length >= 2 && (
-              <section className="rounded-xl border border-border bg-surface p-5 shadow-sm">
-                <div className="flex items-baseline justify-between gap-2 mb-4">
-                  <h2 className="text-sm font-semibold">
-                    {t("stats.chart_avg_views")}
-                  </h2>
-                  <span className="text-xs text-zinc-400">
-                    {t(`stats.gran_${GRANULARITY[period]}` as MessageKey)}
-                  </span>
-                </div>
-                <TrendChart
-                  series={stats.series}
-                  locale={locale}
-                  gran={GRANULARITY[period]}
-                  t={t}
-                />
-              </section>
-            )}
+              </Panel>
+            </div>
           </>
         )}
       </main>
     </div>
+  );
+}
+
+// Delta chip — ↑green / ↓red / "no change". Renders nothing when pct is null
+// (no prior data to compare).
+function Delta({ pct, flat }: { pct: number | null | undefined; flat: string }) {
+  if (pct === null || pct === undefined) return null;
+  const r = Math.round(pct * 10) / 10;
+  if (Math.abs(r) < 0.1)
+    return <span className="text-caption font-semibold text-text-subtle">{flat}</span>;
+  const up = r > 0;
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-0.5 text-caption font-semibold tabular-nums",
+        up ? "text-success" : "text-danger",
+      )}
+    >
+      {up ? <IcArrowUp size={12} /> : <IcArrowDown size={12} />}
+      {Math.abs(r)}%
+    </span>
+  );
+}
+
+// A titled card panel with an optional right-aligned headline (num + delta).
+function Panel({
+  title,
+  cap,
+  headlineNum,
+  headlineDelta,
+  flat,
+  children,
+}: {
+  title: string;
+  cap: string;
+  headlineNum?: string;
+  headlineDelta?: number | null;
+  flat?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
+      <div className="mb-4 flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h2 className="text-h3 font-semibold tracking-tight">{title}</h2>
+          <p className="mt-0.5 text-caption text-text-subtle">{cap}</p>
+        </div>
+        {headlineNum !== undefined && (
+          <div className="shrink-0 text-right">
+            <div className="text-h2 font-semibold leading-[1.1] tracking-tight tabular-nums">
+              {headlineNum}
+            </div>
+            {headlineDelta !== undefined && (
+              <div className="mt-1 flex justify-end">
+                <Delta pct={headlineDelta} flat={flat ?? ""} />
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+// Weekly column chart — one bar per bucket, last bar accented.
+function ColumnChart({
+  series,
+  field,
+  locale,
+  fmtVal,
+}: {
+  series: StatsBucket[];
+  field: "avg_views" | "posts";
+  locale: string;
+  fmtVal: (n: number) => string;
+}) {
+  const vals = series.map((b) => b[field]);
+  const max = Math.max(1, ...vals);
+  return (
+    <div className="flex items-end gap-[7px]">
+      {series.map((b, i) => {
+        const v = b[field];
+        const last = i === series.length - 1;
+        return (
+          <div
+            key={b.bucket_start}
+            className="flex min-w-0 flex-1 flex-col items-center gap-2"
+            title={`${weekLabel(b.bucket_start, locale)}: ${fmtVal(v)}`}
+          >
+            <div className="flex h-[132px] w-full items-end">
+              <div
+                className="w-full rounded-t-sm transition-[height]"
+                style={{
+                  height: `${Math.max(4, (v / max) * 100)}%`,
+                  // Opaque mix (not a low-alpha text colour) so the bar stays
+                  // visible on the dark card too — matches the design's .colbar.
+                  background: last
+                    ? "var(--color-accent)"
+                    : "color-mix(in srgb, var(--color-text) 16%, var(--color-surface-2))",
+                }}
+              />
+            </div>
+            <span
+              className={cn(
+                "whitespace-nowrap text-[0.6875rem] tabular-nums text-text-subtle",
+                last && "font-semibold text-text-muted",
+              )}
+            >
+              {weekLabel(b.bucket_start, locale)}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function SkeletonDash() {
+  return (
+    <>
+      <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="rounded-lg border border-border bg-surface p-4 shadow-sm">
+            <Skeleton className="h-3 w-20" />
+            <Skeleton className="mt-3.5 h-7 w-28 rounded-md" />
+            <Skeleton className="mt-3 h-2.5 w-full" />
+          </div>
+        ))}
+      </div>
+      <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
+        <Skeleton className="mb-5 h-4 w-44" />
+        <Skeleton className="h-[132px] w-full rounded-md" />
+      </div>
+      <div className="grid gap-3.5 md:grid-cols-2">
+        {Array.from({ length: 2 }).map((_, i) => (
+          <div key={i} className="rounded-lg border border-border bg-surface p-5 shadow-sm">
+            <Skeleton className="mb-4 h-4 w-36" />
+            <Skeleton className="h-[110px] w-full rounded-md" />
+          </div>
+        ))}
+      </div>
+    </>
   );
 }

@@ -334,6 +334,48 @@ const COMMENTS = {
   ],
 };
 
+// Stats — 8 weekly buckets (the default 8-week range) + a current summary,
+// prior-span deltas and the viral-tier distribution. Drives the cards, the
+// two column charts and the distribution bars.
+const STATS_WEEKS = [
+  { bucket_start: "2026-04-13", posts: 4, avg_views: 13400 },
+  { bucket_start: "2026-04-20", posts: 3, avg_views: 12100 },
+  { bucket_start: "2026-04-27", posts: 5, avg_views: 15600 },
+  { bucket_start: "2026-05-04", posts: 4, avg_views: 14800 },
+  { bucket_start: "2026-05-11", posts: 4, avg_views: 17300 },
+  { bucket_start: "2026-05-18", posts: 5, avg_views: 16200 },
+  { bucket_start: "2026-05-25", posts: 4, avg_views: 19800 },
+  { bucket_start: "2026-06-01", posts: 3, avg_views: 22400 },
+];
+const STATS = {
+  period: "8w",
+  current: {
+    posts: 32,
+    views: 523700,
+    likes: 2180,
+    comments: 178,
+    avg_views: 16365.6,
+    avg_likes: 68.1,
+    avg_comments: 5.6,
+    tier_counts: { viral: 3, good: 8, mid: 15, flop: 6 },
+  },
+  previous: {
+    posts: 35,
+    views: 465000,
+    likes: 2010,
+    comments: 168,
+    avg_views: 13285.7,
+    avg_likes: 57.4,
+    avg_comments: 4.8,
+    tier_counts: { viral: 2, good: 7, mid: 18, flop: 8 },
+  },
+  deltas: { views_pct: 12.6, posts_pct: -8.6, likes_pct: 8.5, comments_pct: 6 },
+  series: STATS_WEEKS.map((w) => ({
+    ...w,
+    sum_views: w.posts * w.avg_views,
+  })),
+};
+
 async function setup(page: Page): Promise<void> {
   // Seed a token + selected account + locale before any app code runs.
   await page.addInitScript(() => {
@@ -361,6 +403,7 @@ async function setup(page: Page): Promise<void> {
     if (p.includes("/feed")) return json(FEED);
     if (p.includes("/mentions")) return json(MENTIONS);
     if (p.includes("/comments")) return json(COMMENTS);
+    if (p.includes("/stats")) return json(STATS);
     if (p.includes("/drafts")) return json({ drafts: DRAFTS, count: DRAFTS.length });
     // Safe default — most list endpoints tolerate an empty array.
     return json([]);
@@ -418,4 +461,13 @@ test("Replies", async ({ page }) => {
   await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
   await page.waitForTimeout(700);
   await shoot(page, "replies");
+});
+
+test("Stats", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 1000 });
+  await setup(page);
+  await page.goto("/app/stats");
+  await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
+  await page.waitForTimeout(700);
+  await shoot(page, "stats");
 });

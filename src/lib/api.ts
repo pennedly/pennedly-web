@@ -594,13 +594,16 @@ export async function onboardingFromScratchPreview(
 }
 
 // ── Stats ─────────────────────────────────────────────────────────
+// Stats by period (today/7d/…) OR by `weeks=N` (last N whole weeks, weekly
+// buckets — what the /app/stats range control uses). `weeks` wins if given.
 export async function fetchStats(
   accountId: number,
-  period: StatsPeriod = "7d",
+  opts?: { period?: StatsPeriod; weeks?: number },
 ): Promise<StatsResponse> {
-  return fetchApi<StatsResponse>(
-    `/api/accounts/${accountId}/stats?period=${period}`,
-  );
+  const qs = new URLSearchParams();
+  if (opts?.weeks != null) qs.set("weeks", String(opts.weeks));
+  else qs.set("period", opts?.period ?? "7d");
+  return fetchApi<StatsResponse>(`/api/accounts/${accountId}/stats?${qs}`);
 }
 
 // ── Autopilot ────────────────────────────────────────────────────

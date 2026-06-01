@@ -40,7 +40,7 @@ presentation-слой.
 - **Фаза 2 — Контент:** `[x]` Лента ✅ + Упоминания ✅ + Ответы ✅ — всё на проде
 - **Содержимое-колонка расширена до 900px** (Захар: 712 узко на широких мониторах) — применять везде
 - **Studio-композер** = свободный текст + чипы (бэкенд `prompt` добавлен, 303 теста ✅); карточки 1:1 с дизайном
-- **Фаза 3 — Рост (stats/audits/patterns/autopilot):** `[ ]`
+- **Фаза 3 — Рост (stats/audits/patterns/autopilot):** `[~]` Stats ✅ на проде; audits/patterns/autopilot остаются
 - **Фаза 4 — Голос (voice/style-rules):** `[ ]`
 - **Фаза 5 — Аккаунт+публичное (settings/onboarding/login/landing/legal):** `[ ]`
 - **Фаза 6 — Закрытие (скриншот-тесты, обе темы, SPEC):** `[ ]`
@@ -227,12 +227,20 @@ presentation-слой.
 
 # ФАЗА 3 — Рост
 
-### 3a. Stats
+### 3a. Stats — `[x]` готово на проде (2026-06-01)
 **Роут:** `/app/stats` → `stats/page.tsx` · **Эталон:** `stats-app.jsx`,
-`stats-parts.jsx`, `stats.css` · **Ширина:** 1060 (wide)
-- [ ] Range-сегмент (4/8/12 недель), 4 summary-карты с дельтами WoW
-- [ ] Column-chart «avg views/week», «posts/week», distribution по тирам (CSS-бары)
-- **Состояния:** loading(скелетон) · empty(мало данных)
+`stats-parts.jsx`, `stats.css` · **Ширина:** 928 (как в эталоне, не 1060)
+- [x] Range-сегмент (4/8/12 **недель**) — заменил старый набор периодов; под него
+      добавлен бэкенд-параметр `?weeks=N` (`stats.py` + тест + SPEC §5.2), деплой ✅
+- [x] 4 summary-карты (Posts/Views/Likes/Comments) с иконкой, sub и дельтой (период vs прошлый)
+- [x] Column-chart «avg views/week» (hero) + «posts/week», последний столбец — акцент;
+      distribution по тирам (CSS-бары, ink-ramp). Бар графика — **непрозрачный** color-mix
+      (иначе невидим в тёмной теме — поймал на сверке dark)
+- [x] harness: фикстура `STATS` (8 недель + summary + deltas + тиры) + таргет Stats, light+dark ✓
+- **Состояния:** loading(скелетон) ✅ · empty(мало данных) ✅
+- _Тиры — **реальные бэкендовые** (viral/good/mid/flop с настоящими порогами), не
+  выдуманные имена дизайна (breakout/strong/onpar/quiet). Старый набор периодов
+  (today/7d/all) убран — если нужен, верну отдельной кнопкой._
 
 ### 3b. Audits
 **Роут:** `/app/audits` + `/app/audits/[id]` → `audits/page.tsx`,
