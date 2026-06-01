@@ -97,6 +97,12 @@ export const ru: Partial<Record<MessageKey, string>> = {
     "В твоём голосе. Тема выбирается по кругу из твоих тем.",
   "dashboard.generate.button": "сгенерировать пост",
   "dashboard.generate.generating": "генерирую…",
+  "dashboard.composer.placeholder":
+    "О чём написать? Тема, острое мнение, ссылка…",
+  "dashboard.composer.chip_lesson": "Урок этой недели",
+  "dashboard.composer.chip_trend": "Реакция на тренд",
+  "dashboard.composer.chip_opinion": "Непопулярное мнение",
+  "dashboard.composer.chip_story": "История из сегодня",
   "dashboard.generate.no_topic": "без темы",
   "dashboard.feed.title": "Последние черновики",
   "dashboard.feed.empty": "Черновиков пока нет. Жми",

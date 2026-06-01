@@ -345,13 +345,15 @@ export async function analyzePatterns(
 
 export async function generatePost(
   accountId: number,
-  topicId?: number
+  topicId?: number,
+  prompt?: string,
 ): Promise<GeneratedDraft> {
   return fetchApi<GeneratedDraft>("/api/generation/posts", {
     method: "POST",
     body: JSON.stringify({
       account_id: accountId,
       topic_id: topicId ?? null,
+      prompt: prompt?.trim() || null,
     }),
   });
 }
@@ -360,6 +362,7 @@ export async function generatePostBatch(
   accountId: number,
   count: number,
   topicId?: number,
+  prompt?: string,
 ): Promise<BatchGenerateResult> {
   return fetchApi<BatchGenerateResult>("/api/generation/posts/batch", {
     method: "POST",
@@ -367,6 +370,7 @@ export async function generatePostBatch(
       account_id: accountId,
       count,
       topic_id: topicId ?? null,
+      prompt: prompt?.trim() || null,
     }),
   });
 }

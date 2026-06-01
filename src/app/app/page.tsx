@@ -35,11 +35,20 @@ import { Button, buttonClasses } from "@/components/ui/button";
 import { Mono } from "@/components/ui/mono";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { Toast, ToastHost } from "@/components/ui/toast";
-import { IcCheck, IcExternal, IcNib, IcStudio, IcTrash, IcTweak } from "@/components/icons";
+import { IcCheck, IcExternal, IcNib, IcSparkle, IcStudio, IcTrash, IcTweak } from "@/components/icons";
 import { cn } from "@/lib/cn";
 import type { DraftSummary, GeneratedDraft, Me } from "@/lib/types";
 
 type Toast = { id: number; message: string; tone: "success" | "error" };
+
+// Composer quick-start chips — clicking one fills the brief (free-text → the
+// generator writes about it). Keys live in the i18n catalog.
+const COMPOSER_CHIPS: MessageKey[] = [
+  "dashboard.composer.chip_lesson",
+  "dashboard.composer.chip_trend",
+  "dashboard.composer.chip_opinion",
+  "dashboard.composer.chip_story",
+];
 
 export default function Dashboard() {
   const router = useRouter();
@@ -57,6 +66,7 @@ export default function Dashboard() {
     return Number.isFinite(n) && n >= 1 && n <= 5 ? n : 1;
   });
   const [lastDraft, setLastDraft] = useState<GeneratedDraft | null>(null);
+  const [composerText, setComposerText] = useState("");
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [bootError, setBootError] = useState<string | null>(null);
   // Per-draft edited text. Empty string means "user cleared it" (we
@@ -205,13 +215,13 @@ export default function Dashboard() {
     });
     try {
       if (batchCount === 1) {
-        const draft = await generatePost(accountId);
+        const draft = await generatePost(accountId, undefined, composerText);
         setLastDraft(draft);
         toast(
           `${t("dashboard.toast.generated")} · ${draft.text.length} · ${draft.latency_ms}ms`,
         );
       } else {
-        const result = await generatePostBatch(accountId, batchCount);
+        const result = await generatePostBatch(accountId, batchCount, undefined, composerText);
         // Show the LAST successful draft in the preview slot (most
         // recent generation feels right); all of them land in the
         // feed below.
@@ -231,6 +241,7 @@ export default function Dashboard() {
       }
       const list = await listDrafts(accountId, { limit: 50 });
       setDrafts(list.drafts);
+      setComposerText("");
     } catch (e) {
       toast(String(e), "error");
     } finally {
@@ -445,9 +456,10 @@ export default function Dashboard() {
           </section>
         ) : (
           <>
-        {/* Generate hero — Pennedly auto-picks the topic (round-robin from the
-            account's configured topics); the user chooses how many. */}
-        <section className="rounded-xl border border-border bg-surface p-4 shadow-sm">
+        {/* Composer — type a brief (a topic, a hot take, a link) or pick a chip;
+            Pennedly writes it in your voice. An empty brief falls back to an
+            auto-picked topic. */}
+        <section className="rounded-xl border border-border bg-surface p-4 shadow-sm transition-all focus-within:border-accent/55 focus-within:shadow-md">
           {generating ? (
             <div className="flex items-center gap-3 px-1 py-2">
               <span
@@ -476,41 +488,63 @@ export default function Dashboard() {
                   text={(me?.display_name?.[0] ?? me?.email?.[0] ?? "?").toUpperCase()}
                   size={36}
                 />
-                <div className="min-w-0">
-                  <h2 className="text-h3 font-semibold">{t("dashboard.generate.title")}</h2>
-                  <p className="mt-0.5 text-small text-text-muted">
-                    {t("dashboard.generate.subtitle")}
-                  </p>
-                </div>
+                <textarea
+                  value={composerText}
+                  onChange={(e) => {
+                    setComposerText(e.target.value);
+                    e.target.style.height = "auto";
+                    e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`;
+                  }}
+                  onKeyDown={(e) => {
+                    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") onGenerate();
+                  }}
+                  placeholder={t("dashboard.composer.placeholder")}
+                  rows={1}
+                  className="mt-1 min-h-[30px] flex-1 resize-none border-0 bg-transparent text-h3 leading-snug text-text placeholder:text-text-subtle focus:outline-none"
+                />
               </div>
-              <div className="mt-3 flex items-center gap-2 border-t border-border pt-3">
-                <div className="inline-flex items-center gap-1 rounded-md border border-border bg-surface-2 p-1">
-                  {[1, 2, 3, 5].map((n) => (
+              <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3">
+                <div className="flex min-w-0 flex-1 flex-wrap gap-1.5">
+                  {COMPOSER_CHIPS.map((key) => (
                     <button
-                      key={n}
+                      key={key}
                       type="button"
-                      onClick={() => persistBatchCount(n)}
-                      className={cn(
-                        "rounded-sm px-2.5 py-1 text-small font-medium transition-colors",
-                        batchCount === n
-                          ? "bg-surface text-text shadow-sm"
-                          : "text-text-muted hover:text-text",
-                      )}
-                      title={n === 1 ? "Single draft" : `Generate ${n} drafts in parallel`}
+                      onClick={() => setComposerText(t(key))}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 py-1 text-small font-medium text-text-muted transition-colors hover:bg-surface-2 hover:text-text"
                     >
-                      ×{n}
+                      <IcSparkle size={13} className="text-text-subtle" />
+                      {t(key)}
                     </button>
                   ))}
                 </div>
-                <div className="flex-1" />
-                <Button
-                  variant="primary"
-                  onClick={onGenerate}
-                  disabled={accountId === null}
-                  icon={<IcNib size={16} />}
-                >
-                  {t("dashboard.generate.button")}
-                </Button>
+                <div className="flex shrink-0 items-center gap-2">
+                  <div className="inline-flex items-center gap-1 rounded-md border border-border bg-surface-2 p-1">
+                    {[1, 2, 3, 5].map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => persistBatchCount(n)}
+                        className={cn(
+                          "rounded-sm px-2 py-1 text-small font-medium transition-colors",
+                          batchCount === n
+                            ? "bg-surface text-text shadow-sm"
+                            : "text-text-muted hover:text-text",
+                        )}
+                        title={n === 1 ? "Single draft" : `Generate ${n} drafts in parallel`}
+                      >
+                        ×{n}
+                      </button>
+                    ))}
+                  </div>
+                  <Button
+                    variant="primary"
+                    onClick={onGenerate}
+                    disabled={accountId === null}
+                    icon={<IcNib size={16} />}
+                  >
+                    {t("dashboard.generate.button")}
+                  </Button>
+                </div>
               </div>
 
               {lastDraft && (

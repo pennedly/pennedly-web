@@ -96,6 +96,12 @@ export const en = {
     "In your voice. Topic auto-picked round-robin from your topics.",
   "dashboard.generate.button": "generate post",
   "dashboard.generate.generating": "generating…",
+  "dashboard.composer.placeholder":
+    "What do you want to write about? A topic, a hot take, a link…",
+  "dashboard.composer.chip_lesson": "A lesson from this week",
+  "dashboard.composer.chip_trend": "React to a trend",
+  "dashboard.composer.chip_opinion": "An unpopular opinion",
+  "dashboard.composer.chip_story": "A story from today",
   "dashboard.generate.no_topic": "no topic",
   "dashboard.feed.title": "Recent drafts",
   "dashboard.feed.empty": "No drafts yet. Hit",
