@@ -875,3 +875,17 @@ test("Settings", async ({ page }) => {
   await page.waitForTimeout(700);
   await shoot(page, "settings");
 });
+
+test("Onboarding", async ({ page }) => {
+  // Full-screen flow — no sidebar; wait on its own header instead of `aside`.
+  await page.setViewportSize({ width: 1280, height: 1000 });
+  await setup(page);
+  await page.goto("/app/onboarding");
+  await page.waitForSelector("header", { state: "visible", timeout: 15_000 });
+  await page.waitForTimeout(1000);
+  await shoot(page, "onboarding");
+  // Continue (analyze) → the progress + done step.
+  await page.getByRole("button", { name: /continue/i }).click();
+  await page.waitForTimeout(3400);
+  await shoot(page, "onboarding-done");
+});

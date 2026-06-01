@@ -817,6 +817,49 @@ export const en = {
   "onboarding.sec_do": "Do",
   "onboarding.sec_dont": "Don't",
   "onboarding.sec_examples": "Examples",
+  "onboarding.step_connect": "Connect",
+  "onboarding.step_voice": "Voice",
+  "onboarding.step_done": "Done",
+  "onboarding.skip_for_now": "Skip for now",
+  "onboarding.welcome_eyebrow": "Welcome to Pennedly",
+  "onboarding.connect_hero_title": "Your drafting partner, ready in a minute.",
+  "onboarding.connect_hero_sub":
+    "Pennedly writes posts and replies that sound like you — then waits for your okay. To start, connect the Threads account you want it to write for.",
+  "onboarding.trust1": "Read-only to start — it never posts without your approval.",
+  "onboarding.trust2": "You review every draft before anything goes live.",
+  "onboarding.trust3": "Disconnect anytime — your data leaves with you.",
+  "onboarding.choose_eyebrow": "Step 2 of 3 · Your voice",
+  "onboarding.choose_title": "How should Pennedly learn your voice?",
+  "onboarding.choose_sub":
+    "This is what makes drafts sound like you and not a robot. Pick one — you can always refine it later.",
+  "onboarding.mode_analyze_title": "Analyse my posts",
+  "onboarding.mode_analyze_desc":
+    "Pennedly reads your recent posts and distils your themes, rhythm, and the things you'd never say.",
+  "onboarding.mode_scratch_title": "Start from a description",
+  "onboarding.mode_scratch_desc":
+    "Tell Pennedly how you write in a few lines. Best when the account is new or you want a fresh start.",
+  "onboarding.mode_scratch_meta": "about 2 minutes",
+  "onboarding.recommended": "Recommended",
+  "onboarding.continue": "Continue",
+  "onboarding.analyze_learning": "Learning how you write…",
+  "onboarding.analyze_step1": "Reading your recent posts",
+  "onboarding.analyze_step2": "Distilling your themes and rhythm",
+  "onboarding.analyze_step3": "Writing your voice",
+  "onboarding.scratch_eyebrow": "Step 2 of 3 · From a description",
+  "onboarding.optional": "optional",
+  "onboarding.preview_run": "Preview voice",
+  "onboarding.done_title_set": "You're all set.",
+  "onboarding.done_title_skip": "You're good to go for now.",
+  "onboarding.done_sub_set":
+    "Pennedly is ready to draft in your voice. Remember — nothing is published until you approve it.",
+  "onboarding.done_sub_skip":
+    "You can set up your voice anytime from Settings. Nothing is ever published until you approve it.",
+  "onboarding.recap_voice": "Your voice",
+  "onboarding.voice_analyzed": "Analysed from your posts",
+  "onboarding.voice_scratch": "Built from your description",
+  "onboarding.voice_later": "Set up later",
+  "onboarding.refine_voice": "Refine your voice",
+  "onboarding.go_studio": "Go to Studio",
 } as const;
 
 export type MessageKey = keyof typeof en;

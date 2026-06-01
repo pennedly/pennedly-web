@@ -65,6 +65,10 @@ export const IcPenLine = (p: IconProps) => <Svg {...p}><path d="M4 20h16" /><pat
 export const IcUnlink = (p: IconProps) => <Svg {...p}><path d="M9 15l-2 2a3.5 3.5 0 0 1-5-5l2-2M15 9l2-2a3.5 3.5 0 0 1 5 5l-2 2M8 4v2M4 8H2M20 16h2M16 20v-2" /></Svg>;
 export const IcLogout = (p: IconProps) => <Svg {...p}><path d="M15 5H6a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h9" /><path d="M11 12h9M17 8l4 4-4 4" /></Svg>;
 export const IcFlask = (p: IconProps) => <Svg {...p}><path d="M9 3h6M10 3v6L5.5 17a2 2 0 0 0 1.8 3h9.4a2 2 0 0 0 1.8-3L14 9V3" /><path d="M8.2 14h7.6" /></Svg>;
+
+/* onboarding — ported from onboarding-icons.jsx */
+export const IcLock = (p: IconProps) => <Svg {...p}><rect x="4.5" y="10.5" width="15" height="9.5" rx="2.5" /><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" /><circle cx="12" cy="15" r="1.1" fill="currentColor" stroke="none" /></Svg>;
+export const IcArrowRight = (p: IconProps) => <Svg {...p}><path d="M5 12h14M13 6l6 6-6 6" /></Svg>;
 export const IcTweak = (p: IconProps) => <Svg {...p}><path d="M4 5v5h5" /><path d="M4 10a8 8 0 1 1 1 7" /></Svg>;
 export const IcSend = (p: IconProps) => <Svg {...p}><path d="M5 12h13M12 5l7 7-7 7" /></Svg>;
 export const IcExternal = (p: IconProps) => <Svg {...p}><path d="M14 5h5v5M19 5l-8 8M11 6H6.5A1.5 1.5 0 0 0 5 7.5v10A1.5 1.5 0 0 0 6.5 19h10A1.5 1.5 0 0 0 18 17.5V13" /></Svg>;

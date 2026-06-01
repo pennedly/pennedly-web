@@ -42,7 +42,7 @@ presentation-слой.
 - **Studio-композер** = свободный текст + чипы (бэкенд `prompt` добавлен, 303 теста ✅); карточки 1:1 с дизайном
 - **Фаза 3 — Рост (stats/audits/patterns/autopilot):** `[x]` Stats ✅ + Audits ✅ + Patterns ✅ + Autopilot ✅ — вся фаза на проде
 - **Фаза 4 — Голос (voice/style-rules):** `[x]` Voice ✅ + Style rules ✅ — вся фаза на проде
-- **Фаза 5 — Аккаунт+публичное (settings/onboarding/login/landing/legal):** `[~]` Settings ✅ на проде; onboarding/login/landing/legal остаются
+- **Фаза 5 — Аккаунт+публичное (settings/onboarding/login/landing/legal):** `[~]` Settings ✅ + Onboarding ✅ на проде; login/landing/legal остаются
 - **Фаза 6 — Закрытие (скриншот-тесты, обе темы, SPEC):** `[ ]`
 
 ---
@@ -344,14 +344,21 @@ presentation-слой.
 - _Фронт-онли. Опущено как невыстроенное в бэкенде: смена email, биллинг «Manage plan»,
   счётчик подписчиков, номер версии._
 
-### 5b. Onboarding
+### 5b. Onboarding — `[x]` готово на проде (2026-06-01)
 **Роут:** `/app/onboarding` → `onboarding/page.tsx` · **Эталон:**
 `onboarding-app.jsx`, `onboarding-parts.jsx`, `onboarding.css` · полноэкранный
-(вне shell)
-- [ ] Topbar (марка + «Skip for now» + тема), степпер ①Connect ②Voice ③Done
-- [ ] Шаги: connect (карта + reassurance) → choose (analyze / from-scratch) →
-      analyze(прогресс) / scratch(форма: описание + write/avoid) → done
-- **Состояния:** connect idle/connecting/connected · choose · analyze · scratch · done
+(вне shell, layout SHELL_EXEMPT)
+- [x] Topbar (марка + «Skip for now» + язык + тема), степпер ①Connect ②Voice ③Done
+- [x] Шаги: connect (hero + 3 reassurance-строки + ConnectThreadsButton) → choose
+      (2 карты analyze[recommended если can_analyze] / from-scratch) → analyze(прогресс с
+      шагами+пером) / scratch(форма: описание + темы-писать + темы-избегать) → done (recap + Go to Studio)
+- [x] **Сохранён tester-режим `?preview=1`** (запуск без сохранения → restyled preview-панель)
+- [x] Перенёс иконки `onboarding-icons.jsx` (Lock/ArrowRight; Scan/Pen уже были)
+- [x] harness: таргет (choose → Continue → done), light+dark ✓ (ждёт header, не aside — экран вне сайдбара)
+- **Состояния:** connect · choose · analyze · scratch · done ✓
+- _Фронт-онли. Connect использует реальный OAuth-редирект (нет in-page «connecting»-анимации —
+  после возврата load видит аккаунт → choose). Стартеры/подсказки-чипы из дизайна упростил
+  (TagInput без suggestions) — декоративные хелперы, добавить позже._
 
 ### 5c. Login
 **Роут:** `/app/login` → `login/page.tsx` · **Эталон:** `login-app.jsx`,
