@@ -188,10 +188,13 @@ export async function devLogin(
   });
 }
 
-export async function requestMagicLink(email: string): Promise<void> {
+export async function requestMagicLink(
+  email: string,
+  locale?: string,
+): Promise<void> {
   await fetchApi<void>("/api/auth/magic-link/request", {
     method: "POST",
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ email, locale }),
   });
 }
 
