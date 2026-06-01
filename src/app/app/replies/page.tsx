@@ -4,14 +4,14 @@
 // generate an AI reply in your voice, review/edit it, approve, then
 // publish it threaded under the comment. The queue is filled hourly by
 // the ingest_comments worker; this is the manual-reply surface for the
-// threads_manage_replies permission. Mirrors the dashboard draft flow:
-// generate → edit → approve → publish.
+// threads_manage_replies permission.
 //
-// Layout follows design-export/PennedlyDesign/replies-* (the rail variant):
-// a single feed of comment cards, with a status filter + a horizontal
-// post-rail above it. Each card carries its own "on your post" context
-// inset and an in-card threaded reply block. Logic/data flow are unchanged
-// from the master-detail version — this is a presentation restyle.
+// Layout + interactions follow design-export/PennedlyDesign/replies-* (the
+// rail variant): a single feed of comment cards, with a status filter + a
+// horizontal post-rail above it. Each card carries its own "on your post"
+// context inset and an in-card threaded reply block whose action set is the
+// design's: generate → (regenerate / edit) → approve → publish, plus
+// skip/restore on the comment itself.
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
@@ -20,12 +20,12 @@ import {
   ApiError,
   approveDraft,
   clearTokens,
-  dismissComment,
   fetchComments,
   generateReply,
   getTokens,
   publishDraft,
-  rejectDraft,
+  restoreComment,
+  skipComment,
 } from "@/lib/api";
 import { captureEvent } from "@/lib/analytics";
 import { useSelectedAccountId } from "@/lib/account";
@@ -44,9 +44,12 @@ import {
   IcCheck,
   IcExternal,
   IcNib,
+  IcPencil,
   IcReplies,
   IcReply,
   IcSkip,
+  IcTweak,
+  IcUndo,
 } from "@/components/icons";
 import type { CommentSummary } from "@/lib/types";
 
@@ -54,8 +57,8 @@ type Toast = { id: number; message: string; tone: "success" | "error" };
 
 const REPLY_LIMIT = 500;
 
-// E: one post + every comment sitting under it (master-detail grouping),
-// reused here to build the post-rail and "all posts" count.
+// E: one post + every comment sitting under it, used to build the post-rail
+// and the "all posts" count.
 type PostGroup = {
   postId: number;
   postText: string | null;
@@ -65,9 +68,7 @@ type PostGroup = {
 };
 
 // Reply-queue filter tabs. `key` is the comment `status` passed to the API
-// (null = all). new = needs a reply, drafted = AI reply awaiting review,
-// replied = answered, skipped = autopilot/generator blocked it. `dot` is the
-// status-dot colour (a Tailwind bg-* token) shown on each tab.
+// (null = all). `dot` is the status-dot colour (a Tailwind bg-* token).
 const FILTER_TABS = [
   { key: null, labelKey: "replies.filter_all", dot: "bg-text-subtle" },
   { key: "new", labelKey: "replies.filter_new", dot: "bg-accent" },
@@ -77,12 +78,13 @@ const FILTER_TABS = [
 ] as const;
 
 // Which design "state" a comment is in — drives badge, reply thread and the
-// footer action set. Maps the backend (comment.status + draft_status +
-// draft_is_skip) onto the five card states from the design.
+// footer action set. Maps the backend (comment.status + draft_status) onto
+// the card states from the design. `skipped` covers BOTH a manual skip and
+// the generator's auto-SKIP (reply_generator sets comment.status='skipped').
 type CardState = "new" | "pending" | "approved" | "rejected" | "replied" | "skip";
 function cardState(c: CommentSummary): CardState {
   if (c.status === "replied") return "replied";
-  if (c.draft_is_skip === true) return "skip";
+  if (c.status === "skipped" || c.draft_is_skip === true) return "skip";
   if (c.ai_draft_id !== null && c.draft_text !== null) {
     if (c.draft_status === "approved") return "approved";
     if (c.draft_status === "rejected") return "rejected";
@@ -111,17 +113,19 @@ export default function RepliesPage() {
   const [loaded, setLoaded] = useState(false);
   const [bootError, setBootError] = useState<string | null>(null);
   const [generatingId, setGeneratingId] = useState<number | null>(null);
-  const [busyDraftId, setBusyDraftId] = useState<number | null>(null);
+  const [busyId, setBusyId] = useState<number | null>(null);
+  // Inline edit of a pending reply draft: which comment, and the buffer.
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editBuffer, setEditBuffer] = useState("");
+  // Committed edits per draft id (applied at approve time).
   const [edits, setEdits] = useState<Record<number, string>>({});
   const [publishTarget, setPublishTarget] = useState<{
     draftId: number;
     text: string;
   } | null>(null);
   const [publishing, setPublishing] = useState(false);
-  const [confirmDismissId, setConfirmDismissId] = useState<number | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
-  // E: post-rail filter — "all" or a specific post id (client-side narrowing
-  // of the already status-filtered list).
+  // E: post-rail filter — "all" or a specific post id (client-side narrowing).
   const [postFilter, setPostFilter] = useState<number | "all">("all");
 
   function toast(message: string, tone: Toast["tone"] = "success") {
@@ -211,6 +215,7 @@ export default function RepliesPage() {
 
   const needsCount = counts["new"] ?? 0;
 
+  // Generate (also used to regenerate — the endpoint re-links a fresh draft).
   async function onGenerate(comment: CommentSummary) {
     setGeneratingId(comment.id);
     captureEvent("ui.reply_generate_clicked", { comment_id: comment.id });
@@ -236,7 +241,7 @@ export default function RepliesPage() {
     const localEdit = edits[draftId];
     const wasEdited =
       localEdit !== undefined && localEdit.trim() !== original.trim();
-    setBusyDraftId(draftId);
+    setBusyId(comment.id);
     captureEvent("ui.reply_approve_clicked", {
       draft_id: draftId,
       edited: wasEdited,
@@ -261,23 +266,7 @@ export default function RepliesPage() {
     } catch (e) {
       toast(errMsg(e), "error");
     } finally {
-      setBusyDraftId(null);
-    }
-  }
-
-  async function onReject(comment: CommentSummary) {
-    if (comment.ai_draft_id === null) return;
-    const draftId = comment.ai_draft_id;
-    setBusyDraftId(draftId);
-    captureEvent("ui.reply_reject_clicked", { draft_id: draftId });
-    try {
-      await rejectDraft(draftId);
-      toast(`#${draftId} ${t("dashboard.toast.rejected")}`);
-      await reload();
-    } catch (e) {
-      toast(errMsg(e), "error");
-    } finally {
-      setBusyDraftId(null);
+      setBusyId(null);
     }
   }
 
@@ -300,18 +289,53 @@ export default function RepliesPage() {
     }
   }
 
-  async function onDismiss(comment: CommentSummary) {
-    setConfirmDismissId(null);
-    const prev = comments;
-    setComments((s) => s.filter((x) => x.id !== comment.id)); // optimistic
-    captureEvent("ui.reply_dismiss_clicked", { comment_id: comment.id });
+  // Skip the whole comment (won't reply) — reversible via restore.
+  async function onSkip(comment: CommentSummary) {
+    setBusyId(comment.id);
+    captureEvent("ui.reply_skip_clicked", { comment_id: comment.id });
     try {
-      await dismissComment(comment.id);
-      toast(t("replies.toast_dismissed"));
+      await skipComment(comment.id);
+      toast(t("replies.toast_skipped"));
+      await reload();
     } catch (e) {
-      setComments(prev); // restore on failure
       toast(errMsg(e), "error");
+    } finally {
+      setBusyId(null);
     }
+  }
+
+  async function onRestore(comment: CommentSummary) {
+    setBusyId(comment.id);
+    captureEvent("ui.reply_restore_clicked", { comment_id: comment.id });
+    try {
+      await restoreComment(comment.id);
+      toast(t("replies.toast_restored"));
+      await reload();
+    } catch (e) {
+      toast(errMsg(e), "error");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  function startEdit(comment: CommentSummary) {
+    if (comment.ai_draft_id === null) return;
+    setEditBuffer(edits[comment.ai_draft_id] ?? comment.draft_text ?? "");
+    setEditingId(comment.id);
+  }
+
+  function saveEdit(comment: CommentSummary) {
+    if (comment.ai_draft_id === null) return;
+    const draftId = comment.ai_draft_id;
+    const next = editBuffer;
+    const original = comment.draft_text ?? "";
+    setEdits((s) => {
+      const n = { ...s };
+      if (next.trim() && next.trim() !== original.trim()) n[draftId] = next;
+      else delete n[draftId];
+      return n;
+    });
+    setEditingId(null);
   }
 
   if (checking) return null;
@@ -335,6 +359,16 @@ export default function RepliesPage() {
       </div>
     );
   }
+
+  // Empty-state copy per active filter (mirrors the design's EMPTY map).
+  const emptyCopy: Record<string, { title: string; sub: string }> = {
+    all: { title: t("replies.empty_all_title"), sub: t("replies.empty_all_sub") },
+    new: { title: t("replies.empty_needs_title"), sub: t("replies.empty_needs_sub") },
+    drafted: { title: t("replies.empty_drafts_title"), sub: t("replies.empty_drafts_sub") },
+    replied: { title: t("replies.empty_replied_title"), sub: t("replies.empty_replied_sub") },
+    skipped: { title: t("replies.empty_skipped_title"), sub: t("replies.empty_skipped_sub") },
+  };
+  const empty = emptyCopy[filter ?? "all"] ?? emptyCopy.all;
 
   return (
     <div className="min-h-screen bg-bg text-text">
@@ -402,8 +436,9 @@ export default function RepliesPage() {
                 <span className="mb-3 grid h-11 w-11 place-items-center rounded-full border border-border bg-surface-2 text-text-subtle">
                   <IcReplies size={22} />
                 </span>
-                <p className="max-w-[42ch] text-small leading-relaxed text-text-muted">
-                  {t("replies.empty")}
+                <p className="text-body font-semibold">{empty.title}</p>
+                <p className="mt-1 max-w-[42ch] text-small leading-relaxed text-text-muted">
+                  {empty.sub}
                 </p>
               </div>
             ) : (
@@ -412,14 +447,14 @@ export default function RepliesPage() {
                   const state = cardState(c);
                   const draftId = c.ai_draft_id;
                   const generating = generatingId === c.id;
-                  const busy = draftId !== null && busyDraftId === draftId;
-                  const currentText =
+                  const busy = busyId === c.id;
+                  const editing = editingId === c.id;
+                  const displayText =
                     draftId !== null ? edits[draftId] ?? c.draft_text ?? "" : "";
                   const isEdited =
                     draftId !== null &&
                     edits[draftId] !== undefined &&
                     edits[draftId].trim() !== (c.draft_text ?? "").trim();
-                  const editLen = currentText.length;
                   const badge = BADGE[state];
 
                   return (
@@ -532,16 +567,15 @@ export default function RepliesPage() {
                               )}
                             </div>
 
-                            {state === "pending" ? (
+                            {state === "pending" && editing ? (
                               <>
                                 <textarea
-                                  value={currentText}
-                                  onChange={(e) =>
-                                    setEdits((s) => ({ ...s, [draftId!]: e.target.value }))
-                                  }
+                                  value={editBuffer}
+                                  autoFocus
+                                  onChange={(e) => setEditBuffer(e.target.value)}
                                   rows={Math.min(
                                     10,
-                                    Math.max(2, currentText.split("\n").length + 1),
+                                    Math.max(2, editBuffer.split("\n").length + 1),
                                   )}
                                   className="w-full resize-y rounded-sm border border-accent bg-surface px-3 py-2 text-small leading-relaxed text-text shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-accent)_16%,transparent)] outline-none"
                                 />
@@ -549,16 +583,16 @@ export default function RepliesPage() {
                                   <span
                                     className={cn(
                                       "text-caption tabular-nums text-text-subtle",
-                                      editLen > REPLY_LIMIT && "font-semibold text-danger",
+                                      editBuffer.length > REPLY_LIMIT && "font-semibold text-danger",
                                     )}
                                   >
-                                    {editLen} / {REPLY_LIMIT}
+                                    {editBuffer.length} / {REPLY_LIMIT}
                                   </span>
                                 </div>
                               </>
                             ) : (
                               <p className="whitespace-pre-wrap text-small leading-relaxed text-text">
-                                {c.draft_text ?? ""}
+                                {state === "replied" ? c.draft_text ?? "" : displayText}
                               </p>
                             )}
                           </ReplyThread>
@@ -591,114 +625,133 @@ export default function RepliesPage() {
                           </div>
 
                           <div className="flex shrink-0 items-center gap-2">
-                            {/* remove-from-queue (with inline confirm) — all but replied */}
-                            {state !== "replied" &&
-                              (confirmDismissId === c.id ? (
-                                <>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => setConfirmDismissId(null)}
-                                  >
-                                    {t("common.cancel")}
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="danger"
-                                    onClick={() => onDismiss(c)}
-                                  >
-                                    {t("replies.dismiss")}
-                                  </Button>
-                                </>
-                              ) : (
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => setConfirmDismissId(c.id)}
-                                  icon={<IcSkip size={15} />}
-                                  aria-label={t("replies.dismiss")}
-                                  title={t("replies.dismiss")}
-                                />
-                              ))}
-
-                            {confirmDismissId !== c.id &&
-                              (state === "new" || state === "rejected") && (
-                                <Button
-                                  size="sm"
-                                  variant="primary"
-                                  onClick={() => onGenerate(c)}
-                                  disabled={generating}
-                                  icon={<IcNib size={15} />}
-                                >
-                                  {t("replies.generate")}
-                                </Button>
-                              )}
-
-                            {confirmDismissId !== c.id && state === "pending" && (
+                            {/* editing a pending draft */}
+                            {editing && state === "pending" ? (
                               <>
-                                {isEdited && (
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() =>
-                                      setEdits((s) => {
-                                        const n = { ...s };
-                                        delete n[draftId!];
-                                        return n;
-                                      })
-                                    }
-                                  >
-                                    {t("common.revert")}
-                                  </Button>
-                                )}
-                                <Button
-                                  size="sm"
-                                  variant="secondary"
-                                  onClick={() => onReject(c)}
-                                  disabled={busy}
-                                >
-                                  {t("dashboard.draft.reject")}
+                                <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>
+                                  {t("common.cancel")}
                                 </Button>
                                 <Button
                                   size="sm"
                                   variant="primary"
-                                  onClick={() => onApprove(c)}
-                                  disabled={busy}
+                                  onClick={() => saveEdit(c)}
+                                  disabled={
+                                    editBuffer.trim().length === 0 ||
+                                    editBuffer.length > REPLY_LIMIT
+                                  }
                                   icon={<IcCheck size={15} />}
                                 >
-                                  {isEdited
-                                    ? t("dashboard.draft.approve_edited")
-                                    : t("dashboard.draft.approve")}
+                                  {t("common.save")}
                                 </Button>
                               </>
-                            )}
+                            ) : (
+                              <>
+                                {(state === "new" || state === "rejected") && (
+                                  <>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => onSkip(c)}
+                                      disabled={busy}
+                                      icon={<IcSkip size={15} />}
+                                    >
+                                      {t("replies.skip")}
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="primary"
+                                      onClick={() => onGenerate(c)}
+                                      disabled={generating}
+                                      icon={<IcNib size={15} />}
+                                    >
+                                      {t("replies.generate")}
+                                    </Button>
+                                  </>
+                                )}
 
-                            {confirmDismissId !== c.id && state === "approved" && (
-                              <Button
-                                size="sm"
-                                variant="primary"
-                                onClick={() =>
-                                  setPublishTarget({
-                                    draftId: draftId!,
-                                    text: c.draft_text ?? "",
-                                  })
-                                }
-                                icon={<IcReply size={15} />}
-                              >
-                                {t("dashboard.draft.publish")}
-                              </Button>
-                            )}
+                                {state === "pending" && (
+                                  <>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => onSkip(c)}
+                                      disabled={busy}
+                                      aria-label={t("replies.skip")}
+                                      title={t("replies.skip")}
+                                      icon={<IcSkip size={15} />}
+                                    />
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => onGenerate(c)}
+                                      disabled={busy}
+                                      icon={<IcTweak size={15} />}
+                                    >
+                                      {t("replies.regenerate")}
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="secondary"
+                                      onClick={() => startEdit(c)}
+                                      disabled={busy}
+                                      icon={<IcPencil size={15} />}
+                                    >
+                                      {t("dashboard.draft.edit")}
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="primary"
+                                      onClick={() => onApprove(c)}
+                                      disabled={busy}
+                                      icon={<IcCheck size={15} />}
+                                    >
+                                      {isEdited
+                                        ? t("dashboard.draft.approve_edited")
+                                        : t("dashboard.draft.approve")}
+                                    </Button>
+                                  </>
+                                )}
 
-                            {state === "replied" && (c.comment_url || c.post_threads_url) && (
-                              <a
-                                href={(c.comment_url || c.post_threads_url)!}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={buttonClasses({ variant: "secondary", size: "sm" })}
-                              >
-                                <IcExternal size={15} />
-                                {t("replies.open_thread")}
-                              </a>
+                                {state === "approved" && (
+                                  <Button
+                                    size="sm"
+                                    variant="primary"
+                                    onClick={() =>
+                                      setPublishTarget({
+                                        draftId: draftId!,
+                                        text: c.draft_text ?? "",
+                                      })
+                                    }
+                                    icon={<IcReply size={15} />}
+                                  >
+                                    {t("dashboard.draft.publish")}
+                                  </Button>
+                                )}
+
+                                {state === "skip" && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => onRestore(c)}
+                                    disabled={busy}
+                                    icon={<IcUndo size={15} />}
+                                  >
+                                    {t("replies.restore")}
+                                  </Button>
+                                )}
+
+                                {state === "replied" && (c.comment_url || c.post_threads_url) && (
+                                  <a
+                                    href={(c.comment_url || c.post_threads_url)!}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={buttonClasses({ variant: "secondary", size: "sm" })}
+                                  >
+                                    <IcExternal size={15} />
+                                    {t("replies.open_thread")}
+                                  </a>
+                                )}
+                              </>
                             )}
                           </div>
                         </div>
@@ -800,9 +853,7 @@ function PostRail({
               title={it.label}
               className={cn(
                 "flex w-[204px] shrink-0 flex-col gap-2.5 rounded-md border bg-surface p-3 text-left transition-colors hover:bg-surface-2",
-                on
-                  ? "border-accent/55 bg-surface-2 shadow-sm"
-                  : "border-border",
+                on ? "border-accent/55 bg-surface-2 shadow-sm" : "border-border",
               )}
             >
               <span

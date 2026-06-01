@@ -361,6 +361,26 @@ export const en = {
   "replies.badge_new": "New",
   "replies.badge_draft": "Draft",
   "replies.badge_approved": "Approved",
+  "replies.skip": "skip",
+  "replies.restore": "restore",
+  "replies.regenerate": "regenerate",
+  "replies.toast_skipped": "Comment skipped",
+  "replies.toast_restored": "Restored to queue",
+  "replies.empty_all_title": "Your queue is empty",
+  "replies.empty_all_sub":
+    "When people comment on your posts, they'll show up here ready for a reply in your voice.",
+  "replies.empty_needs_title": "You're all caught up",
+  "replies.empty_needs_sub":
+    "No comments are waiting on a reply. Go make something new in the Studio.",
+  "replies.empty_drafts_title": "No drafts in progress",
+  "replies.empty_drafts_sub":
+    "Generate a reply on a comment and it'll wait here until you approve and publish it.",
+  "replies.empty_replied_title": "Nothing published yet",
+  "replies.empty_replied_sub":
+    "Replies you publish will appear here, threaded under their comment.",
+  "replies.empty_skipped_title": "Nothing skipped",
+  "replies.empty_skipped_sub":
+    "Comments you pass on — spam, noise, the unanswerable — land here.",
 
   // ── Mentions ───────────────────────────────────────────────────
   "dashboard.nav.mentions": "mentions",

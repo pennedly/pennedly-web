@@ -317,7 +317,7 @@ const COMMENTS = {
       author_username: "growthhacks.io",
       text: "🚀 amazing post!! check out my page for DAILY writing hacks and follow back 🔥🔥 link in bio",
       comment_url: "https://www.threads.net/@growthhacks.io/post/706",
-      status: "drafted",
+      status: "skipped",
       published_at: "2026-05-31T20:00:00Z",
       created_at: "2026-05-31T20:00:00Z",
       post_text:

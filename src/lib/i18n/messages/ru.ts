@@ -366,6 +366,26 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "replies.badge_new": "Новый",
   "replies.badge_draft": "Черновик",
   "replies.badge_approved": "Одобрен",
+  "replies.skip": "пропустить",
+  "replies.restore": "вернуть",
+  "replies.regenerate": "перегенерировать",
+  "replies.toast_skipped": "Комментарий пропущен",
+  "replies.toast_restored": "Возвращено в очередь",
+  "replies.empty_all_title": "Очередь пуста",
+  "replies.empty_all_sub":
+    "Когда под твоими постами появятся комментарии, они придут сюда — готовые к ответу в твоём голосе.",
+  "replies.empty_needs_title": "Всё разобрано",
+  "replies.empty_needs_sub":
+    "Нет комментариев, ждущих ответа. Создай что-нибудь новое в Студии.",
+  "replies.empty_drafts_title": "Нет черновиков",
+  "replies.empty_drafts_sub":
+    "Сгенерируй ответ на комментарий — он будет ждать здесь, пока ты не одобришь и не опубликуешь.",
+  "replies.empty_replied_title": "Пока ничего не опубликовано",
+  "replies.empty_replied_sub":
+    "Опубликованные ответы появятся здесь — под своими комментариями.",
+  "replies.empty_skipped_title": "Ничего не пропущено",
+  "replies.empty_skipped_sub":
+    "Комментарии, которые ты пропустил — спам, шум, неотвечаемое — попадают сюда.",
 
   // ── Mentions ───────────────────────────────────────────────────
   "dashboard.nav.mentions": "упоминания",

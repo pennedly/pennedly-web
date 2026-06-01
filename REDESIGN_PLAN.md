@@ -205,10 +205,14 @@ presentation-слой.
 - [x] CommentCard: контекст-пост (inset «on your post»), translate коммента, reply-тред
       с коннектором (generate-шиммер → edit+счётчик 500 → approve/reject → publish → open)
 - [x] `postFilter` заменил master-detail split; вся логика/API без изменений (рестайл)
-- [x] harness: фикстура `COMMENTS` (6 коммента, 2 поста, все статусы) + таргет Replies, light+dark ✓
-- **Состояния:** loading · empty · comment: new/drafted(pending)/approved/replied/skip ✓
-- _Отложено в общую полировку: per-status пустые состояния; design-only действия
-  Regenerate/Restore (нет в бэкенде — не добавлял); reply-translate убран (эталон
+- [x] **Полный набор действий по эталону** (2-й проход, по решению Захара «доделать по дизайну»):
+      edit-toggle (текст ответа + «edit» → поле; только на pending — `approve` даёт 409 на повторное),
+      **Regenerate** (повторная генерация), **Skip/Restore** (новые бэкенд-эндпоинты
+      `POST /comments/{id}/skip|restore` + 5 тестов + SPEC §5.2/§14), per-status пустые состояния
+- [x] harness: фикстура `COMMENTS` (6 комментов, 2 поста, все статусы вкл. skipped) + таргет Replies, light+dark ✓ (тёмная сверена замером вычисленных цветов)
+- **Состояния:** loading · empty(по статусу) · comment: new/drafted(pending)/approved/replied/skip ✓
+- _Лайки коммента **не показываем** — Threads API не отдаёт счётчик лайков для ответов
+  (`threads_api.REPLY_FIELDS`); зафиксировано в SPEC §14. reply-translate убран (эталон
   переводит только входящий коммент)._
 
 ### 2c. Mentions

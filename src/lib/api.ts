@@ -450,6 +450,21 @@ export async function dismissComment(
   return fetchApi(`/api/comments/${commentId}`, { method: "DELETE" });
 }
 
+// Skip a comment without replying — moves it to the "skipped" tab.
+// Reversible (unlike dismiss); never touches Threads.
+export async function skipComment(
+  commentId: number,
+): Promise<{ comment_id: number; status: string }> {
+  return fetchApi(`/api/comments/${commentId}/skip`, { method: "POST" });
+}
+
+// Restore a skipped comment back into the queue as "new" (clears any draft).
+export async function restoreComment(
+  commentId: number,
+): Promise<{ comment_id: number; status: string }> {
+  return fetchApi(`/api/comments/${commentId}/restore`, { method: "POST" });
+}
+
 // Generate an AI reply draft for a comment. The backend may decline
 // (is_skip) if the comment isn't worth replying to.
 export async function generateReply(
