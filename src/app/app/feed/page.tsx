@@ -174,7 +174,7 @@ export default function FeedPage() {
   if (bootError) {
     return (
       <div className="min-h-screen bg-bg text-text">
-        <AppTopbar title={t("feed.title")} />
+        <AppTopbar maxW="900px" title={t("feed.title")} />
         <main className="mx-auto max-w-[900px] px-5 py-7 md:px-6">
           <div className="rounded-lg border border-danger/40 bg-danger/10 p-4 text-small text-danger">
             {bootError}
@@ -195,7 +195,7 @@ export default function FeedPage() {
 
   return (
     <div className="min-h-screen bg-bg text-text">
-      <AppTopbar title={t("feed.title")} />
+      <AppTopbar maxW="900px" title={t("feed.title")} />
       <main className="mx-auto max-w-[900px] space-y-4 px-5 py-7 md:px-6">
         {/* Reference baseline */}
         {loaded && reference && (

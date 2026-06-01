@@ -66,22 +66,35 @@ export function AppTopbar({
   title,
   pill,
   actions,
+  maxW = "760px",
 }: {
   title: ReactNode;
   pill?: ReactNode;
   actions?: ReactNode;
+  /**
+   * Width of the screen's content column. The bar spans full width (border +
+   * frosted bg), but its inner row is centered to this same width so the title
+   * sits directly above the content's left edge and the actions above its
+   * right edge — instead of the title floating at the far left.
+   */
+  maxW?: string;
 }) {
   return (
-    <header className="sticky top-0 z-10 flex h-15 items-center gap-3 border-b border-border bg-bg/85 px-5 backdrop-blur-md md:px-6">
-      <h1 className="truncate text-h3 font-semibold tracking-tight">{title}</h1>
-      {pill}
-      <div className="flex-1" />
-      <div className="flex items-center gap-2">
-        {actions}
-        <ThemeToggle />
-        <Link href="/app/settings" aria-label="Settings" className={ICON_BTN}>
-          <IcSettings size={17} />
-        </Link>
+    <header className="sticky top-0 z-10 border-b border-border bg-bg/85 backdrop-blur-md">
+      <div
+        className="mx-auto flex h-15 w-full items-center gap-3 px-5 md:px-6"
+        style={{ maxWidth: maxW }}
+      >
+        <h1 className="truncate text-h3 font-semibold tracking-tight">{title}</h1>
+        {pill}
+        <div className="flex-1" />
+        <div className="flex items-center gap-2">
+          {actions}
+          <ThemeToggle />
+          <Link href="/app/settings" aria-label="Settings" className={ICON_BTN}>
+            <IcSettings size={17} />
+          </Link>
+        </div>
       </div>
     </header>
   );

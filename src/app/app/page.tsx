@@ -495,7 +495,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-bg text-text">
-      <AppTopbar title={t("nav.studio")} />
+      <AppTopbar maxW="900px" title={t("nav.studio")} />
       <main className="mx-auto max-w-[900px] space-y-5 px-5 py-7 md:px-6">
         {needsVoiceSetup ? (
           /* Account connected, but the user skipped voice setup. Generation

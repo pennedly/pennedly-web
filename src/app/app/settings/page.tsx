@@ -124,7 +124,7 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-bg text-text">
-      <AppTopbar title={t("settings.title")} />
+      <AppTopbar maxW="680px" title={t("settings.title")} />
       <main className="mx-auto max-w-[680px] space-y-5 px-5 py-7 md:px-6">
         {!loaded || !me ? (
           <div className="space-y-5">

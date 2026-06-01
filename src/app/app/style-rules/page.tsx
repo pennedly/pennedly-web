@@ -159,7 +159,7 @@ export default function StyleRulesEditor() {
   if (bootError) {
     return (
       <div className="min-h-screen bg-bg text-text">
-        <AppTopbar title={t("style_rules.title")} />
+        <AppTopbar maxW="740px" title={t("style_rules.title")} />
         <main className="mx-auto max-w-[740px] px-5 py-7 md:px-6">
           <div className="rounded-lg border border-danger/40 bg-danger/10 p-4 text-small text-danger">
             {bootError}
@@ -186,7 +186,7 @@ export default function StyleRulesEditor() {
 
   return (
     <div className="min-h-screen bg-bg text-text">
-      <AppTopbar
+      <AppTopbar maxW="740px"
         title={t("style_rules.title")}
         pill={
           rules ? (

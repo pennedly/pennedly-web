@@ -135,7 +135,7 @@ export default function StatsPage() {
 
   return (
     <div className="min-h-screen bg-bg text-text">
-      <AppTopbar title={t("stats.title")} />
+      <AppTopbar maxW="928px" title={t("stats.title")} />
       <main className="mx-auto max-w-[928px] space-y-4 px-5 py-7 md:px-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <p className="text-small text-text-muted">{t("stats.subtitle")}</p>
