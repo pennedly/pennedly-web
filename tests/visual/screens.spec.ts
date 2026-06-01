@@ -27,7 +27,10 @@ const ACCOUNTS = [
     threads_user_id: "t_1",
     username: "mara.lin",
     display_name: "Mara Lin",
-    profile_picture_url: null,
+    // Inline data-URI so the harness can verify the real-avatar <img> path
+    // (external Threads CDN images don't load under test).
+    profile_picture_url:
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect width='64' height='64' fill='%234f46e5'/%3E%3Ccircle cx='32' cy='25' r='11' fill='%23fff'/%3E%3Crect x='12' y='40' width='40' height='22' rx='11' fill='%23fff'/%3E%3C/svg%3E",
     connected_at: "2026-05-01T00:00:00Z",
     disconnected_at: null,
   },
@@ -767,6 +770,10 @@ test("shell — Studio", async ({ page }) => {
   await page.getByRole("button", { name: /drafts/i }).first().click();
   await page.waitForTimeout(400);
   await shoot(page, "shell-studio-drafts");
+  // Consolidated account/profile menu (switch account · connect · settings · log out).
+  await page.locator("aside").getByRole("button", { name: /mara\.lin/i }).first().click();
+  await page.waitForTimeout(300);
+  await shoot(page, "shell-studio-account");
 });
 
 test("Feed", async ({ page }) => {

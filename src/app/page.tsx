@@ -26,7 +26,7 @@ import {
   type IconProps,
 } from "@/components/icons";
 
-const CONTACT_EMAIL = "hi@pennedly.com";
+const CONTACT_EMAIL = "hello@pennedly.com";
 
 const FEATURES: { Ico: (p: IconProps) => ReactNode; title: string; desc: string }[] = [
   { Ico: IcVoice, title: "Drafts in your voice", desc: "It studies how you write, so drafts sound like you — never generic." },

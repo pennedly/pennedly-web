@@ -21,17 +21,14 @@ import {
   IcAudit,
   IcBolt,
   IcChart,
-  IcChevDown,
   IcFeed,
   IcReplies,
-  IcSettings,
   IcStudio,
   IcStudy,
   IcTweak,
   IcVoice,
   type IconProps,
 } from "@/components/icons";
-import { Mono } from "@/components/ui/mono";
 import type { Me } from "@/lib/types";
 
 type IconCmp = (p: IconProps) => React.ReactElement;
@@ -165,11 +162,10 @@ export function Sidebar() {
   );
 
   const bottom = (
-    <div className="shrink-0 space-y-1 border-t border-border px-2 py-2">
-      {/* Account switcher — opens upward (it sits at the very bottom) */}
-      <AccountSwitcher />
-      {/* Profile / settings / logout */}
-      <ProfileMenu me={me} onLogout={onLogout} />
+    <div className="shrink-0 border-t border-border px-2 py-2">
+      {/* Active account + profile in one control (switch / connect / settings /
+          log out) — opens upward, it sits at the very bottom. */}
+      <AccountSwitcher me={me} onLogout={onLogout} />
     </div>
   );
 
@@ -235,65 +231,5 @@ export function Sidebar() {
         </div>
       )}
     </>
-  );
-}
-
-// The bottom-left user area: profile (who's logged in), settings, and log out —
-// in one menu that opens UPWARD (it sits at the very bottom).
-function ProfileMenu({
-  me,
-  onLogout,
-}: {
-  me: Me | null;
-  onLogout: () => void;
-}) {
-  const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
-  const initial = (me?.email?.[0] ?? "?").toUpperCase();
-
-  return (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center gap-2.5 rounded-md p-2 text-left transition-colors hover:bg-surface-2"
-      >
-        <Mono text={initial} size={28} />
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-small font-medium leading-tight">
-            {me?.email ?? "…"}
-          </span>
-          {me && (
-            <span className="block truncate text-caption capitalize text-text-subtle">
-              {me.tenant.plan_tier}
-            </span>
-          )}
-        </span>
-        <IcChevDown size={15} className="shrink-0 text-text-subtle" />
-      </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} aria-hidden />
-          <div className="absolute bottom-full left-0 right-0 z-40 mb-1.5 rounded-lg border border-border bg-surface py-1 shadow-lg">
-            <Link
-              href="/app/settings"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2 text-small text-text transition-colors hover:bg-surface-2"
-            >
-              <IcSettings size={16} className="text-text-subtle" />
-              {t("nav.settings")}
-            </Link>
-            <div className="my-1 border-t border-border" />
-            <button
-              type="button"
-              onClick={onLogout}
-              className="w-full px-3 py-2 text-left text-small text-danger transition-colors hover:bg-surface-2"
-            >
-              {t("dashboard.nav.logout")}
-            </button>
-          </div>
-        </>
-      )}
-    </div>
   );
 }
