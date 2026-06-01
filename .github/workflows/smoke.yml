@@ -1,0 +1,42 @@
+name: smoke
+
+# Render-smoke for the SPA: boots the Next dev server (no backend) and
+# checks every public + /app route serves and renders without a client
+# crash. This is the guardrail that catches a refactor silently breaking
+# a page's bundle (bad import, top-level throw, renamed export). See
+# tests/smoke.spec.ts + tests/pages-smoke.spec.ts. A deeper authenticated
+# end-to-end pass against a seeded tenant is a separate (Phase 6) task.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "package.json"
+      - "playwright.config.ts"
+      - ".github/workflows/smoke.yml"
+  pull_request:
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "package.json"
+      - "playwright.config.ts"
+      - ".github/workflows/smoke.yml"
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+        env:
+          # The smoke suite hits no backend; a placeholder keeps the
+          # client bundle's NEXT_PUBLIC_API_URL defined at build time.
+          NEXT_PUBLIC_API_URL: http://localhost:8000
