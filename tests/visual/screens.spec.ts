@@ -550,6 +550,79 @@ const STUDY = {
   ],
 };
 
+// Autopilot — master ON (green card + Active pill), two scheduled posts (one
+// enabled, one paused), an active reply policy, and a populated activity log.
+const AUTOPILOT_CONFIG = {
+  enabled: true,
+  post_enabled: false,
+  posts_per_day: 1,
+  quiet_start_hour: null,
+  quiet_end_hour: null,
+  reply_enabled: true,
+  reply_audience: "all_except_trolls",
+  replies_per_day: 5,
+};
+const AUTOPOST_RULES = {
+  master_enabled: true,
+  topics: [
+    { id: 1, label: "Writing craft" },
+    { id: 2, label: "Habits" },
+  ],
+  rules: [
+    {
+      id: 1,
+      name: "Morning thought",
+      topic_id: 1,
+      post_hour: 6,
+      jitter_minutes: 15,
+      enabled: true,
+      auto_reply: true,
+      reply_audience: "all_except_trolls",
+      replies_per_day: 5,
+    },
+    {
+      id: 2,
+      name: "Evening reflection",
+      topic_id: null,
+      post_hour: 15,
+      jitter_minutes: 0,
+      enabled: false,
+      auto_reply: false,
+      reply_audience: "fans",
+      replies_per_day: 3,
+    },
+  ],
+};
+const AUTOPOST_ACTIVITY = {
+  rules: [
+    { id: 1, name: "Morning thought", enabled: true, last_post_at: "2026-06-01T06:00:00Z", posts_today: 1, last_reply_at: "2026-06-01T07:00:00Z", replies_today: 2 },
+    { id: 2, name: "Evening reflection", enabled: false, last_post_at: null, posts_today: 0, last_reply_at: null, replies_today: 0 },
+  ],
+  posts: [
+    {
+      post_id: 8801,
+      rule_id: 1,
+      rule_name: "Morning thought",
+      text: "The fastest way to find your voice online: publish the thing you're slightly embarrassed by.",
+      published_at: "2026-06-01T06:05:00Z",
+      views: 3200,
+      likes: 140,
+      comments: 9,
+      threads_url: "https://www.threads.net/@mara.lin/post/8801",
+    },
+  ],
+  replies: [
+    {
+      comment_id: 701,
+      author_username: "devon.makes",
+      comment_text: "how do you actually decide what to cut?",
+      reply_text: "honestly? if a line is only there to sound smart, it goes. I keep the ones that would still be true even if no one read them.",
+      replied_at: "2026-06-01T07:02:00Z",
+      post_threads_url: "https://www.threads.net/@mara.lin/post/8801",
+    },
+  ],
+};
+
 async function setup(page: Page): Promise<void> {
   // Seed a token + selected account + locale before any app code runs.
   await page.addInitScript(() => {
@@ -582,6 +655,9 @@ async function setup(page: Page): Promise<void> {
     if (p.includes("/stats")) return json(STATS);
     if (/\/audits\/\d+$/.test(p)) return json(AUDIT_DETAIL);
     if (p.includes("/audits")) return json(AUDITS_LIST);
+    if (p.endsWith("/autopost-rules")) return json(AUTOPOST_RULES);
+    if (p.includes("/autopost-activity")) return json(AUTOPOST_ACTIVITY);
+    if (p.endsWith("/autopilot")) return json(AUTOPILOT_CONFIG);
     if (p.includes("/drafts")) return json({ drafts: DRAFTS, count: DRAFTS.length });
     // Safe default — most list endpoints tolerate an empty array.
     return json([]);
@@ -593,9 +669,15 @@ async function shoot(page: Page, name: string): Promise<void> {
   await page
     .addStyleTag({ content: "nextjs-portal,[data-nextjs-toast]{display:none!important}" })
     .catch(() => {});
+  // Settle after each theme toggle: elements with `transition-colors` animate
+  // bg/border from the old theme, and a screenshot fired immediately catches
+  // them mid-transition (looking light in the dark shot). On prod the theme is
+  // set before paint, so there's no transition — this only matters here.
   await page.evaluate(() => document.documentElement.classList.remove("dark"));
+  await page.waitForTimeout(260);
   await page.screenshot({ path: `test-results/visual/${name}-light.png` });
   await page.evaluate(() => document.documentElement.classList.add("dark"));
+  await page.waitForTimeout(260);
   await page.screenshot({ path: `test-results/visual/${name}-dark.png` });
   await page.evaluate(() => document.documentElement.classList.remove("dark"));
 }
@@ -679,4 +761,13 @@ test("Patterns", async ({ page }) => {
   await page.getByRole("button", { name: /run a study/i }).click();
   await page.waitForTimeout(3400);
   await shoot(page, "patterns");
+});
+
+test("Autopilot", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 1400 });
+  await setup(page);
+  await page.goto("/app/autopilot");
+  await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
+  await page.waitForTimeout(700);
+  await shoot(page, "autopilot");
 });

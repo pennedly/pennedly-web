@@ -40,8 +40,8 @@ presentation-слой.
 - **Фаза 2 — Контент:** `[x]` Лента ✅ + Упоминания ✅ + Ответы ✅ — всё на проде
 - **Содержимое-колонка расширена до 900px** (Захар: 712 узко на широких мониторах) — применять везде
 - **Studio-композер** = свободный текст + чипы (бэкенд `prompt` добавлен, 303 теста ✅); карточки 1:1 с дизайном
-- **Фаза 3 — Рост (stats/audits/patterns/autopilot):** `[~]` Stats ✅ + Audits ✅ + Patterns ✅ на проде; autopilot остаётся
-- **Фаза 4 — Голос (voice/style-rules):** `[ ]`
+- **Фаза 3 — Рост (stats/audits/patterns/autopilot):** `[x]` Stats ✅ + Audits ✅ + Patterns ✅ + Autopilot ✅ — вся фаза на проде
+- **Фаза 4 — Голос (voice/style-rules):** `[ ]` следующая
 - **Фаза 5 — Аккаунт+публичное (settings/onboarding/login/landing/legal):** `[ ]`
 - **Фаза 6 — Закрытие (скриншот-тесты, обе темы, SPEC):** `[ ]`
 
@@ -276,14 +276,21 @@ presentation-слой.
 - [x] harness: фикстура `STUDY` + таргет (idle → запуск → results), light+dark ✓
 - **Состояния:** loading · empty · idle · running · results ✓
 
-### 3d. Autopilot
+### 3d. Autopilot — `[x]` готово на проде (2026-06-01)
 **Роут:** `/app/autopilot` → `autopilot/page.tsx` · **Эталон:** `autopilot-app.jsx`,
-`autopilot-parts.jsx`, `autopilot.css` · **Ширина:** 712
-- [ ] Master-switch карта (+ reassurance когда on, confirm при включении)
-- [ ] Scheduled posts: список объектов (имя/час/jitter/topic/on-off/seed; add/delete)
-- [ ] Reply-policy карта (on/off + audience + daily cap)
-- [ ] Activity (табы Posts/Replies: счётчики + список авто-постов/авто-реплаев)
-- **Состояния:** loading · master off/on · empty-objects · empty-activity
+`autopilot-parts.jsx`, `autopilot.css` · **Ширина:** 760
+- [x] Master-card (иконка-молния + статус-строка + большой свитч; зелёный тинт когда on)
+      + reassurance-баннер когда off + **confirm-диалог при включении**
+- [x] Scheduled posts: карточки-объекты (имя/время-в-локальном-TZ/jitter/topic/on-off/seed;
+      add/delete с inline-подтверждением) + пустое состояние
+- [x] Reply-policy карта (свитч + 2 policy-row: audience + daily cap; диммится когда off)
+- [x] Activity: табы Posts/Replies + счётчики по объектам + авто-посты / авто-реплаи + пусто
+- [x] **Фронт-онли** — бэкенд (autopost-rules CRUD + /autopilot + /autopost-activity) уже готов
+- [x] harness: фикстуры (rules/config/activity) + таргет, light+dark ✓
+- **Состояния:** loading · master off/on · empty-objects · empty-activity ✓
+- _Поймал артефакт harness: `shoot()` снимал дарк **сразу** после переключения `.dark`, и
+  элементы с `transition-colors` попадали в кадр посветлевшими (на проде не баг — тема до
+  отрисовки). Добавил паузу 260мс после смены темы — теперь все дарк-снимки точные._
 
 ---
 
