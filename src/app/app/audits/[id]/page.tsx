@@ -1,18 +1,17 @@
 "use client";
 
-// Single-audit detail: shows the LLM's reasoning + week-over-week
-// metrics + each proposed_change with per-row approve / reject.
+// Single-audit detail — the coach's weekly review: a narrative, the
+// week-over-week stat dots, and each proposed change with an in-card
+// approve / reject (decided immediately, one decision per change). Layout per
+// design-export/PennedlyDesign/audits-* (detail + change card).
 //
-// Per-change state lives on the row. Already-decided changes (from
-// prior visits) render their final decision read-only with the
-// applied/effect badges. Pending changes render approve/reject
-// buttons and an optional comment textarea.
-//
-// "Apply all approved" at the bottom submits the batch — we then
-// re-fetch the audit to pick up applied_change + new status.
+// Backend reality (api/audits.py): decisions are APPEND-ONLY — one decision
+// per change_id, no un-decide. So a decided change renders read-only (status +
+// any measured effect); the design's user-facing "roll back" / "reconsider"
+// aren't offered (auto-rollback is the effect-tracker's job). The optional
+// note is sent as the decision's user_comment.
 
-import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useParams, useRouter } from "next/navigation";
 
 import {
@@ -23,39 +22,80 @@ import {
   submitAuditDecisions,
 } from "@/lib/api";
 import { captureEvent } from "@/lib/analytics";
-import { useTranslation, type MessageKey } from "@/lib/i18n";
+import { useTranslation, useLocale, type MessageKey } from "@/lib/i18n";
 import { localUtcOffsetLabel, utcHourToLocal } from "@/lib/timezone";
-import type {
-  AuditDecisionRow,
-  AuditDetail,
-  DecisionInput,
-  ProposedChange,
-} from "@/lib/types";
-
-type DraftDecision = {
-  // null = user hasn't chosen yet
-  approved: boolean | null;
-  comment: string;
-};
+import { AppTopbar } from "@/components/AppTopbar";
+import { Badge, type BadgeTone } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Toast, ToastHost } from "@/components/ui/toast";
+import {
+  BrandMark,
+  IcArrowDown,
+  IcArrowLeft,
+  IcArrowUp,
+  IcAudit,
+  IcCheck,
+  IcClock,
+  IcPencil,
+  IcX,
+} from "@/components/icons";
+import { cn } from "@/lib/cn";
+import type { AuditDecisionRow, AuditDetail, ProposedChange } from "@/lib/types";
 
 type Toast = { id: number; message: string; tone: "success" | "error" };
+type ChangeState = "undecided" | "applied" | "rejected" | "rolledback";
+
+const KIND_LABEL_KEY: Record<string, MessageKey> = {
+  prompt_edit: "audits.kind.prompt_edit",
+  role_book_edit: "audits.kind.prompt_edit",
+  post_prompt_edit: "audits.kind.prompt_edit",
+  autopilot_config: "audits.kind.autopilot_config",
+};
+
+function fmtDate(iso: string, locale: string): string {
+  const loc = locale === "ru" ? "ru-RU" : locale === "en" ? "en-US" : locale;
+  try {
+    return new Date(iso).toLocaleDateString(loc, { month: "short", day: "numeric" });
+  } catch {
+    return iso;
+  }
+}
+
+function changeState(d: AuditDecisionRow | undefined): ChangeState {
+  if (!d) return "undecided";
+  if (!d.approved) return "rejected";
+  if (d.rolled_back) return "rolledback";
+  return "applied";
+}
+
+function isBeforeAfter(diff: unknown): diff is { before: string; after: string } {
+  return (
+    typeof diff === "object" &&
+    diff !== null &&
+    "before" in diff &&
+    "after" in diff
+  );
+}
 
 export default function AuditDetailPage() {
   const router = useRouter();
   const { t } = useTranslation();
+  const locale = useLocale();
   const params = useParams<{ id: string }>();
   const auditId = Number(params.id);
 
   const [audit, setAudit] = useState<AuditDetail | null>(null);
   const [bootError, setBootError] = useState<string | null>(null);
-  const [drafts, setDrafts] = useState<Record<string, DraftDecision>>({});
-  const [submitting, setSubmitting] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [notes, setNotes] = useState<Record<string, string>>({});
+  const [openNote, setOpenNote] = useState<Set<string>>(new Set());
+  const [openDiff, setOpenDiff] = useState<Set<string>>(new Set());
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   function toast(message: string, tone: Toast["tone"] = "success") {
     const id = Date.now() + Math.random();
-    setToasts((t) => [...t, { id, message, tone }]);
-    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 4000);
+    setToasts((s) => [...s, { id, message, tone }]);
+    setTimeout(() => setToasts((s) => s.filter((x) => x.id !== id)), 3500);
   }
 
   useEffect(() => {
@@ -69,8 +109,7 @@ export default function AuditDetailPage() {
     }
     (async () => {
       try {
-        const a = await fetchAudit(auditId);
-        setAudit(a);
+        setAudit(await fetchAudit(auditId));
       } catch (e) {
         if (e instanceof ApiError && e.status === 401) {
           clearTokens();
@@ -82,74 +121,16 @@ export default function AuditDetailPage() {
     })();
   }, [auditId, router]);
 
-  if (bootError) {
-    return (
-      <main className="max-w-3xl mx-auto px-6 py-16">
-        <div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 p-4 text-sm text-red-800 dark:text-red-200">
-          {bootError}
-        </div>
-      </main>
-    );
-  }
-
-  if (!audit) {
-    return (
-      <main className="max-w-3xl mx-auto px-6 py-16 text-sm text-zinc-500">
-        {t("common.loading")}
-      </main>
-    );
-  }
-
-  // Map change_id → existing decision (from server).
-  const decidedByChangeId = new Map<string, AuditDecisionRow>();
-  for (const d of audit.decisions) {
-    if (d.change_id) decidedByChangeId.set(d.change_id, d);
-  }
-
-  function setDraft(changeId: string, partial: Partial<DraftDecision>) {
-    setDrafts((s) => {
-      const existing = s[changeId] ?? { approved: null, comment: "" };
-      return {
-        ...s,
-        [changeId]: { ...existing, ...partial },
-      };
-    });
-  }
-
-  async function onSubmitAll() {
-    const decisions: DecisionInput[] = [];
-    for (const change of audit?.proposed_changes ?? []) {
-      const draft = drafts[change.id];
-      if (!draft || draft.approved === null) continue;
-      decisions.push({
-        change_id: change.id,
-        approved: draft.approved,
-        user_comment: draft.comment || undefined,
-      });
-    }
-
-    if (decisions.length === 0) {
-      toast(t("audits.detail.toast_nothing"), "error");
-      return;
-    }
-
-    setSubmitting(true);
-    captureEvent("ui.audit_decisions_submitted", {
-      audit_id: auditId,
-      count: decisions.length,
-      approved: decisions.filter((d) => d.approved).length,
-    });
-
+  async function onDecide(change: ProposedChange, approved: boolean) {
+    setBusyId(change.id);
+    const note = notes[change.id]?.trim() || undefined;
+    captureEvent("ui.audit_decision", { audit_id: auditId, approved });
     try {
-      const res = await submitAuditDecisions(auditId, decisions);
-      const applied = res.results.filter((r) => r.applied).length;
-      toast(
-        `${t("audits.detail.toast_submitted")} · ${applied}/${res.results.length}`,
-      );
-      // Refetch to show the applied state.
-      const fresh = await fetchAudit(auditId);
-      setAudit(fresh);
-      setDrafts({});
+      await submitAuditDecisions(auditId, [
+        { change_id: change.id, approved, user_comment: note },
+      ]);
+      toast(approved ? t("audits.toast_approved") : t("audits.toast_rejected"));
+      setAudit(await fetchAudit(auditId));
     } catch (e) {
       let msg = String(e);
       if (e instanceof ApiError) {
@@ -163,317 +144,351 @@ export default function AuditDetailPage() {
       }
       toast(msg, "error");
     } finally {
-      setSubmitting(false);
+      setBusyId(null);
     }
   }
 
-  const undecidedDraftCount = audit.proposed_changes.filter(
-    (c) => !decidedByChangeId.has(c.id) && drafts[c.id]?.approved !== undefined,
-  ).length;
-  const readyToSubmit = audit.proposed_changes.filter(
-    (c) =>
-      !decidedByChangeId.has(c.id) &&
-      drafts[c.id]?.approved !== null &&
-      drafts[c.id]?.approved !== undefined,
-  ).length;
+  if (bootError) {
+    return (
+      <div className="min-h-screen bg-bg text-text">
+        <AppTopbar title={t("audits.title")} />
+        <main className="mx-auto max-w-[760px] px-5 py-7 md:px-6">
+          <div className="rounded-lg border border-danger/40 bg-danger/10 p-4 text-small text-danger">
+            {bootError}
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (!audit) {
+    return (
+      <div className="min-h-screen bg-bg text-text">
+        <AppTopbar title={t("audits.title")} />
+        <main className="mx-auto max-w-[760px] px-5 py-7 text-small text-text-muted md:px-6">
+          {t("common.loading")}
+        </main>
+      </div>
+    );
+  }
+
+  const decidedByChangeId = new Map<string, AuditDecisionRow>();
+  for (const d of audit.decisions) if (d.change_id) decidedByChangeId.set(d.change_id, d);
+
+  const total = audit.proposed_changes.length;
+  let applied = 0;
+  let rejected = 0;
+  let rolledback = 0;
+  for (const d of audit.decisions) {
+    const s = changeState(d);
+    if (s === "applied") applied++;
+    else if (s === "rejected") rejected++;
+    else if (s === "rolledback") rolledback++;
+  }
+  const pending = total - audit.decisions.length;
+  const range = `${fmtDate(audit.period_start, locale)} – ${fmtDate(audit.period_end, locale)}`;
+
+  const statDots = [
+    { n: total, label: t("audits.suggestions_word"), color: "var(--color-text-subtle)" },
+    { n: applied, label: t("audits.detail.applied"), color: "var(--color-success)" },
+    { n: rejected, label: t("audits.detail.rejected_label"), color: "var(--color-danger)" },
+    { n: rolledback, label: t("audits.detail.rolled_back"), color: "var(--color-text-muted)" },
+    { n: pending, label: t("audits.status.pending"), color: "var(--color-accent)" },
+  ].filter((s, i) => i === 0 || s.n > 0);
+
+  const narrative = (audit.llm_reasoning ?? "")
+    .split(/\n{2,}/)
+    .map((p) => p.trim())
+    .filter(Boolean);
 
   return (
     <div className="min-h-screen bg-bg text-text">
-      <main className="max-w-3xl mx-auto px-6 py-8 space-y-6">
-        <section>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {t("audits.detail.title")} · {fmtDate(audit.period_start)} →{" "}
-            {fmtDate(audit.period_end)}
-          </h1>
-          <p className="text-sm text-zinc-500 mt-1">
-            {audit.posts_analyzed} {t("audits.posts_analyzed")} ·{" "}
-            {audit.proposed_changes.length} {t("audits.detail.changes_count")} ·{" "}
-            {t("audits.detail.status_label")}{" "}
-            <span className="font-medium text-text">
-              {audit.status.replace(/_/g, " ")}
-            </span>
-          </p>
-        </section>
+      <AppTopbar title={t("audits.title")} />
+      <main className="mx-auto max-w-[760px] space-y-4 px-5 py-7 md:px-6">
+        <button
+          onClick={() => router.push("/app/audits")}
+          className="inline-flex items-center gap-1.5 self-start text-small font-medium text-text-muted transition-colors hover:text-text"
+        >
+          <IcArrowLeft size={16} />
+          {t("audits.all_audits")}
+        </button>
 
-        {audit.llm_reasoning && (
-          <details className="rounded-xl border border-border bg-surface p-5">
-            <summary className="cursor-pointer text-sm font-semibold">
-              {t("audits.detail.reasoning")}
-              {audit.llm_model && (
-                <span className="ml-2 font-normal text-xs text-zinc-500">
-                  · {audit.llm_model}
-                </span>
-              )}
-            </summary>
-            <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-text">
-              {audit.llm_reasoning}
+        {/* head */}
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="text-h1 font-semibold tracking-tight">
+              {t("audits.detail.title")}
+            </h1>
+            <p className="mt-1 text-small text-text-subtle">
+              {range} · {audit.posts_analyzed} {t("audits.posts_analyzed")}
             </p>
-          </details>
+          </div>
+          <Badge tone={pending > 0 ? "accent" : "neutral"} dot={pending > 0}>
+            {pending > 0 ? `${pending} ${t("audits.to_review")}` : t("audits.reviewed")}
+          </Badge>
+        </div>
+
+        {/* stat dots */}
+        <div className="flex flex-wrap items-center gap-x-[18px] gap-y-2">
+          {statDots.map((s) => (
+            <span key={s.label} className="inline-flex items-center gap-1.5 text-small text-text-muted">
+              <span className="h-[7px] w-[7px] rounded-full" style={{ background: s.color }} />
+              <b className="font-semibold tabular-nums text-text">{s.n}</b> {s.label}
+            </span>
+          ))}
+        </div>
+
+        {/* coach narrative */}
+        {narrative.length > 0 && (
+          <div className="rounded-xl border border-border bg-surface-2 p-5">
+            <div className="mb-3.5 flex items-center gap-2.5">
+              <BrandMark size={34} className="rounded-md shadow-sm" />
+              <div>
+                <div className="text-small font-semibold">{t("audits.coach_name")}</div>
+                <div className="text-caption text-text-subtle">
+                  {t("audits.coach_role")} · {range}
+                </div>
+              </div>
+            </div>
+            <div className="space-y-3">
+              {narrative.map((p, i) => (
+                <p key={i} className="text-body leading-relaxed text-text">
+                  {p}
+                </p>
+              ))}
+            </div>
+          </div>
         )}
 
-        <section className="space-y-3">
-          <h2 className="text-base font-semibold">
-            {t("audits.detail.proposed_changes")}
-          </h2>
+        <div className="pt-1 text-caption font-semibold uppercase tracking-wide text-text-subtle">
+          {t("audits.detail.proposed_changes")}
+        </div>
 
-          {audit.proposed_changes.length === 0 && (
-            <div className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-zinc-500">
-              {t("audits.detail.no_changes")}
-            </div>
-          )}
+        {total === 0 && (
+          <div className="rounded-lg border border-dashed border-border p-6 text-center text-small text-text-muted">
+            {t("audits.detail.no_changes")}
+          </div>
+        )}
 
+        <div className="space-y-3.5">
           {audit.proposed_changes.map((change) => {
-            const existing = decidedByChangeId.get(change.id);
+            const decision = decidedByChangeId.get(change.id);
+            const state = changeState(decision);
+            const busy = busyId === change.id;
+            const noteShown = openNote.has(change.id);
+            const diffShown = openDiff.has(change.id);
+            const hours =
+              change.kind === "autopilot_config" && Array.isArray(change.payload?.post_hours)
+                ? change.payload!.post_hours!
+                : null;
+            const kindKey = KIND_LABEL_KEY[change.kind];
+
             return (
-              <ChangeCard
+              <article
                 key={change.id}
-                change={change}
-                existing={existing}
-                draft={drafts[change.id]}
-                onDraftChange={(partial) => setDraft(change.id, partial)}
-              />
+                className={cn(
+                  "rounded-lg border border-border bg-surface p-4 shadow-sm transition-colors hover:border-text/12",
+                  state === "rejected" && "opacity-[0.72]",
+                )}
+                style={{ animation: "card-in 240ms var(--ease-entrance) both" }}
+              >
+                {/* head */}
+                <div className="flex items-center gap-2.5">
+                  <span className="inline-flex shrink-0 items-center rounded-full border border-border bg-surface-2 px-2.5 py-0.5 text-caption font-semibold text-text-muted">
+                    {kindKey ? t(kindKey) : change.kind.replace(/_/g, " ")}
+                  </span>
+                  <h3 className="min-w-0 flex-1 text-h3 font-semibold leading-snug tracking-tight">
+                    {change.title}
+                  </h3>
+                  <ChangeStatusBadge state={state} t={t} />
+                </div>
+
+                {change.detail && (
+                  <p className="mt-2.5 whitespace-pre-wrap text-body leading-relaxed text-text-muted">
+                    {change.detail}
+                  </p>
+                )}
+
+                {hours && hours.length > 0 && (
+                  <p className="mt-2.5 inline-flex items-center gap-1.5 font-mono text-small text-text">
+                    <IcClock size={14} className="text-text-subtle" />
+                    {hours.map((h) => `${String(utcHourToLocal(h)).padStart(2, "0")}:00`).join(" · ")}{" "}
+                    ({localUtcOffsetLabel()})
+                  </p>
+                )}
+
+                {/* extra: view change / add note */}
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {change.diff !== undefined && change.diff !== null && (
+                    <button
+                      onClick={() =>
+                        setOpenDiff((s) => {
+                          const n = new Set(s);
+                          n.has(change.id) ? n.delete(change.id) : n.add(change.id);
+                          return n;
+                        })
+                      }
+                      className="inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-caption font-medium text-text-muted transition-colors hover:bg-surface-2 hover:text-text"
+                    >
+                      <IcAudit size={13} />
+                      {diffShown ? t("audits.hide_change") : t("audits.view_change")}
+                    </button>
+                  )}
+                  {state === "undecided" && !noteShown && !notes[change.id] && (
+                    <button
+                      onClick={() => setOpenNote((s) => new Set(s).add(change.id))}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-caption font-medium text-text-muted transition-colors hover:bg-surface-2 hover:text-text"
+                    >
+                      <IcPencil size={13} />
+                      {t("audits.add_note")}
+                    </button>
+                  )}
+                </div>
+
+                {/* diff */}
+                {diffShown && change.diff != null && (
+                  <div className="mt-3 overflow-hidden rounded-md border border-border font-mono text-caption leading-relaxed">
+                    {isBeforeAfter(change.diff) ? (
+                      <>
+                        <div className="flex gap-2 whitespace-pre-wrap break-words bg-danger/[0.09] px-3 py-1.5 text-danger">
+                          <span className="shrink-0 opacity-70">−</span>
+                          <span>{change.diff.before}</span>
+                        </div>
+                        <div className="flex gap-2 whitespace-pre-wrap break-words bg-success/10 px-3 py-1.5 text-success">
+                          <span className="shrink-0 opacity-70">+</span>
+                          <span>{change.diff.after}</span>
+                        </div>
+                      </>
+                    ) : (
+                      <pre className="overflow-x-auto whitespace-pre-wrap bg-bg p-3 text-text-muted">
+                        {JSON.stringify(change.diff, null, 2)}
+                      </pre>
+                    )}
+                  </div>
+                )}
+
+                {/* note: editing (undecided) or saved (decided) */}
+                {state === "undecided" && (noteShown || notes[change.id]) && (
+                  <textarea
+                    value={notes[change.id] ?? ""}
+                    autoFocus={noteShown}
+                    onChange={(e) =>
+                      setNotes((s) => ({ ...s, [change.id]: e.target.value }))
+                    }
+                    placeholder={t("audits.detail.note_placeholder")}
+                    rows={2}
+                    className="mt-3 w-full resize-y rounded-md border border-accent bg-surface px-3 py-2 text-small leading-relaxed text-text shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-accent)_16%,transparent)] outline-none"
+                  />
+                )}
+                {decision?.user_comment && (
+                  <div className="mt-3 flex items-start gap-2 rounded-md border border-border bg-surface-2 px-3 py-2.5 text-small leading-relaxed text-text-muted">
+                    <IcPencil size={14} className="mt-0.5 shrink-0 text-text-subtle" />
+                    <div className="flex-1">{decision.user_comment}</div>
+                  </div>
+                )}
+
+                {/* footer: meta + actions */}
+                <div className="mt-3.5 flex items-center gap-3 border-t border-border pt-3.5">
+                  <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3 text-caption text-text-subtle">
+                    {state === "undecided" && <span>{t("audits.awaiting")}</span>}
+                    {state === "rejected" && <span>{t("audits.you_rejected")}</span>}
+                    {(state === "applied" || state === "rolledback") && decision && (
+                      <EffectChip
+                        rolledBack={state === "rolledback"}
+                        effectPct={decision.effect_pct}
+                        t={t}
+                      />
+                    )}
+                  </div>
+                  {state === "undecided" && (
+                    <div className="flex shrink-0 items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => onDecide(change, false)}
+                        disabled={busy}
+                        icon={<IcX size={15} />}
+                      >
+                        {t("audits.detail.reject")}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        onClick={() => onDecide(change, true)}
+                        loading={busy}
+                        disabled={busy}
+                        icon={<IcCheck size={15} />}
+                      >
+                        {t("audits.detail.approve")}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </article>
             );
           })}
-        </section>
-
-        {/* Submit bar */}
-        {audit.proposed_changes.length > 0 && (
-          <div className="sticky bottom-4 flex items-center justify-end gap-3 bg-white/95 dark:bg-zinc-950/95 backdrop-blur border border-border rounded-xl px-4 py-3 shadow-md">
-            <span className="mr-auto text-xs text-zinc-500">
-              {readyToSubmit} /{" "}
-              {audit.proposed_changes.length - decidedByChangeId.size}{" "}
-              {t("audits.detail.ready_to_submit")}
-            </span>
-            <button
-              onClick={onSubmitAll}
-              disabled={submitting || readyToSubmit === 0}
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {submitting && (
-                <span
-                  className="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"
-                  aria-hidden
-                />
-              )}
-              {submitting
-                ? t("audits.detail.submitting")
-                : t("audits.detail.submit")}
-            </button>
-          </div>
-        )}
+        </div>
       </main>
 
-      <div className="fixed bottom-6 right-6 z-30 space-y-2 pointer-events-none">
+      <ToastHost>
         {toasts.map((tt) => (
-          <div
-            key={tt.id}
-            className={`px-4 py-2.5 rounded-lg shadow-lg text-sm font-medium pointer-events-auto ${
-              tt.tone === "error"
-                ? "bg-red-600 text-white"
-                : "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
-            }`}
-          >
-            {tt.message}
-          </div>
+          <Toast key={tt.id} tone={tt.tone} title={tt.message} />
         ))}
-      </div>
+      </ToastHost>
     </div>
   );
 }
 
-function ChangeCard({
-  change,
-  existing,
-  draft,
-  onDraftChange,
+function ChangeStatusBadge({
+  state,
+  t,
 }: {
-  change: ProposedChange;
-  existing: AuditDecisionRow | undefined;
-  draft: DraftDecision | undefined;
-  onDraftChange: (partial: Partial<DraftDecision>) => void;
+  state: ChangeState;
+  t: (k: MessageKey) => string;
 }) {
-  const { t } = useTranslation();
-  const decided = existing !== undefined;
-  const localApproved = draft?.approved ?? null;
-  const autopilotHours =
-    change.kind === "autopilot_config" && Array.isArray(change.payload?.post_hours)
-      ? change.payload!.post_hours!
-      : null;
-
+  const map: Record<ChangeState, { tone: BadgeTone; key: MessageKey; dot: boolean }> = {
+    undecided: { tone: "accent", key: "audits.cstatus_needs", dot: true },
+    applied: { tone: "good", key: "audits.cstatus_applied", dot: true },
+    rejected: { tone: "neutral", key: "audits.cstatus_rejected", dot: false },
+    rolledback: { tone: "bad", key: "audits.cstatus_rolledback", dot: true },
+  };
+  const m = map[state];
   return (
-    <article
-      className={`rounded-xl border bg-surface p-5 shadow-sm space-y-3 ${
-        decided
-          ? "border-border opacity-90"
-          : localApproved === true
-            ? "border-green-300 dark:border-green-900/60"
-            : localApproved === false
-              ? "border-red-300 dark:border-red-900/60"
-              : "border-border"
-      }`}
+    <Badge tone={m.tone} dot={m.dot}>
+      {t(m.key)}
+    </Badge>
+  );
+}
+
+function EffectChip({
+  rolledBack,
+  effectPct,
+  t,
+}: {
+  rolledBack: boolean;
+  effectPct: number | null;
+  t: (k: MessageKey) => string;
+}) {
+  if (effectPct === null && !rolledBack) {
+    return (
+      <span className="inline-flex items-center gap-1 text-small font-medium text-text-subtle">
+        <IcClock size={13} />
+        {t("audits.measuring")}
+      </span>
+    );
+  }
+  const down = (effectPct ?? 0) < 0 || rolledBack;
+  const label = `${effectPct !== null ? `${effectPct >= 0 ? "+" : ""}${effectPct.toFixed(1)}%` : ""} ${t("audits.effect_engagement")}`;
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 text-small font-semibold tabular-nums",
+        down ? "text-danger" : "text-success",
+      )}
     >
-      <header className="flex items-baseline justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-2 text-xs text-zinc-500">
-          <KindBadge kind={change.kind} />
-          {change.target_section && (
-            <span className="text-text-muted font-mono">
-              {change.target_section}
-            </span>
-          )}
-        </div>
-        {decided && existing && (
-          <DecisionStatus row={existing} />
-        )}
-      </header>
-
-      <h3 className="text-base font-semibold leading-tight">{change.title}</h3>
-
-      {change.detail && (
-        <p className="text-sm leading-relaxed text-text whitespace-pre-wrap">
-          {change.detail}
-        </p>
-      )}
-
-      {autopilotHours && autopilotHours.length > 0 && (
-        <p className="text-sm font-mono text-text">
-          🕐{" "}
-          {autopilotHours
-            .map((h) => `${String(utcHourToLocal(h)).padStart(2, "0")}:00`)
-            .join(" · ")}{" "}
-          ({localUtcOffsetLabel()})
-        </p>
-      )}
-
-      {change.diff !== undefined && change.diff !== null && (
-        <details>
-          <summary className="cursor-pointer text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300">
-            {t("audits.detail.view_diff")}
-          </summary>
-          <pre className="mt-2 text-xs font-mono p-3 bg-bg border border-border rounded-md overflow-x-auto whitespace-pre-wrap">
-            {JSON.stringify(change.diff, null, 2)}
-          </pre>
-        </details>
-      )}
-
-      {decided && existing ? (
-        existing.user_comment && (
-          <p className="text-xs text-zinc-500 italic">
-            {t("audits.detail.your_note")}: {existing.user_comment}
-          </p>
-        )
-      ) : (
-        <>
-          <textarea
-            value={draft?.comment ?? ""}
-            onChange={(e) => onDraftChange({ comment: e.target.value })}
-            placeholder={t("audits.detail.note_placeholder")}
-            rows={2}
-            className="w-full rounded-md border border-border bg-bg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700"
-          />
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => onDraftChange({ approved: true })}
-              className={`text-xs px-3 py-1.5 rounded-md font-medium transition-colors ${
-                localApproved === true
-                  ? "bg-green-600 text-white"
-                  : "border border-border text-text hover:bg-green-50 dark:hover:bg-green-950/30"
-              }`}
-            >
-              {t("audits.detail.approve")}
-            </button>
-            <button
-              type="button"
-              onClick={() => onDraftChange({ approved: false })}
-              className={`text-xs px-3 py-1.5 rounded-md font-medium transition-colors ${
-                localApproved === false
-                  ? "bg-red-600 text-white"
-                  : "border border-border text-text hover:bg-red-50 dark:hover:bg-red-950/30"
-              }`}
-            >
-              {t("audits.detail.reject")}
-            </button>
-            {localApproved !== null && (
-              <button
-                type="button"
-                onClick={() => onDraftChange({ approved: null })}
-                className="text-xs px-2 py-1 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
-              >
-                {t("audits.detail.clear")}
-              </button>
-            )}
-          </div>
-        </>
-      )}
-    </article>
-  );
-}
-
-const KIND_LABEL_KEY: Record<string, MessageKey> = {
-  prompt_edit: "audits.kind.prompt_edit",
-  autopilot_config: "audits.kind.autopilot_config",
-};
-
-function KindBadge({ kind }: { kind: string }) {
-  const { t } = useTranslation();
-  const labelKey = KIND_LABEL_KEY[kind];
-  return (
-    <span className="px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wide bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-      {labelKey ? t(labelKey) : kind.replace(/_/g, " ")}
+      {down ? <IcArrowDown size={13} /> : <IcArrowUp size={13} />}
+      {label.trim()}
+      {rolledBack && ` · ${t("audits.detail.rolled_back")}`}
     </span>
   );
-}
-
-function DecisionStatus({ row }: { row: AuditDecisionRow }) {
-  const { t } = useTranslation();
-  if (row.rolled_back) {
-    return (
-      <span className="text-xs text-red-700 dark:text-red-400 font-medium">
-        {t("audits.detail.rolled_back")} · {t("audits.detail.effect")}{" "}
-        {fmtEffect(row.effect_pct, t("audits.detail.effect_pending"))}
-      </span>
-    );
-  }
-  if (!row.approved) {
-    return (
-      <span className="text-xs text-zinc-500 font-medium">
-        {t("audits.detail.rejected_label")}
-      </span>
-    );
-  }
-  if (row.applied_change) {
-    return (
-      <span className="text-xs text-green-700 dark:text-green-400 font-medium">
-        {t("audits.detail.approved")} · {t("audits.detail.applied")}
-        {row.effect_pct !== null && (
-          <span className="ml-2 text-zinc-500 font-normal">
-            {t("audits.detail.effect")}{" "}
-            {fmtEffect(row.effect_pct, t("audits.detail.effect_pending"))}
-          </span>
-        )}
-      </span>
-    );
-  }
-  return (
-    <span className="text-xs text-green-700 dark:text-green-400 font-medium">
-      {t("audits.detail.approved")}
-    </span>
-  );
-}
-
-function fmtEffect(pct: number | null, pendingLabel: string): string {
-  if (pct === null) return pendingLabel;
-  const sign = pct >= 0 ? "+" : "";
-  return `${sign}${pct.toFixed(1)}%`;
-}
-
-function fmtDate(iso: string): string {
-  try {
-    return new Date(iso).toLocaleDateString(undefined, {
-      month: "short",
-      day: "numeric",
-    });
-  } catch {
-    return iso;
-  }
 }

@@ -40,7 +40,7 @@ presentation-слой.
 - **Фаза 2 — Контент:** `[x]` Лента ✅ + Упоминания ✅ + Ответы ✅ — всё на проде
 - **Содержимое-колонка расширена до 900px** (Захар: 712 узко на широких мониторах) — применять везде
 - **Studio-композер** = свободный текст + чипы (бэкенд `prompt` добавлен, 303 теста ✅); карточки 1:1 с дизайном
-- **Фаза 3 — Рост (stats/audits/patterns/autopilot):** `[~]` Stats ✅ на проде; audits/patterns/autopilot остаются
+- **Фаза 3 — Рост (stats/audits/patterns/autopilot):** `[~]` Stats ✅ + Audits ✅ на проде; patterns/autopilot остаются
 - **Фаза 4 — Голос (voice/style-rules):** `[ ]`
 - **Фаза 5 — Аккаунт+публичное (settings/onboarding/login/landing/legal):** `[ ]`
 - **Фаза 6 — Закрытие (скриншот-тесты, обе темы, SPEC):** `[ ]`
@@ -242,15 +242,23 @@ presentation-слой.
   выдуманные имена дизайна (breakout/strong/onpar/quiet). Старый набор периодов
   (today/7d/all) убран — если нужен, верну отдельной кнопкой._
 
-### 3b. Audits
+### 3b. Audits — `[x]` готово на проде (2026-06-01)
 **Роут:** `/app/audits` + `/app/audits/[id]` → `audits/page.tsx`,
 `audits/[id]/page.tsx` · **Эталон:** `audits-app.jsx`, `audits-parts.jsx`,
-`audits-change.jsx`, `audits.css` · **Ширина:** 712
-- [ ] Список: audit-row (дата, summary, meta, стрелка; accent-бар у новых)
-- [ ] Деталь: back-link, head+статус, ad-stats (точки-счётчики), coach-нарратив
-- [ ] ChangeCard: kind-бейдж, статус, detail, «view change» (diff), «add note»,
-      effect-чип (±%/«measuring»), approve/reject
-- **Состояния:** loading · list · detail
+`audits-change.jsx`, `audits.css` · **Ширина:** 760 (как в эталоне)
+- [x] Список: audit-row (диапазон дат, meta suggestions/to-review/posts, wow-дельта,
+      стрелка; accent-бар у новых) + плашка «N to review» в топбаре
+- [x] Деталь: back-link, head+статус-бейдж, ad-stats (точки-счётчики), coach-нарратив
+      (BrandMark + параграфы из `llm_reasoning`)
+- [x] ChangeCard: kind-бейдж, статус-бейдж, detail, «view change» (diff before/after
+      или JSON-fallback), «add note», effect-чип (±%/«measuring»), автопилот-часы в
+      локальном TZ, approve/reject
+- [x] harness: фикстуры `AUDITS_LIST` + `AUDIT_DETAIL` (все статусы) + 2 таргета, light+dark ✓
+- **Состояния:** loading · list · detail ✓
+- _**Фронт-онли** (бэкенд не трогал). Решения в бэкенде **append-only** (одно на change,
+  повтор → 409): сделал **немедленные** approve/reject по карточке (вместо старого batch
+  «submit all»), а design-only **Roll back / Reconsider убрал** — пользовательского отката
+  в API нет (откат делает авто-трекер эффекта). Заметка уходит как `user_comment` решения._
 
 ### 3c. Patterns
 **Роут:** `/app/patterns` → `patterns/page.tsx` · **Эталон:** `patterns-app.jsx`,

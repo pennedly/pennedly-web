@@ -376,6 +376,135 @@ const STATS = {
   })),
 };
 
+// Audits — list (mixed reviewed / needs-review) + one detail with a coach
+// narrative and every change state: undecided (with diff + autopilot hours),
+// approved/applied (measuring effect), and rejected (with a note).
+const AUDITS_LIST = {
+  count: 3,
+  audits: [
+    {
+      id: 4101,
+      account_id: 1,
+      period_start: "2026-05-25",
+      period_end: "2026-05-31",
+      posts_analyzed: 18,
+      proposed_change_count: 4,
+      decided_change_count: 2,
+      status: "partial_approved",
+      week_over_week_delta_pct: 8.2,
+      created_at: "2026-06-01T09:00:00Z",
+      applied_at: null,
+    },
+    {
+      id: 4100,
+      account_id: 1,
+      period_start: "2026-05-18",
+      period_end: "2026-05-24",
+      posts_analyzed: 21,
+      proposed_change_count: 3,
+      decided_change_count: 3,
+      status: "fully_approved",
+      week_over_week_delta_pct: -4.1,
+      created_at: "2026-05-25T09:00:00Z",
+      applied_at: "2026-05-25T12:00:00Z",
+    },
+    {
+      id: 4099,
+      account_id: 1,
+      period_start: "2026-05-11",
+      period_end: "2026-05-17",
+      posts_analyzed: 16,
+      proposed_change_count: 2,
+      decided_change_count: 0,
+      status: "pending",
+      week_over_week_delta_pct: 2.5,
+      created_at: "2026-05-18T09:00:00Z",
+      applied_at: null,
+    },
+  ],
+};
+const AUDIT_DETAIL = {
+  id: 4101,
+  account_id: 1,
+  period_start: "2026-05-25",
+  period_end: "2026-05-31",
+  posts_analyzed: 18,
+  metrics_summary: {},
+  week_over_week: { delta_pct: 8.2 },
+  llm_reasoning:
+    "Your shortest posts pulled the most engagement this week — the three under 120 characters out-performed your average by a wide margin.\n\nI'd lean further into that: tighten the opening line and cut the wind-up. I've drafted two small voice edits and a posting-time tweak below.",
+  llm_model: "claude",
+  status: "partial_approved",
+  user_comments: {},
+  applied_at: null,
+  created_at: "2026-06-01T09:00:00Z",
+  proposed_changes: [
+    {
+      id: "c-a",
+      kind: "prompt_edit",
+      title: "Open with the claim, not the wind-up",
+      detail:
+        "Several posts buried the point under a throat-clearing first line. Lead with the strongest sentence.",
+      target_section: "voice_characteristics",
+      diff: {
+        before: "Ease readers in with a gentle, relatable opening.",
+        after: "Open on the sharpest line — the claim, not the warm-up.",
+      },
+    },
+    {
+      id: "c-b",
+      kind: "prompt_edit",
+      title: "Trim hedging language",
+      detail: "Words like “maybe” and “kind of” softened otherwise strong takes.",
+      target_section: "dont_list",
+      diff: { before: "(none)", after: "Avoid hedges: maybe, sort of, I think, kind of." },
+    },
+    {
+      id: "c-c",
+      kind: "autopilot_config",
+      title: "Shift the daily post earlier",
+      detail: "Your 9:00 posts settled lower than the 18:00 ones. Try both windows.",
+      payload: { post_hours: [9, 18] },
+    },
+    {
+      id: "c-d",
+      kind: "prompt_edit",
+      title: "Add more rhetorical questions",
+      detail: "Questions can invite replies — but they don't fit every voice.",
+      target_section: "voice_characteristics",
+      diff: { before: "(none)", after: "Open ~1 in 4 posts with a question." },
+    },
+  ],
+  decisions: [
+    {
+      id: 9001,
+      change_id: "c-b",
+      kind: "prompt_edit",
+      approved: true,
+      user_comment: null,
+      decided_at: "2026-06-01T10:00:00Z",
+      applied_change: { version_id: 77 },
+      rolled_back: false,
+      effect_pct: null,
+      engagement_before_pct: null,
+      engagement_after_pct: null,
+    },
+    {
+      id: 9002,
+      change_id: "c-d",
+      kind: "prompt_edit",
+      approved: false,
+      user_comment: "Not my style — I rarely ask questions.",
+      decided_at: "2026-06-01T10:01:00Z",
+      applied_change: null,
+      rolled_back: false,
+      effect_pct: null,
+      engagement_before_pct: null,
+      engagement_after_pct: null,
+    },
+  ],
+};
+
 async function setup(page: Page): Promise<void> {
   // Seed a token + selected account + locale before any app code runs.
   await page.addInitScript(() => {
@@ -404,6 +533,8 @@ async function setup(page: Page): Promise<void> {
     if (p.includes("/mentions")) return json(MENTIONS);
     if (p.includes("/comments")) return json(COMMENTS);
     if (p.includes("/stats")) return json(STATS);
+    if (/\/audits\/\d+$/.test(p)) return json(AUDIT_DETAIL);
+    if (p.includes("/audits")) return json(AUDITS_LIST);
     if (p.includes("/drafts")) return json({ drafts: DRAFTS, count: DRAFTS.length });
     // Safe default — most list endpoints tolerate an empty array.
     return json([]);
@@ -470,4 +601,22 @@ test("Stats", async ({ page }) => {
   await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
   await page.waitForTimeout(700);
   await shoot(page, "stats");
+});
+
+test("Audits — list", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await setup(page);
+  await page.goto("/app/audits");
+  await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
+  await page.waitForTimeout(700);
+  await shoot(page, "audits-list");
+});
+
+test("Audits — detail", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 1300 });
+  await setup(page);
+  await page.goto("/app/audits/4101");
+  await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
+  await page.waitForTimeout(700);
+  await shoot(page, "audits-detail");
 });

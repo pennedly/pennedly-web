@@ -1,11 +1,11 @@
 "use client";
 
-// Audit list — shows every weekly audit the coach loop has produced
-// for the user's accounts, with a status pill (pending / partial /
-// fully / rejected), counts, and the week-over-week engagement delta.
-//
-// Each row links to the detail page where the user can approve or
-// reject the LLM's proposed changes one by one.
+// Audit list — every weekly audit the coach loop produced for the account.
+// Each row → the detail page where the user approves/rejects proposed changes.
+// Layout per design-export/PennedlyDesign/audits-* (list view): an audit-row
+// with a coach-style date title, a meta line (suggestions / to-review /
+// applied) and a Needs-review / Reviewed badge; rows with pending changes get
+// an accent left-bar.
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -13,29 +13,34 @@ import { useRouter } from "next/navigation";
 
 import { ApiError, clearTokens, getTokens, listAudits } from "@/lib/api";
 import { useSelectedAccountId } from "@/lib/account";
-import { useTranslation, type MessageKey } from "@/lib/i18n";
+import { useTranslation, useLocale } from "@/lib/i18n";
+import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/feedback";
+import { cn } from "@/lib/cn";
+import { IcAudit, IcChevDown } from "@/components/icons";
 import type { AuditSummary } from "@/lib/types";
 
-const STATUS_LABEL_KEY: Record<string, MessageKey> = {
-  pending: "audits.status.pending",
-  partial_approved: "audits.status.partial_approved",
-  fully_approved: "audits.status.fully_approved",
-  rejected: "audits.status.rejected",
-};
+function fmtDate(iso: string, locale: string): string {
+  const loc = locale === "ru" ? "ru-RU" : locale === "en" ? "en-US" : locale;
+  try {
+    return new Date(iso).toLocaleDateString(loc, { month: "short", day: "numeric" });
+  } catch {
+    return iso;
+  }
+}
 
 export default function AuditsPage() {
   const router = useRouter();
   const { t } = useTranslation();
+  const locale = useLocale();
   const accountId = useSelectedAccountId();
   const [audits, setAudits] = useState<AuditSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [bootError, setBootError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!getTokens()) {
-      router.push("/app/login");
-      return;
-    }
+    if (!getTokens()) router.push("/app/login");
   }, [router]);
 
   useEffect(() => {
@@ -58,128 +63,121 @@ export default function AuditsPage() {
     })();
   }, [accountId, router]);
 
-  if (bootError) {
-    return (
-      <main className="max-w-3xl mx-auto px-6 py-16">
-        <div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 p-4 text-sm text-red-800 dark:text-red-200">
-          {bootError}
-        </div>
-      </main>
-    );
-  }
+  const toReview = (a: AuditSummary) =>
+    Math.max(0, a.proposed_change_count - a.decided_change_count);
+  const totalToReview = audits.reduce((n, a) => n + toReview(a), 0);
 
   return (
     <div className="min-h-screen bg-bg text-text">
-      <main className="max-w-3xl mx-auto px-6 py-8 space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {t("audits.title")}
-          </h1>
-          <p className="text-sm text-zinc-500 mt-1">{t("audits.subtitle")}</p>
-        </div>
+      <AppTopbar
+        title={t("audits.title")}
+        pill={
+          totalToReview > 0 ? (
+            <TopbarPill tone="accent">
+              {totalToReview} {t("audits.to_review")}
+            </TopbarPill>
+          ) : undefined
+        }
+      />
+      <main className="mx-auto max-w-[760px] space-y-4 px-5 py-7 md:px-6">
+        <p className="max-w-[64ch] text-small text-text-muted">{t("audits.subtitle")}</p>
 
-        {loading && <p className="text-sm text-zinc-500">{t("common.loading")}</p>}
+        {bootError && (
+          <div className="rounded-lg border border-danger/40 bg-danger/10 p-4 text-small text-danger">
+            {bootError}
+          </div>
+        )}
 
-        {!loading && audits.length === 0 && (
-          <div className="rounded-xl border border-dashed border-border p-8 text-center">
-            <p className="text-sm text-zinc-500">{t("audits.empty")}</p>
+        {loading && !bootError && (
+          <ul className="space-y-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <li key={i} className="rounded-lg border border-border bg-surface p-5 shadow-sm">
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="mt-2.5 h-3 w-3/4" />
+                <Skeleton className="mt-3 h-2.5 w-52" />
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {!loading && !bootError && audits.length === 0 && (
+          <div className="flex flex-col items-center rounded-lg border border-dashed border-border px-7 py-16 text-center">
+            <span className="mb-4 grid h-[54px] w-[54px] place-items-center rounded-lg border border-border bg-surface-2 text-text-subtle">
+              <IcAudit size={26} />
+            </span>
+            <p className="text-h2 font-semibold tracking-tight">{t("audits.empty_title")}</p>
+            <p className="mt-2 max-w-[46ch] text-body leading-relaxed text-text-muted">
+              {t("audits.empty")}
+            </p>
           </div>
         )}
 
         <ul className="space-y-3">
-          {audits.map((a) => (
-            <li key={a.id}>
-              <Link
-                href={`/app/audits/${a.id}`}
-                className="block rounded-xl border border-border bg-surface p-4 shadow-sm hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors"
-              >
-                <div className="flex items-baseline justify-between gap-3 mb-2 flex-wrap">
-                  <div className="flex items-center gap-2 text-xs text-zinc-500">
-                    <StatusBadge status={a.status} />
-                    <span>#{a.id}</span>
-                    <span className="text-zinc-400">·</span>
-                    <span>
-                      {fmtDate(a.period_start)} → {fmtDate(a.period_end)}
-                    </span>
+          {audits.map((a) => {
+            const pending = toReview(a);
+            const isNew = pending > 0;
+            return (
+              <li key={a.id}>
+                <Link
+                  href={`/app/audits/${a.id}`}
+                  className={cn(
+                    "flex items-center gap-4 rounded-lg border bg-surface p-5 shadow-sm transition-colors hover:border-text/15",
+                    isNew ? "border-l-[3px] border-l-accent border-accent/30" : "border-border",
+                  )}
+                  style={{ animation: "card-in 240ms var(--ease-entrance) both" }}
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="text-h3 font-semibold tracking-tight">
+                      {fmtDate(a.period_start, locale)} – {fmtDate(a.period_end, locale)}
+                    </div>
+                    <div className="mt-2.5 flex flex-wrap items-center gap-x-3.5 gap-y-1.5 text-caption text-text-subtle">
+                      <span className="inline-flex items-center gap-1.5">
+                        <IcAudit size={13} />
+                        {a.proposed_change_count} {t("audits.suggestions_word")}
+                      </span>
+                      {pending > 0 ? (
+                        <span className="inline-flex items-center gap-1.5 text-accent">
+                          <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                          {pending} {t("audits.to_review")}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5">
+                          <span className="h-1.5 w-1.5 rounded-full bg-success" />
+                          {t("audits.all_reviewed")}
+                        </span>
+                      )}
+                      <span>
+                        {a.posts_analyzed} {t("audits.posts_analyzed")}
+                      </span>
+                    </div>
                   </div>
-                  {a.week_over_week_delta_pct !== null && (
-                    <DeltaBadge pct={a.week_over_week_delta_pct} />
-                  )}
-                </div>
-                <div className="flex items-center gap-4 text-sm text-text flex-wrap">
-                  <span>
-                    <span className="font-medium">{a.posts_analyzed}</span>{" "}
-                    {t("audits.posts_analyzed")}
-                  </span>
-                  <span className="text-zinc-400">·</span>
-                  <span>
-                    <span className="font-medium">
-                      {a.decided_change_count}
-                    </span>
-                    /{a.proposed_change_count} {t("audits.decided_of_total")}
-                  </span>
-                  {a.proposed_change_count > a.decided_change_count && (
-                    <span className="text-amber-600 dark:text-amber-400 text-xs font-medium">
-                      → {a.proposed_change_count - a.decided_change_count}{" "}
-                      {t("audits.pending_review")}
-                    </span>
-                  )}
-                </div>
-              </Link>
-            </li>
-          ))}
+                  <div className="flex shrink-0 items-center gap-3.5">
+                    {a.week_over_week_delta_pct !== null && (
+                      <span
+                        className={cn(
+                          "text-caption font-semibold tabular-nums",
+                          a.week_over_week_delta_pct >= 0 ? "text-success" : "text-danger",
+                        )}
+                      >
+                        {a.week_over_week_delta_pct >= 0 ? "▲" : "▼"}{" "}
+                        {Math.abs(a.week_over_week_delta_pct).toFixed(1)}% {t("audits.delta_wow")}
+                      </span>
+                    )}
+                    <Badge tone={isNew ? "accent" : "neutral"} dot={isNew}>
+                      {isNew ? t("audits.cstatus_needs") : t("audits.reviewed")}
+                    </Badge>
+                    <IcChevDown
+                      size={18}
+                      className="text-text-subtle"
+                      style={{ transform: "rotate(-90deg)" }}
+                    />
+                  </div>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       </main>
     </div>
   );
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const { t } = useTranslation();
-  const map: Record<string, string> = {
-    pending:
-      "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
-    partial_approved:
-      "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
-    fully_approved:
-      "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300",
-    rejected:
-      "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400",
-  };
-  const cls = map[status] ?? map["pending"];
-  const labelKey = STATUS_LABEL_KEY[status];
-  return (
-    <span
-      className={`px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wide ${cls}`}
-    >
-      {labelKey ? t(labelKey) : status.replace(/_/g, " ")}
-    </span>
-  );
-}
-
-function DeltaBadge({ pct }: { pct: number }) {
-  const { t } = useTranslation();
-  const up = pct >= 0;
-  return (
-    <span
-      className={`text-xs font-medium tabular-nums ${
-        up
-          ? "text-green-700 dark:text-green-400"
-          : "text-red-700 dark:text-red-400"
-      }`}
-    >
-      {up ? "▲" : "▼"} {Math.abs(pct).toFixed(1)}% {t("audits.delta_wow")}
-    </span>
-  );
-}
-
-function fmtDate(iso: string): string {
-  try {
-    return new Date(iso).toLocaleDateString(undefined, {
-      month: "short",
-      day: "numeric",
-    });
-  } catch {
-    return iso;
-  }
 }
