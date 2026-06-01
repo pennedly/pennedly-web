@@ -41,7 +41,7 @@ presentation-слой.
 - **Содержимое-колонка расширена до 900px** (Захар: 712 узко на широких мониторах) — применять везде
 - **Studio-композер** = свободный текст + чипы (бэкенд `prompt` добавлен, 303 теста ✅); карточки 1:1 с дизайном
 - **Фаза 3 — Рост (stats/audits/patterns/autopilot):** `[x]` Stats ✅ + Audits ✅ + Patterns ✅ + Autopilot ✅ — вся фаза на проде
-- **Фаза 4 — Голос (voice/style-rules):** `[ ]` следующая
+- **Фаза 4 — Голос (voice/style-rules):** `[~]` Voice ✅ на проде; style-rules остаётся
 - **Фаза 5 — Аккаунт+публичное (settings/onboarding/login/landing/legal):** `[ ]`
 - **Фаза 6 — Закрытие (скриншот-тесты, обе темы, SPEC):** `[ ]`
 
@@ -296,14 +296,21 @@ presentation-слой.
 
 # ФАЗА 4 — Голос
 
-### 4a. Voice (role-book)
+### 4a. Voice (role-book) — `[x]` готово на проде (2026-06-01)
 **Роут:** `/app/role-book` → `role-book/page.tsx` · **Эталон:** `voice-app.jsx`,
 `voice-parts.jsx`, `voice.css` · **Ширина:** 760
-- [ ] Voice-hero (meta, match %, кнопки «Check for conflicts» + «Re-extract»)
-- [ ] Секции: intro / themes / traits / examples — редактируемые (save, lock когда busy)
-- [ ] Voice-check: conflict-карточки (severity, suggested fix → Apply/Dismiss, анимация)
-- [ ] Re-extract панель прогресса + confirm-диалог
-- **Состояния:** boot-loading · ready · busy(re-extract) · conflicts
+- [x] Voice-hero (eyebrow + заголовок + версия v{id}·parent + «Check voice» + «Re-extract»)
+- [x] **Все 7 реальных секций** (решение Захара) в стиле дизайн-карт с inline-Edit/Save:
+      intro / themes_include / themes_exclude(danger) / voice_characteristics / do / dont(danger) / examples
+- [x] Voice-check: conflict-карточки из бэкенд-lint (severity high→Conflict/medium→Caution,
+      rules, why, suggested fix → Apply (если есть fix) / Ignore) + clear-состояние + Re-check
+- [x] Re-extract: панель прогресса (перо + шаги) + confirm-диалог с предупреждением
+- [x] Перенёс недостающие иконки из `voice-icons.jsx` (Scan/Refresh/Shield/Alert/Tags/List/Quote)
+- [x] harness: фикстуры `ROLE_BOOK` + `VOICE_LINT` + таргет (загрузка + проверка), light+dark ✓
+- **Состояния:** boot-loading · ready · busy(re-extract) · conflicts ✓
+- _**Фронт-онли** (бэкенд role-book/lint/apply-fix/extract готов). «Совпадение %» — нет такой
+  метрики в бэкенде, не показываю. Тяжёлый «translated/original» вид убран; перевод —
+  через прозрачность-блок (TranslateButton снизу)._
 
 ### 4b. Style rules
 **Роут:** `/app/style-rules` → `style-rules/page.tsx` · **Эталон:**

@@ -623,6 +623,53 @@ const AUTOPOST_ACTIVITY = {
   ],
 };
 
+// Voice (role-book) — a populated book + a lint result with one high
+// conflict (one-click fix) and one medium caution (manual).
+const ROLE_BOOK = {
+  role_book_id: 12,
+  parent_id: 11,
+  sections: {
+    intro: "A working writer sharing the craft in plain, lived-in language — never lecturing, always mid-thought.",
+    themes_include: ["Writing craft", "Habits & consistency"],
+    themes_exclude: ["Crypto / NFTs"],
+    voice_characteristics: ["Short, declarative sentences", "Lead with the claim, not the wind-up"],
+    do_list: ["Open with a concrete moment", "End on a line that resonates"],
+    dont_list: ["No hashtags", "No corporate buzzwords"],
+    examples: ["Cut 600 words this morning. The 400 that survived are the only ones that ever mattered."],
+  },
+  prompt_text:
+    "You are Mara Lin, a working writer. Write in short, declarative sentences. Lead with the claim. Topics: writing craft, habits. Never: crypto. Avoid hashtags and corporate buzzwords.",
+};
+const VOICE_LINT = {
+  conflicts: [
+    {
+      severity: "high",
+      title: "Two rules disagree on length",
+      description:
+        "One trait asks for short, declarative lines, but an example runs long and discursive — drafts get mixed signals about how tight to be.",
+      items: [
+        { section: "voice_characteristics", text: "Short, declarative sentences" },
+        { section: "examples", text: "Cut 600 words this morning. The 400 that survived are the only ones that ever mattered." },
+      ],
+      suggestion: "Drop the long example, or soften the 'short sentences' rule to allow the occasional longer line.",
+      fix: { kind: "remove_item", section: "examples", text: "Cut 600 words this morning. The 400 that survived are the only ones that ever mattered." },
+    },
+    {
+      severity: "medium",
+      title: "Possible tension around discoverability",
+      description: "The don't-list bans hashtags, which is fine — just confirm you're not relying on them for reach.",
+      items: [{ section: "dont_list", text: "No hashtags" }],
+      suggestion: "Keep as-is if hashtags aren't your style.",
+      fix: null,
+    },
+  ],
+  linted_sections: {},
+  llm_model: "claude",
+  prompt_tokens: 0,
+  completion_tokens: 0,
+  latency_ms: 0,
+};
+
 async function setup(page: Page): Promise<void> {
   // Seed a token + selected account + locale before any app code runs.
   await page.addInitScript(() => {
@@ -658,6 +705,10 @@ async function setup(page: Page): Promise<void> {
     if (p.endsWith("/autopost-rules")) return json(AUTOPOST_RULES);
     if (p.includes("/autopost-activity")) return json(AUTOPOST_ACTIVITY);
     if (p.endsWith("/autopilot")) return json(AUTOPILOT_CONFIG);
+    if (p.includes("/role-book/lint")) return json(VOICE_LINT);
+    if (p.includes("/role-book/apply-fix") || p.includes("/role-book/extract"))
+      return json(ROLE_BOOK);
+    if (p.includes("/role-book")) return json(ROLE_BOOK);
     if (p.includes("/drafts")) return json({ drafts: DRAFTS, count: DRAFTS.length });
     // Safe default — most list endpoints tolerate an empty array.
     return json([]);
@@ -770,4 +821,17 @@ test("Autopilot", async ({ page }) => {
   await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
   await page.waitForTimeout(700);
   await shoot(page, "autopilot");
+});
+
+test("Voice", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 1500 });
+  await setup(page);
+  await page.goto("/app/role-book");
+  await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
+  await page.waitForTimeout(700);
+  await shoot(page, "voice");
+  // Run the conflict check → the voice-check panel.
+  await page.getByRole("button", { name: /check voice/i }).click();
+  await page.waitForTimeout(900);
+  await shoot(page, "voice-check");
 });
