@@ -889,3 +889,18 @@ test("Onboarding", async ({ page }) => {
   await page.waitForTimeout(3400);
   await shoot(page, "onboarding-done");
 });
+
+test("Login", async ({ page }) => {
+  // Full-screen, shell-exempt — no sidebar; wait on the card's <h1>.
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await setup(page);
+  await page.goto("/app/login");
+  await page.waitForSelector("h1", { state: "visible", timeout: 15_000 });
+  await page.waitForTimeout(500);
+  await shoot(page, "login");
+  // Request a code → the 6-cell OTP view.
+  await page.getByPlaceholder("you@example.com").fill("mara@pennedly.app");
+  await page.getByRole("button", { name: /email me a code/i }).click();
+  await page.waitForTimeout(600);
+  await shoot(page, "login-code");
+});

@@ -42,7 +42,7 @@ presentation-слой.
 - **Studio-композер** = свободный текст + чипы (бэкенд `prompt` добавлен, 303 теста ✅); карточки 1:1 с дизайном
 - **Фаза 3 — Рост (stats/audits/patterns/autopilot):** `[x]` Stats ✅ + Audits ✅ + Patterns ✅ + Autopilot ✅ — вся фаза на проде
 - **Фаза 4 — Голос (voice/style-rules):** `[x]` Voice ✅ + Style rules ✅ — вся фаза на проде
-- **Фаза 5 — Аккаунт+публичное (settings/onboarding/login/landing/legal):** `[~]` Settings ✅ + Onboarding ✅ на проде; login/landing/legal остаются
+- **Фаза 5 — Аккаунт+публичное (settings/onboarding/login/landing/legal):** `[~]` Settings ✅ + Onboarding ✅ + Login ✅ на проде; landing/legal остаются
 - **Фаза 6 — Закрытие (скриншот-тесты, обе темы, SPEC):** `[ ]`
 
 ---
@@ -360,13 +360,17 @@ presentation-слой.
   после возврата load видит аккаунт → choose). Стартеры/подсказки-чипы из дизайна упростил
   (TagInput без suggestions) — декоративные хелперы, добавить позже._
 
-### 5c. Login
+### 5c. Login ✅ (на проде)
 **Роут:** `/app/login` → `login/page.tsx` · **Эталон:** `login-app.jsx`,
 `login-parts.jsx`, `login.css` · центр-карта (rounded-2xl), радиальный фон
-- [ ] LanguageSwitcher (верх-право), брендовая шапка карты
-- [ ] Google-кнопка → «OR» → email-форма → OTP (6 ячеек, shake при ошибке) →
-      «signing in» лоадер; consent-строка; dev-drawer (скрытый)
-- **Состояния:** email · code · signing-in · error
+- [x] LanguageSwitcher (верх-право), брендовая шапка карты
+- [x] Google-кнопка (монохромный «G» как в эталоне) → «OR» → email-форма → OTP
+      (6 ячеек, auto-advance/paste, shake при ошибке) → «signing in» лоадер;
+      consent-строка (Terms/Privacy); dev-drawer (скрытый)
+- **Состояния:** email · code · signing-in · error — все по эталону
+- _Логика сохранена 1:1: magic-link (?token), Google-handoff (?handoff),
+  email-code, dev-login. Keyframes `shake`+`nibwrite` добавлены в globals.css
+  (последний оживил перья на Patterns/Voice/Onboarding — раньше no-op)._
 
 ### 5d. Landing
 **Роут:** `/` → `src/app/page.tsx` · **Эталон:** `landing-app.jsx`,

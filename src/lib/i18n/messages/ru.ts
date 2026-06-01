@@ -83,6 +83,15 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "login.dev_submit": "войти (dev)",
   "login.dev_signing_in": "вход…",
   "login.dev_disabled": "dev-вход отключён на бэкенде.",
+  "login.email_title": "Вход в Pennedly",
+  "login.email_sub": "Без пароля — пришлём код на почту.",
+  "login.code_title": "Введите код",
+  "login.code_sub": "Он действует 10 минут. Можно вставить целиком.",
+  "login.signing_title": "Входим",
+  "login.signing_sub": "Секундочку — это быстро.",
+  "login.no_code_q": "Не пришло?",
+  "login.resend": "Отправить ещё раз",
+  "login.resend_in": "Повтор через {n}с",
 
   // ── Dashboard ──────────────────────────────────────────────────
   "dashboard.nav.voice": "голос",

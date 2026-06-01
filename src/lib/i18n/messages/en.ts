@@ -82,6 +82,15 @@ export const en = {
   "login.dev_submit": "dev sign in",
   "login.dev_signing_in": "signing in…",
   "login.dev_disabled": "dev-login is disabled on the backend.",
+  "login.email_title": "Sign in to Pennedly",
+  "login.email_sub": "Passwordless — we'll email you a code.",
+  "login.code_title": "Enter your code",
+  "login.code_sub": "It expires in 10 minutes. You can paste it straight in.",
+  "login.signing_title": "Signing in",
+  "login.signing_sub": "Hold tight — this only takes a second.",
+  "login.no_code_q": "Didn't get it?",
+  "login.resend": "Resend code",
+  "login.resend_in": "Resend in {n}s",
 
   // ── Dashboard ──────────────────────────────────────────────────
   "dashboard.nav.voice": "voice",

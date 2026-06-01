@@ -1,19 +1,12 @@
 "use client";
 
-// Sign-in page — primarily magic-link via email.
-//
-// Two phases the user can be in:
-//   1. Email form  — they came here to sign in. Submit POSTs
-//      /api/auth/magic-link/request, then we show a "check your
-//      email" confirmation. The same form is used to resend.
-//   2. Token consume — they clicked a link in their email. The URL
-//      carries ?token=xxx; on mount we POST /consume, set tokens,
-//      hydrate identity, redirect to /app.
-//
-// Dev-login form is collapsed by default under a "developer mode"
-// toggle so it doesn't pollute the primary flow for real users.
+// Sign-in — passwordless. Centered card on a soft radial stage, per
+// design-export/PennedlyDesign/login-* : Google → OR → email → a 6-cell OTP
+// code → a brief "signing in" state. Magic-link (?token) and Google handoff
+// (?handoff) are still consumed on mount; the dev-login drawer is hidden.
+// Frontend restyle — the email-code / Google / magic-link APIs back it.
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import {
@@ -28,8 +21,107 @@ import {
   verifyEmailCode,
 } from "@/lib/api";
 import { captureEvent, identify } from "@/lib/analytics";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { Button, buttonClasses } from "@/components/ui/button";
+import { BrandMark, IcAlert, IcArrowRight, IcMail, IcSettings } from "@/components/icons";
+import { cn } from "@/lib/cn";
+
+const RADIAL =
+  "radial-gradient(120% 75% at 50% -8%, color-mix(in srgb, var(--color-surface) 55%, transparent) 0%, transparent 58%), var(--color-bg)";
+
+function Alert({ text }: { text: string | null }) {
+  if (!text) return null;
+  return (
+    <div className="mt-3 flex items-start gap-2 rounded-md border border-danger/30 bg-danger/[0.08] px-3 py-2.5" role="alert">
+      <IcAlert size={16} className="mt-px shrink-0 text-danger" />
+      <span className="text-small leading-snug text-danger">{text}</span>
+    </div>
+  );
+}
+
+function OtpInput({
+  value,
+  onChange,
+  error,
+  onComplete,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  error: boolean;
+  onComplete: (v: string) => void;
+}) {
+  const refs = useRef<(HTMLInputElement | null)[]>([]);
+  function setDigit(i: number, d: string): string {
+    const next = value.split("");
+    next[i] = d;
+    const joined = next.join("").slice(0, 6);
+    onChange(joined);
+    return joined;
+  }
+  function handleChange(i: number, raw: string) {
+    const d = (raw.match(/\d/g) || []).join("");
+    if (!d) {
+      setDigit(i, "");
+      return;
+    }
+    if (d.length > 1) {
+      const joined = (value.slice(0, i) + d).slice(0, 6);
+      onChange(joined);
+      requestAnimationFrame(() => refs.current[Math.min(joined.length, 5)]?.focus());
+      if (joined.length === 6) onComplete(joined);
+      return;
+    }
+    const joined = setDigit(i, d);
+    if (i < 5) refs.current[i + 1]?.focus();
+    if (joined.length === 6 && !joined.includes("")) onComplete(joined);
+  }
+  function handleKey(i: number, e: React.KeyboardEvent) {
+    if (e.key === "Backspace") {
+      if (value[i]) setDigit(i, "");
+      else if (i > 0) {
+        refs.current[i - 1]?.focus();
+        setDigit(i - 1, "");
+      }
+    } else if (e.key === "ArrowLeft" && i > 0) refs.current[i - 1]?.focus();
+    else if (e.key === "ArrowRight" && i < 5) refs.current[i + 1]?.focus();
+  }
+  function handlePaste(e: React.ClipboardEvent) {
+    const d = (e.clipboardData.getData("text").match(/\d/g) || []).join("").slice(0, 6);
+    if (!d) return;
+    e.preventDefault();
+    onChange(d);
+    requestAnimationFrame(() => refs.current[Math.min(d.length, 5)]?.focus());
+    if (d.length === 6) onComplete(d);
+  }
+  return (
+    <div
+      className="mt-1 flex justify-center gap-2.5"
+      onPaste={handlePaste}
+      style={error ? { animation: "shake 0.35s var(--ease-standard)" } : undefined}
+    >
+      {Array.from({ length: 6 }).map((_, i) => (
+        <input
+          key={i}
+          ref={(el) => {
+            refs.current[i] = el;
+          }}
+          inputMode="numeric"
+          maxLength={1}
+          aria-label={`Digit ${i + 1}`}
+          autoFocus={i === 0}
+          value={value[i] || ""}
+          onChange={(e) => handleChange(i, e.target.value)}
+          onKeyDown={(e) => handleKey(i, e)}
+          className={cn(
+            "h-14 w-11 rounded-md border text-center text-h3 font-semibold tabular-nums text-text outline-none transition-colors focus:border-accent",
+            error ? "border-danger" : value[i] ? "border-border bg-surface-2" : "border-border bg-surface",
+          )}
+        />
+      ))}
+    </div>
+  );
+}
 
 function LoginPageInner() {
   const router = useRouter();
@@ -39,25 +131,35 @@ function LoginPageInner() {
   const incomingHandoff = searchParams.get("handoff");
   const authErrorParam = searchParams.get("auth_error");
 
+  const [view, setView] = useState<"email" | "code" | "signing">(
+    incomingToken || incomingHandoff ? "signing" : "email",
+  );
   const [email, setEmail] = useState("");
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Sign-in is by an emailed 6-digit code (the only method).
   const [code, setCode] = useState("");
-  const [codeSent, setCodeSent] = useState(false);
+  const [pending, setPending] = useState(false);
   const [verifying, setVerifying] = useState(false);
-
-  // Dev-login bottom drawer (hidden by default)
+  const [error, setError] = useState<string | null>(null);
+  const [resendIn, setResendIn] = useState(0);
   const [devOpen, setDevOpen] = useState(false);
   const [devEmail, setDevEmail] = useState("");
+  const cdRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Magic-link consume on mount when ?token=xxx is present.
-  const [consumeState, setConsumeState] = useState<
-    "idle" | "consuming" | "failed"
-  >(incomingToken || incomingHandoff ? "consuming" : "idle");
-  const [consumeError, setConsumeError] = useState<string | null>(null);
+  function startCooldown() {
+    setResendIn(30);
+    if (cdRef.current) clearInterval(cdRef.current);
+    cdRef.current = setInterval(() => {
+      setResendIn((s) => {
+        if (s <= 1) {
+          if (cdRef.current) clearInterval(cdRef.current);
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+  }
+  useEffect(() => () => void (cdRef.current && clearInterval(cdRef.current)), []);
 
+  // Magic-link consume on mount when ?token=… is present.
   useEffect(() => {
     if (!incomingToken) return;
     (async () => {
@@ -69,30 +171,24 @@ function LoginPageInner() {
           identify(me.user_id, me.email, me.tenant.id);
           captureEvent("ui.login_succeeded", { method: "magic_link" });
         } catch {
-          // identity hydration is best-effort
+          /* best-effort */
         }
         router.push("/app");
       } catch (e) {
-        if (e instanceof ApiError) {
-          setConsumeError(
-            e.status === 410
-              ? t("login.link_invalid")
-              : `${t("login.signin_failed")} (${e.status}).`,
-          );
-        } else {
-          setConsumeError(String(e));
-        }
-        setConsumeState("failed");
+        setError(
+          e instanceof ApiError && e.status === 410 ? t("login.link_invalid") : t("login.signin_failed"),
+        );
+        setView("email");
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Google sign-in returns here: ?handoff=… → swap for a session;
-  // ?auth_error=… → show a generic error on the form.
+  // Google sign-in returns here: ?handoff=… → session; ?auth_error=… → error.
   useEffect(() => {
     if (authErrorParam) {
       setError(t("login.google_error"));
+      setView("email");
       return;
     }
     if (!incomingHandoff) return;
@@ -105,16 +201,12 @@ function LoginPageInner() {
           identify(me.user_id, me.email, me.tenant.id);
           captureEvent("ui.login_succeeded", { method: "google" });
         } catch {
-          // identity hydration is best-effort
+          /* best-effort */
         }
         router.push("/app");
-      } catch (e) {
-        setConsumeError(
-          e instanceof ApiError && e.status === 410
-            ? t("login.google_error")
-            : `${t("login.signin_failed")}.`,
-        );
-        setConsumeState("failed");
+      } catch {
+        setError(t("login.signin_failed"));
+        setView("email");
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -127,54 +219,65 @@ function LoginPageInner() {
     captureEvent("ui.signin_requested", { email_length: email.length });
     try {
       await requestEmailCode(email, locale);
-      setCodeSent(true);
+      setCode("");
+      setView("code");
+      startCooldown();
     } catch (e) {
-      if (e instanceof ApiError) {
-        if (e.status === 429) {
-          setError(t("login.rate_limited"));
-        } else if (e.status === 503) {
-          setError(t("login.email_down"));
-        } else {
-          setError(`${t("login.signin_failed")} (${e.status}).`);
-        }
-      } else {
-        setError(String(e));
-      }
+      setError(
+        e instanceof ApiError
+          ? e.status === 429
+            ? t("login.rate_limited")
+            : e.status === 503
+              ? t("login.email_down")
+              : `${t("login.signin_failed")} (${e.status}).`
+          : String(e),
+      );
     } finally {
       setPending(false);
     }
   }
 
-  async function onVerifyCode(e: React.FormEvent) {
-    e.preventDefault();
+  async function onVerify(value: string) {
+    if (value.length < 6 || verifying) return;
     setError(null);
     setVerifying(true);
+    setView("signing");
     captureEvent("ui.email_code_verify", { email_length: email.length });
     try {
-      const pair = await verifyEmailCode(email, code.trim());
+      const pair = await verifyEmailCode(email, value.trim());
       setTokens(pair);
       try {
         const me = await fetchMe();
         identify(me.user_id, me.email, me.tenant.id);
         captureEvent("ui.login_succeeded", { method: "email_code" });
       } catch {
-        // identity hydration is best-effort
+        /* best-effort */
       }
       router.push("/app");
     } catch (e) {
-      if (e instanceof ApiError) {
-        setError(
-          e.status === 410
+      setError(
+        e instanceof ApiError
+          ? e.status === 410
             ? t("login.code_invalid")
             : e.status === 429
               ? t("login.rate_limited")
-              : `${t("login.signin_failed")} (${e.status}).`,
-        );
-      } else {
-        setError(String(e));
-      }
-    } finally {
+              : `${t("login.signin_failed")} (${e.status}).`
+          : String(e),
+      );
+      setView("code");
       setVerifying(false);
+    }
+  }
+
+  async function onResend() {
+    if (resendIn > 0) return;
+    setError(null);
+    captureEvent("ui.signin_requested", { email_length: email.length, resend: true });
+    try {
+      await requestEmailCode(email, locale);
+      startCooldown();
+    } catch {
+      setError(t("login.signin_failed"));
     }
   }
 
@@ -188,223 +291,175 @@ function LoginPageInner() {
       try {
         const me = await fetchMe();
         identify(me.user_id, me.email, me.tenant.id);
-        captureEvent("ui.login_succeeded", { method: "dev_login" });
       } catch {
-        // best-effort
+        /* best-effort */
       }
       router.push("/app");
     } catch (e) {
-      if (e instanceof ApiError) {
-        if (e.status === 404) {
-          setError(t("login.dev_disabled"));
-        } else if (e.status === 429) {
-          setError(t("login.rate_limited"));
-        } else {
-          setError(`${t("login.signin_failed")} (${e.status}).`);
-        }
-      } else {
-        setError(String(e));
-      }
+      setError(
+        e instanceof ApiError && e.status === 404 ? t("login.dev_disabled") : t("login.signin_failed"),
+      );
     } finally {
       setPending(false);
     }
   }
 
+  const head: { title: MessageKey; sub: MessageKey } =
+    view === "signing"
+      ? { title: "login.signing_title", sub: "login.signing_sub" }
+      : view === "code"
+        ? { title: "login.code_title", sub: "login.code_sub" }
+        : { title: "login.email_title", sub: "login.email_sub" };
+
   return (
-    <main className="max-w-md mx-auto px-6 py-12 font-sans text-text">
-      <div className="flex items-start justify-between mb-1">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {t("app.brand")}
-        </h1>
+    <div className="flex min-h-screen flex-col text-text" style={{ background: RADIAL }}>
+      <div className="flex justify-end p-5">
         <LanguageSwitcher />
       </div>
-      <p className="text-sm text-zinc-500 mb-8">{t("app.tagline")}</p>
 
-      {/* Magic-link consume state */}
-      {consumeState === "consuming" && (
-        <div className="rounded-lg border border-border bg-surface p-5 text-sm">
-          <div className="flex items-center gap-2">
-            <span
-              className="inline-block w-3 h-3 border-2 border-zinc-400 border-t-transparent rounded-full animate-spin"
-              aria-hidden
-            />
-            {t("login.signing_in")}
+      <div className="flex flex-1 items-start justify-center px-5 pb-12 pt-2">
+        <div className="w-full max-w-[400px] rounded-2xl border border-border bg-surface p-7 shadow-md">
+          <div className="flex flex-col items-center text-center">
+            <BrandMark size={52} radius={14} className="shadow-sm" />
+            <h1 className="mt-4 text-h2 font-semibold tracking-tight">{t(head.title)}</h1>
+            <p className="mt-1.5 text-small text-text-muted">{t(head.sub)}</p>
           </div>
-        </div>
-      )}
 
-      {consumeState === "failed" && consumeError && (
-        <div className="rounded-lg border border-amber-300 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/30 p-4 text-sm text-amber-900 dark:text-amber-200 mb-4">
-          {consumeError}
-        </div>
-      )}
-
-      {/* Primary: magic-link email form. Hidden while we're consuming
-          to avoid flashing the form mid-redirect. */}
-      {consumeState !== "consuming" && (
-        <>
-          {codeSent ? (
-            <form onSubmit={onVerifyCode} className="space-y-3">
-              <div className="rounded-lg border border-border bg-surface-2 p-3 text-sm text-text-muted">
-                {t("login.code_sent_to")}{" "}
-                <span className="font-medium text-text">{email}</span>
-              </div>
-              <label className="block">
-                <span className="text-sm text-text-muted">
-                  {t("login.code_label")}
-                </span>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  required
-                  autoFocus
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  placeholder={t("login.code_placeholder")}
-                  className="mt-1 w-full px-3 py-2 rounded-md border border-border bg-surface text-sm tracking-[0.3em] focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700"
-                />
-              </label>
-              {error && (
-                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-              )}
-              <button
-                type="submit"
-                disabled={verifying || !code}
-                className="w-full px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
-              >
-                {verifying ? t("login.verifying") : t("login.verify")}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setCodeSent(false);
-                  setCode("");
-                  setError(null);
-                }}
-                className="text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 underline"
-              >
-                {t("login.use_different_email")}
-              </button>
-            </form>
-          ) : (
-            <form onSubmit={onRequestCode} className="space-y-3">
-              {/* Continue with Google — full-page nav to the backend, which
-                  redirects to Google's consent screen. */}
+          {view === "signing" ? (
+            <div className="flex flex-col items-center gap-3 py-8">
+              <span className="inline-block h-7 w-7 animate-spin rounded-full border-2 border-accent border-t-transparent" aria-hidden />
+              <span className="text-small text-text-muted">{t("login.signing_in")}</span>
+            </div>
+          ) : view === "email" ? (
+            <div className="mt-6">
               <a
                 href={googleSignInUrl()}
-                className="flex w-full items-center justify-center gap-2 rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium text-text hover:bg-surface-2 transition-colors"
+                className={buttonClasses({ variant: "secondary", className: "w-full" })}
               >
-                <svg width="16" height="16" viewBox="0 0 18 18" aria-hidden>
-                  <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.49h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.63Z" />
-                  <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18Z" />
-                  <path fill="#FBBC05" d="M3.97 10.72a5.41 5.41 0 0 1 0-3.44V4.95H.96a9 9 0 0 0 0 8.1l3.01-2.33Z" />
-                  <path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58Z" />
-                </svg>
+                <span className="grid h-[22px] w-[22px] place-items-center rounded-sm border border-border bg-surface-2 text-small font-bold leading-none text-text">
+                  G
+                </span>
                 {t("login.google_button")}
               </a>
 
-              <div className="flex items-center gap-3 py-1">
+              <div className="my-[18px] flex items-center gap-3">
                 <span className="h-px flex-1 bg-border" />
-                <span className="text-xs text-zinc-400">{t("login.or")}</span>
+                <span className="text-caption uppercase tracking-wide text-text-subtle">{t("login.or")}</span>
                 <span className="h-px flex-1 bg-border" />
               </div>
 
-              <label className="block">
-                <span className="text-sm text-text-muted">
-                  {t("login.email_label")}
-                </span>
-                <input
-                  type="email"
-                  required
-                  autoFocus
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="mt-1 w-full px-3 py-2 rounded-md border border-border bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700"
-                  placeholder={t("login.email_placeholder")}
-                />
-              </label>
+              <form onSubmit={onRequestCode}>
+                <label className="block">
+                  <span className="text-small text-text-muted">{t("login.email_label")}</span>
+                  <input
+                    type="email"
+                    required
+                    autoFocus
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder={t("login.email_placeholder")}
+                    className={cn(
+                      "mt-1 h-10 w-full rounded-md border bg-surface px-3 text-small text-text outline-none focus:border-accent",
+                      error ? "border-danger" : "border-border",
+                    )}
+                  />
+                </label>
+                <Alert text={error} />
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className="mt-3 w-full"
+                  loading={pending}
+                  disabled={pending || !email}
+                  icon={<IcMail size={17} />}
+                >
+                  {pending ? t("login.sending") : t("login.submit_code")}
+                </Button>
+              </form>
 
-              {error && (
-                <p className="text-sm text-red-600 dark:text-red-400">
-                  {error}
-                </p>
-              )}
-
-              <button
-                type="submit"
-                disabled={pending || !email}
-                className="w-full px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
-              >
-                {pending ? t("login.sending") : t("login.submit_code")}
-              </button>
-
-              <p className="text-xs text-zinc-500 leading-relaxed pt-2">
-                {t("login.no_password_code")}
+              <p className="mt-5 text-center text-caption leading-relaxed text-text-subtle">
+                {t("login.consent_prefix")}{" "}
+                <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-text">
+                  {t("login.consent_terms")}
+                </a>{" "}
+                {t("login.consent_and")}{" "}
+                <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-text">
+                  {t("login.consent_privacy")}
+                </a>
+                .
               </p>
-            </form>
+            </div>
+          ) : (
+            <div className="mt-6">
+              <p className="text-center text-small text-text-muted">
+                {t("login.code_sent_to")} <b className="text-text">{email}</b>.{" "}
+                <button
+                  onClick={() => {
+                    setView("email");
+                    setCode("");
+                    setError(null);
+                  }}
+                  className="text-accent underline-offset-2 hover:underline"
+                >
+                  {t("login.use_different_email")}
+                </button>
+              </p>
+
+              <OtpInput value={code} onChange={(v) => { setCode(v); if (error) setError(null); }} error={!!error} onComplete={onVerify} />
+              <Alert text={error} />
+
+              <Button
+                variant="primary"
+                className="mt-4 w-full"
+                onClick={() => onVerify(code)}
+                loading={verifying}
+                disabled={code.length < 6 || verifying}
+              >
+                {t("login.verify")}
+                <IcArrowRight size={17} />
+              </Button>
+              <div className="mt-3 text-center text-caption text-text-subtle">
+                {t("login.no_code_q")}{" "}
+                <button onClick={onResend} disabled={resendIn > 0} className="text-accent underline-offset-2 hover:underline disabled:text-text-subtle disabled:no-underline">
+                  {resendIn > 0 ? t("login.resend_in").replace("{n}", String(resendIn)) : t("login.resend")}
+                </button>
+              </div>
+            </div>
           )}
+        </div>
+      </div>
 
-          {/* Consent — applies to every sign-in method (Google + code). */}
-          <p className="mt-5 text-center text-xs leading-relaxed text-zinc-400">
-            {t("login.consent_prefix")}{" "}
-            <a
-              href="/terms"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline hover:text-zinc-600 dark:hover:text-zinc-300"
-            >
-              {t("login.consent_terms")}
-            </a>{" "}
-            {t("login.consent_and")}{" "}
-            <a
-              href="/privacy"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline hover:text-zinc-600 dark:hover:text-zinc-300"
-            >
-              {t("login.consent_privacy")}
-            </a>
-            .
-          </p>
-        </>
-      )}
-
-      {/* Dev-login drawer */}
-      <div className="mt-12 pt-6 border-t border-border">
+      {/* Dev-login drawer (hidden) */}
+      <div className="mx-auto w-full max-w-[400px] px-5 pb-8">
         <button
           type="button"
           onClick={() => setDevOpen((o) => !o)}
-          className="text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
+          className="inline-flex items-center gap-1.5 text-caption text-text-subtle transition-colors hover:text-text-muted"
         >
+          <IcSettings size={13} />
           {devOpen ? t("login.dev_toggle_hide") : t("login.dev_toggle_show")}
         </button>
         {devOpen && (
-          <form onSubmit={onDevSubmit} className="mt-3 space-y-2">
-            <p className="text-xs text-zinc-500">{t("login.dev_explainer")}</p>
+          <form onSubmit={onDevSubmit} className="mt-3 space-y-2 rounded-md border border-border bg-surface p-3">
+            <p className="text-caption text-text-subtle">{t("login.dev_explainer")}</p>
             <input
               type="email"
               value={devEmail}
               onChange={(e) => setDevEmail(e.target.value)}
               placeholder={t("login.email_placeholder")}
-              className="w-full px-3 py-1.5 rounded-md border border-border bg-surface text-xs focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700"
+              className="h-9 w-full rounded-md border border-border bg-surface px-3 text-small text-text outline-none focus:border-accent"
             />
-            <button
-              type="submit"
-              disabled={pending || !devEmail}
-              className="text-xs px-3 py-1.5 rounded-md border border-border text-text hover:bg-surface-2 disabled:opacity-50 transition-colors"
-            >
+            <Button type="submit" size="sm" variant="secondary" loading={pending} disabled={pending || !devEmail}>
               {pending ? t("login.dev_signing_in") : t("login.dev_submit")}
-            </button>
+            </Button>
           </form>
         )}
       </div>
-    </main>
+    </div>
   );
 }
 
 export default function LoginPage() {
-  // useSearchParams must be inside a Suspense boundary for streaming SSR.
   return (
     <Suspense fallback={null}>
       <LoginPageInner />
