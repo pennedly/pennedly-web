@@ -463,8 +463,12 @@ export type RefineResult = {
 
 export type Pattern = {
   name: string;
+  /** One-word category (Hook / Structure / Cadence / …). "" on older data. */
+  kind: string;
   technique: string;
   why_it_works: string;
+  /** The single verbatim source line where the move is clearest. "" on older data. */
+  spotted: string;
   example: string;
   suggested_do_rule: string;
 };

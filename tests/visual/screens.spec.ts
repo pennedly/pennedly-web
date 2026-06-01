@@ -693,6 +693,49 @@ const USER_RULES = {
   ],
 };
 
+// Explore patterns — analysis of pasted admired posts. Each pattern carries the
+// reworked fields: a `kind` tag, the `spotted` source line, and a voice-matched
+// `example` (drives the redesigned Explore card).
+const EXPLORE_RESULT = {
+  patterns: [
+    {
+      name: "The concrete number",
+      kind: "Hook",
+      technique:
+        "Opens on one exact, slightly surprising figure instead of a vague claim — so the reader has something specific to picture before any point is made.",
+      why_it_works: "A precise number reads as reported, not performed. It feels true before you've argued anything.",
+      spotted: "I deleted 40,000 followers worth of old posts last night.",
+      example: "I cut 600 words out of this post before you ever saw it. What's left is the only part that was working.",
+      suggested_do_rule: "open on a specific number, not a vague claim",
+    },
+    {
+      name: "The quarter-turn reframe",
+      kind: "Structure",
+      technique:
+        "States a belief the reader already holds, then rotates it one notch so the same idea is suddenly seen from a sharper angle.",
+      why_it_works: "People rarely share what they agree with — they share what quietly reorganizes something they already knew.",
+      spotted: "Most advice is autobiography in disguise.",
+      example: "You don't find your voice by writing more. You find it by deleting every line that sounds like someone else.",
+      suggested_do_rule: "take a familiar idea, turn it one notch",
+    },
+    {
+      name: "The withheld turn",
+      kind: "Cadence",
+      technique: "Sets up an expectation in the opener, then holds the payoff back until a short final line that lands on its own.",
+      why_it_works: "The gap between setup and payoff is where attention lives. A hard last line gives the reader a place to stop.",
+      spotted: "It's the one you almost didn't publish.",
+      example: "I rewrote this opening nine times. The version you're reading is the one I almost deleted.",
+      suggested_do_rule: "end on a short line, let it land alone",
+    },
+  ],
+  summary: "Three moves worth stealing — and every one of them is about restraint, not volume.",
+  samples_analyzed: 3,
+  llm_model: "claude",
+  prompt_tokens: 0,
+  completion_tokens: 0,
+  latency_ms: 1840,
+};
+
 async function setup(page: Page): Promise<void> {
   // Seed a token + selected account + locale before any app code runs.
   await page.addInitScript(() => {
@@ -718,6 +761,7 @@ async function setup(page: Page): Promise<void> {
     if (p.endsWith("/api/me/accounts")) return json({ accounts: ACCOUNTS });
     if (p.includes("/onboarding"))
       return json({ needs_onboarding: false, has_role_book: true, post_count: 47, can_analyze: true });
+    if (p.includes("/patterns/analyze")) return json(EXPLORE_RESULT);
     if (p.includes("/patterns/study")) return json(STUDY);
     if (p.includes("/feed")) return json(FEED);
     if (p.includes("/mentions")) return json(MENTIONS);
@@ -865,6 +909,21 @@ test("Patterns", async ({ page }) => {
   await page.getByRole("button", { name: /run a study/i }).click();
   await page.waitForTimeout(3400);
   await shoot(page, "patterns");
+});
+
+test("Explore patterns", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 1300 });
+  await setup(page);
+  await page.goto("/app/patterns/explore");
+  await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
+  await page.waitForTimeout(700);
+  await shoot(page, "explore-input");
+  // Seed a sample set → analyze → results (kind tag · spotted line · voice example).
+  await page.getByRole("button", { name: /try a sample set/i }).click();
+  await page.waitForTimeout(150);
+  await page.getByRole("button", { name: /analyze the craft/i }).click();
+  await page.waitForTimeout(1300);
+  await shoot(page, "explore-results");
 });
 
 test("Autopilot", async ({ page }) => {
