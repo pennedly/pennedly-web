@@ -23,57 +23,33 @@ import { captureEvent } from "@/lib/analytics";
 import { useSelectedAccountId } from "@/lib/account";
 import { useTranslation } from "@/lib/i18n";
 import { TranslateButton } from "@/components/TranslateButton";
+import { AppTopbar } from "@/components/AppTopbar";
+import { Button, buttonClasses } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Toast, ToastHost } from "@/components/ui/toast";
+import { cn } from "@/lib/cn";
+import {
+  IcArrowUp,
+  IcBubble,
+  IcChart,
+  IcChevDown,
+  IcClock,
+  IcExternal,
+  IcEye,
+  IcHeart,
+  IcRepost,
+  IcTrash,
+} from "@/components/icons";
 import type { FeedPost, FeedReference, MetricsSnapshot } from "@/lib/types";
 
 type Toast = { id: number; message: string; tone: "success" | "error" };
 
-function num(n: number): string {
+// 48200 -> "48.2K", 1205 -> "1,205" (we keep <10k exact).
+function fmt(n: number): string {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
+  if (n >= 10_000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "K";
   return n.toLocaleString();
 }
-
-function vsAvgClasses(r: number): string {
-  if (r >= 1.2)
-    return "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300";
-  if (r >= 0.6)
-    return "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300";
-  return "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300";
-}
-
-function Stat({ icon, value }: { icon: React.ReactNode; value: number }) {
-  return (
-    <span className="inline-flex items-center gap-1">
-      {icon}
-      {num(value)}
-    </span>
-  );
-}
-
-const ICON = {
-  views: (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-      <circle cx="12" cy="12" r="3" />
-    </svg>
-  ),
-  likes: (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8z" />
-    </svg>
-  ),
-  comments: (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z" />
-    </svg>
-  ),
-  reposts: (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M17 1l4 4-4 4" />
-      <path d="M3 11V9a4 4 0 0 1 4-4h14" />
-      <path d="M7 23l-4-4 4-4" />
-      <path d="M21 13v2a4 4 0 0 1-4 4H3" />
-    </svg>
-  ),
-};
 
 export default function FeedPage() {
   const router = useRouter();
@@ -197,158 +173,214 @@ export default function FeedPage() {
 
   if (bootError) {
     return (
-      <main className="max-w-2xl mx-auto px-6 py-16">
-        <div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 p-4 text-sm text-red-800 dark:text-red-200">
-          {bootError}
-        </div>
-      </main>
+      <div className="min-h-screen bg-bg text-text">
+        <AppTopbar title={t("feed.title")} />
+        <main className="mx-auto max-w-[712px] px-5 py-7 md:px-6">
+          <div className="rounded-lg border border-danger/40 bg-danger/10 p-4 text-small text-danger">
+            {bootError}
+          </div>
+        </main>
+      </div>
     );
   }
 
   const hasBaseline = reference !== null && reference.posts_counted > 0;
+  const baselineStats = reference
+    ? [
+        { Icon: IcEye, val: reference.avg_views },
+        { Icon: IcHeart, val: reference.avg_likes },
+        { Icon: IcBubble, val: reference.avg_comments },
+      ]
+    : [];
 
   return (
     <div className="min-h-screen bg-bg text-text">
-      <main className="max-w-3xl mx-auto px-6 py-8 space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {t("feed.title")}
-          </h1>
-          <p className="text-sm text-zinc-500 mt-1">{t("feed.subtitle")}</p>
-        </div>
-
+      <AppTopbar title={t("feed.title")} />
+      <main className="mx-auto max-w-[712px] space-y-4 px-5 py-7 md:px-6">
         {/* Reference baseline */}
         {loaded && reference && (
-          <div className="rounded-xl border border-border bg-surface p-4 shadow-sm">
+          <section className="rounded-xl border border-border bg-surface p-5 shadow-sm">
             {hasBaseline ? (
               <>
-                <p className="text-xs font-medium text-zinc-500 mb-2">
-                  {reference.window_days <= 7
-                    ? t("feed.ref_week")
-                    : t("feed.ref_30d")}{" "}
-                  · {reference.posts_counted} {t("feed.posts_word")}
-                </p>
-                <div className="flex flex-wrap items-center gap-4 text-sm text-text">
-                  <Stat icon={ICON.views} value={Math.round(reference.avg_views)} />
-                  <Stat icon={ICON.likes} value={Math.round(reference.avg_likes)} />
-                  <Stat icon={ICON.comments} value={Math.round(reference.avg_comments)} />
+                <div className="flex items-center gap-2.5">
+                  <span className="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-md border border-border bg-surface-2 text-text-muted">
+                    <IcChart size={16} />
+                  </span>
+                  <div className="text-small text-text-muted">
+                    <span className="font-semibold text-text">
+                      {reference.window_days <= 7 ? t("feed.ref_week") : t("feed.ref_30d")}
+                    </span>{" "}
+                    · {reference.posts_counted} {t("feed.posts_word")}
+                  </div>
+                </div>
+                <div className="mt-4 grid grid-cols-3">
+                  {baselineStats.map((s, i) => (
+                    <div
+                      key={i}
+                      className={cn("px-4", i === 0 ? "pl-0" : "border-l border-border")}
+                    >
+                      <div className="text-h2 font-semibold leading-tight tracking-tight tabular-nums">
+                        {fmt(Math.round(s.val))}
+                      </div>
+                      <div className="mt-1.5 text-text-subtle">
+                        <s.Icon size={14} />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </>
             ) : (
-              <p className="text-sm text-zinc-500">{t("feed.ref_none")}</p>
+              <p className="text-small text-text-muted">{t("feed.ref_none")}</p>
             )}
-          </div>
+          </section>
         )}
 
-        {!loaded && (
-          <p className="text-sm text-zinc-500">{t("common.loading")}</p>
-        )}
+        {!loaded && <p className="text-small text-text-muted">{t("common.loading")}</p>}
 
         {loaded && posts.length === 0 && (
-          <div className="rounded-xl border border-dashed border-border p-8 text-center">
-            <p className="text-sm text-zinc-500">{t("feed.empty")}</p>
+          <div className="flex flex-col items-center rounded-lg border border-dashed border-border px-6 py-14 text-center">
+            <p className="max-w-[42ch] text-small leading-relaxed text-text-muted">
+              {t("feed.empty")}
+            </p>
           </div>
         )}
 
-        <ul className="space-y-4">
+        <ul className="space-y-3.5">
           {posts.map((p) => (
             <li
               key={p.id}
-              className="rounded-xl border border-border bg-surface p-4 shadow-sm"
+              className="rounded-lg border border-border bg-surface p-4 shadow-sm transition-colors hover:border-text/15"
+              style={{ animation: "card-in 240ms var(--ease-entrance) both" }}
             >
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-text">
+              {/* head: time + virality verdict */}
+              <div className="flex items-center gap-2 text-caption text-text-subtle">
+                {p.published_at && (
+                  <span>
+                    {new Date(p.published_at).toLocaleString(undefined, {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    })}
+                  </span>
+                )}
+                <span className="ml-auto">
+                  {p.is_fresh ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/12 px-2.5 py-1 text-caption font-semibold text-accent">
+                      <IcClock size={12} />
+                      {t("feed.fresh")}
+                    </span>
+                  ) : (
+                    p.vs_avg_views !== null && (
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-caption font-semibold",
+                          p.vs_avg_views >= 1.5
+                            ? "border-success/30 bg-success/12 text-success"
+                            : "border-border bg-surface-2 text-text-muted",
+                        )}
+                      >
+                        {p.vs_avg_views >= 1.5 && <IcArrowUp size={12} />}
+                        {p.vs_avg_views.toFixed(1)}
+                        {t("feed.vs_avg")}
+                      </span>
+                    )
+                  )}
+                </span>
+              </div>
+
+              <p className="mt-2.5 whitespace-pre-wrap text-body leading-relaxed text-text">
                 {p.text ?? ""}
               </p>
 
-              <div className="mt-3 pt-3 border-t border-border flex flex-wrap items-center gap-3 text-xs text-zinc-500">
-                <span className="inline-flex items-center gap-3">
-                  <Stat icon={ICON.views} value={p.views} />
-                  <Stat icon={ICON.likes} value={p.likes} />
-                  <Stat icon={ICON.comments} value={p.comments_count} />
-                  <Stat icon={ICON.reposts} value={p.reposts} />
-                </span>
-
-                {/* Virality verdict */}
-                {p.is_fresh ? (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
-                    🕐 {t("feed.fresh")}
+              {/* metrics — hero views + sub likes/comments/reposts */}
+              <div className="mt-3.5 flex flex-wrap items-baseline gap-x-5 gap-y-2">
+                <span className="inline-flex items-baseline gap-2">
+                  <IcEye size={18} className="self-center text-text-muted" />
+                  <span className="text-h2 font-semibold tracking-tight tabular-nums">
+                    {fmt(p.views)}
                   </span>
-                ) : (
-                  p.vs_avg_views !== null && (
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${vsAvgClasses(
-                        p.vs_avg_views,
-                      )}`}
-                    >
-                      {p.vs_avg_views.toFixed(1)}
-                      {t("feed.vs_avg")}
-                    </span>
-                  )
-                )}
+                </span>
+                <span className="inline-flex items-baseline gap-1.5">
+                  <IcHeart size={15} className="self-center text-text-subtle" />
+                  <span className="font-semibold tabular-nums">{fmt(p.likes)}</span>
+                </span>
+                <span className="inline-flex items-baseline gap-1.5">
+                  <IcBubble size={15} className="self-center text-text-subtle" />
+                  <span className="font-semibold tabular-nums">{fmt(p.comments_count)}</span>
+                </span>
+                <span className="inline-flex items-baseline gap-1.5">
+                  <IcRepost size={15} className="self-center text-text-subtle" />
+                  <span className="font-semibold tabular-nums">{fmt(p.reposts)}</span>
+                </span>
+              </div>
 
-                {/* Per-post auto-reply toggle + indicator */}
-                <button
-                  onClick={() => onToggleAutoReply(p)}
-                  title={t("feed.autoreply_hint")}
-                  aria-pressed={p.auto_reply}
-                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium transition-colors ${
-                    p.auto_reply
-                      ? "bg-accent/10 text-accent hover:bg-accent/20"
-                      : "bg-surface-2 text-text-subtle hover:bg-surface-2/70"
-                  }`}
+              {growthOpen === p.id && (
+                <div
+                  className="mt-3.5 rounded-md border border-border bg-surface-2 p-4"
+                  style={{ animation: "card-in 180ms var(--ease-entrance) both" }}
                 >
-                  <span aria-hidden>{p.auto_reply ? "↩︎" : "○"}</span>
-                  {p.auto_reply
-                    ? t("feed.autoreply_on")
-                    : t("feed.autoreply_off")}
-                </button>
+                  <TrendChart
+                    series={growth[p.id]}
+                    baseline={reference?.avg_views ?? null}
+                    emptyLabel={t("feed.growth_none")}
+                  />
+                </div>
+              )}
 
-                <div className="ml-auto flex items-center gap-3">
-                  {p.published_at && (
-                    <span>
-                      {new Date(p.published_at).toLocaleString(undefined, {
-                        dateStyle: "medium",
-                        timeStyle: "short",
-                      })}
-                    </span>
-                  )}
-                  <button
+              {/* footer: auto-reply switch + actions */}
+              <div className="mt-3.5 flex items-center gap-3 border-t border-border pt-3.5">
+                <label className="flex min-w-0 flex-1 items-center gap-2.5">
+                  <Switch
+                    checked={p.auto_reply}
+                    onCheckedChange={() => onToggleAutoReply(p)}
+                    aria-label={t("feed.autoreply_hint")}
+                  />
+                  <span className="truncate text-small text-text-muted">
+                    {p.auto_reply ? t("feed.autoreply_on") : t("feed.autoreply_off")}
+                  </span>
+                </label>
+
+                <div className="flex shrink-0 items-center gap-1.5">
+                  <Button
+                    size="sm"
+                    variant="ghost"
                     onClick={() => toggleGrowth(p.id)}
-                    className={`hover:text-zinc-700 dark:hover:text-zinc-300 underline-offset-2 hover:underline ${
-                      growthOpen === p.id
-                        ? "text-text font-medium"
-                        : ""
-                    }`}
+                    aria-expanded={growthOpen === p.id}
+                    icon={<IcChart size={15} />}
                   >
                     {t("feed.growth")}
-                  </button>
+                    <IcChevDown
+                      size={14}
+                      className="transition-transform"
+                      style={{
+                        transform: growthOpen === p.id ? "rotate(180deg)" : "none",
+                      }}
+                    />
+                  </Button>
                   {p.threads_url && (
                     <a
                       href={p.threads_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="hover:text-zinc-700 dark:hover:text-zinc-300 underline-offset-2 hover:underline"
+                      className={buttonClasses({ variant: "secondary", size: "sm" })}
                     >
+                      <IcExternal size={15} />
                       {t("feed.open")}
                     </a>
                   )}
                   {isTester && (
                     <button
                       onClick={() => setDeleteTarget(p)}
-                      className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
+                      aria-label={t("posts.delete")}
+                      className="grid h-8 w-8 place-items-center rounded-sm text-text-subtle transition-colors hover:bg-surface-2 hover:text-danger"
                     >
-                      {t("posts.delete")}
+                      <IcTrash size={15} />
                     </button>
                   )}
                 </div>
               </div>
 
-              {growthOpen === p.id && (
-                <GrowthChart series={growth[p.id]} label={t("feed.growth_none")} />
-              )}
-
               {p.text && (
-                <div className="mt-2">
+                <div className="mt-2.5">
                   <TranslateButton text={p.text} source="post" />
                 </div>
               )}
@@ -360,114 +392,153 @@ export default function FeedPage() {
       {/* Delete confirmation (tester-only) */}
       {deleteTarget && (
         <div
-          className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          className="fixed inset-0 z-40 grid place-items-center bg-ink-950/55 p-6 backdrop-blur-sm"
           role="dialog"
           aria-modal="true"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget && !deleting) setDeleteTarget(null);
+          }}
         >
-          <div className="w-full max-w-lg rounded-2xl bg-surface border border-border shadow-xl p-6 space-y-4">
-            <h2 className="text-lg font-semibold tracking-tight">
-              {t("posts.confirm_title")}
-            </h2>
-            <p className="text-sm text-text-muted leading-relaxed">
-              {t("posts.confirm_body")}
-            </p>
-            <p className="text-sm text-zinc-500 line-clamp-3 whitespace-pre-wrap border-l-2 border-border pl-3">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-lg">
+            <div className="flex items-start gap-3">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-danger/30 bg-danger/12 text-danger">
+                <IcTrash size={18} />
+              </span>
+              <div>
+                <h2 className="text-h3 font-semibold">{t("posts.confirm_title")}</h2>
+                <p className="mt-1 text-small leading-relaxed text-text-muted">
+                  {t("posts.confirm_body")}
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 line-clamp-3 whitespace-pre-wrap rounded-md border border-border bg-surface-2 p-3.5 text-small leading-relaxed text-text-muted">
               {deleteTarget.text ?? ""}
-            </p>
-            <div className="flex items-center justify-end gap-3 pt-1">
+            </div>
+            <div className="mt-5 flex items-center justify-end gap-2.5">
               <button
                 onClick={() => {
                   if (!deleting) setDeleteTarget(null);
                 }}
                 disabled={deleting}
-                className="text-sm px-4 py-2 rounded-md text-text hover:bg-surface-2 disabled:opacity-50 transition-colors"
+                className={buttonClasses({ variant: "ghost" })}
               >
                 {t("common.cancel")}
               </button>
-              <button
+              <Button
+                variant="danger"
                 onClick={onDeleteConfirm}
+                loading={deleting}
                 disabled={deleting}
-                className="inline-flex items-center gap-2 text-sm px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+                icon={<IcTrash size={15} />}
               >
-                {deleting && (
-                  <span
-                    className="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"
-                    aria-hidden
-                  />
-                )}
                 {deleting ? t("posts.deleting") : t("posts.confirm_cta")}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
       )}
 
-      <div className="fixed bottom-6 right-6 z-30 space-y-2 pointer-events-none">
-        {toasts.map((tt) => (
-          <div
-            key={tt.id}
-            className={`px-4 py-2.5 rounded-lg shadow-lg text-sm font-medium pointer-events-auto ${
-              tt.tone === "error"
-                ? "bg-red-600 text-white"
-                : "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
-            }`}
-          >
-            {tt.message}
-          </div>
+      {/* Toasts */}
+      <ToastHost>
+        {toasts.map((to) => (
+          <Toast key={to.id} tone={to.tone} title={to.message} />
         ))}
-      </div>
+      </ToastHost>
     </div>
   );
 }
 
-// Hand-rolled SVG sparkline of a post's views over time (no chart lib).
-function GrowthChart({
+// Cumulative views over time, drawn against a dashed "your average" line so
+// the post reads relative to the baseline strip at the top.
+function TrendChart({
   series,
-  label,
+  baseline,
+  emptyLabel,
 }: {
   series: MetricsSnapshot[] | undefined;
-  label: string;
+  baseline: number | null;
+  emptyLabel: string;
 }) {
   if (series === undefined) {
-    return <div className="mt-3 h-14" aria-hidden />; // loading placeholder
+    return <div className="h-20" aria-hidden />; // loading placeholder
   }
-  const pts = series.filter((s) => s.views !== null);
+  const pts = series.filter((s) => s.views !== null).map((s) => s.views ?? 0);
   if (pts.length < 2) {
-    return <p className="mt-3 text-xs text-zinc-400">{label}</p>;
+    return <p className="text-caption text-text-subtle">{emptyLabel}</p>;
   }
-  const vals = pts.map((s) => s.views ?? 0);
-  const max = Math.max(...vals);
-  const min = Math.min(...vals);
-  const range = max - min || 1;
-  const W = 300;
-  const H = 56;
-  const coords = pts
-    .map((s, i) => {
-      const x = (i / (pts.length - 1)) * W;
-      const y = H - (((s.views ?? 0) - min) / range) * H;
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    })
+  const W = 600;
+  const H = 112;
+  const L = 8;
+  const R = 592;
+  const TOP = 12;
+  const BOT = 92;
+  const base = baseline ?? 0;
+  const max = Math.max(...pts, base) * 1.1 || 1;
+  const plotH = BOT - TOP;
+  const x = (i: number) => L + (i / (pts.length - 1)) * (R - L);
+  const y = (v: number) => BOT - (v / max) * plotH;
+  const line = pts
+    .map((v, i) => (i ? "L" : "M") + x(i).toFixed(1) + " " + y(v).toFixed(1))
     .join(" ");
+  const area = `${line} L ${R} ${BOT} L ${L} ${BOT} Z`;
+  const byY = y(base);
+  const lastX = x(pts.length - 1);
+  const lastY = y(pts[pts.length - 1]);
   return (
-    <div className="mt-3 pt-3 border-t border-border">
+    <>
       <svg
         viewBox={`0 0 ${W} ${H}`}
-        className="w-full h-14 text-green-500 dark:text-green-400"
-        preserveAspectRatio="none"
-        aria-hidden
+        className="block h-auto w-full overflow-visible"
+        role="img"
+        aria-label="Views over time vs your average"
       >
-        <polyline
-          points={coords}
+        <path d={area} fill="var(--color-accent)" fillOpacity="0.1" />
+        {base > 0 && (
+          <>
+            <line
+              x1={L}
+              y1={byY}
+              x2={R}
+              y2={byY}
+              stroke="var(--color-text-subtle)"
+              strokeWidth="1"
+              strokeDasharray="4 4"
+              opacity="0.75"
+            />
+            <text
+              x={R}
+              y={byY - 6}
+              textAnchor="end"
+              fontSize="11"
+              fill="var(--color-text-subtle)"
+              style={{ fontFamily: "var(--font-sans)" }}
+            >
+              {fmt(Math.round(base))}
+            </text>
+          </>
+        )}
+        <path
+          d={line}
           fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
+          stroke="var(--color-accent)"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
           vectorEffect="non-scaling-stroke"
         />
+        <circle
+          cx={lastX}
+          cy={lastY}
+          r="3.6"
+          fill="var(--color-accent)"
+          stroke="var(--color-surface)"
+          strokeWidth="2"
+        />
       </svg>
-      <div className="flex justify-between text-[10px] text-zinc-400 mt-0.5">
-        <span>{num(min)} 👁</span>
-        <span>{num(max)} 👁</span>
+      <div className="mt-1.5 flex justify-between text-caption text-text-subtle">
+        <span>{fmt(pts[0])}</span>
+        <span>{fmt(pts[pts.length - 1])}</span>
       </div>
-    </div>
+    </>
   );
 }

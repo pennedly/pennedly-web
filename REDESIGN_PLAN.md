@@ -37,7 +37,7 @@ presentation-слой.
 - **Фаза 0 — Фундамент:** `[~]` (0a+0b готовы; 0c сайдбар готов и **проверен визуально light+dark**; Topbar → Фаза 1; build+smoke зелёные)
 - **Mock-auth harness:** `[x]` готов — `tests/visual/screens.spec.ts` (route-mock + light/dark снимки)
 - **Фаза 1 — Studio:** `[x]` основное на проде (топбар, тема, композер, табы, карточки, тосты, диалог публикации); опц. скелетоны/first-run позже
-- **Фаза 2 — Контент (feed/replies/mentions):** `[ ]`
+- **Фаза 2 — Контент (feed/replies/mentions):** `[~]` (Лента готова и на проде; Ответы/Упоминания дальше)
 - **Фаза 3 — Рост (stats/audits/patterns/autopilot):** `[ ]`
 - **Фаза 4 — Голос (voice/style-rules):** `[ ]`
 - **Фаза 5 — Аккаунт+публичное (settings/onboarding/login/landing/legal):** `[ ]`
@@ -186,12 +186,13 @@ presentation-слой.
 ### 2a. My Feed
 **Роут:** `/app/feed` → `feed/page.tsx` · **Эталон:** `feed-app.jsx`,
 `feed-parts.jsx`, `feed-card.jsx`, `feed.css` · **Ширина:** 712
-- [ ] Baseline-шапка (4 стата: views/likes/comments/reposts + дельта/спарклайн)
-- [ ] Sort-бар (count + Recent/Top сегмент)
-- [ ] PostCard: метрики, virality-бейдж («N× your average» / «still settling»),
-      авто-реплай тогл, «open in Threads», меню (delete для тестеров)
-- [ ] TrendChart (inline SVG: линия+площадь, пунктир-базлайн) по кнопке
-- **Состояния:** loading(скелетоны) · empty · trend-expanded · delete-confirm
+- [x] Baseline-шапка (3 стата views/likes/comments — reposts/спарклайн/дельта бэкенд не отдаёт)
+- [x] PostCard: hero-метрики + иконки, virality-бейдж (over/settling/on-par),
+      авто-reply `Switch`, «open in Threads», delete (тестер), `card-in`
+- [x] TrendChart (area+линия+пунктир-базлайн «your average») по кнопке growth
+- [x] Delete-диалог + тосты `ToastHost`; пустое/loading состояния
+- [ ] _Sort-бар (Recent/Top) пропущен (это +фича/+i18n) — добавить позже client-side_
+- **Проверено:** harness light+dark ✓
 
 ### 2b. Reply queue
 **Роут:** `/app/replies` → `replies/page.tsx` · **Эталон:** `replies-app.jsx`,

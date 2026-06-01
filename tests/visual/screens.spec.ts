@@ -74,6 +74,68 @@ const DRAFTS = [
   },
 ];
 
+const FEED = {
+  count: 3,
+  reference: {
+    window_days: 7,
+    posts_counted: 24,
+    avg_views: 1850,
+    avg_likes: 95,
+    avg_comments: 12,
+    median_views: 1600,
+  },
+  posts: [
+    {
+      id: 9001,
+      threads_post_id: "t_9001",
+      threads_url: "https://www.threads.net/@mara.lin/post/9001",
+      text: "The fastest way to find your voice online: publish the thing you're slightly embarrassed by. The polished version is everyone's.",
+      published_at: "2026-05-30T14:00:00Z",
+      views: 8420,
+      likes: 540,
+      reposts: 38,
+      comments_count: 47,
+      viral_tier: "viral",
+      viral_score: 0.92,
+      vs_avg_views: 4.5,
+      is_fresh: false,
+      auto_reply: true,
+    },
+    {
+      id: 9002,
+      threads_post_id: "t_9002",
+      threads_url: "https://www.threads.net/@mara.lin/post/9002",
+      text: "Just shipped something I've been sitting on for two weeks. Posting before I talk myself out of it.",
+      published_at: "2026-05-31T20:30:00Z",
+      views: 410,
+      likes: 22,
+      reposts: 1,
+      comments_count: 3,
+      viral_tier: null,
+      viral_score: null,
+      vs_avg_views: null,
+      is_fresh: true,
+      auto_reply: false,
+    },
+    {
+      id: 9003,
+      threads_post_id: "t_9003",
+      threads_url: "https://www.threads.net/@mara.lin/post/9003",
+      text: "Consistency beats intensity. Three small posts a week out-compound one viral month — every single time.",
+      published_at: "2026-05-29T09:15:00Z",
+      views: 1620,
+      likes: 88,
+      reposts: 9,
+      comments_count: 11,
+      viral_tier: "good",
+      viral_score: 0.6,
+      vs_avg_views: 0.9,
+      is_fresh: false,
+      auto_reply: false,
+    },
+  ],
+};
+
 async function setup(page: Page): Promise<void> {
   // Seed a token + selected account + locale before any app code runs.
   await page.addInitScript(() => {
@@ -98,6 +160,7 @@ async function setup(page: Page): Promise<void> {
     if (p.endsWith("/api/me")) return json(ME);
     if (p.endsWith("/api/me/accounts")) return json({ accounts: ACCOUNTS });
     if (p.includes("/onboarding")) return json({ needs_onboarding: false, has_role_book: true });
+    if (p.includes("/feed")) return json(FEED);
     if (p.includes("/drafts")) return json({ drafts: DRAFTS, count: DRAFTS.length });
     // Safe default — most list endpoints tolerate an empty array.
     return json([]);
@@ -124,4 +187,13 @@ test("shell — Studio", async ({ page }) => {
   await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
   await page.waitForTimeout(700);
   await shoot(page, "shell-studio");
+});
+
+test("Feed", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 1000 });
+  await setup(page);
+  await page.goto("/app/feed");
+  await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
+  await page.waitForTimeout(700);
+  await shoot(page, "feed");
 });
