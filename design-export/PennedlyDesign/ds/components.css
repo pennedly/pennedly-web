@@ -169,3 +169,62 @@ select.field { appearance: none; cursor: pointer;
 .tbl tbody td { padding: 12px; border-bottom: 1px solid var(--color-border); color: var(--color-text); }
 .tbl tbody tr { transition: background var(--duration-fast) var(--ease-standard); }
 .tbl tbody tr:hover { background: var(--color-surface-2); }
+
+/* ════════════════════════════════════════════════════════════════════════
+   §3 SYSTEM LAYER — shared decisions used across every screen.
+   (Additive + backward-compatible: un-migrated screens keep their own rules;
+   `:has()` gating means nothing here changes a screen until it opts in.)
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* §3.6 — button sizes. sm/md(default)/lg. lg = hero & auth CTA (login, landing,
+   onboarding, idle "run" actions). */
+.btn--lg { height: 46px; padding-inline: 22px; font-size: var(--text-body); border-radius: var(--radius-lg); }
+
+/* §3.3 — standardized topbar status pill. dot + label, three tones.
+   Usage: <span class="status-pill status-pill--success"><i class="pill-dot"/>Voice active</span> */
+.status-pill {
+  display: inline-flex; align-items: center; gap: 7px; white-space: nowrap;
+  font-size: var(--text-small); color: var(--color-text-muted);
+  padding: 5px 11px 5px 9px; border: 1px solid var(--color-border);
+  border-radius: var(--radius-full); background: var(--color-surface);
+}
+.status-pill .pill-dot { width: 7px; height: 7px; }
+.status-pill--success { color: var(--color-success); border-color: color-mix(in srgb, var(--color-success) 30%, var(--color-border)); }
+.status-pill--success .pill-dot { background: var(--color-success); }
+.status-pill--warning { color: var(--color-warning); border-color: color-mix(in srgb, var(--color-warning) 30%, var(--color-border)); }
+.status-pill--warning .pill-dot { background: var(--color-warning); }
+.status-pill--accent  { color: var(--color-accent); border-color: color-mix(in srgb, var(--color-accent) 30%, var(--color-border)); }
+.status-pill--accent .pill-dot { background: var(--color-accent); }
+
+/* §3.1 + §3.2 — topbar ↔ content alignment. The bar is full-width (border +
+   frosted bg, styled per-screen as `.topbar`); its inner row is centered to the
+   same column width as the content. A screen wraps its topbar row in
+   `.topbar-inner` and the outer horizontal padding collapses automatically. */
+.topbar:has(> .topbar-inner) { padding-inline: 0; }
+.topbar-inner {
+  width: 100%; max-width: var(--content-reading);
+  margin-inline: auto; padding-inline: 24px;
+  display: flex; align-items: center; gap: 16px;
+}
+.topbar--wide .topbar-inner,
+.topbar-inner--wide { max-width: var(--content-wide); }
+@media (max-width: 560px) { .topbar-inner { padding-inline: 14px; } }
+
+/* §3.5 — canonical shared keyframes. Reference THESE names everywhere
+   (older screens still define nibwrite/dotpulse locally; those are legacy
+   aliases kept only so un-migrated screens don't break). */
+@keyframes nib-write {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  35% { transform: translateX(3px) rotate(-7deg); }
+  70% { transform: translateX(-2px) rotate(4deg); }
+}
+@keyframes card-in { from { transform: translateY(10px); } to { transform: none; } }
+@keyframes dot-pulse { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  15%, 55% { transform: translateX(-6px); }
+  35%, 75% { transform: translateX(6px); }
+}
+@keyframes ripple { from { box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 45%, transparent); }
+  to { box-shadow: 0 0 0 7px transparent; } }
+@keyframes ping { 75%, 100% { transform: scale(2.2); opacity: 0; } }

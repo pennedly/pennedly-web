@@ -157,11 +157,14 @@ body {
 
 .scroll { flex: 1 1 auto; overflow-y: auto; overflow-x: hidden; }
 .content {
-  max-width: 712px;
+  max-width: var(--content-reading);
   margin: 0 auto;
   padding: 28px 24px 96px;
   display: flex; flex-direction: column; gap: 20px;
 }
+/* §3.2 — data screens opt into the wider column (feed/stats/replies/mentions).
+   Pair with `.topbar--wide` so the header aligns to the same edges. */
+.content--wide { max-width: var(--content-wide); }
 
 /* ============================ COMPOSER ============================ */
 .composer {

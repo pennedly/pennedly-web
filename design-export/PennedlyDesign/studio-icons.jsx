@@ -18,7 +18,9 @@ const Svg = ({ size = 18, children, stroke = true, ...rest }) => (
 const IcStudio   = (p) => <Svg {...p}><path d="M4 19.5 19 4.5M14 5h5v5" /></Svg>;          // pen drawing a line
 const IcReplies  = (p) => <Svg {...p}><path d="M21 11.5a8 8 0 0 1-11.4 7.2L4 20l1.3-4.6A8 8 0 1 1 21 11.5Z" /></Svg>;
 const IcVoice    = (p) => <Svg {...p}><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></Svg>;
-const IcSettings = (p) => <Svg {...p}><circle cx="12" cy="12" r="3" /><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.3 1a7 7 0 0 0-1.7-1L16.5 3h-4l-.4 2.6a7 7 0 0 0-1.7 1l-2.3-1-2 3.4 2 1.5a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7 7 0 0 0 1.7-1l2.3 1 2-3.4L19 13a7 7 0 0 0 .1-1Z" /></Svg>;
+// one clean, optically-balanced 6-tooth cog — even teeth, calm round body,
+// clear center hole; crisp at 16px (24-grid, 1.8 stroke, round caps/joins).
+const IcSettings = (p) => <Svg {...p}><path d="M10.13 3.2 13.87 3.2 14.26 5.8 16.24 6.94 18.69 5.98 20.56 9.22 18.5 10.85 18.5 13.15 20.56 14.78 18.69 18.02 16.24 17.06 14.26 18.2 13.87 20.8 10.13 20.8 9.74 18.2 7.76 17.06 5.31 18.02 3.44 14.78 5.5 13.15 5.5 10.85 3.44 9.22 5.31 5.98 7.76 6.94 9.74 5.8Z" /><circle cx="12" cy="12" r="2.6" /></Svg>;
 
 // actions
 const IcNib     = (p) => <Svg {...p}><path d="M12 4c3 0 5 3 4.8 7-.2 3-2.2 6-4.8 8.5C9.4 17 7.4 14 7.2 11 7 7 9 4 12 4Z" /><circle cx="12" cy="10" r="1.4" /><path d="M12 12v6.5" /></Svg>;
@@ -56,6 +58,10 @@ const IcGlobe   = (p) => <Svg {...p}><circle cx="12" cy="12" r="8.5" /><path d="
 const IcAt       = (p) => <Svg {...p}><circle cx="12" cy="12" r="3.6" /><path d="M15.6 8.6v4.6a2.4 2.4 0 0 0 4.8 0v-1.2a8.4 8.4 0 1 0-3.2 6.6" /></Svg>;
 const IcStar     = (p) => <Svg {...p}><path d="M12 4.2l2.4 4.86 5.36.78-3.88 3.78.92 5.34L12 16.18 7.2 18.74l.92-5.34L4.24 9.62l5.36-.78Z" /></Svg>;
 const IcArchive  = (p) => <Svg {...p}><path d="M4 8.5h16V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V8.5Z" /><path d="M3 4.5h18v4H3zM9.5 12.5h5" /></Svg>;
+// compass — "Explore patterns" nav mark (shared so every screen's sidebar can use it)
+const IcCompass  = (p) => <Svg {...p}><circle cx="12" cy="12" r="8.5" /><path d="M15.2 8.8 13.4 13.4 8.8 15.2 10.6 10.6Z" /></Svg>;
+// log out — door + arrow, for the sidebar account menu
+const IcLogout   = (p) => <Svg {...p}><path d="M14 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-2" /><path d="M10 12h10M17 9l3 3-3 3" /></Svg>;
 
 // "Drafting Line" logo — filled glyph in a rounded paper tile (matches DS brand mark)
 const Logo = ({ size = 34, radius = 10, className }) => (
@@ -78,4 +84,5 @@ Object.assign(window, {
   IcHeart, IcBubble, IcRepost, Logo,
   IcEye, IcFeed, IcChart, IcTrash, IcArrowUp, IcClock, IcGlobe, IcSkip,
   IcAt, IcStar, IcArchive, IcArrowDown, IcArrowLeft, IcAudit, IcStudy, IcBolt, IcPlus,
+  IcCompass, IcLogout,
 });

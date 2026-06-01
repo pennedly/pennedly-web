@@ -61,6 +61,11 @@
   --text-small: 0.8125rem;  --lh-small: 1.5;
   --text-caption: 0.75rem;  --lh-caption: 1.4;   --ls-caption: 0.02em;
 
+  /* layout — content column widths (§3.2). A screen picks one; its topbar
+     inner row aligns to the same width so the header is never crooked. */
+  --content-reading: 720px;   /* text screens: studio composer, audits, patterns, voice… */
+  --content-wide:    960px;   /* data screens: feed, stats, replies, mentions */
+
   /* motion */
   --ease-standard: cubic-bezier(0.2, 0.7, 0.3, 1);
   --ease-entrance: cubic-bezier(0.16, 1, 0.3, 1);

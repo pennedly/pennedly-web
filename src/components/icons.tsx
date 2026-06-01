@@ -39,7 +39,9 @@ function Svg({
 export const IcStudio = (p: IconProps) => <Svg {...p}><path d="M4 19.5 19 4.5M14 5h5v5" /></Svg>;
 export const IcReplies = (p: IconProps) => <Svg {...p}><path d="M21 11.5a8 8 0 0 1-11.4 7.2L4 20l1.3-4.6A8 8 0 1 1 21 11.5Z" /></Svg>;
 export const IcVoice = (p: IconProps) => <Svg {...p}><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></Svg>;
-export const IcSettings = (p: IconProps) => <Svg {...p}><circle cx="12" cy="12" r="3" /><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.3 1a7 7 0 0 0-1.7-1L16.5 3h-4l-.4 2.6a7 7 0 0 0-1.7 1l-2.3-1-2 3.4 2 1.5a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7 7 0 0 0 1.7-1l2.3 1 2-3.4L19 13a7 7 0 0 0 .1-1Z" /></Svg>;
+// Redrawn (design rework §7): a clean optically-balanced cog — single polygon
+// outline + center hole — crisp at 16–18px, replacing the busy 12-tooth gear.
+export const IcSettings = (p: IconProps) => <Svg {...p}><path d="M10.13 3.2 13.87 3.2 14.26 5.8 16.24 6.94 18.69 5.98 20.56 9.22 18.5 10.85 18.5 13.15 20.56 14.78 18.69 18.02 16.24 17.06 14.26 18.2 13.87 20.8 10.13 20.8 9.74 18.2 7.76 17.06 5.31 18.02 3.44 14.78 5.5 13.15 5.5 10.85 3.44 9.22 5.31 5.98 7.76 6.94 9.74 5.8Z" /><circle cx="12" cy="12" r="2.6" /></Svg>;
 
 /* actions */
 export const IcNib = (p: IconProps) => <Svg {...p}><path d="M12 4c3 0 5 3 4.8 7-.2 3-2.2 6-4.8 8.5C9.4 17 7.4 14 7.2 11 7 7 9 4 12 4Z" /><circle cx="12" cy="10" r="1.4" /><path d="M12 12v6.5" /></Svg>;
