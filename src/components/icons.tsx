@@ -70,6 +70,7 @@ export const IcFlask = (p: IconProps) => <Svg {...p}><path d="M9 3h6M10 3v6L5.5 
 export const IcLock = (p: IconProps) => <Svg {...p}><rect x="4.5" y="10.5" width="15" height="9.5" rx="2.5" /><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" /><circle cx="12" cy="15" r="1.1" fill="currentColor" stroke="none" /></Svg>;
 export const IcArrowRight = (p: IconProps) => <Svg {...p}><path d="M5 12h14M13 6l6 6-6 6" /></Svg>;
 export const IcMail = (p: IconProps) => <Svg {...p}><rect x="3" y="5.5" width="18" height="13" rx="2.5" /><path d="M4 7l8 6 8-6" /></Svg>;
+export const IcUsers = (p: IconProps) => <Svg {...p}><circle cx="9" cy="8" r="3.2" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0" /><path d="M16 5.2a3.2 3.2 0 0 1 0 5.6M17.5 19a5.5 5.5 0 0 0-3-4.9" /></Svg>;
 export const IcTweak = (p: IconProps) => <Svg {...p}><path d="M4 5v5h5" /><path d="M4 10a8 8 0 1 1 1 7" /></Svg>;
 export const IcSend = (p: IconProps) => <Svg {...p}><path d="M5 12h13M12 5l7 7-7 7" /></Svg>;
 export const IcExternal = (p: IconProps) => <Svg {...p}><path d="M14 5h5v5M19 5l-8 8M11 6H6.5A1.5 1.5 0 0 0 5 7.5v10A1.5 1.5 0 0 0 6.5 19h10A1.5 1.5 0 0 0 18 17.5V13" /></Svg>;

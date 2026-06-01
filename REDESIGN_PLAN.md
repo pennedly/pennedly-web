@@ -42,7 +42,7 @@ presentation-слой.
 - **Studio-композер** = свободный текст + чипы (бэкенд `prompt` добавлен, 303 теста ✅); карточки 1:1 с дизайном
 - **Фаза 3 — Рост (stats/audits/patterns/autopilot):** `[x]` Stats ✅ + Audits ✅ + Patterns ✅ + Autopilot ✅ — вся фаза на проде
 - **Фаза 4 — Голос (voice/style-rules):** `[x]` Voice ✅ + Style rules ✅ — вся фаза на проде
-- **Фаза 5 — Аккаунт+публичное (settings/onboarding/login/landing/legal):** `[~]` Settings ✅ + Onboarding ✅ + Login ✅ на проде; landing/legal остаются
+- **Фаза 5 — Аккаунт+публичное (settings/onboarding/login/landing/legal):** `[~]` Settings ✅ + Onboarding ✅ + Login ✅ + Landing ✅ на проде; legal остаётся
 - **Фаза 6 — Закрытие (скриншот-тесты, обе темы, SPEC):** `[ ]`
 
 ---
@@ -372,14 +372,18 @@ presentation-слой.
   email-code, dev-login. Keyframes `shake`+`nibwrite` добавлены в globals.css
   (последний оживил перья на Patterns/Voice/Onboarding — раньше no-op)._
 
-### 5d. Landing
+### 5d. Landing ✅ (на проде)
 **Роут:** `/` → `src/app/page.tsx` · **Эталон:** `landing-app.jsx`,
 `landing-parts.jsx`, `landing.css`, `screenshots/02-landing-final.png`
-- [ ] Topbar (марка + тема + «Sign in»)
-- [ ] Hero (2 колонки): pill «In development» + display-заголовок + value-копия
+- [x] Topbar (марка + тема + «Sign in»)
+- [x] Hero (2 колонки): pill «In development» + display-заголовок + value-копия
       (акцент-предложение) + «Sign in →» + email; справа плавающая карточка-черновик
-- [ ] Сетка 4 фич (иконка-тайл + title + desc), футер (© + Privacy/Terms/Data Deletion)
+      («призрак» позади для глубины)
+- [x] Сетка 4 фич (иконка-тайл + title + desc), футер (© + Privacy/Terms/Data Deletion)
 - **Состояния:** —
+- _Публичный pre-auth экран без I18nProvider → копия = EN baseline (в эталоне
+  нет переключателя языка). Контакт-email: `hi@pennedly.com` (наш домен; в
+  эталоне `hello@pennedly.app` — плейсхолдер). Keyframe `ripple` добавлен._
 
 ### 5e. Legal
 **Роут:** `/privacy`, `/terms`, **`/data-deletion`** (новый роут) →

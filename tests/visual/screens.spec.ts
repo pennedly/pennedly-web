@@ -904,3 +904,13 @@ test("Login", async ({ page }) => {
   await page.waitForTimeout(600);
   await shoot(page, "login-code");
 });
+
+test("Landing", async ({ page }) => {
+  // Public marketing page at / — no app shell, no API calls; wait on the top bar.
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await setup(page);
+  await page.goto("/");
+  await page.waitForSelector("header", { state: "visible", timeout: 15_000 });
+  await page.waitForTimeout(700);
+  await shoot(page, "landing");
+});
