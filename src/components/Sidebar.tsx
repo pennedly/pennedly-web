@@ -1,10 +1,10 @@
 "use client";
 
-// Cloudflare-style left navigation for the whole /app area. Desktop: a
-// fixed left column — sections grouped top→down, with the account
-// switcher + language + logout pinned at the bottom. Mobile: a slim top
-// bar with a hamburger that opens the same nav as a drawer. Rendered once
-// by src/app/app/layout.tsx; individual pages no longer carry their own
+// Left navigation for the whole /app area. Desktop: a fixed left column —
+// brand (pen mark + "Drafting partner") over icon-nav groups, with the account
+// switcher + profile menu pinned at the bottom. Mobile: a slim top bar with a
+// hamburger that opens the same nav as a drawer. Rendered once by
+// src/app/app/layout.tsx; individual pages no longer carry their own
 // header/nav. Tester-only sections are hidden unless me.is_tester.
 
 import Link from "next/link";
@@ -15,11 +15,31 @@ import { clearTokens, fetchMe, getTokens, setMyLocale } from "@/lib/api";
 import { captureEvent, resetIdentity } from "@/lib/analytics";
 import { getLocale, useTranslation, type MessageKey } from "@/lib/i18n";
 import { AccountSwitcher } from "@/components/AccountSwitcher";
+import {
+  BrandMark,
+  IcAt,
+  IcAudit,
+  IcBolt,
+  IcChart,
+  IcChevDown,
+  IcFeed,
+  IcReplies,
+  IcSettings,
+  IcStudio,
+  IcStudy,
+  IcTweak,
+  IcVoice,
+  type IconProps,
+} from "@/components/icons";
+import { Mono } from "@/components/ui/mono";
 import type { Me } from "@/lib/types";
+
+type IconCmp = (p: IconProps) => React.ReactElement;
 
 type NavItem = {
   href: string;
   label: MessageKey;
+  icon: IconCmp;
   exact?: boolean;
   tester?: boolean;
 };
@@ -28,30 +48,26 @@ const GROUPS: { title: MessageKey; items: NavItem[] }[] = [
   {
     title: "nav.group.content",
     items: [
-      { href: "/app", label: "nav.studio", exact: true },
-      { href: "/app/feed", label: "dashboard.nav.feed" },
-      { href: "/app/replies", label: "dashboard.nav.replies", tester: true },
-      { href: "/app/mentions", label: "dashboard.nav.mentions", tester: true },
+      { href: "/app", label: "nav.studio", icon: IcStudio, exact: true },
+      { href: "/app/feed", label: "dashboard.nav.feed", icon: IcFeed },
+      { href: "/app/replies", label: "dashboard.nav.replies", icon: IcReplies, tester: true },
+      { href: "/app/mentions", label: "dashboard.nav.mentions", icon: IcAt, tester: true },
     ],
   },
   {
     title: "nav.group.growth",
     items: [
-      { href: "/app/stats", label: "dashboard.nav.stats" },
-      { href: "/app/audits", label: "dashboard.nav.audits" },
-      { href: "/app/patterns", label: "dashboard.nav.patterns" },
-      {
-        href: "/app/autopilot",
-        label: "dashboard.nav.autopilot",
-        tester: true,
-      },
+      { href: "/app/stats", label: "dashboard.nav.stats", icon: IcChart },
+      { href: "/app/audits", label: "dashboard.nav.audits", icon: IcAudit },
+      { href: "/app/patterns", label: "dashboard.nav.patterns", icon: IcStudy },
+      { href: "/app/autopilot", label: "dashboard.nav.autopilot", icon: IcBolt, tester: true },
     ],
   },
   {
     title: "nav.group.voice",
     items: [
-      { href: "/app/role-book", label: "dashboard.nav.voice" },
-      { href: "/app/style-rules", label: "dashboard.nav.style_rules" },
+      { href: "/app/role-book", label: "dashboard.nav.voice", icon: IcVoice },
+      { href: "/app/style-rules", label: "dashboard.nav.style_rules", icon: IcTweak },
     ],
   },
 ];
@@ -97,38 +113,46 @@ export function Sidebar() {
   }
 
   const brand = (
-    <Link
-      href="/app"
-      className="flex items-center gap-2 px-4 h-14 shrink-0 border-b border-border"
-    >
-      <span className="text-lg font-semibold tracking-tight">Pennedly</span>
+    <Link href="/app" className="flex items-center gap-2.5 px-2 pb-4 pt-1">
+      <BrandMark size={34} radius={9} className="shadow-sm" />
+      <span className="min-w-0">
+        <span className="block text-h3 font-semibold leading-none tracking-tight">
+          {t("app.brand")}
+        </span>
+        <span className="mt-1 block text-caption text-text-subtle">
+          {t("nav.brand_tagline")}
+        </span>
+      </span>
     </Link>
   );
 
   const nav = (
-    <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
+    <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-2">
       {GROUPS.map((group) => {
         const items = group.items.filter((it) => !it.tester || isTester);
         if (items.length === 0) return null;
         return (
           <div key={group.title}>
-            <p className="px-2 mb-1 text-[10px] font-semibold uppercase tracking-wider text-text-subtle">
+            <p className="mb-1.5 px-3 text-caption font-semibold uppercase tracking-[0.06em] text-text-subtle">
               {t(group.title)}
             </p>
             <ul className="space-y-0.5">
               {items.map((it) => {
                 const active = isActive(pathname, it.href, it.exact);
+                const Icon = it.icon;
                 return (
                   <li key={it.href}>
                     <Link
                       href={it.href}
-                      className={`block rounded-md px-2.5 py-1.5 text-sm capitalize transition-colors ${
+                      aria-current={active ? "page" : undefined}
+                      className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-small capitalize transition-colors ${
                         active
-                          ? "bg-primary text-primary-foreground font-medium"
-                          : "text-text-muted hover:bg-surface-2 hover:text-zinc-900 dark:hover:text-zinc-100"
+                          ? "bg-surface-2 font-semibold text-text"
+                          : "font-medium text-text-muted hover:bg-surface-2 hover:text-text"
                       }`}
                     >
-                      {t(it.label)}
+                      <Icon size={18} className="shrink-0" />
+                      <span className="truncate">{t(it.label)}</span>
                     </Link>
                   </li>
                 );
@@ -141,10 +165,10 @@ export function Sidebar() {
   );
 
   const bottom = (
-    <div className="border-t border-border px-2 py-2 space-y-1 shrink-0">
+    <div className="shrink-0 space-y-1 border-t border-border px-2 py-2">
       {/* Account switcher — opens upward (it sits at the very bottom) */}
       <AccountSwitcher />
-      {/* Profile / settings / language / logout */}
+      {/* Profile / settings / logout */}
       <ProfileMenu me={me} onLogout={onLogout} />
     </div>
   );
@@ -152,21 +176,22 @@ export function Sidebar() {
   return (
     <>
       {/* Desktop: fixed left column */}
-      <aside className="hidden md:flex md:flex-col md:fixed md:inset-y-0 md:left-0 md:w-56 z-30 bg-surface border-r border-border">
+      <aside className="z-30 hidden border-r border-border bg-bg md:fixed md:inset-y-0 md:left-0 md:flex md:w-62 md:flex-col md:px-3.5 md:py-4">
         {brand}
         {nav}
         {bottom}
       </aside>
 
       {/* Mobile: top bar */}
-      <div className="md:hidden sticky top-0 z-30 flex items-center justify-between h-14 px-4 bg-surface/90 backdrop-blur border-b border-border">
-        <Link href="/app" className="text-lg font-semibold tracking-tight">
-          Pennedly
+      <div className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-bg/90 px-4 backdrop-blur md:hidden">
+        <Link href="/app" className="flex items-center gap-2">
+          <BrandMark size={26} radius={7} />
+          <span className="text-h3 font-semibold tracking-tight">{t("app.brand")}</span>
         </Link>
         <button
           onClick={() => setMobileOpen((o) => !o)}
           aria-label="menu"
-          className="p-2 -mr-2 text-text-muted"
+          className="-mr-2 p-2 text-text-muted"
         >
           <svg
             width="22"
@@ -196,13 +221,13 @@ export function Sidebar() {
 
       {/* Mobile: drawer */}
       {mobileOpen && (
-        <div className="md:hidden fixed inset-0 z-40 flex">
+        <div className="fixed inset-0 z-40 flex md:hidden">
           <div
-            className="absolute inset-0 bg-black/40"
+            className="absolute inset-0 bg-ink-950/40"
             onClick={() => setMobileOpen(false)}
             aria-hidden
           />
-          <aside className="relative flex flex-col w-64 max-w-[80%] bg-surface border-r border-border shadow-xl">
+          <aside className="relative flex w-64 max-w-[80%] flex-col border-r border-border bg-bg px-3.5 py-4 shadow-lg">
             {brand}
             {nav}
             {bottom}
@@ -213,8 +238,8 @@ export function Sidebar() {
   );
 }
 
-// The bottom-left user area: profile (who's logged in), language, settings,
-// and log out — in one menu that opens UPWARD (it sits at the very bottom).
+// The bottom-left user area: profile (who's logged in), settings, and log out —
+// in one menu that opens UPWARD (it sits at the very bottom).
 function ProfileMenu({
   me,
   onLogout,
@@ -231,45 +256,38 @@ function ProfileMenu({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-surface-2 transition-colors"
+        className="flex w-full items-center gap-2.5 rounded-md p-2 text-left transition-colors hover:bg-surface-2"
       >
-        <span className="w-7 h-7 rounded-full bg-surface-2 flex items-center justify-center text-xs font-semibold shrink-0">
-          {initial}
-        </span>
-        <span className="flex-1 min-w-0">
-          <span className="block text-xs font-medium truncate">
+        <Mono text={initial} size={28} />
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-small font-medium leading-tight">
             {me?.email ?? "…"}
           </span>
           {me && (
-            <span className="block text-[10px] text-zinc-500 truncate">
+            <span className="block truncate text-caption capitalize text-text-subtle">
               {me.tenant.plan_tier}
             </span>
           )}
         </span>
-        <span className="text-zinc-400 text-xs" aria-hidden>
-          ⋯
-        </span>
+        <IcChevDown size={15} className="shrink-0 text-text-subtle" />
       </button>
       {open && (
         <>
-          <div
-            className="fixed inset-0 z-30"
-            onClick={() => setOpen(false)}
-            aria-hidden
-          />
-          <div className="absolute bottom-full mb-1 left-0 right-0 z-40 rounded-lg border border-border bg-surface shadow-lg py-1">
+          <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} aria-hidden />
+          <div className="absolute bottom-full left-0 right-0 z-40 mb-1.5 rounded-lg border border-border bg-surface py-1 shadow-lg">
             <Link
               href="/app/settings"
               onClick={() => setOpen(false)}
-              className="block px-3 py-1.5 text-sm text-text hover:bg-surface-2 transition-colors"
+              className="flex items-center gap-2.5 px-3 py-2 text-small text-text transition-colors hover:bg-surface-2"
             >
+              <IcSettings size={16} className="text-text-subtle" />
               {t("nav.settings")}
             </Link>
             <div className="my-1 border-t border-border" />
             <button
               type="button"
               onClick={onLogout}
-              className="w-full text-left px-3 py-1.5 text-sm text-red-600 dark:text-red-400 hover:bg-surface-2 transition-colors"
+              className="w-full px-3 py-2 text-left text-small text-danger transition-colors hover:bg-surface-2"
             >
               {t("dashboard.nav.logout")}
             </button>

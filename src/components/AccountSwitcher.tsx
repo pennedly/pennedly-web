@@ -20,7 +20,19 @@ import {
 } from "@/lib/account";
 import { captureEvent } from "@/lib/analytics";
 import { ConnectThreadsButton } from "@/components/ConnectThreadsButton";
+import { Mono } from "@/components/ui/mono";
+import { IcCheck, IcChevDown } from "@/components/icons";
 import type { ConnectedAccount } from "@/lib/types";
+
+function nameOf(a: ConnectedAccount): string {
+  return a.display_name ?? a.username ?? `acct ${a.id}`;
+}
+
+function initialsOf(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return name.trim().slice(0, 2).toUpperCase() || "?";
+}
 
 export function AccountSwitcher() {
   const selected = useSelectedAccountId();
@@ -72,53 +84,59 @@ export function AccountSwitcher() {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="w-full inline-flex items-center gap-1.5 text-xs text-text px-2 py-1.5 rounded-md hover:bg-surface-2 transition-colors"
+        className="flex w-full items-center gap-2.5 rounded-md border border-transparent p-2 text-left transition-colors hover:bg-surface-2"
       >
-        <span aria-hidden>@</span>
-        <span className="font-medium truncate flex-1 text-left">
-          {selectedAccount.username ?? `acct ${selectedAccount.id}`}
+        <Mono text={initialsOf(nameOf(selectedAccount))} size={32} />
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-small font-semibold leading-tight">
+            {nameOf(selectedAccount)}
+          </span>
+          {selectedAccount.username && (
+            <span className="block truncate text-caption text-text-subtle">
+              @{selectedAccount.username}
+            </span>
+          )}
         </span>
-        <span aria-hidden className="text-zinc-400 shrink-0">
-          ▾
-        </span>
+        <IcChevDown size={15} className="shrink-0 text-text-subtle" />
       </button>
       {open && (
-        <div className="absolute bottom-full mb-1 left-0 right-0 z-40 rounded-lg border border-border bg-surface shadow-lg py-1">
-          {accounts.map((a) => {
-            const isSel = a.id === selectedAccount.id;
-            return (
-              <button
-                key={a.id}
-                type="button"
-                onClick={() => {
-                  setSelectedAccountId(a.id);
-                  setOpen(false);
-                  captureEvent("ui.account_switched", { account_id: a.id });
-                }}
-                className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 transition-colors ${
-                  isSel
-                    ? "bg-surface-2 text-text"
-                    : "text-text hover:bg-surface-2/60"
-                }`}
-              >
-                <span aria-hidden>@</span>
-                <span className="font-medium">
-                  {a.username ?? `acct ${a.id}`}
-                </span>
-                {a.display_name && (
-                  <span className="text-xs text-zinc-500 truncate">
-                    · {a.display_name}
+        <>
+          <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} aria-hidden />
+          <div className="absolute bottom-full left-0 right-0 z-40 mb-1.5 rounded-lg border border-border bg-surface py-1 shadow-lg">
+            {accounts.map((a) => {
+              const isSel = a.id === selectedAccount.id;
+              return (
+                <button
+                  key={a.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedAccountId(a.id);
+                    setOpen(false);
+                    captureEvent("ui.account_switched", { account_id: a.id });
+                  }}
+                  className={`flex w-full items-center gap-2.5 px-2.5 py-2 text-left transition-colors ${
+                    isSel ? "bg-surface-2" : "hover:bg-surface-2"
+                  }`}
+                >
+                  <Mono text={initialsOf(nameOf(a))} size={28} />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-small font-medium leading-tight">
+                      {nameOf(a)}
+                    </span>
+                    {a.username && (
+                      <span className="block truncate text-caption text-text-subtle">
+                        @{a.username}
+                      </span>
+                    )}
                   </span>
-                )}
-                {isSel && (
-                  <span className="ml-auto text-xs text-zinc-500">✓</span>
-                )}
-              </button>
-            );
-          })}
-          <div className="my-1 border-t border-border" />
-          <ConnectThreadsButton variant="menu" />
-        </div>
+                  {isSel && <IcCheck size={15} className="shrink-0 text-text-subtle" />}
+                </button>
+              );
+            })}
+            <div className="my-1 border-t border-border" />
+            <ConnectThreadsButton variant="menu" />
+          </div>
+        </>
       )}
     </div>
   );

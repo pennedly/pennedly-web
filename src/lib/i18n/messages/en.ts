@@ -416,6 +416,7 @@ export const en = {
   // ── My Feed (posts + analytics) ───────────────────────────────
   "dashboard.nav.feed": "feed",
   "nav.studio": "Studio",
+  "nav.brand_tagline": "Drafting partner",
   "nav.group.content": "Content",
   "nav.group.growth": "Growth",
   "nav.group.voice": "Voice",

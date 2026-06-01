@@ -16,6 +16,7 @@ import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 import { Sidebar } from "@/components/Sidebar";
+import { Spinner } from "@/components/ui/feedback";
 import { getTokens } from "@/lib/api";
 import {
   refreshAccountsPresence,
@@ -59,17 +60,14 @@ export default function AppLayout({
   // quiet loader, so the sidebar never flashes before the connect screen.
   if (hasAccounts !== true) {
     return (
-      <div className="min-h-screen bg-bg flex items-center justify-center">
-        <span
-          className="inline-block w-5 h-5 border-2 border-text-subtle border-t-transparent rounded-full animate-spin"
-          aria-label="Loading"
-        />
+      <div className="flex min-h-screen items-center justify-center bg-bg">
+        <Spinner size={20} className="text-text-subtle" />
       </div>
     );
   }
 
   return (
-    <div className="md:pl-56">
+    <div className="md:pl-62">
       <Sidebar />
       {children}
     </div>

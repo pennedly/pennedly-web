@@ -14,6 +14,8 @@ import { useState } from "react";
 import { startThreadsConnect } from "@/lib/api";
 import { captureEvent } from "@/lib/analytics";
 import { useTranslation } from "@/lib/i18n";
+import { Button } from "@/components/ui/button";
+import { IcAt } from "@/components/icons";
 
 type Props = {
   variant?: "primary" | "menu";
@@ -47,49 +49,34 @@ export function ConnectThreadsButton({ variant = "primary" }: Props) {
       ? t("accounts.connect_another")
       : t("accounts.connect");
 
-  const className =
-    variant === "menu"
-      ? "w-full text-left px-3 py-2 text-sm flex items-center gap-2 text-text hover:bg-surface-2/60 disabled:opacity-50 transition-colors"
-      : "inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors";
-
-  const icon = loading ? (
-    <span
-      className="inline-block w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin"
-      aria-hidden
-    />
-  ) : (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
-  );
+  if (variant === "menu") {
+    return (
+      <div>
+        <button
+          type="button"
+          onClick={onConnect}
+          disabled={loading}
+          className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-small text-text transition-colors hover:bg-surface-2 disabled:opacity-50"
+        >
+          <IcAt size={15} className="text-text-subtle" />
+          {label}
+        </button>
+        {error && <span className="px-3 text-caption text-danger">{error}</span>}
+      </div>
+    );
+  }
 
   return (
-    <div className={variant === "menu" ? "" : "inline-flex flex-col gap-1"}>
-      <button
-        type="button"
+    <div className="inline-flex flex-col gap-1">
+      <Button
+        variant="primary"
         onClick={onConnect}
-        disabled={loading}
-        className={className}
+        loading={loading}
+        icon={<IcAt size={16} />}
       >
-        {icon}
         {label}
-      </button>
-      {error && (
-        <span className="text-xs text-red-600 dark:text-red-400 px-1">
-          {error}
-        </span>
-      )}
+      </Button>
+      {error && <span className="px-1 text-caption text-danger">{error}</span>}
     </div>
   );
 }
