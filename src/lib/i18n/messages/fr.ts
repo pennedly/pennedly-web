@@ -429,6 +429,50 @@ export const fr: Partial<Record<MessageKey, string>> = {
   "patterns.side_structure_multiline": "Plusieurs lignes",
   "patterns.side_structure_single": "Un seul bloc",
 
+  // ── Explore patterns (paste admired text) ──────────────────────
+  "explore.title": "Explorer les schémas",
+  "explore.subtitle":
+    "Colle le texte des publications que tu admires et Pennedly nomme le procédé qui les sous-tend — puis réécrit chacune dans ta propre voix. Apprends le procédé, pas la publication.",
+  "explore.pill": "{n} techniques trouvées",
+  "explore.notice_title": "Colle le texte, pas des liens.",
+  "explore.notice_body":
+    "Pennedly n'ouvre jamais de liens et ne lit pas les comptes des autres. Copie les mots des publications que tu admires et dépose-les ci-dessous — une publication par bloc, une ligne vide entre chacune.",
+  "explore.placeholder":
+    "Colle ici quelques publications que tu admires.\n\nLaisse une ligne vide entre chacune pour que Pennedly puisse les distinguer.",
+  "explore.count_empty": "Pas encore de publications",
+  "explore.count_one": "1 publication prête",
+  "explore.count_other": "{n} publications prêtes",
+  "explore.analyze": "Analyser le métier",
+  "explore.warn_link":
+    "On dirait un lien. Colle plutôt les mots de la publication — Pennedly n'ouvre jamais de liens.",
+  "explore.warn_url": "On dirait une URL. Colle le texte de la publication, pas un lien vers elle.",
+  "explore.warn_handle": "On dirait un @identifiant. Colle ce que la personne a écrit, pas son compte.",
+  "explore.seed_cap": "Tu ne sais pas quoi coller ?",
+  "explore.seed_sample": "Essayer un jeu d'exemples",
+  "explore.seed1": "Une accroche qui t'a arrêté",
+  "explore.seed2": "Une publication que tu as relue",
+  "explore.seed3": "Une ligne que tu aurais aimé écrire",
+  "explore.reading_title": "Lecture du métier…",
+  "explore.reading_sub": "J'extrais le procédé de chaque publication — pas la publication elle-même.",
+  "explore.step1": "Lire le texte que tu as collé",
+  "explore.step2": "Séparer le procédé de la publication",
+  "explore.step3": "Nommer chaque technique",
+  "explore.step4": "Réécrire un exemple dans ta voix",
+  "explore.results_title": "{n} techniques à emprunter",
+  "explore.results_cap": "Tirées du texte que tu as collé · chacune réécrite dans ta voix",
+  "explore.paste_more": "Coller plus",
+  "explore.cap_source": "La ligne qui a tout fait",
+  "explore.cap_voice": "Le même procédé, dans ta voix",
+  "explore.do_label": "do:",
+  "explore.add_to_voice": "Ajouter à ma voix",
+  "explore.added": "Ajouté à ta voix",
+  "explore.samples_analyzed": "{n} échantillons analysés",
+  "explore.empty_warning": "Colle d'abord le texte d'au moins une publication.",
+  "explore.empty_title": "Aucun procédé à montrer pour l'instant",
+  "explore.empty_sub":
+    "Rien n'est ressorti de ce texte — il était peut-être trop court ou entièrement composé d'un lien. Colle quelques publications complètes que tu admires et Pennedly trouvera les techniques à emprunter.",
+  "explore.empty_back": "Retour au collage",
+
   // ── Style rules ────────────────────────────────────────────────
   "dashboard.nav.style_rules": "style",
   "style_rules.back": "← tableau de bord",

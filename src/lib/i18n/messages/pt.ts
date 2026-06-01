@@ -429,6 +429,50 @@ export const pt: Partial<Record<MessageKey, string>> = {
   "patterns.side_structure_multiline": "Várias linhas",
   "patterns.side_structure_single": "Um único bloco",
 
+  // ── Explore patterns (paste admired text) ──────────────────────
+  "explore.title": "Explorar padrões",
+  "explore.subtitle":
+    "Cole o texto das publicações que você admira e o Pennedly dá nome ao recurso por trás delas — depois reescreve cada uma na sua própria voz. Aprenda o recurso, não a publicação.",
+  "explore.pill": "{n} técnicas encontradas",
+  "explore.notice_title": "Cole o texto, não links.",
+  "explore.notice_body":
+    "O Pennedly nunca abre links nem lê contas alheias. Copie as palavras das publicações que você admira e cole abaixo — uma publicação por bloco, uma linha em branco entre cada uma.",
+  "explore.placeholder":
+    "Cole aqui algumas publicações que você admira.\n\nDeixe uma linha em branco entre cada uma para o Pennedly distingui-las.",
+  "explore.count_empty": "Ainda sem publicações",
+  "explore.count_one": "1 publicação pronta",
+  "explore.count_other": "{n} publicações prontas",
+  "explore.analyze": "Analisar o ofício",
+  "explore.warn_link":
+    "Isso parece um link. Cole as palavras da publicação — o Pennedly nunca abre links.",
+  "explore.warn_url": "Isso parece uma URL. Cole o texto da publicação, não um link para ela.",
+  "explore.warn_handle": "Isso parece um @usuário. Cole o que a pessoa escreveu, não a conta dela.",
+  "explore.seed_cap": "Não sabe o que colar?",
+  "explore.seed_sample": "Experimentar um conjunto de exemplo",
+  "explore.seed1": "Um gancho que te fez parar",
+  "explore.seed2": "Uma publicação que você releu",
+  "explore.seed3": "Uma linha que você gostaria de ter escrito",
+  "explore.reading_title": "Lendo o ofício…",
+  "explore.reading_sub": "Extraindo o recurso de cada publicação — não a publicação em si.",
+  "explore.step1": "Lendo o texto que você colou",
+  "explore.step2": "Separando o recurso da publicação",
+  "explore.step3": "Nomeando cada técnica",
+  "explore.step4": "Reescrevendo um exemplo na sua voz",
+  "explore.results_title": "{n} técnicas que vale a pena pegar emprestado",
+  "explore.results_cap": "Extraídas do texto que você colou · cada uma reescrita na sua voz",
+  "explore.paste_more": "Colar mais",
+  "explore.cap_source": "A linha que fez a diferença",
+  "explore.cap_voice": "O mesmo recurso, na sua voz",
+  "explore.do_label": "do:",
+  "explore.add_to_voice": "Adicionar à minha voz",
+  "explore.added": "Adicionado à sua voz",
+  "explore.samples_analyzed": "{n} amostras analisadas",
+  "explore.empty_warning": "Primeiro cole o texto de pelo menos uma publicação.",
+  "explore.empty_title": "Ainda nenhum recurso para mostrar",
+  "explore.empty_sub":
+    "Nada saiu desse texto — talvez fosse curto demais ou só um link. Cole algumas publicações completas que você admira e o Pennedly encontrará as técnicas que vale a pena pegar emprestado.",
+  "explore.empty_back": "Voltar a colar",
+
   // ── Style rules ────────────────────────────────────────────────
   "dashboard.nav.style_rules": "estilo",
   "style_rules.back": "← painel",

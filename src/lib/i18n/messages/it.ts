@@ -428,6 +428,50 @@ export const it: Partial<Record<MessageKey, string>> = {
   "patterns.side_structure_multiline": "Più righe",
   "patterns.side_structure_single": "Un solo blocco",
 
+  // ── Explore patterns (paste admired text) ──────────────────────
+  "explore.title": "Esplora gli schemi",
+  "explore.subtitle":
+    "Incolla il testo dei post che ammiri e Pennedly dà un nome alla mossa che c'è dietro — poi riscrive ognuno con la tua voce. Impara la mossa, non il post.",
+  "explore.pill": "{n} tecniche trovate",
+  "explore.notice_title": "Incolla il testo, non i link.",
+  "explore.notice_body":
+    "Pennedly non apre mai i link e non legge gli account altrui. Copia le parole dei post che ammiri e incollale qui sotto — un post per blocco, una riga vuota tra l'uno e l'altro.",
+  "explore.placeholder":
+    "Incolla qui qualche post che ammiri.\n\nLascia una riga vuota tra l'uno e l'altro, così Pennedly può distinguerli.",
+  "explore.count_empty": "Ancora nessun post",
+  "explore.count_one": "1 post pronto",
+  "explore.count_other": "{n} post pronti",
+  "explore.analyze": "Analizza il mestiere",
+  "explore.warn_link":
+    "Sembra un link. Incolla invece le parole del post — Pennedly non apre mai i link.",
+  "explore.warn_url": "Sembra un URL. Incolla il testo del post, non un link a esso.",
+  "explore.warn_handle": "Sembra un @handle. Incolla ciò che ha scritto, non il suo account.",
+  "explore.seed_cap": "Non sai cosa incollare?",
+  "explore.seed_sample": "Prova un set di esempio",
+  "explore.seed1": "Un gancio che ti ha fermato",
+  "explore.seed2": "Un post che hai riletto",
+  "explore.seed3": "Una riga che avresti voluto scrivere",
+  "explore.reading_title": "Leggo il mestiere…",
+  "explore.reading_sub": "Estraggo la mossa da ogni post — non il post stesso.",
+  "explore.step1": "Leggo il testo che hai incollato",
+  "explore.step2": "Separo la mossa dal post",
+  "explore.step3": "Do un nome a ogni tecnica",
+  "explore.step4": "Riscrivo un esempio con la tua voce",
+  "explore.results_title": "{n} tecniche che vale la pena prendere in prestito",
+  "explore.results_cap": "Estratte dal testo che hai incollato · ognuna riscritta con la tua voce",
+  "explore.paste_more": "Incolla altro",
+  "explore.cap_source": "La riga che ha fatto la differenza",
+  "explore.cap_voice": "La stessa mossa, con la tua voce",
+  "explore.do_label": "do:",
+  "explore.add_to_voice": "Aggiungi alla mia voce",
+  "explore.added": "Aggiunto alla tua voce",
+  "explore.samples_analyzed": "{n} campioni analizzati",
+  "explore.empty_warning": "Prima incolla il testo di almeno un post.",
+  "explore.empty_title": "Ancora nessuna mossa da mostrare",
+  "explore.empty_sub":
+    "Da quel testo non è emerso nulla — forse era troppo corto o tutto un link. Incolla qualche post completo che ammiri e Pennedly troverà le tecniche che vale la pena prendere in prestito.",
+  "explore.empty_back": "Torna a incollare",
+
   // ── Style rules ────────────────────────────────────────────────
   "dashboard.nav.style_rules": "stile",
   "style_rules.back": "← dashboard",

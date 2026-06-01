@@ -426,6 +426,50 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "patterns.side_structure_multiline": "Кілька рядків",
   "patterns.side_structure_single": "Один блок",
 
+  // ── Explore patterns (paste admired text) ──────────────────────
+  "explore.title": "Розбір патернів",
+  "explore.subtitle":
+    "Встав тексти постів, якими захоплюєшся — Pennedly назве прийом за ними й перепише кожен твоїм голосом. Вчися прийому, а не посту.",
+  "explore.pill": "Знайдено прийомів: {n}",
+  "explore.notice_title": "Вставляй текст, а не посилання.",
+  "explore.notice_body":
+    "Pennedly ніколи не відкриває посилання й не читає чужі акаунти. Скопіюй слова постів, якими захоплюєшся, і встав нижче — по одному посту в блоці, між ними порожній рядок.",
+  "explore.placeholder":
+    "Встав сюди кілька постів, якими захоплюєшся.\n\nЗалишай порожній рядок між ними, щоб Pennedly міг їх розрізнити.",
+  "explore.count_empty": "Постів поки немає",
+  "explore.count_one": "1 пост готовий",
+  "explore.count_other": "Постів готово: {n}",
+  "explore.analyze": "Розібрати прийоми",
+  "explore.warn_link":
+    "Схоже на посилання. Встав слова поста — Pennedly не відкриває посилань.",
+  "explore.warn_url": "Схоже на URL. Встав текст поста, а не посилання на нього.",
+  "explore.warn_handle": "Схоже на @-нік. Встав те, що людина написала, а не її акаунт.",
+  "explore.seed_cap": "Не знаєш, що вставити?",
+  "explore.seed_sample": "Узяти приклад",
+  "explore.seed1": "Гачок, який тебе зачепив",
+  "explore.seed2": "Пост, який ти перечитував",
+  "explore.seed3": "Рядок, який хотів би написати сам",
+  "explore.reading_title": "Читаю майстерність…",
+  "explore.reading_sub": "Витягую прийом із кожного поста — а не сам пост.",
+  "explore.step1": "Читаю вставлений текст",
+  "explore.step2": "Відділяю прийом від поста",
+  "explore.step3": "Називаю кожен прийом",
+  "explore.step4": "Переписую приклад твоїм голосом",
+  "explore.results_title": "Прийомів, що варто позичити: {n}",
+  "explore.results_cap": "Зі вставленого тексту · кожен переписано твоїм голосом",
+  "explore.paste_more": "Вставити ще",
+  "explore.cap_source": "Рядок, який це зробив",
+  "explore.cap_voice": "Той самий прийом, твоїм голосом",
+  "explore.do_label": "do:",
+  "explore.add_to_voice": "Додати в голос",
+  "explore.added": "Додано в твій голос",
+  "explore.samples_analyzed": "Проаналізовано зразків: {n}",
+  "explore.empty_warning": "Спочатку встав текст хоча б одного поста.",
+  "explore.empty_title": "Поки нема чого показати",
+  "explore.empty_sub":
+    "Із цього тексту нічого не вийшло — можливо, він надто короткий або це суцільне посилання. Встав кілька повних постів, якими захоплюєшся, і Pennedly знайде прийоми, що варто позичити.",
+  "explore.empty_back": "Назад до вставки",
+
   // ── Style rules ────────────────────────────────────────────────
   "dashboard.nav.style_rules": "стиль",
   "style_rules.back": "← дашборд",

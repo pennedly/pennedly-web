@@ -432,6 +432,50 @@ export const de: Partial<Record<MessageKey, string>> = {
   "patterns.side_structure_multiline": "Mehrzeilig",
   "patterns.side_structure_single": "Ein Block",
 
+  // ── Explore patterns (paste admired text) ──────────────────────
+  "explore.title": "Muster erkunden",
+  "explore.subtitle":
+    "Füge den Text von Beiträgen ein, die du bewunderst — Pennedly benennt den Kniff dahinter und schreibt jeden in deiner eigenen Stimme neu. Lerne den Kniff, nicht den Beitrag.",
+  "explore.pill": "{n} Techniken gefunden",
+  "explore.notice_title": "Füge den Text ein, keine Links.",
+  "explore.notice_body":
+    "Pennedly öffnet niemals Links und liest keine fremden Konten. Kopiere die Worte der Beiträge, die du bewunderst, und füge sie unten ein — ein Beitrag pro Block, dazwischen eine Leerzeile.",
+  "explore.placeholder":
+    "Füge hier ein paar Beiträge ein, die du bewunderst.\n\nLass zwischen jedem eine Leerzeile, damit Pennedly sie auseinanderhalten kann.",
+  "explore.count_empty": "Noch keine Beiträge",
+  "explore.count_one": "1 Beitrag bereit",
+  "explore.count_other": "{n} Beiträge bereit",
+  "explore.analyze": "Das Handwerk analysieren",
+  "explore.warn_link":
+    "Das sieht nach einem Link aus. Füge stattdessen die Worte des Beitrags ein — Pennedly öffnet keine Links.",
+  "explore.warn_url": "Das sieht nach einer URL aus. Füge den Text des Beitrags ein, nicht einen Link darauf.",
+  "explore.warn_handle": "Das sieht nach einem @-Handle aus. Füge ein, was die Person geschrieben hat, nicht ihr Konto.",
+  "explore.seed_cap": "Unsicher, was du einfügen sollst?",
+  "explore.seed_sample": "Ein Beispielset ausprobieren",
+  "explore.seed1": "Ein Hook, der dich gestoppt hat",
+  "explore.seed2": "Ein Beitrag, den du erneut gelesen hast",
+  "explore.seed3": "Eine Zeile, die du gern selbst geschrieben hättest",
+  "explore.reading_title": "Das Handwerk lesen…",
+  "explore.reading_sub": "Ich ziehe den Kniff aus jedem Beitrag — nicht den Beitrag selbst.",
+  "explore.step1": "Ich lese den eingefügten Text",
+  "explore.step2": "Ich trenne den Kniff vom Beitrag",
+  "explore.step3": "Ich benenne jede Technik",
+  "explore.step4": "Ich schreibe ein Beispiel in deiner Stimme neu",
+  "explore.results_title": "{n} Techniken, die das Übernehmen wert sind",
+  "explore.results_cap": "Aus dem eingefügten Text gezogen · jede in deiner Stimme neu geschrieben",
+  "explore.paste_more": "Mehr einfügen",
+  "explore.cap_source": "Die Zeile, die es ausgemacht hat",
+  "explore.cap_voice": "Derselbe Kniff, in deiner Stimme",
+  "explore.do_label": "do:",
+  "explore.add_to_voice": "Zu meiner Stimme hinzufügen",
+  "explore.added": "Zu deiner Stimme hinzugefügt",
+  "explore.samples_analyzed": "{n} Beispiele analysiert",
+  "explore.empty_warning": "Füge zuerst den Text mindestens eines Beitrags ein.",
+  "explore.empty_title": "Noch keine Kniffe zu zeigen",
+  "explore.empty_sub":
+    "Aus diesem Text kam nichts zurück — er war vielleicht zu kurz oder nur ein Link. Füge ein paar vollständige Beiträge ein, die du bewunderst, und Pennedly findet die Techniken, die das Übernehmen wert sind.",
+  "explore.empty_back": "Zurück zum Einfügen",
+
   // ── Style rules ────────────────────────────────────────────────
   "dashboard.nav.style_rules": "stil",
   "style_rules.back": "← Dashboard",
