@@ -15,6 +15,7 @@ import {
   clearTokens,
   deleteDraft,
   fetchMe,
+  fetchMyAccounts,
   fetchOnboardingStatus,
   generatePost,
   generatePostBatch,
@@ -35,7 +36,8 @@ import { Button, buttonClasses } from "@/components/ui/button";
 import { Mono } from "@/components/ui/mono";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { Toast, ToastHost } from "@/components/ui/toast";
-import { IcCheck, IcExternal, IcNib, IcSparkle, IcStudio, IcTrash, IcTweak } from "@/components/icons";
+import { IcCheck, IcChevDown, IcExternal, IcNib, IcPencil, IcSend, IcSparkle, IcStudio, IcTrash, IcTweak, IcX } from "@/components/icons";
+import { SkeletonText } from "@/components/ui/feedback";
 import { cn } from "@/lib/cn";
 import type { DraftSummary, GeneratedDraft, Me } from "@/lib/types";
 
@@ -50,6 +52,38 @@ const COMPOSER_CHIPS: MessageKey[] = [
   "dashboard.composer.chip_story",
 ];
 
+// Threads' text-post limit. The char meter warns as you approach it.
+const DRAFT_LIMIT = 500;
+
+function CharMeter({ len, showBar = true }: { len: number; showBar?: boolean }) {
+  const pct = Math.min(100, (len / DRAFT_LIMIT) * 100);
+  const over = len > DRAFT_LIMIT;
+  const warn = !over && len > DRAFT_LIMIT - 60;
+  return (
+    <div className="flex items-center gap-2.5">
+      {showBar && (
+        <div className="h-1 w-full max-w-[140px] overflow-hidden rounded-full border border-border bg-surface-2">
+          <div
+            className={cn(
+              "h-full rounded-full transition-all",
+              over ? "bg-danger" : warn ? "bg-warning" : "bg-text-subtle",
+            )}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      )}
+      <span
+        className={cn(
+          "whitespace-nowrap text-caption tabular-nums",
+          over ? "font-semibold text-danger" : warn ? "text-warning" : "text-text-subtle",
+        )}
+      >
+        {len} / {DRAFT_LIMIT}
+      </span>
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const router = useRouter();
   const { t, locale } = useTranslation();
@@ -63,10 +97,16 @@ export default function Dashboard() {
     if (typeof window === "undefined") return 1;
     const raw = window.localStorage.getItem("pennedly.batchCount");
     const n = raw ? Number(raw) : 1;
-    return Number.isFinite(n) && n >= 1 && n <= 5 ? n : 1;
+    return Number.isFinite(n) && n >= 1 && n <= 4 ? n : 1;
   });
   const [lastDraft, setLastDraft] = useState<GeneratedDraft | null>(null);
   const [composerText, setComposerText] = useState("");
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [selectedAccount, setSelectedAccount] = useState<{
+    name: string;
+    handle: string | null;
+    initials: string;
+  } | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [bootError, setBootError] = useState<string | null>(null);
   // Per-draft edited text. Empty string means "user cleared it" (we
@@ -198,6 +238,26 @@ export default function Dashboard() {
       }
     })();
   }, [accountId, router]);
+
+  // The selected account's identity for the draft cards (avatar + name + handle).
+  useEffect(() => {
+    if (accountId === null) {
+      setSelectedAccount(null);
+      return;
+    }
+    fetchMyAccounts()
+      .then((list) => {
+        const a = list.accounts.find((x) => x.id === accountId);
+        if (!a) return;
+        const name = a.display_name ?? a.username ?? `Account ${a.id}`;
+        const parts = name.trim().split(/\s+/).filter(Boolean);
+        const initials = (
+          parts.length >= 2 ? parts[0][0] + parts[1][0] : name.slice(0, 2)
+        ).toUpperCase();
+        setSelectedAccount({ name, handle: a.username, initials: initials || "?" });
+      })
+      .catch(() => {});
+  }, [accountId]);
 
   function persistBatchCount(n: number) {
     setBatchCount(n);
@@ -518,23 +578,26 @@ export default function Dashboard() {
                   ))}
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  <div className="inline-flex items-center gap-1 rounded-md border border-border bg-surface-2 p-1">
-                    {[1, 2, 3, 5].map((n) => (
-                      <button
-                        key={n}
-                        type="button"
-                        onClick={() => persistBatchCount(n)}
-                        className={cn(
-                          "rounded-sm px-2 py-1 text-small font-medium transition-colors",
-                          batchCount === n
-                            ? "bg-surface text-text shadow-sm"
-                            : "text-text-muted hover:text-text",
-                        )}
-                        title={n === 1 ? "Single draft" : `Generate ${n} drafts in parallel`}
-                      >
-                        ×{n}
-                      </button>
-                    ))}
+                  <div className="relative">
+                    <select
+                      value={batchCount}
+                      onChange={(e) => persistBatchCount(Number(e.target.value))}
+                      aria-label={t("dashboard.composer.count_label")}
+                      className="h-9 appearance-none rounded-md border border-border bg-surface pl-3 pr-8 text-small text-text transition-colors hover:bg-surface-2 focus:border-accent focus:outline-none focus:ring-[3px] focus:ring-accent/25"
+                    >
+                      {[1, 2, 3, 4].map((n) => (
+                        <option key={n} value={n}>
+                          {n}{" "}
+                          {n === 1
+                            ? t("dashboard.composer.draft_one")
+                            : t("dashboard.composer.draft_few")}
+                        </option>
+                      ))}
+                    </select>
+                    <IcChevDown
+                      size={14}
+                      className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-subtle"
+                    />
                   </div>
                   <Button
                     variant="primary"
@@ -625,53 +688,74 @@ export default function Dashboard() {
               const isEdited =
                 localEdit !== undefined &&
                 localEdit.trim() !== d.generated_text.trim();
-              const editable = d.status === "pending";
               return (
                 <li
                   key={d.id}
                   className="rounded-lg border border-border bg-surface p-4 shadow-sm transition-colors hover:border-text/15"
                   style={{ animation: "card-in 240ms var(--ease-entrance) both" }}
                 >
-                  <div className="mb-2.5 flex items-center gap-2 text-caption text-text-subtle">
-                    <StatusBadge status={d.status} />
-                    {d.topic_label && <span className="text-text-muted">{d.topic_label}</span>}
-                    <span>·</span>
-                    <span>#{d.id}</span>
-                    {isEdited && (
-                      <>
-                        <span>·</span>
-                        <span className="font-medium text-warning">
-                          {t("dashboard.draft.edited")}
+                  {/* head: author + time + status (Threads-style) */}
+                  <div className="flex items-center gap-2.5">
+                    <Mono text={selectedAccount?.initials ?? "·"} size={34} />
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-small font-semibold leading-tight">
+                        {selectedAccount?.name ?? "…"}
+                      </div>
+                      <div className="flex items-center gap-1.5 text-caption text-text-subtle">
+                        {selectedAccount?.handle && (
+                          <>
+                            <span className="truncate">@{selectedAccount.handle}</span>
+                            <span>·</span>
+                          </>
+                        )}
+                        <span className="whitespace-nowrap">
+                          {relativeTime(d.created_at, locale)}
                         </span>
-                      </>
-                    )}
-                    <span className="ml-auto">{relativeTime(d.created_at, locale)}</span>
+                      </div>
+                    </div>
+                    <StatusBadge status={d.published ? "published" : d.status} />
                   </div>
 
-                  {editable ? (
-                    <textarea
-                      value={currentText}
-                      onChange={(e) =>
-                        setEdits((s) => ({ ...s, [d.id]: e.target.value }))
-                      }
-                      rows={Math.min(
-                        12,
-                        Math.max(3, currentText.split("\n").length + 1),
-                      )}
-                      className="mb-3 w-full resize-y rounded-md border border-accent bg-surface px-3 py-2.5 text-body leading-relaxed text-text ring-[3px] ring-accent/20 focus:outline-none"
-                    />
+                  {/* body: revising · editing · clean text */}
+                  {refiningId === d.id ? (
+                    <div className="mt-3.5 flex flex-col gap-2.5">
+                      <SkeletonText lines={3} />
+                      <span className="inline-flex items-center gap-1.5 text-caption text-accent">
+                        <IcTweak size={13} /> {t("dashboard.draft.refining")}
+                      </span>
+                    </div>
+                  ) : editingId === d.id ? (
+                    <div className="mt-3">
+                      <textarea
+                        autoFocus
+                        value={currentText}
+                        onChange={(e) => setEdits((s) => ({ ...s, [d.id]: e.target.value }))}
+                        onKeyDown={(e) => {
+                          if ((e.metaKey || e.ctrlKey) && e.key === "Enter") setEditingId(null);
+                        }}
+                        rows={Math.min(12, Math.max(3, currentText.split("\n").length + 1))}
+                        className="w-full resize-y rounded-md border border-accent bg-surface px-3 py-2.5 text-body leading-relaxed text-text ring-[3px] ring-accent/20 focus:outline-none"
+                      />
+                      <div className="mt-2">
+                        <CharMeter len={currentText.length} />
+                      </div>
+                    </div>
                   ) : (
-                    <p className="mb-3 whitespace-pre-wrap text-body leading-relaxed">
-                      {d.generated_text}
+                    <p className="mt-3 whitespace-pre-wrap text-body leading-relaxed text-text">
+                      {currentText}
                     </p>
                   )}
 
-                  {d.status === "pending" && refineOpen[d.id] && (
-                    <div className="mb-3 border-t border-border pt-3">
+                  {d.status === "pending" &&
+                    refineOpen[d.id] &&
+                    editingId !== d.id &&
+                    refiningId !== d.id && (
+                    <div className="mt-3">
                       <div className="flex items-center gap-2 rounded-md border border-accent/40 bg-surface-2 px-2.5 py-2">
                         <IcTweak size={16} className="shrink-0 text-accent" />
                         <input
                           type="text"
+                          autoFocus
                           value={refineInputs[d.id] ?? ""}
                           onChange={(e) =>
                             setRefineInputs((s) => ({
@@ -684,6 +768,8 @@ export default function Dashboard() {
                               e.preventDefault();
                               onRefine(d.id);
                             }
+                            if (e.key === "Escape")
+                              setRefineOpen((s) => ({ ...s, [d.id]: false }));
                           }}
                           placeholder={t("dashboard.draft.refine_placeholder")}
                           disabled={refiningId === d.id}
@@ -692,16 +778,14 @@ export default function Dashboard() {
                         <Button
                           size="sm"
                           variant="primary"
+                          aria-label={t("dashboard.draft.refine")}
                           onClick={() => onRefine(d.id)}
                           loading={refiningId === d.id}
                           disabled={
                             refiningId !== null || !(refineInputs[d.id] ?? "").trim()
                           }
-                        >
-                          {refiningId === d.id
-                            ? t("dashboard.draft.refining")
-                            : t("dashboard.draft.refine")}
-                        </Button>
+                          icon={<IcSend size={15} />}
+                        />
                       </div>
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         {[
@@ -739,115 +823,156 @@ export default function Dashboard() {
                     </div>
                   )}
 
-                  <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
-                    {d.status === "pending" && (
-                      <>
-                        <Button
-                          size="sm"
-                          variant="primary"
-                          icon={<IcCheck size={15} />}
-                          onClick={() => onApprove(d.id, d.generated_text)}
-                        >
-                          {isEdited
-                            ? t("dashboard.draft.approve_edited")
-                            : t("dashboard.draft.approve")}
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => onReject(d.id)}>
-                          {t("dashboard.draft.reject")}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant={refineOpen[d.id] ? "secondary" : "ghost"}
-                          icon={<IcTweak size={15} />}
-                          onClick={() =>
-                            setRefineOpen((s) => ({ ...s, [d.id]: !s[d.id] }))
-                          }
-                        >
-                          {t("dashboard.draft.tweak")}
-                        </Button>
-                        {isEdited && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() =>
-                              setEdits((s) => {
-                                const next = { ...s };
-                                delete next[d.id];
-                                return next;
-                              })
-                            }
-                          >
-                            {t("common.revert")}
-                          </Button>
-                        )}
-                      </>
-                    )}
-                    {/* Publish only when approved AND not yet live. */}
-                    {d.status === "approved" && !d.published && (
-                      <Button
-                        size="sm"
-                        variant="primary"
-                        icon={<IcStudio size={15} />}
-                        onClick={() => onPublishClick(d.id, d.generated_text)}
-                      >
-                        {t("dashboard.draft.publish")}
-                      </Button>
-                    )}
-                    {/* Already live — no publish button, link out instead. */}
-                    {d.published && (
-                      <span className="inline-flex items-center gap-2.5 text-small">
-                        <span className="inline-flex items-center gap-1.5 font-medium text-success">
+                  {/* footer — meta (left) + actions (right) */}
+                  {refiningId !== d.id && (
+                    <div className="mt-3.5 flex flex-wrap items-center gap-2 border-t border-border pt-3">
+                      {editingId === d.id ? (
+                        <span className="text-caption text-text-subtle">
+                          {t("dashboard.draft.editing")}
+                        </span>
+                      ) : d.published ? (
+                        <span className="inline-flex items-center gap-1.5 text-small font-medium text-success">
                           <IcCheck size={15} />
                           {t("dashboard.draft.published")}
                         </span>
-                        {d.threads_url && (
-                          <a
-                            href={d.threads_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-text-subtle underline-offset-2 hover:text-text hover:underline"
-                          >
-                            <IcExternal size={14} />
-                            {t("dashboard.draft.open_threads")}
-                          </a>
-                        )}
-                      </span>
-                    )}
-                    <div className="ml-auto flex items-center gap-1.5">
-                      {!d.published &&
-                        (confirmDeleteId === d.id ? (
-                          <span className="inline-flex items-center gap-2 text-small">
-                            <span className="text-text-subtle">
-                              {t("dashboard.draft.confirm_delete")}
-                            </span>
-                            <button
-                              onClick={() => onDeleteDraft(d.id)}
-                              className="font-medium text-danger hover:underline"
-                            >
-                              {t("dashboard.draft.delete")}
-                            </button>
-                            <button
-                              onClick={() => setConfirmDeleteId(null)}
-                              className="text-text-subtle hover:text-text"
+                      ) : d.status === "rejected" ? (
+                        <span className="text-caption text-text-subtle">
+                          {t("dashboard.draft.passed_on")}
+                        </span>
+                      ) : (
+                        <div className="flex items-center gap-2.5">
+                          <CharMeter len={currentText.length} showBar={false} />
+                          <span className="hidden items-center gap-1.5 text-caption text-text-subtle sm:inline-flex">
+                            <IcSparkle size={12} /> {t("dashboard.draft.in_your_voice")}
+                          </span>
+                        </div>
+                      )}
+
+                      <div className="ml-auto flex items-center gap-1.5">
+                        {editingId === d.id ? (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setEdits((s) => {
+                                  const next = { ...s };
+                                  delete next[d.id];
+                                  return next;
+                                });
+                                setEditingId(null);
+                              }}
                             >
                               {t("common.cancel")}
-                            </button>
-                          </span>
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="primary"
+                              icon={<IcCheck size={15} />}
+                              disabled={
+                                currentText.trim().length === 0 ||
+                                currentText.length > DRAFT_LIMIT
+                              }
+                              onClick={() => setEditingId(null)}
+                            >
+                              {t("common.save")}
+                            </Button>
+                          </>
+                        ) : d.published ? (
+                          d.threads_url && (
+                            <a
+                              href={d.threads_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-small text-text-subtle underline-offset-2 hover:text-text hover:underline"
+                            >
+                              <IcExternal size={14} />
+                              {t("dashboard.draft.open_threads")}
+                            </a>
+                          )
                         ) : (
-                          <button
-                            onClick={() => setConfirmDeleteId(d.id)}
-                            aria-label={t("dashboard.draft.delete")}
-                            className="grid h-8 w-8 place-items-center rounded-md text-text-subtle transition-colors hover:bg-surface-2 hover:text-danger"
-                          >
-                            <IcTrash size={15} />
-                          </button>
-                        ))}
-                      <TranslateButton
-                        text={currentText}
-                        source={`draft_${d.content_type}`}
-                      />
+                          <>
+                            {d.status === "pending" && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  aria-label={t("dashboard.draft.reject")}
+                                  onClick={() => onReject(d.id)}
+                                  icon={<IcX size={15} />}
+                                />
+                                <Button
+                                  size="sm"
+                                  variant={refineOpen[d.id] ? "secondary" : "ghost"}
+                                  icon={<IcTweak size={15} />}
+                                  onClick={() =>
+                                    setRefineOpen((s) => ({ ...s, [d.id]: !s[d.id] }))
+                                  }
+                                >
+                                  {t("dashboard.draft.tweak")}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="secondary"
+                                  icon={<IcPencil size={15} />}
+                                  onClick={() => {
+                                    setRefineOpen((s) => ({ ...s, [d.id]: false }));
+                                    setEditingId(d.id);
+                                  }}
+                                >
+                                  {t("dashboard.draft.edit")}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="primary"
+                                  icon={<IcCheck size={15} />}
+                                  onClick={() => onApprove(d.id, d.generated_text)}
+                                >
+                                  {isEdited
+                                    ? t("dashboard.draft.approve_edited")
+                                    : t("dashboard.draft.approve")}
+                                </Button>
+                              </>
+                            )}
+                            {d.status === "approved" && (
+                              <Button
+                                size="sm"
+                                variant="primary"
+                                icon={<IcStudio size={15} />}
+                                onClick={() => onPublishClick(d.id, currentText)}
+                              >
+                                {t("dashboard.draft.publish")}
+                              </Button>
+                            )}
+                            {confirmDeleteId === d.id ? (
+                              <span className="inline-flex items-center gap-2 text-small">
+                                <button
+                                  onClick={() => onDeleteDraft(d.id)}
+                                  className="font-medium text-danger hover:underline"
+                                >
+                                  {t("dashboard.draft.delete")}
+                                </button>
+                                <button
+                                  onClick={() => setConfirmDeleteId(null)}
+                                  className="text-text-subtle hover:text-text"
+                                >
+                                  {t("common.cancel")}
+                                </button>
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => setConfirmDeleteId(d.id)}
+                                aria-label={t("dashboard.draft.delete")}
+                                className="grid h-8 w-8 place-items-center rounded-sm text-text-subtle transition-colors hover:bg-surface-2 hover:text-danger"
+                              >
+                                <IcTrash size={15} />
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </li>
               );
             })}

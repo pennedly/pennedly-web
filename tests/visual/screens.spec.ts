@@ -72,6 +72,20 @@ const DRAFTS = [
     published: false,
     threads_url: null,
   },
+  {
+    id: 143,
+    account_id: 1,
+    content_type: "post",
+    status: "pending",
+    generated_text:
+      "I used to think discipline was the hard part. Turns out the hard part is deciding what's actually worth being disciplined about.",
+    llm_model: "claude",
+    topic_label: "Discipline",
+    is_skip: false,
+    created_at: "2026-06-01T08:00:00Z",
+    published: false,
+    threads_url: null,
+  },
 ];
 
 const FEED = {
@@ -187,6 +201,10 @@ test("shell — Studio", async ({ page }) => {
   await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
   await page.waitForTimeout(700);
   await shoot(page, "shell-studio");
+  // Pending-tab card (full action set: reject / tweak / edit / approve).
+  await page.getByRole("button", { name: /drafts/i }).first().click();
+  await page.waitForTimeout(400);
+  await shoot(page, "shell-studio-drafts");
 });
 
 test("Feed", async ({ page }) => {
