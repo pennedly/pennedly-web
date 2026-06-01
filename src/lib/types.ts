@@ -610,9 +610,19 @@ export type Translation = {
 
 export type StyleRuleKind = "post" | "reply" | "both";
 
+// Display-only grouping for the /app/style-rules filter chips.
+export type StyleRuleCategory =
+  | "punctuation"
+  | "diction"
+  | "structure"
+  | "cadence"
+  | "formatting"
+  | "tone";
+
 export type StyleRule = {
   key: string;
   kind: StyleRuleKind;
+  category: StyleRuleCategory;
   title: string;
   body: string;
   enabled: boolean;

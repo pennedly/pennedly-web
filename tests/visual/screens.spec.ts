@@ -670,6 +670,26 @@ const VOICE_LINT = {
   latency_ms: 0,
 };
 
+// Style rules — built-in anti-AI catalog across categories (one off) + a
+// couple of the account's own freeform rules.
+const STYLE_RULES = {
+  rules: [
+    { key: "human_punctuation", kind: "both", category: "punctuation", title: "Simple punctuation (no em-dashes or guillemets)", body: "Use plain hyphens and straight quotes — typographic dashes are the loudest AI tell.", enabled: true },
+    { key: "no_antithesis", kind: "both", category: "structure", title: "No “not just X, it’s Y”", body: "Kill the not-just-but reversal and other templated contrasts that read as filler.", enabled: true },
+    { key: "no_ai_buzzwords", kind: "both", category: "diction", title: "Ban AI buzzwords", body: "No “delve”, “leverage”, “seamless”, “robust”. Name the concrete thing instead.", enabled: true },
+    { key: "be_concrete", kind: "both", category: "diction", title: "Concrete over abstract", body: "Examples, numbers, names — vagueness is what gives generated text away.", enabled: true },
+    { key: "vary_rhythm", kind: "post", category: "cadence", title: "Vary sentence rhythm", body: "Mix short lines with long ones. Uniform medium sentences are the rhythm of a machine.", enabled: true },
+    { key: "plain_formatting", kind: "both", category: "formatting", title: "Plain formatting", body: "Solid prose — no headers, bullet lists, or emoji bullets.", enabled: false },
+    { key: "no_hedging", kind: "both", category: "tone", title: "No hedging filler", body: "Cut “I think”, “arguably”, “it could be said”. Commit to the sentence.", enabled: true },
+  ],
+};
+const USER_RULES = {
+  rules: [
+    { id: 1, kind: "reply", body: "Never open a reply with “Great question!” or “Love this.”", enabled: true, sort_order: 0 },
+    { id: 2, kind: "post", body: "Quote a specific detail from their post — never a generic platitude.", enabled: true, sort_order: 1 },
+  ],
+};
+
 async function setup(page: Page): Promise<void> {
   // Seed a token + selected account + locale before any app code runs.
   await page.addInitScript(() => {
@@ -709,6 +729,8 @@ async function setup(page: Page): Promise<void> {
     if (p.includes("/role-book/apply-fix") || p.includes("/role-book/extract"))
       return json(ROLE_BOOK);
     if (p.includes("/role-book")) return json(ROLE_BOOK);
+    if (p.includes("/style-rules")) return json(STYLE_RULES);
+    if (p.includes("/user-rules")) return json(USER_RULES);
     if (p.includes("/drafts")) return json({ drafts: DRAFTS, count: DRAFTS.length });
     // Safe default — most list endpoints tolerate an empty array.
     return json([]);
@@ -834,4 +856,13 @@ test("Voice", async ({ page }) => {
   await page.getByRole("button", { name: /check voice/i }).click();
   await page.waitForTimeout(900);
   await shoot(page, "voice-check");
+});
+
+test("Style rules", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 1300 });
+  await setup(page);
+  await page.goto("/app/style-rules");
+  await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
+  await page.waitForTimeout(700);
+  await shoot(page, "style-rules");
 });

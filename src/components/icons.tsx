@@ -55,6 +55,11 @@ export const IcAlert = (p: IconProps) => <Svg {...p}><path d="M12 4.5 21 19.5H3L
 export const IcTags = (p: IconProps) => <Svg {...p}><path d="M4 10.5V5.5A1.5 1.5 0 0 1 5.5 4h5l8 8a1.5 1.5 0 0 1 0 2.1l-4.4 4.4a1.5 1.5 0 0 1-2.1 0l-8-8Z" /><circle cx="8" cy="8" r="1.2" fill="currentColor" stroke="none" /></Svg>;
 export const IcList = (p: IconProps) => <Svg {...p}><path d="M5 7.5l1.5 1.5L9 6M5 16.5l1.5 1.5L9 14M12.5 8h6.5M12.5 16h6.5" /></Svg>;
 export const IcQuote = (p: IconProps) => <Svg {...p}><path d="M9.5 7C7 7.6 5.5 9.7 5.5 12.4V17h4.7v-4.7H8.3c0-1.7 .7-2.9 2.2-3.5L9.5 7ZM18.5 7c-2.5 .6-4 2.7-4 5.4V17h4.7v-4.7h-2.4c0-1.7 .7-2.9 2.2-3.5L18.5 7Z" fill="currentColor" stroke="none" /></Svg>;
+
+/* style rules — ported from stylerules-icons.jsx */
+export const IcSliders = (p: IconProps) => <Svg {...p}><path d="M4 7h9M17 7h3M4 17h3M11 17h9" /><circle cx="15" cy="7" r="2" /><circle cx="9" cy="17" r="2" /></Svg>;
+export const IcFilter = (p: IconProps) => <Svg {...p}><path d="M4 5h16l-6 7v5l-4 2v-7L4 5Z" /></Svg>;
+export const IcPenLine = (p: IconProps) => <Svg {...p}><path d="M4 20h16" /><path d="M5 16h2L16 7a1.6 1.6 0 0 0-2.3-2.3L5 13.5V16Z" /></Svg>;
 export const IcTweak = (p: IconProps) => <Svg {...p}><path d="M4 5v5h5" /><path d="M4 10a8 8 0 1 1 1 7" /></Svg>;
 export const IcSend = (p: IconProps) => <Svg {...p}><path d="M5 12h13M12 5l7 7-7 7" /></Svg>;
 export const IcExternal = (p: IconProps) => <Svg {...p}><path d="M14 5h5v5M19 5l-8 8M11 6H6.5A1.5 1.5 0 0 0 5 7.5v10A1.5 1.5 0 0 0 6.5 19h10A1.5 1.5 0 0 0 18 17.5V13" /></Svg>;

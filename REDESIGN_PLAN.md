@@ -41,7 +41,7 @@ presentation-слой.
 - **Содержимое-колонка расширена до 900px** (Захар: 712 узко на широких мониторах) — применять везде
 - **Studio-композер** = свободный текст + чипы (бэкенд `prompt` добавлен, 303 теста ✅); карточки 1:1 с дизайном
 - **Фаза 3 — Рост (stats/audits/patterns/autopilot):** `[x]` Stats ✅ + Audits ✅ + Patterns ✅ + Autopilot ✅ — вся фаза на проде
-- **Фаза 4 — Голос (voice/style-rules):** `[~]` Voice ✅ на проде; style-rules остаётся
+- **Фаза 4 — Голос (voice/style-rules):** `[x]` Voice ✅ + Style rules ✅ — вся фаза на проде
 - **Фаза 5 — Аккаунт+публичное (settings/onboarding/login/landing/legal):** `[ ]`
 - **Фаза 6 — Закрытие (скриншот-тесты, обе темы, SPEC):** `[ ]`
 
@@ -312,13 +312,20 @@ presentation-слой.
   метрики в бэкенде, не показываю. Тяжёлый «translated/original» вид убран; перевод —
   через прозрачность-блок (TranslateButton снизу)._
 
-### 4b. Style rules
+### 4b. Style rules — `[x]` готово на проде (2026-06-01)
 **Роут:** `/app/style-rules` → `style-rules/page.tsx` · **Эталон:**
-`stylerules-app.jsx`, `stylerules-parts.jsx`, `stylerules.css` · **Ширина:** 760
-- [ ] Intro (счётчики active/total + own)
-- [ ] Built-in: фильтр-чипы по категориям + переключатель на правило (title+desc+kind)
-- [ ] Freeform: список своих правил (add-форма + edit/remove)
-- **Состояния:** boot-loading · ready
+`stylerules-app.jsx`, `stylerules-parts.jsx`, `stylerules.css` · **Ширина:** 740
+- [x] Intro (eyebrow + заголовок + lead + счётчики active/total + own)
+- [x] Built-in: фильтр-чипы **по категориям** + Switch на правило (title + category-бейдж + desc),
+      примечание у `human_punctuation`
+- [x] Freeform: свои правила (bullet + текст + inline-edit/remove, hover-иконки) + композер
+      (kind-селектор post/reply + поле + «Add rule») + пустое состояние с hint-чипами
+- [x] **Бэкенд:** добавил display-поле `category` каждому встроенному правилу
+      (`default_rules._RULE_CATEGORY` + `category_for`, в `GET /style-rules`) — только для
+      чипов-фильтра, генерация его игнорирует. + тест + SPEC
+- [x] Перенёс иконки из `stylerules-icons.jsx` (Sliders/Filter/PenLine)
+- [x] harness: фикстуры `STYLE_RULES` + `USER_RULES` + таргет, light+dark ✓
+- **Состояния:** boot-loading · ready ✓
 
 ---
 
