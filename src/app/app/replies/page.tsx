@@ -6,8 +6,14 @@
 // the ingest_comments worker; this is the manual-reply surface for the
 // threads_manage_replies permission. Mirrors the dashboard draft flow:
 // generate → edit → approve → publish.
+//
+// Layout follows design-export/PennedlyDesign/replies-* (the rail variant):
+// a single feed of comment cards, with a status filter + a horizontal
+// post-rail above it. Each card carries its own "on your post" context
+// inset and an in-card threaded reply block. Logic/data flow are unchanged
+// from the master-detail version — this is a presentation restyle.
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -27,11 +33,29 @@ import { useTranslation } from "@/lib/i18n";
 import { PublishConfirmModal } from "@/components/PublishConfirmModal";
 import { TranslateButton } from "@/components/TranslateButton";
 import { useTesterGuard } from "@/lib/tester";
+import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
+import { Button, buttonClasses } from "@/components/ui/button";
+import { Badge, type BadgeTone } from "@/components/ui/badge";
+import { Mono } from "@/components/ui/mono";
+import { Skeleton } from "@/components/ui/feedback";
+import { Toast, ToastHost } from "@/components/ui/toast";
+import { cn } from "@/lib/cn";
+import {
+  IcCheck,
+  IcExternal,
+  IcNib,
+  IcReplies,
+  IcReply,
+  IcSkip,
+} from "@/components/icons";
 import type { CommentSummary } from "@/lib/types";
 
 type Toast = { id: number; message: string; tone: "success" | "error" };
 
-// E: one post + every comment sitting under it (master-detail grouping).
+const REPLY_LIMIT = 500;
+
+// E: one post + every comment sitting under it (master-detail grouping),
+// reused here to build the post-rail and "all posts" count.
 type PostGroup = {
   postId: number;
   postText: string | null;
@@ -40,28 +64,45 @@ type PostGroup = {
   comments: CommentSummary[];
 };
 
-// Comments still awaiting action (a fresh comment or an AI draft to review).
-// Drives the unanswered-count badge on each post in the picker.
-function pendingCount(comments: CommentSummary[]): number {
-  return comments.filter(
-    (c) => c.status === "new" || c.status === "drafted",
-  ).length;
-}
-
 // Reply-queue filter tabs. `key` is the comment `status` passed to the API
 // (null = all). new = needs a reply, drafted = AI reply awaiting review,
-// replied = answered, skipped = autopilot/generator blocked it.
+// replied = answered, skipped = autopilot/generator blocked it. `dot` is the
+// status-dot colour (a Tailwind bg-* token) shown on each tab.
 const FILTER_TABS = [
-  { key: null, labelKey: "replies.filter_all" },
-  { key: "new", labelKey: "replies.filter_new" },
-  { key: "drafted", labelKey: "replies.filter_drafted" },
-  { key: "replied", labelKey: "replies.filter_replied" },
-  { key: "skipped", labelKey: "replies.filter_skipped" },
+  { key: null, labelKey: "replies.filter_all", dot: "bg-text-subtle" },
+  { key: "new", labelKey: "replies.filter_new", dot: "bg-accent" },
+  { key: "drafted", labelKey: "replies.filter_drafted", dot: "bg-text-muted" },
+  { key: "replied", labelKey: "replies.filter_replied", dot: "bg-success" },
+  { key: "skipped", labelKey: "replies.filter_skipped", dot: "bg-text-subtle" },
 ] as const;
+
+// Which design "state" a comment is in — drives badge, reply thread and the
+// footer action set. Maps the backend (comment.status + draft_status +
+// draft_is_skip) onto the five card states from the design.
+type CardState = "new" | "pending" | "approved" | "rejected" | "replied" | "skip";
+function cardState(c: CommentSummary): CardState {
+  if (c.status === "replied") return "replied";
+  if (c.draft_is_skip === true) return "skip";
+  if (c.ai_draft_id !== null && c.draft_text !== null) {
+    if (c.draft_status === "approved") return "approved";
+    if (c.draft_status === "rejected") return "rejected";
+    return "pending";
+  }
+  return "new";
+}
+
+const BADGE = {
+  new: { tone: "accent", labelKey: "replies.badge_new", dot: true },
+  pending: { tone: "neutral", labelKey: "replies.badge_draft", dot: true },
+  approved: { tone: "accent", labelKey: "replies.badge_approved", dot: true },
+  rejected: { tone: "neutral", labelKey: "replies.badge_draft", dot: true },
+  replied: { tone: "good", labelKey: "replies.filter_replied", dot: true },
+  skip: { tone: "neutral", labelKey: "replies.filter_skipped", dot: false },
+} as const satisfies Record<CardState, { tone: BadgeTone; labelKey: string; dot: boolean }>;
 
 export default function RepliesPage() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const { checking } = useTesterGuard();
   const accountId = useSelectedAccountId();
   const [comments, setComments] = useState<CommentSummary[]>([]);
@@ -79,8 +120,9 @@ export default function RepliesPage() {
   const [publishing, setPublishing] = useState(false);
   const [confirmDismissId, setConfirmDismissId] = useState<number | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
-  // E: master-detail — which post's replies the right column shows.
-  const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
+  // E: post-rail filter — "all" or a specific post id (client-side narrowing
+  // of the already status-filtered list).
+  const [postFilter, setPostFilter] = useState<number | "all">("all");
 
   function toast(message: string, tone: Toast["tone"] = "success") {
     const id = Date.now() + Math.random();
@@ -130,9 +172,8 @@ export default function RepliesPage() {
     }
   }
 
-  // E: group the flat comment list by the post each comment sits under, so
-  // the UI can show a post picker (left) → that post's replies (right)
-  // instead of one undifferentiated column. Posts sort newest-first.
+  // Group the flat comment list by the post each comment sits under, so the
+  // post-rail can offer "All posts" + one chip per post. Posts sort newest-first.
   const postGroups = useMemo<PostGroup[]>(() => {
     const map = new Map<number, PostGroup>();
     for (const c of comments) {
@@ -156,22 +197,19 @@ export default function RepliesPage() {
     });
   }, [comments]);
 
-  // Keep a valid post selected as the (filtered) group list changes.
+  // Drop the post filter if the selected post left the (re-filtered) list.
   useEffect(() => {
-    if (postGroups.length === 0) {
-      if (selectedPostId !== null) setSelectedPostId(null);
-      return;
+    if (postFilter !== "all" && !postGroups.some((g) => g.postId === postFilter)) {
+      setPostFilter("all");
     }
-    if (
-      selectedPostId === null ||
-      !postGroups.some((g) => g.postId === selectedPostId)
-    ) {
-      setSelectedPostId(postGroups[0].postId);
-    }
-  }, [postGroups, selectedPostId]);
+  }, [postGroups, postFilter]);
 
-  const selectedGroup =
-    postGroups.find((g) => g.postId === selectedPostId) ?? null;
+  const visible =
+    postFilter === "all"
+      ? comments
+      : comments.filter((c) => c.post_id === postFilter);
+
+  const needsCount = counts["new"] ?? 0;
 
   async function onGenerate(comment: CommentSummary) {
     setGeneratingId(comment.id);
@@ -278,381 +316,399 @@ export default function RepliesPage() {
 
   if (checking) return null;
 
+  const pill =
+    needsCount > 0 ? (
+      <TopbarPill tone="accent">
+        {needsCount} {t("replies.need_reply")}
+      </TopbarPill>
+    ) : undefined;
+
   if (bootError) {
     return (
-      <main className="max-w-2xl mx-auto px-6 py-16">
-        <div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 p-4 text-sm text-red-800 dark:text-red-200">
-          {bootError}
-        </div>
-      </main>
+      <div className="min-h-screen bg-bg text-text">
+        <AppTopbar title={t("replies.title")} />
+        <main className="mx-auto max-w-[900px] px-5 py-7 md:px-6">
+          <div className="rounded-lg border border-danger/40 bg-danger/10 p-4 text-small text-danger">
+            {bootError}
+          </div>
+        </main>
+      </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-bg text-text">
-      <main className="max-w-6xl mx-auto px-6 py-8 space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {t("replies.title")}
-          </h1>
-          <p className="text-sm text-zinc-500 mt-1">{t("replies.subtitle")}</p>
-        </div>
+      <AppTopbar title={t("replies.title")} pill={pill} />
+      <main className="mx-auto max-w-[900px] space-y-4 px-5 py-7 md:px-6">
+        <p className="text-small text-text-muted">{t("replies.subtitle")}</p>
 
-        <div className="flex flex-wrap gap-2">
-          {FILTER_TABS.map((tab) => {
-            const n =
-              tab.key === null
-                ? Object.values(counts).reduce((a, b) => a + b, 0)
-                : counts[tab.key] ?? 0;
-            const active = filter === tab.key;
-            return (
-              <button
-                key={tab.key ?? "all"}
-                onClick={() => setFilter(tab.key)}
-                className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                  active
-                    ? "bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 dark:border-zinc-100"
-                    : "border-border text-text-muted hover:bg-surface-2"
-                }`}
-              >
-                {t(tab.labelKey)}
-                {n > 0 && <span className="ml-1.5 opacity-60">{n}</span>}
-              </button>
-            );
-          })}
-        </div>
+        {!loaded && <p className="text-small text-text-muted">{t("common.loading")}</p>}
 
-        {!loaded && (
-          <p className="text-sm text-zinc-500">{t("common.loading")}</p>
-        )}
-
-        {loaded && comments.length === 0 && (
-          <div className="rounded-xl border border-dashed border-border p-8 text-center">
-            <p className="text-sm text-zinc-500">{t("replies.empty")}</p>
-          </div>
-        )}
-
-        {loaded && comments.length > 0 && (
-          <div className="grid gap-6 md:grid-cols-[300px_minmax(0,1fr)] lg:grid-cols-[340px_minmax(0,1fr)] items-start">
-            {/* Post picker (master) — select a post to see its replies */}
-            <aside className="md:sticky md:top-6 space-y-2">
-              <p className="px-1 text-xs font-medium uppercase tracking-wide text-zinc-400">
-                {t("replies.posts_column")}
-              </p>
-              {postGroups.length === 0 ? (
-                <p className="px-1 text-sm text-zinc-500">
-                  {t("replies.no_posts")}
-                </p>
-              ) : (
-                <ul className="space-y-1.5 pr-1 md:max-h-[calc(100vh-12rem)] md:overflow-auto">
-                  {postGroups.map((g) => {
-                    const active = g.postId === selectedPostId;
-                    const pending = pendingCount(g.comments);
-                    return (
-                      <li key={g.postId}>
-                        <button
-                          onClick={() => setSelectedPostId(g.postId)}
-                          className={`w-full rounded-lg border px-3 py-2 text-left transition-colors ${
-                            active
-                              ? "border-primary bg-surface-2"
-                              : "border-border bg-surface hover:bg-surface-2"
-                          }`}
-                        >
-                          <p className="line-clamp-2 text-sm text-text">
-                            {g.postText || `#${g.postId}`}
-                          </p>
-                          <div className="mt-1 flex items-center gap-2 text-xs text-zinc-400">
-                            <span className="truncate">
-                              {fmtDateTime(g.postPublishedAt)}
-                            </span>
-                            <span className="ml-auto shrink-0">
-                              {g.comments.length} 💬
-                            </span>
-                            {pending > 0 && (
-                              <span className="inline-flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
-                                {pending}
-                              </span>
-                            )}
-                          </div>
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </aside>
-
-            {/* Selected post's replies (detail) */}
-            <section className="min-w-0 space-y-4">
-              {selectedGroup === null ? (
-                <p className="text-sm text-zinc-500">
-                  {t("replies.select_post")}
-                </p>
-              ) : (
-                <>
-                  {/* Parent post context — text, publish time, open link */}
-                  <div className="rounded-xl border border-border bg-surface-2 p-4">
-                    <div className="mb-1.5 flex items-center gap-2 text-xs text-zinc-400">
-                      <span className="shrink-0">{t("replies.under_post")}</span>
-                      {selectedGroup.postPublishedAt && (
-                        <span className="shrink-0">
-                          · {fmtDateTime(selectedGroup.postPublishedAt)}
-                        </span>
+        {loaded && (
+          <>
+            {/* status filter — equal-width segments inside a surface-2 bar */}
+            <div
+              role="tablist"
+              aria-label={t("replies.title")}
+              className="sticky top-3 z-[5] flex items-center gap-1 rounded-md border border-border bg-surface-2 p-1"
+            >
+              {FILTER_TABS.map((tab) => {
+                const n =
+                  tab.key === null
+                    ? Object.values(counts).reduce((a, b) => a + b, 0)
+                    : counts[tab.key] ?? 0;
+                const active = filter === tab.key;
+                return (
+                  <button
+                    key={tab.key ?? "all"}
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => setFilter(tab.key)}
+                    className={cn(
+                      "inline-flex h-9 min-w-0 flex-1 items-center justify-center gap-2 rounded-sm border border-transparent px-2.5 text-small font-medium whitespace-nowrap text-text-muted transition-colors hover:text-text",
+                      active && "border-border bg-surface font-semibold text-text shadow-sm",
+                    )}
+                  >
+                    <span className={cn("h-[7px] w-[7px] shrink-0 rounded-full", tab.dot)} />
+                    <span className="truncate">{t(tab.labelKey)}</span>
+                    <span
+                      className={cn(
+                        "text-caption font-semibold tabular-nums",
+                        active ? "text-text-muted" : "text-text-subtle",
                       )}
-                      {selectedGroup.postThreadsUrl && (
-                        <a
-                          href={selectedGroup.postThreadsUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="ml-auto shrink-0 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:underline"
-                        >
-                          {t("feed.open")}
-                        </a>
-                      )}
-                    </div>
-                    <p className="whitespace-pre-wrap text-sm text-text">
-                      {selectedGroup.postText || `#${selectedGroup.postId}`}
-                    </p>
-                  </div>
-
-                  <ul className="space-y-4">
-                    {selectedGroup.comments.map((c) => {
-            const draftId = c.ai_draft_id;
-            const isReplied = c.status === "replied";
-            const isSkip = c.draft_is_skip === true;
-            const hasDraft =
-              draftId !== null && c.draft_text !== null && !isSkip;
-            const currentText =
-              draftId !== null ? edits[draftId] ?? c.draft_text ?? "" : "";
-            const isEdited =
-              draftId !== null &&
-              edits[draftId] !== undefined &&
-              edits[draftId].trim() !== (c.draft_text ?? "").trim();
-            const busy = draftId !== null && busyDraftId === draftId;
-
-            return (
-              <li
-                key={c.id}
-                className="rounded-xl border border-border bg-surface p-4 shadow-sm"
-              >
-                {/* The original comment */}
-                <div className="flex items-center justify-between mb-2 text-xs text-zinc-500">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="font-medium text-text truncate">
-                      @{c.author_username ?? "—"}
+                    >
+                      {n}
                     </span>
-                    {c.published_at && (
-                      <>
-                        <span className="text-zinc-400">·</span>
-                        <span className="truncate">
-                          {fmtDateTime(c.published_at)}
-                        </span>
-                      </>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    {c.comment_url && (
-                      <a
-                        href={c.comment_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 underline-offset-2 hover:underline"
-                      >
-                        {t("replies.view_comment")} ↗
-                      </a>
-                    )}
-                    {confirmDismissId === c.id ? (
-                      <span className="flex items-center gap-2">
-                        <span className="text-zinc-500">
-                          {t("replies.confirm_dismiss")}
-                        </span>
-                        <button
-                          onClick={() => onDismiss(c)}
-                          className="text-red-600 dark:text-red-400 font-medium hover:underline"
-                        >
-                          {t("replies.dismiss")}
-                        </button>
-                        <button
-                          onClick={() => setConfirmDismissId(null)}
-                          className="text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-                        >
-                          {t("common.cancel")}
-                        </button>
-                      </span>
-                    ) : (
-                      <button
-                        onClick={() => setConfirmDismissId(c.id)}
-                        title={t("replies.dismiss")}
-                        aria-label={t("replies.dismiss")}
-                        className="text-zinc-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
-                      >
-                        ✕
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <blockquote className="border-l-2 border-border pl-3 text-sm leading-relaxed text-text whitespace-pre-wrap">
-                  {c.text ?? ""}
-                </blockquote>
-                {c.text && (
-                  <div className="mt-2">
-                    <TranslateButton text={c.text} source="comment" />
-                  </div>
-                )}
+                  </button>
+                );
+              })}
+            </div>
 
-                {/* Reply workflow */}
-                <div className="mt-3 pt-3 border-t border-border">
-                  {isReplied ? (
-                    <div>
-                      <div className="flex items-center gap-2 mb-1.5 text-xs">
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wide bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300">
-                          {t("replies.replied")}
-                        </span>
-                        {c.replied_at && (
-                          <span className="text-zinc-400">
-                            {fmtDateTime(c.replied_at)}
-                          </span>
-                        )}
-                        {(c.comment_url || c.post_threads_url) && (
+            {/* post-rail — horizontal scroll of post chips to narrow the feed */}
+            {comments.length > 0 && (
+              <PostRail
+                groups={postGroups}
+                total={comments.length}
+                active={postFilter}
+                onChange={setPostFilter}
+                allLabel={t("replies.all_posts")}
+                everythingLabel={t("replies.rail_everything")}
+                fmtTime={(iso) => relativeTime(iso, locale)}
+              />
+            )}
+
+            {visible.length === 0 ? (
+              <div className="flex flex-col items-center rounded-lg border border-dashed border-border px-6 py-14 text-center">
+                <span className="mb-3 grid h-11 w-11 place-items-center rounded-full border border-border bg-surface-2 text-text-subtle">
+                  <IcReplies size={22} />
+                </span>
+                <p className="max-w-[42ch] text-small leading-relaxed text-text-muted">
+                  {t("replies.empty")}
+                </p>
+              </div>
+            ) : (
+              <ul className="space-y-3.5">
+                {visible.map((c) => {
+                  const state = cardState(c);
+                  const draftId = c.ai_draft_id;
+                  const generating = generatingId === c.id;
+                  const busy = draftId !== null && busyDraftId === draftId;
+                  const currentText =
+                    draftId !== null ? edits[draftId] ?? c.draft_text ?? "" : "";
+                  const isEdited =
+                    draftId !== null &&
+                    edits[draftId] !== undefined &&
+                    edits[draftId].trim() !== (c.draft_text ?? "").trim();
+                  const editLen = currentText.length;
+                  const badge = BADGE[state];
+
+                  return (
+                    <li
+                      key={c.id}
+                      className={cn(
+                        "rounded-lg border border-border bg-surface p-4 shadow-sm transition-colors hover:border-text/15",
+                        state === "skip" && "opacity-[0.66]",
+                      )}
+                      style={{ animation: "card-in 240ms var(--ease-entrance) both" }}
+                    >
+                      {/* "on your post" context inset */}
+                      {(c.post_text || c.post_threads_url) &&
+                        (c.post_threads_url ? (
                           <a
-                            href={(c.comment_url || c.post_threads_url)!}
+                            href={c.post_threads_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="ml-auto text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:underline"
+                            className="mb-3 flex items-center gap-2.5 rounded-md border border-border bg-surface-2 px-3 py-2.5 transition-colors hover:bg-text/[0.04]"
                           >
-                            {t("replies.open_thread")}
+                            <IcReply size={14} className="shrink-0 text-text-subtle" />
+                            <span className="shrink-0 text-caption font-semibold text-text-muted">
+                              {t("replies.on_post")}
+                            </span>
+                            <span className="min-w-0 flex-1 truncate text-small text-text-muted">
+                              {c.post_text || `#${c.post_id}`}
+                            </span>
+                            {c.post_published_at && (
+                              <span className="shrink-0 text-caption text-text-subtle">
+                                {relativeTime(c.post_published_at, locale)}
+                              </span>
+                            )}
                           </a>
-                        )}
-                      </div>
-                      <p className="whitespace-pre-wrap text-sm leading-relaxed text-text">
-                        {c.draft_text ?? ""}
-                      </p>
-                    </div>
-                  ) : isSkip ? (
-                    <p className="text-sm text-zinc-500 italic">
-                      {t("replies.skipped")}
-                    </p>
-                  ) : hasDraft && c.draft_status === "approved" ? (
-                    <div>
-                      <p className="whitespace-pre-wrap text-sm leading-relaxed mb-3">
-                        {c.draft_text ?? ""}
-                      </p>
-                      <div className="flex flex-wrap items-center gap-3">
-                        <button
-                          onClick={() =>
-                            setPublishTarget({
-                              draftId: draftId!,
-                              text: c.draft_text ?? "",
-                            })
-                          }
-                          className="text-xs px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-                        >
-                          {t("dashboard.draft.publish")}
-                        </button>
-                        <div className="ml-auto">
-                          <TranslateButton
-                            text={c.draft_text ?? ""}
-                            source="reply_approved"
-                          />
+                        ) : (
+                          <div className="mb-3 flex items-center gap-2.5 rounded-md border border-border bg-surface-2 px-3 py-2.5">
+                            <IcReply size={14} className="shrink-0 text-text-subtle" />
+                            <span className="shrink-0 text-caption font-semibold text-text-muted">
+                              {t("replies.on_post")}
+                            </span>
+                            <span className="min-w-0 flex-1 truncate text-small text-text-muted">
+                              {c.post_text || `#${c.post_id}`}
+                            </span>
+                          </div>
+                        ))}
+
+                      {/* comment head: author + status badge */}
+                      <div className="flex items-center gap-2.5">
+                        <Mono text={(c.author_username?.[0] ?? "@").toUpperCase()} size={34} />
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-small font-semibold leading-tight">
+                            @{c.author_username ?? "—"}
+                          </div>
+                          {c.published_at && (
+                            <div className="text-caption text-text-subtle">
+                              {relativeTime(c.published_at, locale)}
+                            </div>
+                          )}
                         </div>
+                        <Badge tone={badge.tone} dot={badge.dot}>
+                          {t(badge.labelKey)}
+                        </Badge>
                       </div>
-                    </div>
-                  ) : hasDraft && c.draft_status === "rejected" ? (
-                    <button
-                      onClick={() => onGenerate(c)}
-                      disabled={generatingId === c.id}
-                      className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-md border border-border text-text hover:bg-surface-2 disabled:opacity-50 transition-colors"
-                    >
-                      {generatingId === c.id && (
-                        <span
-                          className="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"
-                          aria-hidden
-                        />
-                      )}
-                      {generatingId === c.id
-                        ? t("dashboard.generate.generating")
-                        : t("replies.generate")}
-                    </button>
-                  ) : hasDraft ? (
-                    // pending draft — editable
-                    <div>
-                      <textarea
-                        value={currentText}
-                        onChange={(e) =>
-                          setEdits((s) => ({ ...s, [draftId!]: e.target.value }))
-                        }
-                        rows={Math.min(
-                          10,
-                          Math.max(2, currentText.split("\n").length + 1),
-                        )}
-                        className="w-full rounded-md border border-border bg-bg px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700 resize-y mb-2"
-                      />
-                      <div className="flex flex-wrap items-center gap-3">
-                        <button
-                          onClick={() => onApprove(c)}
-                          disabled={busy}
-                          className="text-xs px-3 py-1.5 rounded-md bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 transition-colors"
-                        >
-                          {isEdited
-                            ? t("dashboard.draft.approve_edited")
-                            : t("dashboard.draft.approve")}
-                        </button>
-                        <button
-                          onClick={() => onReject(c)}
-                          disabled={busy}
-                          className="text-xs px-3 py-1.5 rounded-md border border-border text-text hover:bg-surface-2 disabled:opacity-50 transition-colors"
-                        >
-                          {t("dashboard.draft.reject")}
-                        </button>
-                        {isEdited && (
-                          <button
-                            onClick={() =>
-                              setEdits((s) => {
-                                const n = { ...s };
-                                delete n[draftId!];
-                                return n;
-                              })
-                            }
-                            className="text-xs px-2 py-1 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
-                          >
-                            {t("common.revert")}
-                          </button>
-                        )}
-                        <div className="ml-auto">
-                          <TranslateButton
-                            text={currentText}
-                            source="reply_draft"
-                          />
+
+                      {/* the comment body */}
+                      <p className="mt-2.5 whitespace-pre-wrap text-body leading-relaxed text-text">
+                        {c.text ?? ""}
+                      </p>
+                      {c.text && (
+                        <div className="mt-2">
+                          <TranslateButton text={c.text} source="comment" />
                         </div>
-                      </div>
-                    </div>
-                  ) : (
-                    // new — no draft yet
-                    <button
-                      onClick={() => onGenerate(c)}
-                      disabled={generatingId === c.id}
-                      className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
-                    >
-                      {generatingId === c.id && (
-                        <span
-                          className="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"
-                          aria-hidden
-                        />
                       )}
-                      {generatingId === c.id
-                        ? t("dashboard.generate.generating")
-                        : t("replies.generate")}
-                    </button>
-                  )}
-                </div>
-                      </li>
-                      );
-                    })}
-                  </ul>
-                </>
-              )}
-            </section>
-          </div>
+
+                      {/* threaded reply block */}
+                      {generating ? (
+                        <ReplyThread>
+                          <div className="flex flex-col gap-2.5">
+                            <Skeleton className="h-3 w-[88%]" />
+                            <Skeleton className="h-3 w-[55%]" />
+                            <span className="mt-0.5 inline-flex items-center gap-1.5 text-caption text-accent">
+                              <IcNib size={13} />
+                              {t("replies.drafting")}
+                            </span>
+                          </div>
+                        </ReplyThread>
+                      ) : (
+                        (state === "pending" || state === "approved" || state === "replied") && (
+                          <ReplyThread replied={state === "replied"}>
+                            <div className="mb-2 flex items-center gap-2">
+                              <Mono text={t("replies.you").slice(0, 1)} size={22} />
+                              <span className="text-small font-semibold">{t("replies.you")}</span>
+                              {state === "pending" && (
+                                <span className="inline-flex items-center gap-1.5 text-caption text-text-subtle">
+                                  <IcNib size={12} />
+                                  {t("replies.tag_drafted")}
+                                </span>
+                              )}
+                              {state === "approved" && (
+                                <span className="inline-flex items-center gap-1.5 text-caption text-accent">
+                                  <IcCheck size={12} />
+                                  {t("replies.tag_approved")}
+                                </span>
+                              )}
+                              {state === "replied" && (
+                                <span className="inline-flex items-center gap-1.5 text-caption text-success">
+                                  <IcCheck size={12} />
+                                  {t("replies.replied")}
+                                  {c.replied_at && ` · ${relativeTime(c.replied_at, locale)}`}
+                                </span>
+                              )}
+                            </div>
+
+                            {state === "pending" ? (
+                              <>
+                                <textarea
+                                  value={currentText}
+                                  onChange={(e) =>
+                                    setEdits((s) => ({ ...s, [draftId!]: e.target.value }))
+                                  }
+                                  rows={Math.min(
+                                    10,
+                                    Math.max(2, currentText.split("\n").length + 1),
+                                  )}
+                                  className="w-full resize-y rounded-sm border border-accent bg-surface px-3 py-2 text-small leading-relaxed text-text shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-accent)_16%,transparent)] outline-none"
+                                />
+                                <div className="mt-1.5 flex justify-end">
+                                  <span
+                                    className={cn(
+                                      "text-caption tabular-nums text-text-subtle",
+                                      editLen > REPLY_LIMIT && "font-semibold text-danger",
+                                    )}
+                                  >
+                                    {editLen} / {REPLY_LIMIT}
+                                  </span>
+                                </div>
+                              </>
+                            ) : (
+                              <p className="whitespace-pre-wrap text-small leading-relaxed text-text">
+                                {c.draft_text ?? ""}
+                              </p>
+                            )}
+                          </ReplyThread>
+                        )
+                      )}
+
+                      {/* footer: meta (left) + actions (right) */}
+                      {!generating && (
+                        <div className="mt-3.5 flex items-center gap-3 border-t border-border pt-3.5">
+                          <div className="flex min-w-0 flex-1 items-center gap-3 text-caption text-text-subtle">
+                            {state === "replied" ? (
+                              <span className="inline-flex items-center gap-1.5">
+                                <IcCheck size={13} />
+                                {t("replies.published")}
+                                {c.replied_at && ` · ${relativeTime(c.replied_at, locale)}`}
+                              </span>
+                            ) : (
+                              c.comment_url && (
+                                <a
+                                  href={c.comment_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 underline-offset-2 hover:text-text hover:underline"
+                                >
+                                  <IcExternal size={13} />
+                                  {t("replies.view_comment")}
+                                </a>
+                              )
+                            )}
+                          </div>
+
+                          <div className="flex shrink-0 items-center gap-2">
+                            {/* remove-from-queue (with inline confirm) — all but replied */}
+                            {state !== "replied" &&
+                              (confirmDismissId === c.id ? (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => setConfirmDismissId(null)}
+                                  >
+                                    {t("common.cancel")}
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="danger"
+                                    onClick={() => onDismiss(c)}
+                                  >
+                                    {t("replies.dismiss")}
+                                  </Button>
+                                </>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => setConfirmDismissId(c.id)}
+                                  icon={<IcSkip size={15} />}
+                                  aria-label={t("replies.dismiss")}
+                                  title={t("replies.dismiss")}
+                                />
+                              ))}
+
+                            {confirmDismissId !== c.id &&
+                              (state === "new" || state === "rejected") && (
+                                <Button
+                                  size="sm"
+                                  variant="primary"
+                                  onClick={() => onGenerate(c)}
+                                  disabled={generating}
+                                  icon={<IcNib size={15} />}
+                                >
+                                  {t("replies.generate")}
+                                </Button>
+                              )}
+
+                            {confirmDismissId !== c.id && state === "pending" && (
+                              <>
+                                {isEdited && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() =>
+                                      setEdits((s) => {
+                                        const n = { ...s };
+                                        delete n[draftId!];
+                                        return n;
+                                      })
+                                    }
+                                  >
+                                    {t("common.revert")}
+                                  </Button>
+                                )}
+                                <Button
+                                  size="sm"
+                                  variant="secondary"
+                                  onClick={() => onReject(c)}
+                                  disabled={busy}
+                                >
+                                  {t("dashboard.draft.reject")}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="primary"
+                                  onClick={() => onApprove(c)}
+                                  disabled={busy}
+                                  icon={<IcCheck size={15} />}
+                                >
+                                  {isEdited
+                                    ? t("dashboard.draft.approve_edited")
+                                    : t("dashboard.draft.approve")}
+                                </Button>
+                              </>
+                            )}
+
+                            {confirmDismissId !== c.id && state === "approved" && (
+                              <Button
+                                size="sm"
+                                variant="primary"
+                                onClick={() =>
+                                  setPublishTarget({
+                                    draftId: draftId!,
+                                    text: c.draft_text ?? "",
+                                  })
+                                }
+                                icon={<IcReply size={15} />}
+                              >
+                                {t("dashboard.draft.publish")}
+                              </Button>
+                            )}
+
+                            {state === "replied" && (c.comment_url || c.post_threads_url) && (
+                              <a
+                                href={(c.comment_url || c.post_threads_url)!}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={buttonClasses({ variant: "secondary", size: "sm" })}
+                              >
+                                <IcExternal size={15} />
+                                {t("replies.open_thread")}
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </>
         )}
       </main>
 
@@ -666,32 +722,136 @@ export default function RepliesPage() {
         onConfirm={onPublishConfirm}
       />
 
-      <div className="fixed bottom-6 right-6 z-30 space-y-2 pointer-events-none">
+      <ToastHost>
         {toasts.map((tt) => (
-          <div
-            key={tt.id}
-            className={`px-4 py-2.5 rounded-lg shadow-lg text-sm font-medium pointer-events-auto ${
-              tt.tone === "error"
-                ? "bg-red-600 text-white"
-                : "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
-            }`}
-          >
-            {tt.message}
-          </div>
+          <Toast key={tt.id} tone={tt.tone} title={tt.message} />
         ))}
+      </ToastHost>
+    </div>
+  );
+}
+
+// Threaded reply container — a vertical connector line + an inset block,
+// mirroring the design's .reply-thread / .reply-block.
+function ReplyThread({
+  children,
+  replied = false,
+}: {
+  children: ReactNode;
+  replied?: boolean;
+}) {
+  return (
+    <div className="relative mt-3.5 pl-[26px]">
+      <span className="absolute bottom-4 left-[11px] top-0 w-0.5 rounded bg-border" aria-hidden />
+      <div
+        className={cn(
+          "rounded-md border border-border bg-surface-2 p-3.5",
+          replied && "border-success/30",
+        )}
+      >
+        {children}
       </div>
     </div>
   );
 }
 
-// D: date AND time (the reply queue previously showed date only). Matches
-// the feed's format for consistency.
-function fmtDateTime(iso: string | null): string {
-  if (!iso) return "";
-  return new Date(iso).toLocaleString(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
+// Horizontal post-rail: "All posts" + one chip per post, with a count pill and
+// a right-edge fade hinting there's more to scroll.
+function PostRail({
+  groups,
+  total,
+  active,
+  onChange,
+  allLabel,
+  everythingLabel,
+  fmtTime,
+}: {
+  groups: PostGroup[];
+  total: number;
+  active: number | "all";
+  onChange: (key: number | "all") => void;
+  allLabel: string;
+  everythingLabel: string;
+  fmtTime: (iso: string) => string;
+}) {
+  const items: {
+    key: number | "all";
+    label: string;
+    count: number;
+    time: string | null;
+  }[] = [
+    { key: "all", label: allLabel, count: total, time: null },
+    ...groups.map((g) => ({
+      key: g.postId,
+      label: g.postText || `#${g.postId}`,
+      count: g.comments.length,
+      time: g.postPublishedAt,
+    })),
+  ];
+  return (
+    <div className="relative">
+      <div className="flex gap-2.5 overflow-x-auto px-0.5 pb-2 pt-0.5 [scrollbar-width:thin]">
+        {items.map((it) => {
+          const on = active === it.key;
+          return (
+            <button
+              key={it.key}
+              onClick={() => onChange(it.key)}
+              title={it.label}
+              className={cn(
+                "flex w-[204px] shrink-0 flex-col gap-2.5 rounded-md border bg-surface p-3 text-left transition-colors hover:bg-surface-2",
+                on
+                  ? "border-accent/55 bg-surface-2 shadow-sm"
+                  : "border-border",
+              )}
+            >
+              <span
+                className={cn(
+                  "line-clamp-2 min-h-[2.8em] text-small leading-snug text-text",
+                  (on || it.key === "all") && "font-semibold",
+                )}
+              >
+                {it.label}
+              </span>
+              <span className="flex items-center justify-between gap-2">
+                <span className="text-caption text-text-subtle">
+                  {it.time ? fmtTime(it.time) : everythingLabel}
+                </span>
+                <span
+                  className={cn(
+                    "inline-flex h-[19px] min-w-[20px] items-center justify-center rounded-full border px-1.5 text-caption font-semibold tabular-nums",
+                    on
+                      ? "border-accent/30 bg-accent/12 text-accent"
+                      : "border-border bg-surface-2 text-text-muted",
+                  )}
+                >
+                  {it.count}
+                </span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <span
+        className="pointer-events-none absolute bottom-2.5 right-0 top-0 w-11 bg-gradient-to-r from-transparent to-bg"
+        aria-hidden
+      />
+    </div>
+  );
+}
+
+// Localized relative time ("2 hours ago"), falling back to a medium date past
+// a week. Mirrors the Mentions screen for consistency.
+function relativeTime(iso: string, locale: string): string {
+  const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+  if (mins < 1) return rtf.format(0, "minute");
+  if (mins < 60) return rtf.format(-mins, "minute");
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return rtf.format(-hours, "hour");
+  const days = Math.floor(hours / 24);
+  if (days < 7) return rtf.format(-days, "day");
+  return new Date(iso).toLocaleDateString(locale, { dateStyle: "medium" });
 }
 
 function errMsg(e: unknown): string {

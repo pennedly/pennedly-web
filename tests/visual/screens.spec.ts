@@ -189,6 +189,151 @@ const MENTIONS = {
   ],
 };
 
+// Reply queue — comments across two posts in every card state (new / pending
+// draft / approved / replied / skipped), so the redesign's status filter,
+// post-rail and per-state cards all render. `status_counts` drives the tabs.
+const COMMENTS = {
+  count: 6,
+  status_counts: { new: 2, drafted: 2, replied: 1, skipped: 1 },
+  comments: [
+    {
+      id: 701,
+      account_id: 1,
+      post_id: 9001,
+      threads_comment_id: "tc_701",
+      author_username: "devon.makes",
+      text: "this hit me at exactly the right time. how do you actually decide what to cut?",
+      comment_url: "https://www.threads.net/@devon.makes/post/701",
+      status: "new",
+      published_at: "2026-06-01T07:30:00Z",
+      created_at: "2026-06-01T07:30:00Z",
+      post_text:
+        "The fastest way to find your voice online: publish the thing you're slightly embarrassed by.",
+      post_published_at: "2026-05-30T14:00:00Z",
+      post_threads_url: "https://www.threads.net/@mara.lin/post/9001",
+      ai_draft_id: null,
+      draft_text: null,
+      draft_status: null,
+      draft_is_skip: null,
+      replied_at: null,
+      reply_threads_post_id: null,
+    },
+    {
+      id: 702,
+      account_id: 1,
+      post_id: 9001,
+      threads_comment_id: "tc_702",
+      author_username: "theo.writes",
+      text: "“the 400 that survived” ok this is calling me OUT",
+      comment_url: "https://www.threads.net/@theo.writes/post/702",
+      status: "drafted",
+      published_at: "2026-06-01T05:00:00Z",
+      created_at: "2026-06-01T05:00:00Z",
+      post_text:
+        "The fastest way to find your voice online: publish the thing you're slightly embarrassed by.",
+      post_published_at: "2026-05-30T14:00:00Z",
+      post_threads_url: "https://www.threads.net/@mara.lin/post/9001",
+      ai_draft_id: 8021,
+      draft_text:
+        "ha — the survivors are always the ones that scared me a little. those are usually the keepers.",
+      draft_status: "pending",
+      draft_is_skip: false,
+      replied_at: null,
+      reply_threads_post_id: null,
+    },
+    {
+      id: 703,
+      account_id: 1,
+      post_id: 9001,
+      threads_comment_id: "tc_703",
+      author_username: "marina.k",
+      text: "do you write longhand first or go straight to a doc?",
+      comment_url: "https://www.threads.net/@marina.k/post/703",
+      status: "drafted",
+      published_at: "2026-05-31T22:00:00Z",
+      created_at: "2026-05-31T22:00:00Z",
+      post_text:
+        "The fastest way to find your voice online: publish the thing you're slightly embarrassed by.",
+      post_published_at: "2026-05-30T14:00:00Z",
+      post_threads_url: "https://www.threads.net/@mara.lin/post/9001",
+      ai_draft_id: 8022,
+      draft_text:
+        "straight to a doc, always — I type faster than I can second-guess. longhand is only for when I'm truly stuck.",
+      draft_status: "approved",
+      draft_is_skip: false,
+      replied_at: null,
+      reply_threads_post_id: null,
+    },
+    {
+      id: 704,
+      account_id: 1,
+      post_id: 9001,
+      threads_comment_id: "tc_704",
+      author_username: "paul.writes",
+      text: "saving this. genuinely needed the permission to cut today.",
+      comment_url: "https://www.threads.net/@paul.writes/post/704",
+      status: "replied",
+      published_at: "2026-05-31T12:00:00Z",
+      created_at: "2026-05-31T12:00:00Z",
+      post_text:
+        "The fastest way to find your voice online: publish the thing you're slightly embarrassed by.",
+      post_published_at: "2026-05-30T14:00:00Z",
+      post_threads_url: "https://www.threads.net/@mara.lin/post/9001",
+      ai_draft_id: 8023,
+      draft_text:
+        "cut freely — you can always paste it back later, but you almost never want to.",
+      draft_status: "approved",
+      draft_is_skip: false,
+      replied_at: "2026-05-31T13:00:00Z",
+      reply_threads_post_id: "t_reply_704",
+    },
+    {
+      id: 705,
+      account_id: 1,
+      post_id: 9003,
+      threads_comment_id: "tc_705",
+      author_username: "lucia.r",
+      text: "Esto es justo lo que necesitaba leer hoy. ¡Mil gracias por compartirlo! 🙏",
+      comment_url: "https://www.threads.net/@lucia.r/post/705",
+      status: "new",
+      published_at: "2026-06-01T06:15:00Z",
+      created_at: "2026-06-01T06:15:00Z",
+      post_text:
+        "Consistency beats intensity. Three small posts a week out-compound one viral month.",
+      post_published_at: "2026-05-29T09:15:00Z",
+      post_threads_url: "https://www.threads.net/@mara.lin/post/9003",
+      ai_draft_id: null,
+      draft_text: null,
+      draft_status: null,
+      draft_is_skip: null,
+      replied_at: null,
+      reply_threads_post_id: null,
+    },
+    {
+      id: 706,
+      account_id: 1,
+      post_id: 9003,
+      threads_comment_id: "tc_706",
+      author_username: "growthhacks.io",
+      text: "🚀 amazing post!! check out my page for DAILY writing hacks and follow back 🔥🔥 link in bio",
+      comment_url: "https://www.threads.net/@growthhacks.io/post/706",
+      status: "drafted",
+      published_at: "2026-05-31T20:00:00Z",
+      created_at: "2026-05-31T20:00:00Z",
+      post_text:
+        "Consistency beats intensity. Three small posts a week out-compound one viral month.",
+      post_published_at: "2026-05-29T09:15:00Z",
+      post_threads_url: "https://www.threads.net/@mara.lin/post/9003",
+      ai_draft_id: 8024,
+      draft_text: null,
+      draft_status: "pending",
+      draft_is_skip: true,
+      replied_at: null,
+      reply_threads_post_id: null,
+    },
+  ],
+};
+
 async function setup(page: Page): Promise<void> {
   // Seed a token + selected account + locale before any app code runs.
   await page.addInitScript(() => {
@@ -215,6 +360,7 @@ async function setup(page: Page): Promise<void> {
     if (p.includes("/onboarding")) return json({ needs_onboarding: false, has_role_book: true });
     if (p.includes("/feed")) return json(FEED);
     if (p.includes("/mentions")) return json(MENTIONS);
+    if (p.includes("/comments")) return json(COMMENTS);
     if (p.includes("/drafts")) return json({ drafts: DRAFTS, count: DRAFTS.length });
     // Safe default — most list endpoints tolerate an empty array.
     return json([]);
@@ -263,4 +409,13 @@ test("Mentions", async ({ page }) => {
   await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
   await page.waitForTimeout(700);
   await shoot(page, "mentions");
+});
+
+test("Replies", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 1200 });
+  await setup(page);
+  await page.goto("/app/replies");
+  await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
+  await page.waitForTimeout(700);
+  await shoot(page, "replies");
 });

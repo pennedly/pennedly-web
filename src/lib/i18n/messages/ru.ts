@@ -355,6 +355,17 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "replies.posts_column": "Посты",
   "replies.select_post": "Выбери пост слева, чтобы увидеть ответы к нему.",
   "replies.no_posts": "Пока нет постов с комментариями.",
+  "replies.need_reply": "ждут ответа",
+  "replies.all_posts": "Все посты",
+  "replies.rail_everything": "все",
+  "replies.you": "Вы",
+  "replies.tag_drafted": "черновик в твоём голосе",
+  "replies.tag_approved": "готов к публикации",
+  "replies.drafting": "Пишу ответ в твоём голосе…",
+  "replies.published": "Опубликован",
+  "replies.badge_new": "Новый",
+  "replies.badge_draft": "Черновик",
+  "replies.badge_approved": "Одобрен",
 
   // ── Mentions ───────────────────────────────────────────────────
   "dashboard.nav.mentions": "упоминания",

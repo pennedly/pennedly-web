@@ -350,6 +350,17 @@ export const en = {
   "replies.posts_column": "Posts",
   "replies.select_post": "Pick a post on the left to see its replies.",
   "replies.no_posts": "No posts with comments yet.",
+  "replies.need_reply": "need a reply",
+  "replies.all_posts": "All posts",
+  "replies.rail_everything": "everything",
+  "replies.you": "You",
+  "replies.tag_drafted": "drafted in your voice",
+  "replies.tag_approved": "ready to publish",
+  "replies.drafting": "Drafting a reply in your voice…",
+  "replies.published": "Published",
+  "replies.badge_new": "New",
+  "replies.badge_draft": "Draft",
+  "replies.badge_approved": "Approved",
 
   // ── Mentions ───────────────────────────────────────────────────
   "dashboard.nav.mentions": "mentions",

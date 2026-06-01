@@ -37,7 +37,7 @@ presentation-слой.
 - **Фаза 0 — Фундамент:** `[~]` (0a+0b готовы; 0c сайдбар готов и **проверен визуально light+dark**; Topbar → Фаза 1; build+smoke зелёные)
 - **Mock-auth harness:** `[x]` готов — `tests/visual/screens.spec.ts` (route-mock + light/dark снимки)
 - **Фаза 1 — Studio:** `[x]` основное на проде (топбар, тема, композер, табы, карточки, тосты, диалог публикации); опц. скелетоны/first-run позже
-- **Фаза 2 — Контент:** `[~]` Лента ✅ + Упоминания ✅ на проде; **Ответы** остаётся
+- **Фаза 2 — Контент:** `[x]` Лента ✅ + Упоминания ✅ + Ответы ✅ — всё на проде
 - **Содержимое-колонка расширена до 900px** (Захар: 712 узко на широких мониторах) — применять везде
 - **Studio-композер** = свободный текст + чипы (бэкенд `prompt` добавлен, 303 теста ✅); карточки 1:1 с дизайном
 - **Фаза 3 — Рост (stats/audits/patterns/autopilot):** `[ ]`
@@ -196,15 +196,20 @@ presentation-слой.
 - [ ] _Sort-бар (Recent/Top) пропущен (это +фича/+i18n) — добавить позже client-side_
 - **Проверено:** harness light+dark ✓
 
-### 2b. Reply queue
+### 2b. Reply queue — `[x]` готово на проде (2026-06-01)
 **Роут:** `/app/replies` → `replies/page.tsx` · **Эталон:** `replies-app.jsx`,
 `replies-parts.jsx`, `replies-card.jsx`, `replies-postselect.jsx`, `replies.css` ·
-**Ширина:** 712 / 1060 (split)
-- [ ] Status-фильтры (All/Needs/Drafts/Replied/Skipped) с точками+счётчиками
-- [ ] Селектор поста (выбрать вариант из дизайна: rail/split) + unanswered-бейдж
-- [ ] CommentCard: контекст-пост (inset), translate-строка, reply-тред
-      (generate → edit+счётчик → approve → publish / skip / remove)
-- **Состояния:** loading · empty(по статусу) · comment: new/drafted/approved/replied/skipped
+**Ширина:** 900 (как Лента/Упоминания). **Выбран вариант rail** (как в эталонном app).
+- [x] Status-фильтры (All/Needs/Drafts/Replied/Skipped) — сегмент-бар с точками+счётчиками
+- [x] Селектор поста = горизонтальная **рельса** карточек-постов (All posts + по постам), счётчик-пилюля
+- [x] CommentCard: контекст-пост (inset «on your post»), translate коммента, reply-тред
+      с коннектором (generate-шиммер → edit+счётчик 500 → approve/reject → publish → open)
+- [x] `postFilter` заменил master-detail split; вся логика/API без изменений (рестайл)
+- [x] harness: фикстура `COMMENTS` (6 коммента, 2 поста, все статусы) + таргет Replies, light+dark ✓
+- **Состояния:** loading · empty · comment: new/drafted(pending)/approved/replied/skip ✓
+- _Отложено в общую полировку: per-status пустые состояния; design-only действия
+  Regenerate/Restore (нет в бэкенде — не добавлял); reply-translate убран (эталон
+  переводит только входящий коммент)._
 
 ### 2c. Mentions
 **Роут:** `/app/mentions` → `mentions/page.tsx` · **Эталон:** `mentions-app.jsx`,
@@ -350,7 +355,7 @@ presentation-слой.
   Готов: `tests/visual/screens.spec.ts` (route-mock `**/api/**` + seeding токена,
   снимки light/dark в `test-results/visual/`). Запуск: `npx playwright test
   tests/visual/screens.spec.ts`. Сайдбар проверен в обеих темах ✓. Основа для Phase 6.
-- [ ] Селектор поста в Replies — какой из вариантов дизайна берём (rail vs split)?
+- [x] Селектор поста в Replies — **выбран rail** (как в эталонном `replies-app.jsx`); решено 2026-06-01 с Захаром.
 - [ ] Перевод 6 локалей (uk/de/es/fr/it/pt) — отдельная задача с ревью Захара (вне Phase 7).
 - [ ] Экран billing/upgrade — в дизайне нет, проектируем позже (Phase 5 бэкенда).
 - [ ] Легаси-роут `/app/posts` — пропускаем (заменён Лентой); удалить?

@@ -46,13 +46,16 @@ export function TopbarPill({
   tone = "success",
   children,
 }: {
-  tone?: "success" | "warning";
+  tone?: "success" | "warning" | "accent";
   children: ReactNode;
 }) {
   return (
     <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-surface px-3 py-1 text-small text-text-muted">
       <span
-        className={cn("h-[7px] w-[7px] rounded-full", tone === "warning" ? "bg-warning" : "bg-success")}
+        className={cn(
+          "h-[7px] w-[7px] rounded-full",
+          tone === "warning" ? "bg-warning" : tone === "accent" ? "bg-accent" : "bg-success",
+        )}
       />
       {children}
     </span>
