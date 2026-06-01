@@ -150,6 +150,45 @@ const FEED = {
   ],
 };
 
+const MENTIONS = {
+  count: 3,
+  mentions: [
+    {
+      id: 501,
+      account_id: 1,
+      threads_mention_id: "m1",
+      author_username: "devon.writes",
+      text: "Just read @mara.lin's thread on finding your voice — required reading for anyone starting out.",
+      permalink: "https://www.threads.net/@devon.writes/post/1",
+      status: "new",
+      published_at: "2026-06-01T09:30:00Z",
+      created_at: "2026-06-01T09:30:00Z",
+    },
+    {
+      id: 502,
+      account_id: 1,
+      threads_mention_id: "m2",
+      author_username: "ana.k",
+      text: "honestly @mara.lin nailed it here. consistency > intensity, every time.",
+      permalink: "https://www.threads.net/@ana.k/post/2",
+      status: "new",
+      published_at: "2026-05-31T18:00:00Z",
+      created_at: "2026-05-31T18:00:00Z",
+    },
+    {
+      id: 503,
+      account_id: 1,
+      threads_mention_id: "m3",
+      author_username: "buildinpublic",
+      text: "shoutout to @mara.lin for the nudge to ship before you're ready. did it. terrifying. worth it.",
+      permalink: "https://www.threads.net/@buildinpublic/post/3",
+      status: "seen",
+      published_at: "2026-05-30T12:00:00Z",
+      created_at: "2026-05-30T12:00:00Z",
+    },
+  ],
+};
+
 async function setup(page: Page): Promise<void> {
   // Seed a token + selected account + locale before any app code runs.
   await page.addInitScript(() => {
@@ -175,6 +214,7 @@ async function setup(page: Page): Promise<void> {
     if (p.endsWith("/api/me/accounts")) return json({ accounts: ACCOUNTS });
     if (p.includes("/onboarding")) return json({ needs_onboarding: false, has_role_book: true });
     if (p.includes("/feed")) return json(FEED);
+    if (p.includes("/mentions")) return json(MENTIONS);
     if (p.includes("/drafts")) return json({ drafts: DRAFTS, count: DRAFTS.length });
     // Safe default — most list endpoints tolerate an empty array.
     return json([]);
@@ -214,4 +254,13 @@ test("Feed", async ({ page }) => {
   await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
   await page.waitForTimeout(700);
   await shoot(page, "feed");
+});
+
+test("Mentions", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await setup(page);
+  await page.goto("/app/mentions");
+  await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
+  await page.waitForTimeout(700);
+  await shoot(page, "mentions");
 });
