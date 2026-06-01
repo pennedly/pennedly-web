@@ -914,3 +914,20 @@ test("Landing", async ({ page }) => {
   await page.waitForTimeout(700);
   await shoot(page, "landing");
 });
+
+test("Legal", async ({ page }) => {
+  // Public legal template (/privacy, /terms, /data-deletion) — no app shell;
+  // wait on the sticky top bar.
+  await page.setViewportSize({ width: 1280, height: 1400 });
+  await setup(page);
+  for (const [route, name] of [
+    ["/privacy", "legal-privacy"],
+    ["/terms", "legal-terms"],
+    ["/data-deletion", "legal-data-deletion"],
+  ] as const) {
+    await page.goto(route);
+    await page.waitForSelector("header", { state: "visible", timeout: 15_000 });
+    await page.waitForTimeout(500);
+    await shoot(page, name);
+  }
+});

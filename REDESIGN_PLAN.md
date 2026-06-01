@@ -42,7 +42,7 @@ presentation-слой.
 - **Studio-композер** = свободный текст + чипы (бэкенд `prompt` добавлен, 303 теста ✅); карточки 1:1 с дизайном
 - **Фаза 3 — Рост (stats/audits/patterns/autopilot):** `[x]` Stats ✅ + Audits ✅ + Patterns ✅ + Autopilot ✅ — вся фаза на проде
 - **Фаза 4 — Голос (voice/style-rules):** `[x]` Voice ✅ + Style rules ✅ — вся фаза на проде
-- **Фаза 5 — Аккаунт+публичное (settings/onboarding/login/landing/legal):** `[~]` Settings ✅ + Onboarding ✅ + Login ✅ + Landing ✅ на проде; legal остаётся
+- **Фаза 5 — Аккаунт+публичное (settings/onboarding/login/landing/legal):** `[x]` ✅ ЗАВЕРШЕНА — Settings · Onboarding · Login · Landing · Legal (+новый `/data-deletion`) на проде
 - **Фаза 6 — Закрытие (скриншот-тесты, обе темы, SPEC):** `[ ]`
 
 ---
@@ -385,15 +385,22 @@ presentation-слой.
   нет переключателя языка). Контакт-email: `hi@pennedly.com` (наш домен; в
   эталоне `hello@pennedly.app` — плейсхолдер). Keyframe `ripple` добавлен._
 
-### 5e. Legal
+### 5e. Legal ✅ (на проде)
 **Роут:** `/privacy`, `/terms`, **`/data-deletion`** (новый роут) →
 `privacy/page.tsx`, `terms/page.tsx`, `data-deletion/page.tsx` · **Эталон:**
 `legal-app.jsx`, `legal-parts.jsx`, `legal-data.jsx` (контент 3 доков), `legal.css`,
 `Legal Template.html`
-- [ ] Topbar + статья (читаемая ширина ~70ch: h1/h2/p/списки/таблицы)
-- [ ] Футер-переключатель между документами (Privacy / Terms / Data Deletion)
-- [ ] Добавить роут `/data-deletion` (дизайн готов: `legal-data.jsx` → `DATA_DELETION`)
+- [x] Topbar + статья (читаемая колонка 720px: eyebrow/h1/intro/TOC/h2/p/списки)
+- [x] Общий клиент-шаблон `components/legal/LegalLayout.tsx` (3 server-роута с
+      собственным `metadata` кормят его данными); auto-TOC, блоки p/h3/ul/contact
+- [x] Футер кросс-линкует 3 документа + Home (активный документ подсвечен)
+- [x] Новый роут `/data-deletion` (Meta App Review требует) — контент по реальному
+      бэкенду (disconnect · Meta deauth/data-deletion колбэки · confirmation_code)
 - **Состояния:** privacy · terms · data-deletion
+- _Дизайн = эталон **вёрстки**; контент — реальный юр-текст (фонд Twój StartUp,
+  KRS/NIP/REGON, `support@pennedly.com`), НЕ плейсхолдеры дизайна. Модель данных
+  дизайна (простые строки + contact-блоки) → нет JSX через RSC-границу.
+  next.config/`.html`-rewrites больше нет. SPEC §6 обновлён._
 
 ---
 
