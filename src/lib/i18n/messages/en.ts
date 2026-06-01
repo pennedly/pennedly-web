@@ -776,6 +776,27 @@ export const en = {
   "settings.voice_setup": "Voice setup",
   "settings.voice_setup_cta": "Open setup",
   "settings.voice_preview_cta": "Preview (nothing saved)",
+  "settings.eyebrow": "Account",
+  "settings.intro_lead":
+    "Manage your account, the language Pennedly speaks to you in, and the Threads accounts it writes for.",
+  "settings.language_desc":
+    "Changes the app's labels and menus. Your drafts stay in the language you write them.",
+  "settings.accounts_desc":
+    "Pennedly drafts and posts for each connected account. Disconnecting stops all activity for that handle.",
+  "settings.disconnect_q": "Disconnect {handle}?",
+  "settings.disconnect_do": "Disconnect",
+  "settings.primary_tag": "Active",
+  "settings.shortcut_voice_t": "Your voice",
+  "settings.shortcut_voice_d":
+    "Shape how every draft sounds — themes, traits, and example posts.",
+  "settings.open_voice": "Open voice",
+  "settings.shortcut_preview_t": "Preview mode",
+  "settings.shortcut_preview_d":
+    "Try features before they ship. Things may change or break.",
+  "settings.enter_preview": "Enter preview",
+  "settings.tester_tag": "Tester",
+  "settings.lang_toast": "Language updated",
+  "settings.disconnect_toast": "Account disconnected",
   "onboarding.already_setup":
     "Your voice is already set up — going through this again replaces it (the previous version is kept).",
   "onboarding.preview_banner":

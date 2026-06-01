@@ -866,3 +866,12 @@ test("Style rules", async ({ page }) => {
   await page.waitForTimeout(700);
   await shoot(page, "style-rules");
 });
+
+test("Settings", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 1100 });
+  await setup(page);
+  await page.goto("/app/settings");
+  await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
+  await page.waitForTimeout(700);
+  await shoot(page, "settings");
+});

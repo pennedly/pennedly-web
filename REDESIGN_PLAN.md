@@ -42,7 +42,7 @@ presentation-слой.
 - **Studio-композер** = свободный текст + чипы (бэкенд `prompt` добавлен, 303 теста ✅); карточки 1:1 с дизайном
 - **Фаза 3 — Рост (stats/audits/patterns/autopilot):** `[x]` Stats ✅ + Audits ✅ + Patterns ✅ + Autopilot ✅ — вся фаза на проде
 - **Фаза 4 — Голос (voice/style-rules):** `[x]` Voice ✅ + Style rules ✅ — вся фаза на проде
-- **Фаза 5 — Аккаунт+публичное (settings/onboarding/login/landing/legal):** `[ ]`
+- **Фаза 5 — Аккаунт+публичное (settings/onboarding/login/landing/legal):** `[~]` Settings ✅ на проде; onboarding/login/landing/legal остаются
 - **Фаза 6 — Закрытие (скриншот-тесты, обе темы, SPEC):** `[ ]`
 
 ---
@@ -331,14 +331,18 @@ presentation-слой.
 
 # ФАЗА 5 — Аккаунт и публичное
 
-### 5a. Settings
+### 5a. Settings — `[x]` готово на проде (2026-06-01)
 **Роут:** `/app/settings` → `settings/page.tsx` · **Эталон:** `settings-app.jsx`,
 `settings-parts.jsx`, `settings.css` · **Ширина:** 680
-- [ ] Intro (eyebrow+h1+lead), Account-карта (аватар, план-бейдж, kv-строки)
-- [ ] Language-карта (2-кол сетка флаг-кнопок, active-состояние)
-- [ ] Connected accounts (список + disconnect-confirm + connect another)
-- [ ] Shortcuts-секция, футер с версией
-- **Состояния:** loading · ready
+- [x] Intro (eyebrow «Account» + h1 + lead), Account-карта (аватар + имя/email + план-бейдж ★ + kv Email/Plan)
+- [x] Language-карта (сетка 2×4 локалей: код-бейдж + имя + галочка у активной)
+- [x] Connected accounts (список с тегом «Active» у выбранного + disconnect-confirm + ConnectThreadsButton)
+- [x] Shortcuts (Голос → /role-book; tester «Preview mode» → онбординг-превью) + футер (sign out + «Pennedly»)
+- [x] Перенёс иконки `settings-icons.jsx` (Unlink/Logout/Flask)
+- [x] harness: таргет Settings (фикстуры me/accounts уже были), light+dark ✓
+- **Состояния:** loading · ready ✓
+- _Фронт-онли. Опущено как невыстроенное в бэкенде: смена email, биллинг «Manage plan»,
+  счётчик подписчиков, номер версии._
 
 ### 5b. Onboarding
 **Роут:** `/app/onboarding` → `onboarding/page.tsx` · **Эталон:**

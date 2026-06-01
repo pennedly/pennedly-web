@@ -60,6 +60,11 @@ export const IcQuote = (p: IconProps) => <Svg {...p}><path d="M9.5 7C7 7.6 5.5 9
 export const IcSliders = (p: IconProps) => <Svg {...p}><path d="M4 7h9M17 7h3M4 17h3M11 17h9" /><circle cx="15" cy="7" r="2" /><circle cx="9" cy="17" r="2" /></Svg>;
 export const IcFilter = (p: IconProps) => <Svg {...p}><path d="M4 5h16l-6 7v5l-4 2v-7L4 5Z" /></Svg>;
 export const IcPenLine = (p: IconProps) => <Svg {...p}><path d="M4 20h16" /><path d="M5 16h2L16 7a1.6 1.6 0 0 0-2.3-2.3L5 13.5V16Z" /></Svg>;
+
+/* settings — ported from settings-icons.jsx */
+export const IcUnlink = (p: IconProps) => <Svg {...p}><path d="M9 15l-2 2a3.5 3.5 0 0 1-5-5l2-2M15 9l2-2a3.5 3.5 0 0 1 5 5l-2 2M8 4v2M4 8H2M20 16h2M16 20v-2" /></Svg>;
+export const IcLogout = (p: IconProps) => <Svg {...p}><path d="M15 5H6a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h9" /><path d="M11 12h9M17 8l4 4-4 4" /></Svg>;
+export const IcFlask = (p: IconProps) => <Svg {...p}><path d="M9 3h6M10 3v6L5.5 17a2 2 0 0 0 1.8 3h9.4a2 2 0 0 0 1.8-3L14 9V3" /><path d="M8.2 14h7.6" /></Svg>;
 export const IcTweak = (p: IconProps) => <Svg {...p}><path d="M4 5v5h5" /><path d="M4 10a8 8 0 1 1 1 7" /></Svg>;
 export const IcSend = (p: IconProps) => <Svg {...p}><path d="M5 12h13M12 5l7 7-7 7" /></Svg>;
 export const IcExternal = (p: IconProps) => <Svg {...p}><path d="M14 5h5v5M19 5l-8 8M11 6H6.5A1.5 1.5 0 0 0 5 7.5v10A1.5 1.5 0 0 0 6.5 19h10A1.5 1.5 0 0 0 18 17.5V13" /></Svg>;

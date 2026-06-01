@@ -1,8 +1,11 @@
 "use client";
 
-// Settings — account-level info: who you're signed in as, your plan, and
-// the connected Threads accounts (with a "connect another"). Language +
-// log out live in the sidebar profile menu. In the shell (has the sidebar).
+// Settings — account identity + plan, the interface language, the connected
+// Threads accounts (disconnect / connect another), and quick shortcuts.
+// Layout per design-export/PennedlyDesign/settings-* . Frontend restyle — the
+// me / accounts / locale / disconnect APIs already back it. Design bits with no
+// backend (change-email, billing "manage plan", follower counts, a version
+// number) are omitted rather than faked.
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -17,7 +20,10 @@ import {
   getTokens,
   setMyLocale,
 } from "@/lib/api";
-import { getSelectedAccountId, setSelectedAccountId } from "@/lib/account";
+import {
+  getSelectedAccountId,
+  setSelectedAccountId,
+} from "@/lib/account";
 import { refreshAccountsPresence } from "@/lib/accounts";
 import {
   LOCALES,
@@ -27,8 +33,21 @@ import {
   type LocaleCode,
 } from "@/lib/i18n";
 import { captureEvent } from "@/lib/analytics";
+import { AppTopbar } from "@/components/AppTopbar";
+import { Button, buttonClasses } from "@/components/ui/button";
+import { Mono } from "@/components/ui/mono";
+import { Skeleton } from "@/components/ui/feedback";
+import { Toast, ToastHost } from "@/components/ui/toast";
 import { ConnectThreadsButton } from "@/components/ConnectThreadsButton";
+import { cn } from "@/lib/cn";
+import { IcCheck, IcEye, IcFlask, IcLogout, IcStar, IcUnlink, IcVoice } from "@/components/icons";
 import type { ConnectedAccount, Me } from "@/lib/types";
+
+type Toast = { id: number; message: string; tone: "success" | "error" };
+
+function initial(s: string | null | undefined): string {
+  return (s?.trim()?.[0] ?? "@").toUpperCase();
+}
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -39,29 +58,12 @@ export default function SettingsPage() {
   const [loaded, setLoaded] = useState(false);
   const [confirmId, setConfirmId] = useState<number | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
-  const [err, setErr] = useState<string | null>(null);
+  const [toasts, setToasts] = useState<Toast[]>([]);
 
-  async function onDisconnect(id: number) {
-    setBusyId(id);
-    setErr(null);
-    captureEvent("ui.account_disconnect", { account_id: id });
-    try {
-      await disconnectAccount(id);
-      setAccounts((list) => list.filter((a) => a.id !== id));
-      // If the disconnected account was the active one, clear the selection
-      // so the rest of the app falls back to connect / another account.
-      if (getSelectedAccountId() === id) setSelectedAccountId(null);
-      // Tell the shell to re-check presence — if that was the last account,
-      // it flips to the full-screen connect flow (sidebar vanishes).
-      refreshAccountsPresence();
-      setConfirmId(null);
-    } catch (e) {
-      setErr(
-        e instanceof ApiError ? `${e.status}: ${String(e.detail)}` : String(e),
-      );
-    } finally {
-      setBusyId(null);
-    }
+  function toast(message: string, tone: Toast["tone"] = "success") {
+    const id = Date.now() + Math.random();
+    setToasts((s) => [...s, { id, message, tone }]);
+    setTimeout(() => setToasts((s) => s.filter((x) => x.id !== id)), 3500);
   }
 
   useEffect(() => {
@@ -86,147 +88,237 @@ export default function SettingsPage() {
     })();
   }, [router]);
 
+  function pickLocale(code: LocaleCode, name: string) {
+    setLocale(code);
+    captureEvent("ui.locale_switched", { locale: code });
+    setMyLocale(code).catch(() => {});
+    toast(`${t("settings.lang_toast")} · ${name}`);
+  }
+
+  async function onDisconnect(a: ConnectedAccount) {
+    setBusyId(a.id);
+    captureEvent("ui.account_disconnect", { account_id: a.id });
+    try {
+      await disconnectAccount(a.id);
+      setAccounts((list) => list.filter((x) => x.id !== a.id));
+      if (getSelectedAccountId() === a.id) setSelectedAccountId(null);
+      refreshAccountsPresence();
+      setConfirmId(null);
+      toast(`${t("settings.disconnect_toast")} · @${a.username ?? a.id}`);
+    } catch (e) {
+      toast(
+        e instanceof ApiError ? `${e.status}: ${String(e.detail)}` : String(e),
+        "error",
+      );
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  function signOut() {
+    clearTokens();
+    router.push("/app/login");
+  }
+
+  const selectedId = getSelectedAccountId();
+
   return (
     <div className="min-h-screen bg-bg text-text">
-      <main className="max-w-2xl mx-auto px-6 py-8 space-y-6">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {t("settings.title")}
-        </h1>
-
-        {!loaded && <p className="text-sm text-zinc-500">{t("common.loading")}</p>}
-
-        {loaded && me && (
+      <AppTopbar title={t("settings.title")} />
+      <main className="mx-auto max-w-[680px] space-y-5 px-5 py-7 md:px-6">
+        {!loaded || !me ? (
+          <div className="space-y-5">
+            <Skeleton className="h-24 w-full rounded-lg" />
+            <Skeleton className="h-40 w-full rounded-lg" />
+            <Skeleton className="h-40 w-full rounded-lg" />
+          </div>
+        ) : (
           <>
-            <section className="rounded-xl border border-border bg-surface p-5 shadow-sm">
-              <h2 className="text-sm font-semibold mb-3">
-                {t("settings.account")}
-              </h2>
-              <dl className="text-sm space-y-2">
-                <div className="flex justify-between gap-3">
-                  <dt className="text-zinc-500">{t("settings.email")}</dt>
-                  <dd className="truncate">{me.email}</dd>
-                </div>
-                <div className="flex justify-between gap-3">
-                  <dt className="text-zinc-500">{t("settings.plan")}</dt>
-                  <dd className="capitalize">{me.tenant.plan_tier}</dd>
-                </div>
-              </dl>
-            </section>
+            {/* Intro */}
+            <div>
+              <span className="text-caption font-semibold uppercase tracking-wide text-text-subtle">
+                {t("settings.eyebrow")}
+              </span>
+              <h1 className="mt-2 text-h1 font-semibold tracking-tight">{t("settings.title")}</h1>
+              <p className="mt-2 max-w-[60ch] text-body leading-relaxed text-text-muted">
+                {t("settings.intro_lead")}
+              </p>
+            </div>
 
-            <section className="rounded-xl border border-border bg-surface p-5 shadow-sm">
-              <h2 className="text-sm font-semibold mb-3">
-                {t("settings.language")}
-              </h2>
-              <div className="flex flex-wrap gap-2">
-                {LOCALES.map((l) => (
-                  <button
-                    key={l.code}
-                    onClick={() => {
-                      setLocale(l.code as LocaleCode);
-                      captureEvent("ui.locale_switched", { locale: l.code });
-                      setMyLocale(l.code).catch(() => {});
-                    }}
-                    className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md border text-sm transition-colors ${
-                      l.code === locale
-                        ? "border-zinc-400 dark:border-zinc-500 bg-surface-2"
-                        : "border-border hover:bg-surface-2"
-                    }`}
-                  >
-                    <span aria-hidden>{l.flag}</span>
-                    <span>{l.name}</span>
-                  </button>
-                ))}
+            {/* Account */}
+            <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
+              <h2 className="text-small font-semibold">{t("settings.account")}</h2>
+              <div className="mt-4 flex items-center gap-3.5">
+                <Mono text={initial(me.display_name ?? me.email)} size={52} />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-body font-semibold">
+                    {me.display_name ?? me.tenant.name}
+                  </div>
+                  <div className="truncate text-small text-text-subtle">{me.email}</div>
+                </div>
+                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-accent/30 bg-accent/12 px-2.5 py-1 text-caption font-semibold capitalize text-accent">
+                  <IcStar size={13} />
+                  {me.tenant.plan_tier}
+                </span>
+              </div>
+              <div className="mt-4 flex flex-col divide-y divide-border border-t border-border">
+                <div className="flex items-center justify-between gap-3 py-2.5 text-small">
+                  <span className="text-text-subtle">{t("settings.email")}</span>
+                  <span className="truncate">{me.email}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3 py-2.5 text-small">
+                  <span className="text-text-subtle">{t("settings.plan")}</span>
+                  <span className="capitalize">{me.tenant.plan_tier}</span>
+                </div>
               </div>
             </section>
 
-            <section className="rounded-xl border border-border bg-surface p-5 shadow-sm">
-              <h2 className="text-sm font-semibold mb-3">
-                {t("settings.accounts")}
-              </h2>
-              <ul className="space-y-2 mb-3">
-                {accounts.length === 0 && (
-                  <li className="text-sm text-zinc-500">—</li>
-                )}
-                {accounts.map((a) => (
-                  <li key={a.id} className="flex items-center gap-2 text-sm">
-                    <span className="font-medium">
-                      @{a.username ?? `acct ${a.id}`}
-                    </span>
-                    {a.display_name && (
-                      <span className="text-zinc-500 truncate">
-                        · {a.display_name}
+            {/* Language */}
+            <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
+              <h2 className="text-small font-semibold">{t("settings.language")}</h2>
+              <p className="mt-0.5 text-caption text-text-subtle">{t("settings.language_desc")}</p>
+              <div role="radiogroup" className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {LOCALES.map((l) => {
+                  const active = l.code === locale;
+                  return (
+                    <button
+                      key={l.code}
+                      role="radio"
+                      aria-checked={active}
+                      onClick={() => pickLocale(l.code as LocaleCode, l.name)}
+                      className={cn(
+                        "flex items-center gap-2.5 rounded-md border px-3 py-2.5 text-left transition-colors",
+                        active
+                          ? "border-accent/55 bg-surface-2"
+                          : "border-border hover:bg-surface-2",
+                      )}
+                    >
+                      <span className="grid h-7 w-9 shrink-0 place-items-center rounded-sm border border-border bg-surface text-caption font-semibold uppercase text-text-muted">
+                        {l.code}
                       </span>
-                    )}
+                      <span className="min-w-0 flex-1 truncate text-small font-medium">{l.name}</span>
+                      {active && <IcCheck size={16} className="shrink-0 text-accent" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+
+            {/* Connected accounts */}
+            <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
+              <h2 className="text-small font-semibold">{t("settings.accounts")}</h2>
+              <p className="mt-0.5 text-caption text-text-subtle">{t("settings.accounts_desc")}</p>
+              <div className="mt-4 flex flex-col gap-2.5">
+                {accounts.map((a) => (
+                  <div
+                    key={a.id}
+                    className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-surface-2 p-3"
+                  >
+                    <Mono text={initial(a.username)} size={40} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 text-small font-semibold">
+                        <span className="truncate">{a.display_name || `@${a.username ?? a.id}`}</span>
+                        {a.id === selectedId && (
+                          <span className="shrink-0 rounded-full border border-border bg-surface px-2 py-px text-caption font-medium text-text-muted">
+                            {t("settings.primary_tag")}
+                          </span>
+                        )}
+                      </div>
+                      <div className="truncate text-caption text-text-subtle">@{a.username ?? a.id}</div>
+                    </div>
                     {confirmId === a.id ? (
-                      <span className="ml-auto flex items-center gap-3 shrink-0">
-                        <span className="text-text-muted">
-                          {t("settings.disconnect_confirm")}
+                      <div className="flex shrink-0 items-center gap-2">
+                        <span className="text-caption text-text-subtle">
+                          {t("settings.disconnect_q").replace("{handle}", `@${a.username ?? a.id}`)}
                         </span>
-                        <button
-                          onClick={() => onDisconnect(a.id)}
-                          disabled={busyId === a.id}
-                          className="font-medium text-red-600 dark:text-red-400 hover:underline disabled:opacity-50"
-                        >
-                          {busyId === a.id
-                            ? t("settings.disconnecting")
-                            : t("settings.disconnect_yes")}
-                        </button>
-                        <button
+                        <Button
+                          size="sm"
+                          variant="ghost"
                           onClick={() => setConfirmId(null)}
                           disabled={busyId === a.id}
-                          className="text-text-muted hover:underline disabled:opacity-50"
                         >
                           {t("common.cancel")}
-                        </button>
-                      </span>
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          onClick={() => onDisconnect(a)}
+                          loading={busyId === a.id}
+                          disabled={busyId === a.id}
+                          icon={<IcUnlink size={15} />}
+                        >
+                          {t("settings.disconnect_do")}
+                        </Button>
+                      </div>
                     ) : (
-                      <button
-                        onClick={() => {
-                          setErr(null);
-                          setConfirmId(a.id);
-                        }}
-                        className="ml-auto shrink-0 text-text-muted hover:text-red-600 dark:hover:text-red-400 transition-colors"
-                      >
+                      <Button size="sm" variant="ghost" onClick={() => setConfirmId(a.id)}>
                         {t("settings.disconnect")}
-                      </button>
+                      </Button>
                     )}
-                  </li>
+                  </div>
                 ))}
-              </ul>
-              {err && <p className="text-sm text-red-600 dark:text-red-400 mb-2">{err}</p>}
-              <p className="text-xs text-text-subtle mb-4">
-                {t("settings.disconnect_hint")}
-              </p>
-              <ConnectThreadsButton variant="primary" />
-            </section>
-
-            <section className="rounded-xl border border-border bg-surface p-5 shadow-sm">
-              <h2 className="text-sm font-semibold mb-1">
-                {t("settings.voice_setup")}
-              </h2>
-              <p className="text-xs text-zinc-500 mb-3">
-                {t("onboarding.subtitle")}
-              </p>
-              <div className="flex flex-wrap items-center gap-3">
-                <Link
-                  href="/app/onboarding"
-                  className="inline-flex items-center px-4 py-2 rounded-md border border-border text-sm font-medium text-text hover:bg-surface-2 transition-colors"
-                >
-                  {t("settings.voice_setup_cta")}
-                </Link>
-                {me.is_tester && (
-                  <Link
-                    href="/app/onboarding?preview=1"
-                    className="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium text-blue-700 dark:text-blue-400 hover:underline"
-                  >
-                    {t("settings.voice_preview_cta")}
-                  </Link>
-                )}
+              </div>
+              <div className="mt-4">
+                <ConnectThreadsButton variant="primary" />
               </div>
             </section>
+
+            {/* Shortcuts */}
+            <section className="overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
+              <div className="flex items-center gap-3.5 p-4">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-border bg-surface-2 text-text-muted">
+                  <IcVoice size={18} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="text-small font-semibold">{t("settings.shortcut_voice_t")}</div>
+                  <div className="mt-0.5 text-caption text-text-subtle">{t("settings.shortcut_voice_d")}</div>
+                </div>
+                <Link href="/app/role-book" className={buttonClasses({ variant: "primary", size: "sm" })}>
+                  {t("settings.open_voice")}
+                </Link>
+              </div>
+              {me.is_tester && (
+                <div className="flex items-center gap-3.5 border-t border-border p-4">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-border bg-surface-2 text-text-muted">
+                    <IcFlask size={18} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 text-small font-semibold">
+                      {t("settings.shortcut_preview_t")}
+                      <span className="rounded-full border border-border bg-surface-2 px-2 py-px text-caption font-medium text-text-muted">
+                        {t("settings.tester_tag")}
+                      </span>
+                    </div>
+                    <div className="mt-0.5 text-caption text-text-subtle">{t("settings.shortcut_preview_d")}</div>
+                  </div>
+                  <Link
+                    href="/app/onboarding?preview=1"
+                    className={buttonClasses({ variant: "secondary", size: "sm" })}
+                  >
+                    <IcEye size={15} />
+                    {t("settings.enter_preview")}
+                  </Link>
+                </div>
+              )}
+            </section>
+
+            {/* Footer */}
+            <div className="flex items-center gap-3 pt-1">
+              <Button variant="ghost" size="sm" onClick={signOut} icon={<IcLogout size={15} />}>
+                {t("settings.logout")}
+              </Button>
+              <span className="flex-1" />
+              <span className="text-caption text-text-subtle">Pennedly</span>
+            </div>
           </>
         )}
       </main>
+
+      <ToastHost>
+        {toasts.map((tt) => (
+          <Toast key={tt.id} tone={tt.tone} title={tt.message} />
+        ))}
+      </ToastHost>
     </div>
   );
 }

@@ -782,6 +782,27 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "settings.voice_setup": "Настройка голоса",
   "settings.voice_setup_cta": "Открыть настройку",
   "settings.voice_preview_cta": "Режим просмотра (без сохранения)",
+  "settings.eyebrow": "Аккаунт",
+  "settings.intro_lead":
+    "Управляй аккаунтом, языком, на котором Pennedly говорит с тобой, и подключёнными аккаунтами Threads, для которых он пишет.",
+  "settings.language_desc":
+    "Меняет подписи и меню приложения. Твои черновики остаются на языке, на котором ты их пишешь.",
+  "settings.accounts_desc":
+    "Pennedly пишет и постит для каждого подключённого аккаунта. Отключение останавливает всю активность для этого хэндла.",
+  "settings.disconnect_q": "Отключить {handle}?",
+  "settings.disconnect_do": "Отключить",
+  "settings.primary_tag": "Активный",
+  "settings.shortcut_voice_t": "Твой голос",
+  "settings.shortcut_voice_d":
+    "Настрой, как звучит каждый черновик — темы, черты и примеры постов.",
+  "settings.open_voice": "Открыть голос",
+  "settings.shortcut_preview_t": "Режим превью",
+  "settings.shortcut_preview_d":
+    "Пробуй функции до релиза. Что-то может меняться или ломаться.",
+  "settings.enter_preview": "Войти в превью",
+  "settings.tester_tag": "Тестер",
+  "settings.lang_toast": "Язык обновлён",
+  "settings.disconnect_toast": "Аккаунт отключён",
   "onboarding.already_setup":
     "Твой голос уже настроен — повторная настройка заменит его (старая версия сохранится).",
   "onboarding.preview_banner":
