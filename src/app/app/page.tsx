@@ -39,7 +39,7 @@ import { Toast, ToastHost } from "@/components/ui/toast";
 import { IcCheck, IcChevDown, IcExternal, IcNib, IcPencil, IcSend, IcSparkle, IcStudio, IcTrash, IcTweak, IcX } from "@/components/icons";
 import { SkeletonText } from "@/components/ui/feedback";
 import { cn } from "@/lib/cn";
-import type { DraftSummary, GeneratedDraft, Me } from "@/lib/types";
+import type { DraftSummary, Me } from "@/lib/types";
 
 type Toast = { id: number; message: string; tone: "success" | "error" };
 
@@ -99,7 +99,6 @@ export default function Dashboard() {
     const n = raw ? Number(raw) : 1;
     return Number.isFinite(n) && n >= 1 && n <= 4 ? n : 1;
   });
-  const [lastDraft, setLastDraft] = useState<GeneratedDraft | null>(null);
   const [composerText, setComposerText] = useState("");
   const [editingId, setEditingId] = useState<number | null>(null);
   const [selectedAccount, setSelectedAccount] = useState<{
@@ -224,9 +223,6 @@ export default function Dashboard() {
         setNeedsVoiceSetup(false);
         const list = await listDrafts(accountId, { limit: 50 });
         setDrafts(list.drafts);
-        // Clear the "last generated" preview when switching accounts —
-        // it belonged to the previous account.
-        setLastDraft(null);
       } catch (e) {
         if (e instanceof ApiError && e.status === 401) {
           clearTokens();
@@ -276,18 +272,11 @@ export default function Dashboard() {
     try {
       if (batchCount === 1) {
         const draft = await generatePost(accountId, undefined, composerText);
-        setLastDraft(draft);
         toast(
           `${t("dashboard.toast.generated")} · ${draft.text.length} · ${draft.latency_ms}ms`,
         );
       } else {
         const result = await generatePostBatch(accountId, batchCount, undefined, composerText);
-        // Show the LAST successful draft in the preview slot (most
-        // recent generation feels right); all of them land in the
-        // feed below.
-        if (result.drafts.length > 0) {
-          setLastDraft(result.drafts[result.drafts.length - 1]);
-        }
         if (result.errors.length === 0) {
           toast(
             `${t("dashboard.toast.generated")} · ${result.succeeded}/${result.requested}`,
@@ -302,6 +291,9 @@ export default function Dashboard() {
       const list = await listDrafts(accountId, { limit: 50 });
       setDrafts(list.drafts);
       setComposerText("");
+      // Freshly generated drafts are pending — surface that tab so they show
+      // immediately (the default tab is "ready to publish", which excludes them).
+      setTab("pending");
     } catch (e) {
       toast(String(e), "error");
     } finally {
@@ -610,23 +602,6 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {lastDraft && (
-                <div className="mt-3 border-t border-border pt-3">
-                  <div className="mb-2 text-caption text-text-subtle">
-                    <span className="font-medium text-text">
-                      {lastDraft.topic_label ?? t("dashboard.generate.no_topic")}
-                    </span>{" "}
-                    · {lastDraft.text.length} · {lastDraft.latency_ms}ms ·{" "}
-                    {lastDraft.prompt_tokens + lastDraft.completion_tokens} tok
-                  </div>
-                  <p className="whitespace-pre-wrap text-body leading-relaxed">
-                    {lastDraft.text}
-                  </p>
-                  <div className="mt-3">
-                    <TranslateButton text={lastDraft.text} source="generated_draft_preview" />
-                  </div>
-                </div>
-              )}
             </>
           )}
         </section>

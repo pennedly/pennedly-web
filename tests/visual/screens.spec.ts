@@ -734,6 +734,15 @@ async function setup(page: Page): Promise<void> {
     if (p.includes("/role-book")) return json(ROLE_BOOK);
     if (p.includes("/style-rules")) return json(STYLE_RULES);
     if (p.includes("/user-rules")) return json(USER_RULES);
+    if (p.includes("/generation/posts/batch"))
+      return json({
+        drafts: [{ text: "Start before you feel ready. The version of you that waits never ships.", latency_ms: 720, topic_label: "Shipping", prompt_tokens: 0, completion_tokens: 0 }],
+        errors: [],
+        succeeded: 2,
+        requested: 2,
+      });
+    if (p.includes("/generation/posts"))
+      return json({ text: "Start before you feel ready. The version of you that waits never ships.", latency_ms: 720, topic_label: "Shipping", prompt_tokens: 0, completion_tokens: 0 });
     if (p.includes("/drafts")) return json({ drafts: DRAFTS, count: DRAFTS.length });
     // Safe default — most list endpoints tolerate an empty array.
     return json([]);
@@ -774,6 +783,21 @@ test("shell — Studio", async ({ page }) => {
   await page.locator("aside").getByRole("button", { name: /mara\.lin/i }).first().click();
   await page.waitForTimeout(300);
   await shoot(page, "shell-studio-account");
+});
+
+test("Studio — generate", async ({ page }) => {
+  // After generating, the new drafts must show in the feed under the "drafts"
+  // (pending) tab — with NO duplicate "last generated" preview card above it.
+  // Regression for the reported dup (2 drafts shown below + 1 echoed on top).
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await setup(page);
+  await page.goto("/app");
+  await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
+  await page.waitForTimeout(700);
+  await page.locator("textarea").first().fill("shipping before you're ready");
+  await page.getByRole("button", { name: /generate/i }).click();
+  await page.waitForTimeout(900);
+  await shoot(page, "studio-generated");
 });
 
 test("Feed", async ({ page }) => {
