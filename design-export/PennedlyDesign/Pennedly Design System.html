@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Pennedly — Design System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="ds/tokens.css"/>
+<link rel="stylesheet" href="ds/doc.css"/>
+<link rel="stylesheet" href="ds/components.css"/>
+</head>
+<body>
+<div class="shell">
+
+  <!-- ============================ SIDEBAR ============================ -->
+  <aside class="sidebar">
+    <div class="brand">
+      <svg width="34" height="34" viewBox="0 0 512 512" aria-hidden="true" style="display:block">
+        <rect width="512" height="512" rx="115" fill="#ededed"/>
+        <g fill="#171717">
+          <path d="M182 348 C248 366 322 352 376 312 C326 330 252 340 188 326 C176 324 174 344 182 348 Z"/>
+          <g transform="rotate(42 256 256)">
+            <path d="M236 150 Q236 128 256 128 Q276 128 276 150 L276 300 L256 360 L236 300 Z"/>
+            <rect x="236" y="206" width="40" height="7"/>
+          </g>
+        </g>
+      </svg>
+      <div>
+        <div class="name">Pennedly</div>
+        <div class="sub">Design System v1.0</div>
+      </div>
+    </div>
+    <nav class="toc">
+      <a href="#overview">Overview</a>
+      <div class="toc-cap">Foundations</div>
+      <a href="#color">Color</a>
+      <a href="#type">Typography</a>
+      <a href="#radius">Radius &amp; elevation</a>
+      <a href="#spacing">Spacing &amp; motion</a>
+      <div class="toc-cap">Code</div>
+      <a href="#tokens">globals.css</a>
+      <a href="#table">Token reference</a>
+      <div class="toc-cap">Components</div>
+      <a href="#buttons">Buttons</a>
+      <a href="#forms">Forms</a>
+      <a href="#surfaces">Cards &amp; badges</a>
+      <a href="#controls">Switch &amp; nav</a>
+      <a href="#overlays">Dialog, toast, table</a>
+      <div class="toc-cap">Apply it</div>
+      <a href="#rules">Usage rules</a>
+      <a href="#rollout">Rollout plan</a>
+    </nav>
+  </aside>
+
+  <!-- ============================== MAIN ============================== -->
+  <main class="main">
+    <div class="topbar">
+      <span class="crumb">Pennedly&nbsp;&nbsp;/&nbsp;&nbsp;Design System</span>
+      <button class="theme-toggle" data-theme-toggle aria-label="Toggle theme">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/></svg>
+        <span class="tt-label">Light</span>
+      </button>
+    </div>
+
+    <div class="wrap">
+
+      <!-- ----------------------------- OVERVIEW ----------------------------- -->
+      <section class="sec" id="overview" style="padding-top:52px">
+        <p class="eyebrow">Ink on paper</p>
+        <h1 class="disp">The Pennedly<br/>design system.</h1>
+        <p class="lede">A small, coherent token set built from one idea — a near-black ink mark on warm off-white paper — so the entire product looks like it belongs to the <strong>Drafting Line</strong> app icon. Calm, craft-like, confident. Monochrome, with a single quiet ink-blue accent.</p>
+
+        <div class="demo demo--center" style="margin-top:32px;gap:40px;flex-wrap:wrap">
+          <svg width="132" height="132" viewBox="0 0 512 512" aria-label="Pennedly icon" style="display:block;box-shadow:var(--shadow-md);border-radius:30px">
+            <rect width="512" height="512" rx="115" fill="#ededed"/>
+            <g fill="#171717">
+              <path d="M182 348 C248 366 322 352 376 312 C326 330 252 340 188 326 C176 324 174 344 182 348 Z"/>
+              <g transform="rotate(42 256 256)"><path d="M236 150 Q236 128 256 128 Q276 128 276 150 L276 300 L256 360 L236 300 Z"/><rect x="236" y="206" width="40" height="7"/></g>
+            </g>
+          </svg>
+          <div style="max-width:330px">
+            <h4 class="h3" style="margin-top:0">North star</h4>
+            <p class="body" style="margin:0">Off-white paper <code>#ededed</code>, near-black ink <code>#171717</code>, deepest ink <code>#0a0a0a</code>, generous ~22% rounding. Every surface, type ramp and component below derives from these. Toggle the theme in the top-right — nothing was duplicated to make dark mode work.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ------------------------------- COLOR ------------------------------ -->
+      <section class="sec" id="color">
+        <p class="eyebrow">Foundations</p>
+        <h2 class="h1">Color</h2>
+        <p class="body">One hue only: a warm-neutral ink. The <strong>ink scale</strong> is the raw material; the <strong>semantic roles</strong> are what components actually reference, and they flip in dark mode so component code stays the same.</p>
+
+        <h3 class="h2">Ink scale</h3>
+        <div class="swatch-row" id="ink-scale"></div>
+
+        <h3 class="h2">Semantic roles</h3>
+        <p class="body subtle" style="margin-top:-2px">These are the tokens you reach for — <code>bg-surface</code>, <code>text-text</code>, <code>border-border</code>. Shown in the current theme.</p>
+        <div class="role-row" id="roles"></div>
+
+        <h3 class="h2">The one accent &amp; status</h3>
+        <p class="body">A single restrained accent — <strong>Ink Blue</strong> <code>#2f4cc4</code> (light) / <code>#9aacff</code> (dark) — for links, focus, selection and selected nav. It never fills a primary button; the primary action stays ink. Status colors are desaturated so they sit quietly next to the ink.</p>
+        <div class="role-row" id="accents"></div>
+        <div class="note"><strong>Contrast:</strong> body text, muted text and every solid role pairing meet WCAG AA (≥4.5:1) in both themes. <code>text-subtle</code> is reserved for placeholders &amp; captions and still clears AA on its intended surfaces.</div>
+      </section>
+
+      <!-- -------------------------------- TYPE ------------------------------ -->
+      <section class="sec" id="type">
+        <p class="eyebrow">Foundations</p>
+        <h2 class="h1">Typography</h2>
+        <p class="body">Geist throughout — the same geometric, quietly-engineered letterform family as the icon's monogram potential. Geist Mono for code &amp; token values. A seven-step scale; each step carries its own line-height, weight and tracking as Tailwind 4 modifier tokens.</p>
+        <div class="card" style="margin-top:14px">
+          <div class="spec"><div class="demo-text" style="font:600 var(--text-display)/var(--lh-display) var(--font-sans);letter-spacing:var(--ls-display)">Draft in your voice</div><div class="tk">text-display · 48 / 1.05 / 600</div></div>
+          <div class="spec"><div class="demo-text" style="font:600 var(--text-h1)/var(--lh-h1) var(--font-sans);letter-spacing:var(--ls-h1)">Review &amp; approve</div><div class="tk">text-h1 · 32 / 1.15 / 600</div></div>
+          <div class="spec"><div class="demo-text" style="font:600 var(--text-h2)/var(--lh-h2) var(--font-sans);letter-spacing:var(--ls-h2)">Your drafting partner</div><div class="tk">text-h2 · 24 / 1.2 / 600</div></div>
+          <div class="spec"><div class="demo-text" style="font:600 var(--text-h3)/var(--lh-h3) var(--font-sans);letter-spacing:var(--ls-h3)">Suggested reply</div><div class="tk">text-h3 · 19 / 1.3 / 600</div></div>
+          <div class="spec"><div class="demo-text" style="font:400 var(--text-body)/var(--lh-body) var(--font-sans);max-width:46ch">Pennedly drafts posts and replies that sound like you, then waits — you read every word and decide what ships.</div><div class="tk">text-body · 15 / 1.6 / 400</div></div>
+          <div class="spec"><div class="demo-text" style="font:400 var(--text-small)/var(--lh-small) var(--font-sans);color:var(--color-text-muted)">Last edited 2 minutes ago · Draft</div><div class="tk">text-small · 13 / 1.5 / 400</div></div>
+          <div class="spec"><div class="demo-text" style="font:500 var(--text-caption)/var(--lh-caption) var(--font-sans);letter-spacing:var(--ls-caption);text-transform:uppercase;color:var(--color-text-subtle)">In review</div><div class="tk">text-caption · 12 / 1.4 / 500</div></div>
+        </div>
+      </section>
+
+      <!-- ------------------------- RADIUS & ELEVATION ----------------------- -->
+      <section class="sec" id="radius">
+        <p class="eyebrow">Foundations</p>
+        <h2 class="h1">Radius &amp; elevation</h2>
+        <p class="body">Rounding is generous to echo the icon's soft ~22% corner. Buttons &amp; inputs use <code>md</code>; cards <code>lg</code>; modals the most icon-like <code>2xl</code>. Elevation is soft, low and inky — calm, never floaty; in dark mode borders do most of the separating.</p>
+
+        <h4 class="h3">Radius</h4>
+        <div class="tile-row">
+          <div class="tile"><div class="box" style="border-radius:var(--radius-sm)"></div><span class="lbl">sm · 6px</span></div>
+          <div class="tile"><div class="box" style="border-radius:var(--radius-md)"></div><span class="lbl">md · 10px</span></div>
+          <div class="tile"><div class="box" style="border-radius:var(--radius-lg)"></div><span class="lbl">lg · 14px</span></div>
+          <div class="tile"><div class="box" style="border-radius:var(--radius-xl)"></div><span class="lbl">xl · 20px</span></div>
+          <div class="tile"><div class="box" style="border-radius:var(--radius-2xl)"></div><span class="lbl">2xl · 28px</span></div>
+        </div>
+
+        <h4 class="h3">Elevation</h4>
+        <div class="tile-row">
+          <div class="tile"><div class="box" style="border:none;background:var(--color-surface);box-shadow:var(--shadow-sm);border-radius:var(--radius-lg)"></div><span class="lbl">shadow-sm</span></div>
+          <div class="tile"><div class="box" style="border:none;background:var(--color-surface);box-shadow:var(--shadow-md);border-radius:var(--radius-lg)"></div><span class="lbl">shadow-md</span></div>
+          <div class="tile"><div class="box" style="border:none;background:var(--color-surface);box-shadow:var(--shadow-lg);border-radius:var(--radius-lg)"></div><span class="lbl">shadow-lg</span></div>
+        </div>
+      </section>
+
+      <!-- --------------------------- SPACING & MOTION ----------------------- -->
+      <section class="sec" id="spacing">
+        <p class="eyebrow">Foundations</p>
+        <h2 class="h1">Spacing &amp; motion</h2>
+        <p class="body">A strict <strong>4px grid</strong> (<code>--spacing: 0.25rem</code>). Compose from the steps below; avoid one-off values. Motion is short and gentle — a calm standard easing for most transitions, a softer entrance curve for overlays — and always respects <code>prefers-reduced-motion</code>.</p>
+
+        <h4 class="h3">4px grid</h4>
+        <div class="card" style="display:flex;flex-wrap:wrap;gap:18px;align-items:flex-end">
+          <div id="spacing-scale" style="display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap"></div>
+        </div>
+
+        <h4 class="h3">Motion</h4>
+        <div class="role-row">
+          <div class="role"><div class="dot" style="background:var(--color-surface-2)"></div><div><div class="nm">fast · 120ms</div><div class="use">hovers, tap feedback</div></div></div>
+          <div class="role"><div class="dot" style="background:var(--color-surface-2)"></div><div><div class="nm">base · 180ms</div><div class="use">color &amp; state changes</div></div></div>
+          <div class="role"><div class="dot" style="background:var(--color-surface-2)"></div><div><div class="nm">slow · 240ms</div><div class="use">overlays, dialogs</div></div></div>
+          <div class="role"><div class="dot" style="background:var(--color-surface-2)"></div><div><div class="nm">ease-standard</div><div class="use">(.2,.7,.3,1)</div></div></div>
+          <div class="role"><div class="dot" style="background:var(--color-surface-2)"></div><div><div class="nm">ease-entrance</div><div class="use">(.16,1,.3,1)</div></div></div>
+        </div>
+      </section>
+
+      <!-- ------------------------------ TOKENS ------------------------------ -->
+      <section class="sec" id="tokens">
+        <p class="eyebrow">Code · 1 of 2</p>
+        <h2 class="h1">globals.css</h2>
+        <p class="body">The complete token set as a single Tailwind 4 CSS-first file. <strong>Dark mode is class-based</strong> via <code>@custom-variant dark</code> + a <code>.dark</code> override of the semantic tokens — drop it in, add <code>class="dark"</code> on <code>&lt;html&gt;</code>, done. Paste-ready, no placeholders.</p>
+        <div class="code code--tall">
+          <div class="code-head">
+            <span class="code-file">app/globals.css</span>
+            <button class="copy-btn" data-copy="#globals-code"><span class="cb-label">Copy</span></button>
+          </div>
+          <pre><code id="globals-code">/* loading globals.css… */</code></pre>
+        </div>
+      </section>
+
+      <!-- --------------------------- TOKEN TABLE ---------------------------- -->
+      <section class="sec" id="table">
+        <p class="eyebrow">Code · 2 of 2</p>
+        <h2 class="h1">Token reference</h2>
+        <p class="body">The semantic and foundation tokens, their light/dark values, and when to use each. Ink-scale steps (<code>--color-ink-50…950</code>) are the raw palette — prefer the semantic roles in product code.</p>
+        <div class="tbl-wrap">
+          <table class="tokens" id="token-table"></table>
+        </div>
+      </section>
+
+      <!-- ----------------------------- BUTTONS ------------------------------ -->
+      <section class="sec" id="buttons">
+        <p class="eyebrow">Components</p>
+        <h2 class="h1">Buttons</h2>
+        <p class="body">Primary is <strong>ink</strong> (it flips to paper in dark) — the calmest possible emphasis. Secondary, ghost and danger round it out. Sizes <code>md</code> (40px) and <code>sm</code> (32px).</p>
+        <div class="demo">
+          <button class="btn btn--primary">Approve &amp; post</button>
+          <button class="btn btn--secondary">Save draft</button>
+          <button class="btn btn--ghost">Discard</button>
+          <button class="btn btn--danger">Delete</button>
+          <button class="btn btn--primary" data-loading-demo>Generate draft</button>
+          <button class="btn btn--secondary" disabled>Disabled</button>
+        </div>
+        <div class="demo" style="margin-top:14px">
+          <button class="btn btn--primary btn--sm">Approve</button>
+          <button class="btn btn--secondary btn--sm">Edit</button>
+          <button class="btn btn--ghost btn--sm">Skip</button>
+        </div>
+        <div class="recipe"><div class="r-name">base + primary</div><div style="position:relative"><code class="r-code">inline-flex items-center justify-center gap-2 h-10 px-4 rounded-md text-small font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50 disabled:pointer-events-none bg-primary text-primary-foreground hover:bg-primary/90</code><button class="copy-btn r-copy" data-copy="#self"><span class="cb-label">Copy</span></button></div></div>
+        <div class="recipe"><div class="r-name">secondary</div><div style="position:relative"><code class="r-code">… bg-surface text-text border border-border hover:bg-surface-2</code><button class="copy-btn r-copy" data-copy="#self"><span class="cb-label">Copy</span></button></div></div>
+        <div class="recipe"><div class="r-name">ghost · danger · size-sm</div><div style="position:relative"><code class="r-code">ghost:  bg-transparent text-text-muted hover:bg-surface-2 hover:text-text
+danger: bg-danger text-danger-foreground hover:bg-danger/90
+size sm: swap h-10 px-4 → h-8 px-3 rounded-sm   ·   loading: prefix a &lt;span class="spinner"/&gt; and set aria-disabled</code><button class="copy-btn r-copy" data-copy="#self"><span class="cb-label">Copy</span></button></div></div>
+      </section>
+
+      <!-- ------------------------------ FORMS ------------------------------- -->
+      <section class="sec" id="forms">
+        <p class="eyebrow">Components</p>
+        <h2 class="h1">Inputs, select &amp; textarea</h2>
+        <p class="body">40px tall, <code>md</code> radius, hairline border that turns ink-blue with a soft ring on focus. Error state swaps the border &amp; ring to danger.</p>
+        <div class="demo demo--col" style="max-width:440px;gap:18px">
+          <div><label class="field-label">Display name</label><input class="field" placeholder="e.g. Mara Lin" value="Mara Lin"/></div>
+          <div><label class="field-label">Posting cadence</label><select class="field"><option>A few times a week</option><option>Daily</option><option>Multiple times a day</option></select></div>
+          <div><label class="field-label">Voice notes</label><textarea class="field" rows="3" placeholder="Dry wit, short sentences, no hashtags…"></textarea></div>
+          <div><label class="field-label">Threads handle</label><input class="field field--error" value="mara lin"/><div class="field-hint field-hint--error">Handles can’t contain spaces.</div></div>
+        </div>
+        <div class="recipe"><div class="r-name">input / select / textarea</div><div style="position:relative"><code class="r-code">h-10 w-full rounded-md border border-border bg-surface px-3 text-body text-text placeholder:text-text-subtle transition-colors focus:outline-none focus:border-accent focus:ring-3 focus:ring-accent/25
+error:    border-danger focus:border-danger focus:ring-danger/25
+textarea: h-auto py-2.5 leading-relaxed resize-y      select: appearance-none pr-8</code><button class="copy-btn r-copy" data-copy="#self"><span class="cb-label">Copy</span></button></div></div>
+      </section>
+
+      <!-- -------------------------- CARDS & BADGES -------------------------- -->
+      <section class="sec" id="surfaces">
+        <p class="eyebrow">Components</p>
+        <h2 class="h1">Cards, badges &amp; pills</h2>
+        <div class="demo-grid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr));margin-top:6px">
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <span style="font-weight:600;font-size:var(--text-small)">Reply to @devon</span>
+              <span class="badge badge--neutral"><span class="pill-dot"></span>Draft</span>
+            </div>
+            <p style="margin:0;font-size:var(--text-small);line-height:1.6;color:var(--color-text-muted)">Totally — the trick is to start before you feel ready. I’ll usually open a doc and write the worst possible first line on purpose.</p>
+          </div>
+          <div class="panel">
+            <div style="font-weight:600;font-size:var(--text-small);margin-bottom:12px">Statuses</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+              <span class="badge badge--good"><span class="pill-dot"></span>Approved</span>
+              <span class="badge badge--neutral">Queued</span>
+              <span class="badge badge--bad"><span class="pill-dot"></span>Failed</span>
+            </div>
+            <div style="font-weight:600;font-size:var(--text-small);margin:16px 0 12px">Tags</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+              <span class="tag">writing<button aria-label="Remove">✕</button></span>
+              <span class="tag">advice<button aria-label="Remove">✕</button></span>
+              <span class="tag">long-form<button aria-label="Remove">✕</button></span>
+            </div>
+          </div>
+        </div>
+        <div class="recipe"><div class="r-name">card · panel</div><div style="position:relative"><code class="r-code">card:  rounded-lg border border-border bg-surface p-5 shadow-sm
+panel: rounded-lg border border-border bg-surface-2 p-5</code><button class="copy-btn r-copy" data-copy="#self"><span class="cb-label">Copy</span></button></div></div>
+        <div class="recipe"><div class="r-name">badge (graded) · removable tag</div><div style="position:relative"><code class="r-code">badge:   inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-caption font-medium
+  good:    border-success/30 bg-success/12 text-success
+  neutral: border-border bg-text/[0.06] text-text-muted
+  bad:     border-danger/30 bg-danger/12 text-danger
+tag:     inline-flex items-center gap-1.5 rounded-full border border-border bg-surface-2 py-1 pl-2.5 pr-1.5 text-caption font-medium text-text
+  ✕ btn: grid place-items-center h-4 w-4 rounded-full text-text-subtle hover:bg-text/10 hover:text-text</code><button class="copy-btn r-copy" data-copy="#self"><span class="cb-label">Copy</span></button></div></div>
+      </section>
+
+      <!-- --------------------------- SWITCH & NAV --------------------------- -->
+      <section class="sec" id="controls">
+        <p class="eyebrow">Components</p>
+        <h2 class="h1">Switch &amp; sidebar nav</h2>
+        <div class="demo-grid" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">
+          <div class="card">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:16px">
+              <div><div style="font-weight:600;font-size:var(--text-small)">Auto-draft replies</div><div style="font-size:var(--text-caption);color:var(--color-text-subtle);margin-top:2px">Suggest a reply when you’re mentioned</div></div>
+              <label class="switch"><input type="checkbox" checked/><span class="track"></span><span class="knob"></span></label>
+            </div>
+            <hr class="rule" style="margin:16px 0"/>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:16px">
+              <div><div style="font-weight:600;font-size:var(--text-small)">Send without review</div><div style="font-size:var(--text-caption);color:var(--color-text-subtle);margin-top:2px">Off by design — you approve everything</div></div>
+              <label class="switch"><input type="checkbox"/><span class="track"></span><span class="knob"></span></label>
+            </div>
+          </div>
+          <div class="card" style="padding:12px">
+            <a class="nav-item nav-item--active"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5 19 4.5M14 5h5v5"/></svg>Drafts</a>
+            <a class="nav-item"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>Queue</a>
+            <a class="nav-item"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6"/></svg>Voice</a>
+            <a class="nav-item"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.3 1a7 7 0 0 0-1.7-1l-.4-2.6h-4l-.4 2.6a7 7 0 0 0-1.7 1l-2.3-1-2 3.4 2 1.5a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7 7 0 0 0 1.7-1l2.3 1 2-3.4-2-1.5a7 7 0 0 0 .1-1Z"/></svg>Settings</a>
+          </div>
+        </div>
+        <div class="recipe"><div class="r-name">nav item (default → hover → active)</div><div style="position:relative"><code class="r-code">flex items-center gap-2.5 rounded-md px-3 py-2 text-small font-medium text-text-muted transition-colors hover:bg-surface-2 hover:text-text
+active: bg-surface-2 text-text font-semibold</code><button class="copy-btn r-copy" data-copy="#self"><span class="cb-label">Copy</span></button></div></div>
+        <div class="recipe"><div class="r-name">switch (headless, checkbox peer)</div><div style="position:relative"><code class="r-code">input: peer sr-only
+track: h-6 w-11 rounded-full bg-ink-300 dark:bg-ink-700 transition-colors peer-checked:bg-primary
+knob:  absolute left-0.5 h-[18px] w-[18px] rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-5</code><button class="copy-btn r-copy" data-copy="#self"><span class="cb-label">Copy</span></button></div></div>
+      </section>
+
+      <!-- ----------------------- DIALOG, TOAST, TABLE ----------------------- -->
+      <section class="sec" id="overlays">
+        <p class="eyebrow">Components</p>
+        <h2 class="h1">Dialog, toast &amp; table</h2>
+        <div class="demo">
+          <button class="btn btn--secondary" data-open-modal>Open dialog</button>
+          <button class="btn btn--secondary" onclick="window.__toast('success')">Success toast</button>
+          <button class="btn btn--secondary" onclick="window.__toast('error')">Error toast</button>
+          <a class="link" href="#overlays">This is a link</a>
+        </div>
+
+        <div class="card" style="padding:0;overflow:hidden;margin-top:18px">
+          <table class="tbl">
+            <thead><tr><th>Draft</th><th>Status</th><th style="text-align:right">Edited</th></tr></thead>
+            <tbody>
+              <tr><td>Reply to @devon</td><td><span class="badge badge--good"><span class="pill-dot"></span>Approved</span></td><td style="text-align:right;color:var(--color-text-subtle)">2m ago</td></tr>
+              <tr><td>Thread: shipping cadence</td><td><span class="badge badge--neutral">Draft</span></td><td style="text-align:right;color:var(--color-text-subtle)">1h ago</td></tr>
+              <tr><td>Reply to @ana</td><td><span class="badge badge--bad"><span class="pill-dot"></span>Failed</span></td><td style="text-align:right;color:var(--color-text-subtle)">Yesterday</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="recipe"><div class="r-name">overlay + dialog · toast · link · table row</div><div style="position:relative"><code class="r-code">overlay: fixed inset-0 z-30 grid place-items-center p-6 bg-ink-950/55 backdrop-blur-sm
+dialog:  w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-lg
+toast:   flex items-start gap-3 rounded-lg border border-border bg-surface px-4 py-3.5 shadow-lg   (mark: h-2 w-2 rounded-full bg-success | bg-danger)
+link:    text-accent underline underline-offset-2 decoration-accent/40 hover:decoration-accent
+th:      text-left text-caption font-semibold uppercase tracking-wide text-text-subtle px-3 py-2.5 border-b border-border
+td/row:  px-3 py-3 border-b border-border text-text   ·   hover:bg-surface-2</code><button class="copy-btn r-copy" data-copy="#self"><span class="cb-label">Copy</span></button></div></div>
+      </section>
+
+      <!-- ------------------------------ RULES ------------------------------- -->
+      <section class="sec" id="rules">
+        <p class="eyebrow">Apply it</p>
+        <h2 class="h1">Foundations &amp; usage rules</h2>
+        <h4 class="h3">Quick rules</h4>
+        <p class="body" style="max-width:72ch"><strong>Spacing:</strong> everything on the 4px grid; lean on <code>gap-*</code> in flex/grid, not margins. <strong>Radius:</strong> <code>md</code> for controls, <code>lg</code> for cards, <code>2xl</code> for modals — match the size of the thing to the softness of its corner. <strong>Elevation:</strong> <code>sm</code> for resting cards, <code>md</code> for popovers/menus, <code>lg</code> only for overlays; in dark mode let borders carry separation. <strong>Focus:</strong> one rule everywhere — a 2px ink-blue ring at 2px offset (already global in <code>globals.css</code>); never remove it. <strong>Motion:</strong> 120/180/240ms with the standard easing; gate anything decorative behind <code>prefers-reduced-motion</code>. <strong>Iconography:</strong> line icons, ~1.8px stroke, round caps &amp; joins, drawn on a 24px grid — the same calm, single-weight stroke as the pen mark; no filled or duotone icons.</p>
+        <div class="dd">
+          <div class="col do"><h5>Do</h5><ul>
+            <li>Reference semantic tokens (<code>bg-surface</code>, <code>text-text</code>) so dark mode is automatic.</li>
+            <li>Keep primary actions ink; spend the ink-blue accent sparingly on links &amp; focus.</li>
+            <li>Use the ink scale for raw needs (dividers, fills) only when no role fits.</li>
+            <li>Let whitespace and hairlines do the work — this is a calm, papery UI.</li>
+          </ul></div>
+          <div class="col dont"><h5>Don’t</h5><ul>
+            <li>Hard-code hex values or invent one-off grays — every color has a token.</li>
+            <li>Add a second accent or any gradient; the identity is monochrome ink.</li>
+            <li>Stack heavy shadows or tighten radii below <code>sm</code> — it breaks the soft feel.</li>
+            <li>Duplicate styles with <code>dark:</code> when a semantic token already flips.</li>
+          </ul></div>
+        </div>
+      </section>
+
+      <!-- ----------------------------- ROLLOUT ------------------------------ -->
+      <section class="sec" id="rollout">
+        <p class="eyebrow">Apply it</p>
+        <h2 class="h1">Rollout plan</h2>
+        <p class="body">Apply across the codebase in order — tokens first, then swap component class strings surface by surface. Each step is independently shippable.</p>
+        <div class="steps">
+          <div class="step"><div><div class="st-t">Replace <code>app/globals.css</code></div><div class="st-d">Drop in the file from §globals.css. It already <code>@import "tailwindcss"</code> and defines every token + the <code>.dark</code> flip. Delete the old <code>--background/--foreground</code> pair — the new <code>--color-bg</code>/<code>--color-text</code> supersede them.</div></div></div>
+          <div class="step"><div><div class="st-t">Wire the theme class</div><div class="st-d">Ensure your theme provider toggles <code>class="dark"</code> on <code>&lt;html&gt;</code> (most likely already does). No <code>tailwind.config.js</code> needed — config is CSS-first.</div></div></div>
+          <div class="step"><div><div class="st-t">Adopt primitives: Button, then Input/Field</div><div class="st-d">Swap these two first — they appear on every screen. Paste the recipe strings into your existing components; remove any <code>dark:</code> color duplicates as you go.</div></div></div>
+          <div class="step"><div><div class="st-t">Surfaces: Card, Badge, Table, Nav</div><div class="st-d">Convert shells next so pages visually settle onto paper. Replace ad-hoc grays with <code>bg-surface</code>/<code>bg-surface-2</code>/<code>border-border</code>.</div></div></div>
+          <div class="step"><div><div class="st-t">Overlays: Dialog, Toast, Switch</div><div class="st-d">Lower-frequency, higher-polish. Apply <code>rounded-2xl</code> + <code>shadow-lg</code> to dialogs and the entrance easing to mounts.</div></div></div>
+          <div class="step"><div><div class="st-t">Sweep for stragglers</div><div class="st-d">Grep for raw hex (<code>#</code>), <code>shadow-[</code>, and leftover <code>dark:</code> color utilities; replace with tokens. Verify AA on any custom text/background pairing.</div></div></div>
+        </div>
+        <div class="note" style="margin-top:22px">The drop-in files live at the project root: <code>globals.css</code> (ship this) plus this living reference. Toggle the theme above and read each component in both modes before you sign off.</div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- modal + toast host -->
+<div class="overlay" id="demo-modal" style="display:none">
+  <div class="dialog" role="dialog" aria-modal="true">
+    <h3 style="margin:0 0 8px;font:600 var(--text-h3)/1.3 var(--font-sans)">Post this draft?</h3>
+    <p style="margin:0 0 20px;font-size:var(--text-small);line-height:1.6;color:var(--color-text-muted)">It’ll publish to Threads as <strong style="color:var(--color-text)">@mara.lin</strong> immediately. You can still delete it afterwards.</p>
+    <div style="display:flex;justify-content:flex-end;gap:10px">
+      <button class="btn btn--ghost" data-close-modal>Cancel</button>
+      <button class="btn btn--primary" data-close-modal>Approve &amp; post</button>
+    </div>
+  </div>
+</div>
+<div id="toast-host" style="position:fixed;top:18px;right:18px;display:flex;flex-direction:column;gap:10px;z-index:50"></div>
+
+<template id="__bundler_thumbnail">
+  <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><rect width="512" height="512" rx="115" fill="#171717"/><g fill="#ededed" transform="translate(0,6)"><path d="M182 348 C248 366 322 352 376 312 C326 330 252 340 188 326 C176 324 174 344 182 348 Z"/><g transform="rotate(42 256 256)"><path d="M236 150 Q236 128 256 128 Q276 128 276 150 L276 300 L256 360 L236 300 Z"/><rect x="236" y="206" width="40" height="7"/></g></g></svg>
+</template>
+
+<script src="ds/data.js"></script>
+<script src="ds/app.js"></script>
+</body>
+</html>

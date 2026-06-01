@@ -1,0 +1,153 @@
+/* audits.css — Pennedly "Audits" screens (list + detail).
+   The weekly coach review. Built on ink-on-paper tokens + Studio shell
+   classes (studio.css). Calm, considered, trustworthy. No hardcoded hex. */
+
+.topbar-pill {
+  display: inline-flex; align-items: center; gap: 7px; white-space: nowrap;
+  font-size: var(--text-small); color: var(--color-text-muted);
+  padding: 5px 11px 5px 9px; border: 1px solid var(--color-border);
+  border-radius: var(--radius-full); background: var(--color-surface);
+}
+.topbar-pill .pdot { width: 7px; height: 7px; border-radius: var(--radius-full); background: var(--color-accent); }
+
+.page-intro { display: flex; flex-direction: column; gap: 4px; }
+.page-intro h1 { font-size: var(--text-h1); font-weight: 600; letter-spacing: -0.015em; margin: 0; }
+.page-intro p { font-size: var(--text-body); color: var(--color-text-muted); margin: 0; max-width: 64ch; }
+
+/* ============================= AUDITS LIST ========================== */
+.audit-list { display: flex; flex-direction: column; gap: 12px; }
+.audit-row {
+  display: flex; align-items: center; gap: 18px; width: 100%; text-align: left;
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 18px 20px;
+  cursor: pointer; position: relative;
+  animation: card-in var(--duration-slow) var(--ease-entrance) both;
+  transition: border-color var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
+}
+.audit-row:hover { border-color: color-mix(in srgb, var(--color-text) 16%, var(--color-border)); box-shadow: var(--shadow-md); }
+.audit-row--new { border-color: color-mix(in srgb, var(--color-accent) 32%, var(--color-border)); }
+.audit-row--new::before {
+  content: ""; position: absolute; left: -1px; top: 16px; bottom: 16px; width: 3px;
+  border-radius: var(--radius-full); background: var(--color-accent);
+}
+.ar-main { flex: 1 1 auto; min-width: 0; }
+.ar-date { font-size: var(--text-h3); font-weight: 600; letter-spacing: -0.006em; }
+.ar-summary { font-size: var(--text-small); color: var(--color-text-muted); margin-top: 5px; line-height: 1.5; text-wrap: pretty; }
+.ar-meta { display: flex; align-items: center; gap: 14px; margin-top: 10px; }
+.ar-meta .am { display: inline-flex; align-items: center; gap: 5px; font-size: var(--text-caption); color: var(--color-text-subtle); white-space: nowrap; }
+.ar-meta .am-dot { width: 6px; height: 6px; border-radius: var(--radius-full); }
+.ar-right { display: flex; align-items: center; gap: 14px; flex: 0 0 auto; }
+.ar-chev { color: var(--color-text-subtle); flex: 0 0 auto; }
+
+/* ============================ AUDIT DETAIL ========================== */
+.back-link {
+  display: inline-flex; align-items: center; gap: 7px; align-self: flex-start;
+  font-size: var(--text-small); font-weight: 500; color: var(--color-text-muted);
+  background: transparent; border: none; cursor: pointer; padding: 4px 6px 4px 0;
+  transition: color var(--duration-fast) var(--ease-standard);
+}
+.back-link:hover { color: var(--color-text); }
+
+.ad-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.ad-title { font-size: var(--text-h1); font-weight: 600; letter-spacing: -0.015em; }
+.ad-cap { font-size: var(--text-small); color: var(--color-text-subtle); margin-top: 4px; }
+.ad-stats { display: flex; align-items: center; gap: 8px 18px; flex-wrap: wrap; margin-top: 16px; }
+.ad-stat { display: inline-flex; align-items: center; gap: 7px; font-size: var(--text-small); color: var(--color-text-muted); white-space: nowrap; }
+.ad-stat b { color: var(--color-text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.ad-stat .as-dot { width: 7px; height: 7px; border-radius: var(--radius-full); }
+
+/* coach narrative */
+.coach {
+  background: var(--color-surface-2); border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl); padding: 20px 22px;
+}
+.coach-head { display: flex; align-items: center; gap: 11px; margin-bottom: 14px; }
+.coach-mark { width: 34px; height: 34px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); display: block; }
+.coach-who .cw-name { font-size: var(--text-small); font-weight: 600; }
+.coach-who .cw-role { font-size: var(--text-caption); color: var(--color-text-subtle); white-space: nowrap; }
+.coach-body p { font-size: var(--text-body); line-height: 1.65; color: var(--color-text); margin: 0 0 12px; text-wrap: pretty; }
+.coach-body p:last-child { margin-bottom: 0; }
+.coach-body em { font-style: italic; color: var(--color-text); }
+
+.changes-cap { font-size: var(--text-caption); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-subtle); margin-top: 4px; }
+
+/* ============================ CHANGE CARD =========================== */
+.change-card {
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 16px 18px 14px;
+  animation: card-in var(--duration-slow) var(--ease-entrance) both;
+  transition: border-color var(--duration-base) var(--ease-standard);
+}
+.change-card:hover { border-color: color-mix(in srgb, var(--color-text) 12%, var(--color-border)); }
+.change-card--decided { background: var(--color-surface); }
+.change-card--rejected { opacity: 0.72; }
+
+.cc-head { display: flex; align-items: center; gap: 10px; }
+.kind-badge {
+  display: inline-flex; align-items: center; gap: 5px; flex: 0 0 auto;
+  font-size: var(--text-caption); font-weight: 600; letter-spacing: 0.02em;
+  padding: 3px 9px; border-radius: var(--radius-full);
+  background: var(--color-surface-2); color: var(--color-text-muted); border: 1px solid var(--color-border);
+}
+.cc-title { font-size: var(--text-h3); font-weight: 600; letter-spacing: -0.006em; flex: 1 1 auto; min-width: 0; line-height: 1.3; }
+.cc-head .badge, .ad-head .badge { flex: 0 0 auto; white-space: nowrap; }
+.cc-detail { font-size: var(--text-body); line-height: 1.6; color: var(--color-text-muted); margin: 11px 0 0; text-wrap: pretty; }
+
+/* expandable diff */
+.cc-extra { display: flex; gap: 8px; margin-top: 13px; flex-wrap: wrap; }
+.linkbtn {
+  display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-caption); font-weight: 500;
+  color: var(--color-text-muted); background: transparent; border: 1px solid var(--color-border);
+  border-radius: var(--radius-full); padding: 5px 11px; cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+}
+.linkbtn:hover { background: var(--color-surface-2); color: var(--color-text); }
+.diff {
+  margin-top: 12px; border: 1px solid var(--color-border); border-radius: var(--radius-md);
+  overflow: hidden; font-family: var(--font-mono); font-size: var(--text-caption); line-height: 1.6;
+  animation: card-in var(--duration-base) var(--ease-entrance) both;
+}
+.diff-line { display: flex; gap: 8px; padding: 7px 12px; white-space: pre-wrap; word-break: break-word; }
+.diff-line .dl-sign { flex: 0 0 auto; opacity: 0.7; }
+.diff-line--del { background: color-mix(in srgb, var(--color-danger) 9%, var(--color-surface)); color: var(--color-danger); }
+.diff-line--add { background: color-mix(in srgb, var(--color-success) 10%, var(--color-surface)); color: var(--color-success); }
+
+/* note */
+.note-box { margin-top: 12px; animation: card-in var(--duration-base) var(--ease-entrance) both; }
+.note-area {
+  width: 100%; font-family: var(--font-sans); font-size: var(--text-small); line-height: 1.55;
+  color: var(--color-text); background: var(--color-surface); border: 1px solid var(--color-accent);
+  border-radius: var(--radius-md); padding: 10px 12px; resize: vertical; outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 16%, transparent);
+}
+.note-saved {
+  display: flex; align-items: flex-start; gap: 8px; margin-top: 12px; padding: 10px 12px;
+  background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius-md);
+  font-size: var(--text-small); color: var(--color-text-muted); line-height: 1.5;
+}
+.note-saved .ns-ico { color: var(--color-text-subtle); flex: 0 0 auto; margin-top: 1px; }
+
+/* footer */
+.cc-foot { display: flex; align-items: center; gap: 12px; margin-top: 14px; padding-top: 13px; border-top: 1px solid var(--color-border); }
+.cc-meta { display: flex; align-items: center; gap: 12px; flex: 1 1 auto; min-width: 0; flex-wrap: wrap; }
+.cc-when { font-size: var(--text-caption); color: var(--color-text-subtle); white-space: nowrap; }
+.effect { display: inline-flex; align-items: center; gap: 4px; font-size: var(--text-small); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.effect--up { color: var(--color-success); }
+.effect--down { color: var(--color-danger); }
+.effect--measuring { color: var(--color-text-subtle); font-weight: 500; }
+.cc-actions { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+
+/* ============================== EMPTY ============================= */
+.audits-empty {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  padding: 64px 28px; border: 1px dashed var(--color-border); border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--color-surface) 50%, transparent);
+}
+.audits-empty .ae-mark { width: 54px; height: 54px; display: grid; place-items: center; margin-bottom: 18px; border-radius: var(--radius-lg); background: var(--color-surface-2); border: 1px solid var(--color-border); color: var(--color-text-subtle); }
+.audits-empty .ae-title { font-size: var(--text-h2); font-weight: 600; letter-spacing: -0.01em; }
+.audits-empty .ae-sub { font-size: var(--text-body); color: var(--color-text-muted); margin-top: 8px; max-width: 46ch; line-height: 1.55; }
+
+@media (max-width: 560px) {
+  .ar-right .ar-chev { display: none; }
+  .cc-foot { flex-wrap: wrap; }
+}

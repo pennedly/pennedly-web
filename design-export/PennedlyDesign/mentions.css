@@ -1,0 +1,105 @@
+/* mentions.css — Pennedly "Mentions" screen (read-only monitoring).
+   Built on the ink-on-paper tokens + Studio shell/card classes (studio.css).
+   Calm and scannable; no hardcoded hex. */
+
+/* top-bar status pill */
+.topbar-pill {
+  display: inline-flex; align-items: center; gap: 7px; white-space: nowrap;
+  font-size: var(--text-small); color: var(--color-text-muted);
+  padding: 5px 11px 5px 9px;
+  border: 1px solid var(--color-border); border-radius: var(--radius-full);
+  background: var(--color-surface);
+}
+.topbar-pill .pdot { width: 7px; height: 7px; border-radius: var(--radius-full); background: var(--color-accent); }
+
+/* page intro */
+.page-intro { display: flex; flex-direction: column; gap: 4px; }
+.page-intro h1 { font-size: var(--text-h1); font-weight: 600; letter-spacing: -0.015em; margin: 0; }
+.page-intro p { font-size: var(--text-body); color: var(--color-text-muted); margin: 0; }
+
+/* filter row + a quiet "mark all seen" action beside it */
+.ment-bar { display: flex; align-items: center; gap: 12px; }
+.ment-bar .filterbar { flex: 1 1 auto; }
+.markseen {
+  flex: 0 0 auto; display: inline-flex; align-items: center; gap: 7px;
+  font-size: var(--text-small); font-weight: 500; color: var(--color-text-muted);
+  background: transparent; border: 1px solid transparent; border-radius: var(--radius-md);
+  height: 36px; padding: 0 12px; cursor: pointer; white-space: nowrap;
+  transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+}
+.markseen:hover { background: var(--color-surface-2); color: var(--color-text); }
+.markseen:disabled { opacity: 0.45; cursor: default; }
+
+/* status dots */
+.dot-all      { background: var(--color-ink-300); }
+.dot-new      { background: var(--color-accent); }
+.dot-saved    { background: var(--color-warning); }
+.dot-archived { background: var(--color-ink-300); }
+
+/* ============================ MENTION CARD ========================== */
+.ment-card {
+  position: relative;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 15px 18px 13px;
+  animation: card-in var(--duration-slow) var(--ease-entrance) both;
+  transition: border-color var(--duration-base) var(--ease-standard),
+              box-shadow var(--duration-base) var(--ease-standard),
+              opacity var(--duration-slow) var(--ease-standard),
+              transform var(--duration-slow) var(--ease-standard);
+}
+.ment-card:hover { border-color: color-mix(in srgb, var(--color-text) 14%, var(--color-border)); }
+.ment-card--leaving { opacity: 0; transform: translateY(-6px) scale(0.99); }
+.ment-card--archived { opacity: 0.66; }
+.ment-card--new { border-color: color-mix(in srgb, var(--color-accent) 32%, var(--color-border)); }
+
+/* a calm "new" marker: a thin accent rule down the left edge */
+.ment-card--new::before {
+  content: ""; position: absolute; left: -1px; top: 14px; bottom: 14px; width: 3px;
+  border-radius: var(--radius-full); background: var(--color-accent);
+}
+
+.ment-head { display: flex; align-items: center; gap: 11px; }
+.ment-id { min-width: 0; flex: 1 1 auto; }
+.ment-name { min-width: 0; }
+.ment-name .nm { display: block; font-size: var(--text-small); font-weight: 600; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ment-sub { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: var(--text-caption); color: var(--color-text-subtle); }
+.ment-sub > span { white-space: nowrap; }
+.ment-new-badge {
+  flex: 0 0 auto; font-size: var(--text-caption); font-weight: 600; line-height: 1;
+  color: var(--color-accent); display: inline-flex; align-items: center; gap: 5px;
+}
+.ment-new-badge .nd { width: 6px; height: 6px; border-radius: var(--radius-full); background: var(--color-accent); }
+
+.ment-text { font-size: var(--text-body); line-height: 1.6; color: var(--color-text); margin: 12px 0 0; text-wrap: pretty; }
+.ment-card--archived .ment-text { color: var(--color-text-muted); }
+.at-mention { color: var(--color-accent); font-weight: 500; }
+
+.ment-foot {
+  display: flex; align-items: center; gap: 10px;
+  margin-top: 13px; padding-top: 12px; border-top: 1px solid var(--color-border);
+}
+.ment-meta { display: flex; align-items: center; gap: 14px; flex: 1 1 auto; min-width: 0; }
+.ment-meta .mm { display: inline-flex; align-items: center; gap: 5px; font-size: var(--text-caption); color: var(--color-text-subtle); white-space: nowrap; }
+.ment-meta .mm .mm-ico { color: var(--color-text-subtle); }
+.ment-actions { display: flex; align-items: center; gap: 7px; flex: 0 0 auto; }
+
+/* icon toggle button (save / archive) */
+.ment-iconbtn {
+  width: 32px; height: 32px; flex: 0 0 auto; display: grid; place-items: center;
+  border-radius: var(--radius-md); border: 1px solid transparent;
+  background: transparent; color: var(--color-text-subtle); cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+}
+.ment-iconbtn:hover { background: var(--color-surface-2); color: var(--color-text); }
+.ment-iconbtn--on { color: var(--color-warning); }
+.ment-iconbtn--on:hover { color: var(--color-warning); }
+
+/* ============================ RESPONSIVE ============================ */
+@media (max-width: 560px) {
+  .ment-sub .foll { display: none; }
+  .ment-meta .mm:not(:first-child) { display: none; }
+  .markseen .ms-label { display: none; }
+}

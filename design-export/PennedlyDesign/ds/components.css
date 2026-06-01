@@ -1,0 +1,171 @@
+/* ds/components.css — live-preview component styles.
+   These mirror the Tailwind recipe class strings 1:1 (same tokens), so what you
+   see in the doc is what the recipes produce. Engineers copy the recipe
+   strings; this file just renders them here without a Tailwind build. */
+
+/* ---------------------------------- Buttons -------------------------------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: var(--font-sans); font-weight: 500; font-size: var(--text-small);
+  white-space: nowrap; cursor: pointer; user-select: none;
+  border: 1px solid transparent; border-radius: var(--radius-md);
+  height: 40px; padding-inline: 16px;
+  transition: background-color var(--duration-base) var(--ease-standard),
+              border-color var(--duration-base) var(--ease-standard),
+              color var(--duration-base) var(--ease-standard),
+              transform var(--duration-fast) var(--ease-standard);
+}
+.btn:active { transform: translateY(0.5px); }
+.btn--sm { height: 32px; padding-inline: 12px; border-radius: var(--radius-sm); }
+
+.btn--primary { background: var(--color-primary); color: var(--color-primary-foreground); }
+.btn--primary:hover { background: color-mix(in srgb, var(--color-primary) 88%, var(--color-bg)); }
+
+.btn--secondary { background: var(--color-surface); color: var(--color-text); border-color: var(--color-border); }
+.btn--secondary:hover { background: var(--color-surface-2); }
+
+.btn--ghost { background: transparent; color: var(--color-text-muted); }
+.btn--ghost:hover { background: var(--color-surface-2); color: var(--color-text); }
+
+.btn--danger { background: var(--color-danger); color: var(--color-danger-foreground); }
+.btn--danger:hover { background: color-mix(in srgb, var(--color-danger) 88%, var(--color-bg)); }
+
+.btn:disabled, .btn[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
+.btn .spinner {
+  width: 14px; height: 14px; border-radius: var(--radius-full);
+  border: 2px solid currentColor; border-top-color: transparent;
+  animation: spin 0.6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ----------------------------------- Fields -------------------------------- */
+.field {
+  display: block; width: 100%; height: 40px; padding: 0 12px;
+  font-family: var(--font-sans); font-size: var(--text-body); color: var(--color-text);
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition: border-color var(--duration-base) var(--ease-standard),
+              box-shadow var(--duration-base) var(--ease-standard);
+}
+textarea.field { height: auto; padding: 10px 12px; line-height: 1.6; resize: vertical; }
+.field::placeholder { color: var(--color-text-subtle); }
+.field:focus { outline: none; border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 22%, transparent); }
+.field--error { border-color: var(--color-danger); }
+.field--error:focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-danger) 22%, transparent); }
+.field-label { display: block; font-size: var(--text-small); font-weight: 500; margin-bottom: 6px; color: var(--color-text); }
+.field-hint { font-size: var(--text-caption); color: var(--color-text-subtle); margin-top: 6px; }
+.field-hint--error { color: var(--color-danger); }
+select.field { appearance: none; cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%237b7a74' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+
+/* ------------------------------- Card / Panel ------------------------------ */
+.card {
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 20px;
+}
+.panel { background: var(--color-surface-2); border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg); padding: 20px; }
+
+/* ----------------------------- Badges / Chips / Pills ---------------------- */
+.badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: var(--text-caption); font-weight: 500; line-height: 1;
+  padding: 4px 9px; border-radius: var(--radius-full);
+  background: var(--color-surface-2); color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+}
+.badge--good   { background: color-mix(in srgb, var(--color-success) 14%, var(--color-surface));
+  color: var(--color-success); border-color: color-mix(in srgb, var(--color-success) 28%, transparent); }
+.badge--neutral{ background: color-mix(in srgb, var(--color-text) 7%, var(--color-surface));
+  color: var(--color-text-muted); border-color: var(--color-border); }
+.badge--bad    { background: color-mix(in srgb, var(--color-danger) 14%, var(--color-surface));
+  color: var(--color-danger); border-color: color-mix(in srgb, var(--color-danger) 28%, transparent); }
+
+.pill-dot { width: 6px; height: 6px; border-radius: var(--radius-full); background: currentColor; }
+
+.tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: var(--text-caption); font-weight: 500;
+  padding: 4px 6px 4px 10px; border-radius: var(--radius-full);
+  background: var(--color-surface-2); color: var(--color-text); border: 1px solid var(--color-border);
+}
+.tag button {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; border-radius: var(--radius-full);
+  background: transparent; border: none; cursor: pointer; color: var(--color-text-subtle);
+  transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+}
+.tag button:hover { background: color-mix(in srgb, var(--color-text) 10%, transparent); color: var(--color-text); }
+
+/* --------------------------------- Switch ---------------------------------- */
+.switch { position: relative; width: 44px; height: 24px; flex: 0 0 auto; cursor: pointer; display: inline-block; }
+.switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.switch .track {
+  position: absolute; inset: 0; border-radius: var(--radius-full);
+  background: var(--color-ink-300); transition: background var(--duration-base) var(--ease-standard);
+}
+.dark .switch .track { background: var(--color-ink-700); }
+.switch .knob {
+  position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: var(--radius-full);
+  background: #ffffff; box-shadow: var(--shadow-sm);
+  transition: transform var(--duration-base) var(--ease-standard);
+}
+.switch input:checked ~ .track { background: var(--color-primary); }
+.switch input:checked ~ .knob { transform: translateX(20px); background: var(--color-primary-foreground); }
+.switch input:focus-visible ~ .track { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+
+/* ---------------------------- Modal / Dialog ------------------------------- */
+.overlay {
+  position: absolute; inset: 0; display: grid; place-items: center; padding: 24px;
+  background: color-mix(in srgb, var(--color-ink-950) 55%, transparent);
+  backdrop-filter: blur(3px); z-index: 30;
+}
+.dialog {
+  width: 100%; max-width: 420px; background: var(--color-surface);
+  border: 1px solid var(--color-border); border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-lg); padding: 24px;
+  animation: dialog-in var(--duration-slow) var(--ease-entrance);
+}
+@keyframes dialog-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
+
+/* ----------------------------------- Toast --------------------------------- */
+.toast {
+  display: flex; align-items: flex-start; gap: 12px;
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); padding: 14px 16px;
+  min-width: 280px;
+}
+.toast .toast-mark { width: 8px; height: 8px; border-radius: var(--radius-full); margin-top: 6px; flex: 0 0 auto; }
+.toast--success .toast-mark { background: var(--color-success); }
+.toast--error .toast-mark { background: var(--color-danger); }
+
+/* ------------------------------- Sidebar nav ------------------------------- */
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px; border-radius: var(--radius-md);
+  font-size: var(--text-small); font-weight: 500; color: var(--color-text-muted);
+  cursor: pointer; border: 1px solid transparent;
+  transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+}
+.nav-item:hover { background: var(--color-surface-2); color: var(--color-text); }
+.nav-item--active { background: var(--color-surface-2); color: var(--color-text); font-weight: 600; }
+.nav-item .nav-ico { width: 16px; height: 16px; flex: 0 0 auto; opacity: 0.85; }
+
+/* ----------------------------------- Link ---------------------------------- */
+.link { color: var(--color-accent); text-decoration: underline; text-underline-offset: 2px;
+  text-decoration-thickness: 1px; text-decoration-color: color-mix(in srgb, var(--color-accent) 40%, transparent);
+  transition: text-decoration-color var(--duration-fast) var(--ease-standard); }
+.link:hover { text-decoration-color: var(--color-accent); }
+
+/* ----------------------------- Table / list row --------------------------- */
+.tbl { width: 100%; border-collapse: collapse; font-size: var(--text-small); }
+.tbl thead th {
+  text-align: left; font-size: var(--text-caption); font-weight: 600; letter-spacing: 0.04em;
+  text-transform: uppercase; color: var(--color-text-subtle);
+  padding: 10px 12px; border-bottom: 1px solid var(--color-border);
+}
+.tbl tbody td { padding: 12px; border-bottom: 1px solid var(--color-border); color: var(--color-text); }
+.tbl tbody tr { transition: background var(--duration-fast) var(--ease-standard); }
+.tbl tbody tr:hover { background: var(--color-surface-2); }
