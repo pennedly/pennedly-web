@@ -479,6 +479,37 @@ export type PatternStudyResult = {
   latency_ms: number;
 };
 
+// Self pattern-study (the redesigned /app/patterns) — deterministic patterns
+// in the account's OWN posts. Prose is rendered client-side from i18n keyed
+// by `key`; the backend ships pure data.
+export type SelfStudyEvidence = {
+  value: number;
+  display: string;
+  sample: number;
+};
+
+export type SelfStudyExample = {
+  text: string;
+  views: number;
+  display: string;
+};
+
+export type SelfStudyPattern = {
+  key: string; // "length" | "question" | "emoji" | "structure"
+  lead_group: string; // which side won, e.g. "short" / "with"
+  strength: "strong" | "worth_testing";
+  sample: number;
+  delta_pct: number;
+  lead: SelfStudyEvidence;
+  base: SelfStudyEvidence;
+  examples: SelfStudyExample[];
+};
+
+export type SelfStudyResult = {
+  posts_analyzed: number;
+  patterns: SelfStudyPattern[];
+};
+
 // ── Audits ───────────────────────────────────────────────────────────
 
 export type AuditSummary = {

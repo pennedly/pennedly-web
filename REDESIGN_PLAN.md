@@ -40,7 +40,7 @@ presentation-слой.
 - **Фаза 2 — Контент:** `[x]` Лента ✅ + Упоминания ✅ + Ответы ✅ — всё на проде
 - **Содержимое-колонка расширена до 900px** (Захар: 712 узко на широких мониторах) — применять везде
 - **Studio-композер** = свободный текст + чипы (бэкенд `prompt` добавлен, 303 теста ✅); карточки 1:1 с дизайном
-- **Фаза 3 — Рост (stats/audits/patterns/autopilot):** `[~]` Stats ✅ + Audits ✅ на проде; patterns/autopilot остаются
+- **Фаза 3 — Рост (stats/audits/patterns/autopilot):** `[~]` Stats ✅ + Audits ✅ + Patterns ✅ на проде; autopilot остаётся
 - **Фаза 4 — Голос (voice/style-rules):** `[ ]`
 - **Фаза 5 — Аккаунт+публичное (settings/onboarding/login/landing/legal):** `[ ]`
 - **Фаза 6 — Закрытие (скриншот-тесты, обе темы, SPEC):** `[ ]`
@@ -260,12 +260,21 @@ presentation-слой.
   «submit all»), а design-only **Roll back / Reconsider убрал** — пользовательского отката
   в API нет (откат делает авто-трекер эффекта). Заметка уходит как `user_comment` решения._
 
-### 3c. Patterns
+### 3c. Patterns — `[x]` готово на проде (2026-06-01)
 **Роут:** `/app/patterns` → `patterns/page.tsx` · **Эталон:** `patterns-app.jsx`,
-`patterns-parts.jsx`, `patterns.css` · **Ширина:** 712
-- [ ] Состояния: empty(мало постов) / idle(«run study») / running(шаги-прогресс) /
-      results(pattern-карточки с evidence)
-- **Состояния:** loading · empty · idle · running · results
+`patterns-parts.jsx`, `patterns.css` · **Ширина:** 760
+- [x] **Новая фича по дизайну: «изучи МОИ посты»** (решение Захара). Состояния:
+      empty(мало постов, прогресс have/need) / idle(«Run a study» + чипы LOOKS_FOR) /
+      running(шаги-прогресс с тиками/спиннером) / results(pattern-карточки)
+- [x] Pattern-карточка: kind-тег, сила сигнала, «+N%»-стат, headline, **evidence**-полоски
+      (lead акцент / base серый), примеры из твоих постов с просмотрами
+- [x] **Бэкенд:** новый `POST /patterns/study` — **детерминированный** анализ твоих постов
+      (split по длине/вопросу/эмодзи/структуре → avg views, ≥3 в каждой группе, топ-4),
+      без LLM; тексты заголовков локализую на фронте через i18n-шаблоны. + тест + SPEC
+- [x] **Старый флоу «вставь чужой текст» НЕ удалён** — переехал на `/app/patterns/explore`
+      (по решению Захара: отдельный дизайн под него — позже)
+- [x] harness: фикстура `STUDY` + таргет (idle → запуск → results), light+dark ✓
+- **Состояния:** loading · empty · idle · running · results ✓
 
 ### 3d. Autopilot
 **Роут:** `/app/autopilot` → `autopilot/page.tsx` · **Эталон:** `autopilot-app.jsx`,

@@ -43,6 +43,7 @@ import type {
   Me,
   MentionsList,
   PatternStudyResult,
+  SelfStudyResult,
   PostsList,
   PublishResult,
   RefineResult,
@@ -338,6 +339,18 @@ export async function analyzePatterns(
       method: "POST",
       body: JSON.stringify({ samples }),
     },
+  );
+}
+
+// Self pattern-study — deterministic patterns in the account's OWN posts.
+// 422 { reason: "insufficient_posts", posts_available, posts_needed } below
+// the post floor (the screen shows progress toward it).
+export async function runPatternStudy(
+  accountId: number,
+): Promise<SelfStudyResult> {
+  return fetchApi<SelfStudyResult>(
+    `/api/accounts/${accountId}/patterns/study`,
+    { method: "POST" },
   );
 }
 

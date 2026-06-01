@@ -505,6 +505,51 @@ const AUDIT_DETAIL = {
   ],
 };
 
+// Self pattern-study — 3 patterns over the account's own posts (strong length
+// signal + two worth-testing), each with evidence sides and example posts.
+const STUDY = {
+  posts_analyzed: 47,
+  patterns: [
+    {
+      key: "length",
+      lead_group: "short",
+      strength: "strong",
+      sample: 24,
+      delta_pct: 38.0,
+      lead: { value: 14200, display: "14.2K", sample: 24 },
+      base: { value: 10300, display: "10.3K", sample: 23 },
+      examples: [
+        { text: "Cut 600 words this morning. The 400 that survived are the only ones that mattered.", views: 22400, display: "22.4K" },
+        { text: "Start before you feel ready.", views: 18800, display: "18.8K" },
+      ],
+    },
+    {
+      key: "question",
+      lead_group: "with",
+      strength: "worth_testing",
+      sample: 11,
+      delta_pct: 12.5,
+      lead: { value: 12900, display: "12.9K", sample: 11 },
+      base: { value: 11500, display: "11.5K", sample: 36 },
+      examples: [
+        { text: "What's the one line you'd keep if you could keep only one?", views: 16100, display: "16.1K" },
+      ],
+    },
+    {
+      key: "emoji",
+      lead_group: "without",
+      strength: "worth_testing",
+      sample: 31,
+      delta_pct: 9.2,
+      lead: { value: 12400, display: "12.4K", sample: 31 },
+      base: { value: 11400, display: "11.4K", sample: 16 },
+      examples: [
+        { text: "Stop optimizing your first sentence. Optimize the reason to care by the third.", views: 15600, display: "15.6K" },
+      ],
+    },
+  ],
+};
+
 async function setup(page: Page): Promise<void> {
   // Seed a token + selected account + locale before any app code runs.
   await page.addInitScript(() => {
@@ -528,7 +573,9 @@ async function setup(page: Page): Promise<void> {
 
     if (p.endsWith("/api/me")) return json(ME);
     if (p.endsWith("/api/me/accounts")) return json({ accounts: ACCOUNTS });
-    if (p.includes("/onboarding")) return json({ needs_onboarding: false, has_role_book: true });
+    if (p.includes("/onboarding"))
+      return json({ needs_onboarding: false, has_role_book: true, post_count: 47, can_analyze: true });
+    if (p.includes("/patterns/study")) return json(STUDY);
     if (p.includes("/feed")) return json(FEED);
     if (p.includes("/mentions")) return json(MENTIONS);
     if (p.includes("/comments")) return json(COMMENTS);
@@ -619,4 +666,17 @@ test("Audits — detail", async ({ page }) => {
   await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
   await page.waitForTimeout(700);
   await shoot(page, "audits-detail");
+});
+
+test("Patterns", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 1100 });
+  await setup(page);
+  await page.goto("/app/patterns");
+  await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
+  await page.waitForTimeout(700);
+  await shoot(page, "patterns-idle");
+  // Run a study → the deterministic results view.
+  await page.getByRole("button", { name: /run a study/i }).click();
+  await page.waitForTimeout(3400);
+  await shoot(page, "patterns");
 });
