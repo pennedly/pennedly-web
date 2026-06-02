@@ -494,7 +494,9 @@ export type SelfStudyEvidence = {
 
 export type SelfStudyExample = {
   text: string;
-  views: number;
+  // Q56: the metric that fits this pattern — "views" | "likes" | "comments".
+  metric: string;
+  value: number;
   display: string;
 };
 
@@ -512,6 +514,13 @@ export type SelfStudyPattern = {
 export type SelfStudyResult = {
   posts_analyzed: number;
   patterns: SelfStudyPattern[];
+};
+
+// Q54: the last persisted self-study (GET /patterns/study/latest). Both null
+// when the account has never run one.
+export type LatestSelfStudy = {
+  computed_at: string | null;
+  study: SelfStudyResult | null;
 };
 
 // ── Audits ───────────────────────────────────────────────────────────

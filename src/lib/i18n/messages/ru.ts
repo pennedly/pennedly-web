@@ -405,6 +405,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "patterns.examples_cap": "Из твоих постов",
   "patterns.headline": "{lead} против {base}",
   "patterns.views_word": "просмотров",
+  "patterns.metric_likes": "лайков",
+  "patterns.metric_comments": "комментариев",
   "patterns.kind_length": "Длина поста",
   "patterns.kind_question": "Вопросы",
   "patterns.kind_emoji": "Эмодзи",

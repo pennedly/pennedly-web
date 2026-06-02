@@ -400,6 +400,8 @@ export const en = {
   "patterns.examples_cap": "From your posts",
   "patterns.headline": "{lead} vs {base}",
   "patterns.views_word": "views",
+  "patterns.metric_likes": "likes",
+  "patterns.metric_comments": "comments",
   "patterns.kind_length": "Post length",
   "patterns.kind_question": "Questions",
   "patterns.kind_emoji": "Emoji",

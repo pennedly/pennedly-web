@@ -43,6 +43,7 @@ import type {
   Me,
   MentionsList,
   PatternStudyResult,
+  LatestSelfStudy,
   SelfStudyResult,
   PostsList,
   PublishResult,
@@ -354,6 +355,15 @@ export async function runPatternStudy(
   return fetchApi<SelfStudyResult>(
     `/api/accounts/${accountId}/patterns/study`,
     { method: "POST" },
+  );
+}
+
+// Q54: the last persisted self-study, so revisits show it without recomputing.
+export async function fetchPatternStudyLatest(
+  accountId: number,
+): Promise<LatestSelfStudy> {
+  return fetchApi<LatestSelfStudy>(
+    `/api/accounts/${accountId}/patterns/study/latest`,
   );
 }
 

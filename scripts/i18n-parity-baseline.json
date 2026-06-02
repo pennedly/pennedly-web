@@ -4,37 +4,49 @@
     "audits.cat.voice",
     "audits.cat.cadence",
     "audits.cat.topic",
-    "audits.cat.format"
+    "audits.cat.format",
+    "patterns.metric_likes",
+    "patterns.metric_comments"
   ],
   "es": [
     "audits.cat.voice",
     "audits.cat.cadence",
     "audits.cat.topic",
-    "audits.cat.format"
+    "audits.cat.format",
+    "patterns.metric_likes",
+    "patterns.metric_comments"
   ],
   "fr": [
     "audits.cat.voice",
     "audits.cat.cadence",
     "audits.cat.topic",
-    "audits.cat.format"
+    "audits.cat.format",
+    "patterns.metric_likes",
+    "patterns.metric_comments"
   ],
   "it": [
     "audits.cat.voice",
     "audits.cat.cadence",
     "audits.cat.topic",
-    "audits.cat.format"
+    "audits.cat.format",
+    "patterns.metric_likes",
+    "patterns.metric_comments"
   ],
   "pt": [
     "audits.cat.voice",
     "audits.cat.cadence",
     "audits.cat.topic",
-    "audits.cat.format"
+    "audits.cat.format",
+    "patterns.metric_likes",
+    "patterns.metric_comments"
   ],
   "ru": [],
   "uk": [
     "audits.cat.voice",
     "audits.cat.cadence",
     "audits.cat.topic",
-    "audits.cat.format"
+    "audits.cat.format",
+    "patterns.metric_likes",
+    "patterns.metric_comments"
   ]
 }

@@ -15,6 +15,7 @@ import {
   ApiError,
   clearTokens,
   fetchOnboardingStatus,
+  fetchPatternStudyLatest,
   getTokens,
   runPatternStudy,
 } from "@/lib/api";
@@ -75,14 +76,32 @@ function fill(s: string, vars: Record<string, string | number>): string {
   return s.replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ""));
 }
 
+// Q56: the metric an example surfaces depends on the pattern (question→
+// comments, emoji→likes, length/structure→views).
+const METRIC_LABEL: Record<string, MessageKey> = {
+  views: "patterns.views_word",
+  likes: "patterns.metric_likes",
+  comments: "patterns.metric_comments",
+};
+
+function fmtStudied(iso: string, locale: string): string {
+  const loc = locale === "en" ? "en-US" : locale === "ru" ? "ru-RU" : locale;
+  try {
+    return new Date(iso).toLocaleDateString(loc, { month: "short", day: "numeric" });
+  } catch {
+    return iso;
+  }
+}
+
 export default function PatternsPage() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const accountId = useSelectedAccountId();
 
   const [phase, setPhase] = useState<Phase>("loading");
   const [postCount, setPostCount] = useState(0);
   const [result, setResult] = useState<SelfStudyResult | null>(null);
+  const [computedAt, setComputedAt] = useState<string | null>(null);
   const [step, setStep] = useState(0);
   const [studied, setStudied] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -103,6 +122,16 @@ export default function PatternsPage() {
     setPhase("loading");
     (async () => {
       try {
+        // Q54: show the last persisted study (with its real date) on revisit,
+        // instead of dropping back to idle and forcing a recompute.
+        const latest = await fetchPatternStudyLatest(accountId);
+        if (latest.study && latest.study.patterns.length > 0) {
+          setResult(latest.study);
+          setComputedAt(latest.computed_at);
+          setStudied(true);
+          setPhase("results");
+          return;
+        }
         const ob = await fetchOnboardingStatus(accountId);
         setPostCount(ob.post_count);
         setPhase(ob.post_count >= MIN_POSTS ? "idle" : "empty");
@@ -167,7 +196,8 @@ export default function PatternsPage() {
         pill={
           phase === "results" && studied ? (
             <TopbarPill tone="accent">
-              {t("patterns.studied")} {t("patterns.just_now")}
+              {t("patterns.studied")}{" "}
+              {computedAt ? fmtStudied(computedAt, locale) : t("patterns.just_now")}
             </TopbarPill>
           ) : undefined
         }
@@ -417,7 +447,7 @@ function PatternCard({
                   {ex.text}
                 </span>
                 <span className="shrink-0 text-caption tabular-nums text-text-subtle">
-                  {ex.display} {t("patterns.views_word")}
+                  {ex.display} {t(METRIC_LABEL[ex.metric] ?? "patterns.views_word")}
                 </span>
               </div>
             ))}
