@@ -85,7 +85,6 @@
 .idle-hero .idle-run { margin-top: 26px; }
 .idle-scope { display: flex; align-items: center; gap: 10px; margin-top: 18px; font-size: var(--text-caption); color: var(--color-text-subtle); }
 .idle-scope .dot { width: 4px; height: 4px; border-radius: 999px; background: var(--color-text-subtle); }
-.btn--lg { height: 46px; padding-inline: 22px; font-size: var(--text-body); border-radius: var(--radius-lg); }
 
 /* what it looks for — a quiet row of chips on idle */
 .idle-kinds { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 28px; max-width: 460px; }

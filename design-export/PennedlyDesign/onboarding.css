@@ -11,7 +11,6 @@ body {
 }
 ::selection { background: color-mix(in srgb, var(--color-accent) 22%, transparent); }
 #root { height: 100%; }
-@keyframes dialog-in { from { transform: translateY(10px) scale(0.985); } to { transform: none; } }
 
 /* ============================== STAGE ============================ */
 .ob {
@@ -99,7 +98,6 @@ body {
 
 .step-actions { display: flex; align-items: center; gap: 12px; margin-top: 26px; }
 .step-actions .grow { flex: 1 1 auto; }
-.btn--lg { height: 46px; padding-inline: 22px; font-size: var(--text-body); border-radius: var(--radius-md); }
 a.btn { text-decoration: none; }
 .back-link {
   display: inline-flex; align-items: center; gap: 6px;

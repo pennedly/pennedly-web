@@ -6,13 +6,12 @@
 
 /* entrance + flash keyframes (transform-only so resting opacity stays 1) */
 @keyframes vsec-in { from { transform: translateY(8px); } to { transform: none; } }
-@keyframes dialog-in { from { transform: translateY(10px) scale(0.985); } to { transform: none; } }
 @keyframes flash-fix {
   0% { background: color-mix(in srgb, var(--color-success) 22%, var(--color-surface)); border-color: var(--color-success); }
   100% { background: var(--color-surface-2); }
 }
 
-/* skeleton block (studio.css supplies .skel-line + shimmer) */
+/* skeleton block (shimmer keyframes live in ds/components.css §3.7) */
 .skel { pointer-events: none; }
 .skel-block {
   border-radius: var(--radius-md);

@@ -29,7 +29,7 @@ function AccountCard() {
     <section className="card">
       <div className="card-head"><div className="ch-row"><span className="h">Account</span></div></div>
       <div className="card-body">
-        <div className="acct-id">
+        <div className="cxn-id">
           <window.Avatar src={primary.avatar} initials={primary.initials} size={52} />
           <div className="who">
             <div className="nm">{user.email}</div>
@@ -79,13 +79,13 @@ function LanguageCard({ value, onChange }) {
 function AccountRow({ acct, leaving, confirming, onAskDisconnect, onCancel, onConfirm }) {
   const primary = acct.active || acct.primary;
   return (
-    <div className={`acct-row ${leaving ? "acct-row--leaving" : ""}`}>
+    <div className={`cxn-row ${leaving ? "cxn-row--leaving" : ""}`}>
       <window.Avatar src={acct.avatar} initials={acct.initials} size={40} />
-      <div className="acct-main">
-        <div className="acct-name">{acct.name}{primary && <span className="acct-tag">Primary</span>}</div>
-        <div className="acct-sub"><span>{acct.handle}</span></div>
+      <div className="cxn-main">
+        <div className="cxn-name">{acct.name}{primary && <span className="cxn-tag">Primary</span>}</div>
+        <div className="cxn-sub"><span>{acct.handle}</span></div>
       </div>
-      <div className="acct-actions">
+      <div className="cxn-actions">
         {confirming ? (
           <div className="disconnect-confirm">
             <span className="dc-msg">Disconnect {acct.handle}?</span>
@@ -110,13 +110,13 @@ function AccountsCard({ accounts, leavingIds, confirmingId, onAskDisconnect, onC
         <div className="d">Pennedly drafts and posts for each connected account. Disconnecting stops all activity for that handle.</div>
       </div>
       {empty ? (
-        <div className="acct-empty">
+        <div className="cxn-empty">
           <span className="ae-mark"><window.IcLink size={20} /></span>
           <div className="ae-title">No accounts connected</div>
           <div className="ae-sub">Connect a Threads account and Pennedly can start drafting for it.</div>
         </div>
       ) : (
-        <div className="acct-list" style={{ marginTop: 14 }}>
+        <div className="cxn-list" style={{ marginTop: 14 }}>
           {accounts.map((a) => (
             <AccountRow
               key={a.id} acct={a}
@@ -127,7 +127,7 @@ function AccountsCard({ accounts, leavingIds, confirmingId, onAskDisconnect, onC
           ))}
         </div>
       )}
-      <div className="acct-foot">
+      <div className="cxn-foot">
         <button className="btn btn--secondary" onClick={onConnect}>
           <window.IcLink size={16} /> {empty ? "Connect a Threads account" : "Connect another account"}
         </button>
@@ -155,7 +155,7 @@ function VoiceSetupCard({ isTester, onPreview }) {
         <div className="shortcut">
           <span className="shortcut-ico"><window.IcFlask size={18} /></span>
           <div className="shortcut-txt">
-            <div className="shortcut-t">Preview mode <span className="acct-tag">Tester</span></div>
+            <div className="shortcut-t">Preview mode <span className="cxn-tag">Tester</span></div>
             <div className="shortcut-d">Try features before they ship. Things may change or break.</div>
           </div>
           <span className="shortcut-act"><button className="btn btn--secondary btn--sm" onClick={onPreview}><window.IcEye size={15} /> Enter preview</button></span>

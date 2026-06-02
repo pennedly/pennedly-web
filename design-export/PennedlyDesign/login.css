@@ -67,7 +67,6 @@ body {
 
 .view { animation: view-in var(--duration-base) var(--ease-entrance) both; }
 @keyframes view-in { from { transform: translateY(6px); } to { transform: none; } }
-@keyframes dialog-in { from { transform: translateY(10px) scale(0.985); } to { transform: none; } }
 
 /* ---------------------------- Google btn ------------------------- */
 .btn-block { width: 100%; }
@@ -147,8 +146,7 @@ body {
 .back-link { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-small); font-weight: 500; color: var(--color-text-muted); background: none; border: none; cursor: pointer; padding: 6px 4px; transition: color var(--duration-fast) var(--ease-standard); }
 .back-link:hover { color: var(--color-text); }
 
-/* button sizing */
-.btn--lg { height: 46px; padding-inline: 18px; font-size: var(--text-body); border-radius: var(--radius-md); }
+/* button sizing — `.btn--lg` (46/22/radius-lg) lives in ds/components.css §3.6 */
 .btn .spinner { width: 16px; height: 16px; border-radius: var(--radius-full); border: 2px solid currentColor; border-top-color: transparent; animation: spin 0.6s linear infinite; }
 a.btn { text-decoration: none; }
 

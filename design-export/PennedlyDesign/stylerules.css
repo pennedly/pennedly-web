@@ -5,7 +5,6 @@
    light/dark flip for free. Reading-width column (.content, 720). */
 
 @keyframes sec-in { from { transform: translateY(8px); } to { transform: none; } }
-@keyframes dialog-in { from { transform: translateY(10px) scale(0.985); } to { transform: none; } }
 
 /* ============================== INTRO ============================= */
 .intro { display: flex; flex-direction: column; }
