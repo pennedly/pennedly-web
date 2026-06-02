@@ -906,6 +906,12 @@ export const uk: Partial<Record<MessageKey, string>> = {
 
   // ── Низ сайдбару + Налаштування ────────────────────────────────
   "nav.settings": "Налаштування",
+  "shell.avatar_alt": "Фото профілю",
+  "shell.toggle_theme": "Перемкнути тему",
+  "error.title": "Не вдалося завантажити сторінку",
+  "error.subtitle":
+    "Щось пішло не так під час звернення до Threads. Твоя робота збережена — спробуй ще раз за мить.",
+  "error.retry": "Повторити",
   "settings.title": "Налаштування",
   "settings.account": "Акаунт",
   "settings.email": "Email",

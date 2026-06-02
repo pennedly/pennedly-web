@@ -34,13 +34,14 @@ function initialsOf(name: string): string {
 
 // Real Threads profile picture when we have one; initials monogram otherwise.
 function Avatar({ account, size }: { account: ConnectedAccount; size: number }) {
+  const { t } = useTranslation();
   if (account.profile_picture_url) {
     return (
       // Threads CDN host varies — a plain <img> avoids next/image remote config.
       // eslint-disable-next-line @next/next/no-img-element
       <img
         src={account.profile_picture_url}
-        alt=""
+        alt={t("shell.avatar_alt")}
         width={size}
         height={size}
         className="shrink-0 rounded-full bg-surface-2 object-cover"

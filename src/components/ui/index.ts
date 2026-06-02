@@ -8,6 +8,7 @@ export { Badge, StatusDot, Tag, type BadgeTone } from "./badge";
 export { Input, Textarea, Select, FieldLabel, FieldHint } from "./field";
 export { Switch } from "./switch";
 export { Spinner, Skeleton, SkeletonText, EmptyState } from "./feedback";
+export { ErrorBanner } from "./error-banner";
 export { Dialog, DialogTitle, DialogDescription, DialogActions } from "./overlay";
 export { Toast, ToastHost, type ToastTone } from "./toast";
 export { TextLink, linkClasses } from "./link";

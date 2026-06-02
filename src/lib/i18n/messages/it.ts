@@ -908,6 +908,12 @@ export const it: Partial<Record<MessageKey, string>> = {
 
   // ── Fondo sidebar + Impostazioni ───────────────────────────────
   "nav.settings": "Impostazioni",
+  "shell.avatar_alt": "Foto del profilo",
+  "shell.toggle_theme": "Cambia tema",
+  "error.title": "Impossibile caricare questa pagina",
+  "error.subtitle":
+    "Qualcosa è andato storto nel raggiungere Threads. Il tuo lavoro è al sicuro — riprova tra un momento.",
+  "error.retry": "Riprova",
   "settings.title": "Impostazioni",
   "settings.account": "Account",
   "settings.email": "Email",

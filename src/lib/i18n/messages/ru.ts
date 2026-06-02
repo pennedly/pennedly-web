@@ -820,6 +820,12 @@ export const ru: Partial<Record<MessageKey, string>> = {
 
   // ── Низ сайдбара + Настройки ──────────────────────────────────
   "nav.settings": "Настройки",
+  "shell.avatar_alt": "Фото профиля",
+  "shell.toggle_theme": "Переключить тему",
+  "error.title": "Не удалось загрузить страницу",
+  "error.subtitle":
+    "Что-то пошло не так при обращении к Threads. Твоя работа сохранена — попробуй ещё раз через мгновение.",
+  "error.retry": "Повторить",
   "settings.title": "Настройки",
   "settings.account": "Аккаунт",
   "settings.email": "Email",

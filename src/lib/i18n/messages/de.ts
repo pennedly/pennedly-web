@@ -915,6 +915,12 @@ export const de: Partial<Record<MessageKey, string>> = {
 
   // ── Sidebar unten + Einstellungen ──────────────────────────────
   "nav.settings": "Einstellungen",
+  "shell.avatar_alt": "Profilfoto",
+  "shell.toggle_theme": "Thema umschalten",
+  "error.title": "Diese Seite konnte nicht geladen werden",
+  "error.subtitle":
+    "Beim Verbinden mit Threads ist etwas schiefgelaufen. Deine Arbeit ist sicher — versuch es gleich noch mal.",
+  "error.retry": "Erneut versuchen",
   "settings.title": "Einstellungen",
   "settings.account": "Konto",
   "settings.email": "E-Mail",

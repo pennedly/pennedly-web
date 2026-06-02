@@ -814,6 +814,15 @@ export const en = {
 
   // ── Sidebar bottom + Settings ─────────────────────────────────
   "nav.settings": "Settings",
+  "shell.avatar_alt": "Profile photo",
+  "shell.toggle_theme": "Toggle theme",
+
+  // ── Error banner (shared, design §3.8) ────────────────────────
+  "error.title": "Couldn't load this page",
+  "error.subtitle":
+    "Something went wrong reaching Threads. Your work is safe — try again in a moment.",
+  "error.retry": "Retry",
+
   "settings.title": "Settings",
   "settings.account": "Account",
   "settings.email": "Email",

@@ -10,12 +10,14 @@ import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 
 import { cn } from "@/lib/cn";
+import { useTranslation } from "@/lib/i18n";
 import { IcMoon, IcSettings, IcSun } from "@/components/icons";
 
 const ICON_BTN =
   "grid h-9 w-9 place-items-center rounded-md border border-border bg-surface text-text-muted transition-colors hover:bg-surface-2 hover:text-text";
 
 function ThemeToggle() {
+  const { t } = useTranslation();
   const [dark, setDark] = useState(false);
 
   // The no-FOUC script in the root layout sets `.dark` on <html> before paint;
@@ -36,7 +38,7 @@ function ThemeToggle() {
   }
 
   return (
-    <button type="button" onClick={toggle} aria-label="Toggle theme" className={ICON_BTN}>
+    <button type="button" onClick={toggle} aria-label={t("shell.toggle_theme")} className={ICON_BTN}>
       {dark ? <IcSun size={17} /> : <IcMoon size={16} />}
     </button>
   );
@@ -79,6 +81,7 @@ export function AppTopbar({
    */
   maxW?: string;
 }) {
+  const { t } = useTranslation();
   return (
     <header className="sticky top-0 z-10 border-b border-border bg-bg/85 backdrop-blur-md">
       <div
@@ -91,7 +94,7 @@ export function AppTopbar({
         <div className="flex items-center gap-2">
           {actions}
           <ThemeToggle />
-          <Link href="/app/settings" aria-label="Settings" className={ICON_BTN}>
+          <Link href="/app/settings" aria-label={t("nav.settings")} className={ICON_BTN}>
             <IcSettings size={17} />
           </Link>
         </div>
