@@ -46,24 +46,30 @@ _Гейты: `uv run pytest` + `uv run ruff check`. SPEC §6/§7/§13/§14 — �
 ## Фаза 2 — Перенос экранов (по одному, по ритму) · репо `pennedly-web`
 _На КАЖДОМ экране — общие паттерны: общий shell · аватары (Q26/Q38/Q57) · перевод в ⋯-меню (Q21/Q10) · loading/empty/error (Q22/Q23) · оптимистичность + Undo (Q24/Q25) · абсолютное локальное время (Q40) · status-pills (Q41/Q14)._
 
-| # | Экран | Ключевые решения |
-|---|-------|------------------|
-| 1 | **Explore** | re-sync с новым shell/ds (мелочь) + i18n-хвост уже добит |
-| 2 | **Studio** | Q25 (⋯-overflow) · Q62 (reply-черновики) · Q14 (pill) · Q9 (chips) · Q24 |
-| 3 | **Feed** | Q26 (шапка автора) · Q13 (сортировка) · Q64/Q65 (baseline) · Q37 (badge/empty) |
-| 4 | **Replies** | **Q18 (master-detail!)** · Q3 (auto-replied badge) · Q10 (перевод ответа) · Q77 · Q37 |
-| 5 | **Mentions** | Q15 (read-only) · Q22 (error) · Q57 |
-| 6 | **Stats** | Q19 (6 периодов) · Q39 (chart) · Q31 (подпись) · Q47 (тиры) · Q80 · Q12 |
-| 7 | **Audits** | Q48 (откат) · Q51 (diff) · Q27 (note) · Q75 (category) · Q78 (empty) · Q7 |
-| 8 | **Patterns** | Q54 (saved) · Q55 (поэтапно) · Q42 (×) · Q45 (зелёный) · Q82 · Q56 |
-| 9 | **Autopilot** | Q5 (trust-текст) · Q6 (иконка-часы) · Q50 · Q59 · Q34 (темы) · Q66 (cap) |
-| 10 | **Voice/role-book** | Q60 (структура) · Q8 (перевод секций) · Q16 (Post/Reply) · Q67 (hero) · Q23 |
-| 11 | **Style rules** | Q29 (порядок) · Q30 (группы) · Q11 (toggle) · Q44 (демо) · Q49 · Q81 |
-| 12 | **Settings** | Q33 (две строки voice) · Q36 (без Log out) · Q38 (фото) · Q46 (флаги) · Q68 |
-| 13 | **Onboarding** | Q23 (empty/locked) · Q32 (возврат connect) · Q53 (порог) |
-| 14 | **Login** | Q20 (абс. ссылки) · Q79 (чистка ключей) |
-| 15 | **Landing** | Q1/Q2/Q4 (позиционирование) · Q20 (ссылки) |
-| 16 | **Legal** | Q70 (настоящий текст + оболочка) · Q71 (data-deletion 2 уровня) |
+> **📋 АУДИТ 2026-06-02 (4 агента, все 16 экранов).** Ключевой вывод: **общий shell + design-system уже стоят на всех экранах** — осталась не верстка с нуля, а **поведение + подключение полей бэка** (Фаза 1 уже их отдаёт, фронт их ещё не читает). Готово 3/16 (Explore, Landing, Legal). Типы в `src/lib/types.ts`, которые надо дотянуть до бэка: `auto_replied`(Q3) · `avg_reposts`(Q64) · `min_posts_to_analyze`(Q53) · `posts_analyzed`(Q67) · `category`+`old_text/new_text`(Q51/Q75) · `SelfStudyExample.metric`(Q56) · `GET /study/latest`(Q54) · **`RoleBookSections` flat-strings→typed objects(Q60)**.
+>
+> **🚨 СРОЧНО (регрессия от Q60-бэка):** живой `/app/role-book` всё ещё ждёт `string[]`, а бэк после `e701953` отдаёт объекты `{id,label,note}` — экран Voice сейчас отображается криво в проде. Чинить ПЕРВЫМ.
+
+| # | Экран | Статус | Осталось (по аудиту) |
+|---|-------|--------|----------------------|
+| 1 | **Explore** | ✅ done | — совпадает с эталоном, shell+i18n есть |
+| 2 | **Studio** | 🟡 M | Q25 ⋯-overflow · Q62 reply-черновики (read-only) · Q14 topbar voice-pill · Q24 optimistic+Undo. (Q9 chips ✅) |
+| 3 | **Feed** | 🟡 M | Q26 шапка автора · Q13 сорт Recent/Top · Q64 `avg_reposts`(+тип) · Q65 числовая дельта % · Q37 «On par»+warm empty/Studio-CTA |
+| 4 | **Replies** | 🔴 L | **Q18 master-detail (переписать, убрать PostRail)** · Q3 `auto_replied`(+тип, бейдж) · Q10 перевод ответа · Q77 бакеты. (Q37 empty ✅) |
+| 5 | **Mentions** | 🟡 S | Q22 ErrorBanner+Retry · «Updated hourly» pill · убрать мёртвый `new`-акцент. (Q15/Q57 ✅) |
+| 6 | **Stats** | 🔴 L | Q19 6 периодов (сейчас weeks 4/8/12) · Q39 chart avg-line+above/below · Q12 убрать «posts/week» chart · Q80 «Updated hourly» pill. (Q47 тиры ✅) |
+| 7 | **Audits** | 🟡 M | Q51 diff читать `old_text/new_text` (убрать JSON-dump; сейчас ждёт `before/after`) · Q75 `category` badge(+тип). (Q48/Q27/Q78/Q7 ✅) |
+| 8 | **Patterns** | 🟡 M | Q54 грузить `/study/latest` on-mount · Q56 метрика примера(+тип) · Q42 «×N»-множитель · убрать Topics-chip. (Q55/Q45/Q82 ✅) |
+| 9 | **Autopilot** | 🟡 S | Q6 иконка-часы (сейчас `IcBolt`) · Q66 cap 10/25/50 (сейчас 1/3/5/10/20). (Q5/Q50/Q59/Q34 ✅) |
+| 10 | **Voice/role-book** | 🔴 L 🚨 | **Q60 типизация sections (flat→objects) — СРОЧНО, ломает прод** · Q67 hero «Analyzed N posts · Updated» (убрать v<id>, +тип `posts_analyzed`) · Q8 перевод по секциям · Q16 Post/Reply context · Q23 404→EmptyVoice |
+| 11 | **Style rules** | 🟡 M | Q29 порядок (Your rules ПЕРВЫМИ) · Q30 группы по категориям (не chip-фильтр) · Q44 live-демо пунктуации · Q49 i18n встроенных по `key` · Q81 toast по виду. (Q11 ✅) |
+| 12 | **Settings** | 🟡 M | Q33 вторая строка («Restart setup») · Q38 реальное фото (Avatar) · Q46 флаги+имена в локали-пикере. (Q36/Q68 ✅) |
+| 13 | **Onboarding** | 🟡 M | Q32 connected-карточка + `return_to=/app/onboarding` · Q53 `min_posts_to_analyze`(+тип) в текст. (Q23 ✅) |
+| 14 | **Login** | 🟡 S | Q20 абс. ссылки на /terms,/privacy · Q79 удалить ~8 осиротевших `login.*` ключей (8 локалей) |
+| 15 | **Landing** | ✅ done | Q1/Q2/Q4 ✅; Q20 — относительные ссылки ок на одном домене (опц.) |
+| 16 | **Legal** | ✅ done | Q70 (Twój StartUp, реальный GDPR/ToS) ✅ · Q71 (2 уровня удаления) ✅ |
+
+**Порядок исполнения (по риску, не по номеру):** (1) 🚨 **Voice Q60** — чинит прод-регрессию + снимает крит-риск; (2) быстрые wiring-подключения уже готового бэка — Audits(Q51/Q75), Patterns(Q54/Q56), Feed(Q64), Onboarding(Q53), Studio(Q62) — это типы+чтение полей; (3) S-экраны — Mentions, Autopilot, Login; (4) M — Style rules, Settings, Studio(остаток), Feed(остаток); (5) L-переписи — Replies (master-detail), Stats (6 периодов). После — Фаза 3 (Meta).
 
 ## Фаза 3 — Meta App Review + финальная сборка
 - [ ] **Q52 / Q71 / Q76** — Danger Zone в Settings · callback-URL в Meta-консоли (/deauthorize, /data-deletion) · Feed Delete tester-only · обрезать `THREADS_SCOPES` под round-1.
