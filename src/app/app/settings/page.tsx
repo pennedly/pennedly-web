@@ -40,7 +40,7 @@ import { Skeleton } from "@/components/ui/feedback";
 import { Toast, ToastHost } from "@/components/ui/toast";
 import { ConnectThreadsButton } from "@/components/ConnectThreadsButton";
 import { cn } from "@/lib/cn";
-import { IcCheck, IcEye, IcFlask, IcLogout, IcStar, IcUnlink, IcVoice } from "@/components/icons";
+import { IcCheck, IcEye, IcFlask, IcStar, IcUnlink, IcVoice } from "@/components/icons";
 import type { ConnectedAccount, Me } from "@/lib/types";
 
 type Toast = { id: number; message: string; tone: "success" | "error" };
@@ -113,11 +113,6 @@ export default function SettingsPage() {
     } finally {
       setBusyId(null);
     }
-  }
-
-  function signOut() {
-    clearTokens();
-    router.push("/app/login");
   }
 
   const selectedId = getSelectedAccountId();
@@ -301,15 +296,6 @@ export default function SettingsPage() {
                 </div>
               )}
             </section>
-
-            {/* Footer */}
-            <div className="flex items-center gap-3 pt-1">
-              <Button variant="ghost" size="sm" onClick={signOut} icon={<IcLogout size={15} />}>
-                {t("settings.logout")}
-              </Button>
-              <span className="flex-1" />
-              <span className="text-caption text-text-subtle">Pennedly</span>
-            </div>
           </>
         )}
       </main>

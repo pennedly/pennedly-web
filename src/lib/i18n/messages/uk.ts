@@ -357,6 +357,7 @@ export const uk: Partial<Record<MessageKey, string>> = {
 
   // ── Pattern study ──────────────────────────────────────────────
   "dashboard.nav.patterns": "патерни",
+  "dashboard.nav.explore": "огляд",
   "patterns.back": "← дашборд",
   "patterns.title": "Вивчення патернів",
   "patterns.subtitle":
@@ -711,9 +712,9 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "dashboard.nav.feed": "feed",
   "nav.studio": "Studio",
   "nav.brand_tagline": "Партнер із письма",
-  "nav.group.content": "Контент",
-  "nav.group.growth": "Зростання",
-  "nav.group.voice": "Голос",
+  "nav.group.workspace": "Робоча область",
+  "nav.group.insight": "Аналітика",
+  "nav.group.voice_automation": "Голос і автоматизація",
   "feed.back": "← дашборд",
   "feed.title": "Мій Feed",
   "feed.subtitle": "Твої пости — кожен із результатом проти твого звичного.",

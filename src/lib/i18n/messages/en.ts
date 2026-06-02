@@ -339,6 +339,7 @@ export const en = {
 
   // ── Pattern Study ───────────────────────────────────────────────
   "dashboard.nav.patterns": "patterns",
+  "dashboard.nav.explore": "explore",
   "patterns.back": "← dashboard",
   "patterns.title": "Pattern study",
   "patterns.subtitle":
@@ -685,9 +686,9 @@ export const en = {
   "dashboard.nav.feed": "feed",
   "nav.studio": "Studio",
   "nav.brand_tagline": "Drafting partner",
-  "nav.group.content": "Content",
-  "nav.group.growth": "Growth",
-  "nav.group.voice": "Voice",
+  "nav.group.workspace": "Workspace",
+  "nav.group.insight": "Insight",
+  "nav.group.voice_automation": "Voice & automation",
   "feed.back": "← dashboard",
   "feed.title": "My Feed",
   "feed.subtitle": "Your posts — each with how it did versus your usual.",

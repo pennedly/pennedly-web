@@ -344,6 +344,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
 
   // ── Pattern Study ───────────────────────────────────────────────
   "dashboard.nav.patterns": "паттерны",
+  "dashboard.nav.explore": "обзор",
   "patterns.back": "← дашборд",
   "patterns.title": "Изучение паттернов",
   "patterns.subtitle":
@@ -690,9 +691,9 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "dashboard.nav.feed": "лента",
   "nav.studio": "Студия",
   "nav.brand_tagline": "Партнёр по черновикам",
-  "nav.group.content": "Контент",
-  "nav.group.growth": "Рост",
-  "nav.group.voice": "Голос",
+  "nav.group.workspace": "Рабочая область",
+  "nav.group.insight": "Аналитика",
+  "nav.group.voice_automation": "Голос и автоматизация",
   "feed.back": "← дашборд",
   "feed.title": "Моя лента",
   "feed.subtitle":

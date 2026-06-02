@@ -359,6 +359,7 @@ export const es: Partial<Record<MessageKey, string>> = {
 
   // ── Pattern study ──────────────────────────────────────────────
   "dashboard.nav.patterns": "patrones",
+  "dashboard.nav.explore": "explorar",
   "patterns.back": "← panel",
   "patterns.title": "Estudio de patrones",
   "patterns.subtitle":
@@ -713,9 +714,9 @@ export const es: Partial<Record<MessageKey, string>> = {
   "dashboard.nav.feed": "feed",
   "nav.studio": "Studio",
   "nav.brand_tagline": "Compañero de escritura",
-  "nav.group.content": "Contenido",
-  "nav.group.growth": "Crecimiento",
-  "nav.group.voice": "Voz",
+  "nav.group.workspace": "Espacio de trabajo",
+  "nav.group.insight": "Análisis",
+  "nav.group.voice_automation": "Voz y automatización",
   "feed.back": "← panel",
   "feed.title": "Mi Feed",
   "feed.subtitle": "Tus publicaciones — cada una con su rendimiento frente a lo habitual.",

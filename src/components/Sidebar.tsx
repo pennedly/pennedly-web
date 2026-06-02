@@ -21,6 +21,7 @@ import {
   IcAudit,
   IcBolt,
   IcChart,
+  IcCompass,
   IcFeed,
   IcReplies,
   IcStudio,
@@ -43,7 +44,7 @@ type NavItem = {
 
 const GROUPS: { title: MessageKey; items: NavItem[] }[] = [
   {
-    title: "nav.group.content",
+    title: "nav.group.workspace",
     items: [
       { href: "/app", label: "nav.studio", icon: IcStudio, exact: true },
       { href: "/app/feed", label: "dashboard.nav.feed", icon: IcFeed },
@@ -52,19 +53,21 @@ const GROUPS: { title: MessageKey; items: NavItem[] }[] = [
     ],
   },
   {
-    title: "nav.group.growth",
+    title: "nav.group.insight",
     items: [
       { href: "/app/stats", label: "dashboard.nav.stats", icon: IcChart },
       { href: "/app/audits", label: "dashboard.nav.audits", icon: IcAudit },
-      { href: "/app/patterns", label: "dashboard.nav.patterns", icon: IcStudy },
-      { href: "/app/autopilot", label: "dashboard.nav.autopilot", icon: IcBolt, tester: true },
+      // `exact` so Pattern study doesn't also light up on the /explore child.
+      { href: "/app/patterns", label: "dashboard.nav.patterns", icon: IcStudy, exact: true },
+      { href: "/app/patterns/explore", label: "dashboard.nav.explore", icon: IcCompass },
     ],
   },
   {
-    title: "nav.group.voice",
+    title: "nav.group.voice_automation",
     items: [
       { href: "/app/role-book", label: "dashboard.nav.voice", icon: IcVoice },
       { href: "/app/style-rules", label: "dashboard.nav.style_rules", icon: IcTweak },
+      { href: "/app/autopilot", label: "dashboard.nav.autopilot", icon: IcBolt, tester: true },
     ],
   },
 ];
