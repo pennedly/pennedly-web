@@ -861,6 +861,9 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "settings.shortcut_voice_d":
     "Настрой, как звучит каждый черновик — темы, черты и примеры постов.",
   "settings.open_voice": "Открыть голос",
+  "settings.restart_t": "Перезапустить настройку голоса",
+  "settings.restart_d": "Заново пройти онбординг — это заменит текущий голос.",
+  "settings.restart_cta": "Перезапустить",
   "settings.shortcut_preview_t": "Режим превью",
   "settings.shortcut_preview_d":
     "Пробуй функции до релиза. Что-то может меняться или ломаться.",

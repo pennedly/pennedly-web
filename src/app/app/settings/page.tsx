@@ -34,13 +34,14 @@ import {
 } from "@/lib/i18n";
 import { captureEvent } from "@/lib/analytics";
 import { AppTopbar } from "@/components/AppTopbar";
+import { Avatar } from "@/components/ui/avatar";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Mono } from "@/components/ui/mono";
 import { Skeleton } from "@/components/ui/feedback";
 import { Toast, ToastHost } from "@/components/ui/toast";
 import { ConnectThreadsButton } from "@/components/ConnectThreadsButton";
 import { cn } from "@/lib/cn";
-import { IcCheck, IcEye, IcFlask, IcStar, IcUnlink, IcVoice } from "@/components/icons";
+import { IcCheck, IcEye, IcFlask, IcScan, IcStar, IcUnlink, IcVoice } from "@/components/icons";
 import type { ConnectedAccount, Me } from "@/lib/types";
 
 type Toast = { id: number; message: string; tone: "success" | "error" };
@@ -188,10 +189,16 @@ export default function SettingsPage() {
                           : "border-border hover:bg-surface-2",
                       )}
                     >
-                      <span className="grid h-7 w-9 shrink-0 place-items-center rounded-sm border border-border bg-surface text-caption font-semibold uppercase text-text-muted">
-                        {l.code}
+                      {/* Q46: flag glyph + native name + English name. */}
+                      <span className="shrink-0 text-h3 leading-none" aria-hidden="true">
+                        {l.flag}
                       </span>
-                      <span className="min-w-0 flex-1 truncate text-small font-medium">{l.name}</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-small font-medium">{l.name}</span>
+                        {l.en !== l.name && (
+                          <span className="block truncate text-caption text-text-subtle">{l.en}</span>
+                        )}
+                      </span>
                       {active && <IcCheck size={16} className="shrink-0 text-accent" />}
                     </button>
                   );
@@ -209,7 +216,8 @@ export default function SettingsPage() {
                     key={a.id}
                     className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-surface-2 p-3"
                   >
-                    <Mono text={initial(a.username)} size={40} />
+                    {/* Q38: real Threads profile photo, monogram fallback. */}
+                    <Avatar account={a} size={40} />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 text-small font-semibold">
                         <span className="truncate">{a.display_name || `@${a.username ?? a.id}`}</span>
@@ -270,6 +278,23 @@ export default function SettingsPage() {
                 </div>
                 <Link href="/app/role-book" className={buttonClasses({ variant: "primary", size: "sm" })}>
                   {t("settings.open_voice")}
+                </Link>
+              </div>
+              {/* Q33: a second row — restart the whole setup (re-runs onboarding,
+                  replaces the current voice) vs the everyday edit above. */}
+              <div className="flex items-center gap-3.5 border-t border-border p-4">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-border bg-surface-2 text-text-muted">
+                  <IcScan size={18} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="text-small font-semibold">{t("settings.restart_t")}</div>
+                  <div className="mt-0.5 text-caption text-warning">{t("settings.restart_d")}</div>
+                </div>
+                <Link
+                  href="/app/onboarding"
+                  className={buttonClasses({ variant: "secondary", size: "sm" })}
+                >
+                  {t("settings.restart_cta")}
                 </Link>
               </div>
               {me.is_tester && (

@@ -22,6 +22,9 @@
     "feed.published_posts",
     "feed.on_par",
     "onboarding.analyze_locked",
+    "settings.restart_t",
+    "settings.restart_d",
+    "settings.restart_cta",
     "onboarding.connected",
     "onboarding.connect_failed"
   ],
@@ -47,6 +50,9 @@
     "feed.published_posts",
     "feed.on_par",
     "onboarding.analyze_locked",
+    "settings.restart_t",
+    "settings.restart_d",
+    "settings.restart_cta",
     "onboarding.connected",
     "onboarding.connect_failed"
   ],
@@ -72,6 +78,9 @@
     "feed.published_posts",
     "feed.on_par",
     "onboarding.analyze_locked",
+    "settings.restart_t",
+    "settings.restart_d",
+    "settings.restart_cta",
     "onboarding.connected",
     "onboarding.connect_failed"
   ],
@@ -97,6 +106,9 @@
     "feed.published_posts",
     "feed.on_par",
     "onboarding.analyze_locked",
+    "settings.restart_t",
+    "settings.restart_d",
+    "settings.restart_cta",
     "onboarding.connected",
     "onboarding.connect_failed"
   ],
@@ -122,6 +134,9 @@
     "feed.published_posts",
     "feed.on_par",
     "onboarding.analyze_locked",
+    "settings.restart_t",
+    "settings.restart_d",
+    "settings.restart_cta",
     "onboarding.connected",
     "onboarding.connect_failed"
   ],
@@ -148,6 +163,9 @@
     "feed.published_posts",
     "feed.on_par",
     "onboarding.analyze_locked",
+    "settings.restart_t",
+    "settings.restart_d",
+    "settings.restart_cta",
     "onboarding.connected",
     "onboarding.connect_failed"
   ]

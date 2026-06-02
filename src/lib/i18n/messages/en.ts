@@ -859,6 +859,9 @@ export const en = {
   "settings.shortcut_voice_d":
     "Shape how every draft sounds — themes, traits, and example posts.",
   "settings.open_voice": "Open voice",
+  "settings.restart_t": "Restart voice setup",
+  "settings.restart_d": "Walk through onboarding again — this replaces your current voice.",
+  "settings.restart_cta": "Restart setup",
   "settings.shortcut_preview_t": "Preview mode",
   "settings.shortcut_preview_d":
     "Try features before they ship. Things may change or break.",
