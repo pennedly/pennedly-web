@@ -309,6 +309,7 @@ const COMMENTS = {
       draft_is_skip: false,
       replied_at: "2026-05-31T13:00:00Z",
       reply_threads_post_id: "t_reply_704",
+      auto_replied: true,
     },
     {
       id: 705,

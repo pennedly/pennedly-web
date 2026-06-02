@@ -559,6 +559,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "replies.skipped":
     "пропущено — AI решил, что на этот комментарий отвечать не стоит",
   "replies.replied": "отвечено",
+  "replies.auto_replied": "Авто-ответ от Pennedly",
   "replies.filter_all": "Все",
   "replies.filter_new": "Нужен ответ",
   "replies.filter_drafted": "Черновик",

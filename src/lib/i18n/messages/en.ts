@@ -558,6 +558,7 @@ export const en = {
   "replies.skipped":
     "skipped — the AI judged this comment not worth replying to",
   "replies.replied": "replied",
+  "replies.auto_replied": "Auto-replied by Pennedly",
   "replies.filter_all": "All",
   "replies.filter_new": "Needs reply",
   "replies.filter_drafted": "Draft",

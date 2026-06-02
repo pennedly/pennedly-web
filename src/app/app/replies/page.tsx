@@ -565,6 +565,13 @@ export default function RepliesPage() {
                                   {c.replied_at && ` · ${relativeTime(c.replied_at, locale)}`}
                                 </span>
                               )}
+                              {/* Q3: the reply went out via the Autopilot sweep. */}
+                              {state === "replied" && c.auto_replied && (
+                                <span className="inline-flex items-center gap-1 rounded-full border border-accent/30 bg-accent/12 px-2 py-px text-caption font-medium text-accent">
+                                  <IcReply size={11} />
+                                  {t("replies.auto_replied")}
+                                </span>
+                              )}
                             </div>
 
                             {state === "pending" && editing ? (
@@ -591,9 +598,20 @@ export default function RepliesPage() {
                                 </div>
                               </>
                             ) : (
-                              <p className="whitespace-pre-wrap text-small leading-relaxed text-text">
-                                {state === "replied" ? c.draft_text ?? "" : displayText}
-                              </p>
+                              <>
+                                <p className="whitespace-pre-wrap text-small leading-relaxed text-text">
+                                  {state === "replied" ? c.draft_text ?? "" : displayText}
+                                </p>
+                                {/* Q10: translate the reply draft to the UI locale. */}
+                                {(state === "replied" ? c.draft_text : displayText) && (
+                                  <div className="mt-2">
+                                    <TranslateButton
+                                      text={(state === "replied" ? c.draft_text : displayText) ?? ""}
+                                      source="reply"
+                                    />
+                                  </div>
+                                )}
+                              </>
                             )}
                           </ReplyThread>
                         )

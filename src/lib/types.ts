@@ -240,6 +240,9 @@ export type CommentSummary = {
   draft_is_skip: boolean | null;
   replied_at: string | null;
   reply_threads_post_id: string | null;
+  // Q3: the reply went out via the Autopilot auto-reply sweep, not a manual
+  // approval — surfaced as an "Auto-replied by Pennedly" badge.
+  auto_replied: boolean;
 };
 
 export type CommentsList = {
