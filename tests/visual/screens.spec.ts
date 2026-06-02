@@ -118,6 +118,7 @@ const FEED = {
     avg_views: 1850,
     avg_likes: 95,
     avg_comments: 12,
+    avg_reposts: 8,
     median_views: 1600,
   },
   posts: [

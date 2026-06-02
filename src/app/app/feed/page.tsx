@@ -7,6 +7,7 @@
 // since it uses the round-2 threads_delete scope.
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import {
@@ -15,15 +16,17 @@ import {
   deletePost,
   fetchFeed,
   fetchMe,
+  fetchMyAccounts,
   fetchPostMetricsHistory,
   getTokens,
   setPostAutoReply,
 } from "@/lib/api";
 import { captureEvent } from "@/lib/analytics";
 import { useSelectedAccountId } from "@/lib/account";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { TranslateButton } from "@/components/TranslateButton";
 import { AppTopbar } from "@/components/AppTopbar";
+import { Avatar, nameOf } from "@/components/ui/avatar";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Toast, ToastHost } from "@/components/ui/toast";
@@ -38,9 +41,10 @@ import {
   IcEye,
   IcHeart,
   IcRepost,
+  IcStudio,
   IcTrash,
 } from "@/components/icons";
-import type { FeedPost, FeedReference, MetricsSnapshot } from "@/lib/types";
+import type { ConnectedAccount, FeedPost, FeedReference, MetricsSnapshot } from "@/lib/types";
 
 type Toast = { id: number; message: string; tone: "success" | "error" };
 
@@ -65,6 +69,10 @@ export default function FeedPage() {
   const [growthOpen, setGrowthOpen] = useState<number | null>(null);
   const [growth, setGrowth] = useState<Record<number, MetricsSnapshot[]>>({});
   const [toasts, setToasts] = useState<Toast[]>([]);
+  // Q26: the selected account's identity for the per-card author header.
+  const [account, setAccount] = useState<ConnectedAccount | null>(null);
+  // Q13: client-side sort over the already-loaded posts.
+  const [sort, setSort] = useState<"recent" | "top">("recent");
 
   async function toggleGrowth(postId: number) {
     if (growthOpen === postId) {
@@ -98,6 +106,17 @@ export default function FeedPage() {
       .then((m) => setIsTester(m.is_tester))
       .catch(() => {});
   }, []);
+
+  // Q26: load the selected account's identity (avatar/name/handle) for the cards.
+  useEffect(() => {
+    if (accountId === null) {
+      setAccount(null);
+      return;
+    }
+    fetchMyAccounts()
+      .then((list) => setAccount(list.accounts.find((a) => a.id === accountId) ?? null))
+      .catch(() => {});
+  }, [accountId]);
 
   async function onDeleteConfirm() {
     if (deleteTarget === null) return;
@@ -184,6 +203,10 @@ export default function FeedPage() {
     );
   }
 
+  // Q13: posts arrive newest-first; "top" re-sorts by views (client-side).
+  const sortedPosts =
+    sort === "top" ? [...posts].sort((a, b) => b.views - a.views) : posts;
+
   const hasBaseline = reference !== null && reference.posts_counted > 0;
   const baselineStats = reference
     ? [
@@ -214,7 +237,7 @@ export default function FeedPage() {
                     · {reference.posts_counted} {t("feed.posts_word")}
                   </div>
                 </div>
-                <div className="mt-4 grid grid-cols-3">
+                <div className="mt-4 grid grid-cols-4">
                   {baselineStats.map((s, i) => (
                     <div
                       key={i}
@@ -238,54 +261,91 @@ export default function FeedPage() {
 
         {!loaded && <p className="text-small text-text-muted">{t("common.loading")}</p>}
 
+        {/* Q37: a warm empty state that points the user back to drafting. */}
         {loaded && posts.length === 0 && (
-          <div className="flex flex-col items-center rounded-lg border border-dashed border-border px-6 py-14 text-center">
-            <p className="max-w-[42ch] text-small leading-relaxed text-text-muted">
+          <div className="flex flex-col items-center rounded-lg border border-dashed border-border px-6 py-16 text-center">
+            <span className="mb-4 grid h-[54px] w-[54px] place-items-center rounded-lg border border-border bg-surface-2 text-text-subtle">
+              <IcStudio size={26} />
+            </span>
+            <p className="text-h3 font-semibold tracking-tight">{t("feed.empty_title")}</p>
+            <p className="mt-1.5 max-w-[44ch] text-small leading-relaxed text-text-muted">
               {t("feed.empty")}
             </p>
+            <Link href="/app" className={cn(buttonClasses({ variant: "primary" }), "mt-5")}>
+              {t("feed.empty_cta")}
+            </Link>
+          </div>
+        )}
+
+        {/* Q13: post count + Recent / Top-performing sort. */}
+        {loaded && posts.length > 0 && (
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-small text-text-muted">
+              <b className="font-semibold tabular-nums text-text">{posts.length}</b>{" "}
+              {t("feed.published_posts")}
+            </div>
+            <div
+              role="tablist"
+              aria-label={t("feed.sort_label")}
+              className="inline-flex gap-[3px] rounded-md border border-border bg-surface-2 p-[3px]"
+            >
+              {(
+                [
+                  ["recent", t("feed.sort_recent")],
+                  ["top", t("feed.sort_top")],
+                ] as const
+              ).map(([k, label]) => (
+                <button
+                  key={k}
+                  role="tab"
+                  aria-selected={sort === k}
+                  onClick={() => setSort(k)}
+                  className={cn(
+                    "h-8 rounded-sm border px-3 text-small font-medium transition-colors",
+                    sort === k
+                      ? "border-border bg-surface font-semibold text-text shadow-sm"
+                      : "border-transparent text-text-muted hover:text-text",
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
         <ul className="space-y-3.5">
-          {posts.map((p) => (
+          {sortedPosts.map((p) => (
             <li
               key={p.id}
               className="rounded-lg border border-border bg-surface p-4 shadow-sm transition-colors hover:border-text/15"
               style={{ animation: "card-in 240ms var(--ease-entrance) both" }}
             >
-              {/* head: time + virality verdict */}
-              <div className="flex items-center gap-2 text-caption text-text-subtle">
-                {p.published_at && (
-                  <span>
-                    {new Date(p.published_at).toLocaleString(undefined, {
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    })}
-                  </span>
-                )}
-                <span className="ml-auto">
-                  {p.is_fresh ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/12 px-2.5 py-1 text-caption font-semibold text-accent">
-                      <IcClock size={12} />
-                      {t("feed.fresh")}
-                    </span>
-                  ) : (
-                    p.vs_avg_views !== null && (
-                      <span
-                        className={cn(
-                          "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-caption font-semibold",
-                          p.vs_avg_views >= 1.5
-                            ? "border-success/30 bg-success/12 text-success"
-                            : "border-border bg-surface-2 text-text-muted",
-                        )}
-                      >
-                        {p.vs_avg_views >= 1.5 && <IcArrowUp size={12} />}
-                        {p.vs_avg_views.toFixed(1)}
-                        {t("feed.vs_avg")}
+              {/* head: author (Q26) + virality verdict (Q37) */}
+              <div className="flex items-center gap-2.5">
+                {account && <Avatar account={account} size={38} />}
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-small font-semibold leading-tight">
+                    {account ? nameOf(account) : "…"}
+                  </div>
+                  <div className="flex items-center gap-1.5 text-caption text-text-subtle">
+                    {account?.username && (
+                      <>
+                        <span className="truncate">@{account.username}</span>
+                        {p.published_at && <span>·</span>}
+                      </>
+                    )}
+                    {p.published_at && (
+                      <span className="whitespace-nowrap" title={p.published_at}>
+                        {new Date(p.published_at).toLocaleString(undefined, {
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                        })}
                       </span>
-                    )
-                  )}
-                </span>
+                    )}
+                  </div>
+                </div>
+                <ViralityBadge post={p} t={t} />
               </div>
 
               <p className="mt-2.5 whitespace-pre-wrap text-body leading-relaxed text-text">
@@ -446,6 +506,45 @@ export default function FeedPage() {
         ))}
       </ToastHost>
     </div>
+  );
+}
+
+// Q37: four-band virality verdict from vs_avg_views — settling, over (≥1.5×),
+// on par (0.85–1.5×), or below — all from data already on the post.
+function ViralityBadge({ post, t }: { post: FeedPost; t: (k: MessageKey) => string }) {
+  const pill =
+    "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-caption font-semibold";
+  if (post.is_fresh) {
+    return (
+      <span className={cn(pill, "border-accent/30 bg-accent/12 text-accent")}>
+        <IcClock size={12} />
+        {t("feed.fresh")}
+      </span>
+    );
+  }
+  const r = post.vs_avg_views;
+  if (r === null) return null;
+  if (r >= 1.5) {
+    return (
+      <span className={cn(pill, "border-success/30 bg-success/12 text-success")}>
+        <IcArrowUp size={12} />
+        {r.toFixed(1)}
+        {t("feed.vs_avg")}
+      </span>
+    );
+  }
+  if (r >= 0.85) {
+    return (
+      <span className={cn(pill, "border-border bg-surface-2 text-text-muted")}>
+        {t("feed.on_par")}
+      </span>
+    );
+  }
+  return (
+    <span className={cn(pill, "border-border bg-surface-2 text-text-muted")}>
+      {r.toFixed(1)}
+      {t("feed.vs_avg")}
+    </span>
   );
 }
 

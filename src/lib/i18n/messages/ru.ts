@@ -697,6 +697,13 @@ export const ru: Partial<Record<MessageKey, string>> = {
     "Твои посты — у каждого видно, насколько он зашёл относительно твоего среднего.",
   "feed.empty":
     "Постов пока нет. Как опубликуешь в Threads — появятся здесь с аналитикой.",
+  "feed.empty_title": "Лента пуста",
+  "feed.empty_cta": "В Studio",
+  "feed.sort_label": "Сортировка постов",
+  "feed.sort_recent": "Свежие",
+  "feed.sort_top": "Лучшие",
+  "feed.published_posts": "опубликованных постов",
+  "feed.on_par": "На уровне",
   "feed.ref_week": "Твоё среднее за неделю",
   "feed.ref_30d": "Твоё среднее за 30 дней",
   "feed.ref_none":

@@ -692,6 +692,13 @@ export const en = {
   "feed.subtitle": "Your posts — each with how it did versus your usual.",
   "feed.empty":
     "No posts yet. Once you publish on Threads, they'll show up here with analytics.",
+  "feed.empty_title": "Your feed is empty",
+  "feed.empty_cta": "Go to Studio",
+  "feed.sort_label": "Sort posts",
+  "feed.sort_recent": "Recent",
+  "feed.sort_top": "Top performing",
+  "feed.published_posts": "published posts",
+  "feed.on_par": "On par",
   "feed.ref_week": "Your weekly average",
   "feed.ref_30d": "Your 30-day average",
   "feed.ref_none":
