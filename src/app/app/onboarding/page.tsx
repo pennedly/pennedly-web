@@ -49,10 +49,11 @@ import {
   IcSun,
   IcVoice,
 } from "@/components/icons";
+import { Avatar, nameOf } from "@/components/ui/avatar";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/feedback";
 import { cn } from "@/lib/cn";
-import type { OnboardingPreview, OnboardingStatus } from "@/lib/types";
+import type { ConnectedAccount, OnboardingPreview, OnboardingStatus } from "@/lib/types";
 
 type Stage = "loading" | "connect" | "choose" | "analyze" | "scratch" | "done";
 const STAGE_STEP: Record<Stage, number> = {
@@ -147,6 +148,9 @@ export default function OnboardingPage() {
 
   const [stage, setStage] = useState<Stage>("loading");
   const [accountId, setAccountId] = useState<number | null>(null);
+  // Q32: the just-connected account, shown in the Connect step's confirmation
+  // card (avatar + handle + Connected pill) before the user continues to Voice.
+  const [connectedAccount, setConnectedAccount] = useState<ConnectedAccount | null>(null);
   const [status, setStatus] = useState<OnboardingStatus | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -166,25 +170,43 @@ export default function OnboardingPage() {
       router.replace("/app/login");
       return;
     }
-    setPreview(new URLSearchParams(window.location.search).get("preview") === "1");
+    const params = new URLSearchParams(window.location.search);
+    setPreview(params.get("preview") === "1");
+    // Q32: we asked Meta to 302 back here (return_to=/app/onboarding) — read the
+    // one-shot result, then strip it so a refresh doesn't re-trigger it.
+    const justConnected = params.get("threads_connected") === "1";
+    const connectErr = params.get("threads_error");
+    if (justConnected || connectErr) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("threads_connected");
+      url.searchParams.delete("threads_error");
+      window.history.replaceState({}, "", url.toString());
+    }
     (async () => {
       try {
         const list = await fetchMyAccounts();
         const active = list.accounts.filter((a) => a.disconnected_at === null);
         if (active.length === 0) {
+          if (connectErr) setError(t("onboarding.connect_failed"));
           setStage("connect");
           return;
         }
-        let acc = getSelectedAccountId();
-        if (acc === null || !active.some((a) => a.id === acc)) {
-          acc = active[0].id;
-          setSelectedAccountId(acc);
-        }
-        setAccountId(acc);
-        const st = await fetchOnboardingStatus(acc);
+        // After a fresh connect, operate on the newest account and show its
+        // confirmation; otherwise keep the persisted selection.
+        const target = justConnected
+          ? active.reduce((a, b) => (b.connected_at > a.connected_at ? b : a))
+          : active.find((a) => a.id === getSelectedAccountId()) ?? active[0];
+        setSelectedAccountId(target.id);
+        setAccountId(target.id);
+        const st = await fetchOnboardingStatus(target.id);
         setStatus(st);
         setAlreadySetUp(!st.needs_onboarding);
-        setStage("choose");
+        if (justConnected) {
+          setConnectedAccount(target);
+          setStage("connect"); // renders the connected confirmation, not a redirect
+        } else {
+          setStage("choose");
+        }
       } catch (e) {
         if (e instanceof ApiError && e.status === 401) {
           clearTokens();
@@ -339,7 +361,11 @@ export default function OnboardingPage() {
               <Spinner size={20} />
             </div>
           ) : stage === "connect" ? (
-            <ConnectStep t={t} />
+            <ConnectStep
+              t={t}
+              connected={connectedAccount}
+              onContinue={() => { setError(null); setStage("choose"); }}
+            />
           ) : stage === "choose" ? (
             <ChooseStep
               status={status}
@@ -373,7 +399,15 @@ export default function OnboardingPage() {
   );
 }
 
-function ConnectStep({ t }: { t: (k: MessageKey) => string }) {
+function ConnectStep({
+  t,
+  connected,
+  onContinue,
+}: {
+  t: (k: MessageKey) => string;
+  connected?: ConnectedAccount | null;
+  onContinue?: () => void;
+}) {
   const trust: { Icon: (p: { size?: number }) => ReactNode; key: MessageKey }[] = [
     { Icon: IcEye, key: "onboarding.trust1" },
     { Icon: IcCheck, key: "onboarding.trust2" },
@@ -391,19 +425,47 @@ function ConnectStep({ t }: { t: (k: MessageKey) => string }) {
       <p className="mx-auto mt-2.5 max-w-[46ch] text-body leading-relaxed text-text-muted">
         {t("onboarding.connect_hero_sub")}
       </p>
-      <div className="mx-auto mt-5 flex max-w-[34ch] flex-col gap-2.5 text-left">
-        {trust.map(({ Icon, key }) => (
-          <div key={key} className="flex items-center gap-2.5 text-small text-text-muted">
-            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md border border-border bg-surface-2 text-text-subtle">
-              <Icon size={15} />
+
+      {connected ? (
+        <>
+          {/* Q32: confirm the freshly-connected account before moving on. */}
+          <div className="mx-auto mt-6 flex max-w-[34ch] items-center gap-3 rounded-lg border border-success/30 bg-success/[0.06] p-3.5 text-left">
+            <Avatar account={connected} size={42} />
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-small font-semibold">{nameOf(connected)}</div>
+              {connected.username && (
+                <div className="truncate text-caption text-text-subtle">@{connected.username}</div>
+              )}
+            </div>
+            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-success/30 bg-success/12 px-2.5 py-1 text-caption font-medium text-success">
+              <span className="h-1.5 w-1.5 rounded-full bg-success" />
+              {t("onboarding.connected")}
             </span>
-            {t(key)}
           </div>
-        ))}
-      </div>
-      <div className="mt-6 flex justify-center">
-        <ConnectThreadsButton variant="primary" />
-      </div>
+          <div className="mt-6 flex justify-center">
+            <Button variant="primary" onClick={onContinue}>
+              {t("onboarding.continue")}
+              <IcArrowRight size={17} />
+            </Button>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="mx-auto mt-5 flex max-w-[34ch] flex-col gap-2.5 text-left">
+            {trust.map(({ Icon, key }) => (
+              <div key={key} className="flex items-center gap-2.5 text-small text-text-muted">
+                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md border border-border bg-surface-2 text-text-subtle">
+                  <Icon size={15} />
+                </span>
+                {t(key)}
+              </div>
+            ))}
+          </div>
+          <div className="mt-6 flex justify-center">
+            <ConnectThreadsButton variant="primary" returnTo="/app/onboarding" />
+          </div>
+        </>
+      )}
     </section>
   );
 }

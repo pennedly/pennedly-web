@@ -19,9 +19,13 @@ import { IcAt } from "@/components/icons";
 
 type Props = {
   variant?: "primary" | "menu";
+  // Where Meta's callback 302s back to (a path under our origin). Defaults to
+  // the dashboard; onboarding passes "/app/onboarding" so the user lands back
+  // in the wizard (Q32) instead of the app.
+  returnTo?: string;
 };
 
-export function ConnectThreadsButton({ variant = "primary" }: Props) {
+export function ConnectThreadsButton({ variant = "primary", returnTo = "/app" }: Props) {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,8 +35,8 @@ export function ConnectThreadsButton({ variant = "primary" }: Props) {
     setError(null);
     captureEvent("ui.threads_connect_clicked", { variant });
     try {
-      const returnTo = `${window.location.origin}/app`;
-      const { authorize_url } = await startThreadsConnect(returnTo);
+      const returnUrl = `${window.location.origin}${returnTo}`;
+      const { authorize_url } = await startThreadsConnect(returnUrl);
       // Full-page navigation out of the SPA to Meta's consent screen.
       window.location.href = authorize_url;
     } catch {

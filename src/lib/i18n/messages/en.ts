@@ -898,6 +898,8 @@ export const en = {
   "onboarding.trust1": "Read-only to start — Pennedly studies your posts to learn your voice.",
   "onboarding.trust2": "By default, nothing posts until you approve it — you stay in control.",
   "onboarding.trust3": "Disconnect anytime — your data leaves with you.",
+  "onboarding.connected": "Connected",
+  "onboarding.connect_failed": "We couldn't connect that account. Please try again.",
   "onboarding.choose_eyebrow": "Step 2 of 3 · Your voice",
   "onboarding.choose_title": "How should Pennedly learn your voice?",
   "onboarding.choose_sub":

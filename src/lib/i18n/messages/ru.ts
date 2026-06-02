@@ -901,6 +901,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "onboarding.trust1": "Сначала только чтение — Pennedly изучает твои посты, чтобы освоить твой голос.",
   "onboarding.trust2": "По умолчанию ничего не постится, пока ты не одобришь — всё под твоим контролем.",
   "onboarding.trust3": "Отключить можно в любой момент — данные уходят с тобой.",
+  "onboarding.connected": "Подключён",
+  "onboarding.connect_failed": "Не получилось подключить аккаунт. Попробуй ещё раз.",
   "onboarding.choose_eyebrow": "Шаг 2 из 3 · Твой голос",
   "onboarding.choose_title": "Как Pennedly выучит твой голос?",
   "onboarding.choose_sub":

@@ -18,39 +18,9 @@ import { setSelectedAccountId, useSelectedAccountId } from "@/lib/account";
 import { captureEvent } from "@/lib/analytics";
 import { useTranslation } from "@/lib/i18n";
 import { ConnectThreadsButton } from "@/components/ConnectThreadsButton";
-import { Mono } from "@/components/ui/mono";
+import { Avatar, nameOf } from "@/components/ui/avatar";
 import { IcCheck, IcChevDown, IcSettings } from "@/components/icons";
 import type { ConnectedAccount, Me } from "@/lib/types";
-
-function nameOf(a: ConnectedAccount): string {
-  return a.display_name ?? a.username ?? `acct ${a.id}`;
-}
-
-function initialsOf(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-  return name.trim().slice(0, 2).toUpperCase() || "?";
-}
-
-// Real Threads profile picture when we have one; initials monogram otherwise.
-function Avatar({ account, size }: { account: ConnectedAccount; size: number }) {
-  const { t } = useTranslation();
-  if (account.profile_picture_url) {
-    return (
-      // Threads CDN host varies — a plain <img> avoids next/image remote config.
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={account.profile_picture_url}
-        alt={t("shell.avatar_alt")}
-        width={size}
-        height={size}
-        className="shrink-0 rounded-full bg-surface-2 object-cover"
-        style={{ width: size, height: size }}
-      />
-    );
-  }
-  return <Mono text={initialsOf(nameOf(account))} size={size} />;
-}
 
 export function AccountSwitcher({ me, onLogout }: { me?: Me | null; onLogout?: () => void }) {
   const selected = useSelectedAccountId();

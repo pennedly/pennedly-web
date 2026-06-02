@@ -46,7 +46,7 @@ _Гейты: `uv run pytest` + `uv run ruff check`. SPEC §6/§7/§13/§14 — �
 ## Фаза 2 — Перенос экранов (по одному, по ритму) · репо `pennedly-web`
 _На КАЖДОМ экране — общие паттерны: общий shell · аватары (Q26/Q38/Q57) · перевод в ⋯-меню (Q21/Q10) · loading/empty/error (Q22/Q23) · оптимистичность + Undo (Q24/Q25) · абсолютное локальное время (Q40) · status-pills (Q41/Q14)._
 
-> **📋 АУДИТ 2026-06-02 (4 агента, все 16 экранов).** Ключевой вывод: **общий shell + design-system уже стоят на всех экранах** — осталась не верстка с нуля, а **поведение + подключение полей бэка** (Фаза 1 уже их отдаёт, фронт их ещё не читает). **Готово 5/16** (Explore, Landing, Legal, Audits, Patterns). Подключённые поля: `avg_reposts`(Q64✅) · `min_posts_to_analyze`(Q53✅) · `category`+`old_text/new_text`(Q51/Q75✅) · `SelfStudyExample.metric`(Q56✅) · `GET /study/latest`(Q54✅) · Patterns ×N+Topics-chip(Q42/Q55✅). Осталось подтянуть: `auto_replied`(Q3, Replies) · `posts_analyzed`(Q67, Voice) · **`RoleBookSections` flat→typed objects(Q60, Voice — полный редактор)**.
+> **📋 АУДИТ 2026-06-02 (4 агента, все 16 экранов).** Ключевой вывод: **общий shell + design-system уже стоят на всех экранах** — осталась не верстка с нуля, а **поведение + подключение полей бэка** (Фаза 1 уже их отдаёт, фронт их ещё не читает). **Готово 6/16** (Explore, Landing, Legal, Audits, Patterns, Onboarding). Подключённые поля: `avg_reposts`(Q64✅) · `min_posts_to_analyze`(Q53✅) · `category`+`old_text/new_text`(Q51/Q75✅) · `SelfStudyExample.metric`(Q56✅) · `GET /study/latest`(Q54✅) · Patterns ×N+Topics-chip(Q42/Q55✅). Осталось подтянуть: `auto_replied`(Q3, Replies) · `posts_analyzed`(Q67, Voice) · **`RoleBookSections` flat→typed objects(Q60, Voice — полный редактор)**.
 >
 > **✅ Q60-регрессия закрыта (интерим):** живой `/app/role-book` снова работает — `flattenSections` коэрсит объекты бэка обратно в строки на чтении (`eb05773`). Полный типизированный редактор (ids, перевод по пунктам, контекст примеров, hero) — оставшаяся задача Voice.
 
@@ -63,8 +63,8 @@ _На КАЖДОМ экране — общие паттерны: общий shel
 | 9 | **Autopilot** | 🟡 S | Q6 иконка-часы (сейчас `IcBolt`) · Q66 cap 10/25/50 (сейчас 1/3/5/10/20). (Q5/Q50/Q59/Q34 ✅) |
 | 10 | **Voice/role-book** | 🔴 L | Q60 **интерим-фикс ✅** (`flattenSections` коэрсит объекты→строки — прод больше НЕ ломается). Остаётся полный типизированный редактор: Q60 (ids + правка объектов) · Q67 hero «Analyzed N posts · Updated» (`posts_analyzed`) · Q8 перевод по секциям · Q16 Post/Reply context · Q23 404→EmptyVoice |
 | 11 | **Style rules** | 🟡 M | Q29 порядок (Your rules ПЕРВЫМИ) · Q30 группы по категориям (не chip-фильтр) · Q44 live-демо пунктуации · Q49 i18n встроенных по `key` · Q81 toast по виду. (Q11 ✅) |
-| 12 | **Settings** | 🟡 M | Q33 вторая строка («Restart setup») · Q38 реальное фото (Avatar) · Q46 флаги+имена в локали-пикере. (Q36/Q68 ✅) |
-| 13 | **Onboarding** | 🟡 S | Q32 connected-карточка + `return_to=/app/onboarding`. (Q53 `min_posts_to_analyze` в тексте ✅ · Q23 ✅) |
+| 12 | **Settings** | 🟡 M | Q33 вторая строка («Restart setup») · Q38 реальное фото в Settings (общий `ui/Avatar` уже вынесен при Onboarding-Q32 ✅, осталось применить в Settings) · Q46 флаги+имена в локали-пикере. (Q36/Q68 ✅) |
+| 13 | **Onboarding** | ✅ done | Q32 ✅ — Connect шлёт `return_to=/app/onboarding`; по возврату (`?threads_connected=1`) — карточка-подтверждение (общий `<Avatar>` + @handle + «Connected»-пилюля + Continue→Voice), без редиректа на /app. (Q53 ✅ · Q23 ✅) |
 | 14 | **Login** | 🟡 S | Q20 абс. ссылки на /terms,/privacy · Q79 удалить ~8 осиротевших `login.*` ключей (8 локалей) |
 | 15 | **Landing** | ✅ done | Q1/Q2/Q4 ✅; Q20 — относительные ссылки ок на одном домене (опц.) |
 | 16 | **Legal** | ✅ done | Q70 (Twój StartUp, реальный GDPR/ToS) ✅ · Q71 (2 уровня удаления) ✅ |

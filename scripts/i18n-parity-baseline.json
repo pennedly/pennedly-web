@@ -7,7 +7,9 @@
     "audits.cat.format",
     "patterns.metric_likes",
     "patterns.metric_comments",
-    "onboarding.analyze_locked"
+    "onboarding.analyze_locked",
+    "onboarding.connected",
+    "onboarding.connect_failed"
   ],
   "es": [
     "audits.cat.voice",
@@ -16,7 +18,9 @@
     "audits.cat.format",
     "patterns.metric_likes",
     "patterns.metric_comments",
-    "onboarding.analyze_locked"
+    "onboarding.analyze_locked",
+    "onboarding.connected",
+    "onboarding.connect_failed"
   ],
   "fr": [
     "audits.cat.voice",
@@ -25,7 +29,9 @@
     "audits.cat.format",
     "patterns.metric_likes",
     "patterns.metric_comments",
-    "onboarding.analyze_locked"
+    "onboarding.analyze_locked",
+    "onboarding.connected",
+    "onboarding.connect_failed"
   ],
   "it": [
     "audits.cat.voice",
@@ -34,7 +40,9 @@
     "audits.cat.format",
     "patterns.metric_likes",
     "patterns.metric_comments",
-    "onboarding.analyze_locked"
+    "onboarding.analyze_locked",
+    "onboarding.connected",
+    "onboarding.connect_failed"
   ],
   "pt": [
     "audits.cat.voice",
@@ -43,7 +51,9 @@
     "audits.cat.format",
     "patterns.metric_likes",
     "patterns.metric_comments",
-    "onboarding.analyze_locked"
+    "onboarding.analyze_locked",
+    "onboarding.connected",
+    "onboarding.connect_failed"
   ],
   "ru": [],
   "uk": [
@@ -53,6 +63,8 @@
     "audits.cat.format",
     "patterns.metric_likes",
     "patterns.metric_comments",
-    "onboarding.analyze_locked"
+    "onboarding.analyze_locked",
+    "onboarding.connected",
+    "onboarding.connect_failed"
   ]
 }

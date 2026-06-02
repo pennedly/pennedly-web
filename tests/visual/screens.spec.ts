@@ -978,6 +978,12 @@ test("Onboarding", async ({ page }) => {
   await page.getByRole("button", { name: /continue/i }).click();
   await page.waitForTimeout(3400);
   await shoot(page, "onboarding-done");
+  // Q32: returning from OAuth (?threads_connected=1) shows the connected-account
+  // confirmation card (avatar + handle + Connected pill + Continue), not a redirect.
+  await page.goto("/app/onboarding?threads_connected=1");
+  await page.waitForSelector("header", { state: "visible", timeout: 15_000 });
+  await page.waitForTimeout(1000);
+  await shoot(page, "onboarding-connected");
 });
 
 test("Login", async ({ page }) => {
