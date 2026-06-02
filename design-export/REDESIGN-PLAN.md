@@ -20,26 +20,28 @@ _Быстрые общие правки. Без них перенос экран
 ## Фаза 1 — Бэкенд (данные и эндпоинты под экраны) · репо `pennedly-backend`
 _Гейты: `uv run pytest` + `uv run ruff check`. SPEC §6/§7/§13/§14 — в тех же коммитах. Многое блокирует экраны Фазы 2._
 
+> **✅ ФАЗА 1 БЭКЕНД ЗАКРЫТА (2026-06-02)** — все backend-задачи сделаны, протестированы и задеплоены в прод (health 200, 346 тестов). Осталось НЕ-бэкендовое: переуказать Meta callback-URL в консоли Meta (Закхар, Q52); фронтовые хвосты Q49/Q63/Q65 (делаются на экранах Фазы 2); Q28 отложен. Backend-коммиты: `1e6c10f`(Q52) `3b92705`(Q3/Q53/Q61/Q62/Q64) `9d88e56`(Q54) `c85fda9`(Q67) `389acad`(Q51/Q75) `74cc4a8`(Q56/Q58) `00c7633`(Q57); Q60 — `e701953`.
+
 **🚨 Блокер Meta / запуска**
-- [ ] **Q52** — `DELETE /api/me` (каскадное удаление tenant) + переуказать Meta callback-URL.
+- [x] **Q52** — ✅ `DELETE /api/me` (каскадное удаление tenant + user + magic-link-токены, изоляция чужих тенантов, DB-тест) задеплоен. ⏳ Осталось **переуказать Meta callback-URL в консоли Meta** — это Закхар.
 
 **Профиль голоса (блокирует Voice / Studio / Replies / Autopilot)**
-- [ ] **Q60** — типизировать секции role-book в объекты + переписать `assemble_prompt`. **АТОМАРНО** (нельзя дробить на коммиты — прод-генерация сломается на полпути на старых плоских данных). Данные: **Alembic-миграция сохраняет** догфудинг-role_books (решение Закхара). 🔎 _Разведка готова 2026-06-02 — план ниже, реализовать одним заходом (лучше свежей сессией):_
+- [x] **Q60** — ✅ ГОТОВО (`e701953`). Секции role-book — типизированные объекты с `id`; рендер промпта обратно-совместим (мигрированные плоские данные дают идентичный `prompt_text` — прод-генерация не сдвинулась, проверено на живой БД); lint чинит по `id`+`field`; экстрактор отдаёт объекты; render-neutral Alembic-бэкфилл. _Исходный план разведки ниже — для истории:_
   - **Цель (эталон `voice-data.jsx`):** каждый элемент секции — объект с `id`. `themes_include`/`themes_exclude` → `{id,label,note}`; `voice_characteristics` → `{id,label,text}`; `do_list`/`dont_list` → `{id,text}`; `examples` → `{id,context,text}` (context=Post/Reply; **stat (лайки) убрать — Q16**); `intro` остаётся `str`.
   - **7 точек, один коммит:** (1) `onboarding/role_book_sections.py` — типы элементов по секции + переписать `assemble_prompt`/`normalize_sections`/`merge_sections`; `id` генерить для новых, **сохранять существующие** (lint targeting); рендер промпта: exclude→`- {label}`, include→`- {label}: {note}`, traits→`- {label}: {text}`, do/dont→`- {text}`, examples→`- {text}`. (2) `onboarding/voice_extractor.py` — `VOICE_EXTRACTOR_SYSTEM_PROMPT` отдаёт объекты. (3) `role_book_lint.py` — fix-модель `text`→`id`+`field` (эталон `VOICE_CONFLICTS.fix={section,id,field,value}`); переписать `FIX_KINDS`/`validate_fix`/`apply_fix_to_sections`/system-prompt + `_format_sections_for_llm`. (4) `api/role_book.py` GET/PATCH типы. (5) `api/onboarding.py` потребление. (6) **Alembic** data-migration: строка → `{id,label:строка,note:""}` (themes), `{id,label:"",text:строка}` (traits), `{id,text:строка}` (do/dont), `{id,context:"post",text:строка}` (examples); intro как есть. (7) тесты `test_role_book_sections.py` (FULL_VOICE → объекты, сохранить data-loss инвариант) + lint-тесты + SPEC §5.3/§7.6/§13. ⚠️ Открывает Q8 (перевод по пунктам) и Q16 (Post/Reply context).
 
 **Данные под конкретные экраны**
-- [ ] **Q54** — `self_studies` + `GET /patterns/study/latest` (Patterns).
-- [ ] **Q3** — `auto_replied` в SELECT `comments` + `CommentSummary` (Replies).
-- [ ] **Q51 / Q75** — diff `old_text/new_text` + display-`category` от coach (Audits).
-- [ ] **Q50 / Q59** — 3 audience-фильтра (тёплые имена) + post-time целый час (Autopilot).
-- [ ] **Q53** — `MIN_POSTS_TO_ANALYZE=15` + вывести в `OnboardingStatus` (Onboarding).
-- [ ] **Q56 / Q58 / Q64 / Q65** — метрики примеров по виду · Stats today/yesterday по постам · `avg_reposts` · числовая дельта Feed.
-- [ ] **Q61 / Q62 / Q63** — `both` в user_rules · `reply_to` в GET /drafts · (опц.) `reopen` эндпоинт.
-- [ ] **Q67 / Q49** — колонка `posts_analyzed` · style-rules i18n по `key`.
-- [ ] **Q57** — 🔍 разведка: отдаёт ли Threads conversation API автора (фото/имя) → решит аватары комментаторов.
+- [x] **Q54** — ✅ `self_studies` (UNIQUE/аккаунт, UPSERT) + `GET /patterns/study/latest` (`{computed_at, study}`); `POST /study` пишет. DB-тест.
+- [x] **Q3** — ✅ `auto_replied` в SELECT `comments` + `CommentSummary` (бейдж «Auto-replied by Pennedly»).
+- [x] **Q51 / Q75** — ✅ coach отдаёт `category` (Voice/Cadence/Topic/Format); `GET /audits/{id}` обогащает каждое решение `category`(fallback на kind) + `old_text/new_text/change_type/title/detail` из `proposed_change.diff` (чистый diff вместо сырого JSON). Без миграции.
+- [x] **Q50 / Q59** — ✅ NO-OP: бэкенд уже имеет 3 валидируемых фильтра `{all_except_trolls, fans, questions}` на уровне аккаунта (тёплые имена — фронт) и целый час `post_hour` 0-23 (минуты отложены). Кода не нужно.
+- [x] **Q53** — ✅ `MIN_POSTS_TO_ANALYZE=15` + `min_posts_to_analyze` в `OnboardingStatus`.
+- [x] **Q56 / Q58 / Q64** — ✅ примеры self-study несут метрику под паттерн (question→comments, emoji→likes, length/structure→views; ранжирование по ней) · Stats today/yesterday = разбивка по постам (бар/пост с label) · `avg_reposts` в feed baseline. **Q65** = фронт (числовая дельта выводится из `vs_avg_views`, фейк-спарклайн — на экране Feed).
+- [x] **Q61 / Q62** — ✅ `both` в user_rules (читают и post-, и reply-генерация) · `reply_to {who,text}` в `GET /drafts` (DB-тест). **Q63** = фронт (Undo-тост, без эндпоинта).
+- [x] **Q67** — ✅ колонка `posts_analyzed` (ставит экстрактор, переносят PATCH/apply-fix/coach), в `GET /role-book` для Voice-героя. **Q49** = бэкенд уже отдаёт `key`; i18n встроенных правил — фронт.
+- [x] **Q57** — ✅ разведка: Threads `/conversation` отдаёт только `@username` (нет фото/имени; `threads_profile_picture_url` только у `/me`, юзер-лукапа нет) → аватары комментаторов невозможны, везде `@username` + монограмма. Зафиксировано в SPEC §14 (закрывает Q26/Q38/Q57).
 - [ ] **Q28** — (отложено) счётчик `ready_to_publish` для Studio-бейджа.
-- [ ] **Q48** — подтвердить, что `rolled_back` пишется (показ — на фронте в Audits).
+- [x] **Q48** — ✅ подтверждено: `effect_tracker` пишет `rolled_back = TRUE` + PostHog-событие (показ — фронт в Audits).
 
 ## Фаза 2 — Перенос экранов (по одному, по ритму) · репо `pennedly-web`
 _На КАЖДОМ экране — общие паттерны: общий shell · аватары (Q26/Q38/Q57) · перевод в ⋯-меню (Q21/Q10) · loading/empty/error (Q22/Q23) · оптимистичность + Undo (Q24/Q25) · абсолютное локальное время (Q40) · status-pills (Q41/Q14)._
