@@ -6,7 +6,7 @@ const AUDIT_USER = { name: "Mara Lin", handle: "@mara.lin", initials: "ML" };
 
 const AUDITS = [
   {
-    id: "a1", title: "Week of May 25", range: "May 25 – Jun 1", posted: "2 days ago",
+    id: "a1", title: "Week of May 25", range: "May 25 – Jun 1", posted: "2 days ago", postsAnalyzed: 18, wowDelta: 12,
     summary: "Your revision posts are pulling ahead — let's lean into craft and quiet the motivational closers.",
     narrative: [
       "This week your account leaned into something worth protecting. Posts about the act of editing — cutting, revising, deciding what to keep — outperformed your motivational posts by nearly 2 to 1. That's a real signal about what people come to you for: craft, not cheerleading.",
@@ -37,6 +37,12 @@ const AUDITS = [
         status: "rejected", effect: null, diff: null,
       },
       {
+        id: "c6", kind: "Autopilot", title: "Set your default auto-post hours",
+        detail: "Your audience is most active in three windows. With Autopilot on, I'll schedule posts at these times by default — you can fine-tune them on the Autopilot screen.",
+        status: "undecided", effect: null, diff: null,
+        config: "autopilot_config", hoursUtc: [13, 18, 23],
+      },
+      {
         id: "c5", kind: "Voice", title: "Enforce lowercase everywhere",
         detail: "I tried carrying your warm lowercase replies into your posts too — but it flattened them. Rolled back to replies-only; your posts read better sentence-cased.",
         status: "rolledback", effect: "-4%", effectLabel: "on posts", diff: null,
@@ -44,7 +50,7 @@ const AUDITS = [
     ],
   },
   {
-    id: "a2", title: "Week of May 18", range: "May 18 – 24", posted: "1 week ago",
+    id: "a2", title: "Week of May 18", range: "May 18 – 24", posted: "1 week ago", postsAnalyzed: 16, wowDelta: 5,
     summary: "A strong week for replies. Small tweaks to your openings and reply timing.",
     narrative: [
       "Replies carried the week — the ones you sent within the hour pulled real conversations. Below are a few small adjustments to lock that in and tighten your post openings.",
@@ -58,7 +64,7 @@ const AUDITS = [
     ],
   },
   {
-    id: "a3", title: "Week of May 11", range: "May 11 – 17", posted: "2 weeks ago",
+    id: "a3", title: "Week of May 11", range: "May 11 – 17", posted: "2 weeks ago", postsAnalyzed: 14, wowDelta: -3,
     summary: "Cleaning up hashtags and leaning into behind-the-scenes posts.",
     narrative: ["A tidy-up week. Two changes landed well; one didn't fit your voice."],
     changes: [
@@ -68,7 +74,7 @@ const AUDITS = [
     ],
   },
   {
-    id: "a4", title: "Week of May 4", range: "May 4 – 10", posted: "3 weeks ago",
+    id: "a4", title: "Week of May 4", range: "May 4 – 10", posted: "3 weeks ago", postsAnalyzed: 17, wowDelta: 9,
     summary: "Found your best posting window and a sharper question style.",
     narrative: ["Your evenings outperformed mornings this week, and posts that ended on a question drew more replies."],
     changes: [
@@ -79,7 +85,7 @@ const AUDITS = [
     ],
   },
   {
-    id: "a5", title: "Week of Apr 27", range: "Apr 27 – May 3", posted: "4 weeks ago",
+    id: "a5", title: "Week of Apr 27", range: "Apr 27 – May 3", posted: "4 weeks ago", postsAnalyzed: 12, wowDelta: null,
     summary: "Your first audit — establishing a baseline voice.",
     narrative: ["Welcome to your first weekly review. I set a few starting defaults from your existing posts."],
     changes: [

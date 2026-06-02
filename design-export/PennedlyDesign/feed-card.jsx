@@ -61,27 +61,33 @@ function TrendChart({ points, baseline }) {
 /* ------------------------------ Post card ----------------------------- */
 function PostCard({ post, baseline, expanded, leaving, onToggleTrend, onToggleReplies, onDelete }) {
   const [menu, setMenu] = useCS(false);
+  const [menuMode, setMenuMode] = useCS("root");
+  const [lang, setLang] = useCS(null);
   const anchorRef = useCR(null);
   useCE(() => {
     if (!menu) return;
-    const close = (e) => { if (anchorRef.current && !anchorRef.current.contains(e.target)) setMenu(false); };
+    const close = (e) => { if (anchorRef.current && !anchorRef.current.contains(e.target)) { setMenu(false); setMenuMode("root"); } };
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);
   }, [menu]);
 
   const ratio = post.metrics.views / baseline.views;
   const isReply = post.kind === "reply";
+  const origLang = post.lang || "en";
+  const translatedLang = lang ? window.UI_LANGS.find((l) => l.code === lang) : null;
+  const bodyText = translatedLang ? (post.tr && post.tr[lang]) || post.text : post.text;
+  function pickLang(code) { setMenu(false); setMenuMode("root"); setLang(code === origLang ? null : code); }
 
   return (
     <article className={`feed-card ${leaving ? "feed-card--leaving" : ""}`}>
       <div className="draft-head">
-        <window.Mono text={window.FEED_USER.initials} size={34} font={12} />
+        <window.Avatar src={window.FEED_USER.avatar} initials={window.FEED_USER.initials} size={38} />
         <div className="draft-id">
           <div className="draft-name">{window.FEED_USER.name}</div>
           <div className="draft-sub">
             <span>{window.FEED_USER.handle}</span>
             {isReply && <><span className="sep">·</span><span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><window.IcReply size={12} />replied to {post.replyTo.who}</span></>}
-            <span className="sep">·</span><span>{post.time}</span>
+            <span className="sep">·</span><span title={post.time}>{window.fmtDateTime(post.at)}</span>
           </div>
         </div>
         <ViralityBadge ratio={ratio} settling={post.settling} />
@@ -97,7 +103,15 @@ function PostCard({ post, baseline, expanded, leaving, onToggleTrend, onToggleRe
         </div>
       )}
 
-      <p className="draft-body">{post.text}</p>
+      <p className="draft-body">{bodyText}</p>
+      {translatedLang && (
+        <div className="translate-bar">
+          <window.IcGlobe size={13} className="tb-ico" />
+          <span>Translated to {translatedLang.native}</span>
+          <span className="tb-dot">·</span>
+          <button className="tb-orig" onClick={() => setLang(null)}>Show original</button>
+        </div>
+      )}
 
       <MetricRow m={post.metrics} />
 
@@ -113,35 +127,59 @@ function PostCard({ post, baseline, expanded, leaving, onToggleTrend, onToggleRe
       )}
 
       <div className="feed-foot">
-        <label className="reply-toggle">
-          <span className="switch">
-            <input type="checkbox" checked={post.autoReplies} onChange={() => onToggleReplies(post.id)} aria-label="Auto-replies" />
-            <span className="track" /><span className="knob" />
-          </span>
-          <span className="rt-label">Auto-replies <b>{post.autoReplies ? "on" : "off"}</b></span>
-        </label>
+        <button className={`ar-pill ${post.autoReplies ? "ar-pill--on" : ""}`} onClick={() => onToggleReplies(post.id)} aria-pressed={post.autoReplies}>
+          {post.autoReplies ? <window.IcReply size={14} className="ar-ico" /> : <span className="ar-dot" />}
+          Auto-replies {post.autoReplies ? "on" : "off"}
+        </button>
 
         <div className="feed-actions">
-          <button className={`btn btn--ghost btn--sm`} onClick={() => onToggleTrend(post.id)} aria-expanded={expanded}>
-            <window.IcChart size={15} /> Trend
+          <button className="btn btn--ghost btn--sm" onClick={() => onToggleTrend(post.id)} aria-expanded={expanded}>
+            <window.IcChart size={15} /> Growth
             <window.IcChevDown size={14} style={{ transform: expanded ? "rotate(180deg)" : "none", transition: "transform var(--duration-base) var(--ease-standard)" }} />
           </button>
           <a className="btn btn--primary btn--sm" href="https://www.threads.net" target="_blank" rel="noopener noreferrer">
             <window.IcExternal size={15} /> Open on Threads
           </a>
           <div className="menu-anchor" ref={anchorRef}>
-            <button className="icon-btn" style={{ width: 32, height: 32 }} aria-label="More actions" aria-haspopup="menu" onClick={() => setMenu((v) => !v)}>
+            <button className="icon-btn" style={{ width: 34, height: 34 }} aria-label="More actions" aria-haspopup="menu" aria-expanded={menu} onClick={() => { setMenu((v) => !v); setMenuMode("root"); }}>
               <window.IcMore size={17} />
             </button>
             {menu && (
               <div className="menu" role="menu">
-                <a className="menu-item" role="menuitem" href="https://www.threads.net" target="_blank" rel="noopener noreferrer" onClick={() => setMenu(false)}>
-                  <window.IcExternal size={15} className="mi-ico" /> Open on Threads
-                </a>
-                <div className="menu-sep" />
-                <button className="menu-item menu-item--danger" role="menuitem" onClick={() => { setMenu(false); onDelete(post); }}>
-                  <window.IcTrash size={15} className="mi-ico" /> Delete post
-                </button>
+                {menuMode === "root" ? (
+                  <>
+                    {translatedLang && (
+                      <button className="menu-item" role="menuitem" onClick={() => { setMenu(false); setLang(null); }}>
+                        <window.IcUndo size={15} className="mi-ico" /> Show original
+                      </button>
+                    )}
+                    <button className="menu-item" role="menuitem" onClick={() => setMenuMode("translate")}>
+                      <window.IcGlobe size={15} className="mi-ico" /> Translate
+                      <window.IcChevDown size={13} className="mi-caret" />
+                    </button>
+                    <a className="menu-item" role="menuitem" href="https://www.threads.net" target="_blank" rel="noopener noreferrer" onClick={() => setMenu(false)}>
+                      <window.IcExternal size={15} className="mi-ico" /> Open on Threads
+                    </a>
+                    <div className="menu-sep" />
+                    <button className="menu-item menu-item--danger" role="menuitem" onClick={() => { setMenu(false); onDelete(post); }}>
+                      <window.IcTrash size={15} className="mi-ico" /> Delete post
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button className="menu-back" onClick={() => setMenuMode("root")}><window.IcArrowLeft size={14} /> Translate to</button>
+                    {window.UI_LANGS.map((l) => {
+                      const isOrig = l.code === origLang;
+                      const on = lang ? lang === l.code : isOrig;
+                      return (
+                        <button key={l.code} className={`menu-item ${on ? "menu-item--on" : ""}`} role="menuitemradio" aria-checked={on} onClick={() => pickLang(l.code)}>
+                          <span className="mi-lang"><span className="mi-lname">{l.label}</span><span className="mi-native">{isOrig ? "Original" : l.native}</span></span>
+                          {on && <window.IcCheck size={14} className="mi-check" />}
+                        </button>
+                      );
+                    })}
+                  </>
+                )}
               </div>
             )}
           </div>

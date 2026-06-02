@@ -1,95 +1,87 @@
-// voice-parts.jsx — shell + presentational building blocks for the Voice screen.
+// voice-parts.jsx — presentational building blocks for the Voice screen.
+// Sidebar / account / avatar come from the shared shell (shell-parts.jsx).
 // All visuals reference the ink-on-paper tokens; no hardcoded colours.
 
 const { useState: useVS, useEffect: useVE, useRef: useVR } = React;
 
-/* ------------------------------- Avatar -------------------------------- */
-function Mono({ text, size = 34, font = 13 }) {
-  return <span className="mono" style={{ width: size, height: size, fontSize: font }}>{text}</span>;
-}
+const langEntry = (code) => (window.UI_LANGS || []).find((l) => l.code === code) || { code, label: code, native: code };
 
-/* ------------------------------- Sidebar ------------------------------- */
-function Sidebar() {
-  const nav = [
-    { id: "studio",   label: "Studio",   Icon: window.IcStudio,   href: "Studio.html", badge: 4 },
-    { id: "feed",     label: "My Feed",  Icon: window.IcFeed,     href: "Feed.html" },
-    { id: "stats",    label: "Stats",    Icon: window.IcChart,    href: "Stats.html" },
-    { id: "replies",  label: "Replies",  Icon: window.IcReplies,  href: "Replies.html", badge: 3 },
-    { id: "autopilot",label: "Autopilot",Icon: window.IcBolt,     href: "Autopilot.html" },
-    { id: "voice",    label: "Voice",    Icon: window.IcVoice,    active: true },
-    { id: "settings", label: "Settings", Icon: window.IcSettings },
-  ];
+/* --------------------------- Language menu ----------------------------- */
+// Reusable globe dropdown over a set of UI locales (see shell-data UI_LANGS).
+function LangMenu({ value, onChange, langs, compact }) {
+  const [open, setOpen] = useVS(false);
+  const cur = langEntry(value);
   return (
-    <aside className="sidebar">
-      <div className="brand">
-        <window.Logo size={34} radius={10} className="brand-mark" />
-        <div>
-          <div className="brand-name">Pennedly</div>
-          <div className="brand-sub">Drafting partner</div>
+    <div className="langmenu">
+      {open && <div className="lm-scrim" onClick={() => setOpen(false)} />}
+      <button className={`lm-btn ${compact ? "lm-btn--sm" : ""} ${open ? "is-open" : ""}`} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+        <window.IcGlobe size={compact ? 15 : 16} />
+        <span className="lm-cur">{value === "en" ? "Original" : cur.native}</span>
+        <window.IcChevDown size={14} className="lm-chev" />
+      </button>
+      {open && (
+        <div className="lm-pop" role="menu">
+          {langs.map((code) => {
+            const l = langEntry(code);
+            return (
+              <button key={code} role="menuitemradio" aria-checked={code === value} className={`lm-item ${code === value ? "is-on" : ""}`} onClick={() => { onChange(code); setOpen(false); }}>
+                <span className="lm-names">
+                  <span className="lm-native">{code === "en" ? "English" : l.native}</span>
+                  <span className="lm-label">{code === "en" ? "Original · editable" : l.label}</span>
+                </span>
+                {code === value && <window.IcCheck size={15} className="lm-check" />}
+              </button>
+            );
+          })}
         </div>
-      </div>
-      <nav className="nav">
-        <div className="nav-cap">Workspace</div>
-        {nav.map(({ id, label, Icon, active, badge, href }) => (
-          <a key={id} className={`nav-item ${active ? "nav-item--active" : ""}`} href={href || undefined} tabIndex="0">
-            <Icon size={16} />
-            <span className="nav-label">{label}</span>
-            {badge ? <span className="nav-badge">{badge}</span> : null}
-          </a>
-        ))}
-      </nav>
-      <div className="sidebar-foot">
-        <button className="account">
-          <Mono text={window.VC_USER.initials} size={32} font={12} />
-          <div className="who">
-            <div className="nm">{window.VC_USER.name}</div>
-            <div className="hd">{window.VC_USER.handle}</div>
-          </div>
-          <window.IcChevDown size={15} className="chev" />
-        </button>
-      </div>
-    </aside>
+      )}
+    </div>
   );
 }
 
 /* -------------------------------- Topbar ------------------------------- */
-function Topbar({ dark, onToggleTheme, status, issues }) {
-  let cls = "topbar-meta", label = "In sync";
-  if (status === "busy") { cls += " is-busy"; label = "Re-extracting\u2026"; }
-  else if (issues > 0) { cls += " has-issues"; label = `${issues} to resolve`; }
+function Topbar({ dark, onToggleTheme, status, issues, locale }) {
+  let tone = "status-pill--success", label = "In sync";
+  if (status === "busy") { tone = "status-pill--accent"; label = "Re-extracting\u2026"; }
+  else if (locale && locale !== "en") { tone = "status-pill--accent"; label = "Translated \u00B7 " + langEntry(locale).native; }
+  else if (issues > 0) { tone = "status-pill--warning"; label = issues + (issues === 1 ? " conflict" : " conflicts"); }
   return (
     <header className="topbar">
-      <span className="topbar-title">Voice</span>
-      <span className={cls}><span className="vdot" />{label}</span>
-      <span className="topbar-spacer" />
-      <div className="topbar-actions">
-        <button className="icon-btn" aria-label="Toggle theme" onClick={onToggleTheme}>
-          {dark ? <window.IcSun size={17} /> : <window.IcMoon size={16} />}
-        </button>
-        <button className="icon-btn" aria-label="Settings"><window.IcSettings size={17} /></button>
+      <div className="topbar-inner">
+        <span className="topbar-title">Voice</span>
+        <span className={`status-pill ${tone}`}><span className="pill-dot" />{label}</span>
+        <span className="topbar-spacer" />
+        <div className="topbar-actions">
+          <button className="icon-btn" aria-label="Toggle theme" onClick={onToggleTheme}>
+            {dark ? <window.IcSun size={17} /> : <window.IcMoon size={16} />}
+          </button>
+          <a className="icon-btn" href="Settings.html" aria-label="Settings"><window.IcSettings size={17} /></a>
+        </div>
       </div>
     </header>
   );
 }
 
 /* ------------------------------ Voice hero ----------------------------- */
-function VoiceHero({ meta, busy, onReExtract, onCheck, checking }) {
+function VoiceHero({ meta, busy, checking, locale, onCheck, onReExtract, onLocale }) {
+  const translated = locale && locale !== "en";
   return (
     <div className="vhero">
       <span className="vhero-eyebrow"><window.IcVoice size={14} className="vh-ico" /> Account voice</span>
-      <h1 className="vhero-title">How <em>{window.VC_USER.name}</em> sounds</h1>
+      <div className="vhero-row">
+        <h1 className="vhero-title">How <em>{window.SHELL_ACCOUNTS[0].name}</em> sounds</h1>
+        <LangMenu value={locale} onChange={onLocale} langs={window.VOICE_LANGS} />
+      </div>
       <div className="vhero-meta">
         <span className="vmeta">Extracted from <b>{meta.sources}</b> posts</span>
         <span className="sep" />
         <span className="vmeta">Updated <b>{meta.updated}</b></span>
-        <span className="sep" />
-        <span className="vmeta">Recent drafts matched <b>{meta.match}%</b></span>
       </div>
       <div className="vhero-actions">
-        <button className="btn btn--secondary" onClick={onCheck} disabled={busy || checking}>
+        <button className="btn btn--secondary" onClick={onCheck} disabled={busy || checking || translated}>
           {checking ? <><span className="spinner" /> Checking…</> : <><window.IcScan size={16} /> Check voice</>}
         </button>
-        <button className="btn btn--secondary" onClick={onReExtract} disabled={busy || checking}>
+        <button className="btn btn--secondary" onClick={onReExtract} disabled={busy || checking || translated}>
           <window.IcRefresh size={16} /> Re-extract
         </button>
       </div>
@@ -97,20 +89,32 @@ function VoiceHero({ meta, busy, onReExtract, onCheck, checking }) {
   );
 }
 
-/* --------------------------- Section shell ----------------------------- */
-function SectionCard({ Icon, title, desc, count, editing, locked, onEdit, onSave, onCancel, footNote, children }) {
+/* ----------------------- Translated read-only banner ------------------- */
+function TranslatedBanner({ locale, onViewOriginal }) {
+  const l = langEntry(locale);
   return (
-    <section className={`vsec ${editing ? "vsec--editing" : ""}`}>
+    <div className="tbanner">
+      <window.IcGlobe size={17} className="tb-ico" />
+      <div className="tb-text">
+        <b>Showing your voice in {l.native} ({l.label}).</b> This is a read-only translation of your original — switch back to the original to make edits.
+      </div>
+      <button className="btn btn--secondary btn--sm" onClick={onViewOriginal}><window.IcPencil size={14} /> View original</button>
+    </div>
+  );
+}
+
+/* --------------------------- Section shell ----------------------------- */
+function SectionCard({ Icon, title, desc, count, editing, readOnly, tone, onEdit, onSave, onCancel, footNote, children }) {
+  return (
+    <section className={`vsec ${editing ? "vsec--editing" : ""} ${tone ? "vsec--" + tone : ""}`}>
       <div className="vsec-head">
         <span className="vsec-mark"><Icon size={17} /></span>
         <div className="vsec-ttl">
           <div className="h">{title}{count != null && <span className="count">{count}</span>}</div>
           <div className="d">{desc}</div>
         </div>
-        {!editing && (
-          <button className="vsec-edit" onClick={onEdit} disabled={locked}>
-            <window.IcPencil size={15} /> Edit
-          </button>
+        {!editing && !readOnly && (
+          <button className="vsec-edit" onClick={onEdit}><window.IcPencil size={15} /> Edit</button>
         )}
       </div>
       <div className="vsec-body">{children}</div>
@@ -126,43 +130,46 @@ function SectionCard({ Icon, title, desc, count, editing, locked, onEdit, onSave
 }
 
 /* ------------------------------- Intro --------------------------------- */
-function IntroSection({ value, locked, onSave }) {
+function IntroSection({ value, locale, readOnly, onSave }) {
   const [editing, setEditing] = useVS(false);
   const [draft, setDraft] = useVS(value);
   const ref = useVR(null);
   useVE(() => { setDraft(value); }, [value]);
   useVE(() => { if (editing && ref.current) { ref.current.focus(); ref.current.setSelectionRange(ref.current.value.length, ref.current.value.length); } }, [editing]);
-  function start() { setDraft(value); setEditing(true); }
-  function save() { onSave(draft.trim()); setEditing(false); }
+  const shown = locale && locale !== "en" ? (window.INTRO_I18N[locale] || value) : value;
   return (
     <SectionCard
       Icon={window.IcVoice} title="In a sentence" desc="The through-line a draft should always hit"
-      editing={editing} locked={locked}
-      onEdit={start} onSave={save} onCancel={() => setEditing(false)}
+      editing={editing} readOnly={readOnly}
+      onEdit={() => { setDraft(value); setEditing(true); }} onSave={() => { onSave(draft.trim()); setEditing(false); }} onCancel={() => setEditing(false)}
       footNote="This frames every draft Pennedly writes."
     >
       {editing
         ? <textarea ref={ref} className="intro-edit" value={draft} onChange={(e) => setDraft(e.target.value)} />
-        : <p className="intro-text">{value}</p>}
+        : <p className="intro-text">{shown}</p>}
     </SectionCard>
   );
 }
 
-/* ------------------------------- Themes -------------------------------- */
-function ThemesSection({ items, locked, onSave }) {
+/* ----------------------------- Themes (±) ------------------------------ */
+// Used twice: include (normal) and exclude (red "won't write about" zone).
+function ThemesSection({ section, items, exclude, locale, readOnly, onSave }) {
   const [editing, setEditing] = useVS(false);
   const [draft, setDraft] = useVS(items);
   useVE(() => { setDraft(items); }, [items]);
-  function start() { setDraft(items.map((x) => ({ ...x }))); setEditing(true); }
-  function save() { onSave(draft.filter((d) => d.label.trim())); setEditing(false); }
   const set = (id, k, v) => setDraft((d) => d.map((x) => x.id === id ? { ...x, [k]: v } : x));
   const del = (id) => setDraft((d) => d.filter((x) => x.id !== id));
-  const add = () => setDraft((d) => [...d, { id: "th" + Date.now(), label: "", note: "" }]);
+  const add = () => setDraft((d) => [...d, { id: (exclude ? "tx" : "ti") + Date.now(), label: "", note: "" }]);
   return (
     <SectionCard
-      Icon={window.IcTags} title="Themes" desc="The subjects this account returns to" count={items.length}
-      editing={editing} locked={locked}
-      onEdit={start} onSave={save} onCancel={() => setEditing(false)}
+      Icon={exclude ? window.IcAlert : window.IcTags}
+      title={exclude ? "Won't write about" : "Themes to write about"}
+      desc={exclude ? "Topics Pennedly should steer every draft away from" : "The subjects this account returns to"}
+      count={items.length} tone={exclude ? "exclude" : null}
+      editing={editing} readOnly={readOnly}
+      onEdit={() => { setDraft(items.map((x) => ({ ...x }))); setEditing(true); }}
+      onSave={() => { onSave(draft.filter((d) => d.label.trim())); setEditing(false); }}
+      onCancel={() => setEditing(false)}
     >
       {editing ? (
         <>
@@ -170,21 +177,21 @@ function ThemesSection({ items, locked, onSave }) {
             {draft.map((t) => (
               <div className="edit-row" key={t.id}>
                 <div className="er-fields">
-                  <input className="inp inp--strong" value={t.label} placeholder="Theme name" onChange={(e) => set(t.id, "label", e.target.value)} />
-                  <input className="inp inp--note" value={t.note} placeholder="What it covers" onChange={(e) => set(t.id, "note", e.target.value)} />
+                  <input className="inp inp--strong" value={t.label} placeholder={exclude ? "Topic to avoid" : "Theme name"} onChange={(e) => set(t.id, "label", e.target.value)} />
+                  <input className="inp inp--note" value={t.note} placeholder={exclude ? "Why it's off-limits (optional)" : "What it covers"} onChange={(e) => set(t.id, "note", e.target.value)} />
                 </div>
-                <button className="er-del" aria-label="Remove theme" onClick={() => del(t.id)}><window.IcTrash size={16} /></button>
+                <button className="er-del" aria-label="Remove" onClick={() => del(t.id)}><window.IcTrash size={16} /></button>
               </div>
             ))}
           </div>
-          <button className="add-row" onClick={add}><window.IcPlus size={15} /> Add a theme</button>
+          <button className="add-row" onClick={add}><window.IcPlus size={15} /> {exclude ? "Add a topic to avoid" : "Add a theme"}</button>
         </>
       ) : (
         <div className="themes">
           {items.map((t) => (
-            <div className="theme-row" key={t.id}>
-              <span className="th-label"><span className="th-bullet" />{t.label}</span>
-              <span className="th-note">{t.note}</span>
+            <div className={`theme-row ${exclude ? "theme-row--x" : ""}`} key={t.id}>
+              <span className="th-label"><span className="th-bullet" />{window.vLoc(t, locale, "label")}</span>
+              {window.vLoc(t, locale, "note") && <span className="th-note">{window.vLoc(t, locale, "note")}</span>}
             </div>
           ))}
         </div>
@@ -193,22 +200,21 @@ function ThemesSection({ items, locked, onSave }) {
   );
 }
 
-/* ------------------------------- Traits -------------------------------- */
-const TRAIT_KINDS = ["Length", "Structure", "Diction", "Format", "Casing", "Tone"];
-function TraitsSection({ items, locked, flaggedIds, justFixedId, onSave }) {
+/* -------------------------- Characteristics ---------------------------- */
+function CharacteristicsSection({ items, locale, readOnly, flaggedKeys, justFixedId, onSave }) {
   const [editing, setEditing] = useVS(false);
   const [draft, setDraft] = useVS(items);
   useVE(() => { setDraft(items); }, [items]);
-  function start() { setDraft(items.map((x) => ({ ...x }))); setEditing(true); }
-  function save() { onSave(draft.filter((d) => d.text.trim())); setEditing(false); }
   const set = (id, k, v) => setDraft((d) => d.map((x) => x.id === id ? { ...x, [k]: v } : x));
   const del = (id) => setDraft((d) => d.filter((x) => x.id !== id));
-  const add = () => setDraft((d) => [...d, { id: "tr" + Date.now(), kind: "Tone", text: "" }]);
+  const add = () => setDraft((d) => [...d, { id: "ch" + Date.now(), label: "", text: "" }]);
   return (
     <SectionCard
-      Icon={window.IcList} title="Voice traits" desc="The rules a draft has to follow" count={items.length}
-      editing={editing} locked={locked}
-      onEdit={start} onSave={save} onCancel={() => setEditing(false)}
+      Icon={window.IcList} title="Voice characteristics" desc="How a draft should feel to read" count={items.length}
+      editing={editing} readOnly={readOnly}
+      onEdit={() => { setDraft(items.map((x) => ({ ...x }))); setEditing(true); }}
+      onSave={() => { onSave(draft.filter((d) => d.text.trim())); setEditing(false); }}
+      onCancel={() => setEditing(false)}
     >
       {editing ? (
         <>
@@ -216,28 +222,23 @@ function TraitsSection({ items, locked, flaggedIds, justFixedId, onSave }) {
             {draft.map((t) => (
               <div className="edit-row" key={t.id}>
                 <div className="er-fields">
-                  <div className="er-kind-row">
-                    <select className="inp er-kind-select" value={t.kind} onChange={(e) => set(t.id, "kind", e.target.value)} aria-label="Trait category">
-                      {TRAIT_KINDS.map((k) => <option key={k} value={k}>{k}</option>)}
-                    </select>
-                  </div>
-                  <textarea className="inp" rows={2} value={t.text} placeholder="Describe the rule" onChange={(e) => set(t.id, "text", e.target.value)} />
+                  <input className="inp inp--strong" value={t.label} placeholder="Quality (e.g. Warmth)" onChange={(e) => set(t.id, "label", e.target.value)} />
+                  <textarea className="inp" rows={2} value={t.text} placeholder="Describe how it reads" onChange={(e) => set(t.id, "text", e.target.value)} />
                 </div>
-                <button className="er-del" aria-label="Remove trait" onClick={() => del(t.id)}><window.IcTrash size={16} /></button>
+                <button className="er-del" aria-label="Remove characteristic" onClick={() => del(t.id)}><window.IcTrash size={16} /></button>
               </div>
             ))}
           </div>
-          <button className="add-row" onClick={add}><window.IcPlus size={15} /> Add a trait</button>
+          <button className="add-row" onClick={add}><window.IcPlus size={15} /> Add a characteristic</button>
         </>
       ) : (
         <div className="traits">
           {items.map((t) => {
-            const flagged = flaggedIds && flaggedIds.includes(t.id);
-            const fixed = justFixedId === t.id;
+            const flagged = flaggedKeys && flaggedKeys.has("characteristics:" + t.id);
             return (
-              <div className={`trait-row ${flagged ? "is-flagged" : ""} ${fixed ? "just-fixed" : ""}`} key={t.id}>
-                <span className="trait-kind">{t.kind}</span>
-                <span className="trait-text">{t.text}</span>
+              <div className={`trait-row ${flagged ? "is-flagged" : ""} ${justFixedId === t.id ? "just-fixed" : ""}`} key={t.id}>
+                <span className="trait-kind">{window.vLoc(t, locale, "label")}</span>
+                <span className="trait-text">{window.vLoc(t, locale, "text")}</span>
               </div>
             );
           })}
@@ -247,21 +248,71 @@ function TraitsSection({ items, locked, flaggedIds, justFixedId, onSave }) {
   );
 }
 
-/* ------------------------------ Examples ------------------------------- */
-function ExamplesSection({ items, locked, justFixedId, onSave }) {
+/* ------------------------------ Do / Don't ----------------------------- */
+function RuleSection({ section, items, negative, locale, readOnly, flaggedKeys, justFixedId, onSave }) {
   const [editing, setEditing] = useVS(false);
   const [draft, setDraft] = useVS(items);
   useVE(() => { setDraft(items); }, [items]);
-  function start() { setDraft(items.map((x) => ({ ...x }))); setEditing(true); }
-  function save() { onSave(draft.filter((d) => d.text.trim())); setEditing(false); }
+  const set = (id, v) => setDraft((d) => d.map((x) => x.id === id ? { ...x, text: v } : x));
+  const del = (id) => setDraft((d) => d.filter((x) => x.id !== id));
+  const add = () => setDraft((d) => [...d, { id: (negative ? "dn" : "do") + Date.now(), text: "" }]);
+  return (
+    <SectionCard
+      Icon={negative ? window.IcX : window.IcCheck}
+      title={negative ? "Don't" : "Do"}
+      desc={negative ? "Hard rules a draft must never break" : "Hard rules a draft must always follow"}
+      count={items.length} tone={negative ? "dont" : "do"}
+      editing={editing} readOnly={readOnly}
+      onEdit={() => { setDraft(items.map((x) => ({ ...x }))); setEditing(true); }}
+      onSave={() => { onSave(draft.filter((d) => d.text.trim())); setEditing(false); }}
+      onCancel={() => setEditing(false)}
+    >
+      {editing ? (
+        <>
+          <div className="edit-list">
+            {draft.map((r) => (
+              <div className="edit-row" key={r.id}>
+                <div className="er-fields">
+                  <textarea className="inp" rows={2} value={r.text} placeholder={negative ? "What a draft must never do" : "What a draft must always do"} onChange={(e) => set(r.id, e.target.value)} />
+                </div>
+                <button className="er-del" aria-label="Remove rule" onClick={() => del(r.id)}><window.IcTrash size={16} /></button>
+              </div>
+            ))}
+          </div>
+          <button className="add-row" onClick={add}><window.IcPlus size={15} /> Add a rule</button>
+        </>
+      ) : (
+        <ul className="rules">
+          {items.map((r) => {
+            const flagged = flaggedKeys && flaggedKeys.has(section + ":" + r.id);
+            return (
+              <li className={`rule ${negative ? "rule--no" : "rule--yes"} ${flagged ? "is-flagged" : ""} ${justFixedId === r.id ? "just-fixed" : ""}`} key={r.id}>
+                <span className="rule-tick">{negative ? <window.IcX size={13} /> : <window.IcCheck size={13} />}</span>
+                <span className="rule-text">{window.vLoc(r, locale, "text")}</span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </SectionCard>
+  );
+}
+
+/* ------------------------------ Examples ------------------------------- */
+function ExamplesSection({ items, locale, readOnly, flaggedKeys, justFixedId, onSave }) {
+  const [editing, setEditing] = useVS(false);
+  const [draft, setDraft] = useVS(items);
+  useVE(() => { setDraft(items); }, [items]);
   const set = (id, k, v) => setDraft((d) => d.map((x) => x.id === id ? { ...x, [k]: v } : x));
   const del = (id) => setDraft((d) => d.filter((x) => x.id !== id));
   const add = () => setDraft((d) => [...d, { id: "ex" + Date.now(), context: "Post", stat: "", text: "" }]);
   return (
     <SectionCard
       Icon={window.IcQuote} title="Example posts" desc="Real posts that show the voice in motion" count={items.length}
-      editing={editing} locked={locked}
-      onEdit={start} onSave={save} onCancel={() => setEditing(false)}
+      editing={editing} readOnly={readOnly}
+      onEdit={() => { setDraft(items.map((x) => ({ ...x }))); setEditing(true); }}
+      onSave={() => { onSave(draft.filter((d) => d.text.trim())); setEditing(false); }}
+      onCancel={() => setEditing(false)}
       footNote="Pennedly studies these for rhythm and length."
     >
       {editing ? (
@@ -288,9 +339,9 @@ function ExamplesSection({ items, locked, justFixedId, onSave }) {
       ) : (
         <div className="examples">
           {items.map((x) => (
-            <div className={`ex ${justFixedId === x.id ? "just-fixed" : ""}`} key={x.id}>
+            <div className={`ex ${(flaggedKeys && flaggedKeys.has("examples:" + x.id)) ? "is-flagged" : ""} ${justFixedId === x.id ? "just-fixed" : ""}`} key={x.id}>
               <div className="ex-meta"><span className="ex-kind">{x.context}</span>{x.stat && <><span className="ex-dot" /><span>{x.stat}</span></>}</div>
-              <div className="ex-text">{x.text}</div>
+              <div className="ex-text">{window.vLoc(x, locale, "text")}</div>
             </div>
           ))}
         </div>
@@ -299,9 +350,42 @@ function ExamplesSection({ items, locked, justFixedId, onSave }) {
   );
 }
 
+/* ------------------------ Assembled-prompt preview --------------------- */
+// "What the AI actually sees" — read-only, with its own translate button.
+function PromptPreview({ sections }) {
+  const [open, setOpen] = useVS(false);
+  const [lang, setLang] = useVS("en");
+  const text = window.assemblePrompt(sections, lang);
+  return (
+    <section className="vsec prompt-sec">
+      <div className="vsec-head">
+        <span className="vsec-mark"><window.IcSparkle size={17} /></span>
+        <div className="vsec-ttl">
+          <div className="h">What the AI actually sees</div>
+          <div className="d">Your sections, assembled into the exact instructions Pennedly receives</div>
+        </div>
+        <button className="vsec-edit" onClick={() => setOpen((v) => !v)}>
+          <window.IcChevDown size={15} style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform var(--duration-base) var(--ease-standard)" }} />
+          {open ? "Hide" : "Show"}
+        </button>
+      </div>
+      {open && (
+        <div className="vsec-body">
+          <div className="prompt-tools">
+            <span className="prompt-note">Read-only · generated from the sections above</span>
+            <span style={{ flex: 1 }} />
+            <LangMenu value={lang} onChange={setLang} langs={window.VOICE_LANGS} compact />
+          </div>
+          <pre className="prompt-pre">{text}</pre>
+        </div>
+      )}
+    </section>
+  );
+}
+
 /* --------------------------- Conflict card ----------------------------- */
 function ConflictCard({ conflict, leaving, onApply, onDismiss }) {
-  const sev = conflict.severity; // "caution" | "conflict"
+  const sev = conflict.severity;
   const label = sev === "conflict" ? "Conflict" : "Caution";
   return (
     <div className={`conflict ${leaving ? "conflict--leaving" : ""}`}>
@@ -341,24 +425,14 @@ function VoiceCheck({ conflicts, checking, lastRun, leavingIds, onApply, onDismi
         <span className="vcheck-mark">{clear ? <window.IcShield size={18} /> : <window.IcScan size={18} />}</span>
         <div className="vcheck-h">
           {checking ? (
-            <>
-              <div className="t">Reading your voice for conflicts…</div>
-              <div className="s">Comparing every trait against the others and your examples.</div>
-            </>
+            <><div className="t">Reading your voice for conflicts…</div><div className="s">Comparing every rule against the others and your examples.</div></>
           ) : clear ? (
-            <>
-              <div className="t">Your voice is consistent</div>
-              <div className="s">No traits contradict each other. Drafts have one clear set of rules to follow.</div>
-            </>
+            <><div className="t">Your voice is consistent</div><div className="s">No rules contradict each other. Drafts have one clear set of instructions to follow.</div></>
           ) : (
-            <>
-              <div className="t">{n} {n === 1 ? "thing" : "things"} to resolve</div>
-              <div className="s">A rule disagrees with another rule or example. Each fix is one click — review before you apply.</div>
-            </>
+            <><div className="t">{n} {n === 1 ? "thing" : "things"} to resolve</div><div className="s">A rule disagrees with another rule or example. Each fix is one click — review before you apply.</div></>
           )}
         </div>
       </div>
-
       {checking ? (
         <div style={{ padding: 18, display: "flex", flexDirection: "column", gap: 10 }} className="skel">
           <div className="skel-line" style={{ width: "70%" }} />
@@ -367,18 +441,13 @@ function VoiceCheck({ conflicts, checking, lastRun, leavingIds, onApply, onDismi
         </div>
       ) : !clear ? (
         <div className="conflicts">
-          {conflicts.map((c) => (
-            <ConflictCard key={c.id} conflict={c} leaving={leavingIds.includes(c.id)} onApply={onApply} onDismiss={onDismiss} />
-          ))}
+          {conflicts.map((c) => <ConflictCard key={c.id} conflict={c} leaving={leavingIds.includes(c.id)} onApply={onApply} onDismiss={onDismiss} />)}
         </div>
       ) : null}
-
       <div className="vcheck-foot">
-        <span className="lastrun">{checking ? "Checking now…" : `Last checked ${lastRun}`}</span>
+        <span className="lastrun">{checking ? "Checking now\u2026" : `Last checked ${lastRun}`}</span>
         <span style={{ flex: 1 }} />
-        <button className="btn btn--ghost btn--sm" onClick={onRecheck} disabled={checking}>
-          <window.IcRefresh size={15} /> Re-check
-        </button>
+        <button className="btn btn--ghost btn--sm" onClick={onRecheck} disabled={checking}><window.IcRefresh size={15} /> Re-check</button>
       </div>
     </section>
   );
@@ -438,6 +507,19 @@ function ReExtractDialog({ onCancel, onConfirm }) {
   );
 }
 
+/* ------------------------------- Empty --------------------------------- */
+function EmptyVoice({ onExtract }) {
+  return (
+    <div className="vempty">
+      <span className="ve-mark"><window.IcVoice size={28} /></span>
+      <div className="ve-title">Pennedly hasn't learned your voice yet</div>
+      <div className="ve-sub">Once you've published a handful of posts, Pennedly can read them back and draft a starting voice — themes, characteristics, and rules you can edit. Nothing is shared until you say so.</div>
+      <button className="btn btn--primary btn--lg" onClick={onExtract}><window.IcRefresh size={18} /> Extract my voice</button>
+      <div className="ve-note">You can rewrite or re-extract any part of it afterward.</div>
+    </div>
+  );
+}
+
 /* ------------------------------ Skeleton ------------------------------- */
 function SkeletonSection({ rows = 3 }) {
   return (
@@ -462,7 +544,7 @@ function VoiceSkeleton() {
       <section className="vhero skel">
         <div className="skel-line" style={{ width: 120, height: 10 }} />
         <div className="skel-line" style={{ width: 280, height: 26, marginTop: 14 }} />
-        <div className="skel-line" style={{ width: 360, height: 11, marginTop: 16 }} />
+        <div className="skel-line" style={{ width: 320, height: 11, marginTop: 16 }} />
         <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
           <div className="skel-block" style={{ width: 130, height: 40 }} />
           <div className="skel-block" style={{ width: 120, height: 40 }} />
@@ -494,8 +576,8 @@ function Toasts({ toasts, onUndo }) {
 }
 
 Object.assign(window, {
-  Mono, Sidebar, Topbar, VoiceHero, SectionCard,
-  IntroSection, ThemesSection, TraitsSection, ExamplesSection,
-  ConflictCard, VoiceCheck, ReExtractPanel, ReExtractDialog,
-  VoiceSkeleton, SkeletonSection, Toasts,
+  LangMenu, Topbar, VoiceHero, TranslatedBanner, SectionCard,
+  IntroSection, ThemesSection, CharacteristicsSection, RuleSection, ExamplesSection,
+  PromptPreview, ConflictCard, VoiceCheck, ReExtractPanel, ReExtractDialog,
+  EmptyVoice, VoiceSkeleton, SkeletonSection, Toasts,
 });

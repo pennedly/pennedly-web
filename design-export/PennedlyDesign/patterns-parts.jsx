@@ -1,57 +1,18 @@
-// patterns-parts.jsx — shell + states + pattern card for the Pattern study.
-// Reuses Studio shell classes (studio.css) + ds tokens. No hardcoded hex.
-
-function PMono({ text, size = 32, font = 12 }) {
-  return <span className="mono" style={{ width: size, height: size, fontSize: font }}>{text}</span>;
-}
-
-/* ------------------------------- Sidebar ------------------------------- */
-function Sidebar() {
-  const nav = [
-    { id: "studio", label: "Studio", Icon: window.IcStudio, badge: 4 },
-    { id: "feed", label: "My Feed", Icon: window.IcFeed },
-    { id: "stats", label: "Stats", Icon: window.IcChart },
-    { id: "patterns", label: "Patterns", Icon: window.IcStudy, active: true },
-    { id: "audits", label: "Audits", Icon: window.IcAudit, badge: 1 },
-    { id: "replies", label: "Replies", Icon: window.IcReplies, badge: 3 },
-    { id: "settings", label: "Settings", Icon: window.IcSettings },
-  ];
-  return (
-    <aside className="sidebar">
-      <div className="brand">
-        <window.Logo size={34} radius={10} className="brand-mark" />
-        <div><div className="brand-name">Pennedly</div><div className="brand-sub">Drafting partner</div></div>
-      </div>
-      <nav className="nav">
-        <div className="nav-cap">Workspace</div>
-        {nav.map(({ id, label, Icon, active, badge }) => (
-          <a key={id} className={`nav-item ${active ? "nav-item--active" : ""}`} tabIndex="0">
-            <Icon size={16} /><span className="nav-label">{label}</span>
-            {badge ? <span className="nav-badge">{badge}</span> : null}
-          </a>
-        ))}
-      </nav>
-      <div className="sidebar-foot">
-        <button className="account">
-          <PMono text={window.PATTERN_USER.initials} size={32} font={12} />
-          <div className="who"><div className="nm">{window.PATTERN_USER.name}</div><div className="hd">{window.PATTERN_USER.handle}</div></div>
-          <window.IcChevDown size={15} className="chev" />
-        </button>
-      </div>
-    </aside>
-  );
-}
+// patterns-parts.jsx — states + pattern card for the Pattern study.
+// Sidebar/account/avatar come from the shared shell. No hardcoded hex.
 
 /* -------------------------------- Topbar ------------------------------- */
 function Topbar({ dark, onToggleTheme, lastRun }) {
   return (
     <header className="topbar">
-      <span className="topbar-title">Pattern study</span>
-      {lastRun && <span className="topbar-pill"><span className="pdot" />Studied {lastRun}</span>}
-      <span className="topbar-spacer" />
-      <div className="topbar-actions">
-        <button className="icon-btn" aria-label="Toggle theme" onClick={onToggleTheme}>{dark ? <window.IcSun size={17} /> : <window.IcMoon size={16} />}</button>
-        <button className="icon-btn" aria-label="Settings"><window.IcSettings size={17} /></button>
+      <div className="topbar-inner">
+        <span className="topbar-title">Pattern study</span>
+        {lastRun && <span className="status-pill status-pill--success"><span className="pill-dot" />Studied {lastRun}</span>}
+        <span className="topbar-spacer" />
+        <div className="topbar-actions">
+          <button className="icon-btn" aria-label="Toggle theme" onClick={onToggleTheme}>{dark ? <window.IcSun size={17} /> : <window.IcMoon size={16} />}</button>
+          <button className="icon-btn" aria-label="Settings"><window.IcSettings size={17} /></button>
+        </div>
       </div>
     </header>
   );
@@ -142,12 +103,12 @@ function PatternCard({ p }) {
           <div className="ev-row">
             <span className="ev-label">{p.evidence.lead.label}</span>
             <span className="ev-track"><span className="ev-fill ev-fill--lead" style={{ width: `${(p.evidence.lead.value / max) * 100}%` }} /></span>
-            <span className="ev-val">{p.evidence.lead.display}</span>
+            <span className="ev-val">{p.evidence.lead.display}<span className="ev-n">n={p.evidence.lead.n}</span></span>
           </div>
           <div className="ev-row ev-row--base">
             <span className="ev-label">{p.evidence.base.label}</span>
             <span className="ev-track"><span className="ev-fill ev-fill--base" style={{ width: `${(p.evidence.base.value / max) * 100}%` }} /></span>
-            <span className="ev-val">{p.evidence.base.display}</span>
+            <span className="ev-val">{p.evidence.base.display}<span className="ev-n">n={p.evidence.base.n}</span></span>
           </div>
         </div>
         <div className="ev-note">{p.note}</div>
@@ -167,4 +128,4 @@ function PatternCard({ p }) {
   );
 }
 
-Object.assign(window, { PMono, Sidebar, Topbar, IdleView, RunningView, RUN_STEPS, EmptyView, PatternCard });
+Object.assign(window, { Topbar, IdleView, RunningView, RUN_STEPS, EmptyView, PatternCard });

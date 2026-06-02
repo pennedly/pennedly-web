@@ -2,11 +2,7 @@
 // All visuals reference the ink-on-paper tokens; no hardcoded colours.
 
 const { useState: obS, useEffect: obE, useRef: obR } = React;
-
-/* ------------------------------- Avatar -------------------------------- */
-function Mono({ text, size = 34, font = 13 }) {
-  return <span className="mono" style={{ width: size, height: size, fontSize: font }}>{text}</span>;
-}
+// Avatar comes from the shared shell (shell-parts.jsx) — real photo + initials fallback.
 
 /* ------------------------------- Stepper ------------------------------- */
 const STEPS = [
@@ -32,13 +28,15 @@ function Stepper({ current }) {
 }
 
 /* ------------------------------- Top bar ------------------------------- */
-function TopBar({ dark, onToggleTheme, onSkip, showSkip }) {
+function TopBar({ dark, onToggleTheme, onSkip, showSkip, showBack, preview }) {
   return (
     <div className="ob-top">
       <div className="ob-brand">
         <window.Logo size={30} radius={9} className="bm" />
         <span className="bn">Pennedly</span>
       </div>
+      {showBack && <a className="ob-back" href="Settings.html"><window.IcArrowLeft size={15} /> Back to Settings</a>}
+      {preview && <span className="status-pill status-pill--accent ob-preview-pill"><span className="pill-dot" />Preview · nothing is saved</span>}
       <span className="ob-top-spacer" />
       <div className="ob-top-actions">
         {showSkip && <button className="skip-btn" onClick={onSkip}>Skip for now</button>}
@@ -65,12 +63,12 @@ function ConnectStep({ status, account, onConnect, onContinue }) {
 
       {status === "connected" ? (
         <div className="connected">
-          <Mono text={account.initials} size={42} font={15} />
+          <window.Avatar src={account.avatar} initials={account.initials} size={42} />
           <div className="who">
             <div className="nm">{account.name}</div>
             <div className="hd">{account.handle} · {account.followers} followers</div>
           </div>
-          <span className="ok"><span className="okdot" /> Connected</span>
+          <span className="status-pill status-pill--success"><span className="pill-dot" /> Connected</span>
         </div>
       ) : (
         <div className="trust">
@@ -101,7 +99,7 @@ function ConnectStep({ status, account, onConnect, onContinue }) {
 
 /* ----------------------------- Choose step ----------------------------- */
 const MODE_ICONS = { analyze: window.IcScan, scratch: window.IcPen };
-function ChooseStep({ account, selected, onSelect, onContinue, onBack }) {
+function ChooseStep({ account, selected, onSelect, onContinue, onBack, enoughPosts, postCount, need }) {
   return (
     <div className="step">
       <div className="step-eyebrow">Step 2 of 3 · Your voice</div>
@@ -111,29 +109,34 @@ function ChooseStep({ account, selected, onSelect, onContinue, onBack }) {
       <div className="choices" role="radiogroup" aria-label="Voice setup method">
         {window.OB_VOICE_MODES.map((m) => {
           const Ico = MODE_ICONS[m.id];
-          const active = selected === m.id;
+          const disabled = m.id === "analyze" && !enoughPosts;
+          const active = selected === m.id && !disabled;
           return (
             <button
-              key={m.id} className={`choice ${active ? "choice--active" : ""}`}
-              role="radio" aria-checked={active} onClick={() => onSelect(m.id)}
+              key={m.id} className={`choice ${active ? "choice--active" : ""} ${disabled ? "choice--disabled" : ""}`}
+              role="radio" aria-checked={active} aria-disabled={disabled}
+              onClick={() => { if (!disabled) onSelect(m.id); }}
             >
               <span className="choice-ico"><Ico size={20} /></span>
               <span className="choice-body">
                 <span className="choice-top">
                   <span className="choice-title">{m.title}</span>
-                  {m.recommended && <span className="choice-rec">Recommended</span>}
+                  {m.recommended && !disabled && <span className="choice-rec">Recommended</span>}
+                  {disabled && <span className="choice-locked"><window.IcLock size={12} /> Needs {need} posts</span>}
                 </span>
-                <span className="choice-desc">{m.id === "analyze" ? `Pennedly reads ${account.handle}'s recent posts and distils your themes, rhythm, and the things you'd never say.` : m.desc}</span>
-                <span className="choice-meta"><window.IcClock size={13} /> {m.meta}</span>
+                <span className="choice-desc">{disabled
+                  ? `Pennedly needs at least ${need} recent posts to learn from — ${account.handle} has ${postCount}. Build from scratch for now; this unlocks once you've posted more.`
+                  : (m.id === "analyze" ? `Pennedly reads ${account.handle}'s recent posts and distils your themes, rhythm, and the things you'd never say.` : m.desc)}</span>
+                {!disabled && <span className="choice-meta"><window.IcClock size={13} /> {m.meta}</span>}
               </span>
-              <window.IcCheck size={18} className="choice-check" />
+              {!disabled && <window.IcCheck size={18} className="choice-check" />}
             </button>
           );
         })}
       </div>
 
       <div className="step-actions">
-        <button className="back-link" onClick={onBack}><window.IcArrowLeft size={15} /> Back</button>
+        {onBack && <button className="back-link" onClick={onBack}><window.IcArrowLeft size={15} /> Back</button>}
         <span className="grow" />
         <button className="btn btn--primary btn--lg" onClick={onContinue} disabled={!selected}>Continue <window.IcArrowRight size={17} /></button>
       </div>
@@ -148,7 +151,7 @@ function AnalyzeStep({ account, stepIndex }) {
       <div className="analyze">
         <span className="nib"><window.IcNib size={40} /></span>
         <h1 className="step-title" style={{ textAlign: "center" }}>Learning how you write…</h1>
-        <span className="analyze-acct"><Mono text={account.initials} size={22} font={10} /> {account.handle}</span>
+        <span className="analyze-acct"><window.Avatar src={account.avatar} initials={account.initials} size={22} /> {account.handle}</span>
         <div className="analyze-steps">
           {window.OB_ANALYZE_STEPS.map((label, i) => {
             const state = i < stepIndex ? "done" : i === stepIndex ? "active" : "";
@@ -250,8 +253,45 @@ function ScratchStep({ form, setForm, onContinue, onBack }) {
   );
 }
 
+/* ------------------------- Preview result (tester) --------------------- */
+// ?preview=1 runs the flow for real but saves nothing — so instead of "done",
+// it renders the voice Pennedly WOULD build, read-only.
+function PreviewResult({ account, mode }) {
+  const v = window.OB_PREVIEW_VOICE;
+  const src = mode === "scratch" ? "your description" : `${account.handle}'s recent posts`;
+  return (
+    <div className="step">
+      <div className="done-head">
+        <span className="status-pill status-pill--accent"><span className="pill-dot" /> Preview · nothing was saved</span>
+        <h1 className="step-title" style={{ marginTop: 16 }}>The voice Pennedly would build</h1>
+        <p className="step-sub">Generated for real from {src} — but preview mode doesn’t save it. Run setup normally to keep this voice.</p>
+      </div>
+      <div className="pv">
+        <div className="pv-block">
+          <div className="pv-cap">Voice summary</div>
+          <p className="pv-summary">{v.summary}</p>
+        </div>
+        <div className="pv-block">
+          <div className="pv-cap">Themes</div>
+          <div className="pv-chips">{v.themes.map((x) => <span className="pv-chip" key={x}>{x}</span>)}</div>
+        </div>
+        <div className="pv-block">
+          <div className="pv-cap">How you sound</div>
+          <ul className="pv-list">{v.traits.map((x) => <li key={x}><window.IcCheck size={14} /> {x}</li>)}</ul>
+        </div>
+      </div>
+      <div className="step-actions">
+        <a className="back-link" href="Settings.html"><window.IcArrowLeft size={15} /> Back to Settings</a>
+        <span className="grow" />
+        <a className="btn btn--primary btn--lg" href="Onboarding.html">Run setup for real <window.IcArrowRight size={17} /></a>
+      </div>
+    </div>
+  );
+}
+
 /* ------------------------------ Done step ------------------------------ */
-function DoneStep({ account, connected, mode, onRefine }) {
+function DoneStep({ account, connected, mode, preview, onRefine }) {
+  if (preview) return <PreviewResult account={account} mode={mode} />;
   const voiceLabel = mode === "scratch" ? "Built from your description" : mode === "analyze" ? "Analysed from your posts" : "Set up later";
   const first = account.name.split(" ")[0];
   return (
@@ -289,5 +329,5 @@ function DoneStep({ account, connected, mode, onRefine }) {
 }
 
 Object.assign(window, {
-  Mono, Stepper, TopBar, ConnectStep, ChooseStep, AnalyzeStep, ChipInput, ScratchStep, DoneStep,
+  Stepper, TopBar, ConnectStep, ChooseStep, AnalyzeStep, ChipInput, ScratchStep, DoneStep, PreviewResult,
 });

@@ -1,9 +1,7 @@
-// autopilot-parts.jsx — shell + cards for the Autopilot screen.
-// Reuses Studio shell classes (studio.css) + ds tokens. No hardcoded hex.
+// autopilot-parts.jsx — Autopilot cards + states.
+// Sidebar / account / avatar come from the shared shell (shell-parts.jsx).
+// Built on ds tokens + Studio shell classes. No hardcoded hex.
 
-function APMono({ text, size = 32, font = 12 }) {
-  return <span className="mono" style={{ width: size, height: size, fontSize: font }}>{text}</span>;
-}
 function Switch({ checked, onChange, big, label }) {
   return (
     <label className={`switch ${big ? "switch--lg" : ""}`}>
@@ -12,47 +10,12 @@ function Switch({ checked, onChange, big, label }) {
     </label>
   );
 }
+// options: [{ value, label }]; onChange gets the raw string value.
 function Select({ value, onChange, options, ...rest }) {
   return (
     <select className="field" value={value} onChange={(e) => onChange(e.target.value)} {...rest}>
-      {options.map((o) => <option key={o} value={o}>{o}</option>)}
+      {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
     </select>
-  );
-}
-
-/* ------------------------------- Sidebar ------------------------------- */
-function Sidebar() {
-  const nav = [
-    { id: "studio", label: "Studio", Icon: window.IcStudio, badge: 4 },
-    { id: "feed", label: "My Feed", Icon: window.IcFeed },
-    { id: "stats", label: "Stats", Icon: window.IcChart },
-    { id: "replies", label: "Replies", Icon: window.IcReplies, badge: 3 },
-    { id: "autopilot", label: "Autopilot", Icon: window.IcBolt, active: true },
-    { id: "settings", label: "Settings", Icon: window.IcSettings },
-  ];
-  return (
-    <aside className="sidebar">
-      <div className="brand">
-        <window.Logo size={34} radius={10} className="brand-mark" />
-        <div><div className="brand-name">Pennedly</div><div className="brand-sub">Drafting partner</div></div>
-      </div>
-      <nav className="nav">
-        <div className="nav-cap">Workspace</div>
-        {nav.map(({ id, label, Icon, active, badge }) => (
-          <a key={id} className={`nav-item ${active ? "nav-item--active" : ""}`} tabIndex="0">
-            <Icon size={16} /><span className="nav-label">{label}</span>
-            {badge ? <span className="nav-badge">{badge}</span> : null}
-          </a>
-        ))}
-      </nav>
-      <div className="sidebar-foot">
-        <button className="account">
-          <APMono text={window.AP_USER.initials} size={32} font={12} />
-          <div className="who"><div className="nm">{window.AP_USER.name}</div><div className="hd">{window.AP_USER.handle}</div></div>
-          <window.IcChevDown size={15} className="chev" />
-        </button>
-      </div>
-    </aside>
   );
 }
 
@@ -60,12 +23,16 @@ function Sidebar() {
 function Topbar({ dark, onToggleTheme, on }) {
   return (
     <header className="topbar">
-      <span className="topbar-title">Autopilot</span>
-      <span className={`topbar-pill ${on ? "topbar-pill--on" : ""}`}><span className="pdot" />{on ? "Active" : "Off"}</span>
-      <span className="topbar-spacer" />
-      <div className="topbar-actions">
-        <button className="icon-btn" aria-label="Toggle theme" onClick={onToggleTheme}>{dark ? <window.IcSun size={17} /> : <window.IcMoon size={16} />}</button>
-        <button className="icon-btn" aria-label="Settings"><window.IcSettings size={17} /></button>
+      <div className="topbar-inner">
+        <span className="topbar-title">Autopilot</span>
+        <span className={`status-pill ${on ? "status-pill--success" : ""}`}>
+          <span className="pill-dot" />{on ? "Active" : "Off"}
+        </span>
+        <span className="topbar-spacer" />
+        <div className="topbar-actions">
+          <button className="icon-btn" aria-label="Toggle theme" onClick={onToggleTheme}>{dark ? <window.IcSun size={17} /> : <window.IcMoon size={16} />}</button>
+          <a className="icon-btn" href="Settings.html" aria-label="Settings"><window.IcSettings size={17} /></a>
+        </div>
       </div>
     </header>
   );
@@ -78,7 +45,7 @@ function MasterCard({ on, onToggle }) {
       <span className="am-icon"><window.IcBolt size={24} /></span>
       <div className="am-text">
         <div className="am-title">Autopilot</div>
-        <div className="am-state"><span className="sdot" />{on ? "On · posting and replying on your schedule" : "Off · you approve everything yourself"}</div>
+        <div className="am-state"><span className="sdot" />{on ? "On \u00B7 posting and replying on your schedule" : "Off \u00B7 you approve everything yourself"}</div>
       </div>
       <Switch checked={on} onChange={onToggle} big label="Autopilot master switch" />
     </div>
@@ -90,52 +57,77 @@ function Reassure({ on }) {
   return (
     <div className="ap-reassure">
       <window.IcCheck size={16} className="ar-ico" />
-      <div><b>Autopilot is off — nothing posts or replies without you.</b> Set up your schedule and reply policy below, then turn it on when you're ready. You can pause it again anytime.</div>
+      <div><b>Autopilot is off — nothing posts or replies without you.</b> Set up your schedules and reply policy below, then turn it on when you're ready. You can pause it again anytime.</div>
     </div>
   );
 }
 
-/* ----------------------------- Object card ----------------------------- */
+/* ----------------------------- Schedule card --------------------------- */
 function ObjectCard({ obj, onChange, onRemove }) {
   const set = (k, v) => onChange(obj.id, { [k]: v });
+  const localMin = window.apUtcToLocal(obj.utcMin);
+  const timeOpts = window.TIME_SLOTS.map((m) => ({ value: m, label: window.apFmtClock(m) }));
+  const jitterOpts = window.JITTER_OPTIONS.map((n) => ({ value: n, label: window.apFmtJitter(n) }));
+  const topicOpts = window.TOPIC_OPTIONS.map((o) => ({ value: o, label: o }));
   return (
     <div className={`obj-card ${obj.on ? "" : "obj-card--off"}`}>
       <div className="obj-head">
         <input className="obj-name" value={obj.name} onChange={(e) => set("name", e.target.value)} aria-label="Schedule name" />
         <Switch checked={obj.on} onChange={(v) => set("on", v)} label="Enable this schedule" />
-        <button className="icon-btn obj-remove" style={{ width: 34, height: 34 }} aria-label="Remove schedule" onClick={() => onRemove(obj.id)}><window.IcTrash size={16} /></button>
+        <button className="icon-btn obj-remove" aria-label="Remove schedule" onClick={() => onRemove(obj.id)}><window.IcTrash size={16} /></button>
       </div>
       <div className="obj-grid">
-        <div className="obj-field"><label>Post time · {window.TZ}</label><Select value={obj.time} onChange={(v) => set("time", v)} options={window.TIME_OPTIONS} /></div>
-        <div className="obj-field"><label>Timing jitter</label><Select value={obj.jitter} onChange={(v) => set("jitter", v)} options={window.JITTER_OPTIONS} /></div>
-        <div className="obj-field"><label>Topic</label><Select value={obj.topic} onChange={(v) => set("topic", v)} options={window.TOPIC_OPTIONS} /></div>
+        <div className="obj-field">
+          <label>Post time</label>
+          <Select value={localMin} onChange={(v) => set("utcMin", window.apLocalToUtc(Number(v)))} options={timeOpts} aria-label="Post time (your local time)" />
+          <span className="obj-hint">{window.apFmtOffset()} · sends {window.apFmtUTC(obj.utcMin)}</span>
+        </div>
+        <div className="obj-field">
+          <label>Random spread</label>
+          <Select value={obj.jitter} onChange={(v) => set("jitter", Number(v))} options={jitterOpts} aria-label="Random minute spread" />
+          <span className="obj-hint">{obj.jitter === 0 ? "Posts exactly at the time" : `Posts within \u00B1${obj.jitter} min`}</span>
+        </div>
+        <div className="obj-field">
+          <label>Topic</label>
+          <Select value={obj.topic} onChange={(v) => set("topic", v)} options={topicOpts} aria-label="Topic" />
+        </div>
       </div>
       <div className="obj-foot">
-        <label className="obj-seed"><Switch checked={obj.seeds} onChange={(v) => set("seeds", v)} label="Seed auto-replies" /> Let these posts seed auto-replies</label>
+        <label className="obj-seed">
+          <Switch checked={obj.seed} onChange={(v) => set("seed", v)} label="Seed auto-reply on new posts" />
+          New posts from this schedule start with auto-reply on
+        </label>
         {!obj.on && <span className="obj-paused">Paused</span>}
       </div>
     </div>
   );
 }
 
-/* ----------------------------- Policy card ----------------------------- */
+/* ----------------------- Account auto-reply policy --------------------- */
+// Account-level — the worker honors THIS (audience + replies/day), not the
+// per-schedule cards.
 function PolicyCard({ policy, onChange }) {
   const set = (k, v) => onChange({ [k]: v });
+  const audOpts = window.AUDIENCE_OPTIONS.map((o) => ({ value: o, label: o }));
+  const capOpts = window.CAP_OPTIONS.map((o) => ({ value: o, label: o }));
   return (
     <div className="ap-section">
       <div className="ap-sec-head">
-        <div><div className="ap-sec-title">Auto-reply policy</div><div className="ap-sec-sub">When on, replies are drafted in your voice and sent automatically.</div></div>
-        <Switch checked={policy.on} onChange={(v) => set("on", v)} label="Auto-reply on" />
+        <div>
+          <div className="ap-sec-title">Auto-reply policy</div>
+          <div className="ap-sec-sub">Account-wide. When on, replies are drafted in your voice and sent automatically under these limits.</div>
+        </div>
+        <Switch checked={policy.on} onChange={(v) => set("on", v)} label="Auto-reply master switch" />
       </div>
       <div className="ap-sec-body">
         <div className="policy-list" style={policy.on ? null : { opacity: 0.5, pointerEvents: "none" }}>
           <div className="policy-row">
-            <div className="pr-label"><div className="pr-t">Who it replies to</div><div className="pr-d">Choose the audience whose comments get an automatic reply.</div></div>
-            <div className="pr-control"><Select value={policy.audience} onChange={(v) => set("audience", v)} options={window.AUDIENCE_OPTIONS} /></div>
+            <div className="pr-label"><div className="pr-t">Who it replies to</div><div className="pr-d">The audience whose comments can get an automatic reply.</div></div>
+            <div className="pr-control"><Select value={policy.audience} onChange={(v) => set("audience", v)} options={audOpts} aria-label="Reply audience" /></div>
           </div>
           <div className="policy-row">
-            <div className="pr-label"><div className="pr-t">Daily reply cap</div><div className="pr-d">A safety limit on how many replies autopilot sends per day.</div></div>
-            <div className="pr-control"><Select value={policy.cap} onChange={(v) => set("cap", v)} options={window.CAP_OPTIONS} /></div>
+            <div className="pr-label"><div className="pr-t">Replies per day</div><div className="pr-d">A safety limit on how many replies autopilot sends each day.</div></div>
+            <div className="pr-control"><Select value={policy.cap} onChange={(v) => set("cap", v)} options={capOpts} aria-label="Replies per day" /></div>
           </div>
         </div>
       </div>
@@ -164,13 +156,16 @@ function AutoPostItem({ p }) {
     <div className="autopost">
       <div className="autopost-top">
         <span className="autopost-tag"><window.IcBolt size={12} />{p.object}</span>
-        <span className="autopost-time spacer">{p.time}</span>
+        <span className="autopost-time spacer">{window.fmtDateTime(p.at)}</span>
       </div>
       <div className="autopost-text">{p.text}</div>
-      <div className="autopost-stats">
-        <span className="ms"><window.IcEye size={13} />{p.views}</span>
-        <span className="ms"><window.IcHeart size={13} />{p.likes}</span>
-        <span className="ms"><window.IcBubble size={13} />{p.replies}</span>
+      <div className="autopost-foot">
+        <div className="autopost-stats">
+          <span className="ms"><window.IcEye size={13} />{p.views}</span>
+          <span className="ms"><window.IcHeart size={13} />{p.likes}</span>
+          <span className="ms"><window.IcBubble size={13} />{p.replies}</span>
+        </div>
+        <a className="act-link" href={p.link} target="_blank" rel="noopener noreferrer">View post<window.IcExternal size={13} /></a>
       </div>
     </div>
   );
@@ -179,9 +174,9 @@ function AutoReplyItem({ r }) {
   return (
     <div className="autoreply">
       <div className="ar-comment">
-        <APMono text={r.to.initials} size={28} font={11} />
+        <window.Avatar initials={r.from.initials} size={28} />
         <div className="arc-body">
-          <div className="arc-who">{r.to.name} <span>{r.to.handle}</span></div>
+          <div className="arc-who">{r.from.name} <span>{r.from.handle}</span></div>
           <div className="arc-text">{r.comment}</div>
         </div>
       </div>
@@ -191,7 +186,10 @@ function AutoReplyItem({ r }) {
           <div className="arr-text">{r.reply}</div>
         </div>
       </div>
-      <div className="ar-foot">{r.time} · under your “{r.on}” schedule</div>
+      <div className="ar-foot">
+        <span>{window.fmtDateTime(r.at)} · on a comment to your “{r.onPost}” post</span>
+        <a className="act-link" href={r.link} target="_blank" rel="noopener noreferrer">View thread<window.IcExternal size={13} /></a>
+      </div>
     </div>
   );
 }
@@ -201,7 +199,7 @@ function EmptyObjects({ onAdd }) {
   return (
     <div className="ap-empty">
       <div className="ape-mark"><window.IcBolt size={22} /></div>
-      <div className="ape-title">No scheduled posts yet</div>
+      <div className="ape-title">No schedules yet</div>
       <div className="ape-sub">Add a schedule and Pennedly will draft and post on a rhythm — always in your voice, always visible in your feed.</div>
       <button className="btn btn--secondary" onClick={onAdd}><window.IcPlus size={16} /> Add a schedule</button>
     </div>
@@ -212,7 +210,7 @@ function EmptyActivity() {
     <div className="ap-empty">
       <div className="ape-mark"><window.IcClock size={22} /></div>
       <div className="ape-title">No activity yet</div>
-      <div className="ape-sub">Once autopilot runs, its posts and the replies it sends will appear here for you to review.</div>
+      <div className="ape-sub">Once autopilot runs, the posts it publishes and the replies it sends will appear here for you to review.</div>
     </div>
   );
 }
@@ -250,6 +248,6 @@ function Toasts({ toasts, onUndo }) {
 }
 
 Object.assign(window, {
-  APMono, Switch, Select, Sidebar, Topbar, MasterCard, Reassure, ObjectCard, PolicyCard,
+  Switch, Select, Topbar, MasterCard, Reassure, ObjectCard, PolicyCard,
   Counters, AutoPostItem, AutoReplyItem, EmptyObjects, EmptyActivity, SkeletonDash, Toasts,
 });

@@ -44,4 +44,17 @@ const SHELL_ACCOUNTS = [
 // The signed-in Pennedly user (separate identity from the Threads accounts).
 const SHELL_USER = { email: "mara@pennedly.com", plan: "Creator plan" };
 
-Object.assign(window, { SHELL_NAV, SHELL_ACCOUNTS, SHELL_USER });
+// The 8 UI locales the app ships in (app-wide). English is the source language;
+// the other 7 are translate targets shown in each card's globe / translate menu.
+const UI_LANGS = [
+  { code: "en", label: "English",    native: "English",    original: true },
+  { code: "es", label: "Spanish",    native: "Español" },
+  { code: "de", label: "German",     native: "Deutsch" },
+  { code: "fr", label: "French",     native: "Français" },
+  { code: "it", label: "Italian",    native: "Italiano" },
+  { code: "pt", label: "Portuguese", native: "Português" },
+  { code: "ru", label: "Russian",    native: "Русский" },
+  { code: "uk", label: "Ukrainian",  native: "Українська" },
+];
+
+Object.assign(window, { SHELL_NAV, SHELL_ACCOUNTS, SHELL_USER, UI_LANGS });

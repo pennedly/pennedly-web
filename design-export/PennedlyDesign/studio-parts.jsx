@@ -1,14 +1,8 @@
-// studio-parts.jsx — shell + shared building blocks for the Studio screen.
+// studio-parts.jsx — shared building blocks for the Studio screen.
+// Sidebar + account + avatar now come from the shared shell (shell-parts.jsx).
 // All visuals reference the ink-on-paper tokens; no hardcoded colours.
 
 const { useState, useRef, useEffect } = React;
-
-/* ------------------------------- Avatar -------------------------------- */
-function Mono({ text, size = 34, font = 13 }) {
-  return (
-    <span className="mono" style={{ width: size, height: size, fontSize: font }}>{text}</span>
-  );
-}
 
 /* ----------------------------- Char meter ------------------------------ */
 const LIMIT = 500;
@@ -46,63 +40,27 @@ function FilterTabs({ filters, active, onChange }) {
   );
 }
 
-/* ------------------------------- Sidebar ------------------------------- */
-function Sidebar({ counts }) {
-  const nav = [
-    { id: "studio", label: "Studio", Icon: window.IcStudio, active: true, badge: counts.draft || null },
-    { id: "replies", label: "Replies", Icon: window.IcReplies, badge: 3 },
-    { id: "voice", label: "Voice", Icon: window.IcVoice },
-    { id: "settings", label: "Settings", Icon: window.IcSettings },
-  ];
-  return (
-    <aside className="sidebar">
-      <div className="brand">
-        <window.Logo size={34} radius={10} className="brand-mark" />
-        <div>
-          <div className="brand-name">Pennedly</div>
-          <div className="brand-sub">Drafting partner</div>
-        </div>
-      </div>
-      <nav className="nav">
-        <div className="nav-cap">Workspace</div>
-        {nav.map(({ id, label, Icon, active, badge }) => (
-          <a key={id} className={`nav-item ${active ? "nav-item--active" : ""}`} tabIndex="0">
-            <Icon size={16} />
-            <span className="nav-label">{label}</span>
-            {badge ? <span className="nav-badge">{badge}</span> : null}
-          </a>
-        ))}
-      </nav>
-      <div className="sidebar-foot">
-        <button className="account">
-          <Mono text={window.USER.initials} size={32} font={12} />
-          <div className="who">
-            <div className="nm">{window.USER.name}</div>
-            <div className="hd">{window.USER.handle}</div>
-          </div>
-          <window.IcChevDown size={15} className="chev" />
-        </button>
-      </div>
-    </aside>
-  );
-}
+/* ------------------------------- Sidebar -------------------------------
+   Now the shared <window.Sidebar active="studio" /> (shell-parts.jsx, §4). */
 
 /* -------------------------------- Topbar ------------------------------- */
 function Topbar({ dark, onToggleTheme, voiceReady }) {
   return (
     <header className="topbar">
-      <span className="topbar-title">Studio</span>
-      {voiceReady ? (
-        <span className="topbar-voice"><span className="vdot" />Voice active</span>
-      ) : (
-        <span className="topbar-voice"><span className="vdot" style={{ background: "var(--color-warning)" }} />Voice not set up</span>
-      )}
-      <span className="topbar-spacer" />
-      <div className="topbar-actions">
-        <button className="icon-btn" aria-label="Toggle theme" onClick={onToggleTheme}>
-          {dark ? <window.IcSun size={17} /> : <window.IcMoon size={16} />}
-        </button>
-        <button className="icon-btn" aria-label="Settings"><window.IcSettings size={17} /></button>
+      <div className="topbar-inner topbar--wide">
+        <span className="topbar-title">Studio</span>
+        {voiceReady ? (
+          <span className="status-pill status-pill--success"><span className="pill-dot" />Voice active</span>
+        ) : (
+          <span className="status-pill status-pill--warning"><span className="pill-dot" />Voice not set up</span>
+        )}
+        <span className="topbar-spacer" />
+        <div className="topbar-actions">
+          <button className="icon-btn" aria-label="Toggle theme" onClick={onToggleTheme}>
+            {dark ? <window.IcSun size={17} /> : <window.IcMoon size={16} />}
+          </button>
+          <button className="icon-btn" aria-label="Settings"><window.IcSettings size={17} /></button>
+        </div>
       </div>
     </header>
   );
@@ -139,7 +97,7 @@ function Composer({ value, onChange, onGenerate, busy, count, onCount }) {
   return (
     <div className="composer">
       <div className="composer-top">
-        <Mono text={window.USER.initials} size={36} font={13} />
+        <window.Avatar src={window.USER.avatar} initials={window.USER.initials} size={38} />
         <textarea
           ref={ref}
           className="composer-input"
@@ -248,7 +206,7 @@ function FirstRun({ onSetup }) {
       </div>
       <div className="composer fr-disabled-composer" style={{ marginTop: 22 }}>
         <div className="composer-top">
-          <Mono text={window.USER.initials} size={36} font={13} />
+          <window.Avatar src={window.USER.avatar} initials={window.USER.initials} size={38} />
           <div className="composer-input" style={{ color: "var(--color-text-subtle)" }}>Set up your voice to start drafting…</div>
         </div>
       </div>
@@ -276,7 +234,7 @@ function PublishDialog({ draft, onCancel, onConfirm }) {
           </div>
         </div>
         <div className="pub-account">
-          <Mono text={window.USER.initials} size={30} font={12} />
+          <window.Avatar src={window.USER.avatar} initials={window.USER.initials} size={30} />
           <div className="pa-t"><b>{window.USER.name}</b> <span>{window.USER.handle}</span></div>
         </div>
         <div className="pub-preview">{draft.text}</div>
@@ -310,7 +268,10 @@ function Toasts({ toasts, onUndo, onDismiss }) {
   );
 }
 
+/* ----------------------------- Error banner ---------------------------
+   Now the shared <window.ErrorBanner> from shell-parts.jsx (§3.8). */
+
 Object.assign(window, {
-  Mono, CharMeter, FilterTabs, Sidebar, Topbar, Composer,
+  CharMeter, FilterTabs, Topbar, Composer,
   SkeletonCard, EmptyState, FirstRun, PublishDialog, Toasts, LIMIT,
 });

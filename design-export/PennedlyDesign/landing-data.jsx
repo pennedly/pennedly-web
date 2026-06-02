@@ -8,7 +8,7 @@ const LAND = {
   leadHead: "Pennedly drafts posts and replies in your voice, then waits for you.",
   leadBody: "Nothing publishes until you approve it. Manage every account from one place, see what's landing, and keep your tone consistent across all of it.",
   leadEmph: "A partner that does the legwork — not an autopilot. You stay in control.",
-  contactEmail: "hello@pennedly.app",
+  contactEmail: "hello@pennedly.com",
 };
 
 const LAND_FEATURES = [

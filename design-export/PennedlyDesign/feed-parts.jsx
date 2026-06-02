@@ -10,65 +10,22 @@ function fmt(n) {
   return n.toLocaleString("en-US");
 }
 
-/* monogram avatar (same as Studio's) */
-function Mono({ text, size = 34, font = 13 }) {
-  return <span className="mono" style={{ width: size, height: size, fontSize: font }}>{text}</span>;
-}
-
-/* ------------------------------- Sidebar ------------------------------- */
-function Sidebar() {
-  const nav = [
-    { id: "studio", label: "Studio", Icon: window.IcStudio, badge: 4 },
-    { id: "feed", label: "My Feed", Icon: window.IcFeed, active: true },
-    { id: "replies", label: "Replies", Icon: window.IcReplies, badge: 3 },
-    { id: "voice", label: "Voice", Icon: window.IcVoice },
-    { id: "settings", label: "Settings", Icon: window.IcSettings },
-  ];
-  return (
-    <aside className="sidebar">
-      <div className="brand">
-        <window.Logo size={34} radius={10} className="brand-mark" />
-        <div>
-          <div className="brand-name">Pennedly</div>
-          <div className="brand-sub">Drafting partner</div>
-        </div>
-      </div>
-      <nav className="nav">
-        <div className="nav-cap">Workspace</div>
-        {nav.map(({ id, label, Icon, active, badge }) => (
-          <a key={id} className={`nav-item ${active ? "nav-item--active" : ""}`} tabIndex="0">
-            <Icon size={16} />
-            <span className="nav-label">{label}</span>
-            {badge ? <span className="nav-badge">{badge}</span> : null}
-          </a>
-        ))}
-      </nav>
-      <div className="sidebar-foot">
-        <button className="account">
-          <Mono text={window.FEED_USER.initials} size={32} font={12} />
-          <div className="who">
-            <div className="nm">{window.FEED_USER.name}</div>
-            <div className="hd">{window.FEED_USER.handle}</div>
-          </div>
-          <window.IcChevDown size={15} className="chev" />
-        </button>
-      </div>
-    </aside>
-  );
-}
+/* monogram + sidebar now come from the shared shell (shell-parts.jsx, §4). */
 
 /* -------------------------------- Topbar ------------------------------- */
 function Topbar({ dark, onToggleTheme }) {
   return (
     <header className="topbar">
-      <span className="topbar-title">My Feed</span>
-      <span className="topbar-pill"><span className="pdot" />Updated just now</span>
-      <span className="topbar-spacer" />
-      <div className="topbar-actions">
-        <button className="icon-btn" aria-label="Toggle theme" onClick={onToggleTheme}>
-          {dark ? <window.IcSun size={17} /> : <window.IcMoon size={16} />}
-        </button>
-        <button className="icon-btn" aria-label="Settings"><window.IcSettings size={17} /></button>
+      <div className="topbar-inner topbar--wide">
+        <span className="topbar-title">My Feed</span>
+        <span className="status-pill status-pill--success"><span className="pill-dot" />Updated just now</span>
+        <span className="topbar-spacer" />
+        <div className="topbar-actions">
+          <button className="icon-btn" aria-label="Toggle theme" onClick={onToggleTheme}>
+            {dark ? <window.IcSun size={17} /> : <window.IcMoon size={16} />}
+          </button>
+          <button className="icon-btn" aria-label="Settings"><window.IcSettings size={17} /></button>
+        </div>
       </div>
     </header>
   );
@@ -230,6 +187,6 @@ function Toasts({ toasts, onUndo }) {
 }
 
 Object.assign(window, {
-  fmt, Mono, Sidebar, Topbar, Sparkline, Baseline, FeedBar,
+  fmt, Topbar, Sparkline, Baseline, FeedBar,
   EmptyState, SkeletonCard, ConfirmDelete, Toasts,
 });

@@ -1,6 +1,28 @@
 // legal-app.jsx — reusable legal-page template: renders one doc + tweaks.
-// In production each route (/privacy, /terms, /data-deletion) renders this
-// template with its own doc; here a Tweak + footer links switch the sample.
+
+/* ── DEV HANDOFF · Legal template ────────────────────────────────────
+ * Routes:       /privacy · /terms · /data-deletion — all render THIS one
+ *               template, each fed its own doc. PUBLIC page: no app shell, no
+ *               sidebar. Here a Tweak + the footer switcher swap the sample doc.
+ * Purpose:      A single, reusable, highly-readable legal-doc shell the operator
+ *               drops reviewed copy into. /data-deletion is a first-class doc
+ *               (Meta requires a reachable data-deletion page).
+ * Sections:     sticky top bar (brand → home + theme toggle) · 720px article
+ *               column (back-to-home · eyebrow/title/updated/intro · TEMPLATE
+ *               notice callout · auto-generated TOC · typed prose blocks:
+ *               paragraph / sub-heading / bullet list / fill-in placeholder /
+ *               operator-identity card / quiet contact block) · footer that
+ *               cross-links the three docs + Home.
+ * What changed: the COPY is now an explicit TEMPLATE — every section body is
+ *               bracketed fill-in guidance, not authoritative legal text (do NOT
+ *               ship as-is). Added the real operator of record (Fundacja Rozwoju
+ *               Przedsi\u0119biorczo\u015bci \u201eTw\u00f3j StartUp\u201d — KRS/NIP/REGON, Warszawa) and a
+ *               TEMPLATE notice callout. Data Deletion now documents the Meta
+ *               deauthorize / data-deletion callback (cascade-delete + confirmation
+ *               code, completes within 30 days). Contact emails moved to the real
+ *               domain (pennedly.com); tokens-only (light + dark); canonical card-in
+ *               entrance; added this handoff note.
+ * ──────────────────────────────────────────────────────────────────── */
 
 const { useState: gS, useEffect: gE } = React;
 

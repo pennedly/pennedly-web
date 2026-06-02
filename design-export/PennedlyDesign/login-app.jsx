@@ -1,5 +1,39 @@
 // login-app.jsx — passwordless sign-in: auth state machine + tweaks.
 
+/* ── DEV HANDOFF · Login ─────────────────────────────────────────────
+ * Route / shell:   /app/login — FULL-SCREEN, NO app shell (no <Sidebar>). Its own
+ *                  centered card on a soft radial background; the pre-auth entry.
+ * Purpose:         Passwordless sign-in. First sign-in creates the account, then
+ *                  the user lands in Onboarding.
+ * States + triggers:
+ *                  email     — default: Continue with Google, "or", email field.
+ *                  code      — after "Email me a code": 6-cell OTP + resend cooldown.
+ *                  signing   — brief spinner after Google / a verified code, then
+ *                              redirects to Onboarding.html.
+ *                  error     — rate-limit / invalid-code / Google-failed. The OTP
+ *                              shows the danger border and the canonical SHAKE.
+ *                  (All four are previewable via the Tweaks "View" + "Error" radios.)
+ * Data:            LOGIN_COPY (all strings), LOGIN_ERRORS, LOGIN_LANGS (the 8 UI
+ *                  locales), DEV_LOGIN (env-flag + dev email + build hash).
+ * Interactions:    Google (simulated) · request a code · enter/paste the 6-digit
+ *                  code (auto-advance, backspace, arrows) · resend (30s cooldown) ·
+ *                  change email · language switch (top-right) · Terms/Privacy links ·
+ *                  Developer-mode drawer = the real email-only dev login.
+ * Localize:        all end-user copy localizes (title/sub, button labels, errors,
+ *                  resend, consent). The OTP is digits-only (locale-agnostic).
+ * Backend gotchas: The monochrome Google "G" tile is DELIBERATE — a trademark-safe
+ *                  mark, not a missing logo; do not swap in the multicolour logo.
+ *                  The Developer drawer models the REAL dev path: an EMAIL-ONLY
+ *                  sign-in gated by the DEV_LOGIN env flag (skips OTP); it must be
+ *                  hidden in production. No password anywhere. Codes expire ~10 min;
+ *                  resend is rate-limited (the cooldown).
+ * Changed in rework: tokens-only (removed the only hardcoded hex — the switch knob);
+ *                  the error shake now uses the CANONICAL keyframes (components.css);
+ *                  aligned the language list to the app's 8 locales; and replaced the
+ *                  Developer drawer's FICTIONAL environment / mock-auth / API-URL
+ *                  fields with the real env-gated email-only dev login, clearly labelled.
+ * ──────────────────────────────────────────────────────────────────── */
+
 const { useState: aS, useEffect: aE, useRef: aR } = React;
 
 const ERR_MAP = { "Rate limit": "rate", "Invalid code": "invalid", "Google": "google" };
@@ -64,6 +98,12 @@ function App() {
   function changeEmail() { setErr(null); setCode(""); setView("email"); }
   function resend() { setErr(null); startCooldown(); }
 
+  function devLogin() {
+    setSigningText(window.LOGIN_COPY.signingCode);
+    setView("signing");
+    setTimeout(() => { window.location.href = "Studio.html"; }, 1200);
+  }
+
   function verifyCode() {
     if (code.length < 6) return;
     setBusyCode(true);
@@ -113,7 +153,7 @@ function App() {
         </div>
       </div>
 
-      <window.DevDrawer />
+      <window.DevDrawer onDevLogin={devLogin} />
 
       {/* ------------------------------ Tweaks ------------------------------ */}
       <window.TweaksPanel>

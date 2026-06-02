@@ -20,6 +20,9 @@
 
 /* ----------------------- Consolidated account control ------------------ */
 .sidebar-foot { position: relative; }
+/* buttons don't inherit page text color (UA default ~near-black) — set it so
+   account names read correctly in dark mode too. */
+.account, .acct-row { color: var(--color-text); }
 .account .chev { transition: transform var(--duration-base) var(--ease-standard); }
 .account[aria-expanded="true"] .chev { transform: rotate(180deg); }
 
@@ -85,3 +88,22 @@
 @media (max-width: 880px) {
   .acct-menu { left: 8px; right: auto; width: 248px; }
 }
+
+/* ----------------------------- Error banner (§3.8) --------------------- */
+.error-banner {
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px 18px;
+  background: color-mix(in srgb, var(--color-danger) 9%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--color-danger) 32%, var(--color-border));
+  border-radius: var(--radius-lg);
+  animation: card-in var(--duration-slow) var(--ease-entrance) both;
+}
+.error-banner .eb-mark {
+  width: 34px; height: 34px; flex: 0 0 auto; display: grid; place-items: center;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--color-danger) 16%, var(--color-surface));
+  color: var(--color-danger);
+}
+.error-banner .eb-body { flex: 1 1 auto; min-width: 0; }
+.error-banner .eb-title { font-size: var(--text-small); font-weight: 600; color: var(--color-text); }
+.error-banner .eb-sub { font-size: var(--text-caption); color: var(--color-text-muted); margin-top: 2px; line-height: 1.5; text-wrap: pretty; }

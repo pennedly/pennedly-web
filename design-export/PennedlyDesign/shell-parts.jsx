@@ -91,4 +91,31 @@ function Sidebar({ active }) {
   );
 }
 
-Object.assign(window, { Avatar, AccountMenu, Sidebar });
+/* ----------------------------- Error banner ---------------------------- */
+// §3.8 — shared inline error state (used by every data screen).
+function ErrorBanner({ title = "Couldn’t load this page", sub = "Something went wrong reaching Threads. Your work is safe — try again in a moment.", onRetry }) {
+  return (
+    <div className="error-banner" role="alert">
+      <span className="eb-mark"><window.IcX size={18} /></span>
+      <div className="eb-body">
+        <div className="eb-title">{title}</div>
+        <div className="eb-sub">{sub}</div>
+      </div>
+      {onRetry && <button className="btn btn--secondary btn--sm" onClick={onRetry}><window.IcUndo size={15} /> Retry</button>}
+    </div>
+  );
+}
+
+/* ----------------------------- Local time (§3.10) ---------------------- */
+// Render a timestamp in the VIEWER's local timezone + locale. Pass an ISO
+// string with no trailing Z so it's read as the viewer's local wall-clock.
+function fmtDateTime(iso) {
+  const d = new Date(iso);
+  if (isNaN(d)) return "";
+  const now = new Date();
+  const opts = { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" };
+  if (d.getFullYear() !== now.getFullYear()) opts.year = "numeric";
+  return d.toLocaleString(undefined, opts);
+}
+
+Object.assign(window, { Avatar, AccountMenu, Sidebar, ErrorBanner, fmtDateTime });

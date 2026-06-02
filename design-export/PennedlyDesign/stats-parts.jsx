@@ -1,9 +1,5 @@
-// stats-parts.jsx — shell + chart components for the Stats screen.
-// Reuses Studio shell classes (studio.css) + ds tokens. CSS-only charts.
-
-function SMono({ text, size = 32, font = 12 }) {
-  return <span className="mono" style={{ width: size, height: size, fontSize: font }}>{text}</span>;
-}
+// stats-parts.jsx — chart components for the Stats screen (CSS/SVG only, no lib).
+// Sidebar/account/avatar come from the shared shell. No hardcoded hex.
 
 function sfmt(n) {
   if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
@@ -11,61 +7,30 @@ function sfmt(n) {
   return Math.round(n).toLocaleString("en-US");
 }
 
-/* ------------------------------- Sidebar ------------------------------- */
-function Sidebar() {
-  const nav = [
-    { id: "studio", label: "Studio", Icon: window.IcStudio, badge: 4 },
-    { id: "feed", label: "My Feed", Icon: window.IcFeed },
-    { id: "stats", label: "Stats", Icon: window.IcChart, active: true },
-    { id: "replies", label: "Replies", Icon: window.IcReplies, badge: 3 },
-    { id: "mentions", label: "Mentions", Icon: window.IcAt, badge: 3 },
-    { id: "voice", label: "Voice", Icon: window.IcVoice },
-    { id: "settings", label: "Settings", Icon: window.IcSettings },
-  ];
-  return (
-    <aside className="sidebar">
-      <div className="brand">
-        <window.Logo size={34} radius={10} className="brand-mark" />
-        <div>
-          <div className="brand-name">Pennedly</div>
-          <div className="brand-sub">Drafting partner</div>
-        </div>
-      </div>
-      <nav className="nav">
-        <div className="nav-cap">Workspace</div>
-        {nav.map(({ id, label, Icon, active, badge }) => (
-          <a key={id} className={`nav-item ${active ? "nav-item--active" : ""}`} tabIndex="0">
-            <Icon size={16} />
-            <span className="nav-label">{label}</span>
-            {badge ? <span className="nav-badge">{badge}</span> : null}
-          </a>
-        ))}
-      </nav>
-      <div className="sidebar-foot">
-        <button className="account">
-          <SMono text={window.STATS_USER.initials} size={32} font={12} />
-          <div className="who">
-            <div className="nm">{window.STATS_USER.name}</div>
-            <div className="hd">{window.STATS_USER.handle}</div>
-          </div>
-          <window.IcChevDown size={15} className="chev" />
-        </button>
-      </div>
-    </aside>
-  );
+// localized bucket label from an ISO date + the period granularity (§3.10)
+function fmtBucket(at, gran) {
+  const d = new Date(at);
+  if (gran === "hour") return d.toLocaleTimeString(undefined, { hour: "numeric" });
+  if (gran === "day") return d.toLocaleDateString(undefined, { weekday: "short" });
+  if (gran === "week") return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  if (gran === "month") return d.toLocaleDateString(undefined, { month: "short" });
+  return d.toLocaleDateString();
 }
 
 /* -------------------------------- Topbar ------------------------------- */
 function Topbar({ dark, onToggleTheme }) {
   return (
     <header className="topbar">
-      <span className="topbar-title">Stats</span>
-      <span className="topbar-spacer" />
-      <div className="topbar-actions">
-        <button className="icon-btn" aria-label="Toggle theme" onClick={onToggleTheme}>
-          {dark ? <window.IcSun size={17} /> : <window.IcMoon size={16} />}
-        </button>
-        <button className="icon-btn" aria-label="Settings"><window.IcSettings size={17} /></button>
+      <div className="topbar-inner topbar--wide">
+        <span className="topbar-title">Stats</span>
+        <span className="status-pill"><window.IcChart size={13} />Updated daily</span>
+        <span className="topbar-spacer" />
+        <div className="topbar-actions">
+          <button className="icon-btn" aria-label="Toggle theme" onClick={onToggleTheme}>
+            {dark ? <window.IcSun size={17} /> : <window.IcMoon size={16} />}
+          </button>
+          <button className="icon-btn" aria-label="Settings"><window.IcSettings size={17} /></button>
+        </div>
       </div>
     </header>
   );
@@ -73,6 +38,7 @@ function Topbar({ dark, onToggleTheme }) {
 
 /* ------------------------------- Delta chip ---------------------------- */
 function Delta({ pct }) {
+  if (pct == null) return <span className="delta delta--flat">no prior period</span>;
   const r = Math.round(pct * 10) / 10;
   if (Math.abs(r) < 0.1) return <span className="delta delta--flat">no change</span>;
   const up = r > 0;
@@ -101,41 +67,52 @@ function SummaryCard({ Icon, label, num, sub, delta }) {
   );
 }
 
-/* ----------------------------- Column chart ---------------------------- */
-function ColumnChart({ data, field, fmtVal }) {
-  const max = Math.max(...data.map((d) => d[field])) || 1;
+/* ----------------------------- Column chart ----------------------------
+   Hand-rolled (no chart lib): avg views per bucket, a dashed period-average
+   line, bars colour-coded above/below that average, localized date labels. */
+function ColumnChart({ buckets, gran, fmtVal }) {
+  const vals = buckets.map((b) => b.v);
+  const max = Math.max(...vals) || 1;
+  const avg = vals.reduce((a, b) => a + b, 0) / (vals.length || 1);
+  const avgPct = (avg / max) * 100;
   return (
     <div className="colchart">
-      {data.map((d, i) => (
-        <div key={d.label} className={`colslot ${i === data.length - 1 ? "colslot--last" : ""}`}
-          title={`${d.label}: ${fmtVal(d[field])}`}>
-          <div className="colbar-wrap">
-            <div className="colbar" style={{ height: `${Math.max(4, (d[field] / max) * 100)}%` }} />
-          </div>
-          <span className="collabel">{d.label}</span>
+      <div className="colplot">
+        <div className="colavg" style={{ bottom: `${avgPct}%` }}>
+          <span className="colavg-lbl">avg {fmtVal(avg)}</span>
         </div>
-      ))}
+        {buckets.map((b, i) => {
+          const above = b.v >= avg;
+          return (
+            <div key={i} className="colbar-col" title={`${fmtBucket(b.at, gran)}: ${fmtVal(b.v)}`}>
+              <div className={`colbar ${above ? "colbar--above" : "colbar--below"}`} style={{ height: `${Math.max(3, (b.v / max) * 100)}%` }} />
+            </div>
+          );
+        })}
+      </div>
+      <div className="collabels">
+        {buckets.map((b, i) => <span key={i} className="collabel">{fmtBucket(b.at, gran)}</span>)}
+      </div>
     </div>
   );
 }
 
 /* -------------------------- Distribution bars -------------------------- */
-function DistributionBars({ tiers, totalPosts }) {
-  const counts = tiers.map((t) => Math.round(t.pct * totalPosts));
-  // fix rounding so counts sum to totalPosts
+function DistributionBars({ meta, dist, totalPosts }) {
+  const counts = meta.map((t) => Math.round((dist[t.key] || 0) * totalPosts));
   let diff = totalPosts - counts.reduce((a, b) => a + b, 0);
-  if (diff !== 0) counts[2] += diff;
+  if (diff !== 0) { const mi = counts.indexOf(Math.max(...counts)); counts[mi] += diff; }
   const maxCount = Math.max(...counts) || 1;
   return (
     <div className="distlist">
-      {tiers.map((t, i) => (
+      {meta.map((t, i) => (
         <div className="distrow" key={t.key}>
           <div className="dist-top">
             <span className="dist-name">
               <span className={`dist-dot ${t.cls}`} />
               {t.name}<span className="dn-sub">· {t.sub}</span>
             </span>
-            <span className="dist-val">{counts[i]} posts<span className="dv-pct">{Math.round((counts[i] / (totalPosts || 1)) * 100)}%</span></span>
+            <span className="dist-val">{counts[i]} post{counts[i] === 1 ? "" : "s"}<span className="dv-pct">{Math.round((counts[i] / (totalPosts || 1)) * 100)}%</span></span>
           </div>
           <div className="dist-track">
             <div className={`dist-fill ${t.cls}`} style={{ width: `${(counts[i] / maxCount) * 100}%` }} />
@@ -190,4 +167,4 @@ function SkeletonDash() {
   );
 }
 
-Object.assign(window, { SMono, sfmt, Sidebar, Topbar, Delta, SummaryCard, ColumnChart, DistributionBars, EmptyState, SkeletonDash });
+Object.assign(window, { sfmt, fmtBucket, Topbar, Delta, SummaryCard, ColumnChart, DistributionBars, EmptyState, SkeletonDash });

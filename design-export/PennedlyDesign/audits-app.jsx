@@ -1,5 +1,43 @@
 // audits-app.jsx — Audits: list ⇄ detail, approve/reject decisions, states.
 
+/* ── DEV HANDOFF · Audits ───────────────────────────────────────────
+ * Route / shell:   /app/audits (list) + /app/audits/{id} (detail). Full app
+ *                  shell, sidebar = yes; active="audits".
+ * Purpose:         Pennedly's weekly coach reviews the account and proposes
+ *                  voice/strategy changes; the user approves or rejects each.
+ * Content width:   reading (--content-reading, 720); topbar .topbar-inner (no --wide).
+ * Topbar:          title="Audits"; .status-pill — accent "N to review" / success
+ *                  "All reviewed"; actions = theme, settings.
+ * Sections (top→bottom):
+ *   - LIST: intro + audit rows (status pill · period range · posts analyzed ·
+ *     "N of M decided" · week-over-week delta).
+ *   - DETAIL: back link, header + decision tally, the coach's narrative, then each
+ *     proposed change as a card (approve/reject + optional note; diff viewer; an
+ *     autopilot_config change also shows its posting hours in LOCAL time).
+ * States:          loading (skeleton list) · live · empty (no audits yet).
+ *                  Driven by the `state` tweak; real app: loading on fetch.
+ * Data shown:      list row metrics above; per change — kind, title, detail,
+ *                  status badge, optional diff, optional note, and (once applied)
+ *                  the measured effect %.
+ * Interactions:    open row → detail. On an UNDECIDED change: Approve → Applied
+ *                  (immediately, effect measured later) / Reject → Rejected; both
+ *                  show a confirmation toast (NO undo — see gotcha). Add/edit a
+ *                  note while undecided. Decided changes are READ-ONLY.
+ * Localize:        end-user copy = intro, row labels, status badges, narrative
+ *                  framing, change buttons/labels, autopilot hours caption + note,
+ *                  empty copy, toasts. Audit content + numbers are SAMPLE data.
+ * Backend truth:   APPEND-ONLY — a change is decided once, immediately, and cannot
+ *                  be rolled back or reconsidered, so there is NO undo / rollback /
+ *                  reconsider affordance anywhere. autopilot_config hours are
+ *                  stored UTC and rendered in the viewer's local timezone.
+ * Changed in rework: removed the invented rollback/reconsider (+ rolled-back
+ *                  status) and the post-decision undo; decided changes now render
+ *                  read-only. Adopted shared shell; reading width + aligned topbar;
+ *                  .status-pill; added posts-analyzed + N-of-M-decided + WoW delta
+ *                  to list rows; added an autopilot_config change with local-time
+ *                  posting hours.
+ * ─────────────────────────────────────────────────────────────────── */
+
 const { useState: useAuS, useEffect: useAuE } = React;
 
 const AUDIT_TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
@@ -27,13 +65,12 @@ function AuditsApp() {
   const reviewCount = live.reduce((a, au) => a + au.changes.filter((c) => c.status === "undecided").length, 0);
   const open = live.find((a) => a.id === openId);
 
-  /* toasts */
+  /* toasts — confirmation only; decisions are append-only (no undo) */
   function pushToast(toast) {
     const id = "t" + Date.now() + Math.random().toString(36).slice(2, 5);
     setToasts((ts) => [...ts, { ...toast, id }]);
-    setTimeout(() => setToasts((ts) => ts.filter((x) => x.id !== id)), 4600);
+    setTimeout(() => setToasts((ts) => ts.filter((x) => x.id !== id)), 4200);
   }
-  function undoToast(toast) { if (toast.undo) toast.undo(); setToasts((ts) => ts.filter((x) => x.id !== toast.id)); }
 
   function patchChange(changeId, changes) {
     setAudits((as) => as.map((a) => a.id !== openId ? a : {
@@ -42,17 +79,15 @@ function AuditsApp() {
   }
   const findCh = (id) => open && open.changes.find((c) => c.id === id);
 
-  const approve = (id) => { const c = findCh(id); patchChange(id, { status: "applied", effect: null, effectLabel: c.effectLabel || "engagement" }); pushToast({ kind: "success", title: "Change approved", sub: "Applied — Pennedly will measure the effect", undo: () => patchChange(id, { status: "undecided", effect: null }) }); };
-  const reject = (id) => { patchChange(id, { status: "rejected" }); pushToast({ kind: "success", title: "Change rejected", sub: "Nothing changes in your voice", undo: () => patchChange(id, { status: "undecided" }) }); };
-  const rollback = (id) => { const c = findCh(id); patchChange(id, { status: "rolledback" }); pushToast({ kind: "success", title: "Change rolled back", sub: "Reverted to how it was before", undo: () => patchChange(id, { status: "applied" }) }); };
-  const reconsider = (id) => { patchChange(id, { status: "undecided", effect: null }); pushToast({ kind: "success", title: "Back to review" }); };
+  const approve = (id) => { const c = findCh(id); patchChange(id, { status: "applied", effect: null, effectLabel: c.effectLabel || "engagement" }); pushToast({ kind: "success", title: "Change approved", sub: "Applied now — Pennedly will measure the effect" }); };
+  const reject = (id) => { patchChange(id, { status: "rejected" }); pushToast({ kind: "success", title: "Change rejected", sub: "Nothing changes in your voice" }); };
   const saveNote = (id, text) => { patchChange(id, { note: text || null }); pushToast({ kind: "success", title: text ? "Note saved" : "Note removed" }); };
 
   function openAudit(id) { setOpenId(id); setView("detail"); document.querySelector(".scroll")?.scrollTo(0, 0); }
 
   return (
     <div className="app">
-      <window.Sidebar reviewCount={reviewCount} />
+      <window.Sidebar active="audits" />
       <div className="main">
         <window.Topbar dark={!!t.dark} onToggleTheme={() => setTweak("dark", !t.dark)} reviewCount={reviewCount} />
         <div className="scroll">
@@ -64,7 +99,7 @@ function AuditsApp() {
               </>
             ) : view === "detail" && open ? (
               <AuditDetail audit={open} onBack={() => setView("list")}
-                onApprove={approve} onReject={reject} onRollback={rollback} onReconsider={reconsider} onSaveNote={saveNote} />
+                onApprove={approve} onReject={reject} onSaveNote={saveNote} />
             ) : (
               <>
                 <div className="page-intro">
@@ -84,7 +119,7 @@ function AuditsApp() {
         </div>
       </div>
 
-      <window.Toasts toasts={toasts} onUndo={undoToast} />
+      <window.Toasts toasts={toasts} />
 
       <window.TweaksPanel>
         <window.TweakSection label="Appearance" />
@@ -97,14 +132,13 @@ function AuditsApp() {
 }
 
 /* ----------------------------- Audit detail ---------------------------- */
-function AuditDetail({ audit, onBack, onApprove, onReject, onRollback, onReconsider, onSaveNote }) {
+function AuditDetail({ audit, onBack, onApprove, onReject, onSaveNote }) {
   const c = window.counts(audit);
   const isNew = c.undecided > 0;
   const stat = [
     { n: c.total, label: "suggestions", color: "var(--color-text-subtle)" },
     { n: c.applied, label: "applied", color: "var(--color-success)" },
     { n: c.rejected, label: "rejected", color: "var(--color-danger)" },
-    { n: c.rolledback, label: "rolled back", color: "var(--color-ink-400)" },
     { n: c.undecided, label: "pending", color: "var(--color-accent)" },
   ].filter((s, i) => i === 0 || s.n > 0);
 
@@ -114,7 +148,7 @@ function AuditDetail({ audit, onBack, onApprove, onReject, onRollback, onReconsi
       <div className="ad-head">
         <div>
           <div className="ad-title">{audit.title}</div>
-          <div className="ad-cap">{audit.range} · reviewed {audit.posted}</div>
+          <div className="ad-cap">{audit.range} · reviewed {audit.posted} · {audit.postsAnalyzed} posts analyzed</div>
         </div>
         {isNew
           ? <span className="badge" style={{ background: "color-mix(in srgb, var(--color-accent) 12%, var(--color-surface))", color: "var(--color-accent)", borderColor: "color-mix(in srgb, var(--color-accent) 30%, transparent)" }}><span className="pill-dot" />{c.undecided} to review</span>
@@ -132,7 +166,7 @@ function AuditDetail({ audit, onBack, onApprove, onReject, onRollback, onReconsi
       <div className="feed">
         {audit.changes.map((ch) => (
           <window.ChangeCard key={ch.id} change={ch}
-            onApprove={onApprove} onReject={onReject} onRollback={onRollback} onReconsider={onReconsider} onSaveNote={onSaveNote} />
+            onApprove={onApprove} onReject={onReject} onSaveNote={onSaveNote} />
         ))}
       </div>
     </>

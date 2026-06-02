@@ -207,7 +207,8 @@ select.field { appearance: none; cursor: pointer;
   display: flex; align-items: center; gap: 16px;
 }
 .topbar--wide .topbar-inner,
-.topbar-inner--wide { max-width: var(--content-wide); }
+.topbar-inner--wide,
+.topbar-inner.topbar--wide { max-width: var(--content-wide); }
 @media (max-width: 560px) { .topbar-inner { padding-inline: 14px; } }
 
 /* §3.5 — canonical shared keyframes. Reference THESE names everywhere

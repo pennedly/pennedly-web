@@ -2,13 +2,7 @@
    The weekly coach review. Built on ink-on-paper tokens + Studio shell
    classes (studio.css). Calm, considered, trustworthy. No hardcoded hex. */
 
-.topbar-pill {
-  display: inline-flex; align-items: center; gap: 7px; white-space: nowrap;
-  font-size: var(--text-small); color: var(--color-text-muted);
-  padding: 5px 11px 5px 9px; border: 1px solid var(--color-border);
-  border-radius: var(--radius-full); background: var(--color-surface);
-}
-.topbar-pill .pdot { width: 7px; height: 7px; border-radius: var(--radius-full); background: var(--color-accent); }
+/* top-bar status now uses the shared .status-pill (ds/components.css). */
 
 .page-intro { display: flex; flex-direction: column; gap: 4px; }
 .page-intro h1 { font-size: var(--text-h1); font-weight: 600; letter-spacing: -0.015em; margin: 0; }
@@ -33,9 +27,15 @@
 .ar-main { flex: 1 1 auto; min-width: 0; }
 .ar-date { font-size: var(--text-h3); font-weight: 600; letter-spacing: -0.006em; }
 .ar-summary { font-size: var(--text-small); color: var(--color-text-muted); margin-top: 5px; line-height: 1.5; text-wrap: pretty; }
-.ar-meta { display: flex; align-items: center; gap: 14px; margin-top: 10px; }
-.ar-meta .am { display: inline-flex; align-items: center; gap: 5px; font-size: var(--text-caption); color: var(--color-text-subtle); white-space: nowrap; }
-.ar-meta .am-dot { width: 6px; height: 6px; border-radius: var(--radius-full); }
+.ar-meta { display: flex; align-items: center; gap: 9px; margin-top: 10px; flex-wrap: wrap; }
+.ar-meta .am { font-size: var(--text-caption); color: var(--color-text-subtle); white-space: nowrap; }
+.ar-meta .am-sep { font-size: var(--text-caption); color: var(--color-text-subtle); opacity: 0.5; }
+.ar-meta .am-wow {
+  display: inline-flex; align-items: center; gap: 3px; white-space: nowrap;
+  font-size: var(--text-caption); font-weight: 600; font-variant-numeric: tabular-nums;
+}
+.ar-meta .am-wow--up { color: var(--color-success); }
+.ar-meta .am-wow--down { color: var(--color-danger); }
 .ar-right { display: flex; align-items: center; gap: 14px; flex: 0 0 auto; }
 .ar-chev { color: var(--color-text-subtle); flex: 0 0 auto; }
 
@@ -92,6 +92,23 @@
 .cc-title { font-size: var(--text-h3); font-weight: 600; letter-spacing: -0.006em; flex: 1 1 auto; min-width: 0; line-height: 1.3; }
 .cc-head .badge, .ad-head .badge { flex: 0 0 auto; white-space: nowrap; }
 .cc-detail { font-size: var(--text-body); line-height: 1.6; color: var(--color-text-muted); margin: 11px 0 0; text-wrap: pretty; }
+
+/* autopilot_config: proposed posting hours in the viewer's local time */
+.autopilot-hours {
+  margin-top: 13px; padding: 12px 14px;
+  background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius-md);
+}
+.autopilot-hours .ah-cap { font-size: var(--text-caption); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-subtle); }
+.autopilot-hours .ah-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 9px; }
+.autopilot-hours .ah-chip {
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+  font-size: var(--text-small); font-weight: 600; color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-full); padding: 5px 12px;
+}
+.autopilot-hours .ah-chip svg { color: var(--color-accent); flex: 0 0 auto; }
+.autopilot-hours .ah-note { font-size: var(--text-caption); color: var(--color-text-subtle); margin-top: 9px; }
 
 /* expandable diff */
 .cc-extra { display: flex; gap: 8px; margin-top: 13px; flex-wrap: wrap; }

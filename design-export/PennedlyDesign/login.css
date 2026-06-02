@@ -109,8 +109,8 @@ body {
 .otp-box.filled { background: var(--color-surface-2); }
 .otp.error .otp-box { border-color: var(--color-danger); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-danger) 14%, transparent); }
 @media (max-width: 420px) { .otp-box { width: 40px; height: 50px; font-size: var(--text-h3); } .otp { gap: 6px; } }
-@keyframes shake { 10%,90% { transform: translateX(-1px); } 30%,70% { transform: translateX(2px); } 50% { transform: translateX(-3px); } }
-.otp.error { animation: shake 0.35s var(--ease-standard); }
+/* error shake uses the canonical @keyframes shake (ds/components.css) */
+.otp.error { animation: shake 0.4s var(--ease-standard); }
 
 .code-actions { margin-top: 20px; display: flex; flex-direction: column; gap: 12px; }
 .resend { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: var(--text-small); color: var(--color-text-subtle); }
@@ -124,7 +124,7 @@ body {
   border: 2.5px solid var(--color-border); border-top-color: var(--color-text);
   animation: spin 0.7s linear infinite;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
+/* spin comes from the canonical @keyframes spin (ds/components.css) */
 .signing-text { font-size: var(--text-body); color: var(--color-text-muted); margin-top: 18px; }
 
 /* ------------------------------ Error ---------------------------- */
@@ -168,33 +168,29 @@ a.btn { text-decoration: none; }
 .dev-toggle .chev { transition: transform var(--duration-fast) var(--ease-standard); }
 .dev.open .dev-toggle .chev { transform: rotate(180deg); }
 .dev-body {
-  max-width: 520px; margin: 0 auto; padding: 4px 20px 22px;
-  display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px;
+  max-width: 460px; margin: 0 auto; padding: 6px 20px 22px;
+  display: flex; flex-direction: column; gap: 14px;
 }
-.dev-field { display: flex; flex-direction: column; gap: 6px; }
-.dev-field.full { grid-column: 1 / -1; }
-.dev-label { font-size: var(--text-caption); font-weight: 600; color: var(--color-text-subtle); letter-spacing: 0.02em; }
-.dev-input, .dev-select {
-  height: 36px; padding: 0 10px; font-family: var(--font-mono); font-size: var(--text-small);
-  color: var(--color-text); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm); outline: none;
+.dev-gate { display: flex; flex-direction: column; gap: 9px; align-items: flex-start; }
+.dev-gate-note { font-size: var(--text-caption); color: var(--color-text-subtle); line-height: 1.5; text-wrap: pretty; }
+.dev-gate-note code {
+  font-family: var(--font-mono); font-size: 0.92em; color: var(--color-text-muted);
+  background: var(--color-surface-2); border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm); padding: 0 5px;
 }
-.dev-input:focus, .dev-select:focus { border-color: var(--color-accent); }
-.dev-row { display: flex; align-items: center; gap: 10px; }
-.dev-mock { display: flex; align-items: center; gap: 10px; font-size: var(--text-small); color: var(--color-text-muted); }
-.dev-foot { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; padding-top: 4px; border-top: 1px solid var(--color-border); margin-top: 2px; }
+.dev-form { display: flex; gap: 10px; }
+.dev-input {
+  flex: 1 1 auto; min-width: 0; height: 38px; padding: 0 11px;
+  font-family: var(--font-mono); font-size: var(--text-small); color: var(--color-text);
+  background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); outline: none;
+  transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
+}
+.dev-input:focus { border-color: var(--color-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 18%, transparent); }
+.dev-form .btn { flex: 0 0 auto; }
+.dev-foot { display: flex; align-items: center; padding-top: 2px; }
 .dev-hash { font-family: var(--font-mono); font-size: 11px; color: var(--color-text-subtle); }
-.dev-foot .grow { flex: 1 1 auto; }
-
-/* the quiet switch (mirrors ds/components.css .switch) */
-.switch { position: relative; width: 38px; height: 22px; flex: 0 0 auto; cursor: pointer; display: inline-block; }
-.switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
-.switch .track { position: absolute; inset: 0; border-radius: var(--radius-full); background: var(--color-ink-300); transition: background var(--duration-base) var(--ease-standard); }
-.dark .switch .track { background: var(--color-ink-700); }
-.switch .knob { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: var(--radius-full); background: #fff; box-shadow: var(--shadow-sm); transition: transform var(--duration-base) var(--ease-standard); }
-.switch input:checked ~ .track { background: var(--color-primary); }
-.switch input:checked ~ .knob { transform: translateX(16px); background: var(--color-primary-foreground); }
 
 @media (max-width: 460px) {
   .login-card { padding: 26px 20px 22px; border-radius: var(--radius-xl); }
-  .dev-body { grid-template-columns: 1fr; }
+  .dev-form { flex-direction: column; }
 }

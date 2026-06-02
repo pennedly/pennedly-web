@@ -1,5 +1,52 @@
 // autopilot-app.jsx — Autopilot: master switch, schedules, reply policy, activity.
 
+/* ── DEV HANDOFF · Autopilot ────────────────────────────────────────
+ * Route / shell:   /app/autopilot  (tester-gated). Full app shell, sidebar = yes;
+ *                  render <window.Sidebar active="autopilot" />.
+ * Purpose:         Opt-in automation: let Pennedly publish posts on a schedule
+ *                  and auto-reply to comments — all in the user's voice, all
+ *                  visible in their feed. OFF by default; the user stays in control.
+ * Content width:   reading (--content-reading, 720); topbar row in .topbar-inner
+ *                  (no --wide), body in .content.
+ * Topbar:          title="Autopilot"; .status-pill — success "Active" when the
+ *                  master is on, neutral "Off" otherwise; actions = theme, settings.
+ * Sections (top→bottom): page intro · master card + "off" reassurance ·
+ *                  Scheduled posts (list of schedule objects) · Auto-reply policy
+ *                  (account-level) · Activity (read-only).
+ * States + triggers:
+ *                  loading — skeleton on mount / `state=Loading` tweak (~850ms).
+ *                  ready   — default.
+ *                  empty (no schedules) — `state=No objects` tweak → EmptyObjects.
+ *                  empty (no activity)  — `state=No activity` tweak → EmptyActivity.
+ *                  confirm dialog — turning the MASTER on (only) opens a confirm;
+ *                  turning it off is immediate. (Per-schedule on/off are instant.)
+ * Data shown:      per schedule — name, post time, random ± spread, topic, on/off,
+ *                  and a "new posts start with auto-reply on" seed. Policy — master
+ *                  on/off, audience, replies/day. Activity — per-schedule counters,
+ *                  recent published posts (text + metrics + link), recent auto-replies
+ *                  (commenter + their comment + the bot's reply + the post it's on + link).
+ * Interactions:    master toggle (confirm-to-enable) · add / rename / edit / delete
+ *                  schedules (delete is undoable via toast) · edit policy. Activity is
+ *                  strictly read-only.
+ * Localize:        end-user copy = intro, master/reassure/empty copy, section
+ *                  titles + subs, field labels, policy labels, activity captions.
+ *                  Post text, names, numbers are SAMPLE content. Clock times +
+ *                  activity timestamps render in the VIEWER's locale & timezone.
+ * Backend gotchas: SCHEDULE TIME = UTC minutes-since-midnight (obj.utcMin) is the
+ *                  truth; the UI converts to/from the viewer's LOCAL time and shows
+ *                  a "UTC±N · sends HH:MM UTC" hint (see autopilot-data.jsx). The
+ *                  ACCOUNT auto-reply policy (audience + replies/day) is what the
+ *                  worker actually honors — the per-schedule "seed" only sets the
+ *                  initial auto-reply state of NEW posts. Activity links are real
+ *                  Threads permalinks in production.
+ * Changed in rework: adopted the shared shell (deleted the local sidebar/account);
+ *                  reading width + .topbar-inner; topbar uses .status-pill; avatars
+ *                  use <window.Avatar/>; timestamps via window.fmtDateTime. Schedule
+ *                  time is now genuinely local-timezone (UTC-stored + converted).
+ *                  Removed the vestigial per-schedule audience/cap no-ops — those
+ *                  live ONLY on the account policy now. Added the activity link-outs.
+ * ─────────────────────────────────────────────────────────────────── */
+
 const { useState: useApS, useEffect: useApE } = React;
 
 const AP_TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
@@ -50,12 +97,12 @@ function AutopilotApp() {
 
   const changeObj = (id, patch) => setObjects((os) => os.map((o) => (o.id === id ? { ...o, ...patch } : o)));
   const removeObj = (id) => { const removed = objects.find((o) => o.id === id); setObjects((os) => os.filter((o) => o.id !== id)); pushToast({ kind: "success", title: "Schedule removed", undo: () => setObjects((os) => (os.some((o) => o.id === id) ? os : [...os, removed])) }); };
-  const addObj = () => { const id = "o" + (++OBJ_SEQ); setObjects((os) => [...os, { id, name: "New schedule", time: "9:00 AM", jitter: "± 15 min", topic: "Writing craft", on: false, seeds: false }]); pushToast({ kind: "success", title: "Schedule added", sub: "It stays paused until you switch it on" }); };
+  const addObj = () => { const id = "o" + (++OBJ_SEQ); setObjects((os) => [...os, { id, name: "New schedule", utcMin: window.apLocalToUtc(9 * 60), jitter: 15, topic: "Writing craft", on: false, seed: false }]); pushToast({ kind: "success", title: "Schedule added", sub: "It stays paused until you switch it on" }); };
   const changePolicy = (patch) => setPolicy((p) => ({ ...p, ...patch }));
 
   return (
     <div className="app">
-      <window.Sidebar />
+      <window.Sidebar active="autopilot" />
       <div className="main">
         <window.Topbar dark={!!t.dark} onToggleTheme={() => setTweak("dark", !t.dark)} on={master} />
         <div className="scroll">
@@ -75,7 +122,7 @@ function AutopilotApp() {
                 <div className="ap-config">
                   <div className="ap-section">
                     <div className="ap-sec-head">
-                      <div><div className="ap-sec-title">Scheduled posts</div><div className="ap-sec-sub">Each schedule drafts a post in your voice and publishes it at the set time.</div></div>
+                      <div><div className="ap-sec-title">Scheduled posts</div><div className="ap-sec-sub">Each schedule drafts a post in your voice and publishes it around the set time — shown in your local time ({window.apFmtOffset()}).</div></div>
                       {objs.length > 0 && <button className="btn btn--secondary btn--sm" onClick={addObj}><window.IcPlus size={15} /> Add</button>}
                     </div>
                     <div className="ap-sec-body">

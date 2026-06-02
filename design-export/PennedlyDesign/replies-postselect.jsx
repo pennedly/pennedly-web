@@ -1,32 +1,33 @@
-// replies-postselect.jsx — choosing which post's comments to work through:
-// a horizontal scroll rail of post cards. Scrolls right; the right edge fades
-// to hint there's more. Drives the postFilter state. No hardcoded hex.
+// replies-postselect.jsx — the MASTER pane of the master-detail layout: a
+// vertical list of the user's posts that have comments (newest first). Each row
+// shows the post text, its date·time (local), the comment count, and an
+// unanswered-count badge. Selecting a post drives the detail pane.
 
-function PostSelector({ posts, counts, active, onChange, total }) {
-  const items = [
-    { key: "all", label: "All posts", count: total, time: null },
-    ...posts.map((p) => ({ key: p.id, label: p.text, count: counts[p.id] || 0, time: p.time })),
-  ];
+function PostMaster({ posts, selected, onSelect }) {
   return (
-    <div className="post-rail-wrap">
-      <div className="post-rail">
-        {items.map((it) => (
+    <aside className="rq-master">
+      <div className="rq-master-cap">Posts with comments</div>
+      <div className="rq-post-list" role="listbox" aria-label="Posts with comments">
+        {posts.map((p) => (
           <button
-            key={it.key}
-            className={`railcard ${it.key === "all" ? "railcard--all" : ""} ${active === it.key ? "railcard--active" : ""}`}
-            onClick={() => onChange(it.key)}
-            title={it.label}
+            key={p.id}
+            role="option"
+            aria-selected={selected === p.id}
+            className={`rq-post ${selected === p.id ? "rq-post--active" : ""}`}
+            onClick={() => onSelect(p.id)}
           >
-            <span className="rc-snippet">{it.label}</span>
-            <span className="rc-foot">
-              <span className="rc-time">{it.time ? it.time : "everything"}</span>
-              <span className={`ps-count ${active === it.key ? "ps-count--on" : ""}`}>{it.count}</span>
+            <span className="rq-post-text">{p.text}</span>
+            <span className="rq-post-meta">
+              <span className="rq-post-time">{window.fmtDateTime(p.at)}</span>
+              <span className="rq-post-sep">·</span>
+              <span className="rq-post-count">{p.total} comment{p.total === 1 ? "" : "s"}</span>
+              {p.unanswered > 0 && <span className="rq-post-badge">{p.unanswered} to answer</span>}
             </span>
           </button>
         ))}
       </div>
-    </div>
+    </aside>
   );
 }
 
-Object.assign(window, { PostSelector });
+Object.assign(window, { PostMaster });

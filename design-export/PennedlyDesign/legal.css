@@ -33,7 +33,7 @@ a.btn { text-decoration: none; }
 .icon-btn:hover { background: var(--color-surface-2); color: var(--color-text); }
 
 /* ------------------------------ Article -------------------------- */
-.legal-main { flex: 1 1 auto; padding: 44px 0 24px; }
+.legal-main { flex: 1 1 auto; padding: 44px 0 24px; animation: card-in var(--duration-slow) var(--ease-entrance) both; }
 .backhome {
   display: inline-flex; align-items: center; gap: 7px; margin-bottom: 26px; white-space: nowrap;
   font-size: var(--text-small); font-weight: 500; color: var(--color-text-muted); text-decoration: none;
@@ -45,6 +45,21 @@ a.btn { text-decoration: none; }
 .doc-title { font-size: var(--text-h1); font-weight: 600; letter-spacing: -0.015em; margin: 12px 0 0; }
 .doc-updated { font-size: var(--text-small); color: var(--color-text-subtle); margin: 10px 0 0; }
 .doc-intro { font-size: var(--text-h3); font-weight: 400; color: var(--color-text-muted); line-height: 1.55; margin: 20px 0 0; max-width: 60ch; text-wrap: pretty; }
+
+/* template notice callout — makes the placeholder nature unmistakable */
+.legal-notice {
+  display: flex; align-items: flex-start; gap: 11px; margin: 22px 0 0; padding: 13px 15px;
+  background: color-mix(in srgb, var(--color-warning) 9%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--color-warning) 30%, var(--color-border));
+  border-radius: var(--radius-lg);
+}
+.legal-notice .ln-tag {
+  flex: 0 0 auto; font-size: var(--text-caption); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--color-warning); background: color-mix(in srgb, var(--color-warning) 16%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--color-warning) 30%, transparent);
+  border-radius: var(--radius-full); padding: 2px 9px; margin-top: 1px;
+}
+.legal-notice .ln-txt { font-size: var(--text-small); color: var(--color-text-muted); line-height: 1.5; text-wrap: pretty; }
 
 /* table of contents */
 .toc {
@@ -73,6 +88,27 @@ a.btn { text-decoration: none; }
 .sec ul li::before { content: ""; position: absolute; left: 4px; top: 9px; width: 6px; height: 6px; border-radius: 2px; background: var(--color-ink-400); transform: rotate(45deg); }
 .sec a { color: var(--color-accent); text-decoration: underline; text-underline-offset: 2px; text-decoration-color: color-mix(in srgb, var(--color-accent) 40%, transparent); }
 .sec a:hover { text-decoration-color: var(--color-accent); }
+
+/* fill-in placeholder block — clearly not final copy */
+.sec p.ph {
+  position: relative; padding: 11px 14px; margin-top: 12px;
+  color: var(--color-text-subtle); font-style: italic;
+  background: var(--color-surface-2); border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md); max-width: 68ch;
+}
+
+/* operator-of-record identity card (factual) */
+.operator {
+  margin-top: 14px; padding: 15px 17px; max-width: 68ch;
+  background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);
+}
+.operator .op-name { font-size: var(--text-body); font-weight: 600; color: var(--color-text); line-height: 1.4; }
+.operator .op-regs { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+.operator .op-reg {
+  font-family: var(--font-mono); font-size: var(--text-caption); color: var(--color-text-muted); white-space: nowrap;
+  background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 3px 8px;
+}
+.operator .op-city { font-size: var(--text-small); color: var(--color-text-subtle); margin-top: 10px; }
 
 /* contact block */
 .contact-block {

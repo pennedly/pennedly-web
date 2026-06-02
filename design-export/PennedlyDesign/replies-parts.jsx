@@ -1,68 +1,40 @@
-// replies-parts.jsx — shell + shared building blocks for the Reply queue.
-// Reuses Studio shell classes (studio.css) + ds tokens. No hardcoded hex.
+// replies-parts.jsx — building blocks for the Reply queue (master-detail).
+// Sidebar/account/avatar come from the shared shell. No hardcoded hex.
 
 const { useEffect: useRE } = React;
-
-function Mono({ text, size = 34, font = 13 }) {
-  return <span className="mono" style={{ width: size, height: size, fontSize: font }}>{text}</span>;
-}
-
-/* ------------------------------- Sidebar ------------------------------- */
-function Sidebar({ needsCount }) {
-  const nav = [
-    { id: "studio", label: "Studio", Icon: window.IcStudio, badge: 4 },
-    { id: "feed", label: "My Feed", Icon: window.IcFeed },
-    { id: "replies", label: "Replies", Icon: window.IcReplies, active: true, badge: needsCount || null },
-    { id: "voice", label: "Voice", Icon: window.IcVoice },
-    { id: "settings", label: "Settings", Icon: window.IcSettings },
-  ];
-  return (
-    <aside className="sidebar">
-      <div className="brand">
-        <window.Logo size={34} radius={10} className="brand-mark" />
-        <div>
-          <div className="brand-name">Pennedly</div>
-          <div className="brand-sub">Drafting partner</div>
-        </div>
-      </div>
-      <nav className="nav">
-        <div className="nav-cap">Workspace</div>
-        {nav.map(({ id, label, Icon, active, badge }) => (
-          <a key={id} className={`nav-item ${active ? "nav-item--active" : ""}`} tabIndex="0">
-            <Icon size={16} />
-            <span className="nav-label">{label}</span>
-            {badge ? <span className="nav-badge">{badge}</span> : null}
-          </a>
-        ))}
-      </nav>
-      <div className="sidebar-foot">
-        <button className="account">
-          <Mono text={window.REPLY_USER.initials} size={32} font={12} />
-          <div className="who">
-            <div className="nm">{window.REPLY_USER.name}</div>
-            <div className="hd">{window.REPLY_USER.handle}</div>
-          </div>
-          <window.IcChevDown size={15} className="chev" />
-        </button>
-      </div>
-    </aside>
-  );
-}
 
 /* -------------------------------- Topbar ------------------------------- */
 function Topbar({ dark, onToggleTheme, needsCount }) {
   return (
     <header className="topbar">
-      <span className="topbar-title">Replies</span>
-      <span className="topbar-pill"><span className="pdot" />{needsCount} need a reply</span>
-      <span className="topbar-spacer" />
-      <div className="topbar-actions">
-        <button className="icon-btn" aria-label="Toggle theme" onClick={onToggleTheme}>
-          {dark ? <window.IcSun size={17} /> : <window.IcMoon size={16} />}
-        </button>
-        <button className="icon-btn" aria-label="Settings"><window.IcSettings size={17} /></button>
+      <div className="topbar-inner topbar--wide">
+        <span className="topbar-title">Replies</span>
+        {needsCount > 0
+          ? <span className="status-pill status-pill--accent"><span className="pill-dot" />{needsCount} need a reply</span>
+          : <span className="status-pill status-pill--success"><span className="pill-dot" />All caught up</span>}
+        <span className="topbar-spacer" />
+        <div className="topbar-actions">
+          <button className="icon-btn" aria-label="Toggle theme" onClick={onToggleTheme}>
+            {dark ? <window.IcSun size={17} /> : <window.IcMoon size={16} />}
+          </button>
+          <button className="icon-btn" aria-label="Settings"><window.IcSettings size={17} /></button>
+        </div>
       </div>
     </header>
+  );
+}
+
+/* --------------------- Detail context header ("replying under") -------- */
+function PostContext({ post }) {
+  return (
+    <div className="rq-context">
+      <div className="rq-context-cap">Replying under your post</div>
+      <p className="rq-context-text">{post.text}</p>
+      <div className="rq-context-foot">
+        <span className="rq-context-time">{window.fmtDateTime(post.at)}</span>
+        <a className="rq-context-link" href="https://www.threads.net" target="_blank" rel="noopener noreferrer"><window.IcExternal size={14} /> Open in Threads</a>
+      </div>
+    </div>
   );
 }
 
@@ -84,22 +56,7 @@ function StatusFilter({ filters, active, onChange }) {
 }
 
 /* ---------------------------- Post filter pills ------------------------ */
-function PostPills({ posts, counts, active, onChange, total }) {
-  return (
-    <div className="post-pills">
-      <button className={`post-pill ${active === "all" ? "post-pill--active" : ""}`} onClick={() => onChange("all")}>
-        <span className="pp-label">All posts</span>
-        <span className="pp-count">{total}</span>
-      </button>
-      {posts.map((p) => (
-        <button key={p.id} className={`post-pill ${active === p.id ? "post-pill--active" : ""}`} onClick={() => onChange(p.id)} title={p.text}>
-          <span className="pp-label">{p.text}</span>
-          <span className="pp-count">{counts[p.id] || 0}</span>
-        </button>
-      ))}
-    </div>
-  );
-}
+// (PostPills removed — the master list now drives post selection.)
 
 /* ----------------------------- Empty states ---------------------------- */
 const EMPTY = {
@@ -159,4 +116,32 @@ function Toasts({ toasts, onUndo }) {
   );
 }
 
-Object.assign(window, { Mono, Sidebar, Topbar, StatusFilter, PostPills, EmptyState, SkeletonCard, Toasts });
+/* ----------------------------- Publish dialog -------------------------- */
+function PublishReplyDialog({ comment, onCancel, onConfirm }) {
+  useRE(() => {
+    const h = (e) => { if (e.key === "Escape") onCancel(); };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [onCancel]);
+  return (
+    <div className="overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onCancel(); }}>
+      <div className="dialog" role="dialog" aria-modal="true" aria-label="Publish reply">
+        <div className="dialog-head">
+          <span className="dialog-mark"><window.IcReply size={18} /></span>
+          <div>
+            <div className="dialog-title">Publish this reply?</div>
+            <div className="dialog-sub">It posts publicly on Threads, threaded under {comment.author.name}’s comment.</div>
+          </div>
+        </div>
+        <div className="pub-ctx"><span className="pub-ctx-bar" /><span className="pub-ctx-txt">{comment.text}</span></div>
+        <div className="pub-preview">{comment.reply}</div>
+        <div className="dialog-actions">
+          <button className="btn btn--ghost" onClick={onCancel}>Cancel</button>
+          <button className="btn btn--primary" onClick={onConfirm}><window.IcReply size={16} /> Publish reply</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, { Topbar, PostContext, StatusFilter, EmptyState, SkeletonCard, Toasts, PublishReplyDialog });

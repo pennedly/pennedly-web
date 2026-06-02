@@ -21,6 +21,7 @@ function CommentCard({ comment: c, post, leaving, onGenerate, onRegenerate, onAp
   const [editing, setEditing] = useCdS(false);
   const [editText, setEditText] = useCdS(c.reply || "");
   const [translated, setTranslated] = useCdS(false);
+  const [replyTranslated, setReplyTranslated] = useCdS(false);
   const editRef = useCdR(null);
 
   useCdE(() => { if (editing && editRef.current) { editRef.current.focus(); autosize(editRef.current); } }, [editing]);
@@ -30,27 +31,25 @@ function CommentCard({ comment: c, post, leaving, onGenerate, onRegenerate, onAp
   function saveEdit() { onSaveEdit(c.id, editText.trim()); setEditing(false); }
 
   const hasReply = c.status === "draft" || c.status === "approved" || c.status === "replied";
+  const canRemove = c.status === "new" || c.status === "draft" || c.status === "approved";
+  const replyTrText = c.candTr && c.candTr[c.ci];
+  const replyDisplay = c.replyLang && replyTranslated && replyTrText ? replyTrText : c.reply;
   const cls = ["cmt-card", c.status === "skipped" ? "cmt-card--skipped" : "", leaving ? "cmt-card--leaving" : ""].join(" ");
   const editLen = editText.length;
 
   return (
     <article className={cls}>
-      {/* the post this comment sits under */}
-      <a className="post-context" href="https://www.threads.net" target="_blank" rel="noopener noreferrer">
-        <window.IcReply size={14} className="pc-ico" />
-        <span className="pc-lbl">On your post</span>
-        <span className="pc-txt">{post.text}</span>
-        <span className="pc-time">{post.time}</span>
-      </a>
-
       {/* the comment */}
       <div className="draft-head">
-        <window.Mono text={c.author.initials} size={34} font={12} />
+        <window.Avatar src={c.author.avatar} initials={c.author.initials} size={38} />
         <div className="draft-id">
           <div className="draft-name">{c.author.name}</div>
-          <div className="draft-sub"><span>{c.author.handle}</span><span className="sep">·</span><span>{c.time}</span></div>
+          <div className="draft-sub"><span>{c.author.handle}</span><span className="sep">·</span><span title={c.time}>{window.fmtDateTime(c.at)}</span></div>
         </div>
         <CommentBadge status={c.status} />
+        {canRemove && (
+          <button className="cmt-remove" aria-label="Remove from queue" title="Remove from queue" onClick={() => onSkip(c.id)}><window.IcX size={15} /></button>
+        )}
       </div>
 
       <p className="cmt-body">{c.lang && translated ? c.translated : c.text}</p>
@@ -83,7 +82,7 @@ function CommentCard({ comment: c, post, leaving, onGenerate, onRegenerate, onAp
         <div className="reply-thread">
           <div className={`reply-block ${c.status === "replied" ? "reply-block--replied" : ""}`}>
             <div className="reply-author">
-              <window.Mono text={window.REPLY_USER.initials} size={22} font={9} />
+              <window.Avatar src={window.REPLY_USER.avatar} initials={window.REPLY_USER.initials} size={24} />
               <span className="ra-name">You</span>
               {c.status === "draft" && <span className="ra-tag"><window.IcNib size={12} />drafted in your voice</span>}
               {c.status === "approved" && <span className="ra-tag" style={{ color: "var(--color-accent)" }}><window.IcCheck size={12} />approved · ready to publish</span>}
@@ -97,7 +96,21 @@ function CommentCard({ comment: c, post, leaving, onGenerate, onRegenerate, onAp
                 <div className="reply-edit-meta"><span className={`reply-cc ${editLen > REPLY_LIMIT ? "over" : ""}`}>{editLen} / {REPLY_LIMIT}</span></div>
               </>
             ) : (
-              <div className="reply-text">{c.reply}</div>
+              <>
+                <div className="reply-text">{replyDisplay}</div>
+                {c.replyLang && (
+                  <div className="translate-row translate-row--reply">
+                    {replyTranslated ? (
+                      <>
+                        <span className="translate-note"><window.IcGlobe size={13} />Translated from {c.replyLang}</span>
+                        <button className="translate-btn" onClick={() => setReplyTranslated(false)}>Show original</button>
+                      </>
+                    ) : (
+                      <button className="translate-btn" onClick={() => setReplyTranslated(true)}><window.IcGlobe size={13} />Translate from {c.replyLang}</button>
+                    )}
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -110,25 +123,18 @@ function CommentCard({ comment: c, post, leaving, onGenerate, onRegenerate, onAp
             {c.status === "replied" ? (
               <span className="cm-item"><window.IcCheck size={13} className="cm-ico" />Published {c.repliedTime}</span>
             ) : c.status === "skipped" ? (
-              <span className="cm-item">Skipped · won't be answered</span>
-            ) : (
-              <>
-                <span className="cm-item"><window.IcHeart size={13} className="cm-ico" />{c.likes}</span>
-                {c.lang && <span className="cm-item"><window.IcGlobe size={13} className="cm-ico" />{c.lang}</span>}
-              </>
-            )}
+              <span className="cm-item">Removed from queue · won't be answered</span>
+            ) : c.lang ? (
+              <span className="cm-item"><window.IcGlobe size={13} className="cm-ico" />{c.lang}</span>
+            ) : null}
           </div>
 
           <div className="cmt-actions">
             {c.status === "new" && (
-              <>
-                <button className="btn btn--ghost btn--sm" onClick={() => onSkip(c.id)}><window.IcSkip size={15} /> Skip</button>
-                <button className="btn btn--primary btn--sm" onClick={() => onGenerate(c.id)}><window.IcNib size={15} /> Generate reply</button>
-              </>
+              <button className="btn btn--primary btn--sm" onClick={() => onGenerate(c.id)}><window.IcNib size={15} /> Generate reply</button>
             )}
             {c.status === "draft" && !editing && (
               <>
-                <button className="btn btn--ghost btn--sm" onClick={() => onSkip(c.id)} aria-label="Skip"><window.IcSkip size={15} /></button>
                 <button className="btn btn--ghost btn--sm" onClick={() => onRegenerate(c.id)}><window.IcTweak size={15} /> Regenerate</button>
                 <button className="btn btn--secondary btn--sm" onClick={startEdit}><window.IcPencil size={15} /> Edit</button>
                 <button className="btn btn--primary btn--sm" onClick={() => onApprove(c.id)}><window.IcCheck size={15} /> Approve</button>
@@ -147,7 +153,7 @@ function CommentCard({ comment: c, post, leaving, onGenerate, onRegenerate, onAp
               </>
             )}
             {c.status === "replied" && (
-              <a className="btn btn--secondary btn--sm" href="https://www.threads.net" target="_blank" rel="noopener noreferrer"><window.IcExternal size={15} /> View on Threads</a>
+              <a className="btn btn--secondary btn--sm" href="https://www.threads.net" target="_blank" rel="noopener noreferrer"><window.IcExternal size={15} /> Open in Threads</a>
             )}
             {c.status === "skipped" && (
               <button className="btn btn--ghost btn--sm" onClick={() => onRestore(c.id)}><window.IcUndo size={15} /> Restore</button>

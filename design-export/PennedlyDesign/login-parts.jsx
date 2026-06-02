@@ -192,11 +192,14 @@ function SigningIn({ text }) {
 }
 
 /* ------------------------------ Dev drawer ----------------------------- */
-function DevDrawer() {
+// The REAL developer path: an email-only sign-in gated behind a build-time env
+// flag (DEV_LOGIN). It bypasses the OTP entirely. Hidden in production builds —
+// here it's shown because the flag reads enabled. No fictional config fields.
+function DevDrawer({ onDevLogin }) {
   const [open, setOpen] = lgS(false);
-  const [env, setEnv] = lgS("Production");
-  const [api, setApi] = lgS("https://api.pennedly.app/v1");
-  const [mock, setMock] = lgS(false);
+  const dev = window.DEV_LOGIN;
+  const [email, setEmail] = lgS(dev.email);
+  const valid = /\S+@\S+\.\S+/.test(email.trim());
   return (
     <div className={`dev ${open ? "open" : ""}`}>
       <button className="dev-toggle" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
@@ -205,27 +208,21 @@ function DevDrawer() {
       </button>
       {open && (
         <div className="dev-body">
-          <div className="dev-field">
-            <span className="dev-label">Environment</span>
-            <select className="dev-select" value={env} onChange={(e) => setEnv(e.target.value)}>
-              {window.DEV_ENVS.map((x) => <option key={x}>{x}</option>)}
-            </select>
+          <div className="dev-gate">
+            <span className="status-pill status-pill--accent"><span className="pill-dot" />{dev.flag} enabled</span>
+            <span className="dev-gate-note">Email-only dev sign-in — skips the code. Available only when the <code>{dev.flag}</code> env flag is set; never in production.</span>
           </div>
-          <div className="dev-field">
-            <span className="dev-label">Mock auth</span>
-            <div className="dev-row" style={{ height: 36 }}>
-              <label className="switch"><input type="checkbox" checked={mock} onChange={(e) => setMock(e.target.checked)} /><span className="track" /><span className="knob" /></label>
-              <span className="dev-mock">{mock ? "Bypass real sign-in" : "Use real sign-in"}</span>
-            </div>
-          </div>
-          <div className="dev-field full">
-            <span className="dev-label">API base URL</span>
-            <input className="dev-input" value={api} onChange={(e) => setApi(e.target.value)} spellCheck="false" />
-          </div>
+          <form className="dev-form" onSubmit={(e) => { e.preventDefault(); if (valid) onDevLogin(email.trim()); }}>
+            <input
+              className="dev-input" type="email" inputMode="email" autoComplete="off" spellCheck="false"
+              value={email} onChange={(e) => setEmail(e.target.value)} aria-label="Developer email"
+            />
+            <button className="btn btn--secondary" type="submit" disabled={!valid}>
+              <window.IcArrowRight size={16} /> Dev sign in
+            </button>
+          </form>
           <div className="dev-foot">
-            <span className="dev-hash">build 2.4.1 · a31f9c2</span>
-            <span className="grow" />
-            <a className="btn btn--secondary btn--sm" href="Studio.html">Skip to app</a>
+            <span className="dev-hash">build {dev.build}</span>
           </div>
         </div>
       )}

@@ -1,70 +1,23 @@
-// stylerules-parts.jsx — shell + presentational blocks for Style & reply rules.
+// stylerules-parts.jsx — presentational blocks for Style & reply rules.
+// Sidebar / account / avatar come from the shared shell (shell-parts.jsx).
 // All visuals reference the ink-on-paper tokens; no hardcoded colours.
 
 const { useState: srS, useEffect: srE, useRef: srR } = React;
-
-/* ------------------------------- Avatar -------------------------------- */
-function Mono({ text, size = 34, font = 13 }) {
-  return <span className="mono" style={{ width: size, height: size, fontSize: font }}>{text}</span>;
-}
-
-/* ------------------------------- Sidebar ------------------------------- */
-function Sidebar() {
-  const nav = [
-    { id: "studio",   label: "Studio",   Icon: window.IcStudio,   href: "Studio.html", badge: 4 },
-    { id: "feed",     label: "My Feed",  Icon: window.IcFeed,     href: "Feed.html" },
-    { id: "stats",    label: "Stats",    Icon: window.IcChart,    href: "Stats.html" },
-    { id: "replies",  label: "Replies",  Icon: window.IcReplies,  href: "Replies.html", badge: 3 },
-    { id: "autopilot",label: "Autopilot",Icon: window.IcBolt,     href: "Autopilot.html" },
-    { id: "voice",    label: "Voice",    Icon: window.IcVoice,    href: "Voice.html" },
-    { id: "rules",    label: "Rules",    Icon: window.IcSliders,  active: true },
-    { id: "settings", label: "Settings", Icon: window.IcSettings },
-  ];
-  return (
-    <aside className="sidebar">
-      <div className="brand">
-        <window.Logo size={34} radius={10} className="brand-mark" />
-        <div>
-          <div className="brand-name">Pennedly</div>
-          <div className="brand-sub">Drafting partner</div>
-        </div>
-      </div>
-      <nav className="nav">
-        <div className="nav-cap">Workspace</div>
-        {nav.map(({ id, label, Icon, active, badge, href }) => (
-          <a key={id} className={`nav-item ${active ? "nav-item--active" : ""}`} href={href || undefined} tabIndex="0">
-            <Icon size={16} />
-            <span className="nav-label">{label}</span>
-            {badge ? <span className="nav-badge">{badge}</span> : null}
-          </a>
-        ))}
-      </nav>
-      <div className="sidebar-foot">
-        <button className="account">
-          <Mono text={window.SR_USER.initials} size={32} font={12} />
-          <div className="who">
-            <div className="nm">{window.SR_USER.name}</div>
-            <div className="hd">{window.SR_USER.handle}</div>
-          </div>
-          <window.IcChevDown size={15} className="chev" />
-        </button>
-      </div>
-    </aside>
-  );
-}
 
 /* -------------------------------- Topbar ------------------------------- */
 function Topbar({ dark, onToggleTheme, activeCount, total }) {
   return (
     <header className="topbar">
-      <span className="topbar-title">Style &amp; reply rules</span>
-      <span className="topbar-meta"><span className="vdot" />{activeCount} of {total} rules on</span>
-      <span className="topbar-spacer" />
-      <div className="topbar-actions">
-        <button className="icon-btn" aria-label="Toggle theme" onClick={onToggleTheme}>
-          {dark ? <window.IcSun size={17} /> : <window.IcMoon size={16} />}
-        </button>
-        <button className="icon-btn" aria-label="Settings"><window.IcSettings size={17} /></button>
+      <div className="topbar-inner">
+        <span className="topbar-title">Style &amp; reply rules</span>
+        <span className="status-pill"><span className="pill-dot" />{activeCount} of {total} on</span>
+        <span className="topbar-spacer" />
+        <div className="topbar-actions">
+          <button className="icon-btn" aria-label="Toggle theme" onClick={onToggleTheme}>
+            {dark ? <window.IcSun size={17} /> : <window.IcMoon size={16} />}
+          </button>
+          <a className="icon-btn" href="Settings.html" aria-label="Settings"><window.IcSettings size={17} /></a>
+        </div>
       </div>
     </header>
   );
@@ -77,13 +30,13 @@ function Intro({ builtinOn, builtinTotal, freeformCount }) {
       <span className="intro-eyebrow"><window.IcSliders size={14} className="ie-ico" /> Generation rules</span>
       <h1 className="intro-title">The rules behind every draft</h1>
       <p className="intro-lead">
-        Every post and reply Pennedly writes runs through these. Switch on the built-in fixes that strip
-        the tells of machine writing, then add your own rules in plain words.
+        Every post and reply Pennedly writes runs through these. Add your own rules in plain words,
+        then switch on the built-in fixes that strip the tells of machine writing.
       </p>
       <div className="intro-stats">
-        <span className="istat"><b>{builtinOn}</b> of {builtinTotal} built-in active</span>
-        <span className="sep" />
         <span className="istat"><b>{freeformCount}</b> of your own</span>
+        <span className="sep" />
+        <span className="istat"><b>{builtinOn}</b> of {builtinTotal} built-in active</span>
       </div>
     </div>
   );
@@ -100,77 +53,115 @@ function Switch({ checked, onChange, label }) {
   );
 }
 
-/* ----------------------------- Built-in rules -------------------------- */
-function BuiltinSection({ rules, kinds, filter, onFilter, onToggle }) {
+/* --------------------------- Applies-to chip --------------------------- */
+function KindChip({ kind, only }) {
+  if (!kind || kind === "all") return null;
+  const base = kind === "post" ? "Posts" : "Replies";
+  return <span className={`kind-chip kind-chip--${kind}`}>{only ? base + " only" : base}</span>;
+}
+
+/* ---------------------- Deterministic stripper note -------------------- */
+function StripperNote({ rule }) {
+  return (
+    <div className={`stripper ${rule.on ? "" : "stripper--off"}`}>
+      <div className="strip-note"><window.IcSliders size={13} className="sn-ico" /><span>{rule.note}</span></div>
+      <div className="strip-demo" aria-hidden="true">
+        <code className="sd-from">{rule.demo.from}</code>
+        <span className="sd-arrow">{"\u2192"}</span>
+        <code className="sd-to">{rule.on ? rule.demo.to : rule.demo.from}</code>
+      </div>
+    </div>
+  );
+}
+
+/* ----------------------------- Built-in rule --------------------------- */
+function BuiltinRow({ r, onToggle }) {
+  return (
+    <div className={`rule ${r.on ? "" : "is-off"}`}>
+      <div className="rule-toggle"><Switch checked={r.on} onChange={() => onToggle(r.id)} label={`${r.title} — ${r.on ? "on" : "off"}`} /></div>
+      <div className="rule-body">
+        <div className="rule-top">
+          <span className="rule-title">{r.title}</span>
+          <KindChip kind={r.applies} only />
+        </div>
+        <div className="rule-desc">{r.desc}</div>
+        {r.stripper && <StripperNote rule={r} />}
+      </div>
+    </div>
+  );
+}
+
+/* --------------------- Built-in section (by category) ------------------ */
+function BuiltinSection({ rules, categories, onToggle }) {
   const onCount = rules.filter((r) => r.on).length;
-  const counts = kinds.reduce((a, k) => { a[k] = rules.filter((r) => r.kind === k).length; return a; }, {});
-  const visible = filter === "All" ? rules : rules.filter((r) => r.kind === filter);
   return (
     <section className="sec">
       <div className="sec-head">
         <span className="sec-mark"><window.IcFilter size={17} /></span>
         <div className="sec-ttl">
           <div className="h">Anti-AI-tells <span className="count">{onCount}/{rules.length}</span></div>
-          <div className="d">Built-in fixes that keep drafts from sounding generated</div>
+          <div className="d">A fixed catalog of fixes that keep drafts from sounding generated</div>
         </div>
       </div>
-      <div className="filterbar" role="tablist" aria-label="Filter rules by kind">
-        <button className={`fchip ${filter === "All" ? "fchip--active" : ""}`} onClick={() => onFilter("All")} role="tab" aria-selected={filter === "All"}>
-          All<span className="fc-n">{rules.length}</span>
-        </button>
-        {kinds.map((k) => (
-          <button key={k} className={`fchip ${filter === k ? "fchip--active" : ""}`} onClick={() => onFilter(k)} role="tab" aria-selected={filter === k}>
-            {k}<span className="fc-n">{counts[k]}</span>
-          </button>
-        ))}
-      </div>
-      <div className="rules">
-        {visible.length === 0 ? (
-          <div className="rule-none">No rules in this category.</div>
-        ) : visible.map((r) => (
-          <div className={`rule ${r.on ? "" : "is-off"}`} key={r.id}>
-            <div className="rule-toggle"><Switch checked={r.on} onChange={() => onToggle(r.id)} label={`${r.title} — ${r.on ? "on" : "off"}`} /></div>
-            <div className="rule-body">
-              <div className="rule-top">
-                <span className="rule-title">{r.title}</span>
-                <span className="rule-kind">{r.kind}</span>
+      <div className="cat-groups">
+        {categories.map((cat) => {
+          const items = rules.filter((r) => r.category === cat);
+          if (!items.length) return null;
+          const cOn = items.filter((r) => r.on).length;
+          return (
+            <div className="cat-group" key={cat}>
+              <div className="cat-head"><span className="cat-name">{cat}</span><span className="cat-count">{cOn}/{items.length}</span></div>
+              <div className="rules">
+                {items.map((r) => <BuiltinRow key={r.id} r={r} onToggle={onToggle} />)}
               </div>
-              <div className="rule-desc">{r.desc}</div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );
 }
 
 /* --------------------------- Freeform rule row ------------------------- */
-function FreeformRow({ rule, leaving, onEdit, onRemove }) {
+function FreeformRow({ rule, leaving, onEdit, onToggle, onRemove }) {
   const [editing, setEditing] = srS(false);
   const [draft, setDraft] = srS(rule.text);
+  const [confirming, setConfirming] = srS(false);
   const ref = srR(null);
   srE(() => { if (editing && ref.current) { ref.current.focus(); ref.current.select(); } }, [editing]);
   function save() { const v = draft.trim(); if (v) onEdit(rule.id, v); setEditing(false); }
   return (
-    <div className={`ff-row ${leaving ? "ff-row--leaving" : ""}`}>
-      <span className="ff-bullet" />
+    <div className={`ff-row ${leaving ? "ff-row--leaving" : ""} ${rule.enabled ? "" : "is-off"}`}>
+      <div className="ff-toggle"><Switch checked={rule.enabled} onChange={() => onToggle(rule.id)} label={`${rule.enabled ? "Disable" : "Enable"} this rule`} /></div>
       {editing ? (
         <div className="ff-edit">
           <input
             ref={ref} className="ff-input" value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") { setDraft(rule.text); setEditing(false); } }}
+            aria-label="Edit rule"
           />
           <button className="btn btn--primary btn--sm" onClick={save} disabled={!draft.trim()}><window.IcCheck size={15} /></button>
           <button className="btn btn--ghost btn--sm" onClick={() => { setDraft(rule.text); setEditing(false); }}>Cancel</button>
         </div>
       ) : (
         <>
-          <span className="ff-text">{rule.text}</span>
-          <span className="ff-actions">
-            <button className="ff-icon" aria-label="Edit rule" onClick={() => { setDraft(rule.text); setEditing(true); }}><window.IcPencil size={15} /></button>
-            <button className="ff-icon danger" aria-label="Remove rule" onClick={() => onRemove(rule.id)}><window.IcTrash size={15} /></button>
-          </span>
+          <div className="ff-main">
+            <span className="ff-text">{rule.text}</span>
+          </div>
+          <KindChip kind={rule.kind} />
+          {confirming ? (
+            <span className="ff-confirm">
+              <span className="ffc-q">Delete?</span>
+              <button className="btn btn--danger btn--sm" onClick={() => onRemove(rule.id)}>Delete</button>
+              <button className="btn btn--ghost btn--sm" onClick={() => setConfirming(false)}>Cancel</button>
+            </span>
+          ) : (
+            <span className="ff-actions">
+              <button className="ff-icon" aria-label="Edit rule" onClick={() => { setDraft(rule.text); setEditing(true); }}><window.IcPencil size={15} /></button>
+              <button className="ff-icon danger" aria-label="Remove rule" onClick={() => setConfirming(true)}><window.IcTrash size={15} /></button>
+            </span>
+          )}
         </>
       )}
     </div>
@@ -178,9 +169,11 @@ function FreeformRow({ rule, leaving, onEdit, onRemove }) {
 }
 
 /* --------------------------- Add-a-rule input -------------------------- */
+const KIND_OPTS = [["all", "Both"], ["post", "Posts"], ["reply", "Replies"]];
 function AddRule({ solo, onAdd }) {
   const [value, setValue] = srS("");
-  function add() { const v = value.trim(); if (!v) return; onAdd(v); setValue(""); }
+  const [kind, setKind] = srS("all");
+  function add() { const v = value.trim(); if (!v) return; onAdd(v, kind); setValue(""); setKind("all"); }
   return (
     <div className={`ff-add ${solo ? "ff-add--solo" : ""}`}>
       <input
@@ -189,20 +182,26 @@ function AddRule({ solo, onAdd }) {
         onKeyDown={(e) => { if (e.key === "Enter") add(); }}
         aria-label="New rule"
       />
-      <button className="btn btn--primary" onClick={add} disabled={!value.trim()}><window.IcPlus size={16} /> Add rule</button>
+      <div className="kind-seg" role="group" aria-label="Applies to">
+        {KIND_OPTS.map(([k, l]) => (
+          <button key={k} type="button" className={`kseg ${kind === k ? "kseg--active" : ""}`} aria-pressed={kind === k} onClick={() => setKind(k)}>{l}</button>
+        ))}
+      </div>
+      <button className="btn btn--primary" onClick={add} disabled={!value.trim()}><window.IcPlus size={16} /> Add</button>
     </div>
   );
 }
 
 /* ----------------------------- Freeform card --------------------------- */
-function FreeformSection({ rules, leavingIds, hints, onAdd, onEdit, onRemove }) {
+function FreeformSection({ rules, leavingIds, hints, onAdd, onEdit, onToggle, onRemove }) {
   const empty = rules.length === 0;
+  const onCount = rules.filter((r) => r.enabled).length;
   return (
     <section className="sec">
       <div className="sec-head">
         <span className="sec-mark"><window.IcPenLine size={17} /></span>
         <div className="sec-ttl">
-          <div className="h">Your rules {!empty && <span className="count">{rules.length}</span>}</div>
+          <div className="h">Your rules {!empty && <span className="count">{onCount}/{rules.length}</span>}</div>
           <div className="d">Anything else Pennedly should always do — in your words</div>
         </div>
       </div>
@@ -212,10 +211,10 @@ function FreeformSection({ rules, leavingIds, hints, onAdd, onEdit, onRemove }) 
           <div className="ff-empty">
             <span className="fe-mark"><window.IcPenLine size={22} /></span>
             <div className="fe-title">No rules of your own yet</div>
-            <div className="fe-sub">Add a habit Pennedly should always follow. Short and specific works best.</div>
+            <div className="fe-sub">Add a habit Pennedly should always follow. Short and specific works best — and you can scope each one to posts or replies.</div>
             <div className="ff-hints">
               {hints.map((h) => (
-                <button key={h} className="ff-hint" onClick={() => onAdd(h)}>{h}</button>
+                <button key={h} className="ff-hint" onClick={() => onAdd(h, "all")}>{h}</button>
               ))}
             </div>
           </div>
@@ -225,7 +224,7 @@ function FreeformSection({ rules, leavingIds, hints, onAdd, onEdit, onRemove }) 
         <>
           <div className="ff-list">
             {rules.map((r) => (
-              <FreeformRow key={r.id} rule={r} leaving={leavingIds.includes(r.id)} onEdit={onEdit} onRemove={onRemove} />
+              <FreeformRow key={r.id} rule={r} leaving={leavingIds.includes(r.id)} onEdit={onEdit} onToggle={onToggle} onRemove={onRemove} />
             ))}
           </div>
           <AddRule onAdd={onAdd} />
@@ -252,9 +251,6 @@ function RulesSkeleton() {
             <div className="skel-line" style={{ width: 150, height: 14, marginBottom: 7 }} />
             <div className="skel-line" style={{ width: 230, height: 9 }} />
           </div>
-        </div>
-        <div style={{ padding: "0 18px 14px", display: "flex", gap: 6 }}>
-          {[60, 80, 74, 70].map((w, i) => <div className="skel-block" key={i} style={{ width: w, height: 26 }} />)}
         </div>
         <div>
           {Array.from({ length: 5 }).map((_, i) => (
@@ -291,7 +287,6 @@ function Toasts({ toasts, onUndo }) {
 }
 
 Object.assign(window, {
-  Mono, Sidebar, Topbar, Intro, Switch,
-  BuiltinSection, FreeformRow, AddRule, FreeformSection,
-  RulesSkeleton, Toasts,
+  Topbar, Intro, Switch, KindChip, StripperNote, BuiltinRow, BuiltinSection,
+  FreeformRow, AddRule, FreeformSection, RulesSkeleton, Toasts,
 });

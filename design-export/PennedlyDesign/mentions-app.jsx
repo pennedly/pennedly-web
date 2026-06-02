@@ -1,5 +1,38 @@
 // mentions-app.jsx — read-only Mentions monitoring screen.
 
+/* ── DEV HANDOFF · Mentions ─────────────────────────────────────────
+ * Route / shell:   /app/mentions  (full app shell, sidebar = yes; active="mentions").
+ *                  Tester-gated nav item.
+ * Purpose:         A calm, READ-ONLY feed of posts elsewhere on Threads that
+ *                  @-mention the account — newest first. No actions, just monitor.
+ * Content width:   wide (--content-wide, 960); topbar .topbar-inner.topbar--wide.
+ * Topbar:          title="Mentions"; .status-pill "Updated hourly" (the backend
+ *                  refreshes mentions about hourly); actions = theme, settings.
+ * Sections (top→bottom): page intro (notes the hourly refresh) · mention list.
+ * States:          loading (skeleton cards) · live · empty (no mentions — copy
+ *                  notes the hourly check) · error (banner + retry). Driven by the
+ *                  `state` tweak; real app: loading on fetch, error on failure.
+ * Data shown:      per row — author avatar + name + @handle + local date·time,
+ *                  the mention text (the @handles highlighted), a Translate
+ *                  affordance (foreign-language mentions → the viewer's language),
+ *                  and a link to open the post on Threads.
+ * Interactions:    Translate toggles original ↔ translation inline. Open in
+ *                  Threads (row link + footer button) → opens the source post.
+ *                  Nothing here mutates state — it's read-only.
+ * Localize:        end-user copy = intro, empty/error copy, translate labels,
+ *                  "Open in Threads", topbar pill. Mention bodies + their
+ *                  translations are SAMPLE content (real text + translations from
+ *                  the API / translation service).
+ * Backend truth:   read-only — the Threads API returns mention posts; Pennedly
+ *                  doesn't reply/save/archive them here. Refreshed ~hourly.
+ *                  Timestamps render in the viewer's local timezone.
+ * Changed in rework: stripped the invented triage (saved/archived/seen tabs +
+ *                  mark-all-seen + save/archive actions + engagement counts) down
+ *                  to a true read-only list; adopted shared shell + real avatars;
+ *                  wide + aligned topbar; .status-pill; added error state (shared
+ *                  ErrorBanner); local date+time (fmtDateTime); per-row translate.
+ * ─────────────────────────────────────────────────────────────────── */
+
 const { useState: useMS, useEffect: useME } = React;
 
 const MENT_TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
@@ -7,19 +40,9 @@ const MENT_TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "state": "Live"
 }/*EDITMODE-END*/;
 
-// which statuses each filter shows ("all" = everything except archived)
-function inFilter(status, filter) {
-  if (filter === "all") return status !== "archived";
-  return status === filter;
-}
-
 function MentionsApp() {
   const [t, setTweak] = window.useTweaks(MENT_TWEAK_DEFAULTS);
-  const [mentions, setMentions] = useMS(window.MENTIONS);
   const [phase, setPhase] = useMS("loading");
-  const [filter, setFilter] = useMS("all");
-  const [leaving, setLeaving] = useMS(() => new Set());
-  const [toasts, setToasts] = useMS([]);
 
   useME(() => {
     if (t.state === "Loading") { setPhase("loading"); return; }
@@ -29,102 +52,43 @@ function MentionsApp() {
   }, [t.state]);
   useME(() => { document.documentElement.classList.toggle("dark", !!t.dark); }, [t.dark]);
 
-  const live = t.state === "Empty" ? [] : mentions;
-  const countOf = (s) => live.filter((m) => m.status === s).length;
-  const newCount = countOf("new");
-  const filters = [
-    { key: "all", label: "All", count: live.filter((m) => m.status !== "archived").length },
-    { key: "new", label: "New", count: newCount },
-    { key: "saved", label: "Saved", count: countOf("saved") },
-    { key: "archived", label: "Archived", count: countOf("archived") },
-  ];
-  const visible = live.filter((m) => inFilter(m.status, filter));
-
-  /* toasts */
-  function pushToast(toast) {
-    const id = "t" + Date.now() + Math.random().toString(36).slice(2, 5);
-    setToasts((ts) => [...ts, { ...toast, id }]);
-    setTimeout(() => setToasts((ts) => ts.filter((x) => x.id !== id)), 4600);
-  }
-  function undoToast(toast) { if (toast.undo) toast.undo(); setToasts((ts) => ts.filter((x) => x.id !== toast.id)); }
-
-  function patch(id, changes) { setMentions((ms) => ms.map((m) => (m.id === id ? { ...m, ...changes } : m))); }
-
-  // change status; animate out only when it leaves the active filter
-  function setStatus(id, newStatus, toast) {
-    const m = mentions.find((x) => x.id === id);
-    const exits = inFilter(m.status, filter) && !inFilter(newStatus, filter);
-    if (exits) {
-      setLeaving((s) => new Set(s).add(id));
-      setTimeout(() => {
-        patch(id, { status: newStatus });
-        setLeaving((s) => { const n = new Set(s); n.delete(id); return n; });
-        if (toast) pushToast(toast);
-      }, 250);
-    } else {
-      patch(id, { status: newStatus });
-      if (toast) pushToast(toast);
-    }
-  }
-
-  const save = (id) => {
-    const m = mentions.find((x) => x.id === id);
-    if (m.status === "saved") setStatus(id, "seen", { kind: "success", title: "Removed from saved" });
-    else setStatus(id, "saved", { kind: "success", title: "Saved", sub: "Kept in your Saved tab", undo: () => patch(id, { status: m.status }) });
-  };
-  const archive = (id) => {
-    const m = mentions.find((x) => x.id === id);
-    setStatus(id, "archived", { kind: "success", title: "Mention archived", undo: () => patch(id, { status: m.status }) });
-  };
-  const restore = (id) => setStatus(id, "seen", { kind: "success", title: "Mention restored" });
-  const open = (id) => { const m = mentions.find((x) => x.id === id); if (m && m.status === "new") patch(id, { status: "seen" }); };
-  const markAllSeen = () => { setMentions((ms) => ms.map((m) => (m.status === "new" ? { ...m, status: "seen" } : m))); pushToast({ kind: "success", title: "All caught up", sub: "New mentions marked as seen" }); };
+  const errored = t.state === "Error";
+  const live = t.state === "Empty"
+    ? []
+    : [...window.MENTIONS].sort((a, b) => new Date(b.at) - new Date(a.at));
 
   return (
     <div className="app">
-      <window.Sidebar newCount={newCount} />
+      <window.Sidebar active="mentions" />
       <div className="main">
-        <window.Topbar dark={!!t.dark} onToggleTheme={() => setTweak("dark", !t.dark)} newCount={newCount} />
+        <window.Topbar dark={!!t.dark} onToggleTheme={() => setTweak("dark", !t.dark)} />
         <div className="scroll">
-          <div className="content">
+          <div className="content content--wide">
             <div className="page-intro">
               <h1>Mentions</h1>
-              <p>Posts across Threads that @-mention you — a calm place to keep an eye on the conversation.</p>
+              <p>Posts across Threads that @-mention you — a calm place to keep an eye on the conversation. Pennedly checks for new ones about once an hour.</p>
             </div>
 
-            {phase === "loading" ? (
-              <div className="feed">{Array.from({ length: 4 }).map((_, i) => <window.SkeletonCard key={"sk" + i} />)}</div>
+            {errored ? (
+              <window.ErrorBanner title="Couldn’t load your mentions" onRetry={() => setTweak("state", "Live")} />
+            ) : phase === "loading" ? (
+              <div className="feed">{Array.from({ length: 5 }).map((_, i) => <window.SkeletonCard key={"sk" + i} />)}</div>
+            ) : live.length === 0 ? (
+              <window.EmptyState />
             ) : (
-              <>
-                <div className="ment-bar">
-                  <window.StatusFilter filters={filters} active={filter} onChange={setFilter} />
-                  <button className="markseen" onClick={markAllSeen} disabled={newCount === 0}>
-                    <window.IcCheck size={15} /><span className="ms-label">Mark all seen</span>
-                  </button>
-                </div>
-                <div className="feed">
-                  {visible.length === 0 ? (
-                    <window.EmptyState status={filter} />
-                  ) : (
-                    visible.map((m) => (
-                      <window.MentionCard key={m.id} m={m} leaving={leaving.has(m.id)}
-                        onSave={save} onArchive={archive} onRestore={restore} onOpen={open} />
-                    ))
-                  )}
-                </div>
-              </>
+              <div className="feed">
+                {live.map((m) => <window.MentionCard key={m.id} m={m} />)}
+              </div>
             )}
           </div>
         </div>
       </div>
 
-      <window.Toasts toasts={toasts} onUndo={undoToast} />
-
       <window.TweaksPanel>
         <window.TweakSection label="Appearance" />
         <window.TweakToggle label="Dark mode" value={!!t.dark} onChange={(v) => setTweak("dark", v)} />
         <window.TweakSection label="Preview state" />
-        <window.TweakRadio label="State" value={t.state} options={["Live", "Loading", "Empty"]} onChange={(v) => setTweak("state", v)} />
+        <window.TweakRadio label="State" value={t.state} options={["Live", "Loading", "Empty", "Error"]} onChange={(v) => setTweak("state", v)} />
       </window.TweaksPanel>
     </div>
   );

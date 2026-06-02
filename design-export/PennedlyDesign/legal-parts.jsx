@@ -25,6 +25,17 @@ function Block({ block }) {
     case "h3": return <h3>{block.text}</h3>;
     case "p": return <p>{block.text}</p>;
     case "ul": return <ul>{block.items.map((it, i) => <li key={i}>{it}</li>)}</ul>;
+    case "placeholder": return <p className="ph">{block.text}</p>;
+    case "operator": {
+      const o = window.OPERATOR;
+      return (
+        <div className="operator">
+          <div className="op-name">{o.name}</div>
+          <div className="op-regs">{o.regs.map((r) => <span className="op-reg" key={r}>{r}</span>)}</div>
+          <div className="op-city">{o.city}</div>
+        </div>
+      );
+    }
     case "contact":
       return (
         <div className="contact-block">
@@ -71,6 +82,13 @@ function LegalArticle({ doc }) {
         <h1 className="doc-title">{doc.title}</h1>
         <div className="doc-updated">{doc.updated}</div>
         <p className="doc-intro">{doc.intro}</p>
+
+        {doc.notice && (
+          <div className="legal-notice" role="note">
+            <span className="ln-tag">Template</span>
+            <span className="ln-txt">{doc.notice}</span>
+          </div>
+        )}
 
         <Toc sections={doc.sections} onJump={jump} />
 

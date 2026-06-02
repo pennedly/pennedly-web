@@ -50,8 +50,8 @@ body {
   border-radius: var(--radius-full); padding: 6px 13px 6px 11px;
 }
 .status .sdot { width: 7px; height: 7px; border-radius: var(--radius-full); background: var(--color-warning); position: relative; }
-.status .sdot::after { content: ""; position: absolute; inset: -4px; border-radius: var(--radius-full); border: 1px solid var(--color-warning); opacity: 0.4; animation: ripple 2.4s var(--ease-standard) infinite; }
-@keyframes ripple { 0% { transform: scale(0.6); opacity: 0.5; } 100% { transform: scale(1.5); opacity: 0; } }
+.status .sdot::after { content: ""; position: absolute; inset: -4px; border-radius: var(--radius-full); border: 1px solid var(--color-warning); opacity: 0.4; animation: ping 2.4s var(--ease-standard) infinite; }
+/* ping comes from the canonical @keyframes ping (ds/components.css) */
 
 .hero-title {
   font-family: var(--font-sans); font-weight: 600;
@@ -79,8 +79,11 @@ body {
   background: var(--color-surface); border: 1px solid var(--color-border);
   border-radius: var(--radius-xl); box-shadow: var(--shadow-lg);
   padding: 20px 20px 16px; max-width: 420px; margin-left: auto;
+  transform: rotate(-2.5deg); transform-origin: center;
+  transition: transform var(--duration-slow) var(--ease-standard);
 }
-@media (max-width: 900px) { .specimen-tilt { margin: 0 auto; } }
+.specimen:hover .specimen-tilt { transform: rotate(0deg); }
+@media (max-width: 900px) { .specimen-tilt { margin: 0 auto; transform: none; } }
 .spec-head { display: flex; align-items: center; gap: 11px; }
 .mono { flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-full); background: var(--color-text); color: var(--color-bg); font-weight: 600; user-select: none; font-family: var(--font-mono); }
 .spec-id { flex: 1 1 auto; min-width: 0; }
@@ -138,7 +141,6 @@ body {
 .foot-links a:hover { color: var(--color-text); }
 @media (max-width: 560px) { .wrap { padding: 0 20px; } }
 
-/* keep entrance motion transform-only (no opacity) so captures never blank */
+/* entrance uses the canonical @keyframes card-in (ds/components.css) — transform-only */
 a.btn, a.contact { text-decoration: none; }
-.land-rise { animation: land-rise var(--duration-slow) var(--ease-entrance) both; }
-@keyframes land-rise { from { transform: translateY(10px); } to { transform: none; } }
+.land-rise { animation: card-in var(--duration-slow) var(--ease-entrance) both; }

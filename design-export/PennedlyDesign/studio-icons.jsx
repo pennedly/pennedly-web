@@ -30,7 +30,7 @@ const IcPencil  = (p) => <Svg {...p}><path d="M4 20h4L18.5 9.5a2 2 0 0 0-2.8-2.8
 const IcTweak   = (p) => <Svg {...p}><path d="M4 5v5h5" /><path d="M4 10a8 8 0 1 1 1 7" /></Svg>;
 const IcSend    = (p) => <Svg {...p}><path d="M5 12h13M12 5l7 7-7 7" /></Svg>;
 const IcExternal= (p) => <Svg {...p}><path d="M14 5h5v5M19 5l-8 8M11 6H6.5A1.5 1.5 0 0 0 5 7.5v10A1.5 1.5 0 0 0 6.5 19h10A1.5 1.5 0 0 0 18 17.5V13" /></Svg>;
-const IcUndo    = (p) => <Svg {...p}><path d="M4 7v5h5" /><path d="M4 12a8 8 0 1 0 2.3-5.6" /></Svg>;
+const IcUndo    = (p) => <Svg {...p}><path d="M9 14 4 9l5-5" /><path d="M4 9h11a5 5 0 0 1 0 10h-4" /></Svg>;
 const IcReply   = (p) => <Svg {...p}><path d="M9 7 4 12l5 5M4 12h9a6 6 0 0 1 6 6v1" /></Svg>;
 const IcChevDown= (p) => <Svg {...p}><path d="M5 9l7 7 7-7" /></Svg>;
 const IcMore    = (p) => <Svg {...p}><circle cx="6" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="18" cy="12" r="1.3" fill="currentColor" stroke="none"/></Svg>;

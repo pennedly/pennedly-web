@@ -20,16 +20,16 @@ opts in, so the rework can proceed screen-by-screen.
 
 | # | Decision | Where it lives | How a screen adopts it |
 |---|----------|----------------|------------------------|
-| 3.1 | **Topbar ↔ content alignment.** The bar is full-width (border + frosted bg); its inner row is centered to the same column width as the content, so the title sits above the content's left edge and the actions above its right edge. | `ds/components.css` → `.topbar-inner`, gated by `.topbar:has(> .topbar-inner)` (collapses the outer padding automatically). | Wrap the topbar row in `<div className="topbar-inner">…</div>`. Add `topbar-inner--wide` (or `.topbar--wide`) for data screens. |
+| 3.1 | **Topbar ↔ content alignment.** The bar is full-width (border + frosted bg); its inner row is centered to the same column width as the content, so the title sits above the content's left edge and the actions above its right edge. | `ds/components.css` → `.topbar-inner`, gated by `.topbar:has(> .topbar-inner)` (collapses the outer padding automatically). | Wrap the topbar row in `<div className="topbar-inner">…</div>`. For data screens add `topbar--wide` on the SAME element (`.topbar-inner.topbar--wide`) — or `topbar-inner--wide`. |
 | 3.2 | **Content widths are tokens.** `--content-reading` (720px, text screens) and `--content-wide` (960px, data screens). One per screen; the topbar aligns to the same one. | `ds/tokens.css`; `.content` defaults to reading, `.content--wide` opts wider (`studio.css`). | Reading screens: nothing. Wide screens: add `.content--wide` **and** `.topbar--wide`. |
 | 3.3 | **Standardized status pill.** dot + label, three tones (`--success` / `--warning` / `--accent`). Studio shows the voice-state pill ("Voice active" / "Voice not set up"). | `ds/components.css` → `.status-pill` + tone modifiers. | `<span class="status-pill status-pill--success"><i class="pill-dot"/>…</span>`. Replaces the old per-screen `.topbar-pill`. |
 | 3.4 | **Real avatars.** Anywhere an account/author appears (sidebar foot, account menu, draft cards, feed, replies, mentions, settings, publish dialog), show a real profile photo with the initials monogram as fallback only. | Shared `<Avatar>` block (to be added to a shared parts module). | Use `<Avatar src={…} initials={…} size={…}/>`; mockups currently pass no `src`, so they render the monogram fallback — wire `src` to the real photo URL. |
 | 3.5 | **Canonical animations.** `nib-write`, `card-in`, `dot-pulse`, `shake`, `ripple`, `ping` (plus `spin`). Reference these names everywhere. | `ds/components.css`. Legacy `nibwrite`/`dotpulse`/`shimmer` remain defined locally in older screens **only** until migrated. | Use the hyphenated canonical name. |
 | 3.6 | **Button sizes** sm / md (default) / **lg**. lg is the hero/auth CTA. | `ds/components.css` → `.btn--lg`. | `class="btn btn--primary btn--lg"`. |
 | 3.7 | **Localization-ready layout.** App ships 8 UI locales (en/ru/uk/de/es/fr/it/pt); DE/RU/UK run longer. Don't pin widths to English label lengths — let labels wrap/truncate. Language switcher: top-right on Login, language section in Settings. Public marketing/legal stay English (no switcher). | layout discipline + Login/Settings switchers | per screen |
-| 3.8 | **Loading / empty / error for every data screen.** A skeleton/loading state, a friendly empty state (mark + title + sub), and an inline error banner on `--color-danger`. Draw all three. | per screen | per screen |
+| 3.8 | **Loading / empty / error for every data screen.** A skeleton/loading state, a friendly empty state (mark + title + sub), and an inline error banner on `--color-danger`. Draw all three. Use the shared `<window.ErrorBanner title sub onRetry />` (shell-parts.jsx). | shared `ErrorBanner` + per screen | per screen |
 | 3.9 | **Mobile shell.** Desktop = fixed left sidebar; mobile = top bar + hamburger drawer (same nav). The per-screen sticky topbar stacks under the mobile bar; secondary sticky rows (e.g. Studio status tabs) offset below the topbar. | `studio.css` responsive layer | per screen |
-| 3.10 | **Timestamps + timezone.** Show date **and** time in the viewer's local timezone (feed, replies, mentions). Autopilot post-hours picked/shown in local time with a `UTC±N` hint. | data + formatting | feed / replies / mentions / autopilot |
+| 3.10 | **Timestamps + timezone.** Show date **and** time in the viewer's local timezone (feed, replies, mentions). Use the shared `window.fmtDateTime(iso)` (renders in the viewer's locale + tz). Autopilot post-hours picked/shown in local time with a `UTC±N` hint. | shared `fmtDateTime` + data | feed / replies / mentions / autopilot |
 
 ### Shell / sidebar (§4) — ✅ built as a shared module
 One canonical shell now lives in **`shell-data.jsx`** (nav + accounts + identity),
@@ -51,6 +51,10 @@ other screens swap their local `Sidebar` for it during their §6 pass.
 - **Avatars (§3.4):** `<window.Avatar src initials size />` — real photo with the
   monogram as fallback only. Mockup uses placeholder photos in `assets/avatars/`;
   wire `src` to real profile URLs.
+- **Shared app config in `shell-data.jsx`:** `UI_LANGS` (the 8 UI locales) lives
+  here so every screen's translate menu uses one list. Per-screen translation
+  content (e.g. `STUDIO_TR`, feed `post.tr`) is SAMPLE data; the real app calls
+  the translation service on demand.
 - **Still TODO (tracked):** §4.12 **zero-connected-accounts** → a full-screen
   connect flow (no half-empty shell) — entry path not yet drawn. §3.9 **mobile
   hamburger drawer** — desktop sidebar + the existing ≤880px icon-rail collapse
@@ -75,13 +79,13 @@ written. ⬜ = not yet migrated (still renders; pre-rework).
 
 | Screen | Route | Width | File set | Status |
 |--------|-------|-------|----------|--------|
-| Studio | `/app` | wide | `studio-*` / `Studio.html` | ⬜ |
-| Feed | `/app/feed` | wide | `feed-*` / `Feed.html` | ⬜ |
-| Replies | `/app/replies` | wide | `replies-*` / `Replies.html` | ⬜ |
-| Mentions | `/app/mentions` | wide | `mentions-*` / `Mentions.html` | ⬜ |
-| Stats | `/app/stats` | wide | `stats-*` / `Stats.html` | ⬜ |
-| Audits | `/app/audits` | reading | `audits-*` / `Audits.html` | ⬜ |
-| Pattern study | `/app/patterns` | reading | `patterns-*` / `Patterns.html` | ⬜ |
+| Studio | `/app` | wide | `studio-*` / `Studio.html` | ✅ (+ shared shell) |
+| My Feed | `/app/feed` | wide | `feed-*` / `Feed.html` | ✅ (+ shared shell) |
+| Replies | `/app/replies` | wide | `replies-*` / `Replies.html` | ✅ (+ shared shell) |
+| Mentions | `/app/mentions` | wide | `mentions-*` / `Mentions.html` | ✅ (+ shared shell) |
+| Stats | `/app/stats` | wide | `stats-*` / `Stats.html` | ✅ (+ shared shell) |
+| Audits | `/app/audits` | reading | `audits-*` / `Audits.html` | ✅ (+ shared shell) |
+| Pattern study | `/app/patterns` | reading | `patterns-*` / `Patterns.html` | ✅ (+ shared shell) |
 | **Explore patterns** | `/app/patterns/explore` | reading | `explore-*` / `Explore.html` | ✅ (+ shared shell) |
 | Autopilot | `/app/autopilot` | reading | `autopilot-*` / `Autopilot.html` | ⬜ |
 | Voice / role-book | `/app/role-book` | reading | `voice-*` / `Voice.html` | ⬜ |
