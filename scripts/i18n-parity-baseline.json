@@ -12,6 +12,8 @@
     "audits.cat.format",
     "patterns.metric_likes",
     "patterns.metric_comments",
+    "mentions.updated_hourly",
+    "mentions.error",
     "onboarding.analyze_locked",
     "onboarding.connected",
     "onboarding.connect_failed"
@@ -28,6 +30,8 @@
     "audits.cat.format",
     "patterns.metric_likes",
     "patterns.metric_comments",
+    "mentions.updated_hourly",
+    "mentions.error",
     "onboarding.analyze_locked",
     "onboarding.connected",
     "onboarding.connect_failed"
@@ -44,6 +48,8 @@
     "audits.cat.format",
     "patterns.metric_likes",
     "patterns.metric_comments",
+    "mentions.updated_hourly",
+    "mentions.error",
     "onboarding.analyze_locked",
     "onboarding.connected",
     "onboarding.connect_failed"
@@ -60,6 +66,8 @@
     "audits.cat.format",
     "patterns.metric_likes",
     "patterns.metric_comments",
+    "mentions.updated_hourly",
+    "mentions.error",
     "onboarding.analyze_locked",
     "onboarding.connected",
     "onboarding.connect_failed"
@@ -76,6 +84,8 @@
     "audits.cat.format",
     "patterns.metric_likes",
     "patterns.metric_comments",
+    "mentions.updated_hourly",
+    "mentions.error",
     "onboarding.analyze_locked",
     "onboarding.connected",
     "onboarding.connect_failed"
@@ -93,6 +103,8 @@
     "audits.cat.format",
     "patterns.metric_likes",
     "patterns.metric_comments",
+    "mentions.updated_hourly",
+    "mentions.error",
     "onboarding.analyze_locked",
     "onboarding.connected",
     "onboarding.connect_failed"

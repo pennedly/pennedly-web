@@ -5,7 +5,7 @@
 // the read surface for the threads_manage_mentions permission. No write
 // actions on mentions yet (so no save/archive/filter — those are design-only).
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 
 import { ApiError, clearTokens, fetchMentions, getTokens } from "@/lib/api";
@@ -13,10 +13,10 @@ import { useSelectedAccountId } from "@/lib/account";
 import { useTranslation } from "@/lib/i18n";
 import { TranslateButton } from "@/components/TranslateButton";
 import { useTesterGuard } from "@/lib/tester";
-import { AppTopbar } from "@/components/AppTopbar";
+import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
+import { ErrorBanner } from "@/components/ui/error-banner";
 import { Mono } from "@/components/ui/mono";
-import { cn } from "@/lib/cn";
-import { IcExternal } from "@/components/icons";
+import { IcClock, IcExternal } from "@/components/icons";
 import type { MentionSummary } from "@/lib/types";
 
 // Accent the @-handles inside a mention's text.
@@ -51,53 +51,64 @@ export default function MentionsPage() {
   const accountId = useSelectedAccountId();
   const [mentions, setMentions] = useState<MentionSummary[]>([]);
   const [loaded, setLoaded] = useState(false);
-  const [bootError, setBootError] = useState<string | null>(null);
+  // Q22: a load failure → the shared ErrorBanner. Keep this a boolean (not the
+  // message) so the callback doesn't depend on `t` and re-fetch on locale load.
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     if (!getTokens()) router.push("/app/login");
   }, [router]);
 
-  useEffect(() => {
+  const load = useCallback(async () => {
     if (accountId === null) return;
     setLoaded(false);
-    (async () => {
-      try {
-        const list = await fetchMentions(accountId, { limit: 50 });
-        setMentions(list.mentions);
-      } catch (e) {
-        if (e instanceof ApiError && e.status === 401) {
-          clearTokens();
-          router.push("/app/login");
-          return;
-        }
-        setBootError(String(e));
-      } finally {
-        setLoaded(true);
+    setHasError(false);
+    try {
+      const list = await fetchMentions(accountId, { limit: 50 });
+      setMentions(list.mentions);
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 401) {
+        clearTokens();
+        router.push("/app/login");
+        return;
       }
-    })();
+      setHasError(true);
+    } finally {
+      setLoaded(true);
+    }
   }, [accountId, router]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   if (checking) return null;
 
   return (
     <div className="min-h-screen bg-bg text-text">
-      <AppTopbar maxW="900px" title={t("mentions.title")} />
+      <AppTopbar
+        maxW="900px"
+        title={t("mentions.title")}
+        pill={
+          <TopbarPill icon={<IcClock size={13} className="text-text-subtle" />}>
+            {t("mentions.updated_hourly")}
+          </TopbarPill>
+        }
+      />
       <main className="mx-auto max-w-[900px] space-y-4 px-5 py-7 md:px-6">
-        {bootError && (
-          <div className="rounded-lg border border-danger/40 bg-danger/10 p-4 text-small text-danger">
-            {bootError}
-          </div>
+        {hasError && (
+          <ErrorBanner subtitle={t("mentions.error")} onRetry={load} />
         )}
 
-        {!bootError && (
+        {!hasError && (
           <p className="text-small text-text-muted">{t("mentions.subtitle")}</p>
         )}
 
-        {!loaded && !bootError && (
+        {!loaded && !hasError && (
           <p className="text-small text-text-muted">{t("common.loading")}</p>
         )}
 
-        {loaded && !bootError && mentions.length === 0 && (
+        {loaded && !hasError && mentions.length === 0 && (
           <div className="flex flex-col items-center rounded-lg border border-dashed border-border px-6 py-14 text-center">
             <p className="max-w-[42ch] text-small leading-relaxed text-text-muted">
               {t("mentions.empty")}
@@ -109,10 +120,9 @@ export default function MentionsPage() {
           {mentions.map((m) => (
             <li
               key={m.id}
-              className={cn(
-                "rounded-lg border border-border bg-surface p-4 shadow-sm transition-colors hover:border-text/15",
-                m.status === "new" && "border-l-2 border-l-accent",
-              )}
+              // Q15: no new/seen accent — there's no mark-seen endpoint, so the
+              // accent would glow forever. Flat read-only feed.
+              className="rounded-lg border border-border bg-surface p-4 shadow-sm transition-colors hover:border-text/15"
               style={{ animation: "card-in 240ms var(--ease-entrance) both" }}
             >
               <div className="flex items-center gap-2.5">

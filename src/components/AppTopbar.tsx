@@ -46,19 +46,25 @@ function ThemeToggle() {
 
 export function TopbarPill({
   tone = "success",
+  icon,
   children,
 }: {
   tone?: "success" | "warning" | "accent";
+  // Render this leading glyph instead of the status dot — e.g. a clock for a
+  // freshness pill ("Updated hourly") rather than a state pill.
+  icon?: ReactNode;
   children: ReactNode;
 }) {
   return (
     <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-surface px-3 py-1 text-small text-text-muted">
-      <span
-        className={cn(
-          "h-[7px] w-[7px] rounded-full",
-          tone === "warning" ? "bg-warning" : tone === "accent" ? "bg-accent" : "bg-success",
-        )}
-      />
+      {icon ?? (
+        <span
+          className={cn(
+            "h-[7px] w-[7px] rounded-full",
+            tone === "warning" ? "bg-warning" : tone === "accent" ? "bg-accent" : "bg-success",
+          )}
+        />
+      )}
       {children}
     </span>
   );

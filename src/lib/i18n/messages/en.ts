@@ -587,6 +587,8 @@ export const en = {
     "Posts elsewhere on Threads that @-mention you. Updated hourly.",
   "mentions.empty": "No mentions yet.",
   "mentions.view": "view on Threads",
+  "mentions.updated_hourly": "Updated hourly",
+  "mentions.error": "We couldn't load your mentions. Please try again.",
 
   // ── Posts (published) ──────────────────────────────────────────
   "dashboard.nav.posts": "posts",

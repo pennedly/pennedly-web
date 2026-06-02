@@ -592,6 +592,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
     "Посты в Threads, где тебя упоминают (@). Обновляется раз в час.",
   "mentions.empty": "Упоминаний пока нет.",
   "mentions.view": "открыть в Threads",
+  "mentions.updated_hourly": "Обновляется ежечасно",
+  "mentions.error": "Не удалось загрузить упоминания. Попробуйте ещё раз.",
 
   // ── Posts (published) ──────────────────────────────────────────
   "dashboard.nav.posts": "посты",

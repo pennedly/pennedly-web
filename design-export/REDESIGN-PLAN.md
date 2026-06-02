@@ -46,7 +46,7 @@ _Гейты: `uv run pytest` + `uv run ruff check`. SPEC §6/§7/§13/§14 — �
 ## Фаза 2 — Перенос экранов (по одному, по ритму) · репо `pennedly-web`
 _На КАЖДОМ экране — общие паттерны: общий shell · аватары (Q26/Q38/Q57) · перевод в ⋯-меню (Q21/Q10) · loading/empty/error (Q22/Q23) · оптимистичность + Undo (Q24/Q25) · абсолютное локальное время (Q40) · status-pills (Q41/Q14)._
 
-> **📋 АУДИТ 2026-06-02 (4 агента, все 16 экранов).** Ключевой вывод: **общий shell + design-system уже стоят на всех экранах** — осталась не верстка с нуля, а **поведение + подключение полей бэка** (Фаза 1 уже их отдаёт, фронт их ещё не читает). **Готово 6/16** (Explore, Landing, Legal, Audits, Patterns, Onboarding). Подключённые поля: `avg_reposts`(Q64✅) · `min_posts_to_analyze`(Q53✅) · `category`+`old_text/new_text`(Q51/Q75✅) · `SelfStudyExample.metric`(Q56✅) · `GET /study/latest`(Q54✅) · Patterns ×N+Topics-chip(Q42/Q55✅). Осталось подтянуть: `auto_replied`(Q3, Replies) · `posts_analyzed`(Q67, Voice) · **`RoleBookSections` flat→typed objects(Q60, Voice — полный редактор)**.
+> **📋 АУДИТ 2026-06-02 (4 агента, все 16 экранов).** Ключевой вывод: **общий shell + design-system уже стоят на всех экранах** — осталась не верстка с нуля, а **поведение + подключение полей бэка** (Фаза 1 уже их отдаёт, фронт их ещё не читает). **Готово 7/16** (Explore, Landing, Legal, Audits, Patterns, Onboarding, Mentions). Подключённые поля: `avg_reposts`(Q64✅) · `min_posts_to_analyze`(Q53✅) · `category`+`old_text/new_text`(Q51/Q75✅) · `SelfStudyExample.metric`(Q56✅) · `GET /study/latest`(Q54✅) · Patterns ×N+Topics-chip(Q42/Q55✅). Осталось подтянуть: `auto_replied`(Q3, Replies) · `posts_analyzed`(Q67, Voice) · **`RoleBookSections` flat→typed objects(Q60, Voice — полный редактор)**.
 >
 > **✅ Q60-регрессия закрыта (интерим):** живой `/app/role-book` снова работает — `flattenSections` коэрсит объекты бэка обратно в строки на чтении (`eb05773`). Полный типизированный редактор (ids, перевод по пунктам, контекст примеров, hero) — оставшаяся задача Voice.
 
@@ -56,7 +56,7 @@ _На КАЖДОМ экране — общие паттерны: общий shel
 | 2 | **Studio** | 🟡 M | Q62 reply-черновики read-only (контекст @who + текст + «Open Replies») ✅ · Q14 topbar voice-pill (`voiceReady`) ✅. Осталось: Q25 ⋯-overflow · Q24 optimistic+Undo (кросс-экранный паттерн Studio/Replies/Autopilot/Style). (Q9 chips ✅) |
 | 3 | **Feed** | 🟡 M | Q26 шапка автора · Q13 сорт Recent/Top · Q65 числовая дельта % · Q37 «On par»+warm empty/Studio-CTA. (Q64 `avg_reposts` ✅) |
 | 4 | **Replies** | 🔴 L | **Q18 master-detail (переписать, убрать PostRail)** · Q3 `auto_replied`(+тип, бейдж) · Q10 перевод ответа · Q77 бакеты. (Q37 empty ✅) |
-| 5 | **Mentions** | 🟡 S | Q22 ErrorBanner+Retry · «Updated hourly» pill · убрать мёртвый `new`-акцент. (Q15/Q57 ✅) |
+| 5 | **Mentions** | ✅ done | Q22 общий `ErrorBanner`+Retry (ключ `mentions.error`) ✅ · «Updated hourly» pill (clock-icon, `TopbarPill icon=`) ✅ · мёртвый `new`-акцент убран (Q15) ✅. (Q57 ✅) |
 | 6 | **Stats** | 🔴 L | Q19 6 периодов (сейчас weeks 4/8/12) · Q39 chart avg-line+above/below · Q12 убрать «posts/week» chart · Q80 «Updated hourly» pill. (Q47 тиры ✅) |
 | 7 | **Audits** | ✅ done | Q51 diff (old_text/new_text, без JSON-dump) ✅ · Q75 `category` badge (fallback на kind) ✅. (Q48/Q27/Q78/Q7 ✅) |
 | 8 | **Patterns** | ✅ done | Q42 «×N»-множитель (`1+delta_pct/100`) + маленький «+%» ✅ · Topics-chip убран (Q55) ✅. (Q54 `/study/latest` ✅ · Q56 метрика примера ✅ · Q45/Q82 ✅) |
