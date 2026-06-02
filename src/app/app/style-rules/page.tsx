@@ -54,6 +54,43 @@ const CAT_LABEL: Record<StyleRuleCategory, MessageKey> = {
 
 type Toast = { id: number; message: string; tone: "success" | "error" };
 
+// Q49: display title + description come from i18n keyed by the rule's stable
+// backend `key` (the Russian title/body stay as the model prompt only). Fall
+// back to the backend strings for any future rule without an i18n entry.
+const RULE_I18N: Record<string, { t: MessageKey; d: MessageKey }> = {
+  no_antithesis: { t: "style_rules.r.no_antithesis.t", d: "style_rules.r.no_antithesis.d" },
+  no_rule_of_three: { t: "style_rules.r.no_rule_of_three.t", d: "style_rules.r.no_rule_of_three.d" },
+  no_baity_opener: { t: "style_rules.r.no_baity_opener.t", d: "style_rules.r.no_baity_opener.d" },
+  no_engagement_question: { t: "style_rules.r.no_engagement_question.t", d: "style_rules.r.no_engagement_question.d" },
+  no_significance_formula: { t: "style_rules.r.no_significance_formula.t", d: "style_rules.r.no_significance_formula.d" },
+  no_ai_buzzwords: { t: "style_rules.r.no_ai_buzzwords.t", d: "style_rules.r.no_ai_buzzwords.d" },
+  no_hedging: { t: "style_rules.r.no_hedging.t", d: "style_rules.r.no_hedging.d" },
+  no_elegant_variation: { t: "style_rules.r.no_elegant_variation.t", d: "style_rules.r.no_elegant_variation.d" },
+  no_summary_closer: { t: "style_rules.r.no_summary_closer.t", d: "style_rules.r.no_summary_closer.d" },
+  vary_rhythm: { t: "style_rules.r.vary_rhythm.t", d: "style_rules.r.vary_rhythm.d" },
+  be_concrete: { t: "style_rules.r.be_concrete.t", d: "style_rules.r.be_concrete.d" },
+  plain_formatting: { t: "style_rules.r.plain_formatting.t", d: "style_rules.r.plain_formatting.d" },
+  no_capital_after_colon: { t: "style_rules.r.no_capital_after_colon.t", d: "style_rules.r.no_capital_after_colon.d" },
+  human_punctuation: { t: "style_rules.r.human_punctuation.t", d: "style_rules.r.human_punctuation.d" },
+};
+
+function ruleTitle(rule: StyleRule, t: (k: MessageKey) => string): string {
+  const m = RULE_I18N[rule.key];
+  return m ? t(m.t) : rule.title;
+}
+function ruleDesc(rule: StyleRule, t: (k: MessageKey) => string): string {
+  const m = RULE_I18N[rule.key];
+  return m ? t(m.d) : rule.body;
+}
+
+// Q44: the human_punctuation rule is a deterministic stripper — show its live
+// before→after on a sample, applying the same typographic swaps output_guard
+// does (em-dash → hyphen, «guillemets» → straight quotes, … → ...).
+const PUNCT_DEMO_FROM = "wait — really? «yes»… for sure";
+function humanizePunctuation(s: string): string {
+  return s.replace(/—/g, "-").replace(/[«»]/g, '"').replace(/…/g, "...");
+}
+
 function fill(s: string, vars: Record<string, string | number>): string {
   return s.replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ""));
 }
@@ -64,10 +101,10 @@ export default function StyleRulesEditor() {
   const accountId = useSelectedAccountId();
   const [rules, setRules] = useState<StyleRule[] | null>(null);
   const [userRules, setUserRules] = useState<UserRule[] | null>(null);
-  const [filter, setFilter] = useState<"all" | StyleRuleCategory>("all");
   const [pending, setPending] = useState<Set<string>>(new Set());
   const [newBody, setNewBody] = useState("");
-  const [newKind, setNewKind] = useState("post");
+  // Q81: default to "both" (post + reply), matching the design's default.
+  const [newKind, setNewKind] = useState("both");
   const [bootError, setBootError] = useState<string | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
@@ -130,7 +167,14 @@ export default function StyleRulesEditor() {
       const r = await createUserRule(accountId, { kind: newKind, body: body.trim() });
       setUserRules((rs) => [...(rs ?? []), r]);
       setNewBody("");
-      toast(t("style_rules.toast_rule_added"));
+      // Q81: the toast names where the rule applies.
+      const toastKey: MessageKey =
+        newKind === "post"
+          ? "style_rules.toast_added_post"
+          : newKind === "reply"
+            ? "style_rules.toast_added_reply"
+            : "style_rules.toast_rule_added";
+      toast(t(toastKey));
     } catch (e) {
       toast(String(e), "error");
     }
@@ -175,14 +219,8 @@ export default function StyleRulesEditor() {
   const totalOn = builtinOn + (userRules?.filter((r) => r.enabled).length ?? 0);
   const totalRules = builtinTotal + ownCount;
 
-  // Categories actually present, in canonical order.
+  // Categories actually present, in canonical order (Q30: always-visible groups).
   const presentCats = CATEGORIES.filter((c) => rules?.some((r) => r.category === c));
-  const catCount = (c: StyleRuleCategory) => rules?.filter((r) => r.category === c).length ?? 0;
-  const visible = rules
-    ? filter === "all"
-      ? rules
-      : rules.filter((r) => r.category === filter)
-    : [];
 
   return (
     <div className="min-h-screen bg-bg text-text">
@@ -203,9 +241,10 @@ export default function StyleRulesEditor() {
             <Skeleton className="h-72 w-full rounded-lg" />
           </div>
         ) : (
-          <>
+          // Q29: Your rules shown first, then the built-in catalog (flex order).
+          <div className="flex flex-col gap-5">
             {/* Intro */}
-            <div>
+            <div className="order-1">
               <span className="inline-flex items-center gap-1.5 text-caption font-semibold uppercase tracking-wide text-text-subtle">
                 <IcSliders size={14} className="text-text-muted" />
                 {t("style_rules.eyebrow")}
@@ -221,8 +260,8 @@ export default function StyleRulesEditor() {
               </div>
             </div>
 
-            {/* Built-in anti-AI rules */}
-            <section className="overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
+            {/* Built-in anti-AI rules (Q29: order-3, after Your rules) */}
+            <section className="order-3 overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
               <div className="flex items-center gap-3 p-4">
                 <span className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-md border border-border bg-surface-2 text-text-muted">
                   <IcFilter size={17} />
@@ -238,62 +277,58 @@ export default function StyleRulesEditor() {
                 </div>
               </div>
 
-              {/* category filter chips */}
-              <div role="tablist" className="flex flex-wrap items-center gap-1.5 px-4 pb-3.5">
-                <Chip active={filter === "all"} onClick={() => setFilter("all")} label={t("style_rules.filter_all")} n={builtinTotal} />
-                {presentCats.map((c) => (
-                  <Chip key={c} active={filter === c} onClick={() => setFilter(c)} label={t(CAT_LABEL[c])} n={catCount(c)} />
-                ))}
-              </div>
-
+              {/* Q30: always-visible category groups (was a chip filter). */}
               <div className="flex flex-col">
-                {visible.length === 0 ? (
-                  <div className="px-4 py-7 text-center text-small text-text-subtle">
-                    {t("style_rules.no_in_category")}
-                  </div>
-                ) : (
-                  visible.map((rule) => (
-                    <div
-                      key={rule.key}
-                      className={cn(
-                        "flex items-start gap-3.5 border-t border-border px-4 py-4 transition-colors first:border-t-0 hover:bg-surface-2",
-                        !rule.enabled && "opacity-95",
-                      )}
-                    >
-                      <div className="mt-0.5 shrink-0">
-                        <Switch
-                          checked={rule.enabled}
-                          onCheckedChange={() => onToggle(rule)}
-                          disabled={pending.has(rule.key)}
-                          aria-label={rule.title}
-                        />
+                {presentCats.map((c) => {
+                  const items = rules.filter((r) => r.category === c);
+                  const cOn = items.filter((r) => r.enabled).length;
+                  return (
+                    <div key={c} className="border-t border-border">
+                      <div className="flex items-center justify-between gap-2 bg-surface-2 px-4 py-2">
+                        <span className="text-caption font-semibold uppercase tracking-wide text-text-subtle">
+                          {t(CAT_LABEL[c])}
+                        </span>
+                        <span className="text-caption tabular-nums text-text-subtle">
+                          {cOn}/{items.length}
+                        </span>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2.5">
-                          <span className={cn("text-small font-semibold", !rule.enabled && "text-text-subtle")}>
-                            {rule.title}
-                          </span>
-                          <span className="shrink-0 rounded-sm border border-border bg-surface-2 px-2 py-px text-caption font-semibold text-text-muted">
-                            {t(CAT_LABEL[rule.category])}
-                          </span>
+                      {items.map((rule) => (
+                        <div
+                          key={rule.key}
+                          className={cn(
+                            "flex items-start gap-3.5 border-t border-border px-4 py-4 transition-colors hover:bg-surface",
+                            !rule.enabled && "opacity-95",
+                          )}
+                        >
+                          <div className="mt-0.5 shrink-0">
+                            <Switch
+                              checked={rule.enabled}
+                              onCheckedChange={() => onToggle(rule)}
+                              disabled={pending.has(rule.key)}
+                              aria-label={ruleTitle(rule, t)}
+                            />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <span className={cn("text-small font-semibold", !rule.enabled && "text-text-subtle")}>
+                              {ruleTitle(rule, t)}
+                            </span>
+                            <p className={cn("mt-1 text-small leading-relaxed", rule.enabled ? "text-text-muted" : "text-text-subtle")}>
+                              {ruleDesc(rule, t)}
+                            </p>
+                            {rule.key === PUNCTUATION_RULE_KEY && (
+                              <PunctuationDemo on={rule.enabled} t={t} />
+                            )}
+                          </div>
                         </div>
-                        <p className={cn("mt-1 text-small leading-relaxed", rule.enabled ? "text-text-muted" : "text-text-subtle")}>
-                          {rule.body}
-                        </p>
-                        {rule.key === PUNCTUATION_RULE_KEY && (
-                          <p className="mt-1.5 text-caption leading-relaxed text-warning">
-                            {t("style_rules.punctuation_note")}
-                          </p>
-                        )}
-                      </div>
+                      ))}
                     </div>
-                  ))
-                )}
+                  );
+                })}
               </div>
             </section>
 
-            {/* Freeform rules */}
-            <section className="overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
+            {/* Freeform rules — Your rules (Q29: order-2, first after the intro) */}
+            <section className="order-2 overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
               <div className="flex items-center gap-3 p-4">
                 <span className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-md border border-border bg-surface-2 text-text-muted">
                   <IcPenLine size={17} />
@@ -361,7 +396,7 @@ export default function StyleRulesEditor() {
                 </>
               )}
             </section>
-          </>
+          </div>
         )}
       </main>
 
@@ -374,32 +409,22 @@ export default function StyleRulesEditor() {
   );
 }
 
-function Chip({
-  active,
-  onClick,
-  label,
-  n,
-}: {
-  active: boolean;
-  onClick: () => void;
-  label: string;
-  n: number;
-}) {
+// Q44: live before→after for the human_punctuation stripper. The note explains
+// it's typographic + opt-in; the demo shows the actual swap on a sample.
+function PunctuationDemo({ on, t }: { on: boolean; t: (k: MessageKey) => string }) {
   return (
-    <button
-      role="tab"
-      aria-selected={active}
-      onClick={onClick}
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-caption font-medium whitespace-nowrap transition-colors",
-        active
-          ? "border-primary bg-primary text-primary-foreground"
-          : "border-border bg-surface text-text-muted hover:bg-surface-2 hover:text-text",
-      )}
-    >
-      {label}
-      <span className={cn("tabular-nums", active ? "opacity-75" : "opacity-60")}>{n}</span>
-    </button>
+    <>
+      <p className="mt-1.5 text-caption leading-relaxed text-warning">
+        {t("style_rules.punctuation_note")}
+      </p>
+      <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md border border-border bg-surface-2 px-3 py-2 font-mono text-caption">
+        <code className="text-text-subtle">{PUNCT_DEMO_FROM}</code>
+        <span className="shrink-0 text-text-subtle">→</span>
+        <code className={cn("font-medium", on ? "text-success" : "text-text-subtle")}>
+          {on ? humanizePunctuation(PUNCT_DEMO_FROM) : PUNCT_DEMO_FROM}
+        </code>
+      </div>
+    </>
   );
 }
 
@@ -516,6 +541,7 @@ function AddComposer({
         aria-label="kind"
         className="h-10 shrink-0 rounded-md border border-border bg-surface px-2.5 text-small text-text outline-none focus-visible:outline-2 focus-visible:outline-accent"
       >
+        <option value="both">{t("user_rules.kind_both")}</option>
         <option value="post">{t("user_rules.kind_post")}</option>
         <option value="reply">{t("user_rules.kind_reply")}</option>
       </select>
