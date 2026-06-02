@@ -60,6 +60,42 @@ import type {
 type ListKey = keyof Omit<RoleBookSections, "intro">;
 type Toast = { id: number; message: string; tone: "success" | "error" };
 
+// Q60 interim: the backend now returns each section item as a typed object
+// ({id,label,note} / {id,label,text} / {id,text} / {id,context,text}). This
+// editor still works on flat strings, so coerce each item to its display text
+// on read (themes→label, the rest→text). Round-trips safely — saving strings
+// re-wraps them server-side (the normalizer assigns ids). The full typed-object
+// editor (stable ids, per-item translate, example Post/Reply context, the
+// "Analyzed N posts" hero) is the remaining Q60 frontend task.
+function flattenSections(
+  raw: RoleBookSections | null | undefined,
+): RoleBookSections {
+  const out: RoleBookSections = {};
+  if (!raw) return out;
+  if (typeof raw.intro === "string") out.intro = raw.intro;
+  const keys: ListKey[] = [
+    "themes_include",
+    "themes_exclude",
+    "voice_characteristics",
+    "do_list",
+    "dont_list",
+    "examples",
+  ];
+  for (const k of keys) {
+    const arr = raw[k] as unknown[] | undefined;
+    if (Array.isArray(arr)) {
+      out[k] = arr
+        .map((it) => {
+          if (typeof it === "string") return it;
+          const o = it as { label?: string; text?: string };
+          return (o?.label || o?.text || "").trim();
+        })
+        .filter(Boolean);
+    }
+  }
+  return out;
+}
+
 const LIST_SECTIONS: {
   key: ListKey;
   Icon: (p: { size?: number }) => ReactNode;
@@ -120,7 +156,7 @@ export default function VoiceEditor() {
       try {
         const rb = await fetchRoleBook(accountId);
         setBook(rb);
-        setSections({ ...(rb.sections ?? {}) });
+        setSections(flattenSections(rb.sections));
       } catch (e) {
         if (e instanceof ApiError && e.status === 401) {
           clearTokens();
@@ -154,7 +190,7 @@ export default function VoiceEditor() {
     try {
       const rb = await patchRoleBook(accountId, next);
       setBook(rb);
-      setSections({ ...(rb.sections ?? {}) });
+      setSections(flattenSections(rb.sections));
       setLintResult(null);
       setDismissed(new Set());
       toast(t("voice.toast_saved"));
@@ -187,7 +223,7 @@ export default function VoiceEditor() {
     try {
       const rb = await applyLintFix(accountId, fix);
       setBook(rb);
-      setSections({ ...(rb.sections ?? {}) });
+      setSections(flattenSections(rb.sections));
       // Re-lint on the new version so the panel reflects reality.
       try {
         const fresh = await lintRoleBook(accountId);
@@ -225,7 +261,7 @@ export default function VoiceEditor() {
         const [rb] = await Promise.all([extractVoice(accountId), minDelay]);
         setStepIndex(n);
         setBook(rb);
-        setSections({ ...(rb.sections ?? {}) });
+        setSections(flattenSections(rb.sections));
         setLintResult(null);
         setDismissed(new Set());
         setLastRun(t("voice.just_now"));
