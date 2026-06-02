@@ -19,8 +19,8 @@ import {
   BrandMark,
   IcAt,
   IcAudit,
-  IcBolt,
   IcChart,
+  IcClock,
   IcCompass,
   IcFeed,
   IcReplies,
@@ -67,7 +67,7 @@ const GROUPS: { title: MessageKey; items: NavItem[] }[] = [
     items: [
       { href: "/app/role-book", label: "dashboard.nav.voice", icon: IcVoice },
       { href: "/app/style-rules", label: "dashboard.nav.style_rules", icon: IcTweak },
-      { href: "/app/autopilot", label: "dashboard.nav.autopilot", icon: IcBolt, tester: true },
+      { href: "/app/autopilot", label: "dashboard.nav.autopilot", icon: IcClock, tester: true },
     ],
   },
 ];

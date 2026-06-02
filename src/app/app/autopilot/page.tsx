@@ -36,7 +36,6 @@ import { Toast, ToastHost } from "@/components/ui/toast";
 import { Mono } from "@/components/ui/mono";
 import { cn } from "@/lib/cn";
 import {
-  IcBolt,
   IcBubble,
   IcCheck,
   IcClock,
@@ -235,7 +234,7 @@ export default function AutopilotPage() {
                     : "border-border bg-surface-2 text-text-muted",
                 )}
               >
-                <IcBolt size={24} />
+                <IcClock size={24} />
               </span>
               <div className="min-w-0 flex-1">
                 <div className="text-h2 font-semibold tracking-tight">{t("autopilot.title")}</div>
@@ -290,7 +289,7 @@ export default function AutopilotPage() {
               {rules.length === 0 ? (
                 <div className="flex flex-col items-center rounded-md border border-dashed border-border px-6 py-10 text-center">
                   <span className="mb-3.5 grid h-[46px] w-[46px] place-items-center rounded-md border border-border bg-surface-2 text-text-subtle">
-                    <IcBolt size={22} />
+                    <IcClock size={22} />
                   </span>
                   <p className="text-h3 font-semibold">{t("autopilot.empty_obj_title")}</p>
                   <p className="mt-1.5 max-w-[40ch] text-small leading-relaxed text-text-muted">
@@ -479,11 +478,15 @@ export default function AutopilotPage() {
                       onChange={(e) => onReply({ replies_per_day: Number(e.target.value) })}
                       className={cn(SELECT, "min-w-[168px]")}
                     >
-                      {[1, 3, 5, 10, 20].map((n) => (
-                        <option key={n} value={n}>
-                          {n}
-                        </option>
-                      ))}
+                      {/* Q66: reply cap 10 / 25 / 50 (no "no cap"). Keep any
+                          legacy stored value visible so the select never blanks. */}
+                      {Array.from(new Set([10, 25, 50, config.replies_per_day]))
+                        .sort((a, b) => a - b)
+                        .map((n) => (
+                          <option key={n} value={n}>
+                            {n}
+                          </option>
+                        ))}
                     </select>
                   </PolicyRow>
                 </div>
@@ -570,7 +573,7 @@ export default function AutopilotPage() {
                           <div key={p.post_id} className="rounded-md border border-border bg-surface p-3.5">
                             <div className="mb-2 flex items-center gap-2.5">
                               <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface-2 px-2.5 py-0.5 text-caption font-semibold text-text-muted">
-                                <IcBolt size={12} />
+                                <IcClock size={12} />
                                 {p.rule_name || t("autopilot.title")}
                               </span>
                               <span className="text-caption text-text-subtle">
@@ -627,7 +630,7 @@ export default function AutopilotPage() {
                               <div className="mb-1 flex items-center gap-1.5 text-caption font-semibold">
                                 {t("autopilot.you")}
                                 <span className="inline-flex items-center gap-1 font-medium text-accent">
-                                  <IcBolt size={11} />
+                                  <IcBubble size={11} />
                                   {t("autopilot.auto_replied")}
                                 </span>
                               </div>
@@ -677,7 +680,7 @@ export default function AutopilotPage() {
           <div className="w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-lg">
             <div className="flex items-start gap-3">
               <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-accent/30 bg-accent/12 text-accent">
-                <IcBolt size={18} />
+                <IcClock size={18} />
               </span>
               <div>
                 <h2 className="text-h3 font-semibold">{t("autopilot.confirm_title")}</h2>
@@ -692,7 +695,7 @@ export default function AutopilotPage() {
               </button>
               <Button
                 variant="primary"
-                icon={<IcBolt size={15} />}
+                icon={<IcClock size={15} />}
                 onClick={() => {
                   setConfirmOn(false);
                   doSetMaster(true);

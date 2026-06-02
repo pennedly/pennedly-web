@@ -582,7 +582,7 @@ const AUTOPILOT_CONFIG = {
   quiet_end_hour: null,
   reply_enabled: true,
   reply_audience: "all_except_trolls",
-  replies_per_day: 5,
+  replies_per_day: 25,
 };
 const AUTOPOST_RULES = {
   master_enabled: true,
