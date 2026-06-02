@@ -39,15 +39,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   // ── Login ──────────────────────────────────────────────────────
   "login.email_label": "email",
   "login.email_placeholder": "ты@example.com",
-  "login.submit": "отправить ссылку для входа",
   "login.submit_code": "отправить код на почту",
   "login.sending": "отправляю…",
-  "login.method_code": "получить код на почту вместо ссылки",
-  "login.method_link": "прислать ссылку вместо кода",
-  "login.tab_code": "Код на почту",
-  "login.tab_link": "Ссылка",
-  "login.no_password_code":
-    "Пришлём одноразовый код на почту. Пароль не нужен.",
   "login.google_button": "Войти через Google",
   "login.or": "или",
   "login.google_error": "Не удалось войти через Google. Попробуй ещё раз.",
@@ -56,18 +49,9 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "login.consent_and": "и",
   "login.consent_privacy": "Политикой конфиденциальности",
   "login.code_sent_to": "Введи код, отправленный на",
-  "login.code_label": "Код из письма",
-  "login.code_placeholder": "123456",
   "login.verify": "войти",
-  "login.verifying": "проверяю…",
   "login.code_invalid": "Код неверный или истёк — запроси новый.",
-  "login.no_password":
-    "Пришлём одноразовую ссылку на email. Пароль не нужен.",
   "login.signing_in": "Авторизую…",
-  "login.sent_title": "Проверь почту",
-  "login.sent_to": "Отправили ссылку для входа на",
-  "login.sent_validity":
-    "Ссылка действует 15 минут и срабатывает один раз.",
   "login.use_different_email": "другой email",
   "login.link_invalid":
     "Эта ссылка больше не действует. Запроси новую ниже.",

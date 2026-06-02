@@ -36,15 +36,8 @@ export const de: Partial<Record<MessageKey, string>> = {
   // ── Login ──────────────────────────────────────────────────────
   "login.email_label": "E-Mail",
   "login.email_placeholder": "du@example.com",
-  "login.submit": "Anmelde-Link senden",
   "login.sending": "sende…",
-  "login.no_password":
-    "Wir schicken dir einen Einmal-Link per E-Mail. Kein Passwort nötig.",
   "login.signing_in": "Melde dich an…",
-  "login.sent_title": "Prüfe dein Postfach",
-  "login.sent_to": "Wir haben einen Anmelde-Link gesendet an",
-  "login.sent_validity":
-    "Der Link ist 15 Minuten gültig und kann nur einmal verwendet werden.",
   "login.use_different_email": "andere E-Mail verwenden",
   "login.link_invalid":
     "Dieser Anmelde-Link ist nicht mehr gültig. Fordere unten einen neuen an.",
@@ -209,12 +202,6 @@ export const de: Partial<Record<MessageKey, string>> = {
 
   // ── Login (Rest) ───────────────────────────────────────────────
   "login.submit_code": "Code per E-Mail schicken",
-  "login.method_code": "stattdessen Code per E-Mail",
-  "login.method_link": "stattdessen Link per E-Mail",
-  "login.tab_code": "E-Mail-Code",
-  "login.tab_link": "Magic Link",
-  "login.no_password_code":
-    "Wir schicken dir einen Einmal-Code per E-Mail. Kein Passwort nötig.",
   "login.google_button": "Mit Google fortfahren",
   "login.or": "oder",
   "login.google_error":
@@ -224,10 +211,7 @@ export const de: Partial<Record<MessageKey, string>> = {
   "login.consent_and": "und der",
   "login.consent_privacy": "Datenschutzerklärung",
   "login.code_sent_to": "Gib den Code ein, den wir gesendet haben an",
-  "login.code_label": "Code aus der E-Mail",
-  "login.code_placeholder": "123456",
   "login.verify": "anmelden",
-  "login.verifying": "prüfe…",
   "login.code_invalid":
     "Dieser Code ist ungültig oder abgelaufen — fordere einen neuen an.",
   "login.dev_disabled": "Dev-Anmeldung ist im Backend deaktiviert.",

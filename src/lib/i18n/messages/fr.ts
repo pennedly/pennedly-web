@@ -36,15 +36,8 @@ export const fr: Partial<Record<MessageKey, string>> = {
   // ── Login ──────────────────────────────────────────────────────
   "login.email_label": "email",
   "login.email_placeholder": "toi@example.com",
-  "login.submit": "envoyer le lien de connexion",
   "login.sending": "envoi…",
-  "login.no_password":
-    "On t'envoie un lien à usage unique par email. Pas de mot de passe.",
   "login.signing_in": "Connexion en cours…",
-  "login.sent_title": "Vérifie ta boîte mail",
-  "login.sent_to": "Lien de connexion envoyé à",
-  "login.sent_validity":
-    "Le lien est valable 15 minutes et ne peut être utilisé qu'une fois.",
   "login.use_different_email": "utiliser un autre email",
   "login.link_invalid":
     "Ce lien n'est plus valide. Demandes-en un nouveau ci-dessous.",
@@ -210,12 +203,6 @@ export const fr: Partial<Record<MessageKey, string>> = {
 
   // ── Login (reste) ──────────────────────────────────────────────
   "login.submit_code": "envoie-moi un code",
-  "login.method_code": "plutôt un code par email",
-  "login.method_link": "plutôt un lien par email",
-  "login.tab_code": "Code par email",
-  "login.tab_link": "Lien magique",
-  "login.no_password_code":
-    "On t'envoie un code à usage unique par email. Pas de mot de passe.",
   "login.google_button": "Continuer avec Google",
   "login.or": "ou",
   "login.google_error": "Échec de la connexion avec Google. Réessaie.",
@@ -224,10 +211,7 @@ export const fr: Partial<Record<MessageKey, string>> = {
   "login.consent_and": "et la",
   "login.consent_privacy": "Politique de confidentialité",
   "login.code_sent_to": "Saisis le code envoyé à",
-  "login.code_label": "Code de l'email",
-  "login.code_placeholder": "123456",
   "login.verify": "se connecter",
-  "login.verifying": "vérification…",
   "login.code_invalid":
     "Ce code est invalide ou expiré — demandes-en un nouveau.",
   "login.dev_disabled": "la connexion dev est désactivée côté backend.",

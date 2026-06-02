@@ -30,6 +30,11 @@ import { cn } from "@/lib/cn";
 const RADIAL =
   "radial-gradient(120% 75% at 50% -8%, color-mix(in srgb, var(--color-surface) 55%, transparent) 0%, transparent 58%), var(--color-bg)";
 
+// Q20: pennedly.com is a separate marketing site; the app + its legal pages
+// live on app.pennedly.com. Pin the consent links to that canonical origin so
+// they never 404 even if the login card is ever reached cross-domain.
+const APP_ORIGIN = "https://app.pennedly.com";
+
 function Alert({ text }: { text: string | null }) {
   if (!text) return null;
   return (
@@ -379,11 +384,11 @@ function LoginPageInner() {
 
               <p className="mt-5 text-center text-caption leading-relaxed text-text-subtle">
                 {t("login.consent_prefix")}{" "}
-                <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-text">
+                <a href={`${APP_ORIGIN}/terms`} target="_blank" rel="noopener noreferrer" className="underline hover:text-text">
                   {t("login.consent_terms")}
                 </a>{" "}
                 {t("login.consent_and")}{" "}
-                <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-text">
+                <a href={`${APP_ORIGIN}/privacy`} target="_blank" rel="noopener noreferrer" className="underline hover:text-text">
                   {t("login.consent_privacy")}
                 </a>
                 .

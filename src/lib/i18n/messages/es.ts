@@ -36,15 +36,8 @@ export const es: Partial<Record<MessageKey, string>> = {
   // ── Login ──────────────────────────────────────────────────────
   "login.email_label": "email",
   "login.email_placeholder": "tu@example.com",
-  "login.submit": "enviar enlace de inicio de sesión",
   "login.sending": "enviando…",
-  "login.no_password":
-    "Te enviaremos un enlace de un solo uso por email. Sin contraseña.",
   "login.signing_in": "Iniciando sesión…",
-  "login.sent_title": "Revisa tu bandeja",
-  "login.sent_to": "Enviamos un enlace de inicio de sesión a",
-  "login.sent_validity":
-    "El enlace es válido por 15 minutos y solo puede usarse una vez.",
   "login.use_different_email": "usar otro email",
   "login.link_invalid":
     "Este enlace ya no es válido. Solicita uno nuevo abajo.",
@@ -209,12 +202,6 @@ export const es: Partial<Record<MessageKey, string>> = {
 
   // ── Login (resto) ──────────────────────────────────────────────
   "login.submit_code": "envíame un código",
-  "login.method_code": "mejor envíame un código",
-  "login.method_link": "mejor envíame un enlace",
-  "login.tab_code": "Código por email",
-  "login.tab_link": "Enlace mágico",
-  "login.no_password_code":
-    "Te enviaremos un código de un solo uso por email. Sin contraseña.",
   "login.google_button": "Continuar con Google",
   "login.or": "o",
   "login.google_error": "No se pudo iniciar sesión con Google. Inténtalo de nuevo.",
@@ -223,10 +210,7 @@ export const es: Partial<Record<MessageKey, string>> = {
   "login.consent_and": "y la",
   "login.consent_privacy": "Política de privacidad",
   "login.code_sent_to": "Introduce el código que enviamos a",
-  "login.code_label": "Código del email",
-  "login.code_placeholder": "123456",
   "login.verify": "iniciar sesión",
-  "login.verifying": "verificando…",
   "login.code_invalid":
     "Ese código no es válido o ha caducado — solicita uno nuevo.",
   "login.dev_disabled": "el inicio de sesión dev está desactivado en el backend.",

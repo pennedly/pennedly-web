@@ -36,15 +36,8 @@ export const uk: Partial<Record<MessageKey, string>> = {
   // ── Login ──────────────────────────────────────────────────────
   "login.email_label": "email",
   "login.email_placeholder": "ти@example.com",
-  "login.submit": "надіслати посилання для входу",
   "login.sending": "надсилаю…",
-  "login.no_password":
-    "Надішлемо одноразове посилання на email. Пароль не потрібен.",
   "login.signing_in": "Авторизую…",
-  "login.sent_title": "Перевір пошту",
-  "login.sent_to": "Надіслали посилання для входу на",
-  "login.sent_validity":
-    "Посилання діє 15 хвилин і спрацьовує один раз.",
   "login.use_different_email": "інший email",
   "login.link_invalid":
     "Це посилання більше не діє. Запроси нове нижче.",
@@ -208,12 +201,6 @@ export const uk: Partial<Record<MessageKey, string>> = {
 
   // ── Login (решта) ──────────────────────────────────────────────
   "login.submit_code": "надіслати мені код",
-  "login.method_code": "краще код на email",
-  "login.method_link": "краще посилання на email",
-  "login.tab_code": "Код на email",
-  "login.tab_link": "Магічне посилання",
-  "login.no_password_code":
-    "Надішлемо одноразовий код на email. Пароль не потрібен.",
   "login.google_button": "Продовжити з Google",
   "login.or": "або",
   "login.google_error": "Не вдалося увійти через Google. Спробуй ще раз.",
@@ -222,10 +209,7 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "login.consent_and": "і",
   "login.consent_privacy": "Політикою конфіденційності",
   "login.code_sent_to": "Введи код, який ми надіслали на",
-  "login.code_label": "Код з листа",
-  "login.code_placeholder": "123456",
   "login.verify": "увійти",
-  "login.verifying": "перевіряю…",
   "login.code_invalid": "Код недійсний або застарів — запроси новий.",
   "login.dev_disabled": "вхід dev вимкнено на беку.",
   "login.email_title": "Вхід у Pennedly",

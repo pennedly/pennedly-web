@@ -36,15 +36,8 @@ export const it: Partial<Record<MessageKey, string>> = {
   // ── Login ──────────────────────────────────────────────────────
   "login.email_label": "email",
   "login.email_placeholder": "tu@example.com",
-  "login.submit": "invia link di accesso",
   "login.sending": "invio…",
-  "login.no_password":
-    "Ti invieremo un link monouso via email. Nessuna password.",
   "login.signing_in": "Accesso in corso…",
-  "login.sent_title": "Controlla la posta",
-  "login.sent_to": "Abbiamo inviato un link di accesso a",
-  "login.sent_validity":
-    "Il link è valido 15 minuti e si usa una volta sola.",
   "login.use_different_email": "usa un'altra email",
   "login.link_invalid":
     "Questo link non è più valido. Richiedine uno nuovo qui sotto.",
@@ -210,12 +203,6 @@ export const it: Partial<Record<MessageKey, string>> = {
 
   // ── Login (resto) ──────────────────────────────────────────────
   "login.submit_code": "inviami un codice",
-  "login.method_code": "meglio un codice via email",
-  "login.method_link": "meglio un link via email",
-  "login.tab_code": "Codice via email",
-  "login.tab_link": "Link magico",
-  "login.no_password_code":
-    "Ti invieremo un codice monouso via email. Nessuna password.",
   "login.google_button": "Continua con Google",
   "login.or": "o",
   "login.google_error": "Accesso con Google non riuscito. Riprova.",
@@ -224,10 +211,7 @@ export const it: Partial<Record<MessageKey, string>> = {
   "login.consent_and": "e l'",
   "login.consent_privacy": "Informativa sulla privacy",
   "login.code_sent_to": "Inserisci il codice inviato a",
-  "login.code_label": "Codice dall'email",
-  "login.code_placeholder": "123456",
   "login.verify": "accedi",
-  "login.verifying": "verifico…",
   "login.code_invalid": "Codice non valido o scaduto — richiedine uno nuovo.",
   "login.dev_disabled": "l'accesso dev è disattivato sul backend.",
   "login.email_title": "Accedi a Pennedly",

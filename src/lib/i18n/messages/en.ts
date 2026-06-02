@@ -41,15 +41,8 @@ export const en = {
   // ── Login ──────────────────────────────────────────────────────
   "login.email_label": "email",
   "login.email_placeholder": "you@example.com",
-  "login.submit": "send sign-in link",
   "login.submit_code": "email me a code",
   "login.sending": "sending…",
-  "login.method_code": "email me a code instead",
-  "login.method_link": "email me a link instead",
-  "login.tab_code": "Email code",
-  "login.tab_link": "Magic link",
-  "login.no_password_code":
-    "We'll email you a one-time code. No password needed.",
   "login.google_button": "Continue with Google",
   "login.or": "or",
   "login.google_error": "Couldn't sign in with Google. Try again.",
@@ -58,17 +51,9 @@ export const en = {
   "login.consent_and": "and",
   "login.consent_privacy": "Privacy Policy",
   "login.code_sent_to": "Enter the code we sent to",
-  "login.code_label": "Code from the email",
-  "login.code_placeholder": "123456",
   "login.verify": "sign in",
-  "login.verifying": "verifying…",
   "login.code_invalid": "That code is invalid or expired — request a new one.",
-  "login.no_password": "We'll email you a one-time link. No password needed.",
   "login.signing_in": "Signing you in…",
-  "login.sent_title": "Check your inbox",
-  "login.sent_to": "We sent a sign-in link to",
-  "login.sent_validity":
-    "The link is valid for 15 minutes and can only be used once.",
   "login.use_different_email": "use a different email",
   "login.link_invalid":
     "This sign-in link is no longer valid. Request a new one below.",
