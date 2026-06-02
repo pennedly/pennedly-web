@@ -12,7 +12,7 @@ _Быстрые общие правки. Без них перенос экран
 - [ ] **Q43** — гигиена CSS эталона одним проходом (`.btn--lg` единый 46/22, `dialog-in` только transform, `shimmer` в слой DS, удалить мёртвые `.topbar-pill`, развести коллизии `.acct-*`). ⚠️ **до** переноса любого экрана.
 - [ ] **Q17 (+Q36)** — навигация: группы Workspace / Insight / Voice & automation; Autopilot → в Voice & automation; **Explore сделать видимым**; убрать дубль Log out из Settings; SPEC §6. _Цена: `nav.group.*` во всех 8 локалях._
 - [ ] **Q73** — локализовать `ErrorBanner` + зашитые строки `shell-parts.jsx` (alt аватара, «Connect another / Settings / Log out»).
-- [ ] **Позиционирование (Q1/Q2/Q4/Q72)** — meta-тег сайта (убрать «Threads on autopilot») + свой OG для landing; landing-лозунг «not an autopilot» → «ты главный / сначала одобрение»; честная рамка из Terms как канон; SPEC §1 датированная оговорка про Autopilot. **Имя «Autopilot» внутри приложения оставляем.**
+- [x] **Позиционирование (Q1/Q2/Q4/Q72)** — ✅ ГОТОВО. Landing: своя `metadata` + OG-карточка (`opengraph-image.tsx`), client-вьюха за server-обёрткой, `metadataBase=app.pennedly.com` (web `fa12535`). Onboarding: trust-копия смягчена с абсолютов (`never/ever`) на «by default» во всех 8 локалях (web `d61953f`). SPEC: §6.1 landing+opengraph (backend `4228a02`), §1 датированная оговорка Q72 + §13-строка + bump (backend `7b66aab`). Глобальный meta почищен ранее (cf4a8cc). **Имя «Autopilot» оставлено — тихая опция.**
 - [ ] **Q74** — сверка карты страниц SPEC §6.1/§7.5 (patterns→самоанализ + /explore; login = 6-значный код; voice-UI есть; новые названия экранов).
 
 ## Фаза 1 — Бэкенд (данные и эндпоинты под экраны) · репо `pennedly-backend`
