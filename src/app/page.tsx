@@ -30,7 +30,7 @@ const CONTACT_EMAIL = "hello@pennedly.com";
 
 const FEATURES: { Ico: (p: IconProps) => ReactNode; title: string; desc: string }[] = [
   { Ico: IcVoice, title: "Drafts in your voice", desc: "It studies how you write, so drafts sound like you — never generic." },
-  { Ico: IcCheck, title: "You approve every word", desc: "Read, tweak, and publish on your terms. Nothing posts on its own." },
+  { Ico: IcCheck, title: "You approve every word", desc: "Read, tweak, and publish on your terms. You keep the final say." },
   { Ico: IcUsers, title: "Every account, one place", desc: "Switch between the handles you run without losing the thread." },
   { Ico: IcChart, title: "See what's landing", desc: "Quiet analytics that show which posts earned their place." },
 ];
@@ -161,10 +161,10 @@ export default function Landing() {
                 Pennedly drafts posts and replies in your voice, then waits for you.
               </p>
               <p className="mt-3 text-body leading-relaxed text-text-muted">
-                Nothing publishes until you approve it. Manage every account from one place, see
-                what&apos;s landing, and keep your tone consistent across all of it.{" "}
+                By default, nothing publishes until you approve it. Manage every account from one
+                place, see what&apos;s landing, and keep your tone consistent across all of it.{" "}
                 <span className="font-medium text-accent">
-                  A partner that does the legwork — not an autopilot. You stay in control.
+                  A partner that does the legwork — you keep the final say.
                 </span>
               </p>
             </div>

@@ -16,7 +16,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Pennedly",
-  description: "Your voice. Your topics. Threads, on autopilot.",
+  description:
+    "Your drafting partner for Threads — write in your own voice, and you keep the final say.",
 };
 
 export default function RootLayout({
