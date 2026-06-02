@@ -884,8 +884,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "onboarding.connect_hero_title": "Твой партнёр по черновикам — за минуту.",
   "onboarding.connect_hero_sub":
     "Pennedly пишет посты и ответы, которые звучат как ты — и ждёт твоего ОК. Для начала подключи аккаунт Threads, для которого он будет писать.",
-  "onboarding.trust1": "Сначала только чтение — без твоего одобрения ничего не постится.",
-  "onboarding.trust2": "Ты проверяешь каждый черновик до публикации.",
+  "onboarding.trust1": "Сначала только чтение — Pennedly изучает твои посты, чтобы освоить твой голос.",
+  "onboarding.trust2": "По умолчанию ничего не постится, пока ты не одобришь — всё под твоим контролем.",
   "onboarding.trust3": "Отключить можно в любой момент — данные уходят с тобой.",
   "onboarding.choose_eyebrow": "Шаг 2 из 3 · Твой голос",
   "onboarding.choose_title": "Как Pennedly выучит твой голос?",
@@ -910,9 +910,9 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "onboarding.done_title_set": "Всё готово.",
   "onboarding.done_title_skip": "Пока можно начинать.",
   "onboarding.done_sub_set":
-    "Pennedly готов писать в твоём голосе. Помни — ничего не публикуется без твоего одобрения.",
+    "Pennedly готов писать в твоём голосе. По умолчанию ничего не публикуется, пока ты не одобришь.",
   "onboarding.done_sub_skip":
-    "Настроить голос можно в любой момент в Настройках. Ничего не публикуется без твоего одобрения.",
+    "Настроить голос можно в любой момент в Настройках. По умолчанию ничего не публикуется, пока ты не одобришь.",
   "onboarding.recap_voice": "Твой голос",
   "onboarding.voice_analyzed": "Получен из твоих постов",
   "onboarding.voice_scratch": "Создан из твоего описания",

@@ -802,8 +802,9 @@ export const fr: Partial<Record<MessageKey, string>> = {
   "onboarding.connect_hero_sub":
     "Pennedly écrit des posts et des réponses qui te ressemblent — puis attend ton feu vert. Pour commencer, connecte le compte Threads pour lequel il doit écrire.",
   "onboarding.trust1":
-    "En lecture seule au début — il ne publie jamais sans ton accord.",
-  "onboarding.trust2": "Tu vérifies chaque brouillon avant que quoi que ce soit ne sorte.",
+    "En lecture seule au début — Pennedly étudie tes posts pour apprendre ta voix.",
+  "onboarding.trust2":
+    "Par défaut, rien n'est publié tant que tu ne l'approuves pas — tu gardes le contrôle.",
   "onboarding.trust3": "Déconnecte quand tu veux — tes données partent avec toi.",
   "onboarding.choose_eyebrow": "Étape 2 sur 3 · Ta voix",
   "onboarding.choose_title": "Comment Pennedly doit-il apprendre ta voix ?",
@@ -828,9 +829,9 @@ export const fr: Partial<Record<MessageKey, string>> = {
   "onboarding.done_title_set": "Tout est prêt.",
   "onboarding.done_title_skip": "C'est bon pour l'instant.",
   "onboarding.done_sub_set":
-    "Pennedly est prêt à rédiger dans ta voix. Rappelle-toi — rien n'est publié tant que tu ne l'approuves pas.",
+    "Pennedly est prêt à rédiger dans ta voix. Par défaut, rien n'est publié tant que tu ne l'approuves pas.",
   "onboarding.done_sub_skip":
-    "Tu peux configurer ta voix quand tu veux depuis les Réglages. Rien n'est jamais publié tant que tu ne l'approuves pas.",
+    "Tu peux configurer ta voix quand tu veux depuis les Réglages. Par défaut, rien n'est publié tant que tu ne l'approuves pas.",
   "onboarding.recap_voice": "Ta voix",
   "onboarding.voice_analyzed": "Analysée de tes posts",
   "onboarding.voice_scratch": "Construite depuis ta description",

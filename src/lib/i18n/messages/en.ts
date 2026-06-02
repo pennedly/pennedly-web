@@ -878,8 +878,8 @@ export const en = {
   "onboarding.connect_hero_title": "Your drafting partner, ready in a minute.",
   "onboarding.connect_hero_sub":
     "Pennedly writes posts and replies that sound like you — then waits for your okay. To start, connect the Threads account you want it to write for.",
-  "onboarding.trust1": "Read-only to start — it never posts without your approval.",
-  "onboarding.trust2": "You review every draft before anything goes live.",
+  "onboarding.trust1": "Read-only to start — Pennedly studies your posts to learn your voice.",
+  "onboarding.trust2": "By default, nothing posts until you approve it — you stay in control.",
   "onboarding.trust3": "Disconnect anytime — your data leaves with you.",
   "onboarding.choose_eyebrow": "Step 2 of 3 · Your voice",
   "onboarding.choose_title": "How should Pennedly learn your voice?",
@@ -904,9 +904,9 @@ export const en = {
   "onboarding.done_title_set": "You're all set.",
   "onboarding.done_title_skip": "You're good to go for now.",
   "onboarding.done_sub_set":
-    "Pennedly is ready to draft in your voice. Remember — nothing is published until you approve it.",
+    "Pennedly is ready to draft in your voice. By default, nothing is published until you approve it.",
   "onboarding.done_sub_skip":
-    "You can set up your voice anytime from Settings. Nothing is ever published until you approve it.",
+    "You can set up your voice anytime from Settings. By default, nothing is published until you approve it.",
   "onboarding.recap_voice": "Your voice",
   "onboarding.voice_analyzed": "Analysed from your posts",
   "onboarding.voice_scratch": "Built from your description",
