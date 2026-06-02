@@ -14,10 +14,27 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const DESCRIPTION =
+  "Your drafting partner for Threads — write in your own voice, and you keep the final say.";
+
 export const metadata: Metadata = {
+  // Resolves relative URLs (incl. the opengraph-image card) to absolute ones.
+  // The landing lives at the root of app.pennedly.com (Q20).
+  metadataBase: new URL("https://app.pennedly.com"),
   title: "Pennedly",
-  description:
-    "Your drafting partner for Threads — write in your own voice, and you keep the final say.",
+  description: DESCRIPTION,
+  openGraph: {
+    type: "website",
+    siteName: "Pennedly",
+    locale: "en_US",
+    title: "Pennedly",
+    description: DESCRIPTION,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Pennedly",
+    description: DESCRIPTION,
+  },
 };
 
 export default function RootLayout({
