@@ -40,10 +40,11 @@ const RUN_STEPS: MessageKey[] = [
   "patterns.step_test",
   "patterns.step_rank",
 ];
+// Q55: Topics is deferred (no topic clustering yet) — drop the "Topics" chip
+// so the idle screen never advertises a pattern the engine can't produce.
 const LOOKS_FOR: MessageKey[] = [
   "patterns.looks_hooks",
   "patterns.looks_length",
-  "patterns.looks_topics",
   "patterns.looks_timing",
   "patterns.looks_format",
   "patterns.looks_questions",
@@ -366,6 +367,9 @@ function PatternCard({
   const strengthKey: MessageKey =
     p.strength === "strong" ? "patterns.strength_strong" : "patterns.strength_worth";
   const max = Math.max(1, p.lead.value, p.base.value);
+  // Q42: anchor on the "screenshottable" ratio (×N), with the honest +% beside
+  // it. Both are pure functions of delta_pct — no new backend field.
+  const mult = (1 + p.delta_pct / 100).toFixed(1);
 
   return (
     <article className="space-y-4 rounded-lg border border-border bg-surface p-5 shadow-sm">
@@ -391,8 +395,13 @@ function PatternCard({
       </div>
 
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <span className="text-h1 font-semibold tracking-tight tabular-nums text-accent">
-          +{p.delta_pct}%
+        <span className="inline-flex items-baseline gap-1.5">
+          <span className="text-h1 font-semibold tracking-tight tabular-nums text-accent">
+            {mult}×
+          </span>
+          <span className="text-caption font-semibold tabular-nums text-text-subtle">
+            +{p.delta_pct}%
+          </span>
         </span>
         <span className="text-body text-text-muted">
           {fill(t("patterns.headline"), { lead: leadLabel, base: baseLabel })}
