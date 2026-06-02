@@ -96,6 +96,8 @@ export const en = {
   "dashboard.nav.voice": "voice",
   "dashboard.nav.audits": "audits",
   "dashboard.nav.logout": "logout",
+  "dashboard.voice_active": "Voice active",
+  "dashboard.voice_not_set": "Voice not set up",
   "dashboard.voice_setup_title": "Set up your voice first",
   "dashboard.voice_setup_body":
     "Pennedly drafts in your voice — set it up so we know how you write before generating posts.",
@@ -141,6 +143,9 @@ export const en = {
   "dashboard.draft.tweak": "tweak",
   "dashboard.draft.published": "published",
   "dashboard.draft.open_threads": "open in Threads ↗",
+  "dashboard.draft.replying_to": "replying to",
+  "dashboard.draft.reply_managed": "Reply draft · managed in Replies",
+  "dashboard.draft.open_replies": "Open Replies",
   "dashboard.tab.pending": "drafts",
   "dashboard.tab.approved": "ready to publish",
   "dashboard.tab.published": "published",

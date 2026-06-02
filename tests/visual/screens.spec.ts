@@ -89,6 +89,25 @@ const DRAFTS = [
     published: false,
     threads_url: null,
   },
+  // Q62: a reply draft — Studio shows it read-only (context + text + link out).
+  {
+    id: 144,
+    account_id: 1,
+    content_type: "comment_reply",
+    status: "pending",
+    generated_text:
+      "Start before you feel ready. I open a doc and write the worst possible first line on purpose — it kills the pressure, and the real sentence usually shows up by line three.",
+    llm_model: "claude",
+    topic_label: null,
+    is_skip: false,
+    created_at: "2026-06-01T09:20:00Z",
+    published: false,
+    threads_url: null,
+    reply_to: {
+      who: "devon",
+      text: "honestly how do you even start writing when your brain is completely blank",
+    },
+  },
 ];
 
 const FEED = {

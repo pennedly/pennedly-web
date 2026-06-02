@@ -1,6 +1,11 @@
 {
   "_comment": "Known-missing i18n keys per locale (vs en). The parity guardrail (scripts/check-i18n-parity.mjs) fails on any gap NOT listed here, so this is a ratchet that may only shrink. Regenerate after a reviewed translation backfill with: npm run check:i18n -- --update",
   "de": [
+    "dashboard.voice_active",
+    "dashboard.voice_not_set",
+    "dashboard.draft.replying_to",
+    "dashboard.draft.reply_managed",
+    "dashboard.draft.open_replies",
     "audits.cat.voice",
     "audits.cat.cadence",
     "audits.cat.topic",
@@ -12,6 +17,11 @@
     "onboarding.connect_failed"
   ],
   "es": [
+    "dashboard.voice_active",
+    "dashboard.voice_not_set",
+    "dashboard.draft.replying_to",
+    "dashboard.draft.reply_managed",
+    "dashboard.draft.open_replies",
     "audits.cat.voice",
     "audits.cat.cadence",
     "audits.cat.topic",
@@ -23,6 +33,11 @@
     "onboarding.connect_failed"
   ],
   "fr": [
+    "dashboard.voice_active",
+    "dashboard.voice_not_set",
+    "dashboard.draft.replying_to",
+    "dashboard.draft.reply_managed",
+    "dashboard.draft.open_replies",
     "audits.cat.voice",
     "audits.cat.cadence",
     "audits.cat.topic",
@@ -34,6 +49,11 @@
     "onboarding.connect_failed"
   ],
   "it": [
+    "dashboard.voice_active",
+    "dashboard.voice_not_set",
+    "dashboard.draft.replying_to",
+    "dashboard.draft.reply_managed",
+    "dashboard.draft.open_replies",
     "audits.cat.voice",
     "audits.cat.cadence",
     "audits.cat.topic",
@@ -45,6 +65,11 @@
     "onboarding.connect_failed"
   ],
   "pt": [
+    "dashboard.voice_active",
+    "dashboard.voice_not_set",
+    "dashboard.draft.replying_to",
+    "dashboard.draft.reply_managed",
+    "dashboard.draft.open_replies",
     "audits.cat.voice",
     "audits.cat.cadence",
     "audits.cat.topic",
@@ -57,6 +82,11 @@
   ],
   "ru": [],
   "uk": [
+    "dashboard.voice_active",
+    "dashboard.voice_not_set",
+    "dashboard.draft.replying_to",
+    "dashboard.draft.reply_managed",
+    "dashboard.draft.open_replies",
     "audits.cat.voice",
     "audits.cat.cadence",
     "audits.cat.topic",

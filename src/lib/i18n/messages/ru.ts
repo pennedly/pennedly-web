@@ -97,6 +97,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "dashboard.nav.voice": "голос",
   "dashboard.nav.audits": "аудиты",
   "dashboard.nav.logout": "выйти",
+  "dashboard.voice_active": "Голос активен",
+  "dashboard.voice_not_set": "Голос не настроен",
   "dashboard.voice_setup_title": "Сначала настройте голос",
   "dashboard.voice_setup_body":
     "Pennedly пишет в вашем голосе — настройте его, чтобы мы знали вашу манеру, прежде чем генерировать посты.",
@@ -142,6 +144,9 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "dashboard.draft.tweak": "доработать",
   "dashboard.draft.published": "опубликовано",
   "dashboard.draft.open_threads": "открыть в Threads ↗",
+  "dashboard.draft.replying_to": "ответ на",
+  "dashboard.draft.reply_managed": "Черновик ответа · управление в Ответах",
+  "dashboard.draft.open_replies": "Открыть Ответы",
   "dashboard.tab.pending": "черновики",
   "dashboard.tab.approved": "готово к публикации",
   "dashboard.tab.published": "опубликовано",

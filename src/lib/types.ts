@@ -192,6 +192,10 @@ export type DraftSummary = {
   // row behind it. Lets the dashboard hide "Publish" + link out instead.
   published: boolean;
   threads_url: string | null;
+  // Q62: for a reply draft (content_type === "comment_reply"), the comment it
+  // answers — who wrote it + their text. null for posts. Studio renders these
+  // read-only (generation/approval happen on /app/replies).
+  reply_to: { who: string | null; text: string } | null;
 };
 
 export type DraftsList = {

@@ -53,7 +53,7 @@ _На КАЖДОМ экране — общие паттерны: общий shel
 | # | Экран | Статус | Осталось (по аудиту) |
 |---|-------|--------|----------------------|
 | 1 | **Explore** | ✅ done | — совпадает с эталоном, shell+i18n есть |
-| 2 | **Studio** | 🟡 M | Q25 ⋯-overflow · Q62 reply-черновики (read-only) · Q14 topbar voice-pill · Q24 optimistic+Undo. (Q9 chips ✅) |
+| 2 | **Studio** | 🟡 M | Q62 reply-черновики read-only (контекст @who + текст + «Open Replies») ✅ · Q14 topbar voice-pill (`voiceReady`) ✅. Осталось: Q25 ⋯-overflow · Q24 optimistic+Undo (кросс-экранный паттерн Studio/Replies/Autopilot/Style). (Q9 chips ✅) |
 | 3 | **Feed** | 🟡 M | Q26 шапка автора · Q13 сорт Recent/Top · Q65 числовая дельта % · Q37 «On par»+warm empty/Studio-CTA. (Q64 `avg_reposts` ✅) |
 | 4 | **Replies** | 🔴 L | **Q18 master-detail (переписать, убрать PostRail)** · Q3 `auto_replied`(+тип, бейдж) · Q10 перевод ответа · Q77 бакеты. (Q37 empty ✅) |
 | 5 | **Mentions** | 🟡 S | Q22 ErrorBanner+Retry · «Updated hourly» pill · убрать мёртвый `new`-акцент. (Q15/Q57 ✅) |

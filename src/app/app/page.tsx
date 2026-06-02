@@ -31,12 +31,12 @@ import Link from "next/link";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { PublishConfirmModal } from "@/components/PublishConfirmModal";
 import { TranslateButton } from "@/components/TranslateButton";
-import { AppTopbar } from "@/components/AppTopbar";
+import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Mono } from "@/components/ui/mono";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { Toast, ToastHost } from "@/components/ui/toast";
-import { IcCheck, IcChevDown, IcExternal, IcNib, IcPencil, IcSend, IcSparkle, IcStudio, IcTrash, IcTweak, IcX } from "@/components/icons";
+import { IcArrowRight, IcCheck, IcChevDown, IcExternal, IcNib, IcPencil, IcReply, IcSend, IcSparkle, IcStudio, IcTrash, IcTweak, IcX } from "@/components/icons";
 import { SkeletonText } from "@/components/ui/feedback";
 import { cn } from "@/lib/cn";
 import type { DraftSummary, Me } from "@/lib/types";
@@ -139,6 +139,9 @@ export default function Dashboard() {
   // the wizard we show a gentle "set up your voice" prompt where the generate
   // panel would be (generation needs a role_book, so we don't offer it yet).
   const [needsVoiceSetup, setNeedsVoiceSetup] = useState(false);
+  // Q14: voice-state pill in the topbar. null = still loading (no pill yet);
+  // true = "Voice active"; false = "Voice not set up" (= needs_onboarding).
+  const [voiceReady, setVoiceReady] = useState<boolean | null>(null);
 
   function toast(message: string, tone: Toast["tone"] = "success") {
     const id = Date.now() + Math.random();
@@ -212,6 +215,7 @@ export default function Dashboard() {
         // UNLESS the user explicitly skipped voice setup for this account
         // (then we show a "set up your voice" prompt instead of looping).
         const ob = await fetchOnboardingStatus(accountId);
+        setVoiceReady(!ob.needs_onboarding); // Q14
         if (ob.needs_onboarding) {
           if (!isOnboardingSkipped(accountId)) {
             router.replace("/app/onboarding");
@@ -487,7 +491,17 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-bg text-text">
-      <AppTopbar maxW="900px" title={t("nav.studio")} />
+      <AppTopbar
+        maxW="900px"
+        title={t("nav.studio")}
+        pill={
+          voiceReady === null ? undefined : (
+            <TopbarPill tone={voiceReady ? "success" : "warning"}>
+              {voiceReady ? t("dashboard.voice_active") : t("dashboard.voice_not_set")}
+            </TopbarPill>
+          )
+        }
+      />
       <main className="mx-auto max-w-[900px] space-y-5 px-5 py-7 md:px-6">
         {needsVoiceSetup ? (
           /* Account connected, but the user skipped voice setup. Generation
@@ -663,6 +677,8 @@ export default function Dashboard() {
               const isEdited =
                 localEdit !== undefined &&
                 localEdit.trim() !== d.generated_text.trim();
+              // Q62: reply drafts are read-only here (managed on /app/replies).
+              const isReply = d.content_type === "comment_reply";
               return (
                 <li
                   key={d.id}
@@ -683,6 +699,15 @@ export default function Dashboard() {
                             <span>·</span>
                           </>
                         )}
+                        {isReply && d.reply_to?.who && (
+                          <>
+                            <span className="inline-flex items-center gap-1 whitespace-nowrap text-accent">
+                              <IcReply size={11} />
+                              {t("dashboard.draft.replying_to")} @{d.reply_to.who}
+                            </span>
+                            <span>·</span>
+                          </>
+                        )}
                         <span className="whitespace-nowrap">
                           {relativeTime(d.created_at, locale)}
                         </span>
@@ -690,6 +715,45 @@ export default function Dashboard() {
                     </div>
                     <StatusBadge status={d.published ? "published" : d.status} />
                   </div>
+
+                  {isReply ? (
+                    /* Q62: reply drafts are read-only in Studio — they're
+                       generated and approved on /app/replies. Show the comment
+                       being answered + the draft text, and link out to act. */
+                    <>
+                      {d.reply_to?.text && (
+                        <div className="mt-3 flex gap-2.5 rounded-md border border-border bg-surface-2 p-3">
+                          <span className="w-0.5 shrink-0 self-stretch rounded bg-border" />
+                          <div className="min-w-0">
+                            {d.reply_to.who && (
+                              <div className="mb-0.5 text-caption font-semibold text-text-muted">
+                                @{d.reply_to.who}
+                              </div>
+                            )}
+                            <div className="text-small leading-relaxed text-text-muted">
+                              {d.reply_to.text}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      <p className="mt-3 whitespace-pre-wrap text-body leading-relaxed text-text">
+                        {d.generated_text}
+                      </p>
+                      <div className="mt-3.5 flex items-center justify-between gap-2 border-t border-border pt-3">
+                        <span className="text-caption text-text-subtle">
+                          {t("dashboard.draft.reply_managed")}
+                        </span>
+                        <Link
+                          href="/app/replies"
+                          className="inline-flex items-center gap-1 text-small font-medium text-accent hover:underline"
+                        >
+                          {t("dashboard.draft.open_replies")}
+                          <IcArrowRight size={14} />
+                        </Link>
+                      </div>
+                    </>
+                  ) : (
+                  <>
 
                   {/* body: revising · editing · clean text */}
                   {refiningId === d.id ? (
@@ -947,6 +1011,8 @@ export default function Dashboard() {
                         )}
                       </div>
                     </div>
+                  )}
+                  </>
                   )}
                 </li>
               );
