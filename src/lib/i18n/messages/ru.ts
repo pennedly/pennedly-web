@@ -740,6 +740,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "onboarding.analyze_cta": "Разобрать мои посты",
   "onboarding.analyze_count": "постов готово к разбору",
   "onboarding.analyze_none": "Постов пока нет — начни с нуля.",
+  "onboarding.analyze_locked": "Нужно {need} постов для разбора — у тебя {have}",
   "onboarding.analyzing": "Разбираю твои посты…",
   "onboarding.scratch_title": "Создать с нуля",
   "onboarding.scratch_body":

@@ -80,6 +80,7 @@ export type OnboardingStatus = {
   has_role_book: boolean;
   post_count: number;
   can_analyze: boolean;
+  min_posts_to_analyze: number; // Q53 — the post_count gate `can_analyze` checks
 };
 
 export type FromScratchInput = {
@@ -338,6 +339,7 @@ export type FeedReference = {
   avg_views: number;
   avg_likes: number;
   avg_comments: number;
+  avg_reposts: number; // Q64
   median_views: number;
 };
 

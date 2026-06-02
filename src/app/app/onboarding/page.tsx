@@ -437,7 +437,13 @@ function ChooseStep({
       Icon: IcScan,
       title: "onboarding.mode_analyze_title",
       desc: "onboarding.mode_analyze_desc",
-      meta: canAnalyze ? `${status?.post_count ?? 0} ${t("onboarding.analyze_count")}` : t("onboarding.analyze_none"),
+      meta: canAnalyze
+        ? `${status?.post_count ?? 0} ${t("onboarding.analyze_count")}`
+        : (status?.post_count ?? 0) > 0
+          ? t("onboarding.analyze_locked")
+              .replace("{need}", String(status?.min_posts_to_analyze ?? 15))
+              .replace("{have}", String(status?.post_count ?? 0))
+          : t("onboarding.analyze_none"),
       recommended: canAnalyze,
       disabled: !canAnalyze,
     },

@@ -190,6 +190,7 @@ export default function FeedPage() {
         { Icon: IcEye, val: reference.avg_views },
         { Icon: IcHeart, val: reference.avg_likes },
         { Icon: IcBubble, val: reference.avg_comments },
+        { Icon: IcRepost, val: reference.avg_reposts },
       ]
     : [];
 

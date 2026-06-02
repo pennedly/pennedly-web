@@ -734,6 +734,7 @@ export const en = {
   "onboarding.analyze_cta": "Analyze my posts",
   "onboarding.analyze_count": "posts ready to analyze",
   "onboarding.analyze_none": "No posts yet — build from scratch instead.",
+  "onboarding.analyze_locked": "Need {need} posts to analyze — you have {have}",
   "onboarding.analyzing": "Analyzing your posts…",
   "onboarding.scratch_title": "Build from scratch",
   "onboarding.scratch_body":
