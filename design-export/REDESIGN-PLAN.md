@@ -46,7 +46,7 @@ _Гейты: `uv run pytest` + `uv run ruff check`. SPEC §6/§7/§13/§14 — �
 ## Фаза 2 — Перенос экранов (по одному, по ритму) · репо `pennedly-web`
 _На КАЖДОМ экране — общие паттерны: общий shell · аватары (Q26/Q38/Q57) · перевод в ⋯-меню (Q21/Q10) · loading/empty/error (Q22/Q23) · оптимистичность + Undo (Q24/Q25) · абсолютное локальное время (Q40) · status-pills (Q41/Q14)._
 
-> **📋 АУДИТ 2026-06-02 (4 агента, все 16 экранов).** Ключевой вывод: **общий shell + design-system уже стоят на всех экранах** — осталась не верстка с нуля, а **поведение + подключение полей бэка** (Фаза 1 уже их отдаёт, фронт их ещё не читает). **Готово 4/16** (Explore, Landing, Legal, Audits). Подключённые поля: `avg_reposts`(Q64✅) · `min_posts_to_analyze`(Q53✅) · `category`+`old_text/new_text`(Q51/Q75✅) · `SelfStudyExample.metric`(Q56✅) · `GET /study/latest`(Q54✅). Осталось подтянуть: `auto_replied`(Q3, Replies) · `posts_analyzed`(Q67, Voice) · **`RoleBookSections` flat→typed objects(Q60, Voice — полный редактор)**.
+> **📋 АУДИТ 2026-06-02 (4 агента, все 16 экранов).** Ключевой вывод: **общий shell + design-system уже стоят на всех экранах** — осталась не верстка с нуля, а **поведение + подключение полей бэка** (Фаза 1 уже их отдаёт, фронт их ещё не читает). **Готово 5/16** (Explore, Landing, Legal, Audits, Patterns). Подключённые поля: `avg_reposts`(Q64✅) · `min_posts_to_analyze`(Q53✅) · `category`+`old_text/new_text`(Q51/Q75✅) · `SelfStudyExample.metric`(Q56✅) · `GET /study/latest`(Q54✅) · Patterns ×N+Topics-chip(Q42/Q55✅). Осталось подтянуть: `auto_replied`(Q3, Replies) · `posts_analyzed`(Q67, Voice) · **`RoleBookSections` flat→typed objects(Q60, Voice — полный редактор)**.
 >
 > **✅ Q60-регрессия закрыта (интерим):** живой `/app/role-book` снова работает — `flattenSections` коэрсит объекты бэка обратно в строки на чтении (`eb05773`). Полный типизированный редактор (ids, перевод по пунктам, контекст примеров, hero) — оставшаяся задача Voice.
 
@@ -59,7 +59,7 @@ _На КАЖДОМ экране — общие паттерны: общий shel
 | 5 | **Mentions** | 🟡 S | Q22 ErrorBanner+Retry · «Updated hourly» pill · убрать мёртвый `new`-акцент. (Q15/Q57 ✅) |
 | 6 | **Stats** | 🔴 L | Q19 6 периодов (сейчас weeks 4/8/12) · Q39 chart avg-line+above/below · Q12 убрать «posts/week» chart · Q80 «Updated hourly» pill. (Q47 тиры ✅) |
 | 7 | **Audits** | ✅ done | Q51 diff (old_text/new_text, без JSON-dump) ✅ · Q75 `category` badge (fallback на kind) ✅. (Q48/Q27/Q78/Q7 ✅) |
-| 8 | **Patterns** | 🟡 S | Q42 «×N»-множитель · убрать Topics-chip. (Q54 грузит `/study/latest` ✅ · Q56 метрика примера ✅ · Q55/Q45/Q82 ✅) |
+| 8 | **Patterns** | ✅ done | Q42 «×N»-множитель (`1+delta_pct/100`) + маленький «+%» ✅ · Topics-chip убран (Q55) ✅. (Q54 `/study/latest` ✅ · Q56 метрика примера ✅ · Q45/Q82 ✅) |
 | 9 | **Autopilot** | 🟡 S | Q6 иконка-часы (сейчас `IcBolt`) · Q66 cap 10/25/50 (сейчас 1/3/5/10/20). (Q5/Q50/Q59/Q34 ✅) |
 | 10 | **Voice/role-book** | 🔴 L | Q60 **интерим-фикс ✅** (`flattenSections` коэрсит объекты→строки — прод больше НЕ ломается). Остаётся полный типизированный редактор: Q60 (ids + правка объектов) · Q67 hero «Analyzed N posts · Updated» (`posts_analyzed`) · Q8 перевод по секциям · Q16 Post/Reply context · Q23 404→EmptyVoice |
 | 11 | **Style rules** | 🟡 M | Q29 порядок (Your rules ПЕРВЫМИ) · Q30 группы по категориям (не chip-фильтр) · Q44 live-демо пунктуации · Q49 i18n встроенных по `key` · Q81 toast по виду. (Q11 ✅) |
