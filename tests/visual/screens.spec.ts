@@ -361,15 +361,16 @@ const COMMENTS = {
 // Stats — 8 weekly buckets (the default 8-week range) + a current summary,
 // prior-span deltas and the viral-tier distribution. Drives the cards, the
 // two column charts and the distribution bars.
+// Day-buckets for the default 7d period (the chart colors bars above/below the
+// period average — Q39 — so the values straddle the mean on purpose).
 const STATS_WEEKS = [
-  { bucket_start: "2026-04-13", posts: 4, avg_views: 13400 },
-  { bucket_start: "2026-04-20", posts: 3, avg_views: 12100 },
-  { bucket_start: "2026-04-27", posts: 5, avg_views: 15600 },
-  { bucket_start: "2026-05-04", posts: 4, avg_views: 14800 },
-  { bucket_start: "2026-05-11", posts: 4, avg_views: 17300 },
-  { bucket_start: "2026-05-18", posts: 5, avg_views: 16200 },
-  { bucket_start: "2026-05-25", posts: 4, avg_views: 19800 },
-  { bucket_start: "2026-06-01", posts: 3, avg_views: 22400 },
+  { bucket_start: "2026-05-27", posts: 1, avg_views: 11000 },
+  { bucket_start: "2026-05-28", posts: 1, avg_views: 13500 },
+  { bucket_start: "2026-05-29", posts: 1, avg_views: 18200 },
+  { bucket_start: "2026-05-30", posts: 1, avg_views: 9800 },
+  { bucket_start: "2026-05-31", posts: 1, avg_views: 22400 },
+  { bucket_start: "2026-06-01", posts: 1, avg_views: 16800 },
+  { bucket_start: "2026-06-02", posts: 1, avg_views: 14200 },
 ];
 const STATS = {
   period: "8w",

@@ -12,8 +12,8 @@ import { useRouter } from "next/navigation";
 
 import { ApiError, clearTokens, fetchStats, getTokens } from "@/lib/api";
 import { useSelectedAccountId } from "@/lib/account";
-import { useLocale, useTranslation } from "@/lib/i18n";
-import { AppTopbar } from "@/components/AppTopbar";
+import { useLocale, useTranslation, type MessageKey } from "@/lib/i18n";
+import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
 import { Skeleton } from "@/components/ui/feedback";
 import { cn } from "@/lib/cn";
 import {
@@ -21,13 +21,24 @@ import {
   IcArrowUp,
   IcBubble,
   IcChart,
+  IcClock,
   IcEye,
   IcHeart,
   IcNib,
 } from "@/components/icons";
-import type { StatsBucket, StatsResponse } from "@/lib/types";
+import type { StatsBucket, StatsPeriod, StatsResponse } from "@/lib/types";
 
-const RANGES = [4, 8, 12] as const;
+// Q19: six backend periods instead of the 4/8/12-week ranges. Each carries its
+// trend-chart bucket granularity (today/yesterday show a per-POST breakdown).
+const PERIODS: { key: StatsPeriod; labelKey: MessageKey; gran: Gran }[] = [
+  { key: "today", labelKey: "stats.period.today", gran: "post" },
+  { key: "yesterday", labelKey: "stats.period.yesterday", gran: "post" },
+  { key: "7d", labelKey: "stats.period.7d", gran: "day" },
+  { key: "30d", labelKey: "stats.period.30d", gran: "week" },
+  { key: "90d", labelKey: "stats.period.90d", gran: "week" },
+  { key: "all", labelKey: "stats.period.all", gran: "month" },
+];
+type Gran = "post" | "day" | "week" | "month";
 
 // 22400 -> "22.4K", 1205 -> "1,205" (we keep <10k exact).
 function sfmt(n: number): string {
@@ -36,16 +47,15 @@ function sfmt(n: number): string {
   return Math.round(n).toLocaleString();
 }
 
-// % change, null when the base is non-positive (matches the backend's _pct).
-function pct(cur: number, prev: number): number | null {
-  if (prev <= 0) return null;
-  return Math.round(((cur - prev) / prev) * 100 * 10) / 10;
-}
-
-// A week-bucket's start date as a short "16 Mar" / "Mar 16" label.
-function weekLabel(iso: string, locale: string): string {
+// A bucket's label, by granularity: per-post snippet (today/yesterday), weekday
+// (day), "16 Mar" (week), month (month). Localized.
+function fmtBucket(b: StatsBucket, gran: Gran, locale: string): string {
+  if (gran === "post") return b.label ?? "";
   const loc = locale === "ru" ? "ru-RU" : locale === "en" ? "en-US" : locale;
-  return new Date(iso).toLocaleDateString(loc, { day: "numeric", month: "short" });
+  const d = new Date(b.bucket_start);
+  if (gran === "day") return d.toLocaleDateString(loc, { weekday: "short" });
+  if (gran === "week") return d.toLocaleDateString(loc, { day: "numeric", month: "short" });
+  return d.toLocaleDateString(loc, { month: "short" });
 }
 
 export default function StatsPage() {
@@ -53,7 +63,7 @@ export default function StatsPage() {
   const { t } = useTranslation();
   const locale = useLocale();
   const accountId = useSelectedAccountId();
-  const [range, setRange] = useState<(typeof RANGES)[number]>(8);
+  const [period, setPeriod] = useState<StatsPeriod>("7d");
   const [stats, setStats] = useState<StatsResponse | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [bootError, setBootError] = useState<string | null>(null);
@@ -67,7 +77,7 @@ export default function StatsPage() {
     setLoaded(false);
     (async () => {
       try {
-        setStats(await fetchStats(accountId, { weeks: range }));
+        setStats(await fetchStats(accountId, { period }));
       } catch (e) {
         if (e instanceof ApiError && e.status === 401) {
           clearTokens();
@@ -79,14 +89,13 @@ export default function StatsPage() {
         setLoaded(true);
       }
     })();
-  }, [accountId, range, router]);
+  }, [accountId, period, router]);
 
   const cur = stats?.current ?? null;
   const deltas = stats?.deltas ?? null;
   const series = stats?.series ?? [];
-  const last = series[series.length - 1];
-  const prev = series[series.length - 2];
-  const weeksUnit = t("stats.weeks_unit");
+  const activePeriod = PERIODS.find((p) => p.key === period) ?? PERIODS[2];
+  const periodLabel = t(activePeriod.labelKey);
 
   const cards = cur
     ? [
@@ -94,7 +103,7 @@ export default function StatsPage() {
           icon: <IcNib size={14} />,
           label: t("stats.card_posts"),
           num: sfmt(cur.posts),
-          sub: `${(cur.posts / range).toFixed(1)} ${t("stats.sub_per_week")}`,
+          sub: t("stats.sub_this_period"),
           delta: deltas?.posts_pct,
         },
         {
@@ -131,11 +140,18 @@ export default function StatsPage() {
     : [];
   const tierTotal = tierRows.reduce((a, r) => a + r.n, 0);
   const tierMax = Math.max(1, ...tierRows.map((r) => r.n));
-  const lastRange = `${t("stats.cap_last")} ${range} ${weeksUnit}`;
 
   return (
     <div className="min-h-screen bg-bg text-text">
-      <AppTopbar maxW="928px" title={t("stats.title")} />
+      <AppTopbar
+        maxW="928px"
+        title={t("stats.title")}
+        pill={
+          <TopbarPill icon={<IcClock size={13} className="text-text-subtle" />}>
+            {t("stats.updated_hourly")}
+          </TopbarPill>
+        }
+      />
       <main className="mx-auto max-w-[928px] space-y-4 px-5 py-7 md:px-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <p className="text-small text-text-muted">{t("stats.subtitle")}</p>
@@ -143,22 +159,22 @@ export default function StatsPage() {
             <div
               role="tablist"
               aria-label={t("stats.title")}
-              className="inline-flex shrink-0 gap-[3px] rounded-md border border-border bg-surface-2 p-[3px]"
+              className="flex max-w-full shrink-0 gap-[3px] overflow-x-auto rounded-md border border-border bg-surface-2 p-[3px]"
             >
-              {RANGES.map((r) => (
+              {PERIODS.map((p) => (
                 <button
-                  key={r}
+                  key={p.key}
                   role="tab"
-                  aria-selected={range === r}
-                  onClick={() => setRange(r)}
+                  aria-selected={period === p.key}
+                  onClick={() => setPeriod(p.key)}
                   className={cn(
-                    "h-8 rounded-sm border px-3.5 text-small font-medium whitespace-nowrap transition-colors",
-                    range === r
+                    "h-8 shrink-0 rounded-sm border px-3 text-small font-medium whitespace-nowrap transition-colors",
+                    period === p.key
                       ? "border-border bg-surface font-semibold text-text shadow-sm"
                       : "border-transparent text-text-muted hover:text-text",
                   )}
                 >
-                  {r} {weeksUnit}
+                  {t(p.labelKey)}
                 </button>
               ))}
             </div>
@@ -210,40 +226,21 @@ export default function StatsPage() {
               ))}
             </div>
 
-            {/* average views per week — hero panel */}
+            {/* Q12: one chart — average views per post, with a dashed period-
+                average line + above/below bar coloring (Q39). The posts/week
+                chart is gone; cadence lives in the cards' delta. */}
             <Panel
               title={t("stats.weekly_views_title")}
-              cap={`${t("stats.cap_avg_views")} · ${lastRange}`}
-              headlineNum={last ? sfmt(last.avg_views) : undefined}
-              headlineDelta={last && prev ? pct(last.avg_views, prev.avg_views) : null}
+              cap={periodLabel}
+              headlineNum={sfmt(cur.avg_views)}
+              headlineDelta={deltas?.views_pct ?? null}
               flat={t("stats.delta_flat")}
             >
-              <ColumnChart
-                series={series}
-                field="avg_views"
-                locale={locale}
-                fmtVal={sfmt}
-              />
+              <ColumnChart series={series} gran={activePeriod.gran} locale={locale} fmtVal={sfmt} />
             </Panel>
 
-            {/* posts per week + performance spread */}
-            <div className="grid gap-3.5 md:grid-cols-2">
-              <Panel
-                title={t("stats.weekly_posts_title")}
-                cap={`${t("stats.cap_cadence")} · ${lastRange}`}
-                headlineNum={last ? String(last.posts) : undefined}
-                headlineDelta={last && prev ? pct(last.posts, prev.posts) : null}
-                flat={t("stats.delta_flat")}
-              >
-                <ColumnChart
-                  series={series}
-                  field="posts"
-                  locale={locale}
-                  fmtVal={(n) => `${n} ${t("stats.posts_word")}`}
-                />
-              </Panel>
-
-              <Panel
+            {/* performance spread (full width) */}
+            <Panel
                 title={t("stats.spread_title")}
                 cap={`${cur.posts} ${t("stats.posts_word")} ${t("stats.spread_cap")}`}
               >
@@ -277,7 +274,6 @@ export default function StatsPage() {
                   })}
                 </div>
               </Panel>
-            </div>
           </>
         )}
       </main>
@@ -347,55 +343,69 @@ function Panel({
   );
 }
 
-// Weekly column chart — one bar per bucket, last bar accented.
+// Q39: average views per bucket — a dashed period-average line, bars colored
+// above (success) / below (neutral) that average, localized labels by gran.
 function ColumnChart({
   series,
-  field,
+  gran,
   locale,
   fmtVal,
 }: {
   series: StatsBucket[];
-  field: "avg_views" | "posts";
+  gran: Gran;
   locale: string;
   fmtVal: (n: number) => string;
 }) {
-  const vals = series.map((b) => b[field]);
+  const { t } = useTranslation();
+  const vals = series.map((b) => b.avg_views);
   const max = Math.max(1, ...vals);
+  const avg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+  const avgPct = (avg / max) * 100;
   return (
-    <div className="flex items-end gap-[7px]">
-      {series.map((b, i) => {
-        const v = b[field];
-        const last = i === series.length - 1;
-        return (
+    <div>
+      <div className="relative flex h-[140px] items-end gap-[7px]">
+        {vals.length > 0 && (
           <div
-            key={b.bucket_start}
-            className="flex min-w-0 flex-1 flex-col items-center gap-2"
-            title={`${weekLabel(b.bucket_start, locale)}: ${fmtVal(v)}`}
+            className="pointer-events-none absolute inset-x-0 z-[1] flex justify-end border-t border-dashed border-text-subtle/55"
+            style={{ bottom: `${avgPct}%` }}
           >
-            <div className="flex h-[132px] w-full items-end">
+            <span className="-translate-y-1/2 rounded-sm bg-bg px-1 text-caption tabular-nums text-text-subtle">
+              {t("stats.avg_line")} {fmtVal(avg)}
+            </span>
+          </div>
+        )}
+        {series.map((b, i) => {
+          const v = b.avg_views;
+          const above = v >= avg;
+          return (
+            <div
+              key={i}
+              className="flex h-full min-w-0 flex-1 items-end"
+              title={`${fmtBucket(b, gran, locale)}: ${fmtVal(v)}`}
+            >
               <div
                 className="w-full rounded-t-sm transition-[height]"
                 style={{
-                  height: `${Math.max(4, (v / max) * 100)}%`,
-                  // Opaque mix (not a low-alpha text colour) so the bar stays
-                  // visible on the dark card too — matches the design's .colbar.
-                  background: last
-                    ? "var(--color-accent)"
+                  height: `${Math.max(3, (v / max) * 100)}%`,
+                  background: above
+                    ? "var(--color-success)"
                     : "color-mix(in srgb, var(--color-text) 16%, var(--color-surface-2))",
                 }}
               />
             </div>
-            <span
-              className={cn(
-                "whitespace-nowrap text-[0.6875rem] tabular-nums text-text-subtle",
-                last && "font-semibold text-text-muted",
-              )}
-            >
-              {weekLabel(b.bucket_start, locale)}
-            </span>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
+      <div className="mt-2 flex gap-[7px]">
+        {series.map((b, i) => (
+          <span
+            key={i}
+            className="min-w-0 flex-1 truncate text-center text-[0.6875rem] tabular-nums text-text-subtle"
+          >
+            {fmtBucket(b, gran, locale)}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }

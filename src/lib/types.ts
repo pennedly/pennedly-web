@@ -144,6 +144,9 @@ export type StatsBucket = {
   posts: number;
   avg_views: number;
   sum_views: number;
+  // For the per-post today/yesterday series (Q58): a short post snippet to
+  // label each bar. null in the time-bucketed series.
+  label: string | null;
 };
 
 export type StatsResponse = {
