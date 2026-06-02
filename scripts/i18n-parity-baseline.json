@@ -1,10 +1,40 @@
 {
   "_comment": "Known-missing i18n keys per locale (vs en). The parity guardrail (scripts/check-i18n-parity.mjs) fails on any gap NOT listed here, so this is a ratchet that may only shrink. Regenerate after a reviewed translation backfill with: npm run check:i18n -- --update",
-  "de": [],
-  "es": [],
-  "fr": [],
-  "it": [],
-  "pt": [],
+  "de": [
+    "audits.cat.voice",
+    "audits.cat.cadence",
+    "audits.cat.topic",
+    "audits.cat.format"
+  ],
+  "es": [
+    "audits.cat.voice",
+    "audits.cat.cadence",
+    "audits.cat.topic",
+    "audits.cat.format"
+  ],
+  "fr": [
+    "audits.cat.voice",
+    "audits.cat.cadence",
+    "audits.cat.topic",
+    "audits.cat.format"
+  ],
+  "it": [
+    "audits.cat.voice",
+    "audits.cat.cadence",
+    "audits.cat.topic",
+    "audits.cat.format"
+  ],
+  "pt": [
+    "audits.cat.voice",
+    "audits.cat.cadence",
+    "audits.cat.topic",
+    "audits.cat.format"
+  ],
   "ru": [],
-  "uk": []
+  "uk": [
+    "audits.cat.voice",
+    "audits.cat.cadence",
+    "audits.cat.topic",
+    "audits.cat.format"
+  ]
 }

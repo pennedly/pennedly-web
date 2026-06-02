@@ -540,9 +540,13 @@ export type AuditsList = {
 export type ProposedChange = {
   id: string;
   kind: string; // 'role_book_edit' | 'post_prompt_edit' | 'autopilot_config' | ...
+  // Editorial display label from the coach (Q75): Voice / Cadence / Topic /
+  // Format. Falls back to `kind` when absent (pre-Q75 audits).
+  category?: string;
   title: string;
   detail?: string;
-  diff?: unknown;
+  // For prompt edits the diff is { type, where, old_text, new_text } (Q51).
+  diff?: { type?: string; where?: string; old_text?: string; new_text?: string } | null;
   // autopilot_config changes carry post_hours (UTC) instead of a diff.
   payload?: { post_hours?: number[] } | null;
   target_section?: string;

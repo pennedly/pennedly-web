@@ -52,6 +52,14 @@ const KIND_LABEL_KEY: Record<string, MessageKey> = {
   autopilot_config: "audits.kind.autopilot_config",
 };
 
+// Q75: the coach's editorial category badge. Unknown values render verbatim.
+const CATEGORY_LABEL_KEY: Record<string, MessageKey> = {
+  Voice: "audits.cat.voice",
+  Cadence: "audits.cat.cadence",
+  Topic: "audits.cat.topic",
+  Format: "audits.cat.format",
+};
+
 function fmtDate(iso: string, locale: string): string {
   const loc = locale === "ru" ? "ru-RU" : locale === "en" ? "en-US" : locale;
   try {
@@ -68,12 +76,14 @@ function changeState(d: AuditDecisionRow | undefined): ChangeState {
   return "applied";
 }
 
-function isBeforeAfter(diff: unknown): diff is { before: string; after: string } {
+// Q51: a real prompt diff carries old_text/new_text (not before/after).
+function hasDiff(
+  diff: ProposedChange["diff"],
+): diff is { old_text?: string; new_text?: string } {
   return (
     typeof diff === "object" &&
     diff !== null &&
-    "before" in diff &&
-    "after" in diff
+    ("old_text" in diff || "new_text" in diff)
   );
 }
 
@@ -282,6 +292,16 @@ export default function AuditDetailPage() {
                 ? change.payload!.post_hours!
                 : null;
             const kindKey = KIND_LABEL_KEY[change.kind];
+            const catKey = change.category
+              ? CATEGORY_LABEL_KEY[change.category]
+              : undefined;
+            const badgeLabel = change.category
+              ? catKey
+                ? t(catKey)
+                : change.category
+              : kindKey
+                ? t(kindKey)
+                : change.kind.replace(/_/g, " ");
 
             return (
               <article
@@ -295,7 +315,7 @@ export default function AuditDetailPage() {
                 {/* head */}
                 <div className="flex items-center gap-2.5">
                   <span className="inline-flex shrink-0 items-center rounded-full border border-border bg-surface-2 px-2.5 py-0.5 text-caption font-semibold text-text-muted">
-                    {kindKey ? t(kindKey) : change.kind.replace(/_/g, " ")}
+                    {badgeLabel}
                   </span>
                   <h3 className="min-w-0 flex-1 text-h3 font-semibold leading-snug tracking-tight">
                     {change.title}
@@ -319,7 +339,7 @@ export default function AuditDetailPage() {
 
                 {/* extra: view change / add note */}
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {change.diff !== undefined && change.diff !== null && (
+                  {hasDiff(change.diff) && (
                     <button
                       onClick={() =>
                         setOpenDiff((s) => {
@@ -346,23 +366,19 @@ export default function AuditDetailPage() {
                 </div>
 
                 {/* diff */}
-                {diffShown && change.diff != null && (
+                {diffShown && hasDiff(change.diff) && (
                   <div className="mt-3 overflow-hidden rounded-md border border-border font-mono text-caption leading-relaxed">
-                    {isBeforeAfter(change.diff) ? (
-                      <>
-                        <div className="flex gap-2 whitespace-pre-wrap break-words bg-danger/[0.09] px-3 py-1.5 text-danger">
-                          <span className="shrink-0 opacity-70">−</span>
-                          <span>{change.diff.before}</span>
-                        </div>
-                        <div className="flex gap-2 whitespace-pre-wrap break-words bg-success/10 px-3 py-1.5 text-success">
-                          <span className="shrink-0 opacity-70">+</span>
-                          <span>{change.diff.after}</span>
-                        </div>
-                      </>
-                    ) : (
-                      <pre className="overflow-x-auto whitespace-pre-wrap bg-bg p-3 text-text-muted">
-                        {JSON.stringify(change.diff, null, 2)}
-                      </pre>
+                    {change.diff.old_text && (
+                      <div className="flex gap-2 whitespace-pre-wrap break-words bg-danger/[0.09] px-3 py-1.5 text-danger">
+                        <span className="shrink-0 opacity-70">−</span>
+                        <span>{change.diff.old_text}</span>
+                      </div>
+                    )}
+                    {change.diff.new_text && (
+                      <div className="flex gap-2 whitespace-pre-wrap break-words bg-success/10 px-3 py-1.5 text-success">
+                        <span className="shrink-0 opacity-70">+</span>
+                        <span>{change.diff.new_text}</span>
+                      </div>
                     )}
                   </div>
                 )}
