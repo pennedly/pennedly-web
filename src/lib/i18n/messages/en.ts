@@ -210,6 +210,12 @@ export const en = {
   "rolebook.items_count_plural": "items",
   "voice.eyebrow": "Account voice",
   "voice.title": "How your account sounds",
+  "voice.analyzed_posts": "Analyzed {n} posts",
+  "voice.updated_on": "Updated {date}",
+  "voice.empty_title": "No voice yet",
+  "voice.empty_sub":
+    "Pennedly learns how you write from your recent posts. Extract your voice to start drafting in your style.",
+  "voice.empty_cta": "Extract my voice",
   "voice.check_voice": "Check voice",
   "voice.checking": "Checking…",
   "voice.busy": "Re-extracting…",

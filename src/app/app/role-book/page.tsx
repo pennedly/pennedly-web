@@ -122,9 +122,11 @@ const REEXTRACT_STEPS: MessageKey[] = [
 
 export default function VoiceEditor() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const accountId = useSelectedAccountId();
   const [book, setBook] = useState<RoleBook | null>(null);
+  // Q23: GET /role-book 404s when the account has no voice yet → empty state.
+  const [emptyVoice, setEmptyVoice] = useState(false);
   const [sections, setSections] = useState<RoleBookSections>({});
   const [bootError, setBootError] = useState<string | null>(null);
   const [lintResult, setLintResult] = useState<LintResult | null>(null);
@@ -152,6 +154,7 @@ export default function VoiceEditor() {
     if (accountId === null) return;
     setBook(null);
     setLintResult(null);
+    setEmptyVoice(false);
     (async () => {
       try {
         const rb = await fetchRoleBook(accountId);
@@ -161,6 +164,10 @@ export default function VoiceEditor() {
         if (e instanceof ApiError && e.status === 401) {
           clearTokens();
           router.push("/app/login");
+          return;
+        }
+        if (e instanceof ApiError && e.status === 404) {
+          setEmptyVoice(true); // Q23: no voice extracted yet
           return;
         }
         setBootError(String(e));
@@ -301,11 +308,19 @@ export default function VoiceEditor() {
       <AppTopbar title={t("rolebook.title")} pill={pill} />
       <main className="mx-auto max-w-[760px] space-y-[18px] px-5 py-7 md:px-6">
         {!book ? (
-          <div className="space-y-[18px]">
-            <Skeleton className="h-44 w-full rounded-xl" />
-            <Skeleton className="h-40 w-full rounded-lg" />
-            <Skeleton className="h-40 w-full rounded-lg" />
-          </div>
+          emptyVoice ? (
+            busy ? (
+              <ReExtractPanel stepIndex={stepIndex} steps={REEXTRACT_STEPS} t={t} />
+            ) : (
+              <EmptyVoice onExtract={startReExtract} t={t} />
+            )
+          ) : (
+            <div className="space-y-[18px]">
+              <Skeleton className="h-44 w-full rounded-xl" />
+              <Skeleton className="h-40 w-full rounded-lg" />
+              <Skeleton className="h-40 w-full rounded-lg" />
+            </div>
+          )
         ) : (
           <>
             {/* Voice hero */}
@@ -315,20 +330,22 @@ export default function VoiceEditor() {
                 {t("voice.eyebrow")}
               </span>
               <h1 className="mt-3 text-h1 font-semibold tracking-tight">{t("voice.title")}</h1>
-              {book && (
-                <div className="mt-3 flex flex-wrap items-center gap-x-3.5 gap-y-1.5 text-small text-text-muted">
-                  <span className="tabular-nums">
-                    {t("rolebook.version_label")}
-                    {book.role_book_id}
-                  </span>
-                  {book.parent_id !== null && (
-                    <>
-                      <span className="h-[3px] w-[3px] rounded-full bg-text-subtle" />
-                      <span className="tabular-nums">
-                        {t("rolebook.parent_label")}
-                        {book.parent_id}
-                      </span>
-                    </>
+              {/* Q67: real provenance — "Analyzed N posts · Updated <date>"
+                  (the v<id>/parent line is gone from the hero). */}
+              {book && (!!book.posts_analyzed || book.activated_at) && (
+                <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-small text-text-muted">
+                  {!!book.posts_analyzed && book.posts_analyzed > 0 && (
+                    <span className="tabular-nums">
+                      {fill(t("voice.analyzed_posts"), { n: book.posts_analyzed })}
+                    </span>
+                  )}
+                  {!!book.posts_analyzed && book.posts_analyzed > 0 && book.activated_at && (
+                    <span className="h-[3px] w-[3px] rounded-full bg-text-subtle" />
+                  )}
+                  {book.activated_at && (
+                    <span>
+                      {fill(t("voice.updated_on"), { date: fmtVoiceDate(book.activated_at, locale) })}
+                    </span>
                   )}
                 </div>
               )}
@@ -459,6 +476,40 @@ export default function VoiceEditor() {
 
 function fill(s: string, vars: Record<string, string | number>): string {
   return s.replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ""));
+}
+
+// Q67: a localized "Mar 16, 2026" date for the voice hero.
+function fmtVoiceDate(iso: string, locale: string): string {
+  const loc = locale === "ru" ? "ru-RU" : locale === "en" ? "en-US" : locale;
+  try {
+    return new Date(iso).toLocaleDateString(loc, { month: "short", day: "numeric", year: "numeric" });
+  } catch {
+    return iso;
+  }
+}
+
+// Q23: shown when GET /role-book 404s (no voice yet) — extract one to begin.
+function EmptyVoice({
+  onExtract,
+  t,
+}: {
+  onExtract: () => void;
+  t: (k: MessageKey) => string;
+}) {
+  return (
+    <section className="flex flex-col items-center rounded-xl border border-dashed border-border bg-surface px-7 py-16 text-center shadow-sm">
+      <span className="mb-4 grid h-14 w-14 place-items-center rounded-xl border border-border bg-surface-2 text-accent">
+        <IcVoice size={28} />
+      </span>
+      <h1 className="text-h1 font-semibold tracking-tight">{t("voice.empty_title")}</h1>
+      <p className="mx-auto mt-2.5 max-w-[46ch] text-body leading-relaxed text-text-muted">
+        {t("voice.empty_sub")}
+      </p>
+      <Button className="mt-6" variant="primary" onClick={onExtract} icon={<IcScan size={18} />}>
+        {t("voice.empty_cta")}
+      </Button>
+    </section>
+  );
 }
 
 // ── Section shell ───────────────────────────────────────────────────────────

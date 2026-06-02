@@ -68,6 +68,9 @@ export type RoleBook = {
   created_by: string;
   parent_id: number | null;
   activated_at: string | null;
+  // Q67: how many posts this voice was extracted from (null for a from-scratch
+  // or pre-column voice) — drives the "Analyzed N posts · Updated <date>" hero.
+  posts_analyzed: number | null;
 };
 
 // ── Onboarding ───────────────────────────────────────────────────────

@@ -213,6 +213,12 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "rolebook.items_count_plural": "элементов",
   "voice.eyebrow": "Голос аккаунта",
   "voice.title": "Как звучит твой аккаунт",
+  "voice.analyzed_posts": "Проанализировано постов: {n}",
+  "voice.updated_on": "Обновлён {date}",
+  "voice.empty_title": "Голос ещё не настроен",
+  "voice.empty_sub":
+    "Pennedly учится твоей манере по недавним постам. Извлеки голос, чтобы начать писать в твоём стиле.",
+  "voice.empty_cta": "Извлечь мой голос",
   "voice.check_voice": "Проверить голос",
   "voice.checking": "Проверяю…",
   "voice.busy": "Переизвлекаю…",

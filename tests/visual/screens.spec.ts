@@ -652,7 +652,11 @@ const AUTOPOST_ACTIVITY = {
 // conflict (one-click fix) and one medium caution (manual).
 const ROLE_BOOK = {
   role_book_id: 12,
+  name: "Mara Lin",
+  created_by: "extract",
   parent_id: 11,
+  activated_at: "2026-05-30T14:00:00Z",
+  posts_analyzed: 47,
   sections: {
     intro: "A working writer sharing the craft in plain, lived-in language — never lecturing, always mid-thought.",
     themes_include: ["Writing craft", "Habits & consistency"],
