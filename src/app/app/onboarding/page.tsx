@@ -1,13 +1,17 @@
 "use client";
 
-// First-run onboarding — a focused full-screen wizard (no app shell). Layout
-// per design-export/PennedlyDesign/onboarding-* : a top bar (brand · skip ·
-// theme · language), a 3-dot stepper (Connect · Voice · Done), and the stages
-// connect → choose → analyze | scratch → done.
+// First-run onboarding — a focused full-screen wizard (NO app shell), restyled
+// 1:1 to design-export/PennedlyDesign/onboarding-* (per Onboarding-SPEC.html):
+// top bar (brand · back/preview · skip · theme), a 3-step stepper
+// (Connect · Voice · Done) and a centred stage card per stage.
 //
-// Frontend restyle of the existing flow — the accounts / onboarding-status /
-// analyze / from-scratch APIs back it. The tester ?preview=1 mode (run for
-// real, persist nothing, show the would-be voice) is preserved.
+// Stages: connect (idle → connecting → connected) → choose (analyze | scratch,
+// analyze locked when too few posts) → analyze (nib + 3 steps) | scratch (voice
+// description + starters + topic chips) → done (recap, or read-only preview).
+// Entry: first-run (forced, "Skip for now") vs revisit (from Settings, "Back to
+// Settings"); tester preview (?preview=1) renders the would-be voice, saves
+// nothing. The real accounts / onboarding-status / analyze / from-scratch APIs
+// back the live flow; the tester ?demo=1 panel drives every state on mock data.
 
 import Link from "next/link";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -24,6 +28,7 @@ import {
   onboardingAnalyzePreview,
   onboardingFromScratch,
   onboardingFromScratchPreview,
+  startThreadsConnect,
 } from "@/lib/api";
 import { captureEvent } from "@/lib/analytics";
 import {
@@ -32,15 +37,12 @@ import {
   setSelectedAccountId,
 } from "@/lib/account";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
-import { ConnectThreadsButton } from "@/components/ConnectThreadsButton";
-import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-import { TagInput } from "@/components/TagInput";
 import {
   TweaksPanel,
   TweakSection,
   TweakToggle,
   TweakRadio,
-  TweakSelect,
+  TweakButton,
   useTweaks,
 } from "@/components/tweaks/TweaksPanel";
 import {
@@ -55,9 +57,12 @@ import {
   IcMoon,
   IcNib,
   IcPenLine,
+  IcPlus,
   IcScan,
   IcSun,
   IcVoice,
+  IcX,
+  type IconProps,
 } from "@/components/icons";
 import { Avatar, nameOf } from "@/components/ui/avatar";
 import { Button, buttonClasses } from "@/components/ui/button";
@@ -66,7 +71,10 @@ import { cn } from "@/lib/cn";
 import type { ConnectedAccount, OnboardingPreview, OnboardingStatus } from "@/lib/types";
 
 type Stage = "loading" | "connect" | "choose" | "analyze" | "scratch" | "done";
-const STAGE_STEP: Record<Stage, number> = {
+type Mode = "analyze" | "scratch" | null;
+type ConnectStatus = "idle" | "connecting" | "connected";
+
+const STAGE_INDEX: Record<Stage, number> = {
   loading: 0,
   connect: 0,
   choose: 1,
@@ -80,6 +88,22 @@ const ANALYZE_STEPS: MessageKey[] = [
   "onboarding.analyze_step3",
 ];
 
+// .ob radial-paper background (onboarding.css .ob).
+const OB_BG =
+  "radial-gradient(120% 80% at 50% -10%, color-mix(in srgb, var(--color-surface) 60%, transparent) 0%, transparent 60%), var(--color-bg)";
+const RISE = { animation: "step-in var(--duration-slow) var(--ease-entrance) both" } as const;
+const EASE = "cubic-bezier(0.2,0.7,0.3,1)";
+
+// Sample seed content (not user data) — mirrors onboarding-data.jsx. Per the
+// design handoff, starter lines + topic suggestions are sample content.
+const STARTERS = [
+  "Warm but direct. Short sentences, plain words, the occasional dry joke. I write like I'm talking to one smart friend.",
+  "Curious and a little contrarian. I ask questions more than I give answers, and I'd rather be honest than polished.",
+];
+const TOPICS_WRITE = ["Writing craft", "Building in public", "Productivity", "Design", "Books & reading", "Startups", "Creativity"];
+const TOPICS_AVOID = ["Politics", "Crypto", "Hustle culture", "Personal drama", "Engagement bait"];
+const MIN_POSTS = 15;
+
 function errMsg(e: unknown): string {
   if (e instanceof ApiError) {
     const d =
@@ -91,9 +115,7 @@ function errMsg(e: unknown): string {
   return String(e);
 }
 
-const ICON_BTN =
-  "grid h-9 w-9 place-items-center rounded-md border border-border bg-surface text-text-muted transition-colors hover:bg-surface-2 hover:text-text";
-
+// ────────────────────────────── Theme toggle ────────────────────────────────
 function ThemeToggle() {
   const [dark, setDark] = useState(false);
   useEffect(() => setDark(document.documentElement.classList.contains("dark")), []);
@@ -101,7 +123,7 @@ function ThemeToggle() {
     <button
       type="button"
       aria-label="Toggle theme"
-      className={ICON_BTN}
+      className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-border bg-surface text-text-muted transition-colors duration-[120ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] hover:bg-surface-2 hover:text-text"
       onClick={() => {
         const next = !document.documentElement.classList.contains("dark");
         document.documentElement.classList.toggle("dark", next);
@@ -118,53 +140,748 @@ function ThemeToggle() {
   );
 }
 
+// ────────────────────────────────── Stepper ─────────────────────────────────
 function Stepper({ current }: { current: number }) {
-  const steps: MessageKey[] = ["onboarding.step_connect", "onboarding.step_voice", "onboarding.step_done"];
   const { t } = useTranslation();
+  const steps: MessageKey[] = ["onboarding.step_connect", "onboarding.step_voice", "onboarding.step_done"];
   return (
-    <div className="flex items-center justify-center gap-2">
-      {steps.map((s, i) => (
-        <div key={s} className="flex items-center gap-2">
-          {i > 0 && <span className={cn("h-px w-8", i <= current ? "bg-success" : "bg-border")} />}
-          <span
-            className={cn(
-              "inline-flex items-center gap-1.5 text-caption font-medium",
-              i === current ? "text-text" : "text-text-subtle",
+    <div className="mb-[26px] flex items-center gap-2" aria-label="Onboarding progress">
+      {steps.map((s, i) => {
+        const state = i === current ? "current" : i < current ? "done" : "todo";
+        return (
+          <div key={s} className="flex items-center gap-2">
+            {i > 0 && (
+              <span className={cn("h-px w-7 shrink-0 max-[560px]:w-4", i <= current ? "bg-success" : "bg-border")} />
             )}
-          >
-            <span
-              className={cn(
-                "grid h-[22px] w-[22px] place-items-center rounded-full border text-caption font-semibold tabular-nums",
-                i < current
-                  ? "border-success bg-success text-success-foreground"
-                  : i === current
+            <div className="flex items-center gap-[9px]">
+              <span
+                className={cn(
+                  "grid h-[26px] w-[26px] shrink-0 place-items-center rounded-full border text-caption font-semibold tabular-nums transition-colors duration-[180ms] ease-[cubic-bezier(0.2,0.7,0.3,1)]",
+                  state === "current"
                     ? "border-text bg-text text-bg"
-                    : "border-border text-text-subtle",
-              )}
-            >
-              {i < current ? <IcCheck size={13} /> : i + 1}
-            </span>
-            {t(s)}
-          </span>
-        </div>
-      ))}
+                    : state === "done"
+                      ? "border-success bg-success text-success-foreground"
+                      : "border-border bg-surface text-text-subtle",
+                )}
+              >
+                {state === "done" ? <IcCheck size={14} /> : i + 1}
+              </span>
+              <span
+                className={cn(
+                  "whitespace-nowrap text-small transition-colors duration-[180ms] max-[560px]:hidden",
+                  state === "current" ? "font-semibold text-text" : state === "done" ? "text-text-muted" : "font-medium text-text-subtle",
+                )}
+              >
+                {t(s)}
+              </span>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
 
-// ── Tweaks (tester debug) ────────────────────────────────────────────────────
-type ObTweaks = { demo: boolean; jump: string; posts: string; dark: boolean };
-const OB_TWEAKS: ObTweaks = { demo: false, jump: "Connect", posts: "Enough", dark: false };
-const OB_JUMP_TO_STAGE: Record<string, Stage> = {
-  Connect: "connect",
-  Choose: "choose",
-  Analyze: "analyze",
-  Scratch: "scratch",
-  Done: "done",
+// ─────────────────────────────── Frame (chrome) ─────────────────────────────
+// Top bar + centred stage. Both the live flow and the demo render through this.
+function Frame({
+  stepIndex,
+  showStepper = true,
+  showSkip,
+  showBack,
+  preview,
+  onSkip,
+  wide,
+  children,
+}: {
+  stepIndex: number;
+  showStepper?: boolean;
+  showSkip: boolean;
+  showBack: boolean;
+  preview: boolean;
+  onSkip?: () => void;
+  wide?: boolean;
+  children: ReactNode;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex min-h-screen flex-col text-text" style={{ background: OB_BG }}>
+      {/* Top bar */}
+      <header className="flex shrink-0 items-center gap-3 px-6 py-5">
+        <div className="flex items-center gap-2.5">
+          <BrandMark size={30} radius={9} className="shadow-sm" />
+          <span className="text-h3 font-semibold tracking-[-0.01em]">Pennedly</span>
+        </div>
+        {showBack && (
+          <Link
+            href="/app/settings"
+            className="ml-1.5 inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-small font-medium text-text-muted transition-colors duration-[120ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] hover:bg-surface-2 hover:text-text"
+          >
+            <IcArrowLeft size={15} /> {t("onboarding.back_to_settings")}
+          </Link>
+        )}
+        {preview && (
+          <span className="ml-2.5 inline-flex items-center gap-[7px] whitespace-nowrap rounded-full border bg-surface px-[11px] py-[5px] pl-[9px] text-small text-accent" style={{ borderColor: "color-mix(in srgb, var(--color-accent) 30%, var(--color-border))" }}>
+            <span className="h-[7px] w-[7px] rounded-full bg-accent" /> {t("onboarding.preview_pill")}
+          </span>
+        )}
+        <span className="flex-1" />
+        <div className="flex items-center gap-2">
+          {showSkip && (
+            <button
+              onClick={onSkip}
+              className="h-9 rounded-md px-3 text-small font-medium text-text-muted transition-colors duration-[120ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] hover:bg-surface-2 hover:text-text"
+            >
+              {t("onboarding.skip_for_now")}
+            </button>
+          )}
+          <ThemeToggle />
+        </div>
+      </header>
+
+      {/* Stage */}
+      <div className="flex flex-1 flex-col items-center justify-center px-6 pb-14 pt-2">
+        {showStepper && <Stepper current={stepIndex} />}
+        <div
+          className={cn(
+            "w-full rounded-2xl border border-border bg-surface p-9 pb-[30px] shadow-lg max-[560px]:rounded-xl max-[560px]:px-5 max-[560px]:pb-[22px] max-[560px]:pt-[26px]",
+            wide ? "max-w-[600px]" : "max-w-[540px]",
+          )}
+        >
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────── Shared stage header bits ───────────────────────
+function StepTitle({ children, center }: { children: ReactNode; center?: boolean }) {
+  return (
+    <h1 className={cn("mt-2.5 text-balance text-h1 font-semibold leading-[1.6] tracking-[-0.015em] max-[560px]:text-h2", center && "text-center")}>
+      {children}
+    </h1>
+  );
+}
+function StepSub({ children, center }: { children: ReactNode; center?: boolean }) {
+  return (
+    <p className={cn("mt-3 max-w-[46ch] text-pretty text-body leading-relaxed text-text-muted", center && "mx-auto max-w-[42ch] text-center")}>
+      {children}
+    </p>
+  );
+}
+const PRIMARY_LG = buttonClasses({ variant: "primary", size: "lg", className: "active:translate-y-[0.5px] max-[560px]:w-full" });
+function BackLink({ onClick, href, children }: { onClick?: () => void; href?: string; children: ReactNode }) {
+  const cls =
+    "inline-flex items-center gap-1.5 px-1 py-1.5 text-small font-medium text-text-muted transition-colors duration-[120ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] hover:text-text";
+  return href ? (
+    <Link href={href} className={cls}>
+      {children}
+    </Link>
+  ) : (
+    <button type="button" onClick={onClick} className={cls}>
+      {children}
+    </button>
+  );
+}
+
+// ───────────────────────────────── Connect ──────────────────────────────────
+function ConnectStep({
+  status,
+  account,
+  onConnect,
+  onContinue,
+}: {
+  status: ConnectStatus;
+  account: ConnectedAccount | null;
+  onConnect: () => void;
+  onContinue: () => void;
+}) {
+  const { t } = useTranslation();
+  const trust: { Icon: (p: IconProps) => ReactNode; key: MessageKey }[] = [
+    { Icon: IcEye, key: "onboarding.trust1" },
+    { Icon: IcCheck, key: "onboarding.trust2" },
+    { Icon: IcLock, key: "onboarding.trust3" },
+  ];
+  const connected = status === "connected" && account;
+  return (
+    <div style={RISE}>
+      <span className="mb-5 block">
+        <BrandMark size={56} radius={16} />
+      </span>
+      <div className="text-caption font-semibold uppercase tracking-[0.06em] text-accent">{t("onboarding.welcome_eyebrow")}</div>
+      <StepTitle>{t("onboarding.connect_hero_title")}</StepTitle>
+      <StepSub>{t("onboarding.connect_hero_sub")}</StepSub>
+
+      {connected ? (
+        <div
+          className="mt-[22px] flex items-center gap-3 rounded-lg border border-border bg-surface-2 px-3.5 py-[13px]"
+          style={{ animation: "step-in var(--duration-base) var(--ease-entrance) both" }}
+        >
+          <Avatar account={account} size={42} />
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-small font-semibold leading-tight">{nameOf(account)}</div>
+            {account.username && <div className="mt-0.5 truncate text-caption text-text-subtle">@{account.username}</div>}
+          </div>
+          <span className="inline-flex shrink-0 items-center gap-1.5 text-caption font-semibold text-success">
+            <span className="h-[7px] w-[7px] rounded-full bg-success" /> {t("onboarding.connected")}
+          </span>
+        </div>
+      ) : (
+        <div className="mt-6 flex flex-col gap-[11px]">
+          {trust.map(({ Icon, key }) => (
+            <div key={key} className="flex items-start gap-[11px] text-small leading-snug text-text-muted">
+              <span className="-mt-px grid h-[26px] w-[26px] shrink-0 place-items-center rounded-sm border border-border bg-surface-2 text-text-subtle">
+                <Icon size={15} />
+              </span>
+              {t(key)}
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="mt-[26px] flex flex-wrap items-center gap-3">
+        {connected ? (
+          <Button variant="primary" size="lg" className="active:translate-y-[0.5px] max-[560px]:w-full" onClick={onContinue}>
+            {t("onboarding.continue")} <IcArrowRight size={17} />
+          </Button>
+        ) : (
+          <Button
+            variant="primary"
+            size="lg"
+            className="active:translate-y-[0.5px] max-[560px]:w-full"
+            disabled={status === "connecting"}
+            onClick={onConnect}
+          >
+            {status === "connecting" ? (
+              <>
+                <Spinner size={16} /> {t("onboarding.connecting")}
+              </>
+            ) : (
+              <>
+                <IcAt size={17} /> {t("onboarding.connect_cta")}
+              </>
+            )}
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ───────────────────────────────── Choose ───────────────────────────────────
+function ChooseStep({
+  account,
+  selected,
+  onSelect,
+  onContinue,
+  onBack,
+  enoughPosts,
+  postCount,
+}: {
+  account: ConnectedAccount | null;
+  selected: Mode;
+  onSelect: (m: "analyze" | "scratch") => void;
+  onContinue: () => void;
+  onBack: (() => void) | null;
+  enoughPosts: boolean;
+  postCount: number;
+}) {
+  const { t } = useTranslation();
+  const handle = account?.username ? `@${account.username}` : "your account";
+  const modes: {
+    id: "analyze" | "scratch";
+    Icon: (p: IconProps) => ReactNode;
+    title: MessageKey;
+    desc: string;
+    meta: MessageKey;
+    recommended?: boolean;
+  }[] = [
+    {
+      id: "analyze",
+      Icon: IcScan,
+      title: "onboarding.mode_analyze_title",
+      desc: t("onboarding.mode_analyze_desc").replace("{handle}", handle),
+      meta: "onboarding.mode_analyze_meta",
+      recommended: true,
+    },
+    {
+      id: "scratch",
+      Icon: IcPenLine,
+      title: "onboarding.mode_scratch_title",
+      desc: t("onboarding.mode_scratch_desc"),
+      meta: "onboarding.mode_scratch_meta",
+    },
+  ];
+  return (
+    <div style={RISE}>
+      <div className="text-caption font-semibold uppercase tracking-[0.06em] text-accent">{t("onboarding.choose_eyebrow")}</div>
+      <StepTitle>{t("onboarding.choose_title")}</StepTitle>
+      <StepSub>{t("onboarding.choose_sub")}</StepSub>
+
+      <div role="radiogroup" aria-label="Voice setup method" className="mt-6 flex flex-col gap-3">
+        {modes.map((m) => {
+          const disabled = m.id === "analyze" && !enoughPosts;
+          const active = selected === m.id && !disabled;
+          return (
+            <button
+              key={m.id}
+              role="radio"
+              aria-checked={active}
+              aria-disabled={disabled}
+              onClick={() => {
+                if (!disabled) onSelect(m.id);
+              }}
+              className={cn(
+                "relative flex w-full items-start gap-3.5 rounded-lg border p-[18px] text-left transition-[border-color,background,box-shadow] duration-[120ms] ease-[cubic-bezier(0.2,0.7,0.3,1)]",
+                disabled
+                  ? "cursor-default border-border bg-surface-2 opacity-[0.72]"
+                  : active
+                    ? "border-text bg-surface shadow-[0_0_0_1px_var(--color-text)]"
+                    : "border-border bg-surface hover:border-[color-mix(in_srgb,var(--color-text)_18%,var(--color-border))] hover:bg-surface-2",
+              )}
+            >
+              <span
+                className={cn(
+                  "grid h-[42px] w-[42px] shrink-0 place-items-center rounded-md border",
+                  active
+                    ? "border-text bg-text text-bg"
+                    : disabled
+                      ? "border-border bg-surface text-text-subtle"
+                      : "border-border bg-surface-2 text-text",
+                )}
+              >
+                <m.Icon size={20} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-[9px]">
+                  <span className="text-h3 font-semibold tracking-[-0.006em]">{t(m.title)}</span>
+                  {m.recommended && !disabled && (
+                    <span
+                      className="rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.03em] text-accent"
+                      style={{
+                        background: "color-mix(in srgb, var(--color-accent) 12%, var(--color-surface))",
+                        borderColor: "color-mix(in srgb, var(--color-accent) 28%, transparent)",
+                      }}
+                    >
+                      {t("onboarding.recommended")}
+                    </span>
+                  )}
+                  {disabled && (
+                    <span className="inline-flex items-center gap-[5px] rounded-full border border-border bg-surface px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.03em] text-text-muted">
+                      <IcLock size={12} /> {t("onboarding.choice_locked").replace("{need}", String(MIN_POSTS))}
+                    </span>
+                  )}
+                </span>
+                <span className="mt-[5px] block text-pretty text-small leading-normal text-text-muted">
+                  {disabled
+                    ? t("onboarding.choice_locked_reason")
+                        .replace("{need}", String(MIN_POSTS))
+                        .replace("{handle}", handle)
+                        .replace("{have}", String(postCount))
+                    : m.desc}
+                </span>
+                {!disabled && (
+                  <span className="mt-[9px] inline-flex items-center gap-1.5 text-caption text-text-subtle">
+                    <IcClock size={13} /> {t(m.meta)}
+                  </span>
+                )}
+              </span>
+              {!disabled && (
+                <IcCheck
+                  size={18}
+                  className={cn("absolute right-4 top-4 shrink-0 text-text transition-opacity duration-[120ms]", active ? "opacity-100" : "opacity-0")}
+                />
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="mt-[26px] flex items-center gap-3">
+        {onBack && (
+          <BackLink onClick={onBack}>
+            <IcArrowLeft size={15} /> {t("onboarding.back")}
+          </BackLink>
+        )}
+        <span className="flex-1" />
+        <Button variant="primary" size="lg" className="active:translate-y-[0.5px] max-[560px]:w-full" disabled={!selected} onClick={onContinue}>
+          {t("onboarding.continue")} <IcArrowRight size={17} />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ───────────────────────────────── Analyze ──────────────────────────────────
+function AnalyzeStep({ account, stepIndex }: { account: ConnectedAccount | null; stepIndex: number }) {
+  const { t } = useTranslation();
+  return (
+    <div style={RISE}>
+      <div className="flex flex-col items-center px-0 pb-1 pt-2 text-center">
+        <span className="h-10 w-10 text-text" style={{ animation: "nib-write 1.5s var(--ease-standard) infinite" }}>
+          <IcNib size={40} />
+        </span>
+        <StepTitle center>{t("onboarding.analyze_learning")}</StepTitle>
+        {account?.username && (
+          <span className="mt-4 inline-flex items-center gap-2 text-small text-text-muted">
+            <Avatar account={account} size={22} /> @{account.username}
+          </span>
+        )}
+        <div className="mt-[22px] flex w-full max-w-[340px] flex-col gap-0.5 text-left">
+          {ANALYZE_STEPS.map((k, i) => {
+            const state = i < stepIndex ? "done" : i === stepIndex ? "active" : "todo";
+            return (
+              <div key={k} className="flex items-center gap-3 border-t border-border px-1 py-[11px] first:border-t-0">
+                <span
+                  className={cn(
+                    "grid h-[22px] w-[22px] shrink-0 place-items-center rounded-full border transition-all duration-[180ms]",
+                    state === "done"
+                      ? "border-success bg-success text-success-foreground"
+                      : state === "active"
+                        ? "border-accent text-accent"
+                        : "border-border bg-surface text-text-subtle",
+                  )}
+                >
+                  {state === "done" ? (
+                    <IcCheck size={13} />
+                  ) : state === "active" ? (
+                    <span className="h-[11px] w-[11px] animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  ) : (
+                    <span className="h-[5px] w-[5px] rounded-full bg-current opacity-50" />
+                  )}
+                </span>
+                <span className={cn("text-small transition-colors duration-[180ms]", state === "active" ? "font-medium text-text" : state === "done" ? "text-text" : "text-text-muted")}>
+                  {t(k)}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ──────────────────────────────── Chip input ────────────────────────────────
+function ChipInput({
+  value,
+  onChange,
+  placeholder,
+  suggestions,
+  tone,
+}: {
+  value: string[];
+  onChange: (v: string[]) => void;
+  placeholder: string;
+  suggestions: string[];
+  tone?: "avoid";
+}) {
+  const [text, setText] = useState("");
+  function add(v?: string) {
+    const tt = (v ?? text).trim();
+    if (!tt || value.some((x) => x.toLowerCase() === tt.toLowerCase())) {
+      setText("");
+      return;
+    }
+    onChange([...value, tt]);
+    setText("");
+  }
+  const remove = (v: string) => onChange(value.filter((x) => x !== v));
+  const remaining = suggestions.filter((s) => !value.some((v) => v.toLowerCase() === s.toLowerCase()));
+  return (
+    <>
+      <div className="flex flex-wrap items-center gap-[7px] rounded-md border border-border bg-surface p-2 transition-[border-color,box-shadow] duration-[120ms] focus-within:border-accent focus-within:shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-accent)_18%,transparent)]">
+        {value.map((v) => (
+          <span
+            key={v}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-full border py-1 pl-2.5 pr-1 text-caption font-medium",
+              tone === "avoid"
+                ? "border-[color-mix(in_srgb,var(--color-danger)_26%,var(--color-border))] bg-[color-mix(in_srgb,var(--color-danger)_9%,var(--color-surface))] text-[color-mix(in_srgb,var(--color-danger)_75%,var(--color-text))]"
+                : "border-border bg-surface-2 text-text",
+            )}
+          >
+            {v}
+            <button
+              type="button"
+              aria-label={`Remove ${v}`}
+              onClick={() => remove(v)}
+              className="grid h-4 w-4 place-items-center rounded-full text-text-subtle transition-colors hover:bg-[color-mix(in_srgb,var(--color-text)_10%,transparent)] hover:text-text"
+            >
+              <IcX size={11} />
+            </button>
+          </span>
+        ))}
+        <input
+          value={text}
+          placeholder={value.length === 0 ? placeholder : ""}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              add();
+            }
+            if (e.key === "Backspace" && !text && value.length) remove(value[value.length - 1]);
+          }}
+          className="min-w-[90px] flex-1 bg-transparent px-1 py-[5px] text-small text-text outline-none placeholder:text-text-subtle"
+        />
+      </div>
+      {remaining.length > 0 && (
+        <div className="mt-[9px] flex flex-wrap gap-[7px]">
+          {remaining.map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => add(s)}
+              className="inline-flex items-center gap-1.5 rounded-full border border-border px-[11px] py-[5px] text-caption text-text-muted transition-colors hover:bg-surface-2 hover:text-text"
+            >
+              <IcPlus size={12} /> {s}
+            </button>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+// ───────────────────────────────── Scratch ──────────────────────────────────
+function ScratchStep({
+  desc,
+  setDesc,
+  write,
+  setWrite,
+  avoid,
+  setAvoid,
+  busy,
+  onCreate,
+  onBack,
+}: {
+  desc: string;
+  setDesc: (v: string) => void;
+  write: string[];
+  setWrite: (v: string[]) => void;
+  avoid: string[];
+  setAvoid: (v: string[]) => void;
+  busy: boolean;
+  onCreate: () => void;
+  onBack: () => void;
+}) {
+  const { t } = useTranslation();
+  const taRef = useRef<HTMLTextAreaElement>(null);
+  const ready = desc.trim().length > 0 && write.length > 0;
+  return (
+    <div style={RISE}>
+      <div className="text-caption font-semibold uppercase tracking-[0.06em] text-accent">{t("onboarding.scratch_eyebrow")}</div>
+      <StepTitle>{t("onboarding.scratch_title")}</StepTitle>
+      <StepSub>{t("onboarding.scratch_body")}</StepSub>
+
+      <div className="mt-6">
+        <label htmlFor="ob-desc" className="mb-2 block text-small font-semibold">
+          {t("onboarding.form_intro_label")}
+        </label>
+        <textarea
+          id="ob-desc"
+          ref={taRef}
+          value={desc}
+          onChange={(e) => setDesc(e.target.value)}
+          placeholder={t("onboarding.form_intro_ph")}
+          className="min-h-[92px] w-full resize-y rounded-md border border-border bg-surface px-3 py-[11px] text-small leading-relaxed text-text outline-none transition-[border-color,box-shadow] duration-[120ms] placeholder:text-text-subtle focus:border-accent focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-accent)_18%,transparent)]"
+        />
+        <div className="mt-[9px] flex flex-wrap gap-[7px]">
+          {STARTERS.map((s, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => {
+                setDesc(s);
+                taRef.current?.focus();
+              }}
+              className="max-w-full rounded-full border border-dashed border-border bg-surface px-3 py-1.5 text-left text-caption text-text-muted transition-colors duration-[120ms] hover:border-[color-mix(in_srgb,var(--color-text)_20%,var(--color-border))] hover:bg-surface-2 hover:text-text"
+            >
+              “{s.slice(0, 42)}…”
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-5">
+        <label className="mb-2 block text-small font-semibold">{t("onboarding.form_themes_label")}</label>
+        <ChipInput value={write} onChange={setWrite} placeholder={t("onboarding.form_themes_ph")} suggestions={TOPICS_WRITE} />
+      </div>
+
+      <div className="mt-5">
+        <label className="mb-2 block text-small font-semibold">
+          {t("onboarding.form_exclude_label")}
+          <span className="ml-1.5 font-normal text-text-subtle">{t("onboarding.optional")}</span>
+        </label>
+        <ChipInput value={avoid} onChange={setAvoid} placeholder={t("onboarding.form_exclude_ph")} suggestions={TOPICS_AVOID} tone="avoid" />
+      </div>
+
+      <div className="mt-6 flex items-center gap-3">
+        <BackLink onClick={onBack}>
+          <IcArrowLeft size={15} /> {t("onboarding.back")}
+        </BackLink>
+        <span className="flex-1" />
+        <Button variant="primary" size="lg" className="active:translate-y-[0.5px] max-[560px]:w-full" loading={busy} disabled={busy || !ready} onClick={onCreate}>
+          {t("onboarding.create_cta")} <IcArrowRight size={17} />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────── Preview result (tester) ────────────────────────
+const PREVIEW_VOICE = {
+  summary:
+    "Warm but never gushing — like a voice note to one friend who also makes things. Earns every claim with a small, specific moment, then gets out of the way.",
+  themes: ["The craft of writing", "Building in public", "Creative courage", "Writing for the right hundred people"],
+  traits: ["Plain words over clever ones", "Opens on a concrete moment", "Short paragraphs, one idea each", "Dry humour, usually self-directed"],
 };
 
-// Demo/preview links: in dev anyone can open `?demo=1` (no login) to review every
-// state; in prod the panel is gated to testers.
+function PreviewResult({
+  account,
+  mode,
+  result,
+}: {
+  account: ConnectedAccount | null;
+  mode: Mode;
+  result?: OnboardingPreview | null;
+}) {
+  const { t } = useTranslation();
+  const handle = account?.username ? `@${account.username}` : "your account";
+  const src = mode === "scratch" ? t("onboarding.preview_src_scratch") : t("onboarding.preview_src_posts").replace("{handle}", handle);
+  // Live preview result → flatten to the design's summary/themes/traits shape;
+  // demo falls back to the sample voice.
+  const summary = result?.sections?.intro || PREVIEW_VOICE.summary;
+  const themes = result?.sections?.themes_include?.map((x) => x.label) ?? PREVIEW_VOICE.themes;
+  const traits = result?.sections?.voice_characteristics?.map((x) => (x.label ? `${x.label}: ${x.text}` : x.text)) ?? PREVIEW_VOICE.traits;
+  return (
+    <div style={RISE}>
+      <div className="flex flex-col items-center text-center">
+        <span className="inline-flex items-center gap-[7px] rounded-full border bg-surface px-[11px] py-[5px] pl-[9px] text-small text-accent" style={{ borderColor: "color-mix(in srgb, var(--color-accent) 30%, var(--color-border))" }}>
+          <span className="h-[7px] w-[7px] rounded-full bg-accent" /> {t("onboarding.preview_pill_done")}
+        </span>
+        <h1 className="mt-4 text-balance text-h1 font-semibold leading-[1.6] tracking-[-0.015em] max-[560px]:text-h2">{t("onboarding.preview_would_title")}</h1>
+        <StepSub center>{t("onboarding.preview_would_sub").replace("{src}", src)}</StepSub>
+      </div>
+      <div className="mt-[22px] flex flex-col gap-[18px]">
+        <div>
+          <div className="mb-2 text-caption font-semibold uppercase tracking-[0.05em] text-text-subtle">{t("onboarding.pv_summary_cap")}</div>
+          <p className="rounded-md border border-border bg-surface-2 px-4 py-3.5 text-pretty text-body leading-relaxed text-text">{summary}</p>
+        </div>
+        <div>
+          <div className="mb-2 text-caption font-semibold uppercase tracking-[0.05em] text-text-subtle">{t("onboarding.pv_themes_cap")}</div>
+          <div className="flex flex-wrap gap-2">
+            {themes.map((x) => (
+              <span key={x} className="whitespace-nowrap rounded-full border border-border bg-surface-2 px-3 py-[5px] text-small font-medium text-text">
+                {x}
+              </span>
+            ))}
+          </div>
+        </div>
+        <div>
+          <div className="mb-2 text-caption font-semibold uppercase tracking-[0.05em] text-text-subtle">{t("onboarding.pv_sound_cap")}</div>
+          <ul className="flex flex-col gap-2">
+            {traits.map((x) => (
+              <li key={x} className="flex items-start gap-[9px] text-small leading-snug text-text">
+                <IcCheck size={14} className="mt-0.5 shrink-0 text-success" /> {x}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+      <div className="mt-[26px] flex items-center gap-3">
+        <BackLink href="/app/settings">
+          <IcArrowLeft size={15} /> {t("onboarding.back_to_settings")}
+        </BackLink>
+        <span className="flex-1" />
+        <Link href="/app/onboarding" className={PRIMARY_LG}>
+          {t("onboarding.preview_run")} <IcArrowRight size={17} />
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+// ────────────────────────────────── Done ────────────────────────────────────
+function DoneStep({
+  account,
+  connected,
+  mode,
+  preview,
+  previewResult,
+  onGo,
+}: {
+  account: ConnectedAccount | null;
+  connected: boolean;
+  mode: Mode;
+  preview: boolean;
+  previewResult?: OnboardingPreview | null;
+  onGo: () => void;
+}) {
+  const { t } = useTranslation();
+  if (preview) return <PreviewResult account={account} mode={mode} result={previewResult} />;
+  const handle = account?.username ? `@${account.username}` : "";
+  const first = account ? nameOf(account).split(" ")[0] : "";
+  const voiceLabel = mode === "scratch" ? t("onboarding.voice_scratch") : mode === "analyze" ? t("onboarding.voice_analyzed") : t("onboarding.voice_later");
+  return (
+    <div style={RISE}>
+      <div className="flex flex-col items-center text-center">
+        <span
+          className="mb-[18px] grid h-16 w-16 place-items-center rounded-full text-success"
+          style={{
+            background: "color-mix(in srgb, var(--color-success) 15%, var(--color-surface))",
+            border: "1px solid color-mix(in srgb, var(--color-success) 32%, transparent)",
+            animation: "pop-in var(--duration-slow) var(--ease-entrance) both",
+          }}
+        >
+          <IcCheck size={30} />
+        </span>
+        <h1 className="mx-auto max-w-[42ch] text-balance text-h1 font-semibold leading-[1.6] tracking-[-0.015em] max-[560px]:text-h2">
+          {connected ? t("onboarding.done_title_set").replace("{name}", first) : t("onboarding.done_title_skip")}
+        </h1>
+        <StepSub center>{connected ? t("onboarding.done_sub_set").replace("{handle}", handle) : t("onboarding.done_sub_skip")}</StepSub>
+      </div>
+
+      <div className="mt-6 overflow-hidden rounded-lg border border-border">
+        <div className="flex items-center gap-3 px-[15px] py-[13px]">
+          <span className="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-sm border border-border bg-surface-2 text-text-muted">
+            <IcAt size={16} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="text-caption text-text-subtle">{t("onboarding.recap_account")}</div>
+            <div className="mt-px text-small font-semibold">{connected ? handle : t("onboarding.recap_account_later")}</div>
+          </div>
+          {connected && <IcCheck size={17} className="ml-auto shrink-0 text-success" />}
+        </div>
+        <div className="flex items-center gap-3 border-t border-border px-[15px] py-[13px]">
+          <span className="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-sm border border-border bg-surface-2 text-text-muted">
+            <IcVoice size={16} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="text-caption text-text-subtle">{t("onboarding.recap_voice")}</div>
+            <div className="mt-px text-small font-semibold">{voiceLabel}</div>
+          </div>
+          {mode && <IcCheck size={17} className="ml-auto shrink-0 text-success" />}
+        </div>
+      </div>
+
+      <div className="mt-6 flex items-center gap-3">
+        <BackLink href="/app/role-book">{t("onboarding.refine_voice")}</BackLink>
+        <span className="flex-1" />
+        <button onClick={onGo} className={PRIMARY_LG}>
+          {t("onboarding.go_studio")} <IcArrowRight size={17} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ════════════════════════════════ Demo (tester) ═════════════════════════════
+type ObTweaks = { demo: boolean; entry: string; posts: string; preview: boolean; jump: string; dark: boolean };
+const OB_TWEAKS: ObTweaks = { demo: false, entry: "First run", posts: "Enough", preview: false, jump: "Connect", dark: false };
+const JUMP_TO_STAGE: Record<string, Stage> = { Connect: "connect", Choose: "choose", Analyze: "analyze", Scratch: "scratch", Done: "done" };
 const IS_DEV = process.env.NODE_ENV === "development";
 function isDemoUrl(): boolean {
   if (typeof window === "undefined") return false;
@@ -175,130 +892,208 @@ function isDemoUrl(): boolean {
   }
 }
 
-// Tester-only demo render driven entirely by the Tweaks panel on MOCK data, so
-// every onboarding state can be checked 1-to-1 with the design without a backend.
-// Reuses the real step components; completely isolated from the live flow.
+// A fully simulated flow on mock data, so every onboarding state can be checked
+// 1:1 with the design without a backend. Reuses the same step components.
+const DEMO_ACCOUNT = {
+  id: 1,
+  tenant_id: 1,
+  threads_user_id: "t_demo",
+  username: "mara.lin",
+  display_name: "Mara Lin",
+  profile_picture_url: null,
+  connected_at: "2026-05-01T00:00:00Z",
+  disconnected_at: null,
+} as unknown as ConnectedAccount;
+
 function OnboardingDemo({ tw }: { tw: ObTweaks }) {
-  const { t } = useTranslation();
   const router = useRouter();
-  const [stage, setStage] = useState<Stage>(OB_JUMP_TO_STAGE[tw.jump] ?? "connect");
-  useEffect(() => setStage(OB_JUMP_TO_STAGE[tw.jump] ?? "connect"), [tw.jump]);
-  const [intro, setIntro] = useState("");
-  const [themes, setThemes] = useState<string[]>([]);
-  const [excludes, setExcludes] = useState<string[]>([]);
-  const status = {
-    needs_onboarding: true,
-    has_role_book: false,
-    post_count: tw.posts === "Enough" ? 47 : 2,
-    can_analyze: tw.posts === "Enough",
-  } as OnboardingStatus;
-  // Demo analyze: run the animation through, then land on the Done result —
-  // so "Jump to: Analyze" shows the full flow, not a frozen frame.
+  const firstRun = tw.entry !== "Revisit";
+  const enoughPosts = tw.posts !== "Too few";
+  const postCount = enoughPosts ? 214 : 6;
+
+  const [stage, setStage] = useState<Stage>(firstRun ? "connect" : "choose");
+  const [connectStatus, setConnectStatus] = useState<ConnectStatus>(firstRun ? "idle" : "connected");
+  const [connected, setConnected] = useState(!firstRun);
+  const [mode, setMode] = useState<Mode>(null);
+  const [chosen, setChosen] = useState<Mode>(firstRun ? null : enoughPosts ? null : "scratch");
   const [anIndex, setAnIndex] = useState(0);
+  const [desc, setDesc] = useState("");
+  const [write, setWrite] = useState<string[]>([]);
+  const [avoid, setAvoid] = useState<string[]>([]);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function resetAll() {
+    if (timer.current) clearTimeout(timer.current);
+    setStage("connect");
+    setConnectStatus("idle");
+    setConnected(false);
+    setMode(null);
+    setChosen(null);
+    setAnIndex(0);
+    setDesc("");
+    setWrite([]);
+    setAvoid([]);
+  }
+
+  // Entry tweak → reset to the natural start for that entry.
   useEffect(() => {
-    if (stage !== "analyze") return;
+    if (timer.current) clearTimeout(timer.current);
+    if (firstRun) resetAll();
+    else {
+      setConnected(true);
+      setConnectStatus("connected");
+      setMode(null);
+      setAnIndex(0);
+      setStage("choose");
+      setChosen(enoughPosts ? null : "scratch");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tw.entry]);
+
+  // Jump-to-stage walkthrough.
+  useEffect(() => {
+    const target = JUMP_TO_STAGE[tw.jump];
+    if (!target || target === stage) return;
+    if (timer.current) clearTimeout(timer.current);
+    if (target === "connect") {
+      resetAll();
+      return;
+    }
+    setConnectStatus("connected");
+    setConnected(true);
+    if (target === "choose") {
+      setChosen(enoughPosts ? "analyze" : "scratch");
+      setStage("choose");
+    } else if (target === "analyze") {
+      setChosen("analyze");
+      runAnalyze();
+    } else if (target === "scratch") {
+      setChosen("scratch");
+      setStage("scratch");
+    } else if (target === "done") {
+      setMode("analyze");
+      setStage("done");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tw.jump]);
+
+  // Keep a valid selection when analyze is locked.
+  useEffect(() => {
+    if (stage === "choose" && !enoughPosts && chosen !== "scratch") setChosen("scratch");
+  }, [stage, enoughPosts, chosen]);
+
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+
+  function connect() {
+    setConnectStatus("connecting");
+    timer.current = setTimeout(() => {
+      setConnectStatus("connected");
+      setConnected(true);
+    }, 1500);
+  }
+  function runAnalyze() {
+    setStage("analyze");
     setAnIndex(0);
     let i = 0;
-    const id = setInterval(() => {
+    const tick = () => {
       i += 1;
-      if (i < ANALYZE_STEPS.length) setAnIndex(i);
-      else {
-        clearInterval(id);
-        setTimeout(() => setStage("done"), 700);
+      if (i < ANALYZE_STEPS.length) {
+        setAnIndex(i);
+        timer.current = setTimeout(tick, 1100);
+      } else {
+        setAnIndex(ANALYZE_STEPS.length);
+        timer.current = setTimeout(() => {
+          setMode("analyze");
+          setStage("done");
+        }, 800);
       }
-    }, 1000);
-    return () => clearInterval(id);
-  }, [stage]);
+    };
+    timer.current = setTimeout(tick, 1100);
+  }
+
+  const showSkip = firstRun && !tw.preview && stage !== "done" && stage !== "analyze";
+  const showBack = (!firstRun || tw.preview) && stage !== "analyze";
+  const wide = stage === "scratch" || (stage === "done" && tw.preview);
+
   return (
-    <div className="flex min-h-screen flex-col bg-bg text-text">
-      <header className="flex items-center gap-3 px-5 py-4 md:px-8">
-        <div className="flex items-center gap-2.5">
-          <BrandMark size={30} radius={9} />
-          <span className="text-h3 font-semibold tracking-tight">Pennedly</span>
-        </div>
-        <div className="flex-1" />
-        <div className="flex items-center gap-2">
-          <LanguageSwitcher />
-          <ThemeToggle />
-        </div>
-      </header>
-      <div className="flex flex-1 flex-col items-center px-5 py-8 md:py-12">
-        <div className="mb-8">
-          <Stepper current={STAGE_STEP[stage]} />
-        </div>
-        <div className={cn("w-full", stage === "scratch" ? "max-w-[600px]" : "max-w-[540px]")}>
-          {stage === "connect" ? (
-            <ConnectStep t={t} connected={null} onContinue={() => setStage("choose")} />
-          ) : stage === "choose" ? (
-            <ChooseStep
-              status={status}
-              busy={false}
-              onAnalyze={() => setStage("analyze")}
-              onScratch={() => setStage("scratch")}
-              t={t}
-            />
-          ) : stage === "analyze" ? (
-            <AnalyzeStep index={anIndex} t={t} handle="@mara.lin" />
-          ) : stage === "scratch" ? (
-            <ScratchStep
-              intro={intro}
-              setIntro={setIntro}
-              themes={themes}
-              setThemes={setThemes}
-              excludes={excludes}
-              setExcludes={setExcludes}
-              busy={false}
-              preview={false}
-              onCreate={() => setStage("done")}
-              onBack={() => setStage("choose")}
-              t={t}
-            />
-          ) : (
-            <DoneStep mode="analyze" onGo={() => router.replace("/app")} t={t} connectedHandle="@mara.lin" />
-          )}
-        </div>
-      </div>
-    </div>
+    <Frame
+      stepIndex={STAGE_INDEX[stage]}
+      showSkip={showSkip}
+      showBack={showBack}
+      preview={tw.preview}
+      onSkip={() => setStage("done")}
+      wide={wide}
+    >
+      {stage === "connect" ? (
+        <ConnectStep status={connectStatus} account={connected ? DEMO_ACCOUNT : null} onConnect={connect} onContinue={() => setStage("choose")} />
+      ) : stage === "choose" ? (
+        <ChooseStep
+          account={DEMO_ACCOUNT}
+          selected={chosen}
+          onSelect={setChosen}
+          onContinue={() => (chosen === "analyze" ? runAnalyze() : setStage("scratch"))}
+          onBack={firstRun ? () => setStage("connect") : null}
+          enoughPosts={enoughPosts}
+          postCount={postCount}
+        />
+      ) : stage === "analyze" ? (
+        <AnalyzeStep account={DEMO_ACCOUNT} stepIndex={anIndex} />
+      ) : stage === "scratch" ? (
+        <ScratchStep
+          desc={desc}
+          setDesc={setDesc}
+          write={write}
+          setWrite={setWrite}
+          avoid={avoid}
+          setAvoid={setAvoid}
+          busy={false}
+          onCreate={() => {
+            setMode("scratch");
+            setStage("done");
+          }}
+          onBack={() => setStage("choose")}
+        />
+      ) : (
+        <DoneStep account={DEMO_ACCOUNT} connected={connected} mode={mode} preview={tw.preview} onGo={() => router.replace("/app")} />
+      )}
+    </Frame>
   );
 }
 
+// ════════════════════════════════ Live flow ═════════════════════════════════
 export default function OnboardingPage() {
   const router = useRouter();
-  const { t } = useTranslation();
   const [tw, setTw] = useTweaks(OB_TWEAKS);
   const [tester, setTester] = useState(false);
 
   const [stage, setStage] = useState<Stage>("loading");
   const [accountId, setAccountId] = useState<number | null>(null);
-  // Q32: the just-connected account, shown in the Connect step's confirmation
-  // card (avatar + handle + Connected pill) before the user continues to Voice.
   const [connectedAccount, setConnectedAccount] = useState<ConnectedAccount | null>(null);
   const [status, setStatus] = useState<OnboardingStatus | null>(null);
+  const [connectStatus, setConnectStatus] = useState<ConnectStatus>("idle");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [alreadySetUp, setAlreadySetUp] = useState(false);
   const [preview, setPreview] = useState(false);
   const [previewResult, setPreviewResult] = useState<OnboardingPreview | null>(null);
-  const [mode, setMode] = useState<"analyze" | "scratch" | null>(null);
+  const [mode, setMode] = useState<Mode>(null);
   const [anIndex, setAnIndex] = useState(0);
 
-  const [intro, setIntro] = useState("");
-  const [themes, setThemes] = useState<string[]>([]);
-  const [excludes, setExcludes] = useState<string[]>([]);
+  const [desc, setDesc] = useState("");
+  const [write, setWrite] = useState<string[]>([]);
+  const [avoid, setAvoid] = useState<string[]>([]);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const { t } = useTranslation();
 
-  // Tester gate for the Tweaks debug panel.
   useEffect(() => {
     if (!getTokens()) return;
     fetchMe()
       .then((m) => setTester(m.is_tester))
       .catch(() => {});
   }, []);
-  // The panel's dark toggle, while in demo mode.
   useEffect(() => {
     if (tw.demo) document.documentElement.classList.toggle("dark", !!tw.dark);
   }, [tw.demo, tw.dark]);
-  // A ?demo=1 deep-link opens straight into demo mode (shareable per-screen review).
   useEffect(() => {
     try {
       if (new URLSearchParams(window.location.search).get("demo") === "1") setTw("demo", true);
@@ -309,15 +1104,13 @@ export default function OnboardingPage() {
   }, []);
 
   useEffect(() => {
-    if (tw.demo || isDemoUrl()) return; // demo mode renders mock data; don't hit the backend
+    if (tw.demo || isDemoUrl()) return; // demo renders mock data; don't hit the backend
     if (!getTokens()) {
       router.replace("/app/login");
       return;
     }
     const params = new URLSearchParams(window.location.search);
     setPreview(params.get("preview") === "1");
-    // Q32: we asked Meta to 302 back here (return_to=/app/onboarding) — read the
-    // one-shot result, then strip it so a refresh doesn't re-trigger it.
     const justConnected = params.get("threads_connected") === "1";
     const connectErr = params.get("threads_error");
     if (justConnected || connectErr) {
@@ -335,8 +1128,6 @@ export default function OnboardingPage() {
           setStage("connect");
           return;
         }
-        // After a fresh connect, operate on the newest account and show its
-        // confirmation; otherwise keep the persisted selection.
         const target = justConnected
           ? active.reduce((a, b) => (b.connected_at > a.connected_at ? b : a))
           : active.find((a) => a.id === getSelectedAccountId()) ?? active[0];
@@ -347,8 +1138,11 @@ export default function OnboardingPage() {
         setAlreadySetUp(!st.needs_onboarding);
         if (justConnected) {
           setConnectedAccount(target);
-          setStage("connect"); // renders the connected confirmation, not a redirect
+          setConnectStatus("connected");
+          setStage("connect");
         } else {
+          setConnectedAccount(target);
+          setConnectStatus("connected");
           setStage("choose");
         }
       } catch (e) {
@@ -366,6 +1160,26 @@ export default function OnboardingPage() {
 
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
+  const enoughPosts = status?.can_analyze ?? false;
+  const postCount = status?.post_count ?? 0;
+  // Revisit = arrived already set up (came from Settings): Connect is done,
+  // show "Back to Settings". First-run shows "Skip for now".
+  const firstRun = !alreadySetUp;
+
+  async function onConnect() {
+    setConnectStatus("connecting");
+    setError(null);
+    captureEvent("ui.threads_connect_clicked", { variant: "onboarding" });
+    try {
+      const returnUrl = `${window.location.origin}/app/onboarding`;
+      const { authorize_url } = await startThreadsConnect(returnUrl);
+      window.location.href = authorize_url;
+    } catch {
+      setConnectStatus("idle");
+      setError(t("onboarding.connect_failed"));
+    }
+  }
+
   async function runAnalyze() {
     if (accountId === null) return;
     setError(null);
@@ -374,6 +1188,8 @@ export default function OnboardingPage() {
       setBusy(true);
       try {
         setPreviewResult(await onboardingAnalyzePreview(accountId));
+        setMode("analyze");
+        setStage("done");
       } catch (e) {
         setError(errMsg(e));
       } finally {
@@ -381,14 +1197,13 @@ export default function OnboardingPage() {
       }
       return;
     }
-    // Live: show the progress animation while the analyze call runs.
     setStage("analyze");
     setAnIndex(0);
     timers.current.forEach(clearTimeout);
     timers.current = [];
     const n = ANALYZE_STEPS.length;
-    for (let i = 1; i < n; i++) timers.current.push(setTimeout(() => setAnIndex(i), i * 900));
-    const minDelay = new Promise<void>((r) => timers.current.push(setTimeout(r, n * 900)));
+    for (let i = 1; i < n; i++) timers.current.push(setTimeout(() => setAnIndex(i), i * 1100));
+    const minDelay = new Promise<void>((r) => timers.current.push(setTimeout(r, n * 1100)));
     try {
       await Promise.all([onboardingAnalyze(accountId), minDelay]);
       setAnIndex(n);
@@ -396,7 +1211,6 @@ export default function OnboardingPage() {
       setStage("done");
     } catch (e) {
       if (e instanceof ApiError && e.status === 422) {
-        // No usable posts after all → steer to the from-scratch form.
         setError(t("onboarding.analyze_none"));
         setStage("scratch");
       } else {
@@ -408,17 +1222,19 @@ export default function OnboardingPage() {
 
   async function onCreate() {
     if (accountId === null) return;
-    if (!intro.trim() && themes.length === 0) {
+    if (!desc.trim() && write.length === 0) {
       setError(t("onboarding.error_empty"));
       return;
     }
     setBusy(true);
     setError(null);
     captureEvent("ui.onboarding_from_scratch", { account_id: accountId, preview });
-    const payload = { intro: intro.trim(), themes_include: themes, themes_exclude: excludes };
+    const payload = { intro: desc.trim(), themes_include: write, themes_exclude: avoid };
     try {
       if (preview) {
         setPreviewResult(await onboardingFromScratchPreview(accountId, payload));
+        setMode("scratch");
+        setStage("done");
         setBusy(false);
         return;
       }
@@ -439,612 +1255,90 @@ export default function OnboardingPage() {
     setStage("done");
   }
 
-  const showSkip = !preview && !alreadySetUp && stage !== "done" && stage !== "analyze" && stage !== "loading";
+  const allow = tester || IS_DEV;
+  if (allow && tw.demo) {
+    return (
+      <>
+        <OnboardingDemo tw={tw} />
+        <ObTweaksPanel tw={tw} setTw={setTw} />
+      </>
+    );
+  }
+
+  const showSkip = firstRun && !preview && !alreadySetUp && stage !== "done" && stage !== "analyze" && stage !== "loading";
+  const showBack = (alreadySetUp || preview) && stage !== "analyze" && stage !== "loading";
+  const wide = stage === "scratch" || (stage === "done" && preview);
+  const acct = connectedAccount;
 
   return (
     <>
-      {(tester || IS_DEV) && tw.demo ? (
-        <OnboardingDemo tw={tw} />
+      {stage === "loading" ? (
+        <div className="flex min-h-screen items-center justify-center text-text" style={{ background: OB_BG }}>
+          <Spinner size={20} />
+        </div>
       ) : (
-    <div className="flex min-h-screen flex-col bg-bg text-text">
-      {/* Top bar */}
-      <header className="flex items-center gap-3 px-5 py-4 md:px-8">
-        <div className="flex items-center gap-2.5">
-          <BrandMark size={30} radius={9} />
-          <span className="text-h3 font-semibold tracking-tight">Pennedly</span>
-        </div>
-        {(alreadySetUp || preview) && (
-          <Link
-            href="/app/settings"
-            className="ml-3 text-small text-text-muted transition-colors hover:text-text"
-          >
-            ← {t("onboarding.exit")}
-          </Link>
-        )}
-        <div className="flex-1" />
-        <div className="flex items-center gap-2">
-          {showSkip && (
-            <button
-              onClick={onSkip}
-              className="rounded-md px-3 py-1.5 text-small font-medium text-text-muted transition-colors hover:bg-surface-2 hover:text-text"
-            >
-              {t("onboarding.skip_for_now")}
-            </button>
-          )}
-          <LanguageSwitcher />
-          <ThemeToggle />
-        </div>
-      </header>
-
-      <div className="flex flex-1 flex-col items-center px-5 py-8 md:py-12">
-        {stage !== "loading" && !previewResult && (
-          <div className="mb-8">
-            <Stepper current={STAGE_STEP[stage]} />
-          </div>
-        )}
-
-        <div className={cn("w-full", stage === "scratch" || previewResult ? "max-w-[600px]" : "max-w-[540px]")}>
-          {(preview || alreadySetUp) && !previewResult && (
-            <div
-              className={cn(
-                "mb-5 rounded-md border p-3 text-small leading-relaxed",
-                preview
-                  ? "border-accent/30 bg-accent/[0.08] text-text-muted"
-                  : "border-warning/30 bg-warning/[0.08] text-text-muted",
-              )}
-            >
-              {preview ? t("onboarding.preview_banner") : t("onboarding.already_setup")}
-            </div>
-          )}
+        <Frame stepIndex={STAGE_INDEX[stage]} showSkip={showSkip} showBack={showBack} preview={preview} onSkip={onSkip} wide={wide}>
           {error && (
-            <div className="mb-5 rounded-md border border-danger/40 bg-danger/10 p-3 text-small text-danger">
-              {error}
-            </div>
+            <div className="mb-5 rounded-md border border-danger/40 bg-danger/10 p-3 text-small text-danger">{error}</div>
           )}
-
-          {previewResult ? (
-            <PreviewResultPanel result={previewResult} t={t} onBack={() => { setPreviewResult(null); setError(null); }} />
-          ) : stage === "loading" ? (
-            <div className="flex justify-center py-10">
-              <Spinner size={20} />
-            </div>
-          ) : stage === "connect" ? (
-            <ConnectStep
-              t={t}
-              connected={connectedAccount}
-              onContinue={() => { setError(null); setStage("choose"); }}
-            />
+          {stage === "connect" ? (
+            <ConnectStep status={connectStatus} account={acct} onConnect={onConnect} onContinue={() => setStage("choose")} />
           ) : stage === "choose" ? (
             <ChooseStep
-              status={status}
-              busy={busy}
-              onAnalyze={runAnalyze}
-              onScratch={() => { setError(null); setStage("scratch"); }}
-              t={t}
+              account={acct}
+              selected={mode}
+              onSelect={setMode}
+              onContinue={() => (mode === "analyze" ? runAnalyze() : setStage("scratch"))}
+              onBack={null}
+              enoughPosts={enoughPosts}
+              postCount={postCount}
             />
           ) : stage === "analyze" ? (
-            <AnalyzeStep
-              index={anIndex}
-              t={t}
-              handle={connectedAccount?.username ? `@${connectedAccount.username}` : undefined}
-            />
+            <AnalyzeStep account={acct} stepIndex={anIndex} />
           ) : stage === "scratch" ? (
             <ScratchStep
-              intro={intro}
-              setIntro={setIntro}
-              themes={themes}
-              setThemes={setThemes}
-              excludes={excludes}
-              setExcludes={setExcludes}
+              desc={desc}
+              setDesc={setDesc}
+              write={write}
+              setWrite={setWrite}
+              avoid={avoid}
+              setAvoid={setAvoid}
               busy={busy}
-              preview={preview}
               onCreate={onCreate}
-              onBack={() => { setError(null); setStage("choose"); }}
-              t={t}
+              onBack={() => setStage("choose")}
             />
           ) : (
             <DoneStep
+              account={acct}
+              connected={!!acct}
               mode={mode}
+              preview={preview}
+              previewResult={previewResult}
               onGo={() => router.replace("/app")}
-              t={t}
-              connectedHandle={connectedAccount?.username ? `@${connectedAccount.username}` : undefined}
             />
           )}
-        </div>
-      </div>
-    </div>
+        </Frame>
       )}
-      {(tester || IS_DEV) && (
-        <TweaksPanel title="Onboarding">
-          <TweakSection label="Demo" />
-          <TweakToggle label="Mock data" value={tw.demo} onChange={(v) => setTw("demo", v)} />
-          <TweakSection label="Walkthrough" />
-          <TweakSelect
-            label="Jump to"
-            value={tw.jump}
-            options={["Connect", "Choose", "Analyze", "Scratch", "Done"]}
-            onChange={(v) => setTw("jump", v)}
-          />
-          <TweakSection label="Account posts" />
-          <TweakRadio
-            label="Posts"
-            value={tw.posts}
-            options={["Enough", "Too few"]}
-            onChange={(v) => setTw("posts", v)}
-          />
-          <TweakSection label="Appearance" />
-          <TweakToggle label="Dark mode" value={tw.dark} onChange={(v) => setTw("dark", v)} />
-        </TweaksPanel>
-      )}
+      {allow && <ObTweaksPanel tw={tw} setTw={setTw} />}
     </>
   );
 }
 
-function ConnectStep({
-  t,
-  connected,
-  onContinue,
-}: {
-  t: (k: MessageKey) => string;
-  connected?: ConnectedAccount | null;
-  onContinue?: () => void;
-}) {
-  const trust: { Icon: (p: { size?: number }) => ReactNode; key: MessageKey }[] = [
-    { Icon: IcEye, key: "onboarding.trust1" },
-    { Icon: IcCheck, key: "onboarding.trust2" },
-    { Icon: IcLock, key: "onboarding.trust3" },
-  ];
+// ───────────────────────────────── Tweaks ───────────────────────────────────
+function ObTweaksPanel({ tw, setTw }: { tw: ObTweaks; setTw: (k: keyof ObTweaks, v: ObTweaks[keyof ObTweaks]) => void }) {
   return (
-    <section className="rounded-2xl border border-border bg-surface px-9 pb-[30px] pt-9 shadow-lg">
-      <span className="mb-5 block h-14 w-14">
-        <BrandMark size={56} radius={16} className="shadow-sm" />
-      </span>
-      <div className="text-caption font-semibold uppercase tracking-[0.06em] text-accent">
-        {t("onboarding.welcome_eyebrow")}
-      </div>
-      <h1 className="mt-2.5 text-balance text-h1 font-semibold">{t("onboarding.connect_hero_title")}</h1>
-      <p className="mt-3 max-w-[46ch] text-pretty text-body leading-relaxed text-text-muted">
-        {t("onboarding.connect_hero_sub")}
-      </p>
-
-      {connected ? (
-        <>
-          {/* Q32: confirm the freshly-connected account before moving on. */}
-          <div className="mt-[22px] flex items-center gap-3 rounded-lg border border-border bg-surface-2 p-3.5">
-            <Avatar account={connected} size={42} />
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-small font-semibold leading-tight">{nameOf(connected)}</div>
-              {connected.username && (
-                <div className="mt-0.5 truncate text-caption text-text-subtle">@{connected.username}</div>
-              )}
-            </div>
-            <span className="inline-flex shrink-0 items-center gap-1.5 text-caption font-semibold text-success">
-              <span className="h-[7px] w-[7px] rounded-full bg-success" />
-              {t("onboarding.connected")}
-            </span>
-          </div>
-          <div className="mt-[26px] flex">
-            <Button variant="primary" size="lg" onClick={onContinue}>
-              {t("onboarding.continue")} <IcArrowRight size={17} />
-            </Button>
-          </div>
-        </>
-      ) : (
-        <>
-          <div className="mt-6 flex flex-col gap-[11px]">
-            {trust.map(({ Icon, key }) => (
-              <div key={key} className="flex items-start gap-[11px] text-small leading-snug text-text-muted">
-                <span className="-mt-px grid h-[26px] w-[26px] shrink-0 place-items-center rounded-sm border border-border bg-surface-2 text-text-subtle">
-                  <Icon size={15} />
-                </span>
-                {t(key)}
-              </div>
-            ))}
-          </div>
-          <div className="mt-[26px] flex">
-            <ConnectThreadsButton variant="primary" returnTo="/app/onboarding" />
-          </div>
-        </>
-      )}
-    </section>
-  );
-}
-
-function ChooseStep({
-  status,
-  busy,
-  onAnalyze,
-  onScratch,
-  t,
-}: {
-  status: OnboardingStatus | null;
-  busy: boolean;
-  onAnalyze: () => void;
-  onScratch: () => void;
-  t: (k: MessageKey) => string;
-}) {
-  const canAnalyze = status?.can_analyze ?? false;
-  const [selected, setSelected] = useState<"analyze" | "scratch">(canAnalyze ? "analyze" : "scratch");
-  const cards: {
-    id: "analyze" | "scratch";
-    Icon: (p: { size?: number }) => ReactNode;
-    title: MessageKey;
-    desc: MessageKey;
-    meta: string;
-    recommended?: boolean;
-    disabled?: boolean;
-  }[] = [
-    {
-      id: "analyze",
-      Icon: IcScan,
-      title: "onboarding.mode_analyze_title",
-      desc: "onboarding.mode_analyze_desc",
-      meta: canAnalyze
-        ? `${status?.post_count ?? 0} ${t("onboarding.analyze_count")}`
-        : (status?.post_count ?? 0) > 0
-          ? t("onboarding.analyze_locked")
-              .replace("{need}", String(status?.min_posts_to_analyze ?? 15))
-              .replace("{have}", String(status?.post_count ?? 0))
-          : t("onboarding.analyze_none"),
-      recommended: canAnalyze,
-      disabled: !canAnalyze,
-    },
-    {
-      id: "scratch",
-      Icon: IcPenLine,
-      title: "onboarding.mode_scratch_title",
-      desc: "onboarding.mode_scratch_desc",
-      meta: t("onboarding.mode_scratch_meta"),
-    },
-  ];
-  return (
-    <section className="rounded-2xl border border-border bg-surface px-9 pb-[30px] pt-9 shadow-lg">
-      <div className="text-caption font-semibold uppercase tracking-[0.06em] text-accent">
-        {t("onboarding.choose_eyebrow")}
-      </div>
-      <h1 className="mt-2.5 text-balance text-h1 font-semibold">{t("onboarding.choose_title")}</h1>
-      <p className="mt-3 max-w-[46ch] text-pretty text-body leading-relaxed text-text-muted">
-        {t("onboarding.choose_sub")}
-      </p>
-
-      <div role="radiogroup" className="mt-6 flex flex-col gap-3">
-        {cards.map((c) => {
-          const active = selected === c.id && !c.disabled;
-          return (
-            <button
-              key={c.id}
-              role="radio"
-              aria-checked={active}
-              aria-disabled={c.disabled}
-              onClick={() => {
-                if (!c.disabled) setSelected(c.id);
-              }}
-              className={cn(
-                "relative flex w-full items-start gap-3.5 rounded-lg border p-[18px] text-left transition-colors",
-                c.disabled
-                  ? "cursor-default border-border bg-surface-2 opacity-[0.72]"
-                  : active
-                    ? "border-text bg-surface shadow-[0_0_0_1px_var(--color-text)]"
-                    : "border-border hover:border-text/[0.18] hover:bg-surface-2",
-              )}
-            >
-              <span
-                className={cn(
-                  "grid h-[42px] w-[42px] shrink-0 place-items-center rounded-md border",
-                  active
-                    ? "border-text bg-text text-bg"
-                    : c.disabled
-                      ? "border-border bg-surface text-text-subtle"
-                      : "border-border bg-surface-2 text-text",
-                )}
-              >
-                <c.Icon size={20} />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="flex items-center gap-[9px]">
-                  <span className="text-h3 font-semibold">{t(c.title)}</span>
-                  {c.recommended && !c.disabled && (
-                    <span className="rounded-full border border-accent/30 bg-accent/12 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.03em] text-accent">
-                      {t("onboarding.recommended")}
-                    </span>
-                  )}
-                </span>
-                <span className="mt-1.5 block text-small leading-relaxed text-text-muted">{t(c.desc)}</span>
-                <span className="mt-2.5 inline-flex items-center gap-1.5 text-caption text-text-subtle">
-                  <IcClock size={13} />
-                  {c.meta}
-                </span>
-              </span>
-              {active && <IcCheck size={18} className="absolute right-4 top-4 shrink-0 text-text" />}
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="mt-[26px] flex items-center justify-end">
-        <Button
-          variant="primary"
-          size="lg"
-          loading={busy}
-          disabled={busy || !selected}
-          onClick={() => (selected === "analyze" ? onAnalyze() : onScratch())}
-        >
-          {t("onboarding.continue")} <IcArrowRight size={17} />
-        </Button>
-      </div>
-    </section>
-  );
-}
-
-function AnalyzeStep({
-  index,
-  t,
-  handle,
-}: {
-  index: number;
-  t: (k: MessageKey) => string;
-  handle?: string;
-}) {
-  return (
-    <section className="rounded-2xl border border-border bg-surface px-9 pb-[30px] pt-9 shadow-lg">
-      <div className="flex flex-col items-center text-center">
-        <span className="text-text" style={{ animation: "nibwrite 1.5s var(--ease-standard) infinite" }}>
-          <IcNib size={40} />
-        </span>
-        <h1 className="mt-4 text-balance text-h1 font-semibold">{t("onboarding.analyze_learning")}</h1>
-        {handle && (
-          <span className="mt-4 inline-flex items-center gap-2 text-small text-text-muted">{handle}</span>
-        )}
-        <div className="mt-[22px] flex w-full max-w-[340px] flex-col text-left">
-          {ANALYZE_STEPS.map((k, i) => {
-            const state = i < index ? "done" : i === index ? "active" : "todo";
-            return (
-              <div key={k} className="flex items-center gap-3 border-t border-border px-1 py-[11px] first:border-t-0">
-                <span
-                  className={cn(
-                    "grid h-[22px] w-[22px] shrink-0 place-items-center rounded-full border transition-colors",
-                    state === "done"
-                      ? "border-success bg-success text-success-foreground"
-                      : state === "active"
-                        ? "border-accent text-accent"
-                        : "border-border text-text-subtle",
-                  )}
-                >
-                  {state === "done" ? <IcCheck size={13} /> : state === "active" ? <Spinner size={11} /> : <span className="h-[5px] w-[5px] rounded-full bg-current opacity-50" />}
-                </span>
-                <span className={cn("text-small", state === "active" ? "font-medium text-text" : state === "done" ? "text-text" : "text-text-muted")}>
-                  {t(k)}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function ScratchStep({
-  intro,
-  setIntro,
-  themes,
-  setThemes,
-  excludes,
-  setExcludes,
-  busy,
-  preview,
-  onCreate,
-  onBack,
-  t,
-}: {
-  intro: string;
-  setIntro: (v: string) => void;
-  themes: string[];
-  setThemes: (v: string[]) => void;
-  excludes: string[];
-  setExcludes: (v: string[]) => void;
-  busy: boolean;
-  preview: boolean;
-  onCreate: () => void;
-  onBack: () => void;
-  t: (k: MessageKey) => string;
-}) {
-  const ready = intro.trim().length > 0 && themes.length > 0;
-  return (
-    <section className="rounded-2xl border border-border bg-surface px-9 pb-[30px] pt-9 shadow-lg">
-      <div className="text-caption font-semibold uppercase tracking-[0.06em] text-accent">
-        {t("onboarding.scratch_eyebrow")}
-      </div>
-      <h1 className="mt-2.5 text-balance text-h1 font-semibold">{t("onboarding.scratch_title")}</h1>
-      <p className="mt-3 max-w-[46ch] text-pretty text-body leading-relaxed text-text-muted">
-        {t("onboarding.scratch_body")}
-      </p>
-
-      <div className="mt-5 space-y-5">
-        <div>
-          <label className="mb-1.5 block text-small font-medium">{t("onboarding.form_intro_label")}</label>
-          <textarea
-            value={intro}
-            onChange={(e) => setIntro(e.target.value)}
-            rows={5}
-            placeholder={t("onboarding.form_intro_ph")}
-            className="w-full resize-y rounded-md border border-border bg-surface px-3 py-2.5 text-small leading-relaxed text-text outline-none focus:border-accent"
-          />
-        </div>
-        <div>
-          <label className="mb-1.5 block text-small font-medium">{t("onboarding.form_themes_label")}</label>
-          <TagInput items={themes} onChange={setThemes} placeholder={t("onboarding.form_themes_ph")} />
-        </div>
-        <div>
-          <label className="mb-1.5 block text-small font-medium">
-            {t("onboarding.form_exclude_label")}
-            <span className="ml-1.5 font-normal text-text-subtle">{t("onboarding.optional")}</span>
-          </label>
-          <TagInput items={excludes} onChange={setExcludes} placeholder={t("onboarding.form_exclude_ph")} variant="danger" />
-        </div>
-      </div>
-
-      <div className="mt-6 flex items-center justify-between">
-        <Button variant="ghost" size="sm" onClick={onBack} icon={<IcArrowLeft size={15} />}>
-          {t("onboarding.back")}
-        </Button>
-        <Button variant="primary" size="lg" loading={busy} disabled={busy || !ready} onClick={onCreate}>
-          {preview ? t("onboarding.preview_run") : t("onboarding.create_cta")}
-          <IcArrowRight size={17} />
-        </Button>
-      </div>
-    </section>
-  );
-}
-
-function DoneStep({
-  mode,
-  onGo,
-  t,
-  connectedHandle,
-}: {
-  mode: "analyze" | "scratch" | null;
-  onGo: () => void;
-  t: (k: MessageKey) => string;
-  connectedHandle?: string;
-}) {
-  const connected = !!connectedHandle;
-  const voiceLabel =
-    mode === "scratch"
-      ? t("onboarding.voice_scratch")
-      : mode === "analyze"
-        ? t("onboarding.voice_analyzed")
-        : t("onboarding.voice_later");
-  return (
-    <section className="rounded-2xl border border-border bg-surface px-9 pb-[30px] pt-9 text-center shadow-lg">
-      <span className="mx-auto mb-[18px] grid h-16 w-16 place-items-center rounded-full border border-success/30 bg-success/15 text-success">
-        <IcCheck size={30} />
-      </span>
-      <h1 className="mx-auto max-w-[42ch] text-balance text-h1 font-semibold">
-        {mode ? t("onboarding.done_title_set") : t("onboarding.done_title_skip")}
-      </h1>
-      <p className="mx-auto mt-3 max-w-[42ch] text-pretty text-body leading-relaxed text-text-muted">
-        {mode ? t("onboarding.done_sub_set") : t("onboarding.done_sub_skip")}
-      </p>
-
-      <div className="mt-6 overflow-hidden rounded-lg border border-border text-left">
-        <div className="flex items-center gap-3 px-[15px] py-[13px]">
-          <span className="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-sm border border-border bg-surface-2 text-text-muted">
-            <IcAt size={16} />
-          </span>
-          <div className="min-w-0 flex-1">
-            <div className="text-caption text-text-subtle">{t("onboarding.recap_account")}</div>
-            <div className="mt-px text-small font-semibold">
-              {connected ? connectedHandle : t("onboarding.recap_account_later")}
-            </div>
-          </div>
-          {connected && <IcCheck size={17} className="ml-auto shrink-0 text-success" />}
-        </div>
-        <div className="flex items-center gap-3 border-t border-border px-[15px] py-[13px]">
-          <span className="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-sm border border-border bg-surface-2 text-text-muted">
-            <IcVoice size={16} />
-          </span>
-          <div className="min-w-0 flex-1">
-            <div className="text-caption text-text-subtle">{t("onboarding.recap_voice")}</div>
-            <div className="mt-px text-small font-semibold">{voiceLabel}</div>
-          </div>
-          {mode && <IcCheck size={17} className="ml-auto shrink-0 text-success" />}
-        </div>
-      </div>
-
-      <div className="mt-6 flex items-center justify-between">
-        <Link href="/app/role-book" className={buttonClasses({ variant: "ghost", size: "sm" })}>
-          {t("onboarding.refine_voice")}
-        </Link>
-        <button onClick={onGo} className={buttonClasses({ variant: "primary", size: "lg" })}>
-          {t("onboarding.go_studio")} <IcArrowRight size={17} />
-        </button>
-      </div>
-    </section>
-  );
-}
-
-// The voice a preview run produced — shown but never saved.
-function PreviewResultPanel({
-  result,
-  t,
-  onBack,
-}: {
-  result: OnboardingPreview;
-  t: (k: MessageKey) => string;
-  onBack: () => void;
-}) {
-  const s = result.sections;
-  // Q60: sections are typed objects — flatten each to its display string for
-  // the read-only preview (themes → label, characteristics → "label: text"
-  // or text, do/dont/examples → text).
-  const lists: { key: MessageKey; items?: string[] }[] = [
-    { key: "onboarding.sec_themes", items: s.themes_include?.map((x) => x.label) },
-    { key: "onboarding.sec_exclude", items: s.themes_exclude?.map((x) => x.label) },
-    {
-      key: "onboarding.sec_voice",
-      items: s.voice_characteristics?.map((x) => (x.label ? `${x.label}: ${x.text}` : x.text)),
-    },
-    { key: "onboarding.sec_do", items: s.do_list?.map((x) => x.text) },
-    { key: "onboarding.sec_dont", items: s.dont_list?.map((x) => x.text) },
-    { key: "onboarding.sec_examples", items: s.examples?.map((e) => e.text) },
-  ];
-  return (
-    <section className="space-y-5 rounded-2xl border border-accent/30 bg-surface p-6 shadow-sm">
-      <div>
-        <h2 className="text-h2 font-semibold tracking-tight">{t("onboarding.preview_result_title")}</h2>
-        <p className="mt-1 text-caption text-text-subtle">{t("onboarding.preview_not_saved")}</p>
-        {result.posts_analyzed !== null && (
-          <p className="mt-1 text-caption text-text-subtle">
-            {t("onboarding.preview_posts_analyzed")} {result.posts_analyzed}
-          </p>
-        )}
-      </div>
-      {s.intro && (
-        <div>
-          <h3 className="mb-1 text-caption font-semibold uppercase tracking-wide text-text-subtle">
-            {t("onboarding.sec_intro")}
-          </h3>
-          <p className="whitespace-pre-wrap text-small leading-relaxed text-text">{s.intro}</p>
-        </div>
-      )}
-      {lists.map(({ key, items }) =>
-        items && items.length > 0 ? (
-          <div key={key}>
-            <h3 className="mb-1.5 text-caption font-semibold uppercase tracking-wide text-text-subtle">{t(key)}</h3>
-            <ul className="list-inside list-disc space-y-0.5 text-small text-text">
-              {items.map((it, i) => (
-                <li key={i}>{it}</li>
-              ))}
-            </ul>
-          </div>
-        ) : null,
-      )}
-      {result.would_seed_topics.length > 0 && (
-        <div>
-          <h3 className="mb-1.5 text-caption font-semibold uppercase tracking-wide text-text-subtle">
-            {t("onboarding.preview_would_topics")}
-          </h3>
-          <div className="flex flex-wrap gap-1.5">
-            {result.would_seed_topics.map((tp, i) => (
-              <span key={i} className="rounded-full bg-surface-2 px-2.5 py-0.5 text-caption text-text">
-                {tp}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-      <details className="rounded-md border border-border p-3">
-        <summary className="cursor-pointer text-caption font-medium text-text-subtle">
-          {t("onboarding.preview_full_rolebook")}
-        </summary>
-        <pre className="mt-2 whitespace-pre-wrap font-mono text-caption leading-relaxed text-text-muted">
-          {result.prompt_text}
-        </pre>
-      </details>
-      <Button variant="secondary" size="sm" onClick={onBack}>
-        {t("onboarding.preview_back")}
-      </Button>
-    </section>
+    <TweaksPanel title="Onboarding">
+      <TweakSection label="Demo" />
+      <TweakToggle label="Mock data" value={tw.demo} onChange={(v) => setTw("demo", v)} />
+      <TweakSection label="Entry" />
+      <TweakRadio label="Started from" value={tw.entry} options={["First run", "Revisit"]} onChange={(v) => setTw("entry", v)} />
+      <TweakRadio label="Account posts" value={tw.posts} options={["Enough", "Too few"]} onChange={(v) => setTw("posts", v)} />
+      <TweakToggle label="Preview mode" value={tw.preview} onChange={(v) => setTw("preview", v)} />
+      <TweakSection label="Walkthrough" />
+      <TweakRadio label="Jump to" value={tw.jump} options={["Connect", "Choose", "Analyze", "Scratch", "Done"]} onChange={(v) => setTw("jump", v)} />
+      <TweakButton label="Restart flow" onClick={() => setTw("jump", "Connect")} />
+      <TweakSection label="Appearance" />
+      <TweakToggle label="Dark mode" value={tw.dark} onChange={(v) => setTw("dark", v)} />
+    </TweaksPanel>
   );
 }

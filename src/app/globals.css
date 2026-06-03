@@ -227,6 +227,10 @@
 /* Landing status-dot ping — canonical (mirrors ds/components.css §3.5): the ring
    holds at rest, then bursts out to 2.2× and fades. */
 @keyframes ping { 75%, 100% { transform: scale(2.2); opacity: 0; } }
+/* Onboarding stage entrance + the "done" check pop — transform-only, so a
+   resting card never sticks invisible if interrupted. */
+@keyframes step-in { from { transform: translateY(8px); } to { transform: none; } }
+@keyframes pop-in { from { transform: scale(0.82); } to { transform: none; } }
 /* §3.7 skeleton shimmer — surface-2 base with a moving ink-tinted sheen.
    Disabled automatically by the reduced-motion rule above. */
 @keyframes shimmer { from { background-position: 220% 0; } to { background-position: -120% 0; } }

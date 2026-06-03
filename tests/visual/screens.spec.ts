@@ -1035,9 +1035,10 @@ test("Onboarding", async ({ page }) => {
   await page.waitForSelector("header", { state: "visible", timeout: 15_000 });
   await page.waitForTimeout(1000);
   await shoot(page, "onboarding");
-  // Continue (analyze) → the progress + done step.
+  // Choose stage: pick "Analyse my posts", continue → analyze progress → done.
+  await page.getByRole("radio", { name: /analyse my posts/i }).click();
   await page.getByRole("button", { name: /continue/i }).click();
-  await page.waitForTimeout(3400);
+  await page.waitForTimeout(3600);
   await shoot(page, "onboarding-done");
   // Q32: returning from OAuth (?threads_connected=1) shows the connected-account
   // confirmation card (avatar + handle + Connected pill + Continue), not a redirect.
