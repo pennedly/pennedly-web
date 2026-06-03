@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation";
 import {
   ApiError,
   clearTokens,
+  fetchMe,
   fetchMyAccounts,
   fetchOnboardingStatus,
   getTokens,
@@ -34,6 +35,14 @@ import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { ConnectThreadsButton } from "@/components/ConnectThreadsButton";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { TagInput } from "@/components/TagInput";
+import {
+  TweaksPanel,
+  TweakSection,
+  TweakToggle,
+  TweakRadio,
+  TweakSelect,
+  useTweaks,
+} from "@/components/tweaks/TweaksPanel";
 import {
   BrandMark,
   IcArrowLeft,
@@ -142,9 +151,92 @@ function Stepper({ current }: { current: number }) {
   );
 }
 
+// ── Tweaks (tester debug) ────────────────────────────────────────────────────
+type ObTweaks = { demo: boolean; jump: string; posts: string; dark: boolean };
+const OB_TWEAKS: ObTweaks = { demo: false, jump: "Connect", posts: "Enough", dark: false };
+const OB_JUMP_TO_STAGE: Record<string, Stage> = {
+  Connect: "connect",
+  Choose: "choose",
+  Analyze: "analyze",
+  Scratch: "scratch",
+  Done: "done",
+};
+
+// Tester-only demo render driven entirely by the Tweaks panel on MOCK data, so
+// every onboarding state can be checked 1-to-1 with the design without a backend.
+// Reuses the real step components; completely isolated from the live flow.
+function OnboardingDemo({ tw }: { tw: ObTweaks }) {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const [stage, setStage] = useState<Stage>(OB_JUMP_TO_STAGE[tw.jump] ?? "connect");
+  useEffect(() => setStage(OB_JUMP_TO_STAGE[tw.jump] ?? "connect"), [tw.jump]);
+  const [intro, setIntro] = useState("");
+  const [themes, setThemes] = useState<string[]>([]);
+  const [excludes, setExcludes] = useState<string[]>([]);
+  const status = {
+    needs_onboarding: true,
+    has_role_book: false,
+    post_count: tw.posts === "Enough" ? 47 : 2,
+    can_analyze: tw.posts === "Enough",
+  } as OnboardingStatus;
+  return (
+    <div className="flex min-h-screen flex-col bg-bg text-text">
+      <header className="flex items-center gap-3 px-5 py-4 md:px-8">
+        <div className="flex items-center gap-2.5">
+          <BrandMark size={30} radius={9} />
+          <span className="text-h3 font-semibold tracking-tight">Pennedly</span>
+        </div>
+        <div className="flex-1" />
+        <div className="flex items-center gap-2">
+          <LanguageSwitcher />
+          <ThemeToggle />
+        </div>
+      </header>
+      <div className="flex flex-1 flex-col items-center px-5 py-8 md:py-12">
+        <div className="mb-8">
+          <Stepper current={STAGE_STEP[stage]} />
+        </div>
+        <div className={cn("w-full", stage === "scratch" ? "max-w-[640px]" : "max-w-[560px]")}>
+          {stage === "connect" ? (
+            <ConnectStep t={t} connected={null} onContinue={() => setStage("choose")} />
+          ) : stage === "choose" ? (
+            <ChooseStep
+              status={status}
+              busy={false}
+              onAnalyze={() => setStage("analyze")}
+              onScratch={() => setStage("scratch")}
+              t={t}
+            />
+          ) : stage === "analyze" ? (
+            <AnalyzeStep index={2} t={t} />
+          ) : stage === "scratch" ? (
+            <ScratchStep
+              intro={intro}
+              setIntro={setIntro}
+              themes={themes}
+              setThemes={setThemes}
+              excludes={excludes}
+              setExcludes={setExcludes}
+              busy={false}
+              preview={false}
+              onCreate={() => setStage("done")}
+              onBack={() => setStage("choose")}
+              t={t}
+            />
+          ) : (
+            <DoneStep mode="analyze" onGo={() => router.replace("/app")} t={t} />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function OnboardingPage() {
   const router = useRouter();
   const { t } = useTranslation();
+  const [tw, setTw] = useTweaks(OB_TWEAKS);
+  const [tester, setTester] = useState(false);
 
   const [stage, setStage] = useState<Stage>("loading");
   const [accountId, setAccountId] = useState<number | null>(null);
@@ -165,7 +257,20 @@ export default function OnboardingPage() {
   const [excludes, setExcludes] = useState<string[]>([]);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
+  // Tester gate for the Tweaks debug panel.
   useEffect(() => {
+    if (!getTokens()) return;
+    fetchMe()
+      .then((m) => setTester(m.is_tester))
+      .catch(() => {});
+  }, []);
+  // The panel's dark toggle, while in demo mode.
+  useEffect(() => {
+    if (tw.demo) document.documentElement.classList.toggle("dark", !!tw.dark);
+  }, [tw.demo, tw.dark]);
+
+  useEffect(() => {
+    if (tw.demo) return; // demo mode renders mock data; don't hit the backend
     if (!getTokens()) {
       router.replace("/app/login");
       return;
@@ -218,7 +323,7 @@ export default function OnboardingPage() {
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [tw.demo]);
 
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
@@ -298,6 +403,10 @@ export default function OnboardingPage() {
   const showSkip = !preview && !alreadySetUp && stage !== "done" && stage !== "analyze" && stage !== "loading";
 
   return (
+    <>
+      {tester && tw.demo ? (
+        <OnboardingDemo tw={tw} />
+      ) : (
     <div className="flex min-h-screen flex-col bg-bg text-text">
       {/* Top bar */}
       <header className="flex items-center gap-3 px-5 py-4 md:px-8">
@@ -396,6 +505,30 @@ export default function OnboardingPage() {
         </div>
       </div>
     </div>
+      )}
+      {tester && (
+        <TweaksPanel title="Onboarding">
+          <TweakSection label="Demo" />
+          <TweakToggle label="Mock data" value={tw.demo} onChange={(v) => setTw("demo", v)} />
+          <TweakSection label="Walkthrough" />
+          <TweakSelect
+            label="Jump to"
+            value={tw.jump}
+            options={["Connect", "Choose", "Analyze", "Scratch", "Done"]}
+            onChange={(v) => setTw("jump", v)}
+          />
+          <TweakSection label="Account posts" />
+          <TweakRadio
+            label="Posts"
+            value={tw.posts}
+            options={["Enough", "Too few"]}
+            onChange={(v) => setTw("posts", v)}
+          />
+          <TweakSection label="Appearance" />
+          <TweakToggle label="Dark mode" value={tw.dark} onChange={(v) => setTw("dark", v)} />
+        </TweaksPanel>
+      )}
+    </>
   );
 }
 
