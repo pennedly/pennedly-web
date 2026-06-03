@@ -39,9 +39,26 @@ import { Toast, ToastHost } from "@/components/ui/toast";
 import { IcArrowRight, IcCheck, IcChevDown, IcExternal, IcMore, IcNib, IcPencil, IcReply, IcSend, IcSparkle, IcStudio, IcTrash, IcTweak, IcX } from "@/components/icons";
 import { SkeletonText } from "@/components/ui/feedback";
 import { cn } from "@/lib/cn";
+import { useDeferredCommit } from "@/lib/use-deferred-commit";
 import type { DraftSummary, Me } from "@/lib/types";
 
-type Toast = { id: number; message: string; tone: "success" | "error" };
+type Toast = {
+  id: number;
+  message: string;
+  tone: "success" | "error";
+  onUndo?: () => void;
+  undoLabel?: string;
+};
+
+// Q24: how long a destructive action stays undoable before it commits.
+const UNDO_MS = 5000;
+
+// Re-insert a removed item near its original position (undo / rollback).
+function insertAt<T>(arr: T[], index: number, item: T): T[] {
+  const next = arr.slice();
+  next.splice(Math.min(Math.max(index, 0), next.length), 0, item);
+  return next;
+}
 
 // Composer quick-start chips — clicking one fills the brief (free-text → the
 // generator writes about it). Keys live in the i18n catalog.
@@ -143,10 +160,27 @@ export default function Dashboard() {
   // true = "Voice active"; false = "Voice not set up" (= needs_onboarding).
   const [voiceReady, setVoiceReady] = useState<boolean | null>(null);
 
-  function toast(message: string, tone: Toast["tone"] = "success") {
+  const deferred = useDeferredCommit();
+
+  function toast(
+    message: string,
+    tone: Toast["tone"] = "success",
+    opts?: { onUndo?: () => void; undoLabel?: string; duration?: number },
+  ) {
     const id = Date.now() + Math.random();
-    setToasts((t) => [...t, { id, message, tone }]);
-    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3500);
+    setToasts((t) => [
+      ...t,
+      { id, message, tone, onUndo: opts?.onUndo, undoLabel: opts?.undoLabel },
+    ]);
+    setTimeout(
+      () => setToasts((t) => t.filter((x) => x.id !== id)),
+      opts?.duration ?? 3500,
+    );
+    return id;
+  }
+
+  function dismissToast(id: number) {
+    setToasts((t) => t.filter((x) => x.id !== id));
   }
 
   useEffect(() => {
@@ -427,40 +461,72 @@ export default function Dashboard() {
     setPublishTarget(null);
   }
 
-  async function onReject(id: number) {
-    captureEvent("ui.reject_clicked", { draft_id: id });
-    try {
-      await rejectDraft(id);
-      if (accountId !== null) {
-        const list = await listDrafts(accountId, { limit: 50 });
-        setDrafts(list.drafts);
-      }
-      toast(`#${id} ${t("dashboard.toast.rejected")}`);
-    } catch (e) {
-      toast(String(e), "error");
-    }
+  // Q24: optimistic + Undo. The card leaves the list immediately; the real
+  // rejectDraft call is deferred and an Undo toast can cancel it before it
+  // fires — so nothing reaches the server if the user changes their mind.
+  function onReject(draft: DraftSummary) {
+    const idx = drafts.findIndex((x) => x.id === draft.id);
+    captureEvent("ui.reject_clicked", { draft_id: draft.id });
+    setDrafts((p) => p.filter((x) => x.id !== draft.id));
+    const key = `reject-${draft.id}`;
+    deferred.schedule(
+      key,
+      async () => {
+        try {
+          await rejectDraft(draft.id);
+        } catch (e) {
+          setDrafts((p) => insertAt(p, idx, draft));
+          toast(String(e), "error");
+        }
+      },
+      UNDO_MS,
+    );
+    toast(`#${draft.id} ${t("dashboard.toast.rejected")}`, "success", {
+      duration: UNDO_MS,
+      undoLabel: t("common.undo"),
+      onUndo: () => {
+        deferred.cancel(key);
+        setDrafts((p) => insertAt(p, idx, draft));
+      },
+    });
   }
 
-  async function onDeleteDraft(id: number) {
-    captureEvent("ui.draft_delete_confirmed", { draft_id: id });
-    try {
-      await deleteDraft(id);
-      setDrafts((p) => p.filter((x) => x.id !== id));
-      setConfirmDeleteId(null);
-      toast(t("dashboard.draft.toast_deleted"));
-    } catch (e) {
-      let msg = String(e);
-      if (e instanceof ApiError) {
-        const detail =
-          typeof e.detail === "object" &&
-          e.detail !== null &&
-          "detail" in (e.detail as Record<string, unknown>)
-            ? (e.detail as { detail: unknown }).detail
-            : e.detail;
-        msg = `${e.status}: ${String(detail)}`;
-      }
-      toast(msg, "error");
-    }
+  function onDeleteDraft(draft: DraftSummary) {
+    const idx = drafts.findIndex((x) => x.id === draft.id);
+    captureEvent("ui.draft_delete_confirmed", { draft_id: draft.id });
+    setDrafts((p) => p.filter((x) => x.id !== draft.id));
+    setConfirmDeleteId(null);
+    const key = `delete-${draft.id}`;
+    deferred.schedule(
+      key,
+      async () => {
+        try {
+          await deleteDraft(draft.id);
+        } catch (e) {
+          setDrafts((p) => insertAt(p, idx, draft));
+          let msg = String(e);
+          if (e instanceof ApiError) {
+            const detail =
+              typeof e.detail === "object" &&
+              e.detail !== null &&
+              "detail" in (e.detail as Record<string, unknown>)
+                ? (e.detail as { detail: unknown }).detail
+                : e.detail;
+            msg = `${e.status}: ${String(detail)}`;
+          }
+          toast(msg, "error");
+        }
+      },
+      UNDO_MS,
+    );
+    toast(t("dashboard.draft.toast_deleted"), "success", {
+      duration: UNDO_MS,
+      undoLabel: t("common.undo"),
+      onUndo: () => {
+        deferred.cancel(key);
+        setDrafts((p) => insertAt(p, idx, draft));
+      },
+    });
   }
 
   // Feed split into status groups. "approved" = approved but not yet
@@ -957,7 +1023,7 @@ export default function Dashboard() {
                                     {
                                       label: t("dashboard.draft.reject"),
                                       Icon: IcX,
-                                      onClick: () => onReject(d.id),
+                                      onClick: () => onReject(d),
                                       danger: true,
                                     },
                                     {
@@ -1034,7 +1100,7 @@ export default function Dashboard() {
                         {t("common.cancel")}
                       </button>
                       <button
-                        onClick={() => onDeleteDraft(d.id)}
+                        onClick={() => onDeleteDraft(d)}
                         className="font-semibold text-danger hover:underline"
                       >
                         {t("dashboard.draft.delete")}
@@ -1064,7 +1130,20 @@ export default function Dashboard() {
       {/* Toasts */}
       <ToastHost>
         {toasts.map((to) => (
-          <Toast key={to.id} tone={to.tone} title={to.message} />
+          <Toast
+            key={to.id}
+            tone={to.tone}
+            title={to.message}
+            undoLabel={to.undoLabel}
+            onUndo={
+              to.onUndo
+                ? () => {
+                    to.onUndo?.();
+                    dismissToast(to.id);
+                  }
+                : undefined
+            }
+          />
         ))}
       </ToastHost>
     </div>

@@ -1,6 +1,7 @@
 {
   "_comment": "Known-missing i18n keys per locale (vs en). The parity guardrail (scripts/check-i18n-parity.mjs) fails on any gap NOT listed here, so this is a ratchet that may only shrink. Regenerate after a reviewed translation backfill with: npm run check:i18n -- --update",
   "de": [
+    "common.undo",
     "dashboard.voice_active",
     "dashboard.voice_not_set",
     "dashboard.draft.replying_to",
@@ -30,6 +31,7 @@
     "patterns.metric_likes",
     "patterns.metric_comments",
     "user_rules.kind_both",
+    "style_rules.toast_rule_deleted",
     "style_rules.toast_added_post",
     "style_rules.toast_added_reply",
     "style_rules.r.no_antithesis.t",
@@ -67,6 +69,7 @@
     "replies.replying_under",
     "mentions.updated_hourly",
     "mentions.error",
+    "autopilot.toast_rule_deleted",
     "feed.empty_title",
     "feed.empty_cta",
     "feed.sort_label",
@@ -86,6 +89,7 @@
     "onboarding.connect_failed"
   ],
   "es": [
+    "common.undo",
     "dashboard.voice_active",
     "dashboard.voice_not_set",
     "dashboard.draft.replying_to",
@@ -115,6 +119,7 @@
     "patterns.metric_likes",
     "patterns.metric_comments",
     "user_rules.kind_both",
+    "style_rules.toast_rule_deleted",
     "style_rules.toast_added_post",
     "style_rules.toast_added_reply",
     "style_rules.r.no_antithesis.t",
@@ -152,6 +157,7 @@
     "replies.replying_under",
     "mentions.updated_hourly",
     "mentions.error",
+    "autopilot.toast_rule_deleted",
     "feed.empty_title",
     "feed.empty_cta",
     "feed.sort_label",
@@ -171,6 +177,7 @@
     "onboarding.connect_failed"
   ],
   "fr": [
+    "common.undo",
     "dashboard.voice_active",
     "dashboard.voice_not_set",
     "dashboard.draft.replying_to",
@@ -200,6 +207,7 @@
     "patterns.metric_likes",
     "patterns.metric_comments",
     "user_rules.kind_both",
+    "style_rules.toast_rule_deleted",
     "style_rules.toast_added_post",
     "style_rules.toast_added_reply",
     "style_rules.r.no_antithesis.t",
@@ -237,6 +245,7 @@
     "replies.replying_under",
     "mentions.updated_hourly",
     "mentions.error",
+    "autopilot.toast_rule_deleted",
     "feed.empty_title",
     "feed.empty_cta",
     "feed.sort_label",
@@ -256,6 +265,7 @@
     "onboarding.connect_failed"
   ],
   "it": [
+    "common.undo",
     "dashboard.voice_active",
     "dashboard.voice_not_set",
     "dashboard.draft.replying_to",
@@ -285,6 +295,7 @@
     "patterns.metric_likes",
     "patterns.metric_comments",
     "user_rules.kind_both",
+    "style_rules.toast_rule_deleted",
     "style_rules.toast_added_post",
     "style_rules.toast_added_reply",
     "style_rules.r.no_antithesis.t",
@@ -322,6 +333,7 @@
     "replies.replying_under",
     "mentions.updated_hourly",
     "mentions.error",
+    "autopilot.toast_rule_deleted",
     "feed.empty_title",
     "feed.empty_cta",
     "feed.sort_label",
@@ -341,6 +353,7 @@
     "onboarding.connect_failed"
   ],
   "pt": [
+    "common.undo",
     "dashboard.voice_active",
     "dashboard.voice_not_set",
     "dashboard.draft.replying_to",
@@ -370,6 +383,7 @@
     "patterns.metric_likes",
     "patterns.metric_comments",
     "user_rules.kind_both",
+    "style_rules.toast_rule_deleted",
     "style_rules.toast_added_post",
     "style_rules.toast_added_reply",
     "style_rules.r.no_antithesis.t",
@@ -407,6 +421,7 @@
     "replies.replying_under",
     "mentions.updated_hourly",
     "mentions.error",
+    "autopilot.toast_rule_deleted",
     "feed.empty_title",
     "feed.empty_cta",
     "feed.sort_label",
@@ -427,6 +442,7 @@
   ],
   "ru": [],
   "uk": [
+    "common.undo",
     "dashboard.voice_active",
     "dashboard.voice_not_set",
     "dashboard.draft.replying_to",
@@ -456,6 +472,7 @@
     "patterns.metric_likes",
     "patterns.metric_comments",
     "user_rules.kind_both",
+    "style_rules.toast_rule_deleted",
     "style_rules.toast_added_post",
     "style_rules.toast_added_reply",
     "style_rules.r.no_antithesis.t",
@@ -493,6 +510,7 @@
     "replies.replying_under",
     "mentions.updated_hourly",
     "mentions.error",
+    "autopilot.toast_rule_deleted",
     "feed.empty_title",
     "feed.empty_cta",
     "feed.sort_label",

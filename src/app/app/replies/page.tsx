@@ -53,7 +53,16 @@ import {
 } from "@/components/icons";
 import type { CommentSummary } from "@/lib/types";
 
-type Toast = { id: number; message: string; tone: "success" | "error" };
+type Toast = {
+  id: number;
+  message: string;
+  tone: "success" | "error";
+  onUndo?: () => void;
+  undoLabel?: string;
+};
+
+// Q24: how long the Undo toast stays up after a skip.
+const UNDO_MS = 5000;
 
 const REPLY_LIMIT = 500;
 
@@ -138,10 +147,25 @@ export default function RepliesPage() {
   // shows that post's comments. The status `filter` is now per-post (client).
   const [selectedPost, setSelectedPost] = useState<number | null>(null);
 
-  function toast(message: string, tone: Toast["tone"] = "success") {
+  function toast(
+    message: string,
+    tone: Toast["tone"] = "success",
+    opts?: { onUndo?: () => void; undoLabel?: string; duration?: number },
+  ) {
     const id = Date.now() + Math.random();
-    setToasts((s) => [...s, { id, message, tone }]);
-    setTimeout(() => setToasts((s) => s.filter((x) => x.id !== id)), 3500);
+    setToasts((s) => [
+      ...s,
+      { id, message, tone, onUndo: opts?.onUndo, undoLabel: opts?.undoLabel },
+    ]);
+    setTimeout(
+      () => setToasts((s) => s.filter((x) => x.id !== id)),
+      opts?.duration ?? 3500,
+    );
+    return id;
+  }
+
+  function dismissToast(id: number) {
+    setToasts((s) => s.filter((x) => x.id !== id));
   }
 
   useEffect(() => {
@@ -309,11 +333,24 @@ export default function RepliesPage() {
   async function onSkip(comment: CommentSummary) {
     setBusyId(comment.id);
     captureEvent("ui.reply_skip_clicked", { comment_id: comment.id });
+    // Q24: optimistically move the card to the skipped bucket for instant
+    // feedback, then commit + reconcile. Undo restores via the existing
+    // restore endpoint (skip ↔ restore is already bidirectional).
+    setComments((cs) =>
+      cs.map((c) => (c.id === comment.id ? { ...c, status: "skipped" } : c)),
+    );
     try {
       await skipComment(comment.id);
-      toast(t("replies.toast_skipped"));
       await reload();
+      toast(t("replies.toast_skipped"), "success", {
+        duration: UNDO_MS,
+        undoLabel: t("common.undo"),
+        onUndo: () => void onRestore(comment),
+      });
     } catch (e) {
+      setComments((cs) =>
+        cs.map((c) => (c.id === comment.id ? { ...c, status: comment.status } : c)),
+      );
       toast(errMsg(e), "error");
     } finally {
       setBusyId(null);
@@ -793,7 +830,20 @@ export default function RepliesPage() {
 
       <ToastHost>
         {toasts.map((tt) => (
-          <Toast key={tt.id} tone={tt.tone} title={tt.message} />
+          <Toast
+            key={tt.id}
+            tone={tt.tone}
+            title={tt.message}
+            undoLabel={tt.undoLabel}
+            onUndo={
+              tt.onUndo
+                ? () => {
+                    tt.onUndo?.();
+                    dismissToast(tt.id);
+                  }
+                : undefined
+            }
+          />
         ))}
       </ToastHost>
     </div>

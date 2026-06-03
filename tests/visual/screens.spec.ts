@@ -872,6 +872,11 @@ test("shell — Studio", async ({ page }) => {
   await page.getByRole("button", { name: /more actions/i }).first().click();
   await page.waitForTimeout(250);
   await shoot(page, "shell-studio-menu");
+  // Q24: reject → the card leaves optimistically + an Undo toast appears
+  // (the real rejectDraft is deferred 5s; Undo cancels it before it fires).
+  await page.getByText("reject", { exact: true }).first().click();
+  await page.waitForTimeout(300);
+  await shoot(page, "shell-studio-undo");
   await page.mouse.click(6, 6); // outside-click closes the menu
   await page.waitForTimeout(200);
   // Consolidated account/profile menu (switch account · connect · settings · log out).

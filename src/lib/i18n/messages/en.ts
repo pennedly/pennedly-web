@@ -14,6 +14,7 @@ export const en = {
   "common.saving": "saving…",
   "common.save": "save",
   "common.cancel": "cancel",
+  "common.undo": "Undo",
   "common.hide": "hide",
   "common.translate_content": "Translate content",
   "common.translating": "Translating…",
@@ -525,6 +526,7 @@ export const en = {
   "style_rules.add_placeholder": "Add a rule in your own words…",
   "style_rules.add_rule": "Add rule",
   "style_rules.toast_rule_added": "Rule added · applied to every new draft",
+  "style_rules.toast_rule_deleted": "Rule deleted",
   "style_rules.toast_added_post": "Rule added · applied to posts",
   "style_rules.toast_added_reply": "Rule added · applied to replies",
   // Q49: built-in rule titles + descriptions, keyed by the backend rule `key`
@@ -705,6 +707,7 @@ export const en = {
   "autopilot.master_off": "Off · you approve everything yourself",
   "autopilot.toast_on": "Autopilot is on",
   "autopilot.toast_off": "Autopilot paused",
+  "autopilot.toast_rule_deleted": "Rule deleted",
   "autopilot.reassure_lead": "Autopilot is off — nothing posts or replies without you.",
   "autopilot.reassure_body":
     "Set up your schedule and reply policy below, then turn it on when you're ready. You can pause it again anytime.",

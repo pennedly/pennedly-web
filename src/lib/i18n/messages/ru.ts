@@ -12,6 +12,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "common.saving": "сохраняю…",
   "common.save": "сохранить",
   "common.cancel": "отмена",
+  "common.undo": "Отменить",
   "common.hide": "скрыть",
   "common.translate_content": "Перевести содержимое",
   "common.translating": "Перевожу…",
@@ -529,6 +530,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "style_rules.add_placeholder": "Добавь правило своими словами…",
   "style_rules.add_rule": "Добавить",
   "style_rules.toast_rule_added": "Правило добавлено · применяется к каждому новому черновику",
+  "style_rules.toast_rule_deleted": "Правило удалено",
   "style_rules.toast_added_post": "Правило добавлено · применяется к постам",
   "style_rules.toast_added_reply": "Правило добавлено · применяется к ответам",
   "style_rules.r.no_antithesis.t": "Без антитез «это не X, а Y»",
@@ -706,6 +708,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "autopilot.master_off": "Выключен · ты всё одобряешь сам",
   "autopilot.toast_on": "Автопилот включён",
   "autopilot.toast_off": "Автопилот на паузе",
+  "autopilot.toast_rule_deleted": "Правило удалено",
   "autopilot.reassure_lead": "Автопилот выключен — без тебя ничего не постится и не отвечается.",
   "autopilot.reassure_body":
     "Настрой расписание и политику ответов ниже, потом включи, когда будешь готов. Поставить на паузу можно в любой момент.",

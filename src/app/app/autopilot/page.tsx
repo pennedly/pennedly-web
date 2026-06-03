@@ -45,6 +45,7 @@ import {
   IcPlus,
   IcTrash,
 } from "@/components/icons";
+import { useDeferredCommit } from "@/lib/use-deferred-commit";
 import type {
   AutopilotConfig,
   AutopostActivity,
@@ -52,7 +53,22 @@ import type {
   TopicOption,
 } from "@/lib/types";
 
-type Toast = { id: number; message: string; tone: "success" | "error" };
+type Toast = {
+  id: number;
+  message: string;
+  tone: "success" | "error";
+  onUndo?: () => void;
+  undoLabel?: string;
+};
+
+// Q24: how long a deleted rule stays undoable before the delete commits.
+const UNDO_MS = 5000;
+
+function insertAt<T>(arr: T[], index: number, item: T): T[] {
+  const next = arr.slice();
+  next.splice(Math.min(Math.max(index, 0), next.length), 0, item);
+  return next;
+}
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const JITTERS = [0, 5, 10, 15, 30, 45, 60];
@@ -83,10 +99,27 @@ export default function AutopilotPage() {
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  function toast(message: string, tone: Toast["tone"] = "success") {
+  const deferred = useDeferredCommit();
+
+  function toast(
+    message: string,
+    tone: Toast["tone"] = "success",
+    opts?: { onUndo?: () => void; undoLabel?: string; duration?: number },
+  ) {
     const id = Date.now() + Math.random();
-    setToasts((s) => [...s, { id, message, tone }]);
-    setTimeout(() => setToasts((s) => s.filter((x) => x.id !== id)), 3500);
+    setToasts((s) => [
+      ...s,
+      { id, message, tone, onUndo: opts?.onUndo, undoLabel: opts?.undoLabel },
+    ]);
+    setTimeout(
+      () => setToasts((s) => s.filter((x) => x.id !== id)),
+      opts?.duration ?? 3500,
+    );
+    return id;
+  }
+
+  function dismissToast(id: number) {
+    setToasts((s) => s.filter((x) => x.id !== id));
   }
 
   useEffect(() => {
@@ -175,14 +208,33 @@ export default function AutopilotPage() {
     }
   }
 
-  async function onDelete(id: number) {
-    try {
-      await deleteAutopostRule(id);
-      setRules((rs) => rs.filter((r) => r.id !== id));
-      setConfirmDelete(null);
-    } catch (e) {
-      toast(String(e), "error");
-    }
+  // Q24: optimistic + Undo. The rule leaves the list immediately; the real
+  // delete is deferred and an Undo toast can cancel it before it fires.
+  function onDelete(rule: AutopostRule) {
+    const idx = rules.findIndex((r) => r.id === rule.id);
+    setRules((rs) => rs.filter((r) => r.id !== rule.id));
+    setConfirmDelete(null);
+    const key = `rule-${rule.id}`;
+    deferred.schedule(
+      key,
+      async () => {
+        try {
+          await deleteAutopostRule(rule.id);
+        } catch (e) {
+          setRules((rs) => insertAt(rs, idx, rule));
+          toast(String(e), "error");
+        }
+      },
+      UNDO_MS,
+    );
+    toast(t("autopilot.toast_rule_deleted"), "success", {
+      duration: UNDO_MS,
+      undoLabel: t("common.undo"),
+      onUndo: () => {
+        deferred.cancel(key);
+        setRules((rs) => insertAt(rs, idx, rule));
+      },
+    });
   }
 
   if (checking) return null;
@@ -330,7 +382,7 @@ export default function AutopilotPage() {
                         />
                         <button
                           onClick={() =>
-                            confirmDelete === r.id ? onDelete(r.id) : setConfirmDelete(r.id)
+                            confirmDelete === r.id ? onDelete(r) : setConfirmDelete(r.id)
                           }
                           onBlur={() => setConfirmDelete(null)}
                           aria-label={t("autopilot.delete_object")}
@@ -710,7 +762,20 @@ export default function AutopilotPage() {
 
       <ToastHost>
         {toasts.map((tt) => (
-          <Toast key={tt.id} tone={tt.tone} title={tt.message} />
+          <Toast
+            key={tt.id}
+            tone={tt.tone}
+            title={tt.message}
+            undoLabel={tt.undoLabel}
+            onUndo={
+              tt.onUndo
+                ? () => {
+                    tt.onUndo?.();
+                    dismissToast(tt.id);
+                  }
+                : undefined
+            }
+          />
         ))}
       </ToastHost>
     </div>

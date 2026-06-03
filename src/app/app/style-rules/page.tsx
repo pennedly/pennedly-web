@@ -30,6 +30,7 @@ import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/feedback";
 import { Toast, ToastHost } from "@/components/ui/toast";
 import { cn } from "@/lib/cn";
+import { useDeferredCommit } from "@/lib/use-deferred-commit";
 import { IcCheck, IcFilter, IcPencil, IcPenLine, IcPlus, IcSliders, IcTrash } from "@/components/icons";
 import type { StyleRule, StyleRuleCategory, UserRule } from "@/lib/types";
 
@@ -52,7 +53,22 @@ const CAT_LABEL: Record<StyleRuleCategory, MessageKey> = {
   tone: "style_rules.cat_tone",
 };
 
-type Toast = { id: number; message: string; tone: "success" | "error" };
+type Toast = {
+  id: number;
+  message: string;
+  tone: "success" | "error";
+  onUndo?: () => void;
+  undoLabel?: string;
+};
+
+// Q24: how long a deleted rule stays undoable before the delete commits.
+const UNDO_MS = 5000;
+
+function insertAt<T>(arr: T[], index: number, item: T): T[] {
+  const next = arr.slice();
+  next.splice(Math.min(Math.max(index, 0), next.length), 0, item);
+  return next;
+}
 
 // Q49: display title + description come from i18n keyed by the rule's stable
 // backend `key` (the Russian title/body stay as the model prompt only). Fall
@@ -108,10 +124,27 @@ export default function StyleRulesEditor() {
   const [bootError, setBootError] = useState<string | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  function toast(message: string, tone: Toast["tone"] = "success") {
+  const deferred = useDeferredCommit();
+
+  function toast(
+    message: string,
+    tone: Toast["tone"] = "success",
+    opts?: { onUndo?: () => void; undoLabel?: string; duration?: number },
+  ) {
     const id = Date.now() + Math.random();
-    setToasts((s) => [...s, { id, message, tone }]);
-    setTimeout(() => setToasts((s) => s.filter((x) => x.id !== id)), 3500);
+    setToasts((s) => [
+      ...s,
+      { id, message, tone, onUndo: opts?.onUndo, undoLabel: opts?.undoLabel },
+    ]);
+    setTimeout(
+      () => setToasts((s) => s.filter((x) => x.id !== id)),
+      opts?.duration ?? 3500,
+    );
+    return id;
+  }
+
+  function dismissToast(id: number) {
+    setToasts((s) => s.filter((x) => x.id !== id));
   }
 
   useEffect(() => {
@@ -189,15 +222,35 @@ export default function StyleRulesEditor() {
     }
   }
 
-  async function onDeleteRule(id: number) {
-    const prev = userRules;
+  // Q24: optimistic + Undo. Keeps the (id) signature FreeformRow calls with;
+  // looks up the rule so it can be re-inserted on undo / commit-error.
+  function onDeleteRule(id: number) {
+    const list = userRules ?? [];
+    const idx = list.findIndex((r) => r.id === id);
+    const rule = list[idx];
+    if (!rule) return;
     setUserRules((rs) => rs?.filter((r) => r.id !== id) ?? rs);
-    try {
-      await deleteUserRule(id);
-    } catch (e) {
-      setUserRules(prev ?? null);
-      toast(String(e), "error");
-    }
+    const key = `userrule-${id}`;
+    deferred.schedule(
+      key,
+      async () => {
+        try {
+          await deleteUserRule(id);
+        } catch (e) {
+          setUserRules((rs) => insertAt(rs ?? [], idx, rule));
+          toast(String(e), "error");
+        }
+      },
+      UNDO_MS,
+    );
+    toast(t("style_rules.toast_rule_deleted"), "success", {
+      duration: UNDO_MS,
+      undoLabel: t("common.undo"),
+      onUndo: () => {
+        deferred.cancel(key);
+        setUserRules((rs) => insertAt(rs ?? [], idx, rule));
+      },
+    });
   }
 
   if (bootError) {
@@ -402,7 +455,20 @@ export default function StyleRulesEditor() {
 
       <ToastHost>
         {toasts.map((tt) => (
-          <Toast key={tt.id} tone={tt.tone} title={tt.message} />
+          <Toast
+            key={tt.id}
+            tone={tt.tone}
+            title={tt.message}
+            undoLabel={tt.undoLabel}
+            onUndo={
+              tt.onUndo
+                ? () => {
+                    tt.onUndo?.();
+                    dismissToast(tt.id);
+                  }
+                : undefined
+            }
+          />
         ))}
       </ToastHost>
     </div>
