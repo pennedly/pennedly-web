@@ -815,7 +815,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "onboarding.form_exclude_ph": "добавь нежелательную тему",
   "onboarding.create_cta": "Создать мой голос",
   "onboarding.creating": "Создаю…",
-  "onboarding.back": "← назад",
+  "onboarding.back": "Назад",
   "onboarding.error_empty": "Добавь хотя бы описание голоса или одну тему.",
 
   // ── Статистика ────────────────────────────────────────────────
@@ -996,6 +996,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "onboarding.done_sub_skip":
     "Настроить голос можно в любой момент в Настройках. По умолчанию ничего не публикуется, пока ты не одобришь.",
   "onboarding.recap_voice": "Твой голос",
+  "onboarding.recap_account": "Подключённый аккаунт",
+  "onboarding.recap_account_later": "Добавить позже в Настройках",
   "onboarding.voice_analyzed": "Получен из твоих постов",
   "onboarding.voice_scratch": "Создан из твоего описания",
   "onboarding.voice_later": "Настроить позже",

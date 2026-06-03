@@ -813,7 +813,7 @@ export const en = {
   "onboarding.form_exclude_ph": "add a topic to avoid",
   "onboarding.create_cta": "Create my voice",
   "onboarding.creating": "Creating…",
-  "onboarding.back": "← back",
+  "onboarding.back": "Back",
   "onboarding.error_empty": "Add at least a voice description or one topic.",
 
   // ── Stats (analytics) ─────────────────────────────────────────
@@ -997,6 +997,8 @@ export const en = {
   "onboarding.done_sub_skip":
     "You can set up your voice anytime from Settings. By default, nothing is published until you approve it.",
   "onboarding.recap_voice": "Your voice",
+  "onboarding.recap_account": "Connected account",
+  "onboarding.recap_account_later": "Add later in Settings",
   "onboarding.voice_analyzed": "Analysed from your posts",
   "onboarding.voice_scratch": "Built from your description",
   "onboarding.voice_later": "Set up later",

@@ -47,6 +47,7 @@ import {
   BrandMark,
   IcArrowLeft,
   IcArrowRight,
+  IcAt,
   IcCheck,
   IcClock,
   IcEye,
@@ -191,6 +192,23 @@ function OnboardingDemo({ tw }: { tw: ObTweaks }) {
     post_count: tw.posts === "Enough" ? 47 : 2,
     can_analyze: tw.posts === "Enough",
   } as OnboardingStatus;
+  // Demo analyze: run the animation through, then land on the Done result —
+  // so "Jump to: Analyze" shows the full flow, not a frozen frame.
+  const [anIndex, setAnIndex] = useState(0);
+  useEffect(() => {
+    if (stage !== "analyze") return;
+    setAnIndex(0);
+    let i = 0;
+    const id = setInterval(() => {
+      i += 1;
+      if (i < ANALYZE_STEPS.length) setAnIndex(i);
+      else {
+        clearInterval(id);
+        setTimeout(() => setStage("done"), 700);
+      }
+    }, 1000);
+    return () => clearInterval(id);
+  }, [stage]);
   return (
     <div className="flex min-h-screen flex-col bg-bg text-text">
       <header className="flex items-center gap-3 px-5 py-4 md:px-8">
@@ -208,7 +226,7 @@ function OnboardingDemo({ tw }: { tw: ObTweaks }) {
         <div className="mb-8">
           <Stepper current={STAGE_STEP[stage]} />
         </div>
-        <div className={cn("w-full", stage === "scratch" ? "max-w-[640px]" : "max-w-[560px]")}>
+        <div className={cn("w-full", stage === "scratch" ? "max-w-[600px]" : "max-w-[540px]")}>
           {stage === "connect" ? (
             <ConnectStep t={t} connected={null} onContinue={() => setStage("choose")} />
           ) : stage === "choose" ? (
@@ -220,7 +238,7 @@ function OnboardingDemo({ tw }: { tw: ObTweaks }) {
               t={t}
             />
           ) : stage === "analyze" ? (
-            <AnalyzeStep index={2} t={t} />
+            <AnalyzeStep index={anIndex} t={t} handle="@mara.lin" />
           ) : stage === "scratch" ? (
             <ScratchStep
               intro={intro}
@@ -236,7 +254,7 @@ function OnboardingDemo({ tw }: { tw: ObTweaks }) {
               t={t}
             />
           ) : (
-            <DoneStep mode="analyze" onGo={() => router.replace("/app")} t={t} />
+            <DoneStep mode="analyze" onGo={() => router.replace("/app")} t={t} connectedHandle="@mara.lin" />
           )}
         </div>
       </div>
@@ -465,7 +483,7 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        <div className={cn("w-full", stage === "scratch" || previewResult ? "max-w-[640px]" : "max-w-[560px]")}>
+        <div className={cn("w-full", stage === "scratch" || previewResult ? "max-w-[600px]" : "max-w-[540px]")}>
           {(preview || alreadySetUp) && !previewResult && (
             <div
               className={cn(
@@ -505,7 +523,11 @@ export default function OnboardingPage() {
               t={t}
             />
           ) : stage === "analyze" ? (
-            <AnalyzeStep index={anIndex} t={t} />
+            <AnalyzeStep
+              index={anIndex}
+              t={t}
+              handle={connectedAccount?.username ? `@${connectedAccount.username}` : undefined}
+            />
           ) : stage === "scratch" ? (
             <ScratchStep
               intro={intro}
@@ -521,7 +543,12 @@ export default function OnboardingPage() {
               t={t}
             />
           ) : (
-            <DoneStep mode={mode} onGo={() => router.replace("/app")} t={t} />
+            <DoneStep
+              mode={mode}
+              onGo={() => router.replace("/app")}
+              t={t}
+              connectedHandle={connectedAccount?.username ? `@${connectedAccount.username}` : undefined}
+            />
           )}
         </div>
       </div>
@@ -568,54 +595,53 @@ function ConnectStep({
     { Icon: IcLock, key: "onboarding.trust3" },
   ];
   return (
-    <section className="rounded-2xl border border-border bg-surface p-7 text-center shadow-sm">
-      <span className="mx-auto mb-4 grid h-14 w-14 place-items-center">
-        <BrandMark size={56} radius={16} />
+    <section className="rounded-2xl border border-border bg-surface px-9 pb-[30px] pt-9 shadow-lg">
+      <span className="mb-5 block h-14 w-14">
+        <BrandMark size={56} radius={16} className="shadow-sm" />
       </span>
-      <div className="text-caption font-semibold uppercase tracking-wide text-text-subtle">
+      <div className="text-caption font-semibold uppercase tracking-[0.06em] text-accent">
         {t("onboarding.welcome_eyebrow")}
       </div>
-      <h1 className="mt-2 text-h1 font-semibold tracking-tight">{t("onboarding.connect_hero_title")}</h1>
-      <p className="mx-auto mt-2.5 max-w-[46ch] text-body leading-relaxed text-text-muted">
+      <h1 className="mt-2.5 text-balance text-h1 font-semibold">{t("onboarding.connect_hero_title")}</h1>
+      <p className="mt-3 max-w-[46ch] text-pretty text-body leading-relaxed text-text-muted">
         {t("onboarding.connect_hero_sub")}
       </p>
 
       {connected ? (
         <>
           {/* Q32: confirm the freshly-connected account before moving on. */}
-          <div className="mx-auto mt-6 flex max-w-[34ch] items-center gap-3 rounded-lg border border-success/30 bg-success/[0.06] p-3.5 text-left">
+          <div className="mt-[22px] flex items-center gap-3 rounded-lg border border-border bg-surface-2 p-3.5">
             <Avatar account={connected} size={42} />
             <div className="min-w-0 flex-1">
-              <div className="truncate text-small font-semibold">{nameOf(connected)}</div>
+              <div className="truncate text-small font-semibold leading-tight">{nameOf(connected)}</div>
               {connected.username && (
-                <div className="truncate text-caption text-text-subtle">@{connected.username}</div>
+                <div className="mt-0.5 truncate text-caption text-text-subtle">@{connected.username}</div>
               )}
             </div>
-            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-success/30 bg-success/12 px-2.5 py-1 text-caption font-medium text-success">
-              <span className="h-1.5 w-1.5 rounded-full bg-success" />
+            <span className="inline-flex shrink-0 items-center gap-1.5 text-caption font-semibold text-success">
+              <span className="h-[7px] w-[7px] rounded-full bg-success" />
               {t("onboarding.connected")}
             </span>
           </div>
-          <div className="mt-6 flex justify-center">
-            <Button variant="primary" onClick={onContinue}>
-              {t("onboarding.continue")}
-              <IcArrowRight size={17} />
+          <div className="mt-[26px] flex">
+            <Button variant="primary" size="lg" onClick={onContinue}>
+              {t("onboarding.continue")} <IcArrowRight size={17} />
             </Button>
           </div>
         </>
       ) : (
         <>
-          <div className="mx-auto mt-5 flex max-w-[34ch] flex-col gap-2.5 text-left">
+          <div className="mt-6 flex flex-col gap-[11px]">
             {trust.map(({ Icon, key }) => (
-              <div key={key} className="flex items-center gap-2.5 text-small text-text-muted">
-                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md border border-border bg-surface-2 text-text-subtle">
+              <div key={key} className="flex items-start gap-[11px] text-small leading-snug text-text-muted">
+                <span className="-mt-px grid h-[26px] w-[26px] shrink-0 place-items-center rounded-sm border border-border bg-surface-2 text-text-subtle">
                   <Icon size={15} />
                 </span>
                 {t(key)}
               </div>
             ))}
           </div>
-          <div className="mt-6 flex justify-center">
+          <div className="mt-[26px] flex">
             <ConnectThreadsButton variant="primary" returnTo="/app/onboarding" />
           </div>
         </>
@@ -672,96 +698,127 @@ function ChooseStep({
     },
   ];
   return (
-    <section className="rounded-2xl border border-border bg-surface p-7 shadow-sm">
-      <div className="text-caption font-semibold uppercase tracking-wide text-text-subtle">
+    <section className="rounded-2xl border border-border bg-surface px-9 pb-[30px] pt-9 shadow-lg">
+      <div className="text-caption font-semibold uppercase tracking-[0.06em] text-accent">
         {t("onboarding.choose_eyebrow")}
       </div>
-      <h1 className="mt-2 text-h1 font-semibold tracking-tight">{t("onboarding.choose_title")}</h1>
-      <p className="mt-2.5 text-body leading-relaxed text-text-muted">{t("onboarding.choose_sub")}</p>
+      <h1 className="mt-2.5 text-balance text-h1 font-semibold">{t("onboarding.choose_title")}</h1>
+      <p className="mt-3 max-w-[46ch] text-pretty text-body leading-relaxed text-text-muted">
+        {t("onboarding.choose_sub")}
+      </p>
 
-      <div role="radiogroup" className="mt-5 flex flex-col gap-3">
+      <div role="radiogroup" className="mt-6 flex flex-col gap-3">
         {cards.map((c) => {
-          const active = selected === c.id;
+          const active = selected === c.id && !c.disabled;
           return (
             <button
               key={c.id}
               role="radio"
               aria-checked={active}
-              disabled={c.disabled}
-              onClick={() => setSelected(c.id)}
+              aria-disabled={c.disabled}
+              onClick={() => {
+                if (!c.disabled) setSelected(c.id);
+              }}
               className={cn(
-                "flex items-start gap-3.5 rounded-lg border p-4 text-left transition-colors",
-                c.disabled && "cursor-not-allowed opacity-60",
-                active ? "border-accent/55 bg-surface-2" : "border-border hover:bg-surface-2",
+                "relative flex w-full items-start gap-3.5 rounded-lg border p-[18px] text-left transition-colors",
+                c.disabled
+                  ? "cursor-default border-border bg-surface-2 opacity-[0.72]"
+                  : active
+                    ? "border-text bg-surface shadow-[0_0_0_1px_var(--color-text)]"
+                    : "border-border hover:border-text/[0.18] hover:bg-surface-2",
               )}
             >
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-border bg-surface text-text-muted">
+              <span
+                className={cn(
+                  "grid h-[42px] w-[42px] shrink-0 place-items-center rounded-md border",
+                  active
+                    ? "border-text bg-text text-bg"
+                    : c.disabled
+                      ? "border-border bg-surface text-text-subtle"
+                      : "border-border bg-surface-2 text-text",
+                )}
+              >
                 <c.Icon size={20} />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="flex items-center gap-2">
-                  <span className="text-body font-semibold">{t(c.title)}</span>
-                  {c.recommended && (
-                    <span className="rounded-full border border-accent/30 bg-accent/12 px-2 py-px text-caption font-semibold text-accent">
+                <span className="flex items-center gap-[9px]">
+                  <span className="text-h3 font-semibold">{t(c.title)}</span>
+                  {c.recommended && !c.disabled && (
+                    <span className="rounded-full border border-accent/30 bg-accent/12 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.03em] text-accent">
                       {t("onboarding.recommended")}
                     </span>
                   )}
                 </span>
-                <span className="mt-1 block text-small leading-relaxed text-text-muted">{t(c.desc)}</span>
-                <span className="mt-2 inline-flex items-center gap-1.5 text-caption text-text-subtle">
+                <span className="mt-1.5 block text-small leading-relaxed text-text-muted">{t(c.desc)}</span>
+                <span className="mt-2.5 inline-flex items-center gap-1.5 text-caption text-text-subtle">
                   <IcClock size={13} />
                   {c.meta}
                 </span>
               </span>
-              {active && <IcCheck size={18} className="shrink-0 text-accent" />}
+              {active && <IcCheck size={18} className="absolute right-4 top-4 shrink-0 text-text" />}
             </button>
           );
         })}
       </div>
 
-      <div className="mt-6 flex items-center justify-end">
+      <div className="mt-[26px] flex items-center justify-end">
         <Button
           variant="primary"
+          size="lg"
           loading={busy}
-          disabled={busy}
+          disabled={busy || !selected}
           onClick={() => (selected === "analyze" ? onAnalyze() : onScratch())}
         >
-          {t("onboarding.continue")}
-          <IcArrowRight size={17} />
+          {t("onboarding.continue")} <IcArrowRight size={17} />
         </Button>
       </div>
     </section>
   );
 }
 
-function AnalyzeStep({ index, t }: { index: number; t: (k: MessageKey) => string }) {
+function AnalyzeStep({
+  index,
+  t,
+  handle,
+}: {
+  index: number;
+  t: (k: MessageKey) => string;
+  handle?: string;
+}) {
   return (
-    <section className="flex flex-col items-center rounded-2xl border border-accent/40 bg-surface p-8 text-center shadow-md">
-      <span className="text-text" style={{ animation: "nibwrite 1.5s ease infinite" }}>
-        <IcNib size={40} />
-      </span>
-      <h1 className="mt-4 text-h2 font-semibold tracking-tight">{t("onboarding.analyze_learning")}</h1>
-      <div className="mt-6 flex w-full max-w-[360px] flex-col text-left">
-        {ANALYZE_STEPS.map((k, i) => {
-          const state = i < index ? "done" : i === index ? "active" : "todo";
-          return (
-            <div key={k} className="flex items-center gap-3 border-t border-border py-3 first:border-t-0">
-              <span
-                className={cn(
-                  "grid h-[22px] w-[22px] shrink-0 place-items-center rounded-full border",
-                  state === "done"
-                    ? "border-success bg-success text-success-foreground"
-                    : state === "active"
-                      ? "border-accent text-accent"
-                      : "border-border text-text-subtle",
-                )}
-              >
-                {state === "done" ? <IcCheck size={13} /> : state === "active" ? <Spinner size={11} /> : <span className="h-1.5 w-1.5 rounded-full bg-current opacity-50" />}
-              </span>
-              <span className={cn("text-small", state === "todo" ? "text-text-muted" : "font-medium text-text")}>{t(k)}</span>
-            </div>
-          );
-        })}
+    <section className="rounded-2xl border border-border bg-surface px-9 pb-[30px] pt-9 shadow-lg">
+      <div className="flex flex-col items-center text-center">
+        <span className="text-text" style={{ animation: "nibwrite 1.5s var(--ease-standard) infinite" }}>
+          <IcNib size={40} />
+        </span>
+        <h1 className="mt-4 text-balance text-h1 font-semibold">{t("onboarding.analyze_learning")}</h1>
+        {handle && (
+          <span className="mt-4 inline-flex items-center gap-2 text-small text-text-muted">{handle}</span>
+        )}
+        <div className="mt-[22px] flex w-full max-w-[340px] flex-col text-left">
+          {ANALYZE_STEPS.map((k, i) => {
+            const state = i < index ? "done" : i === index ? "active" : "todo";
+            return (
+              <div key={k} className="flex items-center gap-3 border-t border-border px-1 py-[11px] first:border-t-0">
+                <span
+                  className={cn(
+                    "grid h-[22px] w-[22px] shrink-0 place-items-center rounded-full border transition-colors",
+                    state === "done"
+                      ? "border-success bg-success text-success-foreground"
+                      : state === "active"
+                        ? "border-accent text-accent"
+                        : "border-border text-text-subtle",
+                  )}
+                >
+                  {state === "done" ? <IcCheck size={13} /> : state === "active" ? <Spinner size={11} /> : <span className="h-[5px] w-[5px] rounded-full bg-current opacity-50" />}
+                </span>
+                <span className={cn("text-small", state === "active" ? "font-medium text-text" : state === "done" ? "text-text" : "text-text-muted")}>
+                  {t(k)}
+                </span>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </section>
   );
@@ -794,12 +851,14 @@ function ScratchStep({
 }) {
   const ready = intro.trim().length > 0 && themes.length > 0;
   return (
-    <section className="rounded-2xl border border-border bg-surface p-7 shadow-sm">
-      <div className="text-caption font-semibold uppercase tracking-wide text-text-subtle">
+    <section className="rounded-2xl border border-border bg-surface px-9 pb-[30px] pt-9 shadow-lg">
+      <div className="text-caption font-semibold uppercase tracking-[0.06em] text-accent">
         {t("onboarding.scratch_eyebrow")}
       </div>
-      <h1 className="mt-2 text-h1 font-semibold tracking-tight">{t("onboarding.scratch_title")}</h1>
-      <p className="mt-2.5 text-body leading-relaxed text-text-muted">{t("onboarding.scratch_body")}</p>
+      <h1 className="mt-2.5 text-balance text-h1 font-semibold">{t("onboarding.scratch_title")}</h1>
+      <p className="mt-3 max-w-[46ch] text-pretty text-body leading-relaxed text-text-muted">
+        {t("onboarding.scratch_body")}
+      </p>
 
       <div className="mt-5 space-y-5">
         <div>
@@ -829,7 +888,7 @@ function ScratchStep({
         <Button variant="ghost" size="sm" onClick={onBack} icon={<IcArrowLeft size={15} />}>
           {t("onboarding.back")}
         </Button>
-        <Button variant="primary" loading={busy} disabled={busy || !ready} onClick={onCreate}>
+        <Button variant="primary" size="lg" loading={busy} disabled={busy || !ready} onClick={onCreate}>
           {preview ? t("onboarding.preview_run") : t("onboarding.create_cta")}
           <IcArrowRight size={17} />
         </Button>
@@ -842,11 +901,14 @@ function DoneStep({
   mode,
   onGo,
   t,
+  connectedHandle,
 }: {
   mode: "analyze" | "scratch" | null;
   onGo: () => void;
   t: (k: MessageKey) => string;
+  connectedHandle?: string;
 }) {
+  const connected = !!connectedHandle;
   const voiceLabel =
     mode === "scratch"
       ? t("onboarding.voice_scratch")
@@ -854,27 +916,39 @@ function DoneStep({
         ? t("onboarding.voice_analyzed")
         : t("onboarding.voice_later");
   return (
-    <section className="rounded-2xl border border-border bg-surface p-7 text-center shadow-sm">
-      <span className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-full border border-success/30 bg-success/12 text-success">
+    <section className="rounded-2xl border border-border bg-surface px-9 pb-[30px] pt-9 text-center shadow-lg">
+      <span className="mx-auto mb-[18px] grid h-16 w-16 place-items-center rounded-full border border-success/30 bg-success/15 text-success">
         <IcCheck size={30} />
       </span>
-      <h1 className="text-h1 font-semibold tracking-tight">
+      <h1 className="mx-auto max-w-[42ch] text-balance text-h1 font-semibold">
         {mode ? t("onboarding.done_title_set") : t("onboarding.done_title_skip")}
       </h1>
-      <p className="mx-auto mt-2.5 max-w-[46ch] text-body leading-relaxed text-text-muted">
+      <p className="mx-auto mt-3 max-w-[42ch] text-pretty text-body leading-relaxed text-text-muted">
         {mode ? t("onboarding.done_sub_set") : t("onboarding.done_sub_skip")}
       </p>
 
-      <div className="mt-6 flex flex-col gap-2 text-left">
-        <div className="flex items-center gap-3 rounded-md border border-border bg-surface-2 p-3.5">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-border bg-surface text-text-muted">
+      <div className="mt-6 overflow-hidden rounded-lg border border-border text-left">
+        <div className="flex items-center gap-3 px-[15px] py-[13px]">
+          <span className="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-sm border border-border bg-surface-2 text-text-muted">
+            <IcAt size={16} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="text-caption text-text-subtle">{t("onboarding.recap_account")}</div>
+            <div className="mt-px text-small font-semibold">
+              {connected ? connectedHandle : t("onboarding.recap_account_later")}
+            </div>
+          </div>
+          {connected && <IcCheck size={17} className="ml-auto shrink-0 text-success" />}
+        </div>
+        <div className="flex items-center gap-3 border-t border-border px-[15px] py-[13px]">
+          <span className="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-sm border border-border bg-surface-2 text-text-muted">
             <IcVoice size={16} />
           </span>
           <div className="min-w-0 flex-1">
             <div className="text-caption text-text-subtle">{t("onboarding.recap_voice")}</div>
-            <div className="text-small font-medium">{voiceLabel}</div>
+            <div className="mt-px text-small font-semibold">{voiceLabel}</div>
           </div>
-          {mode && <IcCheck size={17} className="shrink-0 text-success" />}
+          {mode && <IcCheck size={17} className="ml-auto shrink-0 text-success" />}
         </div>
       </div>
 
@@ -882,9 +956,8 @@ function DoneStep({
         <Link href="/app/role-book" className={buttonClasses({ variant: "ghost", size: "sm" })}>
           {t("onboarding.refine_voice")}
         </Link>
-        <button onClick={onGo} className={buttonClasses({ variant: "primary" })}>
-          {t("onboarding.go_studio")}
-          <IcArrowRight size={17} />
+        <button onClick={onGo} className={buttonClasses({ variant: "primary", size: "lg" })}>
+          {t("onboarding.go_studio")} <IcArrowRight size={17} />
         </button>
       </div>
     </section>

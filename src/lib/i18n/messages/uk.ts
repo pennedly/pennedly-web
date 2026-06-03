@@ -757,7 +757,7 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "onboarding.form_exclude_ph": "додай тему, якої уникати",
   "onboarding.create_cta": "Створити мій голос",
   "onboarding.creating": "Створюю…",
-  "onboarding.back": "← назад",
+  "onboarding.back": "Назад",
   "onboarding.error_empty": "Додай хоча б опис голосу або одну тему.",
   "onboarding.already_setup":
     "Твій голос уже налаштовано — повторне проходження замінить його (попередня версія зберігається).",
@@ -819,6 +819,8 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "onboarding.done_sub_skip":
     "Голос можна налаштувати будь-коли в Налаштуваннях. За замовчуванням нічого не публікується, поки ти не схвалиш.",
   "onboarding.recap_voice": "Твій голос",
+  "onboarding.recap_account": "Підключений обліковий запис",
+  "onboarding.recap_account_later": "Додати пізніше в Налаштуваннях",
   "onboarding.voice_analyzed": "Проаналізовано з твоїх постів",
   "onboarding.voice_scratch": "Побудовано з твого опису",
   "onboarding.voice_later": "Налаштовано пізніше",

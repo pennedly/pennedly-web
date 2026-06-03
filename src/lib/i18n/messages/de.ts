@@ -765,7 +765,7 @@ export const de: Partial<Record<MessageKey, string>> = {
   "onboarding.form_exclude_ph": "ein zu vermeidendes Thema hinzufügen",
   "onboarding.create_cta": "Meine Stimme erstellen",
   "onboarding.creating": "Erstelle…",
-  "onboarding.back": "← zurück",
+  "onboarding.back": "Zurück",
   "onboarding.error_empty":
     "Füge mindestens eine Stimm-Beschreibung oder ein Thema hinzu.",
   "onboarding.already_setup":
@@ -828,6 +828,8 @@ export const de: Partial<Record<MessageKey, string>> = {
   "onboarding.done_sub_skip":
     "Du kannst deine Stimme jederzeit in den Einstellungen einrichten. Standardmäßig wird nichts veröffentlicht, bevor du es freigibst.",
   "onboarding.recap_voice": "Deine Stimme",
+  "onboarding.recap_account": "Verbundenes Konto",
+  "onboarding.recap_account_later": "Später in den Einstellungen hinzufügen",
   "onboarding.voice_analyzed": "Aus deinen Beiträgen analysiert",
   "onboarding.voice_scratch": "Aus deiner Beschreibung gebaut",
   "onboarding.voice_later": "Später eingerichtet",

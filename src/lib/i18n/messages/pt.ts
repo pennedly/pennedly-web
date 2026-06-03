@@ -760,7 +760,7 @@ export const pt: Partial<Record<MessageKey, string>> = {
   "onboarding.form_exclude_ph": "adicione um tema a evitar",
   "onboarding.create_cta": "Criar minha voz",
   "onboarding.creating": "Criando…",
-  "onboarding.back": "← voltar",
+  "onboarding.back": "Voltar",
   "onboarding.error_empty": "Adicione ao menos uma descrição de voz ou um tema.",
   "onboarding.already_setup":
     "Sua voz já está configurada — passar por aqui de novo a substitui (a versão anterior é mantida).",
@@ -822,6 +822,8 @@ export const pt: Partial<Record<MessageKey, string>> = {
   "onboarding.done_sub_skip":
     "Você pode configurar sua voz quando quiser nas Configurações. Por padrão, nada é publicado até você aprovar.",
   "onboarding.recap_voice": "Sua voz",
+  "onboarding.recap_account": "Conta conectada",
+  "onboarding.recap_account_later": "Adicionar depois nas Configurações",
   "onboarding.voice_analyzed": "Analisada dos seus posts",
   "onboarding.voice_scratch": "Construída da sua descrição",
   "onboarding.voice_later": "Configurada depois",
