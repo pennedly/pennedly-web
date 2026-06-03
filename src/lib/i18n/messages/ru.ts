@@ -866,6 +866,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "dashboard.draft.refine_empty": "сначала впиши, что доработать",
   "dashboard.draft.delete": "удалить",
   "dashboard.draft.confirm_delete": "Удалить этот черновик?",
+  "dashboard.draft.more_actions": "Ещё действия",
   "dashboard.draft.toast_deleted": "черновик удалён",
 
   // ── Низ сайдбара + Настройки ──────────────────────────────────

@@ -864,6 +864,7 @@ export const en = {
   "dashboard.draft.refine_empty": "type a tweak instruction first",
   "dashboard.draft.delete": "delete",
   "dashboard.draft.confirm_delete": "Delete this draft?",
+  "dashboard.draft.more_actions": "More actions",
   "dashboard.draft.toast_deleted": "draft deleted",
 
   // ── Sidebar bottom + Settings ─────────────────────────────────

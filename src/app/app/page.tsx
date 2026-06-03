@@ -6,7 +6,7 @@
 // the user out of context. TranslateButton inline on every draft for
 // users running accounts in a non-native language.
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -36,7 +36,7 @@ import { Button, buttonClasses } from "@/components/ui/button";
 import { Mono } from "@/components/ui/mono";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { Toast, ToastHost } from "@/components/ui/toast";
-import { IcArrowRight, IcCheck, IcChevDown, IcExternal, IcNib, IcPencil, IcReply, IcSend, IcSparkle, IcStudio, IcTrash, IcTweak, IcX } from "@/components/icons";
+import { IcArrowRight, IcCheck, IcChevDown, IcExternal, IcMore, IcNib, IcPencil, IcReply, IcSend, IcSparkle, IcStudio, IcTrash, IcTweak, IcX } from "@/components/icons";
 import { SkeletonText } from "@/components/ui/feedback";
 import { cn } from "@/lib/cn";
 import type { DraftSummary, Me } from "@/lib/types";
@@ -682,7 +682,9 @@ export default function Dashboard() {
               return (
                 <li
                   key={d.id}
-                  className="rounded-lg border border-border bg-surface p-4 shadow-sm transition-colors hover:border-text/15"
+                  // relative + focus-within:z lift so an open ⋯ menu (Q25)
+                  // overlays the next card instead of being painted under it.
+                  className="relative rounded-lg border border-border bg-surface p-4 shadow-sm transition-colors focus-within:z-20 hover:border-text/15"
                   style={{ animation: "card-in 240ms var(--ease-entrance) both" }}
                 >
                   {/* head: author + time + status (Threads-style) */}
@@ -930,37 +932,42 @@ export default function Dashboard() {
                             </a>
                           )
                         ) : (
+                          /* Q25: one primary action + a ⋯-overflow for the rest;
+                             hard-delete lives in the menu, not a bare trash icon. */
                           <>
                             {d.status === "pending" && (
                               <>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  aria-label={t("dashboard.draft.reject")}
-                                  onClick={() => onReject(d.id)}
-                                  icon={<IcX size={15} />}
+                                <CardMenu
+                                  t={t}
+                                  items={[
+                                    {
+                                      label: t("dashboard.draft.tweak"),
+                                      Icon: IcTweak,
+                                      onClick: () =>
+                                        setRefineOpen((s) => ({ ...s, [d.id]: !s[d.id] })),
+                                    },
+                                    {
+                                      label: t("dashboard.draft.edit"),
+                                      Icon: IcPencil,
+                                      onClick: () => {
+                                        setRefineOpen((s) => ({ ...s, [d.id]: false }));
+                                        setEditingId(d.id);
+                                      },
+                                    },
+                                    {
+                                      label: t("dashboard.draft.reject"),
+                                      Icon: IcX,
+                                      onClick: () => onReject(d.id),
+                                      danger: true,
+                                    },
+                                    {
+                                      label: t("dashboard.draft.delete"),
+                                      Icon: IcTrash,
+                                      onClick: () => setConfirmDeleteId(d.id),
+                                      danger: true,
+                                    },
+                                  ]}
                                 />
-                                <Button
-                                  size="sm"
-                                  variant={refineOpen[d.id] ? "secondary" : "ghost"}
-                                  icon={<IcTweak size={15} />}
-                                  onClick={() =>
-                                    setRefineOpen((s) => ({ ...s, [d.id]: !s[d.id] }))
-                                  }
-                                >
-                                  {t("dashboard.draft.tweak")}
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="secondary"
-                                  icon={<IcPencil size={15} />}
-                                  onClick={() => {
-                                    setRefineOpen((s) => ({ ...s, [d.id]: false }));
-                                    setEditingId(d.id);
-                                  }}
-                                >
-                                  {t("dashboard.draft.edit")}
-                                </Button>
                                 <Button
                                   size="sm"
                                   variant="primary"
@@ -974,42 +981,64 @@ export default function Dashboard() {
                               </>
                             )}
                             {d.status === "approved" && (
-                              <Button
-                                size="sm"
-                                variant="primary"
-                                icon={<IcStudio size={15} />}
-                                onClick={() => onPublishClick(d.id, currentText)}
-                              >
-                                {t("dashboard.draft.publish")}
-                              </Button>
+                              <>
+                                <CardMenu
+                                  t={t}
+                                  items={[
+                                    {
+                                      label: t("dashboard.draft.delete"),
+                                      Icon: IcTrash,
+                                      onClick: () => setConfirmDeleteId(d.id),
+                                      danger: true,
+                                    },
+                                  ]}
+                                />
+                                <Button
+                                  size="sm"
+                                  variant="primary"
+                                  icon={<IcStudio size={15} />}
+                                  onClick={() => onPublishClick(d.id, currentText)}
+                                >
+                                  {t("dashboard.draft.publish")}
+                                </Button>
+                              </>
                             )}
-                            {confirmDeleteId === d.id ? (
-                              <span className="inline-flex items-center gap-2 text-small">
-                                <button
-                                  onClick={() => onDeleteDraft(d.id)}
-                                  className="font-medium text-danger hover:underline"
-                                >
-                                  {t("dashboard.draft.delete")}
-                                </button>
-                                <button
-                                  onClick={() => setConfirmDeleteId(null)}
-                                  className="text-text-subtle hover:text-text"
-                                >
-                                  {t("common.cancel")}
-                                </button>
-                              </span>
-                            ) : (
-                              <button
-                                onClick={() => setConfirmDeleteId(d.id)}
-                                aria-label={t("dashboard.draft.delete")}
-                                className="grid h-8 w-8 place-items-center rounded-sm text-text-subtle transition-colors hover:bg-surface-2 hover:text-danger"
-                              >
-                                <IcTrash size={15} />
-                              </button>
+                            {d.status === "rejected" && (
+                              <CardMenu
+                                t={t}
+                                items={[
+                                  {
+                                    label: t("dashboard.draft.delete"),
+                                    Icon: IcTrash,
+                                    onClick: () => setConfirmDeleteId(d.id),
+                                    danger: true,
+                                  },
+                                ]}
+                              />
                             )}
                           </>
                         )}
                       </div>
+                    </div>
+                  )}
+                  {/* Q25: hard-delete confirm (triggered from the ⋯ menu). */}
+                  {confirmDeleteId === d.id && (
+                    <div className="mt-2.5 flex flex-wrap items-center gap-2.5 rounded-md border border-danger/30 bg-danger/[0.06] px-3 py-2 text-small">
+                      <span className="min-w-0 flex-1 text-text-muted">
+                        {t("dashboard.draft.confirm_delete")}
+                      </span>
+                      <button
+                        onClick={() => setConfirmDeleteId(null)}
+                        className="text-text-subtle transition-colors hover:text-text"
+                      >
+                        {t("common.cancel")}
+                      </button>
+                      <button
+                        onClick={() => onDeleteDraft(d.id)}
+                        className="font-semibold text-danger hover:underline"
+                      >
+                        {t("dashboard.draft.delete")}
+                      </button>
                     </div>
                   )}
                   </>
@@ -1038,6 +1067,70 @@ export default function Dashboard() {
           <Toast key={to.id} tone={to.tone} title={to.message} />
         ))}
       </ToastHost>
+    </div>
+  );
+}
+
+// Q25: a ⋯-overflow menu — the primary action stays a button, the rest live
+// here (incl. the danger-styled hard-delete). Closes on outside-click.
+function CardMenu({
+  items,
+  t,
+}: {
+  items: {
+    label: string;
+    Icon: (p: { size?: number }) => ReactNode;
+    onClick: () => void;
+    danger?: boolean;
+  }[];
+  t: (k: MessageKey) => string;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [open]);
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        aria-label={t("dashboard.draft.more_actions")}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="grid h-8 w-8 place-items-center rounded-md text-text-subtle transition-colors hover:bg-surface-2 hover:text-text"
+      >
+        <IcMore size={17} />
+      </button>
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 z-20 mt-1 min-w-[184px] overflow-hidden rounded-md border border-border bg-surface py-1 shadow-lg"
+        >
+          {items.map((it, i) => (
+            <button
+              key={i}
+              role="menuitem"
+              onClick={() => {
+                setOpen(false);
+                it.onClick();
+              }}
+              className={cn(
+                "flex w-full items-center gap-2.5 px-3 py-2 text-left text-small transition-colors hover:bg-surface-2",
+                it.danger ? "text-danger" : "text-text",
+              )}
+            >
+              <it.Icon size={15} />
+              {it.label}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

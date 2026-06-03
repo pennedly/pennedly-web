@@ -845,10 +845,16 @@ test("shell — Studio", async ({ page }) => {
   await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
   await page.waitForTimeout(700);
   await shoot(page, "shell-studio");
-  // Pending-tab card (full action set: reject / tweak / edit / approve).
+  // Pending-tab card (Q25: one primary "approve" + a ⋯-overflow for the rest).
   await page.getByRole("button", { name: /drafts/i }).first().click();
   await page.waitForTimeout(400);
   await shoot(page, "shell-studio-drafts");
+  // Q25: open the ⋯ menu (tweak / edit / reject / delete, the last two danger).
+  await page.getByRole("button", { name: /more actions/i }).first().click();
+  await page.waitForTimeout(250);
+  await shoot(page, "shell-studio-menu");
+  await page.mouse.click(6, 6); // outside-click closes the menu
+  await page.waitForTimeout(200);
   // Consolidated account/profile menu (switch account · connect · settings · log out).
   await page.locator("aside").getByRole("button", { name: /mara\.lin/i }).first().click();
   await page.waitForTimeout(300);
