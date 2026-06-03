@@ -6,11 +6,11 @@
 // the ingest_comments worker; this is the manual-reply surface for the
 // threads_manage_replies permission.
 //
-// Layout + interactions follow design-export/PennedlyDesign/replies-* (the
-// rail variant): a single feed of comment cards, with a status filter + a
-// horizontal post-rail above it. Each card carries its own "on your post"
-// context inset and an in-card threaded reply block whose action set is the
-// design's: generate → (regenerate / edit) → approve → publish, plus
+// Layout follows design-export/PennedlyDesign/replies-* (master-detail, Q18):
+// a left post list (PostMaster) drives a right detail pane — a post-context
+// header (PostContext) + a per-post status filter (Q77 buckets) + that post's
+// comment cards. Each card has an in-card threaded reply block whose action set
+// is the design's: generate → (regenerate / edit) → approve → publish, plus
 // skip/restore on the comment itself.
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
@@ -29,7 +29,7 @@ import {
 } from "@/lib/api";
 import { captureEvent } from "@/lib/analytics";
 import { useSelectedAccountId } from "@/lib/account";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { PublishConfirmModal } from "@/components/PublishConfirmModal";
 import { TranslateButton } from "@/components/TranslateButton";
 import { useTesterGuard } from "@/lib/tester";
@@ -93,6 +93,15 @@ function cardState(c: CommentSummary): CardState {
   return "new";
 }
 
+// Q77: the status bucket a comment falls in (approved/rejected fold into Draft).
+function bucketOf(c: CommentSummary): "new" | "drafted" | "replied" | "skipped" {
+  const s = cardState(c);
+  if (s === "replied") return "replied";
+  if (s === "skip") return "skipped";
+  if (s === "new") return "new";
+  return "drafted";
+}
+
 const BADGE = {
   new: { tone: "accent", labelKey: "replies.badge_new", dot: true },
   pending: { tone: "neutral", labelKey: "replies.badge_draft", dot: true },
@@ -125,8 +134,9 @@ export default function RepliesPage() {
   } | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
-  // E: post-rail filter — "all" or a specific post id (client-side narrowing).
-  const [postFilter, setPostFilter] = useState<number | "all">("all");
+  // Q18: master-detail — the post selected in the left list; the detail pane
+  // shows that post's comments. The status `filter` is now per-post (client).
+  const [selectedPost, setSelectedPost] = useState<number | null>(null);
 
   function toast(message: string, tone: Toast["tone"] = "success") {
     const id = Date.now() + Math.random();
@@ -143,10 +153,9 @@ export default function RepliesPage() {
     setLoaded(false);
     (async () => {
       try {
-        const list = await fetchComments(accountId, {
-          limit: 50,
-          status: filter ?? undefined,
-        });
+        // Q18: fetch all comments (no status param) — the status filter is now
+        // client-side per selected post; status_counts stays account-wide.
+        const list = await fetchComments(accountId, { limit: 50 });
         setComments(list.comments);
         setCounts(list.status_counts ?? {});
       } catch (e) {
@@ -160,15 +169,12 @@ export default function RepliesPage() {
         setLoaded(true);
       }
     })();
-  }, [accountId, filter, router]);
+  }, [accountId, router]);
 
   async function reload() {
     if (accountId === null) return;
     try {
-      const list = await fetchComments(accountId, {
-        limit: 50,
-        status: filter ?? undefined,
-      });
+      const list = await fetchComments(accountId, { limit: 50 });
       setComments(list.comments);
       setCounts(list.status_counts ?? {});
     } catch {
@@ -201,17 +207,27 @@ export default function RepliesPage() {
     });
   }, [comments]);
 
-  // Drop the post filter if the selected post left the (re-filtered) list.
+  // Q18: keep a valid selected post — default to the newest, re-home if it left.
   useEffect(() => {
-    if (postFilter !== "all" && !postGroups.some((g) => g.postId === postFilter)) {
-      setPostFilter("all");
+    if (postGroups.length === 0) {
+      if (selectedPost !== null) setSelectedPost(null);
+    } else if (
+      selectedPost === null ||
+      !postGroups.some((g) => g.postId === selectedPost)
+    ) {
+      setSelectedPost(postGroups[0].postId);
     }
-  }, [postGroups, postFilter]);
+  }, [postGroups, selectedPost]);
 
-  const visible =
-    postFilter === "all"
-      ? comments
-      : comments.filter((c) => c.post_id === postFilter);
+  const activeGroup =
+    postGroups.find((g) => g.postId === selectedPost) ?? postGroups[0] ?? null;
+
+  // Q77: per-post status buckets — `approved` folds into the Draft bucket.
+  const postComments = activeGroup?.comments ?? [];
+  const postCounts: Record<string, number> = { new: 0, drafted: 0, replied: 0, skipped: 0 };
+  for (const c of postComments) postCounts[bucketOf(c)] += 1;
+  const filteredComments =
+    filter === null ? postComments : postComments.filter((c) => bucketOf(c) === filter);
 
   const needsCount = counts["new"] ?? 0;
 
@@ -350,8 +366,8 @@ export default function RepliesPage() {
   if (bootError) {
     return (
       <div className="min-h-screen bg-bg text-text">
-        <AppTopbar maxW="900px" title={t("replies.title")} />
-        <main className="mx-auto max-w-[900px] px-5 py-7 md:px-6">
+        <AppTopbar maxW="1040px" title={t("replies.title")} />
+        <main className="mx-auto max-w-[1040px] px-5 py-7 md:px-6">
           <div className="rounded-lg border border-danger/40 bg-danger/10 p-4 text-small text-danger">
             {bootError}
           </div>
@@ -372,78 +388,92 @@ export default function RepliesPage() {
 
   return (
     <div className="min-h-screen bg-bg text-text">
-      <AppTopbar maxW="900px" title={t("replies.title")} pill={pill} />
-      <main className="mx-auto max-w-[900px] space-y-4 px-5 py-7 md:px-6">
+      <AppTopbar maxW="1040px" title={t("replies.title")} pill={pill} />
+      <main className="mx-auto max-w-[1040px] space-y-4 px-5 py-7 md:px-6">
         <p className="text-small text-text-muted">{t("replies.subtitle")}</p>
 
         {!loaded && <p className="text-small text-text-muted">{t("common.loading")}</p>}
 
-        {loaded && (
-          <>
-            {/* status filter — equal-width segments inside a surface-2 bar */}
-            <div
-              role="tablist"
-              aria-label={t("replies.title")}
-              className="sticky top-3 z-[5] flex items-center gap-1 rounded-md border border-border bg-surface-2 p-1"
-            >
-              {FILTER_TABS.map((tab) => {
-                const n =
-                  tab.key === null
-                    ? Object.values(counts).reduce((a, b) => a + b, 0)
-                    : counts[tab.key] ?? 0;
-                const active = filter === tab.key;
-                return (
-                  <button
-                    key={tab.key ?? "all"}
-                    role="tab"
-                    aria-selected={active}
-                    onClick={() => setFilter(tab.key)}
-                    className={cn(
-                      "inline-flex h-9 min-w-0 flex-1 items-center justify-center gap-2 rounded-sm border border-transparent px-2.5 text-small font-medium whitespace-nowrap text-text-muted transition-colors hover:text-text",
-                      active && "border-border bg-surface font-semibold text-text shadow-sm",
-                    )}
-                  >
-                    <span className={cn("h-[7px] w-[7px] shrink-0 rounded-full", tab.dot)} />
-                    <span className="truncate">{t(tab.labelKey)}</span>
-                    <span
+        {/* Q18: account-wide empty — no comments under any post yet. */}
+        {loaded && postGroups.length === 0 && (
+          <div className="flex flex-col items-center rounded-lg border border-dashed border-border px-6 py-16 text-center">
+            <span className="mb-3 grid h-11 w-11 place-items-center rounded-full border border-border bg-surface-2 text-text-subtle">
+              <IcReplies size={22} />
+            </span>
+            <p className="text-body font-semibold">{t("replies.empty_all_title")}</p>
+            <p className="mt-1 max-w-[42ch] text-small leading-relaxed text-text-muted">
+              {t("replies.empty_all_sub")}
+            </p>
+          </div>
+        )}
+
+        {/* Q18: master-detail — post list (left) drives the detail pane (right). */}
+        {loaded && postGroups.length > 0 && (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-[300px_minmax(0,1fr)]">
+            <PostMaster
+              groups={postGroups}
+              selected={selectedPost}
+              onSelect={(id) => {
+                setSelectedPost(id);
+                setFilter(null);
+              }}
+              cap={t("replies.posts_with_comments")}
+              toAnswerLabel={t("replies.to_answer")}
+              commentWord={t("replies.comments_word")}
+              fmtTime={(iso) => relativeTime(iso, locale)}
+            />
+
+            <div className="min-w-0 space-y-4">
+              {activeGroup && <PostContext group={activeGroup} locale={locale} t={t} />}
+
+              {/* per-post status filter (Q77 buckets) */}
+              <div
+                role="tablist"
+                aria-label={t("replies.title")}
+                className="flex items-center gap-1 rounded-md border border-border bg-surface-2 p-1"
+              >
+                {FILTER_TABS.map((tab) => {
+                  const n = tab.key === null ? postComments.length : postCounts[tab.key] ?? 0;
+                  const active = filter === tab.key;
+                  return (
+                    <button
+                      key={tab.key ?? "all"}
+                      role="tab"
+                      aria-selected={active}
+                      onClick={() => setFilter(tab.key)}
                       className={cn(
-                        "text-caption font-semibold tabular-nums",
-                        active ? "text-text-muted" : "text-text-subtle",
+                        "inline-flex h-9 min-w-0 flex-1 items-center justify-center gap-2 rounded-sm border border-transparent px-2.5 text-small font-medium whitespace-nowrap text-text-muted transition-colors hover:text-text",
+                        active && "border-border bg-surface font-semibold text-text shadow-sm",
                       )}
                     >
-                      {n}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* post-rail — horizontal scroll of post chips to narrow the feed */}
-            {comments.length > 0 && (
-              <PostRail
-                groups={postGroups}
-                total={comments.length}
-                active={postFilter}
-                onChange={setPostFilter}
-                allLabel={t("replies.all_posts")}
-                everythingLabel={t("replies.rail_everything")}
-                fmtTime={(iso) => relativeTime(iso, locale)}
-              />
-            )}
-
-            {visible.length === 0 ? (
-              <div className="flex flex-col items-center rounded-lg border border-dashed border-border px-6 py-14 text-center">
-                <span className="mb-3 grid h-11 w-11 place-items-center rounded-full border border-border bg-surface-2 text-text-subtle">
-                  <IcReplies size={22} />
-                </span>
-                <p className="text-body font-semibold">{empty.title}</p>
-                <p className="mt-1 max-w-[42ch] text-small leading-relaxed text-text-muted">
-                  {empty.sub}
-                </p>
+                      <span className={cn("h-[7px] w-[7px] shrink-0 rounded-full", tab.dot)} />
+                      <span className="truncate">{t(tab.labelKey)}</span>
+                      <span
+                        className={cn(
+                          "text-caption font-semibold tabular-nums",
+                          active ? "text-text-muted" : "text-text-subtle",
+                        )}
+                      >
+                        {n}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
-            ) : (
-              <ul className="space-y-3.5">
-                {visible.map((c) => {
+
+              {filteredComments.length === 0 ? (
+                <div className="flex flex-col items-center rounded-lg border border-dashed border-border px-6 py-14 text-center">
+                  <span className="mb-3 grid h-11 w-11 place-items-center rounded-full border border-border bg-surface-2 text-text-subtle">
+                    <IcReplies size={22} />
+                  </span>
+                  <p className="text-body font-semibold">{empty.title}</p>
+                  <p className="mt-1 max-w-[42ch] text-small leading-relaxed text-text-muted">
+                    {empty.sub}
+                  </p>
+                </div>
+              ) : (
+                <ul className="space-y-3.5">
+                  {filteredComments.map((c) => {
                   const state = cardState(c);
                   const draftId = c.ai_draft_id;
                   const generating = generatingId === c.id;
@@ -466,41 +496,8 @@ export default function RepliesPage() {
                       )}
                       style={{ animation: "card-in 240ms var(--ease-entrance) both" }}
                     >
-                      {/* "on your post" context inset */}
-                      {(c.post_text || c.post_threads_url) &&
-                        (c.post_threads_url ? (
-                          <a
-                            href={c.post_threads_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mb-3 flex items-center gap-2.5 rounded-md border border-border bg-surface-2 px-3 py-2.5 transition-colors hover:bg-text/[0.04]"
-                          >
-                            <IcReply size={14} className="shrink-0 text-text-subtle" />
-                            <span className="shrink-0 text-caption font-semibold text-text-muted">
-                              {t("replies.on_post")}
-                            </span>
-                            <span className="min-w-0 flex-1 truncate text-small text-text-muted">
-                              {c.post_text || `#${c.post_id}`}
-                            </span>
-                            {c.post_published_at && (
-                              <span className="shrink-0 text-caption text-text-subtle">
-                                {relativeTime(c.post_published_at, locale)}
-                              </span>
-                            )}
-                          </a>
-                        ) : (
-                          <div className="mb-3 flex items-center gap-2.5 rounded-md border border-border bg-surface-2 px-3 py-2.5">
-                            <IcReply size={14} className="shrink-0 text-text-subtle" />
-                            <span className="shrink-0 text-caption font-semibold text-text-muted">
-                              {t("replies.on_post")}
-                            </span>
-                            <span className="min-w-0 flex-1 truncate text-small text-text-muted">
-                              {c.post_text || `#${c.post_id}`}
-                            </span>
-                          </div>
-                        ))}
-
-                      {/* comment head: author + status badge */}
+                      {/* comment head: author + status badge (the post context
+                          lives in the PostContext header above the list now) */}
                       <div className="flex items-center gap-2.5">
                         <Mono text={(c.author_username?.[0] ?? "@").toUpperCase()} size={34} />
                         <div className="min-w-0 flex-1">
@@ -778,8 +775,9 @@ export default function RepliesPage() {
                   );
                 })}
               </ul>
-            )}
-          </>
+              )}
+            </div>
+          </div>
         )}
       </main>
 
@@ -826,85 +824,109 @@ function ReplyThread({
   );
 }
 
-// Horizontal post-rail: "All posts" + one chip per post, with a count pill and
-// a right-edge fade hinting there's more to scroll.
-function PostRail({
+// Q18 master pane: the posts that have comments (newest first). Each row shows
+// the post text, time, comment count, and an unanswered-count badge; selecting
+// one drives the detail pane.
+function PostMaster({
   groups,
-  total,
-  active,
-  onChange,
-  allLabel,
-  everythingLabel,
+  selected,
+  onSelect,
+  cap,
+  toAnswerLabel,
+  commentWord,
   fmtTime,
 }: {
   groups: PostGroup[];
-  total: number;
-  active: number | "all";
-  onChange: (key: number | "all") => void;
-  allLabel: string;
-  everythingLabel: string;
+  selected: number | null;
+  onSelect: (id: number) => void;
+  cap: string;
+  toAnswerLabel: string;
+  commentWord: string;
   fmtTime: (iso: string) => string;
 }) {
-  const items: {
-    key: number | "all";
-    label: string;
-    count: number;
-    time: string | null;
-  }[] = [
-    { key: "all", label: allLabel, count: total, time: null },
-    ...groups.map((g) => ({
-      key: g.postId,
-      label: g.postText || `#${g.postId}`,
-      count: g.comments.length,
-      time: g.postPublishedAt,
-    })),
-  ];
   return (
-    <div className="relative">
-      <div className="flex gap-2.5 overflow-x-auto px-0.5 pb-2 pt-0.5 [scrollbar-width:thin]">
-        {items.map((it) => {
-          const on = active === it.key;
+    <aside className="md:sticky md:top-3 md:self-start">
+      <div className="mb-2 px-1 text-caption font-semibold uppercase tracking-wide text-text-subtle">
+        {cap}
+      </div>
+      <div
+        role="listbox"
+        aria-label={cap}
+        className="flex flex-col gap-2 md:max-h-[calc(100vh-150px)] md:overflow-y-auto md:pr-1"
+      >
+        {groups.map((g) => {
+          const unanswered = g.comments.filter((c) => bucketOf(c) === "new").length;
+          const active = selected === g.postId;
           return (
             <button
-              key={it.key}
-              onClick={() => onChange(it.key)}
-              title={it.label}
+              key={g.postId}
+              role="option"
+              aria-selected={active}
+              onClick={() => onSelect(g.postId)}
               className={cn(
-                "flex w-[204px] shrink-0 flex-col gap-2.5 rounded-md border bg-surface p-3 text-left transition-colors hover:bg-surface-2",
-                on ? "border-accent/55 bg-surface-2 shadow-sm" : "border-border",
+                "flex flex-col gap-2 rounded-lg border p-3 text-left transition-colors",
+                active
+                  ? "border-accent/55 bg-surface-2 shadow-sm"
+                  : "border-border bg-surface hover:bg-surface-2",
               )}
             >
-              <span
-                className={cn(
-                  "line-clamp-2 min-h-[2.8em] text-small leading-snug text-text",
-                  (on || it.key === "all") && "font-semibold",
-                )}
-              >
-                {it.label}
+              <span className={cn("line-clamp-2 text-small leading-snug text-text", active && "font-semibold")}>
+                {g.postText || `#${g.postId}`}
               </span>
-              <span className="flex items-center justify-between gap-2">
-                <span className="text-caption text-text-subtle">
-                  {it.time ? fmtTime(it.time) : everythingLabel}
+              <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-caption text-text-subtle">
+                {g.postPublishedAt && (
+                  <span className="whitespace-nowrap">{fmtTime(g.postPublishedAt)}</span>
+                )}
+                <span>·</span>
+                <span className="whitespace-nowrap">
+                  {g.comments.length} {commentWord}
                 </span>
-                <span
-                  className={cn(
-                    "inline-flex h-[19px] min-w-[20px] items-center justify-center rounded-full border px-1.5 text-caption font-semibold tabular-nums",
-                    on
-                      ? "border-accent/30 bg-accent/12 text-accent"
-                      : "border-border bg-surface-2 text-text-muted",
-                  )}
-                >
-                  {it.count}
-                </span>
+                {unanswered > 0 && (
+                  <span className="rounded-full border border-accent/30 bg-accent/12 px-1.5 py-px font-semibold text-accent">
+                    {unanswered} {toAnswerLabel}
+                  </span>
+                )}
               </span>
             </button>
           );
         })}
       </div>
-      <span
-        className="pointer-events-none absolute bottom-2.5 right-0 top-0 w-11 bg-gradient-to-r from-transparent to-bg"
-        aria-hidden
-      />
+    </aside>
+  );
+}
+
+// Q18 detail header: the post the comments below sit under.
+function PostContext({
+  group,
+  locale,
+  t,
+}: {
+  group: PostGroup;
+  locale: string;
+  t: (k: MessageKey) => string;
+}) {
+  return (
+    <div className="rounded-lg border border-border bg-surface-2 p-4">
+      <div className="text-caption font-semibold uppercase tracking-wide text-text-subtle">
+        {t("replies.replying_under")}
+      </div>
+      <p className="mt-1.5 whitespace-pre-wrap text-small leading-relaxed text-text">
+        {group.postText || `#${group.postId}`}
+      </p>
+      <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-caption text-text-subtle">
+        {group.postPublishedAt && <span>{relativeTime(group.postPublishedAt, locale)}</span>}
+        {group.postThreadsUrl && (
+          <a
+            href={group.postThreadsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 underline-offset-2 hover:text-text hover:underline"
+          >
+            <IcExternal size={13} />
+            {t("replies.open_thread")}
+          </a>
+        )}
+      </div>
     </div>
   );
 }
