@@ -249,6 +249,14 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "voice.example_post": "Пост",
   "voice.example_reply": "Ответ",
   "voice.example_kind": "Тип примера",
+  // Q8: режим перевода
+  "voice.original": "Оригинал",
+  "voice.original_editable": "Редактируемый",
+  "voice.translated_pill": "Перевод · {lang}",
+  "voice.translated_banner":
+    "Перевод оригинала только для чтения — вернитесь к оригиналу, чтобы редактировать.",
+  "voice.translating": "Перевожу голос…",
+  "voice.view_original": "К оригиналу",
   "voice.rx_title": "Перечитываю твой голос",
   "voice.rx_sub":
     "Pennedly снова изучает твои недавние посты. Текущий голос работает, пока это не завершится.",

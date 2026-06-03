@@ -246,6 +246,14 @@ export const en = {
   "voice.example_post": "Post",
   "voice.example_reply": "Reply",
   "voice.example_kind": "Example type",
+  // Q8: translate mode
+  "voice.original": "Original",
+  "voice.original_editable": "Editable",
+  "voice.translated_pill": "Translated · {lang}",
+  "voice.translated_banner":
+    "A read-only translation of your original — switch back to edit.",
+  "voice.translating": "Translating your voice…",
+  "voice.view_original": "View original",
   "voice.rx_title": "Re-reading your voice",
   "voice.rx_sub":
     "Pennedly is studying your recent posts again. Your current voice stays live until this finishes.",

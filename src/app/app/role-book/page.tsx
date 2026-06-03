@@ -23,6 +23,7 @@ import {
   getTokens,
   lintRoleBook,
   patchRoleBook,
+  translateText,
 } from "@/lib/api";
 import { captureEvent } from "@/lib/analytics";
 import { useSelectedAccountId } from "@/lib/account";
@@ -35,7 +36,9 @@ import { Toast, ToastHost } from "@/components/ui/toast";
 import { cn } from "@/lib/cn";
 import {
   IcAlert,
+  IcChevDown,
   IcCheck,
+  IcGlobe,
   IcList,
   IcNib,
   IcPencil,
@@ -49,7 +52,9 @@ import {
   IcVoice,
   IcX,
 } from "@/components/icons";
+import { SUPPORTED_LANGUAGES } from "@/lib/types";
 import type {
+  LanguageCode,
   LintConflict,
   LintFix,
   LintResult,
@@ -133,6 +138,80 @@ function normalizeSections(
   return out;
 }
 
+// Q8 (translate mode): translate every section field into `lang` for a
+// read-only view. Run a small worker pool so switching locale doesn't fan
+// out dozens of simultaneous requests at once.
+async function runPool<T>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<void>,
+): Promise<void> {
+  let i = 0;
+  const worker = async () => {
+    while (i < items.length) {
+      const idx = i++;
+      await fn(items[idx]);
+    }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, worker),
+  );
+}
+
+// Translate the intro + every item field into `lang`. Identical strings are
+// deduped (one request each); the backend caches per tenant on top. A failed
+// item falls back to its original text. Pure — returns a translated copy and
+// never mutates the source (the stored original stays canonical).
+async function translateSections(
+  src: RoleBookSections,
+  lang: LanguageCode,
+): Promise<RoleBookSections> {
+  const texts = new Set<string>();
+  const add = (s?: string) => {
+    if (s && s.trim()) texts.add(s);
+  };
+  add(src.intro);
+  src.themes_include?.forEach((x) => {
+    add(x.label);
+    add(x.note);
+  });
+  src.themes_exclude?.forEach((x) => {
+    add(x.label);
+    add(x.note);
+  });
+  src.voice_characteristics?.forEach((x) => {
+    add(x.label);
+    add(x.text);
+  });
+  src.do_list?.forEach((x) => add(x.text));
+  src.dont_list?.forEach((x) => add(x.text));
+  src.examples?.forEach((x) => add(x.text));
+
+  const map = new Map<string, string>();
+  await runPool([...texts], 6, async (txt) => {
+    try {
+      const r = await translateText(txt, lang);
+      map.set(txt, r.translated_text || txt);
+    } catch {
+      map.set(txt, txt);
+    }
+  });
+  const tr = (s?: string) => (s && map.has(s) ? (map.get(s) as string) : (s ?? ""));
+
+  const out: RoleBookSections = {};
+  if (src.intro !== undefined) out.intro = tr(src.intro);
+  if (src.themes_include)
+    out.themes_include = src.themes_include.map((x) => ({ ...x, label: tr(x.label), note: tr(x.note) }));
+  if (src.themes_exclude)
+    out.themes_exclude = src.themes_exclude.map((x) => ({ ...x, label: tr(x.label), note: tr(x.note) }));
+  if (src.voice_characteristics)
+    out.voice_characteristics = src.voice_characteristics.map((x) => ({ ...x, label: tr(x.label), text: tr(x.text) }));
+  if (src.do_list) out.do_list = src.do_list.map((x) => ({ ...x, text: tr(x.text) }));
+  if (src.dont_list) out.dont_list = src.dont_list.map((x) => ({ ...x, text: tr(x.text) }));
+  if (src.examples) out.examples = src.examples.map((x) => ({ ...x, text: tr(x.text) }));
+  return out;
+}
+
 const REEXTRACT_STEPS: MessageKey[] = [
   "voice.rx_step1",
   "voice.rx_step2",
@@ -159,6 +238,13 @@ export default function VoiceEditor() {
   const [stepIndex, setStepIndex] = useState(0);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  // Q8: translate mode. transLang = null → original (editable); a locale →
+  // read-only translated view. transToken guards against a stale in-flight
+  // translation overwriting a newer locale pick.
+  const [transLang, setTransLang] = useState<LanguageCode | null>(null);
+  const [translated, setTranslated] = useState<RoleBookSections | null>(null);
+  const [translating, setTranslating] = useState(false);
+  const transToken = useRef(0);
 
   function toast(message: string, tone: Toast["tone"] = "success") {
     const id = Date.now() + Math.random();
@@ -175,6 +261,10 @@ export default function VoiceEditor() {
     setBook(null);
     setLintResult(null);
     setEmptyVoice(false);
+    transToken.current++;
+    setTransLang(null);
+    setTranslated(null);
+    setTranslating(false);
     (async () => {
       try {
         const rb = await fetchRoleBook(accountId);
@@ -227,6 +317,28 @@ export default function VoiceEditor() {
       toast(String(e), "error");
       throw e;
     }
+  }
+
+  // Q8: switch the read-only translation. null → back to the editable original.
+  function onTranslate(lang: LanguageCode | null) {
+    const token = ++transToken.current;
+    if (lang === null) {
+      setTransLang(null);
+      setTranslated(null);
+      setTranslating(false);
+      return;
+    }
+    setTransLang(lang);
+    setTranslated(null);
+    setTranslating(true);
+    if (accountId !== null)
+      captureEvent("ui.voice_translated", { account_id: accountId, target_lang: lang });
+    void (async () => {
+      const result = await translateSections(sections, lang);
+      if (transToken.current !== token) return; // a newer pick superseded this
+      setTranslated(result);
+      setTranslating(false);
+    })();
   }
 
   async function onCheck() {
@@ -317,7 +429,15 @@ export default function VoiceEditor() {
   }
 
   const issues = conflicts.length;
-  const pill = busy ? (
+  // Q8: in translate mode the whole editor is a read-only translated view.
+  const readOnly = transLang !== null;
+  const displaySections = readOnly ? (translated ?? sections) : sections;
+  const transName = transLang
+    ? (SUPPORTED_LANGUAGES.find((l) => l.code === transLang)?.name ?? transLang)
+    : "";
+  const pill = readOnly ? (
+    <TopbarPill tone="accent">{fill(t("voice.translated_pill"), { lang: transName })}</TopbarPill>
+  ) : busy ? (
     <TopbarPill tone="warning">{t("voice.busy")}</TopbarPill>
   ) : lintResult && issues > 0 ? (
     <TopbarPill tone="warning">{fill(t("voice.to_resolve"), { n: issues })}</TopbarPill>
@@ -351,7 +471,16 @@ export default function VoiceEditor() {
                 <IcVoice size={14} className="text-text-muted" />
                 {t("voice.eyebrow")}
               </span>
-              <h1 className="mt-3 text-h1 font-semibold tracking-tight">{t("voice.title")}</h1>
+              <div className="mt-3 flex items-start justify-between gap-3">
+                <h1 className="text-h1 font-semibold tracking-tight">{t("voice.title")}</h1>
+                {/* Q8: globe toggle → read-only translated view of the voice */}
+                <LangMenu
+                  value={transLang}
+                  onChange={onTranslate}
+                  disabled={busy || checking || translating}
+                  t={t}
+                />
+              </div>
               {/* Q67: real provenance — "Analyzed N posts · Updated <date>"
                   (the v<id>/parent line is gone from the hero). */}
               {book && (!!book.posts_analyzed || book.activated_at) && (
@@ -375,7 +504,7 @@ export default function VoiceEditor() {
                 <Button
                   variant="secondary"
                   onClick={onCheck}
-                  disabled={busy || checking}
+                  disabled={busy || checking || readOnly}
                   loading={checking}
                   icon={<IcScan size={16} />}
                 >
@@ -384,7 +513,7 @@ export default function VoiceEditor() {
                 <Button
                   variant="secondary"
                   onClick={() => setReDialog(true)}
-                  disabled={busy || checking}
+                  disabled={busy || checking || readOnly}
                   icon={<IcRefresh size={16} />}
                 >
                   {t("rolebook.extract.button")}
@@ -392,12 +521,22 @@ export default function VoiceEditor() {
               </div>
             </section>
 
+            {/* Q8: read-only translation banner + "view original" */}
+            {readOnly && transLang && (
+              <TranslatedBanner
+                lang={transLang}
+                translating={translating}
+                onViewOriginal={() => onTranslate(null)}
+                t={t}
+              />
+            )}
+
             {busy ? (
               <ReExtractPanel stepIndex={stepIndex} steps={REEXTRACT_STEPS} t={t} />
             ) : (
               <>
-                {/* Voice check */}
-                {(checking || lintResult) && (
+                {/* Voice check — hidden in the read-only translated view */}
+                {!readOnly && (checking || lintResult) && (
                   <VoiceCheck
                     conflicts={conflicts}
                     checking={checking}
@@ -412,14 +551,16 @@ export default function VoiceEditor() {
 
                 {/* Intro */}
                 <IntroSection
-                  value={sections.intro ?? ""}
+                  value={displaySections.intro ?? ""}
+                  readOnly={readOnly}
                   onSave={(text) => saveSection({ intro: text })}
                   t={t}
                 />
 
                 {/* Themes ± — Q60 typed {id, label, note} */}
                 <ThemesSection
-                  items={sections.themes_include ?? []}
+                  items={displaySections.themes_include ?? []}
+                  readOnly={readOnly}
                   Icon={IcTags}
                   labelKey="rolebook.themes_include.label"
                   helperKey="rolebook.themes_include.helper"
@@ -430,7 +571,8 @@ export default function VoiceEditor() {
                   t={t}
                 />
                 <ThemesSection
-                  items={sections.themes_exclude ?? []}
+                  items={displaySections.themes_exclude ?? []}
+                  readOnly={readOnly}
                   danger
                   Icon={IcAlert}
                   labelKey="rolebook.themes_exclude.label"
@@ -444,7 +586,8 @@ export default function VoiceEditor() {
 
                 {/* Voice characteristics — Q60 typed {id, label?, text} */}
                 <TraitsSection
-                  items={sections.voice_characteristics ?? []}
+                  items={displaySections.voice_characteristics ?? []}
+                  readOnly={readOnly}
                   flagged={flaggedIds.voice_characteristics}
                   onSave={(items) => saveSection({ voice_characteristics: items })}
                   t={t}
@@ -452,7 +595,8 @@ export default function VoiceEditor() {
 
                 {/* Do / Don't — Q60 typed {id, text} */}
                 <RulesSection
-                  items={sections.do_list ?? []}
+                  items={displaySections.do_list ?? []}
+                  readOnly={readOnly}
                   Icon={IcCheck}
                   labelKey="rolebook.do_list.label"
                   helperKey="rolebook.do_list.helper"
@@ -462,7 +606,8 @@ export default function VoiceEditor() {
                   t={t}
                 />
                 <RulesSection
-                  items={sections.dont_list ?? []}
+                  items={displaySections.dont_list ?? []}
+                  readOnly={readOnly}
                   danger
                   Icon={IcX}
                   labelKey="rolebook.dont_list.label"
@@ -475,7 +620,8 @@ export default function VoiceEditor() {
 
                 {/* Examples — typed {id, context, text} (Q16) */}
                 <ExamplesSection
-                  items={sections.examples ?? []}
+                  items={displaySections.examples ?? []}
+                  readOnly={readOnly}
                   flagged={flaggedIds.examples}
                   onSave={(examples) => saveSection({ examples })}
                   t={t}
@@ -586,6 +732,110 @@ function EmptyVoice({
   );
 }
 
+// ── Q8: translate mode ──────────────────────────────────────────────────────
+// A compact globe dropdown over the 8 UI locales. value=null → the editable
+// original; a locale → a read-only translated view.
+function LangMenu({
+  value,
+  onChange,
+  disabled,
+  t,
+}: {
+  value: LanguageCode | null;
+  onChange: (v: LanguageCode | null) => void;
+  disabled?: boolean;
+  t: (k: MessageKey) => string;
+}) {
+  const [open, setOpen] = useState(false);
+  const cur = value ? SUPPORTED_LANGUAGES.find((l) => l.code === value) : null;
+  return (
+    <div className="relative shrink-0">
+      {open && <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} aria-hidden />}
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className="relative z-40 inline-flex h-9 items-center gap-1.5 rounded-md border border-border bg-surface px-2.5 text-small font-medium text-text-muted transition-colors hover:bg-surface-2 hover:text-text disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <IcGlobe size={16} />
+        <span>{cur ? `${cur.flag} ${cur.name}` : t("voice.original")}</span>
+        <IcChevDown size={14} className="text-text-subtle" />
+      </button>
+      {open && (
+        <div
+          className="absolute right-0 z-40 mt-1.5 max-h-[330px] w-60 overflow-auto rounded-lg border border-border bg-surface p-1 shadow-lg"
+          role="menu"
+        >
+          <button
+            role="menuitemradio"
+            aria-checked={value === null}
+            onClick={() => {
+              onChange(null);
+              setOpen(false);
+            }}
+            className="flex w-full items-center justify-between gap-2 rounded-md px-2.5 py-2 text-left hover:bg-surface-2"
+          >
+            <span className="flex flex-col">
+              <span className="text-small font-medium text-text">{t("voice.original")}</span>
+              <span className="text-caption text-text-subtle">{t("voice.original_editable")}</span>
+            </span>
+            {value === null && <IcCheck size={15} className="shrink-0 text-accent" />}
+          </button>
+          <div className="my-1 h-px bg-border" />
+          {SUPPORTED_LANGUAGES.map((l) => (
+            <button
+              key={l.code}
+              role="menuitemradio"
+              aria-checked={value === l.code}
+              onClick={() => {
+                onChange(l.code);
+                setOpen(false);
+              }}
+              className="flex w-full items-center justify-between gap-2 rounded-md px-2.5 py-2 text-left text-small text-text hover:bg-surface-2"
+            >
+              <span>
+                {l.flag} {l.name}
+              </span>
+              {value === l.code && <IcCheck size={15} className="shrink-0 text-accent" />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Read-only translation banner with a "view original" escape hatch.
+function TranslatedBanner({
+  lang,
+  translating,
+  onViewOriginal,
+  t,
+}: {
+  lang: LanguageCode;
+  translating: boolean;
+  onViewOriginal: () => void;
+  t: (k: MessageKey) => string;
+}) {
+  const l = SUPPORTED_LANGUAGES.find((x) => x.code === lang);
+  return (
+    <div className="flex flex-wrap items-center gap-3 rounded-lg border border-accent/30 bg-accent/[0.06] px-4 py-3">
+      {translating ? <Spinner /> : <IcGlobe size={17} className="shrink-0 text-accent" />}
+      <div className="min-w-0 flex-1 text-small leading-snug text-text">
+        <b className="font-semibold">{l ? `${l.flag} ${l.name}` : lang}</b>{" "}
+        <span className="text-text-muted">
+          {translating ? t("voice.translating") : t("voice.translated_banner")}
+        </span>
+      </div>
+      <button onClick={onViewOriginal} className={buttonClasses({ variant: "secondary", size: "sm" })}>
+        <IcPencil size={14} /> {t("voice.view_original")}
+      </button>
+    </div>
+  );
+}
+
 // ── Section shell ───────────────────────────────────────────────────────────
 function SectionShell({
   Icon,
@@ -593,6 +843,7 @@ function SectionShell({
   desc,
   count,
   editing,
+  readOnly,
   onEdit,
   onSave,
   onCancel,
@@ -605,6 +856,7 @@ function SectionShell({
   desc: string;
   count?: number;
   editing: boolean;
+  readOnly?: boolean;
   onEdit: () => void;
   onSave: () => void;
   onCancel: () => void;
@@ -634,7 +886,7 @@ function SectionShell({
           </div>
           <div className="mt-0.5 text-caption text-text-subtle">{desc}</div>
         </div>
-        {!editing && (
+        {!editing && !readOnly && (
           <button
             onClick={onEdit}
             className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-2.5 text-small font-medium text-text-muted transition-colors hover:bg-surface-2 hover:text-text"
@@ -661,23 +913,30 @@ function SectionShell({
 
 function IntroSection({
   value,
+  readOnly,
   onSave,
   t,
 }: {
   value: string;
+  readOnly?: boolean;
   onSave: (text: string) => Promise<void>;
   t: (k: MessageKey) => string;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   useEffect(() => setDraft(value), [value]);
+  useEffect(() => {
+    if (readOnly) setEditing(false);
+  }, [readOnly]);
   return (
     <SectionShell
       Icon={IcVoice}
       title={t("rolebook.intro.label")}
       desc={t("rolebook.intro.helper")}
       editing={editing}
+      readOnly={readOnly}
       onEdit={() => {
+        if (readOnly) return;
         setDraft(value);
         setEditing(true);
       }}
@@ -711,6 +970,7 @@ function IntroSection({
 function ThemesSection({
   items,
   danger,
+  readOnly,
   Icon,
   labelKey,
   helperKey,
@@ -722,6 +982,7 @@ function ThemesSection({
 }: {
   items: RoleBookThemeItem[];
   danger?: boolean;
+  readOnly?: boolean;
   Icon: (p: { size?: number }) => ReactNode;
   labelKey: MessageKey;
   helperKey: MessageKey;
@@ -734,6 +995,9 @@ function ThemesSection({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<RoleBookThemeItem[]>(items);
   useEffect(() => setDraft(items), [items]);
+  useEffect(() => {
+    if (readOnly) setEditing(false);
+  }, [readOnly]);
   const set = (i: number, k: "label" | "note", v: string) =>
     setDraft((d) => d.map((x, j) => (j === i ? { ...x, [k]: v } : x)));
   return (
@@ -743,7 +1007,9 @@ function ThemesSection({
       desc={t(helperKey)}
       count={items.length}
       editing={editing}
+      readOnly={readOnly}
       onEdit={() => {
+        if (readOnly) return;
         setDraft(items.length ? items.map((x) => ({ ...x })) : [{ label: "", note: "" }]);
         setEditing(true);
       }}
@@ -827,11 +1093,13 @@ function ThemesSection({
 // name + the observation. Flagged by id.
 function TraitsSection({
   items,
+  readOnly,
   flagged,
   onSave,
   t,
 }: {
   items: RoleBookTraitItem[];
+  readOnly?: boolean;
   flagged?: Set<string>;
   onSave: (items: RoleBookTraitItem[]) => Promise<void>;
   t: (k: MessageKey) => string;
@@ -839,6 +1107,9 @@ function TraitsSection({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<RoleBookTraitItem[]>(items);
   useEffect(() => setDraft(items), [items]);
+  useEffect(() => {
+    if (readOnly) setEditing(false);
+  }, [readOnly]);
   const set = (i: number, k: "label" | "text", v: string) =>
     setDraft((d) => d.map((x, j) => (j === i ? { ...x, [k]: v } : x)));
   return (
@@ -848,7 +1119,9 @@ function TraitsSection({
       desc={t("rolebook.voice_characteristics.helper")}
       count={items.length}
       editing={editing}
+      readOnly={readOnly}
       onEdit={() => {
+        if (readOnly) return;
         setDraft(items.length ? items.map((x) => ({ ...x })) : [{ label: "", text: "" }]);
         setEditing(true);
       }}
@@ -935,6 +1208,7 @@ function TraitsSection({
 function RulesSection({
   items,
   danger,
+  readOnly,
   Icon,
   labelKey,
   helperKey,
@@ -945,6 +1219,7 @@ function RulesSection({
 }: {
   items: RoleBookRuleItem[];
   danger?: boolean;
+  readOnly?: boolean;
   Icon: (p: { size?: number }) => ReactNode;
   labelKey: MessageKey;
   helperKey: MessageKey;
@@ -956,6 +1231,9 @@ function RulesSection({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<RoleBookRuleItem[]>(items);
   useEffect(() => setDraft(items), [items]);
+  useEffect(() => {
+    if (readOnly) setEditing(false);
+  }, [readOnly]);
   const set = (i: number, v: string) =>
     setDraft((d) => d.map((x, j) => (j === i ? { ...x, text: v } : x)));
   return (
@@ -965,7 +1243,9 @@ function RulesSection({
       desc={t(helperKey)}
       count={items.length}
       editing={editing}
+      readOnly={readOnly}
       onEdit={() => {
+        if (readOnly) return;
         setDraft(items.length ? items.map((x) => ({ ...x })) : [{ text: "" }]);
         setEditing(true);
       }}
@@ -1040,11 +1320,13 @@ function RulesSection({
 // context per example, and preserve it (plus the stable id) through an edit.
 function ExamplesSection({
   items,
+  readOnly,
   flagged,
   onSave,
   t,
 }: {
   items: RoleBookExample[];
+  readOnly?: boolean;
   flagged?: Set<string>;
   onSave: (examples: RoleBookExample[]) => Promise<void>;
   t: (k: MessageKey) => string;
@@ -1052,6 +1334,9 @@ function ExamplesSection({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<RoleBookExample[]>(items);
   useEffect(() => setDraft(items), [items]);
+  useEffect(() => {
+    if (readOnly) setEditing(false);
+  }, [readOnly]);
   const set = (i: number, k: keyof RoleBookExample, v: string) =>
     setDraft((d) => d.map((x, j) => (j === i ? { ...x, [k]: v } : x)));
   return (
@@ -1061,7 +1346,9 @@ function ExamplesSection({
       desc={t("rolebook.examples.helper")}
       count={items.length}
       editing={editing}
+      readOnly={readOnly}
       onEdit={() => {
+        if (readOnly) return;
         setDraft(items.length ? items.map((x) => ({ ...x })) : [{ context: "post", text: "" }]);
         setEditing(true);
       }}

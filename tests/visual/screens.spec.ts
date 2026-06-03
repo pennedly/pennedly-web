@@ -817,6 +817,10 @@ async function setup(page: Page): Promise<void> {
     if (p.includes("/role-book/apply-fix") || p.includes("/role-book/extract"))
       return json(ROLE_BOOK);
     if (p.includes("/role-book")) return json(ROLE_BOOK);
+    if (p.endsWith("/api/translate")) {
+      const body = route.request().postDataJSON() as { text?: string } | null;
+      return json({ translated_text: `«${body?.text ?? ""}»`, target_lang: "ru", cached: true });
+    }
     if (p.includes("/style-rules")) return json(STYLE_RULES);
     if (p.includes("/user-rules")) return json(USER_RULES);
     if (p.includes("/generation/posts/batch"))
@@ -993,6 +997,11 @@ test("Voice", async ({ page }) => {
   await page.getByRole("button", { name: /check voice/i }).click();
   await page.waitForTimeout(900);
   await shoot(page, "voice-check");
+  // Q8: globe → pick a locale → read-only translated view (items wrapped «…»).
+  await page.getByRole("button", { name: /original/i }).click();
+  await page.getByRole("menuitemradio", { name: /Русский/ }).click();
+  await page.waitForTimeout(700);
+  await shoot(page, "voice-translated");
 });
 
 test("Style rules", async ({ page }) => {
