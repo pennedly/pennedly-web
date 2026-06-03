@@ -404,7 +404,7 @@ export default function RepliesPage() {
     return (
       <div className="min-h-screen bg-bg text-text">
         <AppTopbar maxW="960px" title={t("replies.title")} />
-        <main className="mx-auto max-w-[960px] px-5 py-7 md:px-6">
+        <main className="mx-auto max-w-[960px] px-5 pb-24 pt-7 md:px-6">
           <div className="rounded-lg border border-danger/40 bg-danger/10 p-4 text-small text-danger">
             {bootError}
           </div>
@@ -426,9 +426,9 @@ export default function RepliesPage() {
   return (
     <div className="min-h-screen bg-bg text-text">
       <AppTopbar maxW="960px" title={t("replies.title")} pill={pill} />
-      <main className="mx-auto max-w-[960px] space-y-5 px-5 py-7 md:px-6">
+      <main className="mx-auto max-w-[960px] space-y-5 px-5 pb-24 pt-7 md:px-6">
         <div className="flex flex-col gap-1">
-          <h1 className="text-h1 font-semibold">{t("replies.title")}</h1>
+          <h1 className="text-h1 font-semibold">{t("replies.heading")}</h1>
           <p className="text-small text-text-muted">{t("replies.subtitle")}</p>
         </div>
 

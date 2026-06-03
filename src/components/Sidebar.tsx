@@ -11,8 +11,9 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { clearTokens, fetchMe, getTokens, setMyLocale } from "@/lib/api";
+import { clearTokens, fetchComments, fetchMe, getTokens, listAudits, listDrafts, setMyLocale } from "@/lib/api";
 import { captureEvent, resetIdentity } from "@/lib/analytics";
+import { useSelectedAccountId } from "@/lib/account";
 import { getLocale, useTranslation, type MessageKey } from "@/lib/i18n";
 import { AccountSwitcher } from "@/components/AccountSwitcher";
 import {
@@ -40,15 +41,17 @@ type NavItem = {
   icon: IconCmp;
   exact?: boolean;
   tester?: boolean;
+  // Which live count to show as a nav badge (§4), if any.
+  badgeKey?: "studio" | "replies" | "audits";
 };
 
 const GROUPS: { title: MessageKey; items: NavItem[] }[] = [
   {
     title: "nav.group.workspace",
     items: [
-      { href: "/app", label: "nav.studio", icon: IcStudio, exact: true },
+      { href: "/app", label: "nav.studio", icon: IcStudio, exact: true, badgeKey: "studio" },
       { href: "/app/feed", label: "dashboard.nav.feed", icon: IcFeed },
-      { href: "/app/replies", label: "dashboard.nav.replies", icon: IcReplies, tester: true },
+      { href: "/app/replies", label: "dashboard.nav.replies", icon: IcReplies, tester: true, badgeKey: "replies" },
       { href: "/app/mentions", label: "dashboard.nav.mentions", icon: IcAt, tester: true },
     ],
   },
@@ -56,7 +59,7 @@ const GROUPS: { title: MessageKey; items: NavItem[] }[] = [
     title: "nav.group.insight",
     items: [
       { href: "/app/stats", label: "dashboard.nav.stats", icon: IcChart },
-      { href: "/app/audits", label: "dashboard.nav.audits", icon: IcAudit },
+      { href: "/app/audits", label: "dashboard.nav.audits", icon: IcAudit, badgeKey: "audits" },
       // `exact` so Pattern study doesn't also light up on the /explore child.
       { href: "/app/patterns", label: "dashboard.nav.patterns", icon: IcStudy, exact: true },
       { href: "/app/patterns/explore", label: "dashboard.nav.explore", icon: IcCompass },
@@ -83,6 +86,31 @@ export function Sidebar() {
   const { t } = useTranslation();
   const [me, setMe] = useState<Me | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const accountId = useSelectedAccountId();
+  // Nav count badges (§4): items waiting on the user for the active account —
+  // pending drafts (Studio), comments needing a reply (Replies), un-reviewed
+  // audits (Audits). Best-effort; a failed or zero count just hides the badge.
+  const [counts, setCounts] = useState<Record<string, number>>({});
+  useEffect(() => {
+    if (!accountId || !getTokens()) return;
+    let cancelled = false;
+    (async () => {
+      const [d, c, a] = await Promise.allSettled([
+        listDrafts(accountId, { status: "pending", limit: 1 }),
+        fetchComments(accountId, { limit: 1 }),
+        listAudits({ accountId, status: "pending", limit: 1 }),
+      ]);
+      if (cancelled) return;
+      setCounts({
+        studio: d.status === "fulfilled" ? (d.value.count ?? 0) : 0,
+        replies: c.status === "fulfilled" ? (c.value.status_counts?.new ?? 0) : 0,
+        audits: a.status === "fulfilled" ? (a.value.count ?? 0) : 0,
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [accountId]);
 
   useEffect(() => {
     if (!getTokens()) return;
@@ -153,6 +181,15 @@ export function Sidebar() {
                     >
                       <Icon size={16} className="shrink-0" />
                       <span className="truncate">{t(it.label)}</span>
+                      {it.badgeKey && (counts[it.badgeKey] ?? 0) > 0 && (
+                        <span
+                          className={`ml-auto inline-flex h-[18px] min-w-[20px] items-center justify-center rounded-full border border-border bg-surface-2 px-1.5 text-caption font-semibold tabular-nums ${
+                            active ? "text-text" : "text-text-subtle"
+                          }`}
+                        >
+                          {counts[it.badgeKey]}
+                        </span>
+                      )}
                     </Link>
                   </li>
                 );

@@ -19,7 +19,7 @@ export function Spinner({ size = 16, className }: { size?: number; className?: s
 }
 
 export function Skeleton({ className, ...rest }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("animate-pulse rounded-md bg-surface-2", className)} {...rest} />;
+  return <div className={cn("skel rounded-md", className)} {...rest} />;
 }
 
 const SKELETON_WIDTHS = ["92%", "100%", "48%", "85%", "70%"];
@@ -30,7 +30,7 @@ export function SkeletonText({ lines = 3, className }: { lines?: number; classNa
       {Array.from({ length: lines }).map((_, i) => (
         <div
           key={i}
-          className="h-3 animate-pulse rounded-full bg-surface-2"
+          className="h-3 skel rounded-full"
           style={{ width: SKELETON_WIDTHS[i % SKELETON_WIDTHS.length] }}
         />
       ))}

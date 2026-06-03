@@ -565,6 +565,7 @@ export const en = {
   "dashboard.nav.replies": "replies",
   "replies.back": "← dashboard",
   "replies.title": "Replies",
+  "replies.heading": "Reply queue",
   "replies.subtitle":
     "Comments under your posts. Generate a reply in your voice, review it, then publish.",
   "replies.empty":

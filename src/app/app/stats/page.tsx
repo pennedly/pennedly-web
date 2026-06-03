@@ -152,7 +152,7 @@ export default function StatsPage() {
           </TopbarPill>
         }
       />
-      <main className="mx-auto max-w-[960px] space-y-4 px-5 py-7 md:px-6">
+      <main className="mx-auto max-w-[960px] space-y-4 px-5 pb-24 pt-7 md:px-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="flex flex-col gap-1">
             <h1 className="text-h1 font-semibold capitalize">{t("dashboard.nav.stats")}</h1>

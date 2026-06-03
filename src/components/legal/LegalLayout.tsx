@@ -23,7 +23,16 @@ export type LegalBlock =
   | { t: "p"; text: string }
   | { t: "h3"; text: string }
   | { t: "ul"; items: string[] }
+  | { t: "operator" }
   | { t: "contact"; email: string; text: string };
+
+// Operator of record (factual legal-entity disclosure — keep verbatim). Shown
+// as the design's `.operator` identity card.
+const LEGAL_OPERATOR = {
+  name: 'Fundacja Rozwoju Przedsiębiorczości "Twój StartUp"',
+  regs: ["KRS 0000442857", "NIP 5213641211", "REGON 14643346700000"],
+  city: "ul. Żurawia 6/12 lok. 766, 00-503 Warszawa, Poland",
+};
 
 export type LegalSection = { id: string; h: string; blocks: LegalBlock[] };
 
@@ -84,6 +93,23 @@ function Block({ block }: { block: LegalBlock }) {
             </li>
           ))}
         </ul>
+      );
+    case "operator":
+      return (
+        <div className="mt-3.5 max-w-[68ch] rounded-lg border border-border bg-surface px-[17px] py-[15px]">
+          <div className="text-body font-semibold leading-[1.4] text-text">{LEGAL_OPERATOR.name}</div>
+          <div className="mt-2.5 flex flex-wrap gap-[7px]">
+            {LEGAL_OPERATOR.regs.map((r) => (
+              <span
+                key={r}
+                className="whitespace-nowrap rounded-sm border border-border bg-surface-2 px-2 py-[3px] font-mono text-caption text-text-muted"
+              >
+                {r}
+              </span>
+            ))}
+          </div>
+          <div className="mt-2.5 text-small text-text-subtle">{LEGAL_OPERATOR.city}</div>
+        </div>
       );
     case "contact":
       return (

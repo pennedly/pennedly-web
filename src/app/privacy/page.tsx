@@ -26,14 +26,8 @@ const DOC: LegalDoc = {
           t: "p",
           text: 'The Service is operated under Fundacja Rozwoju Przedsiębiorczości "Twój StartUp" (the "Foundation"), a foundation registered in Poland, which acts as the data controller:',
         },
-        {
-          t: "ul",
-          items: [
-            "Registered office: ul. Żurawia 6/12 lok. 766, 00-503 Warszawa, Poland",
-            "KRS 0000442857 · NIP 5213641211 · REGON 14643346700000",
-            "Contact: support@pennedly.com",
-          ],
-        },
+        { t: "operator" },
+        { t: "contact", text: "Contact", email: "support@pennedly.com" },
       ],
     },
     {

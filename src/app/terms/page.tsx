@@ -23,8 +23,10 @@ const DOC: LegalDoc = {
       blocks: [
         {
           t: "p",
-          text: 'The Service is operated under Fundacja Rozwoju Przedsiębiorczości "Twój StartUp" (KRS 0000442857, NIP 5213641211), a foundation registered in Poland. Contact: support@pennedly.com.',
+          text: "The Service is operated under the entity below, a foundation registered in Poland:",
         },
+        { t: "operator" },
+        { t: "contact", text: "Contact", email: "support@pennedly.com" },
       ],
     },
     {

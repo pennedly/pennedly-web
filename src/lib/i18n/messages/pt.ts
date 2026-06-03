@@ -521,6 +521,7 @@ export const pt: Partial<Record<MessageKey, string>> = {
   "dashboard.nav.replies": "respostas",
   "replies.back": "← painel",
   "replies.title": "Respostas",
+  "replies.heading": "Fila de respostas",
   "replies.subtitle":
     "Comentários nos seus posts. Gere uma resposta na sua voz, revise e publique.",
   "replies.empty":

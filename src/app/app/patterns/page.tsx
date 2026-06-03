@@ -203,7 +203,7 @@ export default function PatternsPage() {
           ) : undefined
         }
       />
-      <main className="mx-auto max-w-[720px] space-y-5 px-5 py-7 md:px-6">
+      <main className="mx-auto max-w-[720px] space-y-5 px-5 pb-24 pt-7 md:px-6">
         <div className="flex flex-col gap-1">
           <h1 className="text-h1 font-semibold">{t("patterns.title")}</h1>
           <p className="max-w-[64ch] text-small text-text-muted">

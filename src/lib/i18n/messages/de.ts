@@ -524,6 +524,7 @@ export const de: Partial<Record<MessageKey, string>> = {
   "dashboard.nav.replies": "antworten",
   "replies.back": "← Dashboard",
   "replies.title": "Antworten",
+  "replies.heading": "Antwort-Warteschlange",
   "replies.subtitle":
     "Kommentare unter deinen Beiträgen. Generiere eine Antwort in deiner Stimme, prüfe sie und veröffentliche.",
   "replies.empty":

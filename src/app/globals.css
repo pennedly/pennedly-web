@@ -229,3 +229,16 @@
   0%   { transform: scale(0.6); opacity: 0.5; }
   100% { transform: scale(1.5); opacity: 0; }
 }
+/* §3.7 skeleton shimmer — surface-2 base with a moving ink-tinted sheen.
+   Disabled automatically by the reduced-motion rule above. */
+@keyframes shimmer { from { background-position: 220% 0; } to { background-position: -120% 0; } }
+.skel {
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-2) 25%,
+    color-mix(in srgb, var(--color-text) 7%, var(--color-surface-2)) 37%,
+    var(--color-surface-2) 63%
+  );
+  background-size: 220% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
