@@ -162,6 +162,18 @@ const OB_JUMP_TO_STAGE: Record<string, Stage> = {
   Done: "done",
 };
 
+// Demo/preview links: in dev anyone can open `?demo=1` (no login) to review every
+// state; in prod the panel is gated to testers.
+const IS_DEV = process.env.NODE_ENV === "development";
+function isDemoUrl(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return new URLSearchParams(window.location.search).get("demo") === "1";
+  } catch {
+    return false;
+  }
+}
+
 // Tester-only demo render driven entirely by the Tweaks panel on MOCK data, so
 // every onboarding state can be checked 1-to-1 with the design without a backend.
 // Reuses the real step components; completely isolated from the live flow.
@@ -268,9 +280,18 @@ export default function OnboardingPage() {
   useEffect(() => {
     if (tw.demo) document.documentElement.classList.toggle("dark", !!tw.dark);
   }, [tw.demo, tw.dark]);
+  // A ?demo=1 deep-link opens straight into demo mode (shareable per-screen review).
+  useEffect(() => {
+    try {
+      if (new URLSearchParams(window.location.search).get("demo") === "1") setTw("demo", true);
+    } catch {
+      /* no-op */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
-    if (tw.demo) return; // demo mode renders mock data; don't hit the backend
+    if (tw.demo || isDemoUrl()) return; // demo mode renders mock data; don't hit the backend
     if (!getTokens()) {
       router.replace("/app/login");
       return;
@@ -404,7 +425,7 @@ export default function OnboardingPage() {
 
   return (
     <>
-      {tester && tw.demo ? (
+      {(tester || IS_DEV) && tw.demo ? (
         <OnboardingDemo tw={tw} />
       ) : (
     <div className="flex min-h-screen flex-col bg-bg text-text">
@@ -506,7 +527,7 @@ export default function OnboardingPage() {
       </div>
     </div>
       )}
-      {tester && (
+      {(tester || IS_DEV) && (
         <TweaksPanel title="Onboarding">
           <TweakSection label="Demo" />
           <TweakToggle label="Mock data" value={tw.demo} onChange={(v) => setTw("demo", v)} />
