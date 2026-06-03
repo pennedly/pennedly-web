@@ -178,6 +178,10 @@ export const en = {
     "Representative phrases in your actual voice.",
   "rolebook.examples.placeholder":
     "e.g. i have burned water before. not metaphorically",
+  // Q60: secondary-field placeholders for the typed section editors.
+  "rolebook.themes_include.note_placeholder": "What it covers (optional)",
+  "rolebook.themes_exclude.note_placeholder": "Why it's off-limits (optional)",
+  "rolebook.voice_characteristics.label_placeholder": "Short name (optional)",
   "rolebook.extract.button": "re-extract from posts",
   "rolebook.extract.extracting": "extracting…",
   "rolebook.extract.confirm_title": "Re-extract voice from recent posts?",

@@ -748,13 +748,18 @@ function PreviewResultPanel({
   onBack: () => void;
 }) {
   const s = result.sections;
+  // Q60: sections are typed objects — flatten each to its display string for
+  // the read-only preview (themes → label, characteristics → "label: text"
+  // or text, do/dont/examples → text).
   const lists: { key: MessageKey; items?: string[] }[] = [
-    { key: "onboarding.sec_themes", items: s.themes_include },
-    { key: "onboarding.sec_exclude", items: s.themes_exclude },
-    { key: "onboarding.sec_voice", items: s.voice_characteristics },
-    { key: "onboarding.sec_do", items: s.do_list },
-    { key: "onboarding.sec_dont", items: s.dont_list },
-    // Q16: examples are typed ({context,text}); show their text in the preview.
+    { key: "onboarding.sec_themes", items: s.themes_include?.map((x) => x.label) },
+    { key: "onboarding.sec_exclude", items: s.themes_exclude?.map((x) => x.label) },
+    {
+      key: "onboarding.sec_voice",
+      items: s.voice_characteristics?.map((x) => (x.label ? `${x.label}: ${x.text}` : x.text)),
+    },
+    { key: "onboarding.sec_do", items: s.do_list?.map((x) => x.text) },
+    { key: "onboarding.sec_dont", items: s.dont_list?.map((x) => x.text) },
     { key: "onboarding.sec_examples", items: s.examples?.map((e) => e.text) },
   ];
   return (

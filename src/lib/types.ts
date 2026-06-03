@@ -53,6 +53,33 @@ export type ThreadsConnectStart = {
 // Q16: an example post carries its context ("post" | "reply") + text. The
 // editor keeps it typed so the context survives an edit (the other sections
 // are still display-flattened to strings by the interim flattenSections).
+// Q60: role-book section items are typed objects with a stable `id`, not bare
+// strings. Each section has a primary text field + an optional secondary:
+//   themes_include / themes_exclude → { id, label, note }  (note is editor-only
+//     for exclude — only `label` reaches the prompt; primary field = label)
+//   voice_characteristics           → { id, label?, text } (primary = text)
+//   do_list / dont_list             → { id, text }
+//   examples                        → { id, context, text } (context editor-only)
+// The backend normalizes on save (preserves a non-blank id, generates one
+// otherwise, drops an item whose primary field is blank). A legacy bare string
+// is coerced to its section's primary field on read.
+export type RoleBookThemeItem = {
+  id?: string;
+  label: string;
+  note?: string;
+};
+
+export type RoleBookTraitItem = {
+  id?: string;
+  label?: string;
+  text: string;
+};
+
+export type RoleBookRuleItem = {
+  id?: string;
+  text: string;
+};
+
 export type RoleBookExample = {
   id?: string;
   context: string;
@@ -61,11 +88,11 @@ export type RoleBookExample = {
 
 export type RoleBookSections = {
   intro?: string;
-  themes_include?: string[];
-  themes_exclude?: string[];
-  voice_characteristics?: string[];
-  do_list?: string[];
-  dont_list?: string[];
+  themes_include?: RoleBookThemeItem[];
+  themes_exclude?: RoleBookThemeItem[];
+  voice_characteristics?: RoleBookTraitItem[];
+  do_list?: RoleBookRuleItem[];
+  dont_list?: RoleBookRuleItem[];
   examples?: RoleBookExample[];
 };
 

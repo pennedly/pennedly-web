@@ -55,78 +55,83 @@ import type {
   LintResult,
   RoleBook,
   RoleBookExample,
+  RoleBookRuleItem,
   RoleBookSections,
+  RoleBookThemeItem,
+  RoleBookTraitItem,
 } from "@/lib/types";
 
-type ListKey = keyof Omit<RoleBookSections, "intro" | "examples">;
 type Toast = { id: number; message: string; tone: "success" | "error" };
 
-// Q60 interim (the 5 flat list sections): the backend returns each item as a
-// typed object ({id,label,note} / {id,label,text} / {id,text}); this editor
-// still edits them as flat display strings, so coerce on read. Saving strings
-// re-wraps them server-side. Q16: `examples` are kept TYPED ({id,context,text})
-// so their Post/Reply context survives an edit. The full typed editor for the
-// other sections + the translate mode (Q8) is the remaining Voice task.
-function flattenSections(
+// Q60: the backend stores each list-section item as a typed object with a
+// stable id (themes → {id,label,note}, characteristics → {id,label?,text},
+// do/dont → {id,text}, examples → {id,context,text}). normalizeSections
+// coerces the GET payload — and any legacy bare string — into those shapes so
+// the editor can edit the secondary fields and round-trip ids; the backend
+// re-normalizes on save (preserves a non-blank id, drops a blank primary).
+function coerceTheme(it: unknown): RoleBookThemeItem | null {
+  if (typeof it === "string") {
+    const s = it.trim();
+    return s ? { label: s, note: "" } : null;
+  }
+  const o = (it ?? {}) as { id?: string; label?: string; note?: string };
+  const label = (o.label ?? "").trim();
+  return label ? { id: o.id, label, note: (o.note ?? "").trim() } : null;
+}
+function coerceTrait(it: unknown): RoleBookTraitItem | null {
+  if (typeof it === "string") {
+    const s = it.trim();
+    return s ? { label: "", text: s } : null;
+  }
+  const o = (it ?? {}) as { id?: string; label?: string; text?: string };
+  const text = (o.text ?? "").trim();
+  return text ? { id: o.id, label: (o.label ?? "").trim(), text } : null;
+}
+function coerceRule(it: unknown): RoleBookRuleItem | null {
+  if (typeof it === "string") {
+    const s = it.trim();
+    return s ? { text: s } : null;
+  }
+  const o = (it ?? {}) as { id?: string; text?: string };
+  const text = (o.text ?? "").trim();
+  return text ? { id: o.id, text } : null;
+}
+function coerceExample(it: unknown): RoleBookExample | null {
+  if (typeof it === "string") {
+    const s = it.trim();
+    return s ? { context: "post", text: s } : null;
+  }
+  const o = (it ?? {}) as { id?: string; context?: string; text?: string };
+  const text = (o.text ?? "").trim();
+  if (!text) return null;
+  return {
+    id: o.id,
+    context: (o.context ?? "post").toLowerCase() === "reply" ? "reply" : "post",
+    text,
+  };
+}
+function mapCoerce<T>(arr: unknown, fn: (it: unknown) => T | null): T[] {
+  return Array.isArray(arr) ? arr.map(fn).filter((x): x is T => x !== null) : [];
+}
+function normalizeSections(
   raw: RoleBookSections | null | undefined,
 ): RoleBookSections {
   const out: RoleBookSections = {};
   if (!raw) return out;
   if (typeof raw.intro === "string") out.intro = raw.intro;
-  const keys: ListKey[] = [
-    "themes_include",
-    "themes_exclude",
-    "voice_characteristics",
-    "do_list",
-    "dont_list",
-  ];
-  for (const k of keys) {
-    const arr = raw[k] as unknown[] | undefined;
-    if (Array.isArray(arr)) {
-      out[k] = arr
-        .map((it) => {
-          if (typeof it === "string") return it;
-          const o = it as { label?: string; text?: string };
-          return (o?.label || o?.text || "").trim();
-        })
-        .filter(Boolean);
-    }
-  }
-  // Q16: keep examples typed — preserve id + context, normalize context to the
-  // backend's lowercase "post"/"reply".
-  const ex = raw.examples as unknown[] | undefined;
-  if (Array.isArray(ex)) {
-    out.examples = ex
-      .map((it): RoleBookExample => {
-        if (typeof it === "string") return { context: "post", text: it.trim() };
-        const o = it as { id?: string; context?: string; text?: string };
-        return {
-          id: o.id,
-          context: (o.context || "post").toLowerCase() === "reply" ? "reply" : "post",
-          text: (o.text || "").trim(),
-        };
-      })
-      .filter((e) => e.text);
-  }
+  if (raw.themes_include !== undefined)
+    out.themes_include = mapCoerce(raw.themes_include, coerceTheme);
+  if (raw.themes_exclude !== undefined)
+    out.themes_exclude = mapCoerce(raw.themes_exclude, coerceTheme);
+  if (raw.voice_characteristics !== undefined)
+    out.voice_characteristics = mapCoerce(raw.voice_characteristics, coerceTrait);
+  if (raw.do_list !== undefined) out.do_list = mapCoerce(raw.do_list, coerceRule);
+  if (raw.dont_list !== undefined)
+    out.dont_list = mapCoerce(raw.dont_list, coerceRule);
+  if (raw.examples !== undefined)
+    out.examples = mapCoerce(raw.examples, coerceExample);
   return out;
 }
-
-const LIST_SECTIONS: {
-  key: ListKey;
-  Icon: (p: { size?: number }) => ReactNode;
-  labelKey: MessageKey;
-  helperKey: MessageKey;
-  placeholderKey: MessageKey;
-  multiline: boolean;
-  danger?: boolean;
-}[] = [
-  { key: "themes_include", Icon: IcTags, labelKey: "rolebook.themes_include.label", helperKey: "rolebook.themes_include.helper", placeholderKey: "rolebook.themes_include.placeholder", multiline: false },
-  { key: "themes_exclude", Icon: IcAlert, labelKey: "rolebook.themes_exclude.label", helperKey: "rolebook.themes_exclude.helper", placeholderKey: "rolebook.themes_exclude.placeholder", multiline: false, danger: true },
-  { key: "voice_characteristics", Icon: IcList, labelKey: "rolebook.voice_characteristics.label", helperKey: "rolebook.voice_characteristics.helper", placeholderKey: "rolebook.voice_characteristics.placeholder", multiline: true },
-  { key: "do_list", Icon: IcCheck, labelKey: "rolebook.do_list.label", helperKey: "rolebook.do_list.helper", placeholderKey: "rolebook.do_list.placeholder", multiline: true },
-  { key: "dont_list", Icon: IcX, labelKey: "rolebook.dont_list.label", helperKey: "rolebook.dont_list.helper", placeholderKey: "rolebook.dont_list.placeholder", multiline: true, danger: true },
-  // examples are rendered by the typed <ExamplesSection> (Q16), not here.
-];
 
 const REEXTRACT_STEPS: MessageKey[] = [
   "voice.rx_step1",
@@ -174,7 +179,7 @@ export default function VoiceEditor() {
       try {
         const rb = await fetchRoleBook(accountId);
         setBook(rb);
-        setSections(flattenSections(rb.sections));
+        setSections(normalizeSections(rb.sections));
       } catch (e) {
         if (e instanceof ApiError && e.status === 401) {
           clearTokens();
@@ -197,17 +202,14 @@ export default function VoiceEditor() {
     ? lintResult.conflicts.filter((_, i) => !dismissed.has(i))
     : [];
 
-  // Per-section flagged item texts, for the inline highlight.
-  const flaggedBySection: Partial<Record<ListKey, Set<string>>> = {};
-  const flaggedExamples = new Set<string>();
+  // Q60: flag the exact pill by its stable id (the lint response carries an
+  // item id per conflict) instead of a fragile text-match. A "" id — the LLM
+  // referenced an item that no longer matches the document — flags nothing.
+  const flaggedIds: Record<string, Set<string>> = {};
   for (const c of conflicts) {
     for (const item of c.items) {
-      if (item.section === "examples") {
-        flaggedExamples.add(item.text);
-      } else {
-        const sec = item.section as ListKey;
-        (flaggedBySection[sec] ??= new Set()).add(item.text);
-      }
+      if (!item.id) continue;
+      (flaggedIds[item.section] ??= new Set()).add(item.id);
     }
   }
 
@@ -217,7 +219,7 @@ export default function VoiceEditor() {
     try {
       const rb = await patchRoleBook(accountId, next);
       setBook(rb);
-      setSections(flattenSections(rb.sections));
+      setSections(normalizeSections(rb.sections));
       setLintResult(null);
       setDismissed(new Set());
       toast(t("voice.toast_saved"));
@@ -250,7 +252,7 @@ export default function VoiceEditor() {
     try {
       const rb = await applyLintFix(accountId, fix);
       setBook(rb);
-      setSections(flattenSections(rb.sections));
+      setSections(normalizeSections(rb.sections));
       // Re-lint on the new version so the panel reflects reality.
       try {
         const fresh = await lintRoleBook(accountId);
@@ -288,7 +290,7 @@ export default function VoiceEditor() {
         const [rb] = await Promise.all([extractVoice(accountId), minDelay]);
         setStepIndex(n);
         setBook(rb);
-        setSections(flattenSections(rb.sections));
+        setSections(normalizeSections(rb.sections));
         setLintResult(null);
         setDismissed(new Set());
         setLastRun(t("voice.just_now"));
@@ -415,22 +417,66 @@ export default function VoiceEditor() {
                   t={t}
                 />
 
-                {/* List sections */}
-                {LIST_SECTIONS.map((s) => (
-                  <ListSection
-                    key={s.key}
-                    config={s}
-                    items={(sections[s.key] as string[] | undefined) ?? []}
-                    flagged={flaggedBySection[s.key]}
-                    onSave={(items) => saveSection({ [s.key]: items })}
-                    t={t}
-                  />
-                ))}
+                {/* Themes ± — Q60 typed {id, label, note} */}
+                <ThemesSection
+                  items={sections.themes_include ?? []}
+                  Icon={IcTags}
+                  labelKey="rolebook.themes_include.label"
+                  helperKey="rolebook.themes_include.helper"
+                  placeholderKey="rolebook.themes_include.placeholder"
+                  notePlaceholderKey="rolebook.themes_include.note_placeholder"
+                  flagged={flaggedIds.themes_include}
+                  onSave={(items) => saveSection({ themes_include: items })}
+                  t={t}
+                />
+                <ThemesSection
+                  items={sections.themes_exclude ?? []}
+                  danger
+                  Icon={IcAlert}
+                  labelKey="rolebook.themes_exclude.label"
+                  helperKey="rolebook.themes_exclude.helper"
+                  placeholderKey="rolebook.themes_exclude.placeholder"
+                  notePlaceholderKey="rolebook.themes_exclude.note_placeholder"
+                  flagged={flaggedIds.themes_exclude}
+                  onSave={(items) => saveSection({ themes_exclude: items })}
+                  t={t}
+                />
 
-                {/* Examples — typed, with Post/Reply context (Q16) */}
+                {/* Voice characteristics — Q60 typed {id, label?, text} */}
+                <TraitsSection
+                  items={sections.voice_characteristics ?? []}
+                  flagged={flaggedIds.voice_characteristics}
+                  onSave={(items) => saveSection({ voice_characteristics: items })}
+                  t={t}
+                />
+
+                {/* Do / Don't — Q60 typed {id, text} */}
+                <RulesSection
+                  items={sections.do_list ?? []}
+                  Icon={IcCheck}
+                  labelKey="rolebook.do_list.label"
+                  helperKey="rolebook.do_list.helper"
+                  placeholderKey="rolebook.do_list.placeholder"
+                  flagged={flaggedIds.do_list}
+                  onSave={(items) => saveSection({ do_list: items })}
+                  t={t}
+                />
+                <RulesSection
+                  items={sections.dont_list ?? []}
+                  danger
+                  Icon={IcX}
+                  labelKey="rolebook.dont_list.label"
+                  helperKey="rolebook.dont_list.helper"
+                  placeholderKey="rolebook.dont_list.placeholder"
+                  flagged={flaggedIds.dont_list}
+                  onSave={(items) => saveSection({ dont_list: items })}
+                  t={t}
+                />
+
+                {/* Examples — typed {id, context, text} (Q16) */}
                 <ExamplesSection
                   items={sections.examples ?? []}
-                  flagged={flaggedExamples}
+                  flagged={flaggedIds.examples}
                   onSave={(examples) => saveSection({ examples })}
                   t={t}
                 />
@@ -660,61 +706,76 @@ function IntroSection({
   );
 }
 
-function ListSection({
-  config,
+// Q60: themes (include / exclude) are typed {id, label, note}. Edit both
+// fields; the stable id round-trips so lint can flag the exact pill by id.
+function ThemesSection({
   items,
+  danger,
+  Icon,
+  labelKey,
+  helperKey,
+  placeholderKey,
+  notePlaceholderKey,
   flagged,
   onSave,
   t,
 }: {
-  config: (typeof LIST_SECTIONS)[number];
-  items: string[];
+  items: RoleBookThemeItem[];
+  danger?: boolean;
+  Icon: (p: { size?: number }) => ReactNode;
+  labelKey: MessageKey;
+  helperKey: MessageKey;
+  placeholderKey: MessageKey;
+  notePlaceholderKey: MessageKey;
   flagged?: Set<string>;
-  onSave: (items: string[]) => Promise<void>;
+  onSave: (items: RoleBookThemeItem[]) => Promise<void>;
   t: (k: MessageKey) => string;
 }) {
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState<string[]>(items);
+  const [draft, setDraft] = useState<RoleBookThemeItem[]>(items);
   useEffect(() => setDraft(items), [items]);
-  const danger = config.danger;
+  const set = (i: number, k: "label" | "note", v: string) =>
+    setDraft((d) => d.map((x, j) => (j === i ? { ...x, [k]: v } : x)));
   return (
     <SectionShell
-      Icon={config.Icon}
-      title={t(config.labelKey)}
-      desc={t(config.helperKey)}
+      Icon={Icon}
+      title={t(labelKey)}
+      desc={t(helperKey)}
       count={items.length}
       editing={editing}
       onEdit={() => {
-        setDraft(items.length ? [...items] : [""]);
+        setDraft(items.length ? items.map((x) => ({ ...x })) : [{ label: "", note: "" }]);
         setEditing(true);
       }}
       onCancel={() => setEditing(false)}
       onSave={async () => {
-        await onSave(draft.map((x) => x.trim()).filter(Boolean));
+        await onSave(
+          draft
+            .map((x) => ({ ...x, label: x.label.trim(), note: (x.note ?? "").trim() }))
+            .filter((x) => x.label),
+        );
         setEditing(false);
       }}
       t={t}
     >
       {editing ? (
         <div className="flex flex-col gap-2.5">
-          {draft.map((item, i) => (
+          {draft.map((x, i) => (
             <div key={i} className="flex items-start gap-2.5 rounded-md border border-border bg-surface-2 p-2.5">
-              {config.multiline ? (
-                <textarea
-                  value={item}
-                  rows={2}
-                  onChange={(e) => setDraft((d) => d.map((x, j) => (j === i ? e.target.value : x)))}
-                  placeholder={t(config.placeholderKey)}
-                  className="min-h-[60px] w-full resize-y rounded-sm border border-border bg-surface px-2.5 py-2 text-small leading-relaxed text-text outline-none focus:border-accent"
-                />
-              ) : (
+              <div className="flex min-w-0 flex-1 flex-col gap-2">
                 <input
-                  value={item}
-                  onChange={(e) => setDraft((d) => d.map((x, j) => (j === i ? e.target.value : x)))}
-                  placeholder={t(config.placeholderKey)}
-                  className="h-9 w-full rounded-sm border border-border bg-surface px-2.5 text-small text-text outline-none focus:border-accent"
+                  value={x.label}
+                  onChange={(e) => set(i, "label", e.target.value)}
+                  placeholder={t(placeholderKey)}
+                  className="h-9 w-full rounded-sm border border-border bg-surface px-2.5 text-small font-medium text-text outline-none focus:border-accent"
                 />
-              )}
+                <input
+                  value={x.note ?? ""}
+                  onChange={(e) => set(i, "note", e.target.value)}
+                  placeholder={t(notePlaceholderKey)}
+                  className="h-8 w-full rounded-sm border border-border bg-surface px-2.5 text-small text-text-muted outline-none focus:border-accent"
+                />
+              </div>
               <button
                 onClick={() => setDraft((d) => d.filter((_, j) => j !== i))}
                 aria-label={t("common.cancel")}
@@ -725,23 +786,236 @@ function ListSection({
             </div>
           ))}
           <button
-            onClick={() => setDraft((d) => [...d, ""])}
+            onClick={() => setDraft((d) => [...d, { label: "", note: "" }])}
             className="inline-flex items-center gap-1.5 self-start rounded-md border border-dashed border-border bg-surface px-3 py-2 text-small font-medium text-text-muted transition-colors hover:border-text/20 hover:bg-surface-2 hover:text-text"
           >
             <IcPlus size={15} /> {t("voice.add_item")}
           </button>
         </div>
       ) : items.length === 0 ? (
-        <p className="text-small italic text-text-subtle">{t(config.placeholderKey)}</p>
+        <p className="text-small italic text-text-subtle">{t(placeholderKey)}</p>
       ) : (
         <div className="flex flex-col gap-2">
-          {items.map((item, i) => {
-            const isFlagged = flagged?.has(item);
+          {items.map((x, i) => {
+            const isFlagged = !!x.id && flagged?.has(x.id);
             return (
               <div
-                key={i}
+                key={x.id ?? i}
                 className={cn(
-                  "rounded-md border px-3 py-2.5 text-small leading-relaxed",
+                  "rounded-md border px-3 py-2.5 leading-relaxed",
+                  isFlagged
+                    ? "border-warning/45 bg-warning/[0.07]"
+                    : danger
+                      ? "border-danger/25 bg-danger/[0.05]"
+                      : "border-border bg-surface-2",
+                )}
+              >
+                <span className="text-small font-medium text-text">{x.label}</span>
+                {x.note && (
+                  <span className="mt-0.5 block text-caption text-text-subtle">{x.note}</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </SectionShell>
+  );
+}
+
+// Q60: voice characteristics are typed {id, label?, text} — an optional short
+// name + the observation. Flagged by id.
+function TraitsSection({
+  items,
+  flagged,
+  onSave,
+  t,
+}: {
+  items: RoleBookTraitItem[];
+  flagged?: Set<string>;
+  onSave: (items: RoleBookTraitItem[]) => Promise<void>;
+  t: (k: MessageKey) => string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<RoleBookTraitItem[]>(items);
+  useEffect(() => setDraft(items), [items]);
+  const set = (i: number, k: "label" | "text", v: string) =>
+    setDraft((d) => d.map((x, j) => (j === i ? { ...x, [k]: v } : x)));
+  return (
+    <SectionShell
+      Icon={IcList}
+      title={t("rolebook.voice_characteristics.label")}
+      desc={t("rolebook.voice_characteristics.helper")}
+      count={items.length}
+      editing={editing}
+      onEdit={() => {
+        setDraft(items.length ? items.map((x) => ({ ...x })) : [{ label: "", text: "" }]);
+        setEditing(true);
+      }}
+      onCancel={() => setEditing(false)}
+      onSave={async () => {
+        await onSave(
+          draft
+            .map((x) => ({ ...x, label: (x.label ?? "").trim(), text: x.text.trim() }))
+            .filter((x) => x.text),
+        );
+        setEditing(false);
+      }}
+      t={t}
+    >
+      {editing ? (
+        <div className="flex flex-col gap-2.5">
+          {draft.map((x, i) => (
+            <div key={i} className="flex items-start gap-2.5 rounded-md border border-border bg-surface-2 p-2.5">
+              <div className="flex min-w-0 flex-1 flex-col gap-2">
+                <input
+                  value={x.label ?? ""}
+                  onChange={(e) => set(i, "label", e.target.value)}
+                  placeholder={t("rolebook.voice_characteristics.label_placeholder")}
+                  className="h-9 w-full rounded-sm border border-border bg-surface px-2.5 text-small font-medium text-text outline-none focus:border-accent"
+                />
+                <textarea
+                  value={x.text}
+                  rows={2}
+                  onChange={(e) => set(i, "text", e.target.value)}
+                  placeholder={t("rolebook.voice_characteristics.placeholder")}
+                  className="min-h-[60px] w-full resize-y rounded-sm border border-border bg-surface px-2.5 py-2 text-small leading-relaxed text-text outline-none focus:border-accent"
+                />
+              </div>
+              <button
+                onClick={() => setDraft((d) => d.filter((_, j) => j !== i))}
+                aria-label={t("common.cancel")}
+                className="grid h-8 w-8 shrink-0 place-items-center rounded-sm text-text-subtle transition-colors hover:bg-danger/12 hover:text-danger"
+              >
+                <IcTrash size={16} />
+              </button>
+            </div>
+          ))}
+          <button
+            onClick={() => setDraft((d) => [...d, { label: "", text: "" }])}
+            className="inline-flex items-center gap-1.5 self-start rounded-md border border-dashed border-border bg-surface px-3 py-2 text-small font-medium text-text-muted transition-colors hover:border-text/20 hover:bg-surface-2 hover:text-text"
+          >
+            <IcPlus size={15} /> {t("voice.add_item")}
+          </button>
+        </div>
+      ) : items.length === 0 ? (
+        <p className="text-small italic text-text-subtle">
+          {t("rolebook.voice_characteristics.placeholder")}
+        </p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {items.map((x, i) => {
+            const isFlagged = !!x.id && flagged?.has(x.id);
+            return (
+              <div
+                key={x.id ?? i}
+                className={cn(
+                  "rounded-md border px-3 py-2.5 leading-relaxed",
+                  isFlagged
+                    ? "border-warning/45 bg-warning/[0.07]"
+                    : "border-border bg-surface-2",
+                )}
+              >
+                {x.label && (
+                  <span className="mb-1 inline-flex items-center rounded-full border border-border bg-surface px-2 py-px text-caption font-semibold uppercase tracking-wide text-text-subtle">
+                    {x.label}
+                  </span>
+                )}
+                <p className="whitespace-pre-wrap text-small leading-relaxed text-text">{x.text}</p>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </SectionShell>
+  );
+}
+
+// Q60: do / don't rules are typed {id, text} — single-field, flagged by id.
+function RulesSection({
+  items,
+  danger,
+  Icon,
+  labelKey,
+  helperKey,
+  placeholderKey,
+  flagged,
+  onSave,
+  t,
+}: {
+  items: RoleBookRuleItem[];
+  danger?: boolean;
+  Icon: (p: { size?: number }) => ReactNode;
+  labelKey: MessageKey;
+  helperKey: MessageKey;
+  placeholderKey: MessageKey;
+  flagged?: Set<string>;
+  onSave: (items: RoleBookRuleItem[]) => Promise<void>;
+  t: (k: MessageKey) => string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<RoleBookRuleItem[]>(items);
+  useEffect(() => setDraft(items), [items]);
+  const set = (i: number, v: string) =>
+    setDraft((d) => d.map((x, j) => (j === i ? { ...x, text: v } : x)));
+  return (
+    <SectionShell
+      Icon={Icon}
+      title={t(labelKey)}
+      desc={t(helperKey)}
+      count={items.length}
+      editing={editing}
+      onEdit={() => {
+        setDraft(items.length ? items.map((x) => ({ ...x })) : [{ text: "" }]);
+        setEditing(true);
+      }}
+      onCancel={() => setEditing(false)}
+      onSave={async () => {
+        await onSave(
+          draft.map((x) => ({ ...x, text: x.text.trim() })).filter((x) => x.text),
+        );
+        setEditing(false);
+      }}
+      t={t}
+    >
+      {editing ? (
+        <div className="flex flex-col gap-2.5">
+          {draft.map((x, i) => (
+            <div key={i} className="flex items-start gap-2.5 rounded-md border border-border bg-surface-2 p-2.5">
+              <textarea
+                value={x.text}
+                rows={2}
+                onChange={(e) => set(i, e.target.value)}
+                placeholder={t(placeholderKey)}
+                className="min-h-[60px] w-full resize-y rounded-sm border border-border bg-surface px-2.5 py-2 text-small leading-relaxed text-text outline-none focus:border-accent"
+              />
+              <button
+                onClick={() => setDraft((d) => d.filter((_, j) => j !== i))}
+                aria-label={t("common.cancel")}
+                className="grid h-8 w-8 shrink-0 place-items-center rounded-sm text-text-subtle transition-colors hover:bg-danger/12 hover:text-danger"
+              >
+                <IcTrash size={16} />
+              </button>
+            </div>
+          ))}
+          <button
+            onClick={() => setDraft((d) => [...d, { text: "" }])}
+            className="inline-flex items-center gap-1.5 self-start rounded-md border border-dashed border-border bg-surface px-3 py-2 text-small font-medium text-text-muted transition-colors hover:border-text/20 hover:bg-surface-2 hover:text-text"
+          >
+            <IcPlus size={15} /> {t("voice.add_item")}
+          </button>
+        </div>
+      ) : items.length === 0 ? (
+        <p className="text-small italic text-text-subtle">{t(placeholderKey)}</p>
+      ) : (
+        <ul className="flex flex-col gap-2">
+          {items.map((x, i) => {
+            const isFlagged = !!x.id && flagged?.has(x.id);
+            return (
+              <li
+                key={x.id ?? i}
+                className={cn(
+                  "flex items-start gap-2.5 rounded-md border px-3 py-2.5 text-small leading-relaxed",
                   isFlagged
                     ? "border-warning/45 bg-warning/[0.07] text-text"
                     : danger
@@ -749,11 +1023,14 @@ function ListSection({
                       : "border-border bg-surface-2 text-text",
                 )}
               >
-                {item}
-              </div>
+                <span className="mt-0.5 shrink-0 text-text-muted">
+                  {danger ? <IcX size={13} /> : <IcCheck size={13} />}
+                </span>
+                <span className="whitespace-pre-wrap">{x.text}</span>
+              </li>
             );
           })}
-        </div>
+        </ul>
       )}
     </SectionShell>
   );
@@ -844,10 +1121,10 @@ function ExamplesSection({
         <div className="flex flex-col gap-2">
           {items.map((x, i) => (
             <div
-              key={i}
+              key={x.id ?? i}
               className={cn(
                 "rounded-md border px-3 py-2.5 text-small leading-relaxed",
-                flagged?.has(x.text)
+                !!x.id && flagged?.has(x.id)
                   ? "border-warning/45 bg-warning/[0.07] text-text"
                   : "border-border bg-surface-2 text-text",
               )}

@@ -180,6 +180,10 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "rolebook.examples.helper": "Характерные фразы в твоём реальном голосе.",
   "rolebook.examples.placeholder":
     "например, i have burned water before. not metaphorically",
+  // Q60: подписи-плейсхолдеры для вторичных полей типизированных секций.
+  "rolebook.themes_include.note_placeholder": "Что это охватывает (необязательно)",
+  "rolebook.themes_exclude.note_placeholder": "Почему под запретом (необязательно)",
+  "rolebook.voice_characteristics.label_placeholder": "Короткое название (необязательно)",
   "rolebook.extract.button": "извлечь заново из постов",
   "rolebook.extract.extracting": "извлекаю…",
   "rolebook.extract.confirm_title": "Извлечь голос заново из последних постов?",

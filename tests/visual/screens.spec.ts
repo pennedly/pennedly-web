@@ -659,11 +659,23 @@ const ROLE_BOOK = {
   posts_analyzed: 47,
   sections: {
     intro: "A working writer sharing the craft in plain, lived-in language — never lecturing, always mid-thought.",
-    themes_include: ["Writing craft", "Habits & consistency"],
-    themes_exclude: ["Crypto / NFTs"],
-    voice_characteristics: ["Short, declarative sentences", "Lead with the claim, not the wind-up"],
-    do_list: ["Open with a concrete moment", "End on a line that resonates"],
-    dont_list: ["No hashtags", "No corporate buzzwords"],
+    themes_include: [
+      { id: "ti1", label: "Writing craft", note: "Finding a voice, cutting words, the honest middle." },
+      { id: "ti2", label: "Habits & consistency", note: "" },
+    ],
+    themes_exclude: [{ id: "tx1", label: "Crypto / NFTs", note: "Off-brand and off the timeline." }],
+    voice_characteristics: [
+      { id: "ch1", label: "Brevity", text: "Short, declarative sentences." },
+      { id: "ch2", label: "", text: "Lead with the claim, not the wind-up." },
+    ],
+    do_list: [
+      { id: "do1", text: "Open with a concrete moment." },
+      { id: "do2", text: "End on a line that resonates." },
+    ],
+    dont_list: [
+      { id: "dn1", text: "No hashtags." },
+      { id: "dn2", text: "No corporate buzzwords." },
+    ],
     examples: [
       { id: "ex1", context: "post", text: "Cut 600 words this morning. The 400 that survived are the only ones that ever mattered." },
       { id: "ex2", context: "reply", text: "Start before you feel ready — the deciding never ends, the publishing is the only part that teaches you anything." },
@@ -680,17 +692,17 @@ const VOICE_LINT = {
       description:
         "One trait asks for short, declarative lines, but an example runs long and discursive — drafts get mixed signals about how tight to be.",
       items: [
-        { section: "voice_characteristics", text: "Short, declarative sentences" },
-        { section: "examples", text: "Cut 600 words this morning. The 400 that survived are the only ones that ever mattered." },
+        { section: "voice_characteristics", text: "Brevity: Short, declarative sentences.", id: "ch1" },
+        { section: "examples", text: "Cut 600 words this morning. The 400 that survived are the only ones that ever mattered.", id: "ex1" },
       ],
       suggestion: "Drop the long example, or soften the 'short sentences' rule to allow the occasional longer line.",
-      fix: { kind: "remove_item", section: "examples", text: "Cut 600 words this morning. The 400 that survived are the only ones that ever mattered." },
+      fix: { kind: "remove_item", section: "examples", id: "ex1" },
     },
     {
       severity: "medium",
       title: "Possible tension around discoverability",
       description: "The don't-list bans hashtags, which is fine — just confirm you're not relying on them for reach.",
-      items: [{ section: "dont_list", text: "No hashtags" }],
+      items: [{ section: "dont_list", text: "No hashtags.", id: "dn1" }],
       suggestion: "Keep as-is if hashtags aren't your style.",
       fix: null,
     },
