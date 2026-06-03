@@ -50,6 +50,15 @@ export type ThreadsConnectStart = {
   state: string;
 };
 
+// Q16: an example post carries its context ("post" | "reply") + text. The
+// editor keeps it typed so the context survives an edit (the other sections
+// are still display-flattened to strings by the interim flattenSections).
+export type RoleBookExample = {
+  id?: string;
+  context: string;
+  text: string;
+};
+
 export type RoleBookSections = {
   intro?: string;
   themes_include?: string[];
@@ -57,7 +66,7 @@ export type RoleBookSections = {
   voice_characteristics?: string[];
   do_list?: string[];
   dont_list?: string[];
-  examples?: string[];
+  examples?: RoleBookExample[];
 };
 
 export type RoleBook = {

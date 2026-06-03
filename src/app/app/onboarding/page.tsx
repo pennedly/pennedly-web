@@ -754,7 +754,8 @@ function PreviewResultPanel({
     { key: "onboarding.sec_voice", items: s.voice_characteristics },
     { key: "onboarding.sec_do", items: s.do_list },
     { key: "onboarding.sec_dont", items: s.dont_list },
-    { key: "onboarding.sec_examples", items: s.examples },
+    // Q16: examples are typed ({context,text}); show their text in the preview.
+    { key: "onboarding.sec_examples", items: s.examples?.map((e) => e.text) },
   ];
   return (
     <section className="space-y-5 rounded-2xl border border-accent/30 bg-surface p-6 shadow-sm">

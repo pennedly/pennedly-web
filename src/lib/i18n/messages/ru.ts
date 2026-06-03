@@ -242,6 +242,9 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "voice.edit": "Изменить",
   "voice.save_changes": "Сохранить",
   "voice.add_item": "Добавить",
+  "voice.example_post": "Пост",
+  "voice.example_reply": "Ответ",
+  "voice.example_kind": "Тип примера",
   "voice.rx_title": "Перечитываю твой голос",
   "voice.rx_sub":
     "Pennedly снова изучает твои недавние посты. Текущий голос работает, пока это не завершится.",

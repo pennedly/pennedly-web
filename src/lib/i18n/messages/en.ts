@@ -239,6 +239,9 @@ export const en = {
   "voice.edit": "Edit",
   "voice.save_changes": "Save changes",
   "voice.add_item": "Add",
+  "voice.example_post": "Post",
+  "voice.example_reply": "Reply",
+  "voice.example_kind": "Example type",
   "voice.rx_title": "Re-reading your voice",
   "voice.rx_sub":
     "Pennedly is studying your recent posts again. Your current voice stays live until this finishes.",

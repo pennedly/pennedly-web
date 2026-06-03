@@ -54,19 +54,19 @@ import type {
   LintFix,
   LintResult,
   RoleBook,
+  RoleBookExample,
   RoleBookSections,
 } from "@/lib/types";
 
-type ListKey = keyof Omit<RoleBookSections, "intro">;
+type ListKey = keyof Omit<RoleBookSections, "intro" | "examples">;
 type Toast = { id: number; message: string; tone: "success" | "error" };
 
-// Q60 interim: the backend now returns each section item as a typed object
-// ({id,label,note} / {id,label,text} / {id,text} / {id,context,text}). This
-// editor still works on flat strings, so coerce each item to its display text
-// on read (themes→label, the rest→text). Round-trips safely — saving strings
-// re-wraps them server-side (the normalizer assigns ids). The full typed-object
-// editor (stable ids, per-item translate, example Post/Reply context, the
-// "Analyzed N posts" hero) is the remaining Q60 frontend task.
+// Q60 interim (the 5 flat list sections): the backend returns each item as a
+// typed object ({id,label,note} / {id,label,text} / {id,text}); this editor
+// still edits them as flat display strings, so coerce on read. Saving strings
+// re-wraps them server-side. Q16: `examples` are kept TYPED ({id,context,text})
+// so their Post/Reply context survives an edit. The full typed editor for the
+// other sections + the translate mode (Q8) is the remaining Voice task.
 function flattenSections(
   raw: RoleBookSections | null | undefined,
 ): RoleBookSections {
@@ -79,7 +79,6 @@ function flattenSections(
     "voice_characteristics",
     "do_list",
     "dont_list",
-    "examples",
   ];
   for (const k of keys) {
     const arr = raw[k] as unknown[] | undefined;
@@ -92,6 +91,22 @@ function flattenSections(
         })
         .filter(Boolean);
     }
+  }
+  // Q16: keep examples typed — preserve id + context, normalize context to the
+  // backend's lowercase "post"/"reply".
+  const ex = raw.examples as unknown[] | undefined;
+  if (Array.isArray(ex)) {
+    out.examples = ex
+      .map((it): RoleBookExample => {
+        if (typeof it === "string") return { context: "post", text: it.trim() };
+        const o = it as { id?: string; context?: string; text?: string };
+        return {
+          id: o.id,
+          context: (o.context || "post").toLowerCase() === "reply" ? "reply" : "post",
+          text: (o.text || "").trim(),
+        };
+      })
+      .filter((e) => e.text);
   }
   return out;
 }
@@ -110,7 +125,7 @@ const LIST_SECTIONS: {
   { key: "voice_characteristics", Icon: IcList, labelKey: "rolebook.voice_characteristics.label", helperKey: "rolebook.voice_characteristics.helper", placeholderKey: "rolebook.voice_characteristics.placeholder", multiline: true },
   { key: "do_list", Icon: IcCheck, labelKey: "rolebook.do_list.label", helperKey: "rolebook.do_list.helper", placeholderKey: "rolebook.do_list.placeholder", multiline: true },
   { key: "dont_list", Icon: IcX, labelKey: "rolebook.dont_list.label", helperKey: "rolebook.dont_list.helper", placeholderKey: "rolebook.dont_list.placeholder", multiline: true, danger: true },
-  { key: "examples", Icon: IcQuote, labelKey: "rolebook.examples.label", helperKey: "rolebook.examples.helper", placeholderKey: "rolebook.examples.placeholder", multiline: true },
+  // examples are rendered by the typed <ExamplesSection> (Q16), not here.
 ];
 
 const REEXTRACT_STEPS: MessageKey[] = [
@@ -184,10 +199,15 @@ export default function VoiceEditor() {
 
   // Per-section flagged item texts, for the inline highlight.
   const flaggedBySection: Partial<Record<ListKey, Set<string>>> = {};
+  const flaggedExamples = new Set<string>();
   for (const c of conflicts) {
     for (const item of c.items) {
-      const sec = item.section as ListKey;
-      (flaggedBySection[sec] ??= new Set()).add(item.text);
+      if (item.section === "examples") {
+        flaggedExamples.add(item.text);
+      } else {
+        const sec = item.section as ListKey;
+        (flaggedBySection[sec] ??= new Set()).add(item.text);
+      }
     }
   }
 
@@ -406,6 +426,14 @@ export default function VoiceEditor() {
                     t={t}
                   />
                 ))}
+
+                {/* Examples — typed, with Post/Reply context (Q16) */}
+                <ExamplesSection
+                  items={sections.examples ?? []}
+                  flagged={flaggedExamples}
+                  onSave={(examples) => saveSection({ examples })}
+                  t={t}
+                />
 
                 {/* Transparency */}
                 <details className="rounded-lg border border-border bg-surface p-5 shadow-sm">
@@ -725,6 +753,111 @@ function ListSection({
               </div>
             );
           })}
+        </div>
+      )}
+    </SectionShell>
+  );
+}
+
+// Q16: examples are typed ({id,context,text}) — show + edit the Post/Reply
+// context per example, and preserve it (plus the stable id) through an edit.
+function ExamplesSection({
+  items,
+  flagged,
+  onSave,
+  t,
+}: {
+  items: RoleBookExample[];
+  flagged?: Set<string>;
+  onSave: (examples: RoleBookExample[]) => Promise<void>;
+  t: (k: MessageKey) => string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<RoleBookExample[]>(items);
+  useEffect(() => setDraft(items), [items]);
+  const set = (i: number, k: keyof RoleBookExample, v: string) =>
+    setDraft((d) => d.map((x, j) => (j === i ? { ...x, [k]: v } : x)));
+  return (
+    <SectionShell
+      Icon={IcQuote}
+      title={t("rolebook.examples.label")}
+      desc={t("rolebook.examples.helper")}
+      count={items.length}
+      editing={editing}
+      onEdit={() => {
+        setDraft(items.length ? items.map((x) => ({ ...x })) : [{ context: "post", text: "" }]);
+        setEditing(true);
+      }}
+      onCancel={() => setEditing(false)}
+      onSave={async () => {
+        await onSave(
+          draft.map((x) => ({ ...x, text: x.text.trim() })).filter((x) => x.text),
+        );
+        setEditing(false);
+      }}
+      t={t}
+    >
+      {editing ? (
+        <div className="flex flex-col gap-2.5">
+          {draft.map((x, i) => (
+            <div
+              key={i}
+              className="flex items-start gap-2.5 rounded-md border border-border bg-surface-2 p-2.5"
+            >
+              <div className="flex min-w-0 flex-1 flex-col gap-2">
+                <select
+                  value={x.context}
+                  onChange={(e) => set(i, "context", e.target.value)}
+                  aria-label={t("voice.example_kind")}
+                  className="h-8 w-[130px] rounded-sm border border-border bg-surface px-2 text-small text-text outline-none focus:border-accent"
+                >
+                  <option value="post">{t("voice.example_post")}</option>
+                  <option value="reply">{t("voice.example_reply")}</option>
+                </select>
+                <textarea
+                  value={x.text}
+                  rows={2}
+                  onChange={(e) => set(i, "text", e.target.value)}
+                  placeholder={t("rolebook.examples.placeholder")}
+                  className="min-h-[60px] w-full resize-y rounded-sm border border-border bg-surface px-2.5 py-2 text-small leading-relaxed text-text outline-none focus:border-accent"
+                />
+              </div>
+              <button
+                onClick={() => setDraft((d) => d.filter((_, j) => j !== i))}
+                aria-label={t("common.cancel")}
+                className="grid h-8 w-8 shrink-0 place-items-center rounded-sm text-text-subtle transition-colors hover:bg-danger/12 hover:text-danger"
+              >
+                <IcTrash size={16} />
+              </button>
+            </div>
+          ))}
+          <button
+            onClick={() => setDraft((d) => [...d, { context: "post", text: "" }])}
+            className="inline-flex items-center gap-1.5 self-start rounded-md border border-dashed border-border bg-surface px-3 py-2 text-small font-medium text-text-muted transition-colors hover:border-text/20 hover:bg-surface-2 hover:text-text"
+          >
+            <IcPlus size={15} /> {t("voice.add_item")}
+          </button>
+        </div>
+      ) : items.length === 0 ? (
+        <p className="text-small italic text-text-subtle">{t("rolebook.examples.placeholder")}</p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {items.map((x, i) => (
+            <div
+              key={i}
+              className={cn(
+                "rounded-md border px-3 py-2.5 text-small leading-relaxed",
+                flagged?.has(x.text)
+                  ? "border-warning/45 bg-warning/[0.07] text-text"
+                  : "border-border bg-surface-2 text-text",
+              )}
+            >
+              <span className="mb-1.5 inline-flex items-center rounded-full border border-border bg-surface px-2 py-px text-caption font-semibold uppercase tracking-wide text-text-subtle">
+                {x.context === "reply" ? t("voice.example_reply") : t("voice.example_post")}
+              </span>
+              <p className="whitespace-pre-wrap">{x.text}</p>
+            </div>
+          ))}
         </div>
       )}
     </SectionShell>
