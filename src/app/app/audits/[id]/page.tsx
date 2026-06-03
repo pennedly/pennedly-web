@@ -162,7 +162,7 @@ export default function AuditDetailPage() {
     return (
       <div className="min-h-screen bg-bg text-text">
         <AppTopbar title={t("audits.title")} />
-        <main className="mx-auto max-w-[760px] px-5 py-7 md:px-6">
+        <main className="mx-auto max-w-[720px] px-5 py-7 md:px-6">
           <div className="rounded-lg border border-danger/40 bg-danger/10 p-4 text-small text-danger">
             {bootError}
           </div>
@@ -175,7 +175,7 @@ export default function AuditDetailPage() {
     return (
       <div className="min-h-screen bg-bg text-text">
         <AppTopbar title={t("audits.title")} />
-        <main className="mx-auto max-w-[760px] px-5 py-7 text-small text-text-muted md:px-6">
+        <main className="mx-auto max-w-[720px] px-5 py-7 text-small text-text-muted md:px-6">
           {t("common.loading")}
         </main>
       </div>
@@ -214,7 +214,7 @@ export default function AuditDetailPage() {
   return (
     <div className="min-h-screen bg-bg text-text">
       <AppTopbar title={t("audits.title")} />
-      <main className="mx-auto max-w-[760px] space-y-4 px-5 py-7 md:px-6">
+      <main className="mx-auto max-w-[720px] space-y-4 px-5 py-7 md:px-6">
         <button
           onClick={() => router.push("/app/audits")}
           className="inline-flex items-center gap-1.5 self-start text-small font-medium text-text-muted transition-colors hover:text-text"

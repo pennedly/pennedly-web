@@ -115,7 +115,7 @@ function Stepper({ current }: { current: number }) {
     <div className="flex items-center justify-center gap-2">
       {steps.map((s, i) => (
         <div key={s} className="flex items-center gap-2">
-          {i > 0 && <span className={cn("h-px w-8", i <= current ? "bg-accent" : "bg-border")} />}
+          {i > 0 && <span className={cn("h-px w-8", i <= current ? "bg-success" : "bg-border")} />}
           <span
             className={cn(
               "inline-flex items-center gap-1.5 text-caption font-medium",
@@ -128,7 +128,7 @@ function Stepper({ current }: { current: number }) {
                 i < current
                   ? "border-success bg-success text-success-foreground"
                   : i === current
-                    ? "border-accent text-accent"
+                    ? "border-text bg-text text-bg"
                     : "border-border text-text-subtle",
               )}
             >

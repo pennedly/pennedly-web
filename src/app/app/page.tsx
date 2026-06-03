@@ -558,7 +558,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-bg text-text">
       <AppTopbar
-        maxW="900px"
+        maxW="960px"
         title={t("nav.studio")}
         pill={
           voiceReady === null ? undefined : (
@@ -568,7 +568,7 @@ export default function Dashboard() {
           )
         }
       />
-      <main className="mx-auto max-w-[900px] space-y-5 px-5 py-7 md:px-6">
+      <main className="mx-auto max-w-[960px] space-y-5 px-5 py-7 md:px-6">
         {needsVoiceSetup ? (
           /* Account connected, but the user skipped voice setup. Generation
              needs a role_book, so prompt to finish setup rather than offer a

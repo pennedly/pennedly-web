@@ -16,6 +16,11 @@ const BASE =
 const OK = "border-border focus:border-accent focus:ring-accent/25";
 const ERR = "border-danger focus:border-danger focus:ring-danger/25";
 
+// Native-select chevron (design `select.field`): an ink-500 caret SVG pinned
+// right. Mid-gray so it reads on both light + dark surfaces.
+const SELECT_CHEVRON =
+  "url('data:image/svg+xml,%3Csvg width=%2712%27 height=%2712%27 viewBox=%270 0 12 12%27 fill=%27none%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Cpath d=%27M3 4.5L6 7.5L9 4.5%27 stroke=%27%237b7a74%27 stroke-width=%271.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E')";
+
 function tone(error?: boolean): string {
   return error ? ERR : OK;
 }
@@ -45,11 +50,18 @@ export function Select({
   error,
   className,
   children,
+  style,
   ...rest
 }: { error?: boolean } & SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select
-      className={cn("h-10 appearance-none pr-8", BASE, tone(error), className)}
+      className={cn(
+        "h-10 appearance-none bg-no-repeat pr-8 [background-position:right_12px_center]",
+        BASE,
+        tone(error),
+        className,
+      )}
+      style={{ backgroundImage: SELECT_CHEVRON, ...style }}
       {...rest}
     >
       {children}

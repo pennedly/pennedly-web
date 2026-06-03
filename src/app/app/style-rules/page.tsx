@@ -256,8 +256,8 @@ export default function StyleRulesEditor() {
   if (bootError) {
     return (
       <div className="min-h-screen bg-bg text-text">
-        <AppTopbar maxW="740px" title={t("style_rules.title")} />
-        <main className="mx-auto max-w-[740px] px-5 py-7 md:px-6">
+        <AppTopbar maxW="720px" title={t("style_rules.title")} />
+        <main className="mx-auto max-w-[720px] px-5 py-7 md:px-6">
           <div className="rounded-lg border border-danger/40 bg-danger/10 p-4 text-small text-danger">
             {bootError}
           </div>
@@ -277,7 +277,7 @@ export default function StyleRulesEditor() {
 
   return (
     <div className="min-h-screen bg-bg text-text">
-      <AppTopbar maxW="740px"
+      <AppTopbar maxW="720px"
         title={t("style_rules.title")}
         pill={
           rules ? (
@@ -287,7 +287,7 @@ export default function StyleRulesEditor() {
           ) : undefined
         }
       />
-      <main className="mx-auto max-w-[740px] space-y-5 px-5 py-7 md:px-6">
+      <main className="mx-auto max-w-[720px] space-y-5 px-5 py-7 md:px-6">
         {!rules ? (
           <div className="space-y-5">
             <Skeleton className="h-28 w-full rounded-lg" />

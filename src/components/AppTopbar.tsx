@@ -74,7 +74,7 @@ export function AppTopbar({
   title,
   pill,
   actions,
-  maxW = "760px",
+  maxW = "720px",
 }: {
   title: ReactNode;
   pill?: ReactNode;
@@ -94,7 +94,7 @@ export function AppTopbar({
         className="mx-auto flex h-15 w-full items-center gap-3 px-5 md:px-6"
         style={{ maxWidth: maxW }}
       >
-        <h1 className="truncate text-h3 font-semibold tracking-tight">{title}</h1>
+        <h1 className="truncate text-h3 font-semibold">{title}</h1>
         {pill}
         <div className="flex-1" />
         <div className="flex items-center gap-2">

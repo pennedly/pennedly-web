@@ -31,7 +31,7 @@ import {
 import { cn } from "@/lib/cn";
 import type { Pattern, PatternStudyResult } from "@/lib/types";
 
-const MAXW = "760px";
+const MAXW = "720px";
 
 type ToastItem = { id: number; message: string; tone: "success" | "error" };
 type Phase = "idle" | "analyzing" | "results" | "empty";
@@ -163,7 +163,7 @@ export default function ExplorePage() {
           ) : undefined
         }
       />
-      <main className="mx-auto w-full max-w-[760px] space-y-5 px-5 py-7 md:px-6">
+      <main className="mx-auto w-full max-w-[720px] space-y-5 px-5 py-7 md:px-6">
         <div className="flex flex-col gap-1.5">
           <h1 className="text-h1 font-semibold tracking-tight">{t("explore.title")}</h1>
           <p className="max-w-[60ch] text-pretty text-body text-text-muted">{t("explore.subtitle")}</p>

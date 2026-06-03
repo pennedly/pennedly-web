@@ -419,7 +419,7 @@ export default function VoiceEditor() {
     return (
       <div className="min-h-screen bg-bg text-text">
         <AppTopbar title={t("rolebook.title")} />
-        <main className="mx-auto max-w-[760px] px-5 py-7 md:px-6">
+        <main className="mx-auto max-w-[720px] px-5 py-7 md:px-6">
           <div className="rounded-lg border border-danger/40 bg-danger/10 p-4 text-small text-danger">
             {bootError}
           </div>
@@ -448,7 +448,7 @@ export default function VoiceEditor() {
   return (
     <div className="min-h-screen bg-bg text-text">
       <AppTopbar title={t("rolebook.title")} pill={pill} />
-      <main className="mx-auto max-w-[760px] space-y-[18px] px-5 py-7 md:px-6">
+      <main className="mx-auto max-w-[720px] space-y-[18px] px-5 py-7 md:px-6">
         {!book ? (
           emptyVoice ? (
             busy ? (

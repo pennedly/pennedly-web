@@ -20,13 +20,13 @@ import {
   IcAt,
   IcAudit,
   IcChart,
-  IcClock,
+  IcBolt,
   IcCompass,
   IcFeed,
   IcReplies,
   IcStudio,
   IcStudy,
-  IcTweak,
+  IcPencil,
   IcVoice,
   type IconProps,
 } from "@/components/icons";
@@ -66,8 +66,8 @@ const GROUPS: { title: MessageKey; items: NavItem[] }[] = [
     title: "nav.group.voice_automation",
     items: [
       { href: "/app/role-book", label: "dashboard.nav.voice", icon: IcVoice },
-      { href: "/app/style-rules", label: "dashboard.nav.style_rules", icon: IcTweak },
-      { href: "/app/autopilot", label: "dashboard.nav.autopilot", icon: IcClock, tester: true },
+      { href: "/app/style-rules", label: "dashboard.nav.style_rules", icon: IcPencil },
+      { href: "/app/autopilot", label: "dashboard.nav.autopilot", icon: IcBolt, tester: true },
     ],
   },
 ];
@@ -116,7 +116,7 @@ export function Sidebar() {
     <Link href="/app" className="flex items-center gap-2.5 px-2 pb-4 pt-1">
       <BrandMark size={34} radius={9} className="shadow-sm" />
       <span className="min-w-0">
-        <span className="block text-h3 font-semibold leading-none tracking-tight">
+        <span className="block text-h3 font-semibold leading-none">
           {t("app.brand")}
         </span>
         <span className="mt-1 block text-caption text-text-subtle">
@@ -151,7 +151,7 @@ export function Sidebar() {
                           : "font-medium text-text-muted hover:bg-surface-2 hover:text-text"
                       }`}
                     >
-                      <Icon size={18} className="shrink-0" />
+                      <Icon size={16} className="shrink-0" />
                       <span className="truncate">{t(it.label)}</span>
                     </Link>
                   </li>
@@ -185,7 +185,7 @@ export function Sidebar() {
       <div className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-bg/90 px-4 backdrop-blur md:hidden">
         <Link href="/app" className="flex items-center gap-2">
           <BrandMark size={26} radius={7} />
-          <span className="text-h3 font-semibold tracking-tight">{t("app.brand")}</span>
+          <span className="text-h3 font-semibold">{t("app.brand")}</span>
         </Link>
         <button
           onClick={() => setMobileOpen((o) => !o)}

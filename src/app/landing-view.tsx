@@ -86,10 +86,13 @@ function ThemeToggle() {
 
 function Specimen() {
   return (
-    <div className="relative" aria-hidden>
+    <div className="group relative" style={RISE} aria-hidden>
       {/* a soft second card peeking behind, for depth */}
       <div className="absolute right-[-10px] top-[18px] hidden h-[88%] w-[min(420px,100%)] rotate-[2.4deg] rounded-2xl border border-border bg-surface opacity-60 shadow-md md:block" />
-      <div className="relative z-[1] ml-auto max-w-[420px] rounded-2xl border border-border bg-surface px-5 pb-4 pt-5 shadow-lg max-md:mx-auto" style={RISE}>
+      {/* the draft specimen — tilted at rest (design .specimen-tilt: rotate -2.5deg),
+          straightens on hover. The rotate lives here, NOT on the entrance-animated
+          wrapper above, so the card-in transform doesn't wipe it. */}
+      <div className="relative z-[1] ml-auto max-w-[420px] origin-center rounded-2xl border border-border bg-surface px-5 pb-4 pt-5 shadow-lg transition-transform duration-[240ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] max-md:mx-auto md:-rotate-[2.5deg] md:group-hover:rotate-0">
         <div className="flex items-center gap-[11px]">
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-text font-mono text-[13px] font-semibold text-bg">
             {SAMPLE.initials}

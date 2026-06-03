@@ -120,8 +120,8 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-bg text-text">
-      <AppTopbar maxW="680px" title={t("settings.title")} />
-      <main className="mx-auto max-w-[680px] space-y-5 px-5 py-7 md:px-6">
+      <AppTopbar maxW="720px" title={t("settings.title")} />
+      <main className="mx-auto max-w-[720px] space-y-5 px-5 py-7 md:px-6">
         {!loaded || !me ? (
           <div className="space-y-5">
             <Skeleton className="h-24 w-full rounded-lg" />
@@ -185,12 +185,15 @@ export default function SettingsPage() {
                       className={cn(
                         "flex items-center gap-2.5 rounded-md border px-3 py-2.5 text-left transition-colors",
                         active
-                          ? "border-accent/55 bg-surface-2"
+                          ? "border-text bg-surface-2 shadow-[0_0_0_1px_var(--color-text)]"
                           : "border-border hover:bg-surface-2",
                       )}
                     >
                       {/* Q46: flag glyph + native name + English name. */}
-                      <span className="shrink-0 text-h3 leading-none" aria-hidden="true">
+                      <span
+                        className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-md border border-border bg-surface-2 text-[20px] leading-none"
+                        aria-hidden="true"
+                      >
                         {l.flag}
                       </span>
                       <span className="min-w-0 flex-1">
@@ -199,7 +202,7 @@ export default function SettingsPage() {
                           <span className="block truncate text-caption text-text-subtle">{l.en}</span>
                         )}
                       </span>
-                      {active && <IcCheck size={16} className="shrink-0 text-accent" />}
+                      {active && <IcCheck size={16} className="shrink-0 text-text" />}
                     </button>
                   );
                 })}

@@ -103,7 +103,7 @@ function OtpInput({
     <div
       className="mt-1 flex justify-center gap-2.5"
       onPaste={handlePaste}
-      style={error ? { animation: "shake 0.35s var(--ease-standard)" } : undefined}
+      style={error ? { animation: "shake 0.4s var(--ease-standard)" } : undefined}
     >
       {Array.from({ length: 6 }).map((_, i) => (
         <input
@@ -119,7 +119,7 @@ function OtpInput({
           onChange={(e) => handleChange(i, e.target.value)}
           onKeyDown={(e) => handleKey(i, e)}
           className={cn(
-            "h-14 w-11 rounded-md border text-center text-h3 font-semibold tabular-nums text-text outline-none transition-colors focus:border-accent",
+            "h-14 w-[46px] rounded-md border text-center text-h3 font-semibold tabular-nums text-text outline-none transition-colors focus:border-accent",
             error ? "border-danger" : value[i] ? "border-border bg-surface-2" : "border-border bg-surface",
           )}
         />
@@ -323,7 +323,7 @@ function LoginPageInner() {
       </div>
 
       <div className="flex flex-1 items-start justify-center px-5 pb-12 pt-2">
-        <div className="w-full max-w-[400px] rounded-2xl border border-border bg-surface p-7 shadow-md">
+        <div className="w-full max-w-[408px] rounded-2xl border border-border bg-surface p-7 shadow-md">
           <div className="flex flex-col items-center text-center">
             <BrandMark size={52} radius={14} className="shadow-sm" />
             <h1 className="mt-4 text-h2 font-semibold tracking-tight">{t(head.title)}</h1>

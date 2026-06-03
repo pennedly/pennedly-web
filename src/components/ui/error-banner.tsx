@@ -21,10 +21,10 @@ export function ErrorBanner({
   return (
     <div
       role="alert"
-      className="flex items-start gap-3 rounded-lg border border-border bg-surface px-4 py-3.5"
+      className="flex items-center gap-3.5 rounded-lg border border-danger/30 bg-danger/[0.09] px-[18px] py-4"
     >
-      <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-md bg-surface-2 text-danger">
-        <IcAlert size={16} />
+      <span className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-full bg-danger/15 text-danger">
+        <IcAlert size={18} />
       </span>
       <div className="min-w-0 flex-1">
         <div className="text-small font-semibold text-text">{title ?? t("error.title")}</div>

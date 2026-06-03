@@ -39,7 +39,7 @@ export function Switch({
         {...rest}
       />
       <span className="absolute inset-0 rounded-full bg-ink-300 transition-colors peer-checked:bg-primary dark:bg-ink-700" />
-      <span className="absolute left-0.5 top-[3px] h-[18px] w-[18px] rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-5" />
+      <span className="absolute left-0.5 top-[3px] h-[18px] w-[18px] rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-5 peer-checked:bg-primary-foreground" />
     </label>
   );
 }

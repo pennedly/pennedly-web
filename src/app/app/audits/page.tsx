@@ -79,8 +79,11 @@ export default function AuditsPage() {
           ) : undefined
         }
       />
-      <main className="mx-auto max-w-[760px] space-y-4 px-5 py-7 md:px-6">
-        <p className="max-w-[64ch] text-small text-text-muted">{t("audits.subtitle")}</p>
+      <main className="mx-auto max-w-[720px] space-y-5 px-5 py-7 md:px-6">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-h1 font-semibold">{t("audits.title")}</h1>
+          <p className="max-w-[64ch] text-small text-text-muted">{t("audits.subtitle")}</p>
+        </div>
 
         {bootError && (
           <div className="rounded-lg border border-danger/40 bg-danger/10 p-4 text-small text-danger">

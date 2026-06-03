@@ -9,14 +9,17 @@ import { Spinner } from "./feedback";
 // ghost and danger round it out. Sizes md (40px) and sm (32px).
 
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
-export type ButtonSize = "md" | "sm";
+export type ButtonSize = "md" | "sm" | "lg";
 
 const BASE =
-  "inline-flex items-center justify-center gap-2 font-medium text-small transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50 disabled:pointer-events-none";
+  "inline-flex items-center justify-center gap-2 font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50 disabled:pointer-events-none";
 
+// md (40px) / sm (32px) / lg (46px, hero & auth CTA — design .btn--lg). Font size
+// rides with the size: small for md/sm, body for lg.
 const SIZES: Record<ButtonSize, string> = {
-  md: "h-10 px-4 rounded-md",
-  sm: "h-8 px-3 rounded-sm",
+  md: "h-10 px-4 rounded-md text-small",
+  sm: "h-8 px-3 rounded-sm text-small",
+  lg: "h-[46px] px-[22px] rounded-lg text-body",
 };
 
 const VARIANTS: Record<ButtonVariant, string> = {

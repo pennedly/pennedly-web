@@ -38,6 +38,7 @@ import { cn } from "@/lib/cn";
 import {
   IcBubble,
   IcCheck,
+  IcBolt,
   IcClock,
   IcExternal,
   IcEye,
@@ -243,7 +244,7 @@ export default function AutopilotPage() {
     return (
       <div className="min-h-screen bg-bg text-text">
         <AppTopbar title={t("autopilot.title")} />
-        <main className="mx-auto max-w-[760px] px-5 py-7 md:px-6">
+        <main className="mx-auto max-w-[720px] px-5 py-7 md:px-6">
           <div className="rounded-lg border border-danger/40 bg-danger/10 p-4 text-small text-danger">
             {bootError}
           </div>
@@ -261,8 +262,11 @@ export default function AutopilotPage() {
         title={t("autopilot.title")}
         pill={master ? <TopbarPill tone="success">{t("autopilot.active")}</TopbarPill> : undefined}
       />
-      <main className="mx-auto max-w-[760px] space-y-5 px-5 py-7 md:px-6">
-        <p className="max-w-[60ch] text-small text-text-muted">{t("autopilot.subtitle")}</p>
+      <main className="mx-auto max-w-[720px] space-y-5 px-5 py-7 md:px-6">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-h1 font-semibold">{t("autopilot.title")}</h1>
+          <p className="max-w-[60ch] text-small text-text-muted">{t("autopilot.subtitle")}</p>
+        </div>
 
         {!loaded ? (
           <div className="space-y-5">
@@ -286,7 +290,7 @@ export default function AutopilotPage() {
                     : "border-border bg-surface-2 text-text-muted",
                 )}
               >
-                <IcClock size={24} />
+                <IcBolt size={24} />
               </span>
               <div className="min-w-0 flex-1">
                 <div className="text-h2 font-semibold tracking-tight">{t("autopilot.title")}</div>

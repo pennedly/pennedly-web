@@ -203,10 +203,13 @@ export default function PatternsPage() {
           ) : undefined
         }
       />
-      <main className="mx-auto max-w-[760px] space-y-5 px-5 py-7 md:px-6">
-        <p className="max-w-[64ch] text-small text-text-muted">
-          {t("patterns.study_subtitle")}
-        </p>
+      <main className="mx-auto max-w-[720px] space-y-5 px-5 py-7 md:px-6">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-h1 font-semibold">{t("patterns.title")}</h1>
+          <p className="max-w-[64ch] text-small text-text-muted">
+            {t("patterns.study_subtitle")}
+          </p>
+        </div>
 
         {phase === "loading" && (
           <div className="space-y-3">
@@ -381,13 +384,13 @@ function PatternCard({
         <span
           className={cn(
             "inline-flex items-center gap-1.5 text-caption font-medium",
-            p.strength === "strong" ? "text-accent" : "text-text-subtle",
+            p.strength === "strong" ? "text-success" : "text-text-subtle",
           )}
         >
           <span
             className={cn(
               "h-1.5 w-1.5 rounded-full",
-              p.strength === "strong" ? "bg-accent" : "bg-text-subtle",
+              p.strength === "strong" ? "bg-success" : "bg-text-subtle",
             )}
           />
           {t(strengthKey)} · {p.sample} {t("patterns.posts_word")}
@@ -408,31 +411,41 @@ function PatternCard({
         </span>
       </div>
 
-      <div className="rounded-md border border-border bg-surface-2 p-3.5">
-        <div className="mb-2.5 text-caption font-semibold uppercase tracking-wide text-text-subtle">
+      <div className="mt-[18px] border-t border-border pt-4">
+        <div className="mb-3 text-caption font-semibold uppercase tracking-[0.05em] text-text-subtle">
           {t("patterns.evidence_cap")}
         </div>
-        <div className="space-y-2">
+        <div className="space-y-[11px]">
           {[
             { label: leadLabel, side: p.lead, lead: true },
             { label: baseLabel, side: p.base, lead: false },
           ].map((row) => (
-            <div key={row.label} className="flex items-center gap-3">
-              <span className="w-[40%] shrink-0 truncate text-caption text-text-muted">
+            <div key={row.label} className="grid grid-cols-[168px_1fr_auto] items-center gap-3.5">
+              <span
+                className={cn(
+                  "truncate text-small",
+                  row.lead ? "text-text" : "text-text-muted",
+                )}
+              >
                 {row.label}
               </span>
-              <span className="h-2.5 flex-1 overflow-hidden rounded-full bg-bg">
+              <span className="block h-[22px] overflow-hidden rounded-sm border border-border bg-surface-2">
                 <span
-                  className="block h-full rounded-full transition-[width]"
+                  className="block h-full rounded-sm transition-[width]"
                   style={{
                     width: `${(row.side.value / max) * 100}%`,
                     background: row.lead
                       ? "var(--color-accent)"
-                      : "color-mix(in srgb, var(--color-text) 28%, var(--color-surface))",
+                      : "color-mix(in srgb, var(--color-text) 22%, var(--color-surface-2))",
                   }}
                 />
               </span>
-              <span className="shrink-0 text-caption font-semibold tabular-nums">
+              <span
+                className={cn(
+                  "text-small font-semibold tabular-nums",
+                  row.lead ? "text-text" : "text-text-muted",
+                )}
+              >
                 {row.side.display}
               </span>
             </div>

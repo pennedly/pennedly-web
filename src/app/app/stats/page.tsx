@@ -132,10 +132,10 @@ export default function StatsPage() {
 
   const tierRows = cur
     ? [
-        { name: t("stats.tier_viral"), sub: t("stats.tier_viral_sub"), n: cur.tier_counts.viral, ramp: "var(--color-accent)" },
-        { name: t("stats.tier_good"), sub: t("stats.tier_good_sub"), n: cur.tier_counts.good, ramp: "color-mix(in srgb, var(--color-text) 52%, var(--color-surface))" },
-        { name: t("stats.tier_mid"), sub: t("stats.tier_mid_sub"), n: cur.tier_counts.mid, ramp: "color-mix(in srgb, var(--color-text) 32%, var(--color-surface))" },
-        { name: t("stats.tier_flop"), sub: t("stats.tier_flop_sub"), n: cur.tier_counts.flop, ramp: "color-mix(in srgb, var(--color-text) 16%, var(--color-surface))" },
+        { name: t("stats.tier_viral"), sub: t("stats.tier_viral_sub"), n: cur.tier_counts.viral, ramp: "var(--color-success)" },
+        { name: t("stats.tier_good"), sub: t("stats.tier_good_sub"), n: cur.tier_counts.good, ramp: "var(--color-accent)" },
+        { name: t("stats.tier_mid"), sub: t("stats.tier_mid_sub"), n: cur.tier_counts.mid, ramp: "color-mix(in srgb, var(--color-text) 30%, var(--color-surface))" },
+        { name: t("stats.tier_flop"), sub: t("stats.tier_flop_sub"), n: cur.tier_counts.flop, ramp: "color-mix(in srgb, var(--color-text) 15%, var(--color-surface))" },
       ]
     : [];
   const tierTotal = tierRows.reduce((a, r) => a + r.n, 0);
@@ -144,7 +144,7 @@ export default function StatsPage() {
   return (
     <div className="min-h-screen bg-bg text-text">
       <AppTopbar
-        maxW="928px"
+        maxW="960px"
         title={t("stats.title")}
         pill={
           <TopbarPill icon={<IcClock size={13} className="text-text-subtle" />}>
@@ -152,9 +152,12 @@ export default function StatsPage() {
           </TopbarPill>
         }
       />
-      <main className="mx-auto max-w-[928px] space-y-4 px-5 py-7 md:px-6">
+      <main className="mx-auto max-w-[960px] space-y-4 px-5 py-7 md:px-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
-          <p className="text-small text-text-muted">{t("stats.subtitle")}</p>
+          <div className="flex flex-col gap-1">
+            <h1 className="text-h1 font-semibold capitalize">{t("dashboard.nav.stats")}</h1>
+            <p className="text-small text-text-muted">{t("stats.subtitle")}</p>
+          </div>
           {loaded && cur && cur.posts > 0 && (
             <div
               role="tablist"
@@ -388,8 +391,8 @@ function ColumnChart({
                 style={{
                   height: `${Math.max(3, (v / max) * 100)}%`,
                   background: above
-                    ? "var(--color-success)"
-                    : "color-mix(in srgb, var(--color-text) 16%, var(--color-surface-2))",
+                    ? "var(--color-accent)"
+                    : "color-mix(in srgb, var(--color-text) 18%, var(--color-surface-2))",
                 }}
               />
             </div>
