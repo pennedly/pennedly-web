@@ -678,6 +678,10 @@ export type StyleRulesList = {
 export type LintConflictItem = {
   section: string;
   text: string;
+  // The flagged item's stable id — the backend exposes it so the editor can
+  // highlight the exact pill by id instead of a fragile text-match. "" /
+  // absent when the LLM referenced an item that no longer matches.
+  id?: string;
 };
 
 export type LintSeverity = "high" | "medium" | "low";
@@ -685,25 +689,30 @@ export type LintSeverity = "high" | "medium" | "low";
 // The structured fix descriptor mirrors role_book_lint.FIX_KINDS on
 // the backend. Exhaustive union so the UI can branch on `kind` with
 // full TypeScript checking.
+// Mirrors backend role_book_lint.FIX_KINDS exactly. Conflict-resolution
+// fixes target a stable item `id` (not text — which goes stale on edit);
+// `add_item` is the one non-resolution kind, powering Explore's "Add to
+// Voice" (append a discovered rule to a list section).
 export type LintFix =
+  | {
+      kind: "set_field";
+      section: string;
+      id: string;
+      field: string;
+      value: string;
+    }
   | {
       kind: "remove_item";
       section: string;
-      text: string;
+      id: string;
     }
   | {
-      kind: "replace_item";
-      section: string;
-      from: string;
-      to: string;
+      kind: "set_intro";
+      text: string;
     }
   | {
       kind: "add_item";
       section: string;
-      text: string;
-    }
-  | {
-      kind: "set_intro";
       text: string;
     };
 
