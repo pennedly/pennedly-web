@@ -17,7 +17,8 @@ import { usePathname, useRouter } from "next/navigation";
 
 import { Sidebar } from "@/components/Sidebar";
 import { Spinner } from "@/components/ui/feedback";
-import { getTokens } from "@/lib/api";
+import { fetchMe, getTokens } from "@/lib/api";
+import { adoptServerLocale } from "@/lib/i18n";
 import {
   refreshAccountsPresence,
   useHasConnectedAccounts,
@@ -43,6 +44,19 @@ export default function AppLayout({
       refreshAccountsPresence();
     }
   }, [exempt]);
+
+  // Server→client locale: adopt the user's saved language (me.locale) on load
+  // when they haven't explicitly picked one locally — so a returning user's
+  // preference applies on a fresh browser and on the first-run onboarding
+  // (which renders shell-exempt, without the sidebar's own me-fetch). Runs for
+  // every /app page, including onboarding, because hooks run before the
+  // shell-exempt early return below.
+  useEffect(() => {
+    if (!getTokens()) return;
+    fetchMe()
+      .then((m) => adoptServerLocale(m.locale))
+      .catch(() => {});
+  }, []);
 
   // Zero connected accounts → the dedicated full-screen connect flow.
   useEffect(() => {

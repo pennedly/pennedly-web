@@ -87,6 +87,19 @@ export function setLocale(code: LocaleCode): void {
   emit();
 }
 
+/** Adopt the user's saved server-side locale (me.locale) when they have NOT
+ *  made an explicit local choice yet. This makes a returning user's language
+ *  preference follow them onto a fresh browser / the first-run onboarding,
+ *  instead of falling back to the browser language. An explicit local pick
+ *  (stored under STORAGE_KEY) always wins and is left untouched. */
+export function adoptServerLocale(code: string | null | undefined): void {
+  if (typeof window === "undefined" || !code) return;
+  if (window.localStorage.getItem(STORAGE_KEY)) return; // explicit pick — respect it
+  if (code !== current && LOCALES.some((l) => l.code === code)) {
+    setLocale(code as LocaleCode);
+  }
+}
+
 function subscribe(fn: () => void): () => void {
   listeners.add(fn);
   return () => {

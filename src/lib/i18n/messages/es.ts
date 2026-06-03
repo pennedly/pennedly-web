@@ -730,6 +730,9 @@ export const es: Partial<Record<MessageKey, string>> = {
 
   // ── Onboarding ─────────────────────────────────────────────────
   "onboarding.title": "Configura tu voz",
+  "onboarding.analyze_locked": "Se necesitan {need} publicaciones para analizar; tienes {have}",
+  "onboarding.connect_failed": "No pudimos conectar esa cuenta. Inténtalo de nuevo.",
+  "onboarding.connected": "Conectado",
   "onboarding.subtitle":
     "Pennedly escribe con tu voz. Vamos a definirla — elige por dónde empezar.",
   "onboarding.connect_title": "Primero, conecta tu cuenta de Threads",

@@ -728,6 +728,9 @@ export const uk: Partial<Record<MessageKey, string>> = {
 
   // ── Onboarding ─────────────────────────────────────────────────
   "onboarding.title": "Налаштуй свій голос",
+  "onboarding.analyze_locked": "Для аналізу потрібно {need} дописів — у тебе {have}",
+  "onboarding.connect_failed": "Не вдалося підключити цей обліковий запис. Спробуй ще раз.",
+  "onboarding.connected": "Підключено",
   "onboarding.subtitle":
     "Pennedly пише у твоєму голосі. Визначмо його — обери, з чого почати.",
   "onboarding.connect_title": "Спершу підключи свій акаунт Threads",

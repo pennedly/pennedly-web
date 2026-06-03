@@ -77,16 +77,13 @@
     "feed.sort_top",
     "feed.published_posts",
     "feed.on_par",
-    "onboarding.analyze_locked",
     "stats.updated_hourly",
     "stats.sub_this_period",
     "stats.avg_line",
     "dashboard.draft.more_actions",
     "settings.restart_t",
     "settings.restart_d",
-    "settings.restart_cta",
-    "onboarding.connected",
-    "onboarding.connect_failed"
+    "settings.restart_cta"
   ],
   "es": [
     "common.undo",
@@ -165,16 +162,13 @@
     "feed.sort_top",
     "feed.published_posts",
     "feed.on_par",
-    "onboarding.analyze_locked",
     "stats.updated_hourly",
     "stats.sub_this_period",
     "stats.avg_line",
     "dashboard.draft.more_actions",
     "settings.restart_t",
     "settings.restart_d",
-    "settings.restart_cta",
-    "onboarding.connected",
-    "onboarding.connect_failed"
+    "settings.restart_cta"
   ],
   "fr": [
     "common.undo",
@@ -253,16 +247,13 @@
     "feed.sort_top",
     "feed.published_posts",
     "feed.on_par",
-    "onboarding.analyze_locked",
     "stats.updated_hourly",
     "stats.sub_this_period",
     "stats.avg_line",
     "dashboard.draft.more_actions",
     "settings.restart_t",
     "settings.restart_d",
-    "settings.restart_cta",
-    "onboarding.connected",
-    "onboarding.connect_failed"
+    "settings.restart_cta"
   ],
   "it": [
     "common.undo",
@@ -341,16 +332,13 @@
     "feed.sort_top",
     "feed.published_posts",
     "feed.on_par",
-    "onboarding.analyze_locked",
     "stats.updated_hourly",
     "stats.sub_this_period",
     "stats.avg_line",
     "dashboard.draft.more_actions",
     "settings.restart_t",
     "settings.restart_d",
-    "settings.restart_cta",
-    "onboarding.connected",
-    "onboarding.connect_failed"
+    "settings.restart_cta"
   ],
   "pt": [
     "common.undo",
@@ -429,16 +417,13 @@
     "feed.sort_top",
     "feed.published_posts",
     "feed.on_par",
-    "onboarding.analyze_locked",
     "stats.updated_hourly",
     "stats.sub_this_period",
     "stats.avg_line",
     "dashboard.draft.more_actions",
     "settings.restart_t",
     "settings.restart_d",
-    "settings.restart_cta",
-    "onboarding.connected",
-    "onboarding.connect_failed"
+    "settings.restart_cta"
   ],
   "ru": [],
   "uk": [
@@ -518,15 +503,12 @@
     "feed.sort_top",
     "feed.published_posts",
     "feed.on_par",
-    "onboarding.analyze_locked",
     "stats.updated_hourly",
     "stats.sub_this_period",
     "stats.avg_line",
     "dashboard.draft.more_actions",
     "settings.restart_t",
     "settings.restart_d",
-    "settings.restart_cta",
-    "onboarding.connected",
-    "onboarding.connect_failed"
+    "settings.restart_cta"
   ]
 }
