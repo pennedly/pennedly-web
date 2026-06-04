@@ -2,9 +2,11 @@
 
 // Header-level UI-language picker. Identical mechanics to
 // AccountSwitcher: useSyncExternalStore-backed shared state +
-// localStorage persistence. Click flag → setLocale → every component
+// localStorage persistence. Click → setLocale → every component
 // using useTranslation() re-renders with the new strings instantly,
-// no navigation.
+// no navigation. Visually matches the login LangSwitch (globe + locale
+// code, monochrome) rather than flags, per request — one globe pattern
+// everywhere a language switcher appears.
 
 import { useState } from "react";
 
@@ -16,7 +18,7 @@ import {
 } from "@/lib/i18n";
 import { getTokens, setMyLocale } from "@/lib/api";
 import { captureEvent } from "@/lib/analytics";
-import { IcCheck, IcChevDown } from "@/components/icons";
+import { IcCheck, IcChevDown, IcGlobe } from "@/components/icons";
 
 export function LanguageSwitcher() {
   const current = useLocale();
@@ -33,10 +35,8 @@ export function LanguageSwitcher() {
         title="change language"
         className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-2.5 py-1.5 text-small text-text-muted transition-colors hover:bg-surface-2 hover:text-text"
       >
-        <span className="text-base leading-none" aria-hidden>
-          {selected.flag}
-        </span>
-        <span className="font-medium uppercase">{selected.code}</span>
+        <IcGlobe size={15} />
+        <span className="font-mono text-caption font-medium uppercase">{selected.code}</span>
         <IcChevDown size={14} className="text-text-subtle" />
       </button>
       {open && (
@@ -59,10 +59,10 @@ export function LanguageSwitcher() {
                     isSel ? "bg-surface-2 text-text" : "text-text hover:bg-surface-2"
                   }`}
                 >
-                  <span className="text-base leading-none" aria-hidden>
-                    {l.flag}
+                  <span className="w-[22px] font-mono text-caption uppercase text-text-subtle">
+                    {l.code}
                   </span>
-                  <span className="font-medium">{l.name}</span>
+                  <span className="flex-1 font-medium">{l.name}</span>
                   {isSel && <IcCheck size={15} className="ml-auto text-text-subtle" />}
                 </button>
               );
