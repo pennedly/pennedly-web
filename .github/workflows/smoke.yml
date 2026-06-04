@@ -35,7 +35,10 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - run: npm run test:e2e
+      # Render-smoke only (smoke.spec.ts + pages-smoke.spec.ts). The visual
+      # harness tests/visual/screens.spec.ts is a local design-review tool
+      # (screenshots, no assertions) — not a CI gate — so it is excluded here.
+      - run: npx playwright test tests/smoke.spec.ts tests/pages-smoke.spec.ts
         env:
           # The smoke suite hits no backend; a placeholder keeps the
           # client bundle's NEXT_PUBLIC_API_URL defined at build time.

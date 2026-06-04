@@ -24,6 +24,8 @@ const APP_PAGES = [
   "/app/patterns",
   "/app/onboarding",
   "/app/settings",
+  "/app/role-book",
+  "/app/audits",
 ];
 
 for (const path of APP_PAGES) {
