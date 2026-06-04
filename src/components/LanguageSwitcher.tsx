@@ -33,7 +33,7 @@ export function LanguageSwitcher() {
         onClick={() => setOpen((o) => !o)}
         aria-label="change language"
         title="change language"
-        className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-2.5 py-1.5 text-small text-text-muted transition-colors hover:bg-surface-2 hover:text-text"
+        className="inline-flex h-[38px] items-center gap-1.5 rounded-md border border-border bg-surface px-2.5 text-small text-text-muted transition-colors duration-[120ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] hover:bg-surface-2 hover:text-text"
       >
         <IcGlobe size={15} />
         <span className="font-mono text-caption font-medium uppercase">{selected.code}</span>
