@@ -6,10 +6,13 @@
 // client hooks, and `metadata` can only be exported from a Server Component.
 //
 // Restyled 1:1 to design-export/PennedlyDesign/landing-* (per Landing-SPEC.html):
-// a calm marketing page at the root of app.pennedly.com — top bar (brand · theme
-// toggle · Sign in), a hero with a tilted "draft specimen" card, a four-up
-// feature row, and a legal footer. No app shell, no i18n provider on this public
-// route — copy is the EN baseline (the design ships no language switcher here).
+// a calm marketing page at the root of app.pennedly.com — top bar (brand ·
+// language · theme toggle · Sign in), a hero with a tilted "draft specimen" card,
+// a four-up feature row, and a legal footer. No app shell. Copy LOCALIZES to the
+// visitor's browser language (the i18n store auto-detects navigator.language →
+// one of the 8 locales, EN fallback) and a top-bar LanguageSwitcher overrides it
+// — a deviation from the design's EN-only landing, by request. The sample draft
+// in the specimen stays illustrative; only the chrome localizes.
 // Built on the same ink-on-paper tokens as the app. Breakpoints follow the
 // design's exact widths (900 / 560 / 520), NOT Tailwind's sm/md/lg defaults.
 //
@@ -35,36 +38,45 @@ import {
   IcArrowRight,
   IcChart,
   IcCheck,
+  IcClock,
   IcMail,
   IcMoon,
   IcPencil,
+  IcReply,
+  IcScan,
   IcSparkle,
   IcSun,
   IcUsers,
-  IcVoice,
   type IconProps,
 } from "@/components/icons";
+import { useTranslation, type MessageKey } from "@/lib/i18n";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 const CONTACT_EMAIL = "hello@pennedly.com";
 
-const FEATURES: { Ico: (p: IconProps) => ReactNode; title: string; desc: string }[] = [
-  { Ico: IcVoice, title: "Drafts in your voice", desc: "It studies how you write, so drafts sound like you — never generic." },
-  { Ico: IcCheck, title: "You approve every word", desc: "Read, tweak, and publish on your terms. You keep the final say." },
-  { Ico: IcUsers, title: "Every account, one place", desc: "Switch between the handles you run without losing the thread." },
-  { Ico: IcChart, title: "See what's landing", desc: "Quiet analytics that show which posts earned their place." },
+// Public-route copy localizes to the visitor's browser language (auto-detected
+// via navigator.language → one of the 8 locales, EN fallback) + the top-bar
+// LanguageSwitcher. The sample draft in the specimen stays as illustrative
+// content; only the chrome localizes.
+const FEATURES: { Ico: (p: IconProps) => ReactNode; titleKey: MessageKey; descKey: MessageKey }[] = [
+  { Ico: IcSparkle, titleKey: "landing.feat_viral_title", descKey: "landing.feat_viral_desc" },
+  { Ico: IcReply, titleKey: "landing.feat_replies_title", descKey: "landing.feat_replies_desc" },
+  { Ico: IcScan, titleKey: "landing.feat_audits_title", descKey: "landing.feat_audits_desc" },
+  { Ico: IcChart, titleKey: "landing.feat_analytics_title", descKey: "landing.feat_analytics_desc" },
+  { Ico: IcClock, titleKey: "landing.feat_autopilot_title", descKey: "landing.feat_autopilot_desc" },
+  { Ico: IcUsers, titleKey: "landing.feat_accounts_title", descKey: "landing.feat_accounts_desc" },
 ];
 
-const FOOTER_LINKS = [
-  { label: "Privacy Policy", href: "/privacy" },
-  { label: "Terms of Service", href: "/terms" },
-  { label: "Data Deletion", href: "/data-deletion" },
+const FOOTER_LINKS: { labelKey: MessageKey; href: string }[] = [
+  { labelKey: "landing.footer_privacy", href: "/privacy" },
+  { labelKey: "landing.footer_terms", href: "/terms" },
+  { labelKey: "landing.footer_data", href: "/data-deletion" },
 ];
 
 const SAMPLE = {
   name: "Mara Lin",
   handle: "@mara.lin",
   initials: "ML",
-  text: "The fastest way to find your voice online: publish the thing you're slightly embarrassed by. The polished version is everyone's. The embarrassing one is yours.",
 };
 
 const RADIAL =
@@ -125,6 +137,7 @@ function ThemeToggle() {
 }
 
 function Specimen() {
+  const { t } = useTranslation();
   return (
     <div className="group relative" style={RISE} aria-hidden>
       {/* a soft second card peeking behind, for depth — hidden when stacked (≤900) */}
@@ -145,20 +158,20 @@ function Specimen() {
             <div className="mt-px text-caption text-text-subtle">{SAMPLE.handle}</div>
           </div>
           <span className="inline-flex shrink-0 items-center gap-[5px] rounded-full border border-border bg-surface-2 px-[9px] py-[3px] text-caption font-medium text-text-muted">
-            <span className="h-1.5 w-1.5 rounded-full bg-ink-400" /> Draft
+            <span className="h-1.5 w-1.5 rounded-full bg-ink-400" /> {t("landing.spec_draft")}
           </span>
         </div>
-        <p className="mt-3.5 text-body leading-[1.6] text-text [text-wrap:pretty]">{SAMPLE.text}</p>
+        <p className="mt-3.5 text-body leading-[1.6] text-text [text-wrap:pretty]">{t("landing.spec_text")}</p>
         <div className="mt-4 flex items-center gap-2.5 border-t border-border pt-[13px]">
           <span className="inline-flex flex-1 items-center gap-[5px] whitespace-nowrap text-caption text-text-subtle">
-            <IcSparkle size={13} /> In your voice
+            <IcSparkle size={13} /> {t("landing.spec_voice")}
           </span>
           <div className="flex shrink-0 items-center gap-[7px]">
             <span className="inline-flex h-[30px] items-center gap-1.5 rounded-sm border border-border bg-surface px-[11px] text-caption font-medium text-text-muted">
-              <IcPencil size={13} /> Edit
+              <IcPencil size={13} /> {t("landing.spec_edit")}
             </span>
             <span className="inline-flex h-[30px] items-center gap-1.5 rounded-sm border border-primary bg-primary px-3 text-caption font-semibold text-primary-foreground">
-              <IcCheck size={13} /> Approve
+              <IcCheck size={13} /> {t("landing.spec_approve")}
             </span>
           </div>
         </div>
@@ -170,6 +183,7 @@ function Specimen() {
 // The full marketing page (no shell wrapper). `showSample` toggles the hero
 // specimen. Used both for the live page and inside the viewport-preview iframe.
 function LandingContent({ showSample }: { showSample: boolean }) {
+  const { t } = useTranslation();
   return (
     <>
       {/* Top bar */}
@@ -181,13 +195,14 @@ function LandingContent({ showSample }: { showSample: boolean }) {
           </div>
           <span className="flex-1" />
           <div className="flex items-center gap-[9px]">
+            <LanguageSwitcher />
             <ThemeToggle />
             <Link
               href="/app/login"
               data-fx="btnsecondary"
               className="inline-flex h-10 items-center rounded-md border border-border bg-surface px-4 text-small font-medium text-text transition-[background-color,color,transform] duration-[180ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] hover:bg-surface-2 active:translate-y-[0.5px]"
             >
-              Sign in
+              {t("landing.sign_in")}
             </Link>
           </div>
         </div>
@@ -204,25 +219,22 @@ function LandingContent({ showSample }: { showSample: boolean }) {
                   style={{ animation: "ping 2.4s var(--ease-standard) infinite" }}
                 />
               </span>
-              In development · invite-only beta
+              {t("landing.status")}
             </span>
             {/* 14ch + text-wrap:balance, matching the design 1:1. Verified the
                 design's own files render this identically in the current engine
                 (same Geist metrics, same balanced break) — the 2-line static
                 screenshot was captured on an older Chromium whose balance differed. */}
             <h1 className="mt-[22px] max-w-[14ch] text-balance text-[clamp(2.5rem,5.4vw,3.5rem)] font-semibold leading-[1.04] tracking-[-0.025em]">
-              Your drafting partner for Threads.
+              {t("landing.tagline")}
             </h1>
             <div className="mt-[22px] max-w-[46ch]">
               <p className="text-h3 font-medium leading-normal tracking-[-0.004em] text-text">
-                Pennedly drafts posts and replies in your voice, then waits for you.
+                {t("landing.lead_head")}
               </p>
               <p className="mt-3 text-body leading-[1.62] text-text-muted [text-wrap:pretty]">
-                By default, nothing publishes until you approve it. Manage every account from one
-                place, see what&apos;s landing, and keep your tone consistent across all of it.{" "}
-                <span className="font-medium text-accent">
-                  A partner that does the legwork — you keep the final say.
-                </span>
+                {t("landing.lead_body")}{" "}
+                <span className="font-medium text-accent">{t("landing.lead_emph")}</span>
               </p>
             </div>
             <div className="mt-[30px] flex flex-wrap items-center gap-3.5">
@@ -231,7 +243,7 @@ function LandingContent({ showSample }: { showSample: boolean }) {
                 data-fx="btnprimary"
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-primary px-[22px] text-body font-medium text-primary-foreground transition-[background-color,color,transform] duration-[180ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] hover:bg-[color-mix(in_srgb,var(--color-primary)_88%,var(--color-bg))] active:translate-y-[0.5px]"
               >
-                Sign in <IcArrowRight size={17} />
+                {t("landing.sign_in")} <IcArrowRight size={17} />
               </Link>
               <a
                 href={`mailto:${CONTACT_EMAIL}`}
@@ -248,14 +260,14 @@ function LandingContent({ showSample }: { showSample: boolean }) {
 
       {/* Features */}
       <section className="shrink-0 border-t border-border py-9">
-        <div className="mx-auto grid w-full max-w-[1080px] grid-cols-1 gap-5 px-5 min-[521px]:grid-cols-2 min-[521px]:gap-6 min-[561px]:px-8 min-[901px]:grid-cols-4 min-[901px]:gap-7">
-          {FEATURES.map(({ Ico, title, desc }) => (
-            <div key={title} className="flex flex-col gap-[9px]">
+        <div className="mx-auto grid w-full max-w-[1080px] grid-cols-1 gap-5 px-5 min-[521px]:grid-cols-2 min-[521px]:gap-6 min-[561px]:px-8 min-[901px]:grid-cols-3 min-[901px]:gap-7">
+          {FEATURES.map(({ Ico, titleKey, descKey }) => (
+            <div key={titleKey} className="flex flex-col gap-[9px]">
               <span className="grid h-[34px] w-[34px] place-items-center rounded-md border border-border bg-surface text-text">
                 <Ico size={17} />
               </span>
-              <div className="text-small font-semibold">{title}</div>
-              <div className="text-small leading-[1.5] text-text-muted [text-wrap:pretty]">{desc}</div>
+              <div className="text-small font-semibold">{t(titleKey)}</div>
+              <div className="text-small leading-[1.5] text-text-muted [text-wrap:pretty]">{t(descKey)}</div>
             </div>
           ))}
         </div>
@@ -271,12 +283,12 @@ function LandingContent({ showSample }: { showSample: boolean }) {
           <nav aria-label="Legal" className="flex flex-wrap items-center gap-x-[18px] gap-y-1.5">
             {FOOTER_LINKS.map((l) => (
               <Link
-                key={l.label}
+                key={l.labelKey}
                 href={l.href}
                 data-fx="link"
                 className="text-small text-text-muted transition-colors duration-[120ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] hover:text-text"
               >
-                {l.label}
+                {t(l.labelKey)}
               </Link>
             ))}
           </nav>

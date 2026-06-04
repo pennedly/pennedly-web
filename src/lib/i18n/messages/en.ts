@@ -79,6 +79,36 @@ export const en = {
   "login.resend": "Resend code",
   "login.resend_in": "Resend in {n}s",
 
+  // ── Landing (public marketing page, /) ─────────────────────────
+  "landing.sign_in": "Sign in",
+  "landing.status": "In development · invite-only beta",
+  "landing.tagline": "Run Threads like a pro — in your own voice.",
+  "landing.lead_head":
+    "Pennedly drafts viral posts and replies in your voice, audits what's working, and shows you what's landing — across every account you run.",
+  "landing.lead_body": "You approve every word.",
+  "landing.lead_emph": "Autopilot's there when you want it.",
+  "landing.feat_viral_title": "Viral posts in your voice",
+  "landing.feat_viral_desc": "Drafts built to land — and to sound like you, not a generic AI.",
+  "landing.feat_replies_title": "Replies that sound like you",
+  "landing.feat_replies_desc": "It drafts replies to your comments in your voice, so you stay in every conversation.",
+  "landing.feat_audits_title": "Weekly audits + a coach",
+  "landing.feat_audits_desc": "Every week it reviews what worked and suggests small tweaks. You approve; it measures the effect.",
+  "landing.feat_analytics_title": "Analytics, not noise",
+  "landing.feat_analytics_desc": "See what's actually landing — which posts went viral, which flopped, and why.",
+  "landing.feat_autopilot_title": "Autopilot, your call",
+  "landing.feat_autopilot_desc": "Hand off posting and replies on a schedule — or keep approving every word.",
+  "landing.feat_accounts_title": "Every account, one place",
+  "landing.feat_accounts_desc": "Run all your Threads accounts from a single, calm workspace.",
+  "landing.footer_privacy": "Privacy Policy",
+  "landing.footer_terms": "Terms of Service",
+  "landing.footer_data": "Data Deletion",
+  "landing.spec_draft": "Draft",
+  "landing.spec_voice": "In your voice",
+  "landing.spec_edit": "Edit",
+  "landing.spec_approve": "Approve",
+  "landing.spec_text":
+    "Consistency beats talent. Show up every day and you quietly out-grow everyone waiting for inspiration.",
+
   // ── Dashboard ──────────────────────────────────────────────────
   "dashboard.nav.voice": "voice",
   "dashboard.nav.audits": "audits",
