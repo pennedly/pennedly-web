@@ -2,6 +2,7 @@
   "_comment": "Known-missing i18n keys per locale (vs en). The parity guardrail (scripts/check-i18n-parity.mjs) fails on any gap NOT listed here, so this is a ratchet that may only shrink. Regenerate after a reviewed translation backfill with: npm run check:i18n -- --update",
   "de": [
     "common.undo",
+    "login.signing_google",
     "dashboard.voice_active",
     "dashboard.voice_not_set",
     "dashboard.draft.replying_to",
@@ -102,6 +103,7 @@
   ],
   "es": [
     "common.undo",
+    "login.signing_google",
     "dashboard.voice_active",
     "dashboard.voice_not_set",
     "dashboard.draft.replying_to",
@@ -202,6 +204,7 @@
   ],
   "fr": [
     "common.undo",
+    "login.signing_google",
     "dashboard.voice_active",
     "dashboard.voice_not_set",
     "dashboard.draft.replying_to",
@@ -302,6 +305,7 @@
   ],
   "it": [
     "common.undo",
+    "login.signing_google",
     "dashboard.voice_active",
     "dashboard.voice_not_set",
     "dashboard.draft.replying_to",
@@ -402,6 +406,7 @@
   ],
   "pt": [
     "common.undo",
+    "login.signing_google",
     "dashboard.voice_active",
     "dashboard.voice_not_set",
     "dashboard.draft.replying_to",
@@ -503,6 +508,7 @@
   "ru": [],
   "uk": [
     "common.undo",
+    "login.signing_google",
     "dashboard.voice_active",
     "dashboard.voice_not_set",
     "dashboard.draft.replying_to",

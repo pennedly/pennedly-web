@@ -231,6 +231,8 @@
    resting card never sticks invisible if interrupted. */
 @keyframes step-in { from { transform: translateY(8px); } to { transform: none; } }
 @keyframes pop-in { from { transform: scale(0.82); } to { transform: none; } }
+/* Login view/alert entrance (login.css view-in). */
+@keyframes view-in { from { transform: translateY(6px); } to { transform: none; } }
 /* §3.7 skeleton shimmer — surface-2 base with a moving ink-tinted sheen.
    Disabled automatically by the reduced-motion rule above. */
 @keyframes shimmer { from { background-position: 220% 0; } to { background-position: -120% 0; } }
