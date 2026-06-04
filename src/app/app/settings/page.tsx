@@ -189,12 +189,13 @@ export default function SettingsPage() {
                           : "border-border hover:bg-surface-2",
                       )}
                     >
-                      {/* Q46: flag glyph + native name + English name. */}
+                      {/* Q46: locale-code badge + native name + English name
+                          (monochrome, one globe/code pattern across all switchers — no flags). */}
                       <span
-                        className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-md border border-border bg-surface-2 text-[20px] leading-none"
+                        className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-md border border-border bg-surface-2 font-mono text-caption font-medium uppercase text-text-muted"
                         aria-hidden="true"
                       >
-                        {l.flag}
+                        {l.code}
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-small font-medium">{l.name}</span>

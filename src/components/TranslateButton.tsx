@@ -13,6 +13,7 @@ import { useState } from "react";
 import { translateText } from "@/lib/api";
 import { captureEvent } from "@/lib/analytics";
 import { useTranslation } from "@/lib/i18n";
+import { IcGlobe } from "@/components/icons";
 import {
   type LanguageCode,
   SUPPORTED_LANGUAGES,
@@ -63,7 +64,7 @@ export function TranslateButton({ text, source = "unknown", className = "" }: Pr
           className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors"
           aria-label="Translate"
         >
-          <span aria-hidden>🌐</span>
+          <IcGlobe size={13} />
           <span>
             {loading
               ? t("translate.translating")
@@ -81,11 +82,8 @@ export function TranslateButton({ text, source = "unknown", className = "" }: Pr
                 onClick={() => onPick(lang.code)}
                 className="w-full px-3 py-1.5 text-left text-sm hover:bg-surface-2 flex items-center gap-2"
               >
-                <span className="text-base" aria-hidden>
-                  {lang.flag}
-                </span>
                 <span>{lang.name}</span>
-                <span className="ml-auto text-xs text-zinc-400">
+                <span className="ml-auto text-xs uppercase text-zinc-400">
                   {lang.code}
                 </span>
               </button>

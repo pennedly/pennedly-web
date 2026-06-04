@@ -760,7 +760,7 @@ function LangMenu({
         className="relative z-40 inline-flex h-9 items-center gap-1.5 rounded-md border border-border bg-surface px-2.5 text-small font-medium text-text-muted transition-colors hover:bg-surface-2 hover:text-text disabled:cursor-not-allowed disabled:opacity-50"
       >
         <IcGlobe size={16} />
-        <span>{cur ? `${cur.flag} ${cur.name}` : t("voice.original")}</span>
+        <span>{cur ? cur.name : t("voice.original")}</span>
         <IcChevDown size={14} className="text-text-subtle" />
       </button>
       {open && (
@@ -795,8 +795,11 @@ function LangMenu({
               }}
               className="flex w-full items-center justify-between gap-2 rounded-md px-2.5 py-2 text-left text-small text-text hover:bg-surface-2"
             >
-              <span>
-                {l.flag} {l.name}
+              <span className="flex items-center gap-2.5">
+                <span className="w-[22px] shrink-0 font-mono text-caption uppercase text-text-subtle">
+                  {l.code}
+                </span>
+                {l.name}
               </span>
               {value === l.code && <IcCheck size={15} className="shrink-0 text-accent" />}
             </button>
@@ -824,7 +827,7 @@ function TranslatedBanner({
     <div className="flex flex-wrap items-center gap-3 rounded-lg border border-accent/30 bg-accent/[0.06] px-4 py-3">
       {translating ? <Spinner /> : <IcGlobe size={17} className="shrink-0 text-accent" />}
       <div className="min-w-0 flex-1 text-small leading-snug text-text">
-        <b className="font-semibold">{l ? `${l.flag} ${l.name}` : lang}</b>{" "}
+        <b className="font-semibold">{l ? l.name : lang}</b>{" "}
         <span className="text-text-muted">
           {translating ? t("voice.translating") : t("voice.translated_banner")}
         </span>
