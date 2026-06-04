@@ -820,7 +820,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   // ── Онбординг ─────────────────────────────────────────────────
   "onboarding.title": "Настроим твой голос",
   "onboarding.subtitle":
-    "Pennedly пишет в твоём голосе. Давай его зададим — выбери, с чего начать.",
+    "Pennedly пишет в твоём голосе. Давай его зададим. Выбери, с чего начать.",
   "onboarding.connect_title": "Сначала подключи аккаунт Threads",
   "onboarding.connect_body":
     "Pennedly создаёт черновики для подключённого аккаунта. Подключи один, чтобы начать.",
@@ -829,14 +829,14 @@ export const ru: Partial<Record<MessageKey, string>> = {
     "Pennedly прочитает твои недавние посты в Threads и соберёт твой голос автоматически.",
   "onboarding.analyze_cta": "Разобрать мои посты",
   "onboarding.analyze_count": "постов готово к разбору",
-  "onboarding.analyze_none": "Постов пока нет — начни с нуля.",
-  "onboarding.analyze_locked": "Нужно {need} постов для разбора — у тебя {have}",
+  "onboarding.analyze_none": "Постов пока нет. Начни с нуля.",
+  "onboarding.analyze_locked": "Нужно {need} постов для разбора. У тебя {have}.",
   "onboarding.analyzing": "Разбираю твои посты…",
   "onboarding.scratch_title": "Расскажи Pennedly, как ты пишешь.",
   "onboarding.scratch_body":
-    "Хватит пары строк. Это станет отправной точкой для твоего голоса — поправишь когда угодно.",
+    "Хватит пары строк. Это станет отправной точкой для твоего голоса, поправишь когда угодно.",
   "onboarding.scratch_cta": "Создать с нуля",
-  "onboarding.skip": "Пропустить — настрою голос позже",
+  "onboarding.skip": "Пропустить, настрою голос позже",
   "onboarding.form_intro_label": "Опиши свой голос",
   "onboarding.form_intro_ph":
     "Например: тепло, но по делу. Короткие фразы, простые слова, иногда сухая шутка.",
@@ -968,12 +968,12 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "settings.lang_toast": "Язык обновлён",
   "settings.disconnect_toast": "Аккаунт отключён",
   "onboarding.already_setup":
-    "Твой голос уже настроен — повторная настройка заменит его (старая версия сохранится).",
+    "Твой голос уже настроен. Повторная настройка заменит его (старая версия сохранится).",
   "onboarding.preview_banner":
-    "Режим просмотра — в аккаунт ничего не сохраняется. Прогон настоящий, результат показывается и сбрасывается.",
+    "Режим просмотра: в аккаунт ничего не сохраняется. Прогон настоящий, результат показывается и сбрасывается.",
   "onboarding.preview_result_title": "Предпросмотр голоса",
   "onboarding.preview_not_saved":
-    "Это только предпросмотр — в аккаунт ничего не сохранилось.",
+    "Это только предпросмотр. В аккаунт ничего не сохранилось.",
   "onboarding.preview_posts_analyzed": "Проанализировано постов:",
   "onboarding.preview_would_topics": "Будут созданы темы:",
   "onboarding.preview_full_rolebook":
@@ -992,18 +992,18 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "onboarding.step_done": "Готово",
   "onboarding.skip_for_now": "Пропустить пока",
   "onboarding.welcome_eyebrow": "Добро пожаловать в Pennedly",
-  "onboarding.connect_hero_title": "Твой партнёр по черновикам — за минуту.",
+  "onboarding.connect_hero_title": "Твой партнёр по черновикам, готов за минуту.",
   "onboarding.connect_hero_sub":
-    "Pennedly пишет посты и ответы, которые звучат как ты — и ждёт твоего ОК. Для начала подключи аккаунт Threads, для которого он будет писать.",
-  "onboarding.trust1": "Сначала только чтение — Pennedly изучает твои посты, чтобы освоить твой голос.",
-  "onboarding.trust2": "По умолчанию ничего не постится, пока ты не одобришь — всё под твоим контролем.",
-  "onboarding.trust3": "Отключить можно в любой момент — данные уходят с тобой.",
+    "Pennedly пишет посты и ответы, которые звучат как ты, и ждёт твоего ОК. Для начала подключи аккаунт Threads, для которого он будет писать.",
+  "onboarding.trust1": "Сначала только чтение. Pennedly изучает твои посты, чтобы освоить твой голос.",
+  "onboarding.trust2": "По умолчанию ничего не постится, пока ты не одобришь. Всё под твоим контролем.",
+  "onboarding.trust3": "Отключить можно в любой момент. Данные уходят с тобой.",
   "onboarding.connected": "Подключён",
   "onboarding.connect_failed": "Не получилось подключить аккаунт. Попробуй ещё раз.",
   "onboarding.choose_eyebrow": "Шаг 2 из 3 · Твой голос",
   "onboarding.choose_title": "Как Pennedly выучит твой голос?",
   "onboarding.choose_sub":
-    "Именно это делает черновики похожими на тебя, а не на робота. Выбери одно — потом всегда можно поправить.",
+    "Именно это делает черновики похожими на тебя, а не на робота. Выбери одно, потом всегда можно поправить.",
   "onboarding.mode_analyze_title": "Проанализировать мои посты",
   "onboarding.mode_analyze_desc":
     "Pennedly прочитает недавние посты {handle} и выделит темы, ритм и то, что ты бы никогда не написал.",
@@ -1014,7 +1014,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "onboarding.mode_scratch_meta": "Пара минут",
   "onboarding.choice_locked": "Нужно {need} постов",
   "onboarding.choice_locked_reason":
-    "Pennedly нужно хотя бы {need} недавних постов, чтобы учиться — у {handle} их {have}. Пока создай с нуля; разблокируется, когда постов станет больше.",
+    "Pennedly нужно хотя бы {need} недавних постов, чтобы учиться. У {handle} их {have}. Пока создай с нуля; разблокируется, когда постов станет больше.",
   "onboarding.recommended": "Рекомендуем",
   "onboarding.continue": "Продолжить",
   "onboarding.connecting": "Подключаю…",
