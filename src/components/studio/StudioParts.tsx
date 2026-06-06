@@ -26,7 +26,7 @@ import {
   IcMore,
   IcNib,
   IcPencil,
-  IcRefresh,
+  IcReload,
   IcReply,
   IcRepost,
   IcSend,
@@ -803,7 +803,15 @@ export function EmptyState({ status, onWrite }: { status: StudioStatus; onWrite?
   );
 }
 
-export function ErrorBanner({ onRetry }: { onRetry: () => void }) {
+export function ErrorBanner({
+  onRetry,
+  titleKey = "studio.error_title",
+  subKey = "studio.error_sub",
+}: {
+  onRetry: () => void;
+  titleKey?: MessageKey;
+  subKey?: MessageKey;
+}) {
   const { t } = useTranslation();
   return (
     <div
@@ -814,11 +822,11 @@ export function ErrorBanner({ onRetry }: { onRetry: () => void }) {
         <IcX size={18} />
       </span>
       <div className="min-w-0 flex-1">
-        <div className="text-small font-semibold">{t("studio.error_title")}</div>
-        <div className="text-caption text-text-muted">{t("studio.error_sub")}</div>
+        <div className="text-small font-semibold">{t(titleKey)}</div>
+        <div className="text-caption text-text-muted">{t(subKey)}</div>
       </div>
       <button onClick={onRetry} className={buttonClasses({ variant: "secondary", size: "sm" })}>
-        <IcRefresh size={15} /> {t("studio.retry")}
+        <IcReload size={15} /> {t("studio.retry")}
       </button>
     </div>
   );

@@ -950,12 +950,34 @@ test("Mentions", async ({ page }) => {
 });
 
 test("Replies", async ({ page }) => {
-  await page.setViewportSize({ width: 1280, height: 1200 });
+  await page.setViewportSize({ width: 1280, height: 1300 });
   await setup(page);
   await page.goto("/app/replies");
   await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
   await page.waitForTimeout(700);
-  await shoot(page, "replies");
+  await shoot(page, "replies"); // master-detail, real data
+});
+
+test("Replies — demo states", async ({ page }) => {
+  // Tester ?demo=1: 2-tweak panel (dark + state) on mock master-detail content.
+  await page.setViewportSize({ width: 1280, height: 1300 });
+  await setup(page);
+  await page.goto("/app/replies?demo=1");
+  await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
+  await page.waitForTimeout(700);
+  await shoot(page, "replies-demo-live");
+  await page.getByRole("button", { name: "Open tweaks" }).click();
+  await page.waitForTimeout(150);
+  // State is the only <select> in the panel (Dark is a toggle).
+  await page.locator("select.twk-field").first().selectOption("Empty");
+  await page.waitForTimeout(250);
+  await shoot(page, "replies-demo-empty");
+  await page.locator("select.twk-field").first().selectOption("Error");
+  await page.waitForTimeout(250);
+  await shoot(page, "replies-demo-error");
+  await page.locator("select.twk-field").first().selectOption("Loading");
+  await page.waitForTimeout(250);
+  await shoot(page, "replies-demo-loading");
 });
 
 test("Stats", async ({ page }) => {

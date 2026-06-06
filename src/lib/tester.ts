@@ -11,11 +11,12 @@ import { useRouter } from "next/navigation";
 
 import { fetchMe, getTokens } from "@/lib/api";
 
-export function useTesterGuard(): { checking: boolean } {
+export function useTesterGuard(skip = false): { checking: boolean } {
   const router = useRouter();
-  const [checking, setChecking] = useState(true);
+  const [checking, setChecking] = useState(!skip);
 
   useEffect(() => {
+    if (skip) return; // ?demo=1 review mode renders standalone, no guard
     if (!getTokens()) {
       router.replace("/app/login");
       return;

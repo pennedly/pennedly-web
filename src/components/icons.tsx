@@ -51,6 +51,8 @@ export const IcPencil = (p: IconProps) => <Svg {...p}><path d="M4 20h4L18.5 9.5a
 
 /* voice — ported from voice-icons.jsx */
 export const IcRefresh = (p: IconProps) => <Svg {...p}><path d="M20 7a8 8 0 0 0-14.3-2M4 5v4h4" /><path d="M4 17a8 8 0 0 0 14.3 2M20 19v-4h-4" /></Svg>;
+/* single clockwise circular arrow — the "retry / reload" glyph. */
+export const IcReload = (p: IconProps) => <Svg {...p}><path d="M21 12a9 9 0 1 1-2.64-6.36" /><path d="M21 3v5h-5" /></Svg>;
 export const IcScan = (p: IconProps) => <Svg {...p}><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2" /><path d="M7.5 12h9" /></Svg>;
 export const IcShield = (p: IconProps) => <Svg {...p}><path d="M12 3.5 19 6v5.5c0 4.3-2.9 7.4-7 9-4.1-1.6-7-4.7-7-9V6l7-2.5Z" /><path d="M8.8 11.8 11 14l4.2-4.4" /></Svg>;
 export const IcAlert = (p: IconProps) => <Svg {...p}><path d="M12 4.5 21 19.5H3L12 4.5Z" /><path d="M12 10.5v4M12 17.4v.1" /></Svg>;

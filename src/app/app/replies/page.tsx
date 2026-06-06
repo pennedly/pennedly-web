@@ -1,19 +1,13 @@
 "use client";
 
-// Reply queue — comments under the user's own posts. For each comment you
-// generate an AI reply in your voice, review/edit it, approve, then
-// publish it threaded under the comment. The queue is filled hourly by
-// the ingest_comments worker; this is the manual-reply surface for the
-// threads_manage_replies permission.
-//
-// Layout follows design-export/PennedlyDesign/replies-* (master-detail, Q18):
-// a left post list (PostMaster) drives a right detail pane — a post-context
-// header (PostContext) + a per-post status filter (Q77 buckets) + that post's
-// comment cards. Each card has an in-card threaded reply block whose action set
-// is the design's: generate → (regenerate / edit) → approve → publish, plus
-// skip/restore on the comment itself.
+// Reply queue (/app/replies) — comments under the user's own posts, rebuilt 1:1
+// to Replies-SPEC.html. Master-detail: a left post list drives a right detail
+// pane (post context + 5-tab status filter + that post's comment cards). Each
+// card threads a reply drafted in your voice; flow: generate → regenerate/edit →
+// approve → publish (confirm dialog). Real API wiring is preserved; a tester-only
+// ?demo=1 panel (dark + state) drives every state on mock data.
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -21,6 +15,8 @@ import {
   approveDraft,
   clearTokens,
   fetchComments,
+  fetchMe,
+  fetchMyAccounts,
   generateReply,
   getTokens,
   publishDraft,
@@ -29,156 +25,128 @@ import {
 } from "@/lib/api";
 import { captureEvent } from "@/lib/analytics";
 import { useSelectedAccountId } from "@/lib/account";
-import { useTranslation, type MessageKey } from "@/lib/i18n";
-import { PublishConfirmModal } from "@/components/PublishConfirmModal";
-import { TranslateButton } from "@/components/TranslateButton";
+import { useTranslation } from "@/lib/i18n";
 import { useTesterGuard } from "@/lib/tester";
 import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
-import { Button, buttonClasses } from "@/components/ui/button";
-import { Badge, type BadgeTone } from "@/components/ui/badge";
-import { Mono } from "@/components/ui/mono";
-import { Skeleton } from "@/components/ui/feedback";
 import { Toast, ToastHost } from "@/components/ui/toast";
-import { cn } from "@/lib/cn";
+import { Spinner } from "@/components/ui/feedback";
+import { TweaksPanel, TweakSection, TweakToggle, TweakRadio, useTweaks } from "@/components/tweaks/TweaksPanel";
+import { ErrorBanner } from "@/components/studio/StudioParts";
 import {
-  IcCheck,
-  IcExternal,
-  IcNib,
-  IcPencil,
-  IcReplies,
-  IcReply,
-  IcSkip,
-  IcTweak,
-  IcUndo,
-} from "@/components/icons";
+  CommentCard,
+  PostContext,
+  PostMaster,
+  PublishReplyDialog,
+  RepliesEmpty,
+  RepliesLoading,
+  StatusFilter,
+  inFilter,
+  type ReplyFilter,
+  type ReplyHandlers,
+} from "@/components/studio/RepliesParts";
+import {
+  DEMO_COMMENTS,
+  DEMO_POSTS,
+  REPLY_TWEAK_DEFAULTS,
+  type ReplyComment,
+  type ReplyPost,
+  type ReplyStatus,
+} from "@/components/studio/replies-demo";
 import type { CommentSummary } from "@/lib/types";
 
-type Toast = {
-  id: number;
-  message: string;
-  tone: "success" | "error";
-  onUndo?: () => void;
-  undoLabel?: string;
-};
-
-// Q24: how long the Undo toast stays up after a skip.
+const IS_DEV = process.env.NODE_ENV === "development";
 const UNDO_MS = 5000;
 
-const REPLY_LIMIT = 500;
+type ToastT = { id: number; title: string; description?: string; tone: "success" | "error"; onUndo?: () => void; undoLabel?: string };
 
-// E: one post + every comment sitting under it, used to build the post-rail
-// and the "all posts" count.
-type PostGroup = {
-  postId: number;
-  postText: string | null;
-  postPublishedAt: string | null;
-  postThreadsUrl: string | null;
-  comments: CommentSummary[];
-};
-
-// Reply-queue filter tabs. `key` is the comment `status` passed to the API
-// (null = all). `dot` is the status-dot colour (a Tailwind bg-* token).
-const FILTER_TABS = [
-  { key: null, labelKey: "replies.filter_all", dot: "bg-text-subtle" },
-  { key: "new", labelKey: "replies.filter_new", dot: "bg-accent" },
-  { key: "drafted", labelKey: "replies.filter_drafted", dot: "bg-text-muted" },
-  { key: "replied", labelKey: "replies.filter_replied", dot: "bg-success" },
-  { key: "skipped", labelKey: "replies.filter_skipped", dot: "bg-text-subtle" },
-] as const;
-
-// Which design "state" a comment is in — drives badge, reply thread and the
-// footer action set. Maps the backend (comment.status + draft_status) onto
-// the card states from the design. `skipped` covers BOTH a manual skip and
-// the generator's auto-SKIP (reply_generator sets comment.status='skipped').
-type CardState = "new" | "pending" | "approved" | "rejected" | "replied" | "skip";
-function cardState(c: CommentSummary): CardState {
+// Backend (comment.status + draft_status) → the spec's 5 card statuses.
+function specStatus(c: CommentSummary): ReplyStatus {
   if (c.status === "replied") return "replied";
-  if (c.status === "skipped" || c.draft_is_skip === true) return "skip";
+  if (c.status === "skipped" || c.draft_is_skip === true) return "skipped";
   if (c.ai_draft_id !== null && c.draft_text !== null) {
     if (c.draft_status === "approved") return "approved";
-    if (c.draft_status === "rejected") return "rejected";
-    return "pending";
+    if (c.draft_status === "rejected") return "new"; // rejected → regenerate
+    return "draft"; // pending
   }
   return "new";
 }
 
-// Q77: the status bucket a comment falls in (approved/rejected fold into Draft).
-function bucketOf(c: CommentSummary): "new" | "drafted" | "replied" | "skipped" {
-  const s = cardState(c);
-  if (s === "replied") return "replied";
-  if (s === "skip") return "skipped";
-  if (s === "new") return "new";
-  return "drafted";
+function relativeTime(iso: string | null, locale: string): string {
+  if (!iso) return "";
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+  if (mins < 1) return rtf.format(0, "minute");
+  if (mins < 60) return rtf.format(-mins, "minute");
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return rtf.format(-hours, "hour");
+  const days = Math.floor(hours / 24);
+  if (days < 7) return rtf.format(-days, "day");
+  return new Date(iso).toLocaleDateString(locale);
 }
 
-const BADGE = {
-  new: { tone: "accent", labelKey: "replies.badge_new", dot: true },
-  pending: { tone: "neutral", labelKey: "replies.badge_draft", dot: true },
-  approved: { tone: "accent", labelKey: "replies.badge_approved", dot: true },
-  rejected: { tone: "neutral", labelKey: "replies.badge_draft", dot: true },
-  replied: { tone: "good", labelKey: "replies.filter_replied", dot: true },
-  skip: { tone: "neutral", labelKey: "replies.filter_skipped", dot: false },
-} as const satisfies Record<CardState, { tone: BadgeTone; labelKey: string; dot: boolean }>;
+const FILTER_KEYS: ReplyFilter[] = ["all", "needs", "drafts", "replied", "skipped"];
 
 export default function RepliesPage() {
   const router = useRouter();
   const { t, locale } = useTranslation();
-  const { checking } = useTesterGuard();
+  const [demoParam] = useState(() => (typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("demo") === "1" : false));
+  const [isTester, setIsTester] = useState(false);
+  const allow = demoParam && (IS_DEV || isTester);
+  const { checking } = useTesterGuard(allow);
   const accountId = useSelectedAccountId();
+
   const [comments, setComments] = useState<CommentSummary[]>([]);
-  const [filter, setFilter] = useState<string | null>(null);
   const [counts, setCounts] = useState<Record<string, number>>({});
+  const [edits, setEdits] = useState<Record<number, string>>({});
   const [loaded, setLoaded] = useState(false);
   const [bootError, setBootError] = useState<string | null>(null);
+  const [selectedPost, setSelectedPost] = useState<string | null>(null);
+  const [filter, setFilter] = useState<ReplyFilter>("all");
   const [generatingId, setGeneratingId] = useState<number | null>(null);
-  const [busyId, setBusyId] = useState<number | null>(null);
-  // Inline edit of a pending reply draft: which comment, and the buffer.
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [editBuffer, setEditBuffer] = useState("");
-  // Committed edits per draft id (applied at approve time).
-  const [edits, setEdits] = useState<Record<number, string>>({});
-  const [publishTarget, setPublishTarget] = useState<{
-    draftId: number;
-    text: string;
-  } | null>(null);
+  const [publishTarget, setPublishTarget] = useState<{ comment: ReplyComment; reply: string; draftId: number | null } | null>(null);
   const [publishing, setPublishing] = useState(false);
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  // Q18: master-detail — the post selected in the left list; the detail pane
-  // shows that post's comments. The status `filter` is now per-post (client).
-  const [selectedPost, setSelectedPost] = useState<number | null>(null);
+  const [toasts, setToasts] = useState<ToastT[]>([]);
+  const [youInitials, setYouInitials] = useState("Y");
 
-  function toast(
-    message: string,
-    tone: Toast["tone"] = "success",
-    opts?: { onUndo?: () => void; undoLabel?: string; duration?: number },
-  ) {
+  // demo
+  const [tw, setTw] = useTweaks(REPLY_TWEAK_DEFAULTS);
+  const [demoComments, setDemoComments] = useState<ReplyComment[]>(DEMO_COMMENTS);
+  const demoOn = allow;
+
+  function toast(title: string, tone: ToastT["tone"] = "success", opts?: { description?: string; onUndo?: () => void; undoLabel?: string; duration?: number }) {
     const id = Date.now() + Math.random();
-    setToasts((s) => [
-      ...s,
-      { id, message, tone, onUndo: opts?.onUndo, undoLabel: opts?.undoLabel },
-    ]);
-    setTimeout(
-      () => setToasts((s) => s.filter((x) => x.id !== id)),
-      opts?.duration ?? 3500,
-    );
+    setToasts((s) => [...s, { id, title, description: opts?.description, tone, onUndo: opts?.onUndo, undoLabel: opts?.undoLabel }]);
+    setTimeout(() => setToasts((s) => s.filter((x) => x.id !== id)), opts?.duration ?? 4600);
     return id;
   }
-
   function dismissToast(id: number) {
     setToasts((s) => s.filter((x) => x.id !== id));
   }
 
+  // best-effort identity (tester flag for the panel gate + "You" avatar initials)
   useEffect(() => {
-    if (!getTokens()) router.push("/app/login");
-  }, [router]);
+    if (!getTokens()) return;
+    fetchMe().then((m) => {
+      setIsTester(m.is_tester === true);
+      setYouInitials((m.display_name?.[0] ?? m.email?.[0] ?? "Y").toUpperCase());
+    }).catch(() => {});
+    fetchMyAccounts().then((list) => {
+      const a = list.accounts.find((x) => x.id === accountId) ?? list.accounts[0];
+      if (a) {
+        const name = a.display_name ?? a.username ?? "You";
+        setYouInitials(name.slice(0, 2).toUpperCase());
+      }
+    }).catch(() => {});
+  }, [accountId]);
 
+  // real comments load
   useEffect(() => {
+    if (demoParam) return;
     if (accountId === null) return;
     setLoaded(false);
     (async () => {
       try {
-        // Q18: fetch all comments (no status param) — the status filter is now
-        // client-side per selected post; status_counts stays account-wide.
         const list = await fetchComments(accountId, { limit: 50 });
         setComments(list.comments);
         setCounts(list.status_counts ?? {});
@@ -193,7 +161,13 @@ export default function RepliesPage() {
         setLoaded(true);
       }
     })();
-  }, [accountId, router]);
+  }, [accountId, router, demoParam]);
+
+  // demo dark
+  useEffect(() => {
+    if (!demoOn) return;
+    document.documentElement.classList.toggle("dark", !!tw.dark);
+  }, [demoOn, tw.dark]);
 
   async function reload() {
     if (accountId === null) return;
@@ -202,811 +176,314 @@ export default function RepliesPage() {
       setComments(list.comments);
       setCounts(list.status_counts ?? {});
     } catch {
-      // keep current list on a transient failure
+      /* keep current on transient failure */
     }
   }
 
-  // Group the flat comment list by the post each comment sits under, so the
-  // post-rail can offer "All posts" + one chip per post. Posts sort newest-first.
-  const postGroups = useMemo<PostGroup[]>(() => {
-    const map = new Map<number, PostGroup>();
+  // ── build posts + comments-by-post (real or demo) ──
+  const { posts, byPost } = useMemo(() => {
+    if (demoOn) {
+      const map: Record<string, ReplyComment[]> = {};
+      for (const c of demoComments) (map[c.postId] ??= []).push(c);
+      return { posts: DEMO_POSTS, byPost: map };
+    }
+    const pmap = new Map<string, ReplyPost>();
+    const map: Record<string, ReplyComment[]> = {};
     for (const c of comments) {
-      let g = map.get(c.post_id);
-      if (!g) {
-        g = {
-          postId: c.post_id,
-          postText: c.post_text,
-          postPublishedAt: c.post_published_at,
-          postThreadsUrl: c.post_threads_url,
-          comments: [],
-        };
-        map.set(c.post_id, g);
+      const pid = String(c.post_id);
+      if (!pmap.has(pid)) {
+        pmap.set(pid, { id: pid, text: c.post_text ?? "", time: relativeTime(c.post_published_at, locale), threadsUrl: c.post_threads_url ?? "#" });
       }
-      g.comments.push(c);
+      const name = c.author_username ?? "Someone";
+      (map[pid] ??= []).push({
+        id: c.id,
+        postId: pid,
+        status: specStatus(c),
+        author: { name, handle: name, initials: name.slice(0, 2).toUpperCase() },
+        text: c.text ?? "",
+        reply: edits[c.ai_draft_id ?? -1] ?? c.draft_text ?? null,
+        time: relativeTime(c.created_at, locale),
+        repliedTime: relativeTime(c.replied_at, locale) || null,
+      });
     }
-    return [...map.values()].sort((a, b) => {
-      const ta = a.postPublishedAt ? Date.parse(a.postPublishedAt) : 0;
-      const tb = b.postPublishedAt ? Date.parse(b.postPublishedAt) : 0;
-      return tb - ta;
+    const ordered = [...pmap.values()].sort((a, b) => {
+      const ca = comments.find((x) => String(x.post_id) === a.id)?.post_published_at;
+      const cb = comments.find((x) => String(x.post_id) === b.id)?.post_published_at;
+      return (cb ? Date.parse(cb) : 0) - (ca ? Date.parse(ca) : 0);
     });
-  }, [comments]);
+    return { posts: ordered, byPost: map };
+  }, [demoOn, demoComments, comments, edits, locale]);
 
-  // Q18: keep a valid selected post — default to the newest, re-home if it left.
+  // keep a valid selected post
   useEffect(() => {
-    if (postGroups.length === 0) {
+    if (posts.length === 0) {
       if (selectedPost !== null) setSelectedPost(null);
-    } else if (
-      selectedPost === null ||
-      !postGroups.some((g) => g.postId === selectedPost)
-    ) {
-      setSelectedPost(postGroups[0].postId);
+    } else if (selectedPost === null || !posts.some((p) => p.id === selectedPost)) {
+      setSelectedPost(posts[0].id);
     }
-  }, [postGroups, selectedPost]);
+  }, [posts, selectedPost]);
 
-  const activeGroup =
-    postGroups.find((g) => g.postId === selectedPost) ?? postGroups[0] ?? null;
+  const activePost = posts.find((p) => p.id === selectedPost) ?? posts[0] ?? null;
+  const postComments = activePost ? byPost[activePost.id] ?? [] : [];
 
-  // Q77: per-post status buckets — `approved` folds into the Draft bucket.
-  const postComments = activeGroup?.comments ?? [];
-  const postCounts: Record<string, number> = { new: 0, drafted: 0, replied: 0, skipped: 0 };
-  for (const c of postComments) postCounts[bucketOf(c)] += 1;
-  const filteredComments =
-    filter === null ? postComments : postComments.filter((c) => bucketOf(c) === filter);
+  const countsByPost: Record<string, { total: number; unanswered: number }> = {};
+  for (const p of posts) {
+    const cs = byPost[p.id] ?? [];
+    countsByPost[p.id] = { total: cs.length, unanswered: cs.filter((c) => c.status !== "replied" && c.status !== "skipped").length };
+  }
 
-  const needsCount = counts["new"] ?? 0;
+  const filterCounts = Object.fromEntries(FILTER_KEYS.map((f) => [f, postComments.filter((c) => inFilter(c.status, f)).length])) as Record<ReplyFilter, number>;
+  const visible = postComments.filter((c) => inFilter(c.status, filter));
 
-  // Generate (also used to regenerate — the endpoint re-links a fresh draft).
-  async function onGenerate(comment: CommentSummary) {
-    setGeneratingId(comment.id);
-    captureEvent("ui.reply_generate_clicked", { comment_id: comment.id });
+  const needsCount = demoOn ? demoComments.filter((c) => c.status === "new").length : counts["new"] ?? 0;
+  const feedState = demoOn ? (tw.state as "Live" | "Loading" | "Empty" | "Error") : "Live";
+  const phase: "loading" | "ready" | "empty" | "error" =
+    demoOn
+      ? feedState === "Loading"
+        ? "loading"
+        : feedState === "Error"
+          ? "error"
+          : feedState === "Empty"
+            ? "empty"
+            : "ready"
+      : !loaded
+        ? "loading"
+        : posts.length === 0
+          ? "empty"
+          : "ready";
+
+  // ════════════ real handlers ════════════
+  function findDraftId(id: number): number | null {
+    return comments.find((x) => x.id === id)?.ai_draft_id ?? null;
+  }
+
+  async function realGenerate(c: ReplyComment) {
+    setGeneratingId(c.id);
+    captureEvent("ui.reply_generate_clicked", { comment_id: c.id });
     try {
-      const reply = await generateReply(comment.id);
-      toast(
-        reply.is_skip
-          ? t("replies.skipped")
-          : `${t("dashboard.toast.generated")} · ${reply.text.length}`,
-      );
+      await generateReply(c.id);
       await reload();
     } catch (e) {
-      toast(errMsg(e), "error");
+      toast(String(e), "error");
     } finally {
       setGeneratingId(null);
     }
   }
 
-  async function onApprove(comment: CommentSummary) {
-    if (comment.ai_draft_id === null) return;
-    const draftId = comment.ai_draft_id;
-    const original = comment.draft_text ?? "";
-    const localEdit = edits[draftId];
-    const wasEdited =
-      localEdit !== undefined && localEdit.trim() !== original.trim();
-    setBusyId(comment.id);
-    captureEvent("ui.reply_approve_clicked", {
-      draft_id: draftId,
-      edited: wasEdited,
-    });
+  async function realApprove(c: ReplyComment) {
+    const draftId = findDraftId(c.id);
+    if (draftId === null) return;
+    captureEvent("ui.reply_approve_clicked", { comment_id: c.id });
     try {
-      await approveDraft(draftId, {
-        editedText: wasEdited ? localEdit : undefined,
-      });
-      setEdits((e) => {
-        const n = { ...e };
+      await approveDraft(draftId, { editedText: edits[draftId] });
+      setEdits((s) => {
+        const n = { ...s };
         delete n[draftId];
         return n;
       });
-      toast(
-        `#${draftId} ${
-          wasEdited
-            ? t("dashboard.toast.approved_edited")
-            : t("dashboard.toast.approved_as_is")
-        }`,
-      );
       await reload();
+      toast(t("replies.toast_approved"), "success", { description: t("replies.toast_ready") });
     } catch (e) {
-      toast(errMsg(e), "error");
-    } finally {
-      setBusyId(null);
+      toast(String(e), "error");
     }
   }
 
-  async function onPublishConfirm() {
-    if (publishTarget === null) return;
-    const { draftId } = publishTarget;
+  async function realPublishConfirm() {
+    if (!publishTarget?.draftId) return;
     setPublishing(true);
-    captureEvent("ui.reply_publish_confirmed", { draft_id: draftId });
+    captureEvent("ui.reply_publish_confirmed", { draft_id: publishTarget.draftId });
     try {
-      const result = await publishDraft(draftId);
-      toast(
-        `#${draftId} ${t("dashboard.toast.published")} · ${result.threads_post_id}`,
-      );
-      setPublishTarget(null);
+      await publishDraft(publishTarget.draftId);
       await reload();
+      setPublishTarget(null);
+      toast(t("replies.toast_published"), "success", { description: t("replies.toast_posted") });
     } catch (e) {
-      toast(errMsg(e), "error");
+      toast(String(e), "error");
     } finally {
       setPublishing(false);
     }
   }
 
-  // Skip the whole comment (won't reply) — reversible via restore.
-  async function onSkip(comment: CommentSummary) {
-    setBusyId(comment.id);
-    captureEvent("ui.reply_skip_clicked", { comment_id: comment.id });
-    // Q24: optimistically move the card to the skipped bucket for instant
-    // feedback, then commit + reconcile. Undo restores via the existing
-    // restore endpoint (skip ↔ restore is already bidirectional).
-    setComments((cs) =>
-      cs.map((c) => (c.id === comment.id ? { ...c, status: "skipped" } : c)),
-    );
-    try {
-      await skipComment(comment.id);
-      await reload();
-      toast(t("replies.toast_skipped"), "success", {
-        duration: UNDO_MS,
-        undoLabel: t("common.undo"),
-        onUndo: () => void onRestore(comment),
-      });
-    } catch (e) {
-      setComments((cs) =>
-        cs.map((c) => (c.id === comment.id ? { ...c, status: comment.status } : c)),
-      );
-      toast(errMsg(e), "error");
-    } finally {
-      setBusyId(null);
-    }
-  }
-
-  async function onRestore(comment: CommentSummary) {
-    setBusyId(comment.id);
-    captureEvent("ui.reply_restore_clicked", { comment_id: comment.id });
-    try {
-      await restoreComment(comment.id);
-      toast(t("replies.toast_restored"));
-      await reload();
-    } catch (e) {
-      toast(errMsg(e), "error");
-    } finally {
-      setBusyId(null);
-    }
-  }
-
-  function startEdit(comment: CommentSummary) {
-    if (comment.ai_draft_id === null) return;
-    setEditBuffer(edits[comment.ai_draft_id] ?? comment.draft_text ?? "");
-    setEditingId(comment.id);
-  }
-
-  function saveEdit(comment: CommentSummary) {
-    if (comment.ai_draft_id === null) return;
-    const draftId = comment.ai_draft_id;
-    const next = editBuffer;
-    const original = comment.draft_text ?? "";
-    setEdits((s) => {
-      const n = { ...s };
-      if (next.trim() && next.trim() !== original.trim()) n[draftId] = next;
-      else delete n[draftId];
-      return n;
+  function realSkip(c: ReplyComment) {
+    captureEvent("ui.reply_skip_clicked", { comment_id: c.id });
+    // optimistic: drop from view; skipComment fires immediately, undo restores.
+    setComments((p) => p.map((x) => (x.id === c.id ? { ...x, status: "skipped", draft_is_skip: true } : x)));
+    skipComment(c.id).catch(() => reload());
+    toast(t("replies.toast_dismissed"), "success", {
+      duration: UNDO_MS,
+      undoLabel: t("common.undo"),
+      onUndo: () => {
+        restoreComment(c.id).then(reload).catch(() => {});
+      },
     });
-    setEditingId(null);
   }
 
-  if (checking) return null;
+  async function realRestore(c: ReplyComment) {
+    captureEvent("ui.reply_restore_clicked", { comment_id: c.id });
+    try {
+      await restoreComment(c.id);
+      await reload();
+      toast(t("replies.toast_restored"));
+    } catch (e) {
+      toast(String(e), "error");
+    }
+  }
 
-  const pill =
-    needsCount > 0 ? (
-      <TopbarPill tone="accent">
-        {needsCount} {t("replies.need_reply")}
-      </TopbarPill>
-    ) : undefined;
+  const realHandlers: ReplyHandlers = {
+    onGenerate: realGenerate,
+    onApprove: realApprove,
+    onPublish: (c) => setPublishTarget({ comment: c, reply: c.reply ?? "", draftId: findDraftId(c.id) }),
+    onSkip: realSkip,
+    onRestore: realRestore,
+    onSaveEdit: (c, text) => {
+      const draftId = findDraftId(c.id);
+      if (draftId !== null) setEdits((s) => ({ ...s, [draftId]: text }));
+      toast(t("replies.toast_updated"));
+    },
+  };
 
-  if (bootError) {
+  // ════════════ demo handlers ════════════
+  function demoSet(id: number, patch: Partial<ReplyComment>) {
+    setDemoComments((p) => p.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+  }
+  function demoMove(c: ReplyComment, to: ReplyStatus, title: string, description?: string, undoTo?: ReplyStatus) {
+    const from = c.status;
+    demoSet(c.id, { status: to, ...(to === "replied" ? { repliedTime: "now" } : {}) });
+    toast(title, "success", {
+      description,
+      duration: undoTo ? UNDO_MS : 4600,
+      undoLabel: undoTo ? t("common.undo") : undefined,
+      onUndo: undoTo ? () => demoSet(c.id, { status: from }) : undefined,
+    });
+  }
+  const demoHandlers: ReplyHandlers = {
+    onGenerate: (c) => {
+      setGeneratingId(c.id);
+      setTimeout(() => {
+        demoSet(c.id, { status: "draft", reply: "Great question. The short version: keep the bar low enough that a tired you still clears it, and let the streak do the heavy lifting." });
+        setGeneratingId(null);
+      }, 1500);
+    },
+    onApprove: (c) => demoMove(c, "approved", t("replies.toast_approved"), t("replies.toast_ready"), "draft"),
+    onPublish: (c) => setPublishTarget({ comment: c, reply: c.reply ?? "", draftId: null }),
+    onSkip: (c) => demoMove(c, "skipped", t("replies.toast_dismissed"), undefined, "new"),
+    onRestore: (c) => demoMove(c, "new", t("replies.toast_restored")),
+    onSaveEdit: (c, text) => {
+      demoSet(c.id, { reply: text });
+      toast(t("replies.toast_updated"));
+    },
+  };
+
+  const handlers = demoOn ? demoHandlers : realHandlers;
+
+  const pill = needsCount > 0 ? (
+    <TopbarPill tone="accent">
+      {needsCount} {t("replies.need_reply")}
+    </TopbarPill>
+  ) : (
+    <TopbarPill tone="success">{t("replies.all_caught_up")}</TopbarPill>
+  );
+
+  if (checking) {
     return (
-      <div className="min-h-screen bg-bg text-text">
-        <AppTopbar maxW="960px" title={t("replies.title")} />
-        <main className="mx-auto max-w-[960px] px-5 pb-24 pt-7 md:px-6">
-          <div className="rounded-lg border border-danger/40 bg-danger/10 p-4 text-small text-danger">
-            {bootError}
-          </div>
-        </main>
+      <div className="flex min-h-screen items-center justify-center bg-bg">
+        <Spinner size={20} className="text-text-subtle" />
       </div>
     );
   }
 
-  // Empty-state copy per active filter (mirrors the design's EMPTY map).
-  const emptyCopy: Record<string, { title: string; sub: string }> = {
-    all: { title: t("replies.empty_all_title"), sub: t("replies.empty_all_sub") },
-    new: { title: t("replies.empty_needs_title"), sub: t("replies.empty_needs_sub") },
-    drafted: { title: t("replies.empty_drafts_title"), sub: t("replies.empty_drafts_sub") },
-    replied: { title: t("replies.empty_replied_title"), sub: t("replies.empty_replied_sub") },
-    skipped: { title: t("replies.empty_skipped_title"), sub: t("replies.empty_skipped_sub") },
-  };
-  const empty = emptyCopy[filter ?? "all"] ?? emptyCopy.all;
+  if (bootError) {
+    return (
+      <main className="mx-auto max-w-2xl px-6 py-16">
+        <div className="rounded-lg border border-danger/40 bg-danger/10 p-4 text-small text-danger">{bootError}</div>
+      </main>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-bg text-text">
       <AppTopbar maxW="960px" title={t("replies.title")} pill={pill} />
-      <main className="mx-auto max-w-[960px] space-y-5 px-5 pb-24 pt-7 md:px-6">
+      <main className="mx-auto flex max-w-[960px] flex-col gap-5 px-5 pb-24 pt-7 md:px-6">
         <div className="flex flex-col gap-1">
-          <h1 className="text-h1 font-semibold">{t("replies.heading")}</h1>
-          <p className="text-small text-text-muted">{t("replies.subtitle")}</p>
+          <h1 className="text-h1 font-semibold tracking-[-0.015em]">{t("replies.heading")}</h1>
+          <p className="text-body text-text-muted">{t("replies.subtitle")}</p>
         </div>
 
-        {!loaded && <p className="text-small text-text-muted">{t("common.loading")}</p>}
-
-        {/* Q18: account-wide empty — no comments under any post yet. */}
-        {loaded && postGroups.length === 0 && (
-          <div className="flex flex-col items-center rounded-lg border border-dashed border-border px-6 py-16 text-center">
-            <span className="mb-3 grid h-11 w-11 place-items-center rounded-full border border-border bg-surface-2 text-text-subtle">
-              <IcReplies size={22} />
-            </span>
-            <p className="text-body font-semibold">{t("replies.empty_all_title")}</p>
-            <p className="mt-1 max-w-[42ch] text-small leading-relaxed text-text-muted">
-              {t("replies.empty_all_sub")}
-            </p>
-          </div>
-        )}
-
-        {/* Q18: master-detail — post list (left) drives the detail pane (right). */}
-        {loaded && postGroups.length > 0 && (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-[300px_minmax(0,1fr)]">
+        {phase === "loading" ? (
+          <RepliesLoading />
+        ) : phase === "error" ? (
+          <ErrorBanner onRetry={() => setTw("state", "Live")} titleKey="replies.error_title" subKey="replies.error_sub" />
+        ) : phase === "empty" || !activePost ? (
+          <RepliesEmpty filter="all" />
+        ) : (
+          <div className="grid grid-cols-[300px_1fr] items-start gap-[22px] max-[900px]:grid-cols-1">
             <PostMaster
-              groups={postGroups}
-              selected={selectedPost}
+              posts={posts}
+              countsByPost={countsByPost}
+              selected={activePost.id}
               onSelect={(id) => {
                 setSelectedPost(id);
-                setFilter(null);
+                setFilter("all");
               }}
-              cap={t("replies.posts_with_comments")}
-              toAnswerLabel={t("replies.to_answer")}
-              commentWord={t("replies.comments_word")}
-              fmtTime={(iso) => relativeTime(iso, locale)}
             />
-
-            <div className="min-w-0 space-y-4">
-              {activeGroup && <PostContext group={activeGroup} locale={locale} t={t} />}
-
-              {/* per-post status filter (Q77 buckets) */}
-              <div
-                role="tablist"
-                aria-label={t("replies.title")}
-                className="flex items-center gap-1 rounded-md border border-border bg-surface-2 p-1"
-              >
-                {FILTER_TABS.map((tab) => {
-                  const n = tab.key === null ? postComments.length : postCounts[tab.key] ?? 0;
-                  const active = filter === tab.key;
-                  return (
-                    <button
-                      key={tab.key ?? "all"}
-                      role="tab"
-                      aria-selected={active}
-                      onClick={() => setFilter(tab.key)}
-                      className={cn(
-                        "inline-flex h-9 min-w-0 flex-1 items-center justify-center gap-2 rounded-sm border border-transparent px-2.5 text-small font-medium whitespace-nowrap text-text-muted transition-colors hover:text-text",
-                        active && "border-border bg-surface font-semibold text-text shadow-sm",
-                      )}
-                    >
-                      <span className={cn("h-[7px] w-[7px] shrink-0 rounded-full", tab.dot)} />
-                      <span className="truncate">{t(tab.labelKey)}</span>
-                      <span
-                        className={cn(
-                          "text-caption font-semibold tabular-nums",
-                          active ? "text-text-muted" : "text-text-subtle",
-                        )}
-                      >
-                        {n}
-                      </span>
-                    </button>
-                  );
-                })}
+            <div className="flex min-w-0 flex-col gap-4">
+              <PostContext post={activePost} />
+              <StatusFilter active={filter} counts={filterCounts} onChange={setFilter} />
+              <div className="flex flex-col gap-3.5">
+                {visible.length === 0 ? (
+                  <RepliesEmpty filter={filter} />
+                ) : (
+                  visible.map((c) => (
+                    <CommentCard key={c.id} c={c} youInitials={youInitials} generating={generatingId === c.id} h={handlers} />
+                  ))
+                )}
               </div>
-
-              {filteredComments.length === 0 ? (
-                <div className="flex flex-col items-center rounded-lg border border-dashed border-border px-6 py-14 text-center">
-                  <span className="mb-3 grid h-11 w-11 place-items-center rounded-full border border-border bg-surface-2 text-text-subtle">
-                    <IcReplies size={22} />
-                  </span>
-                  <p className="text-body font-semibold">{empty.title}</p>
-                  <p className="mt-1 max-w-[42ch] text-small leading-relaxed text-text-muted">
-                    {empty.sub}
-                  </p>
-                </div>
-              ) : (
-                <ul className="space-y-3.5">
-                  {filteredComments.map((c) => {
-                  const state = cardState(c);
-                  const draftId = c.ai_draft_id;
-                  const generating = generatingId === c.id;
-                  const busy = busyId === c.id;
-                  const editing = editingId === c.id;
-                  const displayText =
-                    draftId !== null ? edits[draftId] ?? c.draft_text ?? "" : "";
-                  const isEdited =
-                    draftId !== null &&
-                    edits[draftId] !== undefined &&
-                    edits[draftId].trim() !== (c.draft_text ?? "").trim();
-                  const badge = BADGE[state];
-
-                  return (
-                    <li
-                      key={c.id}
-                      className={cn(
-                        "rounded-lg border border-border bg-surface p-4 shadow-sm transition-colors hover:border-text/15",
-                        state === "skip" && "opacity-[0.66]",
-                      )}
-                      style={{ animation: "card-in 240ms var(--ease-entrance) both" }}
-                    >
-                      {/* comment head: author + status badge (the post context
-                          lives in the PostContext header above the list now) */}
-                      <div className="flex items-center gap-2.5">
-                        <Mono text={(c.author_username?.[0] ?? "@").toUpperCase()} size={34} />
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate text-small font-semibold leading-tight">
-                            @{c.author_username ?? "—"}
-                          </div>
-                          {c.published_at && (
-                            <div className="text-caption text-text-subtle">
-                              {relativeTime(c.published_at, locale)}
-                            </div>
-                          )}
-                        </div>
-                        <Badge tone={badge.tone} dot={badge.dot}>
-                          {t(badge.labelKey)}
-                        </Badge>
-                      </div>
-
-                      {/* the comment body */}
-                      <p className="mt-2.5 whitespace-pre-wrap text-body leading-relaxed text-text">
-                        {c.text ?? ""}
-                      </p>
-                      {c.text && (
-                        <div className="mt-2">
-                          <TranslateButton text={c.text} source="comment" />
-                        </div>
-                      )}
-
-                      {/* threaded reply block */}
-                      {generating ? (
-                        <ReplyThread>
-                          <div className="flex flex-col gap-2.5">
-                            <Skeleton className="h-3 w-[88%]" />
-                            <Skeleton className="h-3 w-[55%]" />
-                            <span className="mt-0.5 inline-flex items-center gap-1.5 text-caption text-accent">
-                              <IcNib size={13} />
-                              {t("replies.drafting")}
-                            </span>
-                          </div>
-                        </ReplyThread>
-                      ) : (
-                        (state === "pending" || state === "approved" || state === "replied") && (
-                          <ReplyThread replied={state === "replied"}>
-                            <div className="mb-2 flex items-center gap-2">
-                              <Mono text={t("replies.you").slice(0, 1)} size={22} />
-                              <span className="text-small font-semibold">{t("replies.you")}</span>
-                              {state === "pending" && (
-                                <span className="inline-flex items-center gap-1.5 text-caption text-text-subtle">
-                                  <IcNib size={12} />
-                                  {t("replies.tag_drafted")}
-                                </span>
-                              )}
-                              {state === "approved" && (
-                                <span className="inline-flex items-center gap-1.5 text-caption text-accent">
-                                  <IcCheck size={12} />
-                                  {t("replies.tag_approved")}
-                                </span>
-                              )}
-                              {state === "replied" && (
-                                <span className="inline-flex items-center gap-1.5 text-caption text-success">
-                                  <IcCheck size={12} />
-                                  {t("replies.replied")}
-                                  {c.replied_at && ` · ${relativeTime(c.replied_at, locale)}`}
-                                </span>
-                              )}
-                              {/* Q3: the reply went out via the Autopilot sweep. */}
-                              {state === "replied" && c.auto_replied && (
-                                <span className="inline-flex items-center gap-1 rounded-full border border-accent/30 bg-accent/12 px-2 py-px text-caption font-medium text-accent">
-                                  <IcReply size={11} />
-                                  {t("replies.auto_replied")}
-                                </span>
-                              )}
-                            </div>
-
-                            {state === "pending" && editing ? (
-                              <>
-                                <textarea
-                                  value={editBuffer}
-                                  autoFocus
-                                  onChange={(e) => setEditBuffer(e.target.value)}
-                                  rows={Math.min(
-                                    10,
-                                    Math.max(2, editBuffer.split("\n").length + 1),
-                                  )}
-                                  className="w-full resize-y rounded-sm border border-accent bg-surface px-3 py-2 text-small leading-relaxed text-text shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-accent)_16%,transparent)] outline-none"
-                                />
-                                <div className="mt-1.5 flex justify-end">
-                                  <span
-                                    className={cn(
-                                      "text-caption tabular-nums text-text-subtle",
-                                      editBuffer.length > REPLY_LIMIT && "font-semibold text-danger",
-                                    )}
-                                  >
-                                    {editBuffer.length} / {REPLY_LIMIT}
-                                  </span>
-                                </div>
-                              </>
-                            ) : (
-                              <>
-                                <p className="whitespace-pre-wrap text-small leading-relaxed text-text">
-                                  {state === "replied" ? c.draft_text ?? "" : displayText}
-                                </p>
-                                {/* Q10: translate the reply draft to the UI locale. */}
-                                {(state === "replied" ? c.draft_text : displayText) && (
-                                  <div className="mt-2">
-                                    <TranslateButton
-                                      text={(state === "replied" ? c.draft_text : displayText) ?? ""}
-                                      source="reply"
-                                    />
-                                  </div>
-                                )}
-                              </>
-                            )}
-                          </ReplyThread>
-                        )
-                      )}
-
-                      {/* footer: meta (left) + actions (right) */}
-                      {!generating && (
-                        <div className="mt-3.5 flex items-center gap-3 border-t border-border pt-3.5">
-                          <div className="flex min-w-0 flex-1 items-center gap-3 text-caption text-text-subtle">
-                            {state === "replied" ? (
-                              <span className="inline-flex items-center gap-1.5">
-                                <IcCheck size={13} />
-                                {t("replies.published")}
-                                {c.replied_at && ` · ${relativeTime(c.replied_at, locale)}`}
-                              </span>
-                            ) : (
-                              c.comment_url && (
-                                <a
-                                  href={c.comment_url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1 underline-offset-2 hover:text-text hover:underline"
-                                >
-                                  <IcExternal size={13} />
-                                  {t("replies.view_comment")}
-                                </a>
-                              )
-                            )}
-                          </div>
-
-                          <div className="flex shrink-0 items-center gap-2">
-                            {/* editing a pending draft */}
-                            {editing && state === "pending" ? (
-                              <>
-                                <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>
-                                  {t("common.cancel")}
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="primary"
-                                  onClick={() => saveEdit(c)}
-                                  disabled={
-                                    editBuffer.trim().length === 0 ||
-                                    editBuffer.length > REPLY_LIMIT
-                                  }
-                                  icon={<IcCheck size={15} />}
-                                >
-                                  {t("common.save")}
-                                </Button>
-                              </>
-                            ) : (
-                              <>
-                                {(state === "new" || state === "rejected") && (
-                                  <>
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={() => onSkip(c)}
-                                      disabled={busy}
-                                      icon={<IcSkip size={15} />}
-                                    >
-                                      {t("replies.skip")}
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="primary"
-                                      onClick={() => onGenerate(c)}
-                                      disabled={generating}
-                                      icon={<IcNib size={15} />}
-                                    >
-                                      {t("replies.generate")}
-                                    </Button>
-                                  </>
-                                )}
-
-                                {state === "pending" && (
-                                  <>
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={() => onSkip(c)}
-                                      disabled={busy}
-                                      aria-label={t("replies.skip")}
-                                      title={t("replies.skip")}
-                                      icon={<IcSkip size={15} />}
-                                    />
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={() => onGenerate(c)}
-                                      disabled={busy}
-                                      icon={<IcTweak size={15} />}
-                                    >
-                                      {t("replies.regenerate")}
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="secondary"
-                                      onClick={() => startEdit(c)}
-                                      disabled={busy}
-                                      icon={<IcPencil size={15} />}
-                                    >
-                                      {t("dashboard.draft.edit")}
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="primary"
-                                      onClick={() => onApprove(c)}
-                                      disabled={busy}
-                                      icon={<IcCheck size={15} />}
-                                    >
-                                      {isEdited
-                                        ? t("dashboard.draft.approve_edited")
-                                        : t("dashboard.draft.approve")}
-                                    </Button>
-                                  </>
-                                )}
-
-                                {state === "approved" && (
-                                  <Button
-                                    size="sm"
-                                    variant="primary"
-                                    onClick={() =>
-                                      setPublishTarget({
-                                        draftId: draftId!,
-                                        text: c.draft_text ?? "",
-                                      })
-                                    }
-                                    icon={<IcReply size={15} />}
-                                  >
-                                    {t("dashboard.draft.publish")}
-                                  </Button>
-                                )}
-
-                                {state === "skip" && (
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => onRestore(c)}
-                                    disabled={busy}
-                                    icon={<IcUndo size={15} />}
-                                  >
-                                    {t("replies.restore")}
-                                  </Button>
-                                )}
-
-                                {state === "replied" && (c.comment_url || c.post_threads_url) && (
-                                  <a
-                                    href={(c.comment_url || c.post_threads_url)!}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className={buttonClasses({ variant: "secondary", size: "sm" })}
-                                  >
-                                    <IcExternal size={15} />
-                                    {t("replies.open_thread")}
-                                  </a>
-                                )}
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-              )}
             </div>
           </div>
         )}
       </main>
 
-      <PublishConfirmModal
+      <PublishReplyDialog
         open={publishTarget !== null}
-        text={publishTarget?.text ?? ""}
-        isPublishing={publishing}
+        comment={publishTarget?.comment ?? null}
+        reply={publishTarget?.reply ?? ""}
+        publishing={publishing}
         onClose={() => {
           if (!publishing) setPublishTarget(null);
         }}
-        onConfirm={onPublishConfirm}
+        onConfirm={() => {
+          if (demoOn) {
+            const c = publishTarget?.comment;
+            if (c) demoMove(c, "replied", t("replies.toast_published"), t("replies.toast_posted"));
+            setPublishTarget(null);
+          } else {
+            realPublishConfirm();
+          }
+        }}
       />
 
       <ToastHost>
-        {toasts.map((tt) => (
+        {toasts.map((to) => (
           <Toast
-            key={tt.id}
-            tone={tt.tone}
-            title={tt.message}
-            undoLabel={tt.undoLabel}
-            onUndo={
-              tt.onUndo
-                ? () => {
-                    tt.onUndo?.();
-                    dismissToast(tt.id);
-                  }
-                : undefined
-            }
+            key={to.id}
+            tone={to.tone}
+            title={to.title}
+            description={to.description}
+            undoLabel={to.undoLabel}
+            className="[animation:toast-in_var(--duration-slow)_var(--ease-entrance)]"
+            onUndo={to.onUndo ? () => { to.onUndo?.(); dismissToast(to.id); } : undefined}
           />
         ))}
       </ToastHost>
+
+      {allow && (
+        <TweaksPanel title="Replies">
+          <TweakSection label="Appearance" />
+          <TweakToggle label="Dark mode" value={tw.dark} onChange={(v) => setTw("dark", v)} />
+          <TweakSection label="Feed" />
+          <TweakRadio label="State" value={tw.state} options={["Live", "Loading", "Empty", "Error"]} onChange={(v) => setTw("state", v)} />
+        </TweaksPanel>
+      )}
     </div>
   );
-}
-
-// Threaded reply container — a vertical connector line + an inset block,
-// mirroring the design's .reply-thread / .reply-block.
-function ReplyThread({
-  children,
-  replied = false,
-}: {
-  children: ReactNode;
-  replied?: boolean;
-}) {
-  return (
-    <div className="relative mt-3.5 pl-[26px]">
-      <span className="absolute bottom-4 left-[11px] top-0 w-0.5 rounded bg-border" aria-hidden />
-      <div
-        className={cn(
-          "rounded-md border border-border bg-surface-2 p-3.5",
-          replied && "border-success/30",
-        )}
-      >
-        {children}
-      </div>
-    </div>
-  );
-}
-
-// Q18 master pane: the posts that have comments (newest first). Each row shows
-// the post text, time, comment count, and an unanswered-count badge; selecting
-// one drives the detail pane.
-function PostMaster({
-  groups,
-  selected,
-  onSelect,
-  cap,
-  toAnswerLabel,
-  commentWord,
-  fmtTime,
-}: {
-  groups: PostGroup[];
-  selected: number | null;
-  onSelect: (id: number) => void;
-  cap: string;
-  toAnswerLabel: string;
-  commentWord: string;
-  fmtTime: (iso: string) => string;
-}) {
-  return (
-    <aside className="md:sticky md:top-3 md:self-start">
-      <div className="mb-2 px-1 text-caption font-semibold uppercase tracking-wide text-text-subtle">
-        {cap}
-      </div>
-      <div
-        role="listbox"
-        aria-label={cap}
-        className="flex flex-col gap-2 md:max-h-[calc(100vh-150px)] md:overflow-y-auto md:pr-1"
-      >
-        {groups.map((g) => {
-          const unanswered = g.comments.filter((c) => bucketOf(c) === "new").length;
-          const active = selected === g.postId;
-          return (
-            <button
-              key={g.postId}
-              role="option"
-              aria-selected={active}
-              onClick={() => onSelect(g.postId)}
-              className={cn(
-                "flex flex-col gap-2 rounded-lg border p-3 text-left transition-colors",
-                active
-                  ? "border-accent/55 bg-surface-2 shadow-sm"
-                  : "border-border bg-surface hover:bg-surface-2",
-              )}
-            >
-              <span className={cn("line-clamp-2 text-small leading-snug text-text", active && "font-semibold")}>
-                {g.postText || `#${g.postId}`}
-              </span>
-              <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-caption text-text-subtle">
-                {g.postPublishedAt && (
-                  <span className="whitespace-nowrap">{fmtTime(g.postPublishedAt)}</span>
-                )}
-                <span>·</span>
-                <span className="whitespace-nowrap">
-                  {g.comments.length} {commentWord}
-                </span>
-                {unanswered > 0 && (
-                  <span className="rounded-full border border-accent/30 bg-accent/12 px-1.5 py-px font-semibold text-accent">
-                    {unanswered} {toAnswerLabel}
-                  </span>
-                )}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </aside>
-  );
-}
-
-// Q18 detail header: the post the comments below sit under.
-function PostContext({
-  group,
-  locale,
-  t,
-}: {
-  group: PostGroup;
-  locale: string;
-  t: (k: MessageKey) => string;
-}) {
-  return (
-    <div className="rounded-lg border border-border bg-surface-2 p-4">
-      <div className="text-caption font-semibold uppercase tracking-wide text-text-subtle">
-        {t("replies.replying_under")}
-      </div>
-      <p className="mt-1.5 whitespace-pre-wrap text-small leading-relaxed text-text">
-        {group.postText || `#${group.postId}`}
-      </p>
-      <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-caption text-text-subtle">
-        {group.postPublishedAt && <span>{relativeTime(group.postPublishedAt, locale)}</span>}
-        {group.postThreadsUrl && (
-          <a
-            href={group.postThreadsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 underline-offset-2 hover:text-text hover:underline"
-          >
-            <IcExternal size={13} />
-            {t("replies.open_thread")}
-          </a>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// Localized relative time ("2 hours ago"), falling back to a medium date past
-// a week. Mirrors the Mentions screen for consistency.
-function relativeTime(iso: string, locale: string): string {
-  const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
-  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
-  if (mins < 1) return rtf.format(0, "minute");
-  if (mins < 60) return rtf.format(-mins, "minute");
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return rtf.format(-hours, "hour");
-  const days = Math.floor(hours / 24);
-  if (days < 7) return rtf.format(-days, "day");
-  return new Date(iso).toLocaleDateString(locale, { dateStyle: "medium" });
-}
-
-function errMsg(e: unknown): string {
-  if (e instanceof ApiError) {
-    const detail =
-      typeof e.detail === "object" &&
-      e.detail !== null &&
-      "detail" in (e.detail as Record<string, unknown>)
-        ? (e.detail as { detail: unknown }).detail
-        : e.detail;
-    return `${e.status}: ${String(detail)}`;
-  }
-  return String(e);
 }
