@@ -857,28 +857,26 @@ async function shoot(page: Page, name: string): Promise<void> {
 }
 
 test("shell — Studio", async ({ page }) => {
-  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.setViewportSize({ width: 1280, height: 1000 });
   await setup(page);
   await page.goto("/app");
   // Shell renders once the (mocked) account-presence check resolves.
   await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
   await page.waitForTimeout(700);
-  await shoot(page, "shell-studio");
-  // Pending-tab card (Q25: one primary "approve" + a ⋯-overflow for the rest).
-  await page.getByRole("button", { name: /drafts/i }).first().click();
+  await shoot(page, "shell-studio"); // default "Ready to publish" tab
+  // Drafts tab — one primary "Approve" + a ⋯-overflow for the rest.
+  await page.getByRole("tab", { name: /drafts/i }).click();
   await page.waitForTimeout(400);
   await shoot(page, "shell-studio-drafts");
-  // Q25: open the ⋯ menu (tweak / edit / reject / delete, the last two danger).
+  // ⋯ menu opens UPWARD (Reject draft · Tweak · Edit · Translate).
   await page.getByRole("button", { name: /more actions/i }).first().click();
   await page.waitForTimeout(250);
   await shoot(page, "shell-studio-menu");
-  // Q24: reject → the card leaves optimistically + an Undo toast appears
+  // Reject → the card moves to Rejected optimistically + an Undo toast
   // (the real rejectDraft is deferred 5s; Undo cancels it before it fires).
-  await page.getByText("reject", { exact: true }).first().click();
+  await page.getByRole("menuitem", { name: /reject/i }).first().click();
   await page.waitForTimeout(300);
   await shoot(page, "shell-studio-undo");
-  await page.mouse.click(6, 6); // outside-click closes the menu
-  await page.waitForTimeout(200);
   // Consolidated account/profile menu (switch account · connect · settings · log out).
   await page.locator("aside").getByRole("button", { name: /mara\.lin/i }).first().click();
   await page.waitForTimeout(300);
@@ -886,18 +884,51 @@ test("shell — Studio", async ({ page }) => {
 });
 
 test("Studio — generate", async ({ page }) => {
-  // After generating, the new drafts must show in the feed under the "drafts"
-  // (pending) tab — with NO duplicate "last generated" preview card above it.
-  // Regression for the reported dup (2 drafts shown below + 1 echoed on top).
-  await page.setViewportSize({ width: 1280, height: 900 });
+  // Generate → composer flips to the "Drafting N posts…" busy state, the tab
+  // switches to Drafts, and the new drafts land in the feed (no dup preview card).
+  await page.setViewportSize({ width: 1280, height: 1000 });
   await setup(page);
   await page.goto("/app");
   await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
   await page.waitForTimeout(700);
   await page.locator("textarea").first().fill("shipping before you're ready");
-  await page.getByRole("button", { name: /generate/i }).click();
-  await page.waitForTimeout(900);
+  await page.getByRole("button", { name: /^generate$/i }).click();
+  await page.waitForTimeout(400);
   await shoot(page, "studio-generated");
+});
+
+test("Studio — demo states", async ({ page }) => {
+  // Tester `?demo=1` Tweaks panel drives every state on mock content. In dev
+  // (IS_DEV) the panel is allowed without a tester flag.
+  await page.setViewportSize({ width: 1280, height: 1100 });
+  await setup(page);
+  await page.goto("/app?demo=1");
+  await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
+  await page.waitForTimeout(700);
+  await shoot(page, "studio-demo-ready"); // mock cards, Ready tab
+  // Published tab → engagement stats on cards.
+  await page.getByRole("tab", { name: /published/i }).click();
+  await page.waitForTimeout(300);
+  await shoot(page, "studio-demo-published");
+  // Open the Tweaks panel (options are role=radio) and drive First-run hero.
+  await page.getByRole("button", { name: "Open tweaks" }).click();
+  await page.waitForTimeout(150);
+  await page.getByRole("radio", { name: "First-run" }).click();
+  await page.waitForTimeout(300);
+  await shoot(page, "studio-demo-firstrun");
+  // Back to Active + Compact density.
+  await page.getByRole("radio", { name: "Active" }).click();
+  await page.getByRole("radio", { name: "Compact" }).click();
+  await page.waitForTimeout(250);
+  await shoot(page, "studio-demo-compact");
+  // Card interaction: open ⋯ on a Drafts card → Tweak bar.
+  await page.getByRole("tab", { name: /drafts/i }).click();
+  await page.waitForTimeout(250);
+  await page.getByRole("button", { name: /more actions/i }).first().click();
+  await page.waitForTimeout(150);
+  await page.getByRole("menuitem", { name: /tweak/i }).click();
+  await page.waitForTimeout(250);
+  await shoot(page, "studio-demo-tweak");
 });
 
 test("Feed", async ({ page }) => {

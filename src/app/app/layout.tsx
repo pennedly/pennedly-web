@@ -12,7 +12,7 @@
 //     user who disconnects their last account anywhere lands on the connect
 //     screen, not a half-empty app with a dead sidebar.
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 import { Sidebar } from "@/components/Sidebar";
@@ -35,6 +35,12 @@ export default function AppLayout({
   const router = useRouter();
   const exempt = SHELL_EXEMPT.has(pathname);
   const hasAccounts = useHasConnectedAccounts();
+  // Tester `?demo=1` review mode: render the shell standalone (mock content lives
+  // in the page) without waiting on auth / a connected account — so the demo opens
+  // even logged-out and with no backend, like the landing/onboarding demos.
+  const [demo] = useState(
+    () => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("demo") === "1",
+  );
 
   // Check connected-account presence once we enter the shell area. The store
   // persists across SPA navigations, so this only fetches on first entry;
@@ -60,14 +66,24 @@ export default function AppLayout({
 
   // Zero connected accounts → the dedicated full-screen connect flow.
   useEffect(() => {
-    if (!exempt && hasAccounts === false) {
+    if (!demo && !exempt && hasAccounts === false) {
       router.replace("/app/onboarding");
     }
-  }, [exempt, hasAccounts, router]);
+  }, [demo, exempt, hasAccounts, router]);
 
   // Pre-app focused flows (login, onboarding) render bare — no sidebar.
   if (exempt) {
     return <>{children}</>;
+  }
+
+  // Demo review: render the shell immediately, skipping the account gate.
+  if (demo) {
+    return (
+      <div className="md:pl-62">
+        <Sidebar />
+        {children}
+      </div>
+    );
   }
 
   // Still checking, or zero accounts (about to redirect) → render bare with a

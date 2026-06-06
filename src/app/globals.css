@@ -246,3 +246,14 @@
   background-size: 220% 100%;
   animation: shimmer 1.4s linear infinite;
 }
+/* Studio ⋯-menu / account-menu / publish-dialog entrance — transform-only so a
+   resting popover never sticks invisible (house convention; reduced-motion safe). */
+@keyframes dialog-in {
+  from { transform: translateY(8px) scale(0.985); }
+  to   { transform: none; }
+}
+/* Studio toast stack entrance (bottom-center). Transform-only. */
+@keyframes toast-in {
+  from { transform: translateY(14px); }
+  to   { transform: none; }
+}
