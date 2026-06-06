@@ -932,12 +932,35 @@ test("Studio — demo states", async ({ page }) => {
 });
 
 test("Feed", async ({ page }) => {
-  await page.setViewportSize({ width: 1280, height: 1000 });
+  await page.setViewportSize({ width: 1280, height: 1200 });
   await setup(page);
   await page.goto("/app/feed");
   await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
   await page.waitForTimeout(700);
-  await shoot(page, "feed");
+  await shoot(page, "feed"); // baseline + post cards, real data
+});
+
+test("Feed — demo states", async ({ page }) => {
+  // Tester ?demo=1: 3-tweak panel (dark / sort / state) on mock analytics.
+  await page.setViewportSize({ width: 1280, height: 1300 });
+  await setup(page);
+  await page.goto("/app/feed?demo=1");
+  await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
+  await page.waitForTimeout(700);
+  await shoot(page, "feed-demo-live"); // baseline + verdict cards
+  // expand the growth chart on the top card
+  await page.getByRole("button", { name: /growth/i }).first().click();
+  await page.waitForTimeout(300);
+  await shoot(page, "feed-demo-growth");
+  // drive feed states via the panel (State is the only <select>)
+  await page.getByRole("button", { name: "Open tweaks" }).click();
+  await page.waitForTimeout(150);
+  await page.locator("select.twk-field").first().selectOption("Empty");
+  await page.waitForTimeout(250);
+  await shoot(page, "feed-demo-empty");
+  await page.locator("select.twk-field").first().selectOption("Error");
+  await page.waitForTimeout(250);
+  await shoot(page, "feed-demo-error");
 });
 
 test("Mentions", async ({ page }) => {

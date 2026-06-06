@@ -1,0 +1,594 @@
+"use client";
+
+// My Feed presentational layer — pure components driven by props, so the live
+// screen (real API) and the ?demo=1 review (mock data) render identical pixels.
+// Built 1:1 to Feed-SPEC.html: Baseline summary, sort segment, post cards with
+// ViralityBadge ("Still settling" / "{r}× average" / "On par"), hero+sub metrics,
+// expandable growth chart (SVG), auto-reply pill, ⋯-menu (translate + delete),
+// confirm-delete dialog.
+
+import { useEffect, useRef, useState, type ReactNode } from "react";
+
+import { cn } from "@/lib/cn";
+import { useTranslation, type MessageKey } from "@/lib/i18n";
+import { Button, buttonClasses } from "@/components/ui/button";
+import { Mono } from "@/components/ui/mono";
+import {
+  IcArrowLeft,
+  IcArrowUp,
+  IcBubble,
+  IcChart,
+  IcCheck,
+  IcChevDown,
+  IcClock,
+  IcExternal,
+  IcEye,
+  IcFeed,
+  IcGlobe,
+  IcHeart,
+  IcMore,
+  IcReply,
+  IcRepost,
+  IcStudio,
+  IcTrash,
+  IcUndo,
+} from "@/components/icons";
+import { UI_LANGS, type UiLang } from "@/components/studio/studio-demo";
+
+export function fmt(n: number): string {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
+  if (n >= 10_000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "K";
+  return n.toLocaleString("en-US");
+}
+
+export type FeedCardModel = {
+  id: number;
+  kind: "post" | "reply";
+  replyTo?: { who: string; text: string } | null;
+  text: string;
+  tr?: Record<string, string>;
+  lang?: string | null;
+  time: string;
+  views: number;
+  likes: number;
+  comments: number;
+  reposts: number;
+  settling?: boolean;
+  autoReply: boolean;
+};
+
+export type FeedHandlers = {
+  onToggleAutoReply: (p: FeedCardModel) => void;
+  onToggleGrowth: (p: FeedCardModel) => void;
+  onDelete: (p: FeedCardModel) => void;
+  onTranslate: (p: FeedCardModel, lang: UiLang) => Promise<string>;
+};
+
+// ─────────────────────────────── Baseline ───────────────────────────────────
+function Sparkline({ data }: { data: number[] }) {
+  const max = Math.max(...data, 1);
+  const n = data.length;
+  const pts = data.map((v, i) => `${(i / (n - 1)) * 92},${28 - (v / max) * 24 - 2}`).join(" ");
+  const last = data[n - 1];
+  return (
+    <svg width="92" height="28" viewBox="0 0 92 28" fill="none" aria-hidden className="shrink-0">
+      <polyline points={pts} stroke="var(--color-accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="92" cy={28 - (last / max) * 24 - 2} r="2.6" fill="var(--color-accent)" />
+    </svg>
+  );
+}
+
+export function Baseline({
+  posts,
+  views,
+  likes,
+  comments,
+  reposts,
+  deltaViews,
+  sparkline,
+  empty,
+}: {
+  posts: number;
+  views: number;
+  likes: number;
+  comments: number;
+  reposts: number;
+  deltaViews: number;
+  sparkline: number[];
+  empty?: boolean;
+}) {
+  const { t } = useTranslation();
+  const stats: { Icon: (p: { size?: number }) => ReactNode; key: MessageKey; val: number }[] = [
+    { Icon: IcEye, key: "feed.views", val: views },
+    { Icon: IcHeart, key: "feed.likes", val: likes },
+    { Icon: IcBubble, key: "feed.comments", val: comments },
+    { Icon: IcRepost, key: "feed.reposts", val: reposts },
+  ];
+  return (
+    <section className="rounded-xl border border-border bg-surface px-[22px] pb-5 pt-[18px] shadow-sm">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-[9px]">
+          <span className="grid h-[30px] w-[30px] place-items-center rounded-md border border-border bg-surface-2 text-text-muted">
+            <IcChart size={16} />
+          </span>
+          <div>
+            <div className="text-h3 font-semibold leading-[1.1]">{t("feed.baseline_title")}</div>
+            <div className="whitespace-nowrap text-caption text-text-subtle">
+              {empty ? t("feed.baseline_none") : `${t("feed.baseline_sub_pre")} ${posts} ${t("feed.baseline_sub_post")}`}
+            </div>
+          </div>
+        </div>
+        {!empty && sparkline.length > 1 && (
+          <div className="hidden items-center gap-[9px] min-[561px]:flex">
+            <Sparkline data={sparkline} />
+            {deltaViews > 0 && (
+              <span className="inline-flex items-center gap-1 text-small font-semibold text-success">
+                <IcArrowUp size={13} /> {deltaViews}%
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+      <div className="mt-[18px] grid grid-cols-4 gap-0 max-[560px]:grid-cols-2 max-[560px]:gap-y-4">
+        {stats.map((s, i) => (
+          <div key={s.key} className={cn("border-l border-border px-[18px]", i === 0 && "border-l-0 pl-0", "max-[560px]:[&:nth-child(3)]:border-l-0")}>
+            <div className="text-h2 font-semibold tabular-nums leading-[1.1]">{fmt(s.val)}</div>
+            <div className="mt-0.5 inline-flex items-center gap-1 text-caption text-text-subtle">
+              <s.Icon size={12} /> {t(s.key)}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ─────────────────────────────── FeedBar ────────────────────────────────────
+export function FeedBar({ count, sort, onSort }: { count: number; sort: "recent" | "top"; onSort: (s: "recent" | "top") => void }) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-small text-text-muted">
+        <b className="font-semibold text-text">{count}</b> {t("feed.published_posts")}
+      </span>
+      <div role="tablist" aria-label={t("feed.sort_label")} className="inline-flex gap-[3px] rounded-md border border-border bg-surface-2 p-[3px]">
+        {(["recent", "top"] as const).map((k) => (
+          <button
+            key={k}
+            role="tab"
+            aria-selected={sort === k}
+            onClick={() => onSort(k)}
+            className={cn(
+              "h-[30px] rounded-sm border px-[13px] text-small font-medium transition-colors",
+              sort === k ? "border-border bg-surface font-semibold text-text shadow-sm" : "border-transparent text-text-muted hover:text-text",
+            )}
+          >
+            {t(k === "recent" ? "feed.sort_recent" : "feed.sort_top")}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ───────────────────────────── ViralityBadge ────────────────────────────────
+function ViralityBadge({ ratio, settling }: { ratio: number; settling?: boolean }) {
+  const { t } = useTranslation();
+  const base = "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-[5px] text-caption font-semibold leading-none";
+  if (settling)
+    return (
+      <span className={cn(base, "border-accent/28 bg-accent/12 text-accent")}>
+        <IcClock size={12} className="animate-pulse" /> {t("feed.settling")}
+      </span>
+    );
+  if (ratio >= 1.5)
+    return (
+      <span className={cn(base, "border-success/30 bg-success/[0.13] text-success")}>
+        <IcArrowUp size={12} /> {ratio.toFixed(1)}
+        {t("feed.times_average")}
+      </span>
+    );
+  if (ratio >= 0.85) return <span className={cn(base, "border-border bg-surface-2 text-text-muted")}>{t("feed.on_par")}</span>;
+  return (
+    <span className={cn(base, "border-border bg-surface-2 text-text-muted")}>
+      {ratio.toFixed(1)}
+      {t("feed.times_average")}
+    </span>
+  );
+}
+
+// ───────────────────────────── TrendChart ───────────────────────────────────
+function TrendChart({ series, avg }: { series: number[]; avg: number }) {
+  const { t } = useTranslation();
+  const W = 600;
+  const H = 112;
+  const PAD = 8;
+  const max = Math.max(...series, avg, 1);
+  const n = series.length;
+  const x = (i: number) => (i / (n - 1)) * W;
+  const y = (v: number) => H - PAD - (v / max) * (H - PAD * 2);
+  const curve = series.map((v, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(" ");
+  const area = `${curve} L${W} ${H} L0 ${H} Z`;
+  const avgY = y(avg);
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="auto" role="img" aria-label="Views over time" className="block">
+      <path d={area} fill="var(--color-accent)" fillOpacity="0.1" />
+      <line x1="0" y1={avgY} x2={W} y2={avgY} stroke="var(--color-text-subtle)" strokeWidth="1.2" strokeDasharray="4 4" opacity="0.75" />
+      <text x="6" y={avgY - 5} fill="var(--color-text-subtle)" fontSize="11" fontFamily="var(--font-sans)">
+        {t("feed.your_average")}
+      </text>
+      <path d={curve} fill="none" stroke="var(--color-accent)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={x(n - 1)} cy={y(series[n - 1])} r="3.6" fill="var(--color-accent)" stroke="var(--color-surface)" strokeWidth="2" />
+    </svg>
+  );
+}
+
+// ─────────────────────────────── FeedMenu ───────────────────────────────────
+function FeedMenu({
+  threadsUrl,
+  translatedLang,
+  tester,
+  onTranslate,
+  onShowOriginal,
+  onDelete,
+}: {
+  threadsUrl: string;
+  translatedLang: UiLang | null;
+  tester: boolean;
+  onTranslate: (l: UiLang) => void;
+  onShowOriginal: () => void;
+  onDelete: () => void;
+}) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState<"root" | "translate">("root");
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+        setMode("root");
+      }
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [open]);
+  function shut() {
+    setOpen(false);
+    setMode("root");
+  }
+  const item = "flex w-full items-center gap-2.5 rounded-sm px-2.5 py-2 text-left text-small font-medium transition-colors";
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={t("dashboard.draft.more_actions")}
+        onClick={() => setOpen((v) => !v)}
+        className="grid h-[34px] w-[34px] place-items-center rounded-md border border-border bg-surface text-text-muted transition-colors hover:bg-surface-2 hover:text-text"
+      >
+        <IcMore size={17} />
+      </button>
+      {open && (
+        <div
+          role="menu"
+          className="absolute bottom-[calc(100%+6px)] right-0 z-30 max-h-[360px] min-w-[210px] overflow-y-auto rounded-md border border-border bg-surface p-1.5 shadow-lg"
+          style={{ animation: "card-in var(--duration-fast) var(--ease-entrance) both" }}
+        >
+          {mode === "root" ? (
+            <>
+              {translatedLang && (
+                <button role="menuitem" onClick={() => { shut(); onShowOriginal(); }} className={cn(item, "text-text hover:bg-surface-2")}>
+                  <IcUndo size={15} /> {t("studio.show_original")}
+                </button>
+              )}
+              <button role="menuitem" onClick={() => setMode("translate")} className={cn(item, "text-text hover:bg-surface-2")}>
+                <IcGlobe size={15} />
+                <span className="flex-1">{t("studio.translate")}</span>
+                <IcChevDown size={13} className="-rotate-90 text-text-subtle" />
+              </button>
+              <a role="menuitem" href={threadsUrl} target="_blank" rel="noopener noreferrer" onClick={shut} className={cn(item, "text-text hover:bg-surface-2")}>
+                <IcExternal size={15} /> {t("feed.open_threads")}
+              </a>
+              {tester && (
+                <>
+                  <div className="my-1 h-px bg-border" />
+                  <button role="menuitem" onClick={() => { shut(); onDelete(); }} className={cn(item, "text-danger hover:bg-danger/10")}>
+                    <IcTrash size={15} /> {t("feed.delete_post")}
+                  </button>
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              <button onClick={() => setMode("root")} className="mb-1 flex w-full items-center gap-2 border-b border-border px-2.5 pb-2 pt-1 text-left text-caption font-semibold uppercase tracking-[0.04em] text-text-subtle">
+                <IcArrowLeft size={14} /> {t("studio.translate_to")}
+              </button>
+              {UI_LANGS.map((l) => {
+                const sel = l.code === "en" ? translatedLang === null : translatedLang?.code === l.code;
+                return (
+                  <button
+                    key={l.code}
+                    role="menuitemradio"
+                    aria-checked={sel}
+                    onClick={() => { shut(); if (l.code === "en") onShowOriginal(); else onTranslate(l); }}
+                    className={cn("flex w-full items-center gap-2.5 rounded-sm px-2.5 py-2 text-left transition-colors hover:bg-surface-2", sel && "bg-surface-2")}
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-small text-text">{l.name}</span>
+                      <span className="block text-caption text-text-subtle">{l.code === "en" ? t("studio.original") : l.native}</span>
+                    </span>
+                    {sel && <IcCheck size={14} className="shrink-0 text-success" />}
+                  </button>
+                );
+              })}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────── FeedCard ───────────────────────────────────
+export function FeedCard({
+  p,
+  baselineViews,
+  authorInitials,
+  authorName,
+  authorHandle,
+  growthOpen,
+  growthSeries,
+  tester,
+  h,
+}: {
+  p: FeedCardModel;
+  baselineViews: number;
+  authorInitials: string;
+  authorName: string;
+  authorHandle: string;
+  growthOpen: boolean;
+  growthSeries: number[] | null;
+  tester: boolean;
+  h: FeedHandlers;
+}) {
+  const { t } = useTranslation();
+  const [translated, setTranslated] = useState<{ lang: UiLang; body: string } | null>(null);
+  const ratio = baselineViews > 0 ? p.views / baselineViews : 0;
+  const body = translated ? translated.body : p.text;
+
+  async function runTranslate(lang: UiLang) {
+    const tx = await h.onTranslate(p, lang);
+    setTranslated({ lang, body: tx });
+  }
+
+  return (
+    <article
+      className="rounded-lg border border-border bg-surface px-[18px] pb-3.5 pt-4 shadow-sm transition-colors hover:border-text/15"
+      style={{ animation: "card-in var(--duration-slow) var(--ease-entrance) both" }}
+    >
+      {/* head */}
+      <div className="flex items-center gap-[11px]">
+        <Mono text={authorInitials} size={38} />
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-small font-semibold leading-[1.25]">{authorName}</div>
+          <div className="flex flex-wrap items-center gap-x-1.5 text-caption text-text-subtle">
+            <span className="truncate">@{authorHandle}</span>
+            {p.kind === "reply" && p.replyTo?.who && (
+              <>
+                <span className="opacity-60">·</span>
+                <span className="inline-flex items-center gap-1 whitespace-nowrap">
+                  <IcReply size={12} /> {t("studio.replying_to")} @{p.replyTo.who}
+                </span>
+              </>
+            )}
+            <span className="opacity-60">·</span>
+            <span>{p.time}</span>
+          </div>
+        </div>
+        <ViralityBadge ratio={ratio} settling={p.settling} />
+      </div>
+
+      {/* reply context */}
+      {p.kind === "reply" && p.replyTo?.text && (
+        <div className="mt-3 flex gap-2.5 rounded-md border border-border bg-surface-2 p-3">
+          <span className="w-0.5 shrink-0 self-stretch rounded bg-border" />
+          <div className="min-w-0">
+            <div className="mb-0.5 text-caption font-semibold text-text-muted">@{p.replyTo.who}</div>
+            <div className="text-small leading-[1.5] text-text-muted">{p.replyTo.text}</div>
+          </div>
+        </div>
+      )}
+
+      {/* body */}
+      <p className="mt-3 whitespace-pre-wrap text-body leading-[1.62] text-text">{body}</p>
+      {translated && (
+        <div className="mt-[9px] inline-flex items-center gap-2 rounded-full border border-border bg-surface-2 px-2.5 py-[5px] text-caption text-text-subtle">
+          <IcGlobe size={13} /> {t("studio.translated_to")} {translated.lang.native}
+          <span className="h-[3px] w-[3px] rounded-full bg-text-subtle" />
+          <button type="button" onClick={() => setTranslated(null)} className="font-semibold text-accent transition-colors hover:text-accent/80">
+            {t("studio.show_original")}
+          </button>
+        </div>
+      )}
+
+      {/* metrics */}
+      <div className="mt-3.5 flex flex-wrap items-baseline gap-x-[22px] gap-y-2.5">
+        <span className="mr-1 inline-flex items-baseline gap-[9px]">
+          <IcEye size={18} className="self-center text-text-muted" />
+          <span className="text-h2 font-semibold tabular-nums">{fmt(p.views)}</span>
+          <span className="text-small text-text-subtle">{t("feed.views")}</span>
+        </span>
+        <Sub Icon={IcHeart} n={p.likes} />
+        <Sub Icon={IcBubble} n={p.comments} />
+        <Sub Icon={IcRepost} n={p.reposts} />
+      </div>
+
+      {/* growth panel */}
+      {growthOpen && (
+        <div
+          className="mt-3.5 rounded-md border border-border bg-surface-2 px-4 pb-3 pt-4"
+          style={{ animation: "card-in var(--duration-base) var(--ease-entrance) both" }}
+        >
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <span className="text-small font-semibold">{t("feed.views_over")} {p.time}</span>
+            <span className="text-caption text-text-subtle">{fmt(p.views)} {t("feed.views")}</span>
+          </div>
+          {growthSeries && growthSeries.length > 1 ? (
+            <>
+              <TrendChart series={growthSeries} avg={baselineViews} />
+              <div className="mt-[7px] flex justify-between text-caption text-text-subtle">
+                <span>{t("feed.posted")}</span>
+                <span>{t("feed.now")}</span>
+              </div>
+            </>
+          ) : (
+            <p className="py-4 text-center text-caption text-text-subtle">{t("feed.growth_none")}</p>
+          )}
+        </div>
+      )}
+
+      {/* footer */}
+      <div className="mt-3.5 flex items-center gap-3 border-t border-border pt-[13px]">
+        <button
+          type="button"
+          aria-pressed={p.autoReply}
+          onClick={() => h.onToggleAutoReply(p)}
+          className={cn(
+            "inline-flex h-8 items-center gap-[7px] rounded-full border pl-[11px] pr-[13px] text-small font-medium transition-colors",
+            p.autoReply ? "border-accent/32 bg-accent/12 text-accent" : "border-border bg-surface-2 text-text-muted hover:border-text/20",
+          )}
+        >
+          {p.autoReply ? <IcReply size={14} /> : <span className="h-[9px] w-[9px] rounded-full border-[1.6px] border-text-subtle" />}
+          {p.autoReply ? t("feed.autoreply_on") : t("feed.autoreply_off")}
+        </button>
+        <div className="ml-auto flex items-center gap-2">
+          <Button size="sm" variant="ghost" onClick={() => h.onToggleGrowth(p)} aria-expanded={growthOpen}>
+            <IcChart size={15} /> {t("feed.growth")}
+            <IcChevDown size={14} className={cn("transition-transform", growthOpen && "rotate-180")} />
+          </Button>
+          <a href="#" target="_blank" rel="noopener noreferrer" className={buttonClasses({ variant: "primary", size: "sm" })}>
+            <IcExternal size={15} /> {t("feed.open_threads")}
+          </a>
+          <FeedMenu
+            threadsUrl="#"
+            translatedLang={translated?.lang ?? null}
+            tester={tester}
+            onTranslate={runTranslate}
+            onShowOriginal={() => setTranslated(null)}
+            onDelete={() => h.onDelete(p)}
+          />
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function Sub({ Icon, n }: { Icon: (p: { size?: number; className?: string }) => ReactNode; n: number }) {
+  return (
+    <span className="inline-flex items-baseline gap-[7px]">
+      <Icon size={15} className="self-center text-text-subtle" />
+      <span className="text-body font-semibold tabular-nums">{fmt(n)}</span>
+    </span>
+  );
+}
+
+// ───────────────────────── empty / skeleton / dialog ────────────────────────
+export function FeedEmpty({ onStudio }: { onStudio: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex flex-col items-center rounded-lg border border-dashed border-border bg-surface/50 px-6 py-14 text-center">
+      <span className="grid h-[52px] w-[52px] place-items-center rounded-lg border border-border bg-surface-2 text-text-subtle">
+        <IcFeed size={24} />
+      </span>
+      <h3 className="mt-3.5 text-h3 font-semibold">{t("feed.empty_title")}</h3>
+      <p className="mt-1 max-w-[38ch] text-small text-text-muted">{t("feed.empty")}</p>
+      <button onClick={onStudio} className={cn("mt-4", buttonClasses({ variant: "secondary", size: "sm" }))}>
+        <IcStudio size={16} /> {t("feed.empty_cta")}
+      </button>
+    </div>
+  );
+}
+
+export function FeedSkeleton() {
+  return (
+    <div className="rounded-lg border border-border bg-surface px-[18px] pb-3.5 pt-4 shadow-sm">
+      <div className="flex items-center gap-[11px]">
+        <div className="skel h-[34px] w-[34px] rounded-full" />
+        <div className="flex-1 space-y-1.5">
+          <div className="skel h-3 w-32 rounded" />
+          <div className="skel h-2.5 w-20 rounded" />
+        </div>
+        <div className="skel h-[22px] w-[92px] rounded-full" />
+      </div>
+      <div className="mt-3 space-y-2">
+        <div className="skel h-3.5 w-[94%] rounded" />
+        <div className="skel h-3.5 w-[70%] rounded" />
+      </div>
+      <div className="mt-3.5 flex gap-5">
+        <div className="skel h-[18px] w-24 rounded" />
+        <div className="skel h-[14px] w-14 rounded" />
+        <div className="skel h-[14px] w-14 rounded" />
+      </div>
+    </div>
+  );
+}
+
+export function ConfirmDelete({
+  open,
+  text,
+  deleting,
+  onClose,
+  onConfirm,
+}: {
+  open: boolean;
+  text: string;
+  deleting: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  const { t } = useTranslation();
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !deleting) onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, deleting, onClose]);
+  if (!open) return null;
+  return (
+    <div
+      className="fixed inset-0 z-40 grid place-items-center bg-ink-950/55 p-6 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Delete post"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget && !deleting) onClose();
+      }}
+    >
+      <div className="w-full max-w-[420px] rounded-2xl border border-border bg-surface p-6 shadow-lg" style={{ animation: "dialog-in var(--duration-slow) var(--ease-entrance) both" }}>
+        <div className="flex items-start gap-3">
+          <span className="grid h-[38px] w-[38px] shrink-0 place-items-center rounded-md border border-danger/28 bg-danger/12 text-danger">
+            <IcTrash size={18} />
+          </span>
+          <div className="min-w-0">
+            <h2 className="text-h3 font-semibold leading-[1.3]">{t("feed.delete_title")}</h2>
+            <p className="mt-1 text-small text-text-muted">{t("feed.delete_sub")}</p>
+          </div>
+        </div>
+        <div className="mt-3.5 whitespace-pre-wrap rounded-md border border-border bg-surface-2 px-[14px] py-3 text-small leading-[1.55] text-text-muted">{text}</div>
+        <div className="mt-[22px] flex items-center justify-end gap-2.5">
+          <button onClick={onClose} disabled={deleting} className={buttonClasses({ variant: "ghost" })}>
+            {t("studio.cancel")}
+          </button>
+          <Button variant="danger" icon={<IcTrash size={15} />} loading={deleting} onClick={onConfirm}>
+            {t("feed.delete_post")}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}

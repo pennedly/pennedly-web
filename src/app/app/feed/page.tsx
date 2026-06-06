@@ -1,13 +1,12 @@
 "use client";
 
-// My Feed — the account's own posts, Threads-style, with inline analytics
-// (views / likes / comments / reposts + a "how viral vs my usual" badge)
-// AND, for testers, a delete action (folds in the old /app/posts screen —
-// best of both: analytics + management). Main tab; delete is tester-gated
-// since it uses the round-2 threads_delete scope.
+// My Feed (/app/feed) — published-posts analytics, rebuilt 1:1 to Feed-SPEC.html.
+// Baseline summary → sort segment → post cards with a virality verdict vs the
+// account's own baseline, hero+sub metrics, an expandable growth chart, a
+// per-post auto-reply toggle, inline translate and delete. Real API wiring is
+// preserved; a tester ?demo=1 panel (dark/state/sort) drives every state.
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -20,156 +19,99 @@ import {
   fetchPostMetricsHistory,
   getTokens,
   setPostAutoReply,
+  translateText,
 } from "@/lib/api";
 import { captureEvent } from "@/lib/analytics";
 import { useSelectedAccountId } from "@/lib/account";
-import { useTranslation, type MessageKey } from "@/lib/i18n";
-import { TranslateButton } from "@/components/TranslateButton";
-import { AppTopbar } from "@/components/AppTopbar";
-import { Avatar, nameOf } from "@/components/ui/avatar";
-import { Button, buttonClasses } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
+import { useTranslation } from "@/lib/i18n";
+import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
 import { Toast, ToastHost } from "@/components/ui/toast";
-import { cn } from "@/lib/cn";
+import { TweaksPanel, TweakSection, TweakToggle, TweakRadio, useTweaks } from "@/components/tweaks/TweaksPanel";
+import { ErrorBanner } from "@/components/studio/StudioParts";
 import {
-  IcArrowUp,
-  IcBubble,
-  IcChart,
-  IcChevDown,
-  IcClock,
-  IcExternal,
-  IcEye,
-  IcHeart,
-  IcRepost,
-  IcStudio,
-  IcTrash,
-} from "@/components/icons";
-import type { ConnectedAccount, FeedPost, FeedReference, MetricsSnapshot } from "@/lib/types";
+  Baseline,
+  ConfirmDelete,
+  FeedBar,
+  FeedCard,
+  FeedEmpty,
+  FeedSkeleton,
+  type FeedCardModel,
+  type FeedHandlers,
+} from "@/components/studio/FeedParts";
+import { FEED_DEMO_BASELINE, FEED_DEMO_POSTS, FEED_TWEAK_DEFAULTS, type FeedDemoPost } from "@/components/studio/feed-demo";
+import type { FeedPost, FeedReference } from "@/lib/types";
 
-type Toast = { id: number; message: string; tone: "success" | "error" };
+const IS_DEV = process.env.NODE_ENV === "development";
 
-// 48200 -> "48.2K", 1205 -> "1,205" (we keep <10k exact).
-function fmt(n: number): string {
-  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
-  if (n >= 10_000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "K";
-  return n.toLocaleString();
+type ToastT = { id: number; title: string; description?: string; tone: "success" | "error"; onUndo?: () => void; undoLabel?: string };
+
+function relativeTime(iso: string | null, locale: string): string {
+  if (!iso) return "";
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+  if (mins < 1) return rtf.format(0, "minute");
+  if (mins < 60) return rtf.format(-mins, "minute");
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return rtf.format(-hours, "hour");
+  const days = Math.floor(hours / 24);
+  if (days < 7) return rtf.format(-days, "day");
+  return new Date(iso).toLocaleDateString(locale);
 }
 
 export default function FeedPage() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  const [demoParam] = useState(() => (typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("demo") === "1" : false));
+  const [isTester, setIsTester] = useState(false);
+  const allow = demoParam && (IS_DEV || isTester);
+  const demoOn = allow;
   const accountId = useSelectedAccountId();
+
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [reference, setReference] = useState<FeedReference | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [bootError, setBootError] = useState<string | null>(null);
-  const [isTester, setIsTester] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<FeedPost | null>(null);
-  const [deleting, setDeleting] = useState(false);
-  const [growthOpen, setGrowthOpen] = useState<number | null>(null);
-  const [growth, setGrowth] = useState<Record<number, MetricsSnapshot[]>>({});
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  // Q26: the selected account's identity for the per-card author header.
-  const [account, setAccount] = useState<ConnectedAccount | null>(null);
-  // Q13: client-side sort over the already-loaded posts.
+  const [account, setAccount] = useState<{ name: string; handle: string; initials: string }>({ name: "You", handle: "you", initials: "Y" });
   const [sort, setSort] = useState<"recent" | "top">("recent");
+  const [growthOpen, setGrowthOpen] = useState<number | null>(null);
+  const [growth, setGrowth] = useState<Record<number, number[]>>({});
+  const [deleteTarget, setDeleteTarget] = useState<FeedCardModel | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [toasts, setToasts] = useState<ToastT[]>([]);
 
-  async function toggleGrowth(postId: number) {
-    if (growthOpen === postId) {
-      setGrowthOpen(null);
-      return;
-    }
-    setGrowthOpen(postId);
-    if (!growth[postId]) {
-      try {
-        const data = await fetchPostMetricsHistory(postId);
-        setGrowth((g) => ({ ...g, [postId]: data.series }));
-      } catch {
-        setGrowth((g) => ({ ...g, [postId]: [] }));
-      }
-    }
-  }
+  // demo
+  const [tw, setTw] = useTweaks(FEED_TWEAK_DEFAULTS);
+  const [demoPosts, setDemoPosts] = useState<FeedDemoPost[]>(FEED_DEMO_POSTS);
 
-  function toast(message: string, tone: Toast["tone"] = "success") {
+  function toast(title: string, tone: ToastT["tone"] = "success", opts?: { description?: string; onUndo?: () => void; undoLabel?: string; duration?: number }) {
     const id = Date.now() + Math.random();
-    setToasts((s) => [...s, { id, message, tone }]);
-    setTimeout(() => setToasts((s) => s.filter((x) => x.id !== id)), 3500);
+    setToasts((s) => [...s, { id, title, description: opts?.description, tone, onUndo: opts?.onUndo, undoLabel: opts?.undoLabel }]);
+    setTimeout(() => setToasts((s) => s.filter((x) => x.id !== id)), opts?.duration ?? 4600);
+    return id;
   }
+  const dismissToast = (id: number) => setToasts((s) => s.filter((x) => x.id !== id));
 
+  // best-effort identity (tester flag + author)
   useEffect(() => {
-    if (!getTokens()) router.push("/app/login");
-  }, [router]);
-
-  // Delete is a tester-only (round-2) action; gate the button on is_tester.
-  useEffect(() => {
-    fetchMe()
-      .then((m) => setIsTester(m.is_tester))
-      .catch(() => {});
-  }, []);
-
-  // Q26: load the selected account's identity (avatar/name/handle) for the cards.
-  useEffect(() => {
-    if (accountId === null) {
-      setAccount(null);
-      return;
-    }
-    fetchMyAccounts()
-      .then((list) => setAccount(list.accounts.find((a) => a.id === accountId) ?? null))
-      .catch(() => {});
+    if (!getTokens()) return;
+    fetchMe().then((m) => setIsTester(m.is_tester === true)).catch(() => {});
+    fetchMyAccounts().then((list) => {
+      const a = list.accounts.find((x) => x.id === accountId) ?? list.accounts[0];
+      if (a) {
+        const name = a.display_name ?? a.username ?? "You";
+        setAccount({ name, handle: a.username ?? "you", initials: name.slice(0, 2).toUpperCase() });
+      }
+    }).catch(() => {});
   }, [accountId]);
 
-  async function onDeleteConfirm() {
-    if (deleteTarget === null) return;
-    const id = deleteTarget.id;
-    setDeleting(true);
-    captureEvent("ui.post_delete_confirmed", { post_id: id });
-    try {
-      await deletePost(id);
-      setPosts((p) => p.filter((x) => x.id !== id));
-      setDeleteTarget(null);
-      toast(t("posts.toast_deleted"));
-    } catch (e) {
-      let msg = String(e);
-      if (e instanceof ApiError) {
-        const detail =
-          typeof e.detail === "object" &&
-          e.detail !== null &&
-          "detail" in (e.detail as Record<string, unknown>)
-            ? (e.detail as { detail: unknown }).detail
-            : e.detail;
-        msg = `${e.status}: ${String(detail)}`;
-      }
-      toast(msg, "error");
-    } finally {
-      setDeleting(false);
-    }
-  }
-
-  // Per-post auto-reply toggle (optimistic; revert on error). Works on any
-  // post — the auto-reply sweep keys off this flag, not the post's origin.
-  async function onToggleAutoReply(p: FeedPost) {
-    const next = !p.auto_reply;
-    setPosts((ps) =>
-      ps.map((x) => (x.id === p.id ? { ...x, auto_reply: next } : x)),
-    );
-    captureEvent("ui.post_autoreply_toggle", {
-      post_id: p.id,
-      auto_reply: next,
-    });
-    try {
-      await setPostAutoReply(p.id, next);
-      toast(
-        next ? t("feed.autoreply_toast_on") : t("feed.autoreply_toast_off"),
-      );
-    } catch (e) {
-      setPosts((ps) =>
-        ps.map((x) => (x.id === p.id ? { ...x, auto_reply: !next } : x)),
-      );
-      toast(String(e), "error");
-    }
-  }
-
+  // real feed load
   useEffect(() => {
+    if (demoParam) return;
+    if (!getTokens()) {
+      router.push("/app/login");
+      return;
+    }
     if (accountId === null) return;
     setLoaded(false);
     (async () => {
@@ -188,461 +130,243 @@ export default function FeedPage() {
         setLoaded(true);
       }
     })();
-  }, [accountId, router]);
+  }, [accountId, router, demoParam]);
+
+  useEffect(() => {
+    if (!demoOn) return;
+    document.documentElement.classList.toggle("dark", !!tw.dark);
+  }, [demoOn, tw.dark]);
+
+  useEffect(() => {
+    if (demoOn) setSort(tw.sort === "Top" ? "top" : "recent");
+  }, [demoOn, tw.sort]);
+
+  // ── unified cards + baseline ──
+  const cards: FeedCardModel[] = useMemo(() => {
+    const list: FeedCardModel[] = demoOn
+      ? demoPosts
+      : posts.map((fp) => ({
+          id: fp.id,
+          kind: "post",
+          text: fp.text ?? "",
+          time: relativeTime(fp.published_at, locale),
+          views: fp.views,
+          likes: fp.likes,
+          comments: fp.comments_count,
+          reposts: fp.reposts,
+          settling: fp.is_fresh,
+          autoReply: fp.auto_reply,
+        }));
+    return sort === "top" ? [...list].sort((a, b) => b.views - a.views) : list;
+  }, [demoOn, demoPosts, posts, sort, locale]);
+
+  const baseline = demoOn
+    ? FEED_DEMO_BASELINE
+    : {
+        posts: reference?.posts_counted ?? 0,
+        views: reference?.avg_views ?? 0,
+        likes: reference?.avg_likes ?? 0,
+        comments: reference?.avg_comments ?? 0,
+        reposts: reference?.avg_reposts ?? 0,
+        deltaViews: 0,
+        sparkline: [] as number[],
+      };
+
+  const feedState = demoOn ? (tw.state as "Live" | "Loading" | "Empty" | "Error") : "Live";
+  const phase: "loading" | "ready" | "empty" | "error" = demoOn
+    ? feedState === "Loading"
+      ? "loading"
+      : feedState === "Error"
+        ? "error"
+        : feedState === "Empty"
+          ? "empty"
+          : "ready"
+    : !loaded
+      ? "loading"
+      : cards.length === 0
+        ? "empty"
+        : "ready";
+
+  // ── handlers ──
+  function growthSeries(p: FeedCardModel): number[] | null {
+    if (demoOn) return demoPosts.find((d) => d.id === p.id)?.growth ?? null;
+    return growth[p.id] ?? null;
+  }
+
+  const realHandlers: FeedHandlers = {
+    onToggleAutoReply: (p) => {
+      const next = !p.autoReply;
+      setPosts((ps) => ps.map((x) => (x.id === p.id ? { ...x, auto_reply: next } : x)));
+      captureEvent("ui.post_autoreply_toggle", { post_id: p.id, auto_reply: next });
+      setPostAutoReply(p.id, next).catch(() => {
+        setPosts((ps) => ps.map((x) => (x.id === p.id ? { ...x, auto_reply: !next } : x)));
+      });
+      toast(next ? t("feed.autoreply_on") : t("feed.autoreply_off"), "success", { description: next ? t("feed.autoreply_sub_on") : t("feed.autoreply_sub_off") });
+    },
+    onToggleGrowth: async (p) => {
+      if (growthOpen === p.id) {
+        setGrowthOpen(null);
+        return;
+      }
+      setGrowthOpen(p.id);
+      if (!growth[p.id]) {
+        try {
+          const g = await fetchPostMetricsHistory(p.id);
+          setGrowth((m) => ({ ...m, [p.id]: g.series.map((s) => s.views ?? 0) }));
+        } catch {
+          setGrowth((m) => ({ ...m, [p.id]: [] }));
+        }
+      }
+    },
+    onDelete: (p) => setDeleteTarget(p),
+    onTranslate: async (p, lang) => (await translateText(p.text, lang.code)).translated_text,
+  };
+
+  const demoHandlers: FeedHandlers = {
+    onToggleAutoReply: (p) => {
+      const next = !p.autoReply;
+      setDemoPosts((ps) => ps.map((x) => (x.id === p.id ? { ...x, autoReply: next } : x)));
+      toast(next ? t("feed.autoreply_on") : t("feed.autoreply_off"), "success", { description: next ? t("feed.autoreply_sub_on") : t("feed.autoreply_sub_off") });
+    },
+    onToggleGrowth: (p) => setGrowthOpen((cur) => (cur === p.id ? null : p.id)),
+    onDelete: (p) => setDeleteTarget(p),
+    onTranslate: async (p, lang) => {
+      await new Promise((r) => setTimeout(r, 500));
+      const d = demoPosts.find((x) => x.id === p.id);
+      return d?.tr?.[lang.code] ?? `[${lang.native}] ${p.text}`;
+    },
+  };
+
+  const handlers = demoOn ? demoHandlers : realHandlers;
+
+  function confirmDelete() {
+    const target = deleteTarget;
+    if (!target) return;
+    if (demoOn) {
+      const removed = demoPosts.find((x) => x.id === target.id);
+      const idx = demoPosts.findIndex((x) => x.id === target.id);
+      setDemoPosts((ps) => ps.filter((x) => x.id !== target.id));
+      setDeleteTarget(null);
+      toast(t("feed.toast_deleted"), "success", {
+        description: t("feed.toast_deleted_sub"),
+        undoLabel: t("common.undo"),
+        onUndo: () => {
+          if (removed) setDemoPosts((ps) => { const n = ps.slice(); n.splice(Math.min(idx, n.length), 0, removed); return n; });
+        },
+      });
+      return;
+    }
+    const removed = posts.find((x) => x.id === target.id);
+    const idx = posts.findIndex((x) => x.id === target.id);
+    setDeleting(true);
+    deletePost(target.id)
+      .then(() => {
+        setPosts((ps) => ps.filter((x) => x.id !== target.id));
+        setDeleteTarget(null);
+        toast(t("feed.toast_deleted"), "success", {
+          description: t("feed.toast_deleted_sub"),
+          undoLabel: t("common.undo"),
+          onUndo: () => {
+            if (removed) setPosts((ps) => { const n = ps.slice(); n.splice(Math.min(idx, n.length), 0, removed); return n; });
+          },
+        });
+      })
+      .catch((e) => toast(String(e), "error"))
+      .finally(() => setDeleting(false));
+  }
+
+  function onSort(s: "recent" | "top") {
+    setSort(s);
+    if (demoOn) setTw("sort", s === "top" ? "Top" : "Recent");
+  }
 
   if (bootError) {
     return (
-      <div className="min-h-screen bg-bg text-text">
-        <AppTopbar maxW="960px" title={t("feed.title")} />
-        <main className="mx-auto max-w-[960px] px-5 pb-24 pt-7 md:px-6">
-          <div className="rounded-lg border border-danger/40 bg-danger/10 p-4 text-small text-danger">
-            {bootError}
-          </div>
-        </main>
-      </div>
+      <main className="mx-auto max-w-2xl px-6 py-16">
+        <div className="rounded-lg border border-danger/40 bg-danger/10 p-4 text-small text-danger">{bootError}</div>
+      </main>
     );
   }
-
-  // Q13: posts arrive newest-first; "top" re-sorts by views (client-side).
-  const sortedPosts =
-    sort === "top" ? [...posts].sort((a, b) => b.views - a.views) : posts;
-
-  const hasBaseline = reference !== null && reference.posts_counted > 0;
-  const baselineStats = reference
-    ? [
-        { Icon: IcEye, val: reference.avg_views },
-        { Icon: IcHeart, val: reference.avg_likes },
-        { Icon: IcBubble, val: reference.avg_comments },
-        { Icon: IcRepost, val: reference.avg_reposts },
-      ]
-    : [];
 
   return (
     <div className="min-h-screen bg-bg text-text">
-      <AppTopbar maxW="960px" title={t("feed.title")} />
-      <main className="mx-auto max-w-[960px] space-y-5 px-5 pb-24 pt-7 md:px-6">
+      <AppTopbar maxW="960px" title={t("feed.title")} pill={<TopbarPill tone="success">{t("feed.updated")}</TopbarPill>} />
+      <main className="mx-auto flex max-w-[960px] flex-col gap-5 px-5 pb-24 pt-7 md:px-6">
         <div className="flex flex-col gap-1">
-          <h1 className="text-h1 font-semibold">{t("feed.title")}</h1>
-          <p className="max-w-[60ch] text-small text-text-muted">{t("feed.subtitle")}</p>
+          <h1 className="text-h1 font-semibold tracking-[-0.015em]">{t("feed.title")}</h1>
+          <p className="text-body text-text-muted">{t("feed.subtitle")}</p>
         </div>
-        {/* Reference baseline */}
-        {loaded && reference && (
-          <section className="rounded-xl border border-border bg-surface p-5 shadow-sm">
-            {hasBaseline ? (
-              <>
-                <div className="flex items-center gap-2.5">
-                  <span className="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-md border border-border bg-surface-2 text-text-muted">
-                    <IcChart size={16} />
-                  </span>
-                  <div className="text-small text-text-muted">
-                    <span className="font-semibold text-text">
-                      {reference.window_days <= 7 ? t("feed.ref_week") : t("feed.ref_30d")}
-                    </span>{" "}
-                    · {reference.posts_counted} {t("feed.posts_word")}
-                  </div>
-                </div>
-                <div className="mt-4 grid grid-cols-4">
-                  {baselineStats.map((s, i) => (
-                    <div
-                      key={i}
-                      className={cn("px-4", i === 0 ? "pl-0" : "border-l border-border")}
-                    >
-                      <div className="text-h2 font-semibold leading-tight tracking-tight tabular-nums">
-                        {fmt(Math.round(s.val))}
-                      </div>
-                      <div className="mt-1.5 text-text-subtle">
-                        <s.Icon size={14} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <p className="text-small text-text-muted">{t("feed.ref_none")}</p>
-            )}
-          </section>
-        )}
 
-        {!loaded && <p className="text-small text-text-muted">{t("common.loading")}</p>}
-
-        {/* Q37: a warm empty state that points the user back to drafting. */}
-        {loaded && posts.length === 0 && (
-          <div className="flex flex-col items-center rounded-lg border border-dashed border-border px-6 py-16 text-center">
-            <span className="mb-4 grid h-[54px] w-[54px] place-items-center rounded-lg border border-border bg-surface-2 text-text-subtle">
-              <IcStudio size={26} />
-            </span>
-            <p className="text-h3 font-semibold tracking-tight">{t("feed.empty_title")}</p>
-            <p className="mt-1.5 max-w-[44ch] text-small leading-relaxed text-text-muted">
-              {t("feed.empty")}
-            </p>
-            <Link href="/app" className={cn(buttonClasses({ variant: "primary" }), "mt-5")}>
-              {t("feed.empty_cta")}
-            </Link>
+        {phase === "loading" ? (
+          <div className="flex flex-col gap-5">
+            {[0, 1, 2, 3, 4].map((i) => (
+              <FeedSkeleton key={i} />
+            ))}
           </div>
-        )}
-
-        {/* Q13: post count + Recent / Top-performing sort. */}
-        {loaded && posts.length > 0 && (
-          <div className="flex items-center justify-between gap-3">
-            <div className="text-small text-text-muted">
-              <b className="font-semibold tabular-nums text-text">{posts.length}</b>{" "}
-              {t("feed.published_posts")}
-            </div>
-            <div
-              role="tablist"
-              aria-label={t("feed.sort_label")}
-              className="inline-flex gap-[3px] rounded-md border border-border bg-surface-2 p-[3px]"
-            >
-              {(
-                [
-                  ["recent", t("feed.sort_recent")],
-                  ["top", t("feed.sort_top")],
-                ] as const
-              ).map(([k, label]) => (
-                <button
-                  key={k}
-                  role="tab"
-                  aria-selected={sort === k}
-                  onClick={() => setSort(k)}
-                  className={cn(
-                    "h-8 rounded-sm border px-3 text-small font-medium transition-colors",
-                    sort === k
-                      ? "border-border bg-surface font-semibold text-text shadow-sm"
-                      : "border-transparent text-text-muted hover:text-text",
-                  )}
-                >
-                  {label}
-                </button>
+        ) : phase === "error" ? (
+          <ErrorBanner onRetry={() => setTw("state", "Live")} titleKey="feed.error_title" subKey="feed.error_sub" />
+        ) : phase === "empty" ? (
+          <>
+            <Baseline posts={0} views={0} likes={0} comments={0} reposts={0} deltaViews={0} sparkline={[]} empty />
+            <FeedEmpty onStudio={() => router.push("/app")} />
+          </>
+        ) : (
+          <>
+            <Baseline {...baseline} />
+            <FeedBar count={cards.length} sort={sort} onSort={onSort} />
+            <div className="flex flex-col gap-5">
+              {cards.map((p) => (
+                <FeedCard
+                  key={p.id}
+                  p={p}
+                  baselineViews={baseline.views}
+                  authorInitials={demoOn ? "ML" : account.initials}
+                  authorName={demoOn ? "Mara Lin" : account.name}
+                  authorHandle={demoOn ? "mara.lin" : account.handle}
+                  growthOpen={growthOpen === p.id}
+                  growthSeries={growthSeries(p)}
+                  tester={demoOn ? true : isTester}
+                  h={handlers}
+                />
               ))}
             </div>
-          </div>
-        )}
-
-        <ul className="space-y-3.5">
-          {sortedPosts.map((p) => (
-            <li
-              key={p.id}
-              className="rounded-lg border border-border bg-surface p-4 shadow-sm transition-colors hover:border-text/15"
-              style={{ animation: "card-in 240ms var(--ease-entrance) both" }}
-            >
-              {/* head: author (Q26) + virality verdict (Q37) */}
-              <div className="flex items-center gap-2.5">
-                {account && <Avatar account={account} size={38} />}
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-small font-semibold leading-tight">
-                    {account ? nameOf(account) : "…"}
-                  </div>
-                  <div className="flex items-center gap-1.5 text-caption text-text-subtle">
-                    {account?.username && (
-                      <>
-                        <span className="truncate">@{account.username}</span>
-                        {p.published_at && <span>·</span>}
-                      </>
-                    )}
-                    {p.published_at && (
-                      <span className="whitespace-nowrap" title={p.published_at}>
-                        {new Date(p.published_at).toLocaleString(undefined, {
-                          dateStyle: "medium",
-                          timeStyle: "short",
-                        })}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <ViralityBadge post={p} t={t} />
-              </div>
-
-              <p className="mt-2.5 whitespace-pre-wrap text-body leading-relaxed text-text">
-                {p.text ?? ""}
-              </p>
-
-              {/* metrics — hero views + sub likes/comments/reposts */}
-              <div className="mt-3.5 flex flex-wrap items-baseline gap-x-5 gap-y-2">
-                <span className="inline-flex items-baseline gap-2">
-                  <IcEye size={18} className="self-center text-text-muted" />
-                  <span className="text-h2 font-semibold tracking-tight tabular-nums">
-                    {fmt(p.views)}
-                  </span>
-                </span>
-                <span className="inline-flex items-baseline gap-1.5">
-                  <IcHeart size={15} className="self-center text-text-subtle" />
-                  <span className="font-semibold tabular-nums">{fmt(p.likes)}</span>
-                </span>
-                <span className="inline-flex items-baseline gap-1.5">
-                  <IcBubble size={15} className="self-center text-text-subtle" />
-                  <span className="font-semibold tabular-nums">{fmt(p.comments_count)}</span>
-                </span>
-                <span className="inline-flex items-baseline gap-1.5">
-                  <IcRepost size={15} className="self-center text-text-subtle" />
-                  <span className="font-semibold tabular-nums">{fmt(p.reposts)}</span>
-                </span>
-              </div>
-
-              {growthOpen === p.id && (
-                <div
-                  className="mt-3.5 rounded-md border border-border bg-surface-2 p-4"
-                  style={{ animation: "card-in 180ms var(--ease-entrance) both" }}
-                >
-                  <TrendChart
-                    series={growth[p.id]}
-                    baseline={reference?.avg_views ?? null}
-                    emptyLabel={t("feed.growth_none")}
-                  />
-                </div>
-              )}
-
-              {/* footer: auto-reply switch + actions */}
-              <div className="mt-3.5 flex items-center gap-3 border-t border-border pt-3.5">
-                <label className="flex min-w-0 flex-1 items-center gap-2.5">
-                  <Switch
-                    checked={p.auto_reply}
-                    onCheckedChange={() => onToggleAutoReply(p)}
-                    aria-label={t("feed.autoreply_hint")}
-                  />
-                  <span className="truncate text-small text-text-muted">
-                    {p.auto_reply ? t("feed.autoreply_on") : t("feed.autoreply_off")}
-                  </span>
-                </label>
-
-                <div className="flex shrink-0 items-center gap-1.5">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => toggleGrowth(p.id)}
-                    aria-expanded={growthOpen === p.id}
-                    icon={<IcChart size={15} />}
-                  >
-                    {t("feed.growth")}
-                    <IcChevDown
-                      size={14}
-                      className="transition-transform"
-                      style={{
-                        transform: growthOpen === p.id ? "rotate(180deg)" : "none",
-                      }}
-                    />
-                  </Button>
-                  {p.threads_url && (
-                    <a
-                      href={p.threads_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={buttonClasses({ variant: "secondary", size: "sm" })}
-                    >
-                      <IcExternal size={15} />
-                      {t("feed.open")}
-                    </a>
-                  )}
-                  {isTester && (
-                    <button
-                      onClick={() => setDeleteTarget(p)}
-                      aria-label={t("posts.delete")}
-                      className="grid h-8 w-8 place-items-center rounded-sm text-text-subtle transition-colors hover:bg-surface-2 hover:text-danger"
-                    >
-                      <IcTrash size={15} />
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {p.text && (
-                <div className="mt-2.5">
-                  <TranslateButton text={p.text} source="post" />
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
-      </main>
-
-      {/* Delete confirmation (tester-only) */}
-      {deleteTarget && (
-        <div
-          className="fixed inset-0 z-40 grid place-items-center bg-ink-950/55 p-6 backdrop-blur-sm"
-          role="dialog"
-          aria-modal="true"
-          onMouseDown={(e) => {
-            if (e.target === e.currentTarget && !deleting) setDeleteTarget(null);
-          }}
-        >
-          <div className="w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-lg">
-            <div className="flex items-start gap-3">
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-danger/30 bg-danger/12 text-danger">
-                <IcTrash size={18} />
-              </span>
-              <div>
-                <h2 className="text-h3 font-semibold">{t("posts.confirm_title")}</h2>
-                <p className="mt-1 text-small leading-relaxed text-text-muted">
-                  {t("posts.confirm_body")}
-                </p>
-              </div>
-            </div>
-            <div className="mt-4 line-clamp-3 whitespace-pre-wrap rounded-md border border-border bg-surface-2 p-3.5 text-small leading-relaxed text-text-muted">
-              {deleteTarget.text ?? ""}
-            </div>
-            <div className="mt-5 flex items-center justify-end gap-2.5">
-              <button
-                onClick={() => {
-                  if (!deleting) setDeleteTarget(null);
-                }}
-                disabled={deleting}
-                className={buttonClasses({ variant: "ghost" })}
-              >
-                {t("common.cancel")}
-              </button>
-              <Button
-                variant="danger"
-                onClick={onDeleteConfirm}
-                loading={deleting}
-                disabled={deleting}
-                icon={<IcTrash size={15} />}
-              >
-                {deleting ? t("posts.deleting") : t("posts.confirm_cta")}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Toasts */}
-      <ToastHost>
-        {toasts.map((to) => (
-          <Toast key={to.id} tone={to.tone} title={to.message} />
-        ))}
-      </ToastHost>
-    </div>
-  );
-}
-
-// Q37: four-band virality verdict from vs_avg_views — settling, over (≥1.5×),
-// on par (0.85–1.5×), or below — all from data already on the post.
-function ViralityBadge({ post, t }: { post: FeedPost; t: (k: MessageKey) => string }) {
-  const pill =
-    "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-caption font-semibold";
-  if (post.is_fresh) {
-    return (
-      <span className={cn(pill, "border-accent/30 bg-accent/12 text-accent")}>
-        <IcClock size={12} />
-        {t("feed.fresh")}
-      </span>
-    );
-  }
-  const r = post.vs_avg_views;
-  if (r === null) return null;
-  if (r >= 1.5) {
-    return (
-      <span className={cn(pill, "border-success/30 bg-success/12 text-success")}>
-        <IcArrowUp size={12} />
-        {r.toFixed(1)}
-        {t("feed.vs_avg")}
-      </span>
-    );
-  }
-  if (r >= 0.85) {
-    return (
-      <span className={cn(pill, "border-border bg-surface-2 text-text-muted")}>
-        {t("feed.on_par")}
-      </span>
-    );
-  }
-  return (
-    <span className={cn(pill, "border-border bg-surface-2 text-text-muted")}>
-      {r.toFixed(1)}
-      {t("feed.vs_avg")}
-    </span>
-  );
-}
-
-// Cumulative views over time, drawn against a dashed "your average" line so
-// the post reads relative to the baseline strip at the top.
-function TrendChart({
-  series,
-  baseline,
-  emptyLabel,
-}: {
-  series: MetricsSnapshot[] | undefined;
-  baseline: number | null;
-  emptyLabel: string;
-}) {
-  if (series === undefined) {
-    return <div className="h-20" aria-hidden />; // loading placeholder
-  }
-  const pts = series.filter((s) => s.views !== null).map((s) => s.views ?? 0);
-  if (pts.length < 2) {
-    return <p className="text-caption text-text-subtle">{emptyLabel}</p>;
-  }
-  const W = 600;
-  const H = 112;
-  const L = 8;
-  const R = 592;
-  const TOP = 12;
-  const BOT = 92;
-  const base = baseline ?? 0;
-  const max = Math.max(...pts, base) * 1.1 || 1;
-  const plotH = BOT - TOP;
-  const x = (i: number) => L + (i / (pts.length - 1)) * (R - L);
-  const y = (v: number) => BOT - (v / max) * plotH;
-  const line = pts
-    .map((v, i) => (i ? "L" : "M") + x(i).toFixed(1) + " " + y(v).toFixed(1))
-    .join(" ");
-  const area = `${line} L ${R} ${BOT} L ${L} ${BOT} Z`;
-  const byY = y(base);
-  const lastX = x(pts.length - 1);
-  const lastY = y(pts[pts.length - 1]);
-  return (
-    <>
-      <svg
-        viewBox={`0 0 ${W} ${H}`}
-        className="block h-auto w-full overflow-visible"
-        role="img"
-        aria-label="Views over time vs your average"
-      >
-        <path d={area} fill="var(--color-accent)" fillOpacity="0.1" />
-        {base > 0 && (
-          <>
-            <line
-              x1={L}
-              y1={byY}
-              x2={R}
-              y2={byY}
-              stroke="var(--color-text-subtle)"
-              strokeWidth="1"
-              strokeDasharray="4 4"
-              opacity="0.75"
-            />
-            <text
-              x={R}
-              y={byY - 6}
-              textAnchor="end"
-              fontSize="11"
-              fill="var(--color-text-subtle)"
-              style={{ fontFamily: "var(--font-sans)" }}
-            >
-              {fmt(Math.round(base))}
-            </text>
           </>
         )}
-        <path
-          d={line}
-          fill="none"
-          stroke="var(--color-accent)"
-          strokeWidth="2.2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          vectorEffect="non-scaling-stroke"
-        />
-        <circle
-          cx={lastX}
-          cy={lastY}
-          r="3.6"
-          fill="var(--color-accent)"
-          stroke="var(--color-surface)"
-          strokeWidth="2"
-        />
-      </svg>
-      <div className="mt-1.5 flex justify-between text-caption text-text-subtle">
-        <span>{fmt(pts[0])}</span>
-        <span>{fmt(pts[pts.length - 1])}</span>
-      </div>
-    </>
+      </main>
+
+      <ConfirmDelete
+        open={deleteTarget !== null}
+        text={deleteTarget?.text ?? ""}
+        deleting={deleting}
+        onClose={() => {
+          if (!deleting) setDeleteTarget(null);
+        }}
+        onConfirm={confirmDelete}
+      />
+
+      <ToastHost>
+        {toasts.map((to) => (
+          <Toast
+            key={to.id}
+            tone={to.tone}
+            title={to.title}
+            description={to.description}
+            undoLabel={to.undoLabel}
+            className="[animation:toast-in_var(--duration-slow)_var(--ease-entrance)]"
+            onUndo={to.onUndo ? () => { to.onUndo?.(); dismissToast(to.id); } : undefined}
+          />
+        ))}
+      </ToastHost>
+
+      {allow && (
+        <TweaksPanel title="Feed">
+          <TweakSection label="Appearance" />
+          <TweakToggle label="Dark mode" value={tw.dark} onChange={(v) => setTw("dark", v)} />
+          <TweakSection label="Feed" />
+          <TweakRadio label="Default sort" value={tw.sort} options={["Recent", "Top"]} onChange={(v) => setTw("sort", v)} />
+          <TweakRadio label="State" value={tw.state} options={["Live", "Loading", "Empty", "Error"]} onChange={(v) => setTw("state", v)} />
+        </TweaksPanel>
+      )}
+    </div>
   );
 }
