@@ -1033,7 +1033,7 @@ test("Stats — demo states", async ({ page }) => {
 });
 
 test("Audits — list", async ({ page }) => {
-  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.setViewportSize({ width: 1280, height: 1000 });
   await setup(page);
   await page.goto("/app/audits");
   await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
@@ -1042,12 +1042,26 @@ test("Audits — list", async ({ page }) => {
 });
 
 test("Audits — detail", async ({ page }) => {
-  await page.setViewportSize({ width: 1280, height: 1300 });
+  await page.setViewportSize({ width: 1280, height: 1400 });
   await setup(page);
   await page.goto("/app/audits/4101");
   await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
   await page.waitForTimeout(700);
   await shoot(page, "audits-detail");
+});
+
+test("Audits — demo", async ({ page }) => {
+  // Tester ?demo=1: list + inline detail view on mock data (2 tweaks).
+  await page.setViewportSize({ width: 1280, height: 1400 });
+  await setup(page);
+  await page.goto("/app/audits?demo=1");
+  await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
+  await page.waitForTimeout(700);
+  await shoot(page, "audits-demo-list");
+  // open the first audit (Week of May 25 — has changes in every state)
+  await page.getByRole("button", { name: /Week of May 25/i }).click();
+  await page.waitForTimeout(300);
+  await shoot(page, "audits-demo-detail");
 });
 
 test("Patterns", async ({ page }) => {

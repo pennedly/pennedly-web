@@ -1,51 +1,79 @@
 "use client";
 
-// Audit list — every weekly audit the coach loop produced for the account.
-// Each row → the detail page where the user approves/rejects proposed changes.
-// Layout per design-export/PennedlyDesign/audits-* (list view): an audit-row
-// with a coach-style date title, a meta line (suggestions / to-review /
-// applied) and a Needs-review / Reviewed badge; rows with pending changes get
-// an accent left-bar.
+// Audits list (/app/audits) — every weekly audit the coach produced. Rebuilt
+// 1:1 to Audits-SPEC.html (reading-width 720). Each row → the detail route. A
+// tester ?demo=1 panel (dark/state) drives the list + an inline detail view on
+// mock data (the design uses a local view toggle).
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { ApiError, clearTokens, getTokens, listAudits } from "@/lib/api";
+import { ApiError, clearTokens, fetchMe, getTokens, listAudits } from "@/lib/api";
 import { useSelectedAccountId } from "@/lib/account";
-import { useTranslation, useLocale } from "@/lib/i18n";
+import { useTranslation } from "@/lib/i18n";
 import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/feedback";
-import { cn } from "@/lib/cn";
-import { IcAudit, IcChevDown } from "@/components/icons";
+import { Toast, ToastHost } from "@/components/ui/toast";
+import { TweaksPanel, TweakSection, TweakToggle, TweakRadio, useTweaks } from "@/components/tweaks/TweaksPanel";
+import {
+  AuditDetailView,
+  AuditRow,
+  AuditsEmpty,
+  AuditsSkeleton,
+  type AuditHandlers,
+  type AuditRowModel,
+  type ChangeModel,
+} from "@/components/studio/AuditsParts";
+import { AUDIT_TWEAK_DEFAULTS, DEMO_AUDITS, type ChangeStatus, type DemoAudit } from "@/components/studio/audits-demo";
 import type { AuditSummary } from "@/lib/types";
 
+const IS_DEV = process.env.NODE_ENV === "development";
+
+type ToastT = { id: number; title: string; description?: string };
+
 function fmtDate(iso: string, locale: string): string {
-  const loc = locale === "ru" ? "ru-RU" : locale === "en" ? "en-US" : locale;
-  try {
-    return new Date(iso).toLocaleDateString(loc, { month: "short", day: "numeric" });
-  } catch {
-    return iso;
-  }
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString(locale, { month: "short", day: "numeric" });
 }
 
 export default function AuditsPage() {
   const router = useRouter();
-  const { t } = useTranslation();
-  const locale = useLocale();
+  const { t, locale } = useTranslation();
+  const [demoParam] = useState(() => (typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("demo") === "1" : false));
+  const [isTester, setIsTester] = useState(false);
+  const allow = demoParam && (IS_DEV || isTester);
+  const demoOn = allow;
   const accountId = useSelectedAccountId();
+
   const [audits, setAudits] = useState<AuditSummary[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState(false);
   const [bootError, setBootError] = useState<string | null>(null);
+  const [view, setView] = useState<"list" | "detail">("list");
+  const [openId, setOpenId] = useState<number | null>(null);
+  const [toasts, setToasts] = useState<ToastT[]>([]);
+
+  const [tw, setTw] = useTweaks(AUDIT_TWEAK_DEFAULTS);
+  const [demoAudits, setDemoAudits] = useState<DemoAudit[]>(DEMO_AUDITS);
+
+  function toast(title: string, description?: string) {
+    const id = Date.now() + Math.random();
+    setToasts((s) => [...s, { id, title, description }]);
+    setTimeout(() => setToasts((s) => s.filter((x) => x.id !== id)), 4200);
+  }
 
   useEffect(() => {
-    if (!getTokens()) router.push("/app/login");
-  }, [router]);
+    if (!getTokens()) return;
+    fetchMe().then((m) => setIsTester(m.is_tester === true)).catch(() => {});
+  }, []);
 
   useEffect(() => {
+    if (demoParam) return;
+    if (!getTokens()) {
+      router.push("/app/login");
+      return;
+    }
     if (accountId === null) return;
-    setLoading(true);
+    setLoaded(false);
     (async () => {
       try {
         const list = await listAudits({ accountId, limit: 50 });
@@ -58,129 +86,138 @@ export default function AuditsPage() {
         }
         setBootError(String(e));
       } finally {
-        setLoading(false);
+        setLoaded(true);
       }
     })();
-  }, [accountId, router]);
+  }, [accountId, router, demoParam]);
 
-  const toReview = (a: AuditSummary) =>
-    Math.max(0, a.proposed_change_count - a.decided_change_count);
-  const totalToReview = audits.reduce((n, a) => n + toReview(a), 0);
+  useEffect(() => {
+    if (!demoOn) return;
+    document.documentElement.classList.toggle("dark", !!tw.dark);
+  }, [demoOn, tw.dark]);
+
+  const feedState = demoOn ? (tw.state as "Live" | "Loading" | "Empty") : "Live";
+
+  const rows: AuditRowModel[] = demoOn
+    ? demoAudits.map((a) => ({
+        id: a.id,
+        title: a.title,
+        range: a.range,
+        summary: a.summary,
+        postsAnalyzed: a.postsAnalyzed,
+        wowDelta: a.wowDelta,
+        undecided: a.changes.filter((c) => c.status === "undecided").length,
+        total: a.changes.length,
+      }))
+    : audits.map((a) => ({
+        id: a.id,
+        title: `Week of ${fmtDate(a.period_end, locale)}`,
+        range: `${fmtDate(a.period_start, locale)} – ${fmtDate(a.period_end, locale)}`,
+        postsAnalyzed: a.posts_analyzed,
+        wowDelta: a.week_over_week_delta_pct,
+        undecided: Math.max(0, a.proposed_change_count - a.decided_change_count),
+        total: a.proposed_change_count,
+      }));
+
+  const reviewCount = rows.reduce((n, r) => n + r.undecided, 0);
+
+  const phase: "loading" | "ready" | "empty" = demoOn
+    ? feedState === "Loading"
+      ? "loading"
+      : feedState === "Empty"
+        ? "empty"
+        : "ready"
+    : !loaded
+      ? "loading"
+      : rows.length === 0
+        ? "empty"
+        : "ready";
+
+  function openAudit(id: number) {
+    if (demoOn) {
+      setOpenId(id);
+      setView("detail");
+      window.scrollTo({ top: 0 });
+    } else {
+      router.push(`/app/audits/${id}`);
+    }
+  }
+
+  // demo detail handlers
+  function setDemoChange(auditId: number, changeId: string, patch: Partial<ChangeModel>) {
+    setDemoAudits((p) => p.map((a) => (a.id === auditId ? { ...a, changes: a.changes.map((c) => (c.id === changeId ? { ...c, ...patch } : c)) } : a)));
+  }
+  const openAuditData = demoAudits.find((a) => a.id === openId) ?? null;
+  const demoHandlers: AuditHandlers = openAuditData
+    ? {
+        onApprove: (c) => { setDemoChange(openAuditData.id, c.id, { status: "applied" as ChangeStatus, effectPct: null }); toast(t("audits.toast_approved_title"), t("audits.toast_approved_sub")); },
+        onReject: (c) => { setDemoChange(openAuditData.id, c.id, { status: "rejected" as ChangeStatus }); toast(t("audits.toast_rejected_title"), t("audits.toast_rejected_sub")); },
+        onSaveNote: (c, note) => { setDemoChange(openAuditData.id, c.id, { note }); toast(note ? t("audits.toast_note_saved") : t("audits.toast_note_removed")); },
+      }
+    : { onApprove: () => {}, onReject: () => {}, onSaveNote: () => {} };
+
+  const pill =
+    reviewCount > 0 ? (
+      <TopbarPill tone="accent">{reviewCount} {t("audits.to_review")}</TopbarPill>
+    ) : (
+      <TopbarPill tone="success">{t("audits.pill_reviewed")}</TopbarPill>
+    );
+
+  if (bootError) {
+    return (
+      <main className="mx-auto max-w-2xl px-6 py-16">
+        <div className="rounded-lg border border-danger/40 bg-danger/10 p-4 text-small text-danger">{bootError}</div>
+      </main>
+    );
+  }
+
+  const showDetail = demoOn && view === "detail" && openAuditData;
 
   return (
     <div className="min-h-screen bg-bg text-text">
-      <AppTopbar
-        title={t("audits.title")}
-        pill={
-          totalToReview > 0 ? (
-            <TopbarPill tone="accent">
-              {totalToReview} {t("audits.to_review")}
-            </TopbarPill>
-          ) : undefined
-        }
-      />
-      <main className="mx-auto max-w-[720px] space-y-5 px-5 pb-24 pt-7 md:px-6">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-h1 font-semibold">{t("audits.title")}</h1>
-          <p className="max-w-[64ch] text-small text-text-muted">{t("audits.subtitle")}</p>
-        </div>
-
-        {bootError && (
-          <div className="rounded-lg border border-danger/40 bg-danger/10 p-4 text-small text-danger">
-            {bootError}
-          </div>
+      <AppTopbar maxW="720px" title={t("audits.title")} pill={pill} />
+      <main className="mx-auto flex max-w-[720px] flex-col gap-5 px-5 pb-24 pt-7 md:px-6">
+        {showDetail ? (
+          <AuditDetailView
+            audit={{ id: openAuditData.id, title: openAuditData.title, range: openAuditData.range, postsAnalyzed: openAuditData.postsAnalyzed, narrative: openAuditData.narrative, changes: openAuditData.changes }}
+            onBack={() => setView("list")}
+            h={demoHandlers}
+          />
+        ) : (
+          <>
+            <div className="flex flex-col gap-1">
+              <h1 className="text-h1 font-semibold tracking-[-0.015em]">{t("audits.title")}</h1>
+              <p className="max-w-[64ch] text-body text-text-muted">{t("audits.list_sub")}</p>
+            </div>
+            {phase === "loading" ? (
+              <AuditsSkeleton />
+            ) : phase === "empty" ? (
+              <AuditsEmpty />
+            ) : (
+              <div className="flex flex-col gap-3">
+                {rows.map((r) => (
+                  <AuditRow key={r.id} audit={r} onOpen={openAudit} />
+                ))}
+              </div>
+            )}
+          </>
         )}
-
-        {loading && !bootError && (
-          <ul className="space-y-3">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <li key={i} className="rounded-lg border border-border bg-surface p-5 shadow-sm">
-                <Skeleton className="h-4 w-40" />
-                <Skeleton className="mt-2.5 h-3 w-3/4" />
-                <Skeleton className="mt-3 h-2.5 w-52" />
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {!loading && !bootError && audits.length === 0 && (
-          <div className="flex flex-col items-center rounded-lg border border-dashed border-border px-7 py-16 text-center">
-            <span className="mb-4 grid h-[54px] w-[54px] place-items-center rounded-lg border border-border bg-surface-2 text-text-subtle">
-              <IcAudit size={26} />
-            </span>
-            <p className="text-h2 font-semibold tracking-tight">{t("audits.empty_title")}</p>
-            <p className="mt-2 max-w-[46ch] text-body leading-relaxed text-text-muted">
-              {t("audits.empty")}
-            </p>
-          </div>
-        )}
-
-        <ul className="space-y-3">
-          {audits.map((a) => {
-            const pending = toReview(a);
-            const isNew = pending > 0;
-            return (
-              <li key={a.id}>
-                <Link
-                  href={`/app/audits/${a.id}`}
-                  className={cn(
-                    "flex items-center gap-4 rounded-lg border bg-surface p-5 shadow-sm transition-colors hover:border-text/15",
-                    isNew ? "border-l-[3px] border-l-accent border-accent/30" : "border-border",
-                  )}
-                  style={{ animation: "card-in 240ms var(--ease-entrance) both" }}
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="text-h3 font-semibold tracking-tight">
-                      {fmtDate(a.period_start, locale)} – {fmtDate(a.period_end, locale)}
-                    </div>
-                    <div className="mt-2.5 flex flex-wrap items-center gap-x-3.5 gap-y-1.5 text-caption text-text-subtle">
-                      <span className="inline-flex items-center gap-1.5">
-                        <IcAudit size={13} />
-                        {a.proposed_change_count} {t("audits.suggestions_word")}
-                      </span>
-                      {pending > 0 ? (
-                        <span className="inline-flex items-center gap-1.5 text-accent">
-                          <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-                          {pending} {t("audits.to_review")}
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5">
-                          <span className="h-1.5 w-1.5 rounded-full bg-success" />
-                          {t("audits.all_reviewed")}
-                        </span>
-                      )}
-                      <span>
-                        {a.posts_analyzed} {t("audits.posts_analyzed")}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-3.5">
-                    {a.week_over_week_delta_pct !== null && (
-                      <span
-                        className={cn(
-                          "text-caption font-semibold tabular-nums",
-                          a.week_over_week_delta_pct >= 0 ? "text-success" : "text-danger",
-                        )}
-                      >
-                        {a.week_over_week_delta_pct >= 0 ? "▲" : "▼"}{" "}
-                        {Math.abs(a.week_over_week_delta_pct).toFixed(1)}% {t("audits.delta_wow")}
-                      </span>
-                    )}
-                    <Badge tone={isNew ? "accent" : "neutral"} dot={isNew}>
-                      {isNew ? t("audits.cstatus_needs") : t("audits.reviewed")}
-                    </Badge>
-                    <IcChevDown
-                      size={18}
-                      className="text-text-subtle"
-                      style={{ transform: "rotate(-90deg)" }}
-                    />
-                  </div>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
       </main>
+
+      <ToastHost>
+        {toasts.map((to) => (
+          <Toast key={to.id} tone="success" title={to.title} description={to.description} className="[animation:toast-in_var(--duration-slow)_var(--ease-entrance)]" />
+        ))}
+      </ToastHost>
+
+      {allow && (
+        <TweaksPanel title="Audits">
+          <TweakSection label="Appearance" />
+          <TweakToggle label="Dark mode" value={tw.dark} onChange={(v) => setTw("dark", v)} />
+          <TweakSection label="State" />
+          <TweakRadio label="State" value={tw.state} options={["Live", "Loading", "Empty"]} onChange={(v) => setTw("state", v)} />
+        </TweaksPanel>
+      )}
     </div>
   );
 }
