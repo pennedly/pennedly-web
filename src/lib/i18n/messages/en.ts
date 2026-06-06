@@ -513,8 +513,6 @@ export const en = {
     "A study needs at least {need} published posts to find patterns it can stand behind. Keep writing in the Studio — you're getting there.",
   "patterns.of_posts": "{have} of {need} posts",
   "patterns.idle_title": "Find what's working",
-  "patterns.idle_body":
-    "A study reads back through your posts and surfaces the patterns that actually move engagement — each one backed by your own numbers and examples.",
   "patterns.run_study": "Run a study",
   "patterns.idle_scope": "{n} posts ready to analyze",
   "patterns.idle_time": "a few seconds",
@@ -555,6 +553,10 @@ export const en = {
   "patterns.side_emoji_without": "Without emoji",
   "patterns.side_structure_multiline": "Multi-line",
   "patterns.side_structure_single": "Single block",
+  "patterns.idle_body": "A study reads back through your posts and surfaces the patterns that actually move engagement, each one backed by your own numbers and examples.",
+  "patterns.empty_sub": "A study needs at least {need} published posts to find patterns it can stand behind. Keep writing in the Studio, you're getting there.",
+  "patterns.study_cap": "From your last {n} posts · ranked by strength of evidence",
+  "patterns.intro_sub": "What actually drives performance in your posts, found by reading your own history, backed by your own numbers.",
 
   // ── Explore patterns (paste admired text) ──────────────────────
   "explore.title": "Explore patterns",
