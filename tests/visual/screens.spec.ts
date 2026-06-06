@@ -1004,12 +1004,32 @@ test("Replies — demo states", async ({ page }) => {
 });
 
 test("Stats", async ({ page }) => {
-  await page.setViewportSize({ width: 1280, height: 1000 });
+  await page.setViewportSize({ width: 1280, height: 1100 });
   await setup(page);
   await page.goto("/app/stats");
   await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
-  await page.waitForTimeout(700);
-  await shoot(page, "stats");
+  await page.waitForTimeout(900);
+  await shoot(page, "stats"); // cards + chart + tiers, real data
+});
+
+test("Stats — demo states", async ({ page }) => {
+  // Tester ?demo=1: 3-tweak panel (dark / period / state) on mock analytics.
+  await page.setViewportSize({ width: 1280, height: 1100 });
+  await setup(page);
+  await page.goto("/app/stats?demo=1");
+  await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
+  await page.waitForTimeout(1100); // mount loading ~700ms
+  await shoot(page, "stats-demo-live"); // 7 days: cards w/ deltas + chart + tiers
+  // All time → no prior period (flat deltas)
+  await page.getByRole("tab", { name: /all time/i }).click();
+  await page.waitForTimeout(900);
+  await shoot(page, "stats-demo-all");
+  // Empty via the panel (State is a segmented radio)
+  await page.getByRole("button", { name: "Open tweaks" }).click();
+  await page.waitForTimeout(150);
+  await page.getByRole("radio", { name: "Empty" }).click();
+  await page.waitForTimeout(250);
+  await shoot(page, "stats-demo-empty");
 });
 
 test("Audits — list", async ({ page }) => {
