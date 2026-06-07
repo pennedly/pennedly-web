@@ -19,7 +19,7 @@ import { captureEvent } from "@/lib/analytics";
 import { useTranslation } from "@/lib/i18n";
 import { ConnectThreadsButton } from "@/components/ConnectThreadsButton";
 import { Avatar, nameOf } from "@/components/ui/avatar";
-import { IcCheck, IcChevDown, IcSettings } from "@/components/icons";
+import { IcCheck, IcChevDown, IcLogout, IcSettings } from "@/components/icons";
 import { DEMO_ACCOUNTS, DEMO_ME } from "@/components/studio/settings-demo";
 import type { ConnectedAccount, Me } from "@/lib/types";
 
@@ -150,7 +150,7 @@ export function AccountSwitcher({ me, onLogout }: { me?: Me | null; onLogout?: (
                 }}
                 className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-small text-danger transition-colors hover:bg-danger/10"
               >
-                {t("dashboard.nav.logout")}
+                <IcLogout size={16} /> {t("dashboard.nav.logout")}
               </button>
             )}
           </div>

@@ -15,7 +15,7 @@ import { startThreadsConnect } from "@/lib/api";
 import { captureEvent } from "@/lib/analytics";
 import { useTranslation } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
-import { IcAt } from "@/components/icons";
+import { IcAt, IcPlus } from "@/components/icons";
 
 type Props = {
   variant?: "primary" | "menu";
@@ -60,9 +60,9 @@ export function ConnectThreadsButton({ variant = "primary", returnTo = "/app" }:
           type="button"
           onClick={onConnect}
           disabled={loading}
-          className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-small text-text transition-colors hover:bg-surface-2 disabled:opacity-50"
+          className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-small text-text transition-colors hover:bg-surface-2 disabled:opacity-50"
         >
-          <IcAt size={15} className="text-text-subtle" />
+          <IcPlus size={16} className="text-text-subtle" />
           {label}
         </button>
         {error && <span className="px-3 text-caption text-danger">{error}</span>}
