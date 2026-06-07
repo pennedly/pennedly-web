@@ -18,6 +18,7 @@ import {
   fetchAutopilot,
   fetchAutopostActivity,
   fetchAutopostRules,
+  fetchMe,
   getTokens,
   setAutopilotMaster,
   updateAutopilot,
@@ -47,6 +48,8 @@ import {
   IcTrash,
 } from "@/components/icons";
 import { useDeferredCommit } from "@/lib/use-deferred-commit";
+import { TweaksPanel, TweakSection, TweakToggle, TweakRadio, useTweaks } from "@/components/tweaks/TweaksPanel";
+import { AP_TWEAK_DEFAULTS, DEMO_ACTIVITY, DEMO_CONFIG, DEMO_RULES, DEMO_TOPICS } from "@/components/studio/autopilot-demo";
 import type {
   AutopilotConfig,
   AutopostActivity,
@@ -72,7 +75,9 @@ function insertAt<T>(arr: T[], index: number, item: T): T[] {
 }
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
-const JITTERS = [0, 5, 10, 15, 30, 45, 60];
+const JITTERS = [0, 5, 15, 30];
+const IS_DEV = process.env.NODE_ENV === "development";
+const AP_STATES = ["On", "Off", "Edit", "Empty", "PolicyOff", "Replies", "Loading"];
 const SELECT =
   "h-9 w-full rounded-md border border-border bg-surface px-2.5 text-small text-text transition-colors focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
 
@@ -86,7 +91,15 @@ export default function AutopilotPage() {
   const router = useRouter();
   const { t } = useTranslation();
   const locale = useLocale();
-  const { checking } = useTesterGuard();
+  const [demoParam] = useState(() =>
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("demo") === "1"
+      : false,
+  );
+  const { checking } = useTesterGuard(demoParam);
+  const [isTester, setIsTester] = useState(false);
+  const allow = demoParam && (IS_DEV || isTester);
+  const demoOn = allow;
   const accountId = useSelectedAccountId();
   const [master, setMaster] = useState(false);
   const [config, setConfig] = useState<AutopilotConfig | null>(null);
@@ -101,6 +114,7 @@ export default function AutopilotPage() {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const deferred = useDeferredCommit();
+  const [tw, setTw] = useTweaks(AP_TWEAK_DEFAULTS);
 
   function toast(
     message: string,
@@ -124,10 +138,17 @@ export default function AutopilotPage() {
   }
 
   useEffect(() => {
+    if (demoParam) return;
     if (!getTokens()) router.push("/app/login");
-  }, [router]);
+  }, [router, demoParam]);
 
   useEffect(() => {
+    if (!getTokens()) return;
+    fetchMe().then((m) => setIsTester(m.is_tester === true)).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (demoParam) return;
     if (accountId === null) return;
     setLoaded(false);
     (async () => {
@@ -154,7 +175,35 @@ export default function AutopilotPage() {
     })();
   }, [accountId, router]);
 
+  useEffect(() => {
+    if (!demoOn) return;
+    document.documentElement.classList.toggle("dark", !!tw.dark);
+  }, [demoOn, tw.dark]);
+
+  useEffect(() => {
+    if (!demoOn) return;
+    const st = tw.state;
+    setBootError(null);
+    if (st === "Loading") {
+      setLoaded(false);
+      return;
+    }
+    setMaster(st !== "Off");
+    setTopics(DEMO_TOPICS);
+    setRules(st === "Empty" ? [] : DEMO_RULES.map((r) => ({ ...r })));
+    setConfig({ ...DEMO_CONFIG, reply_enabled: st !== "PolicyOff" });
+    setActivity(st === "Empty" ? { rules: [], posts: [], replies: [] } : DEMO_ACTIVITY);
+    setActTab(st === "Replies" ? "replies" : "posts");
+    setLoaded(true);
+  }, [demoOn, tw.state]);
+
   async function doSetMaster(v: boolean) {
+    if (demoOn) {
+      setMaster(v);
+      setConfig((c) => (c ? { ...c, enabled: v } : c));
+      setTw("state", v ? "On" : "Off");
+      return;
+    }
     if (accountId === null) return;
     setMaster(v);
     setConfig((c) => (c ? { ...c, enabled: v } : c));
@@ -176,7 +225,12 @@ export default function AutopilotPage() {
   }
 
   async function onReply(patch: Partial<AutopilotConfig>) {
-    if (accountId === null || config === null) return;
+    if (config === null) return;
+    if (demoOn) {
+      setConfig((c) => (c ? { ...c, ...patch } : c));
+      return;
+    }
+    if (accountId === null) return;
     const prev = config;
     const next = { ...config, ...patch };
     setConfig(next);
@@ -190,6 +244,11 @@ export default function AutopilotPage() {
   }
 
   async function onAdd() {
+    if (demoOn) {
+      const rule: AutopostRule = { id: Date.now(), name: null, topic_id: null, post_hour: 8, jitter_minutes: 15, enabled: false, auto_reply: false, reply_audience: "", replies_per_day: 0 };
+      setRules((rs) => [...rs, rule]);
+      return;
+    }
     if (accountId === null) return;
     captureEvent("ui.autopilot_add_object", { account_id: accountId });
     try {
@@ -202,6 +261,7 @@ export default function AutopilotPage() {
 
   async function patchRule(id: number, patch: Partial<AutopostRule>) {
     setRules((rs) => rs.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+    if (demoOn) return;
     try {
       await updateAutopostRule(id, patch);
     } catch (e) {
@@ -215,6 +275,14 @@ export default function AutopilotPage() {
     const idx = rules.findIndex((r) => r.id === rule.id);
     setRules((rs) => rs.filter((r) => r.id !== rule.id));
     setConfirmDelete(null);
+    if (demoOn) {
+      toast(t("autopilot.toast_rule_deleted"), "success", {
+        duration: UNDO_MS,
+        undoLabel: t("common.undo"),
+        onUndo: () => setRules((rs) => insertAt(rs, idx, rule)),
+      });
+      return;
+    }
     const key = `rule-${rule.id}`;
     deferred.schedule(
       key,
@@ -405,7 +473,7 @@ export default function AutopilotPage() {
                       <div className="mt-3.5 grid grid-cols-1 gap-3 sm:grid-cols-3">
                         <label className="flex min-w-0 flex-col gap-1.5">
                           <span className="text-caption font-medium text-text-muted">
-                            {t("autopilot.field_time")} · {localUtcOffsetLabel()}
+                            {t("autopilot.field_time")}
                           </span>
                           <select
                             value={utcHourToLocal(r.post_hour)}
@@ -420,6 +488,10 @@ export default function AutopilotPage() {
                               </option>
                             ))}
                           </select>
+                          <span className="text-caption tabular-nums text-text-subtle">
+                            {localUtcOffsetLabel()} ·{" "}
+                            {t("autopilot.sends_utc").replace("{time}", `${String(r.post_hour).padStart(2, "0")}:00`)}
+                          </span>
                         </label>
                         <label className="flex min-w-0 flex-col gap-1.5">
                           <span className="text-caption font-medium text-text-muted">
@@ -432,12 +504,21 @@ export default function AutopilotPage() {
                             }
                             className={SELECT}
                           >
-                            {JITTERS.map((m) => (
-                              <option key={m} value={m}>
-                                {m === 0 ? "0" : `± ${m} min`}
-                              </option>
-                            ))}
+                            {Array.from(new Set([...JITTERS, r.jitter_minutes]))
+                              .sort((a, b) => a - b)
+                              .map((m) => (
+                                <option key={m} value={m}>
+                                  {m === 0
+                                    ? t("autopilot.jitter_exact")
+                                    : t("autopilot.jitter_min").replace("{n}", String(m))}
+                                </option>
+                              ))}
                           </select>
+                          <span className="text-caption text-text-subtle">
+                            {r.jitter_minutes === 0
+                              ? t("autopilot.jitter_hint_exact")
+                              : t("autopilot.jitter_hint").replace("{n}", String(r.jitter_minutes))}
+                          </span>
                         </label>
                         <label className="flex min-w-0 flex-col gap-1.5">
                           <span className="text-caption font-medium text-text-muted">
@@ -736,7 +817,7 @@ export default function AutopilotPage() {
           <div className="w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-lg">
             <div className="flex items-start gap-3">
               <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-accent/30 bg-accent/12 text-accent">
-                <IcClock size={18} />
+                <IcBolt size={18} />
               </span>
               <div>
                 <h2 className="text-h3 font-semibold">{t("autopilot.confirm_title")}</h2>
@@ -751,7 +832,7 @@ export default function AutopilotPage() {
               </button>
               <Button
                 variant="primary"
-                icon={<IcClock size={15} />}
+                icon={<IcBolt size={15} />}
                 onClick={() => {
                   setConfirmOn(false);
                   doSetMaster(true);
@@ -782,6 +863,15 @@ export default function AutopilotPage() {
           />
         ))}
       </ToastHost>
+
+      {allow && (
+        <TweaksPanel title="Autopilot">
+          <TweakSection label="Appearance" />
+          <TweakToggle label="Dark mode" value={tw.dark} onChange={(v) => setTw("dark", v)} />
+          <TweakSection label="State" />
+          <TweakRadio label="State" value={tw.state} options={AP_STATES} onChange={(v) => setTw("state", v)} />
+        </TweaksPanel>
+      )}
     </div>
   );
 }
