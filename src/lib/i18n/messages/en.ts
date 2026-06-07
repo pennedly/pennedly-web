@@ -561,11 +561,11 @@ export const en = {
   // ── Explore patterns (paste admired text) ──────────────────────
   "explore.title": "Explore patterns",
   "explore.subtitle":
-    "Paste the text of posts you admire and Pennedly names the move behind them — then rewrites each one in your own voice. Learn the move, not the post.",
+    "Paste the text of posts you admire and Pennedly names the move behind them, then rewrites each one in your own voice. Learn the move, not the post.",
   "explore.pill": "{n} techniques found",
   "explore.notice_title": "Paste the text, not links.",
   "explore.notice_body":
-    "Pennedly never opens links or reads other people's accounts. Copy the words of the posts you admire and drop them in below — one post per block, a blank line between each.",
+    "Pennedly never opens links or reads other people's accounts. Copy the words of the posts you admire and drop them in below, one post per block, a blank line between each.",
   "explore.placeholder":
     "Paste a few posts you admire here.\n\nLeave a blank line between each one, so Pennedly can tell them apart.",
   "explore.count_empty": "No posts yet",
@@ -573,7 +573,7 @@ export const en = {
   "explore.count_other": "{n} posts ready",
   "explore.analyze": "Analyze the craft",
   "explore.warn_link":
-    "That looks like a link. Paste the words of the post instead — Pennedly never opens links.",
+    "That looks like a link. Paste the words of the post instead. Pennedly never opens links.",
   "explore.warn_url": "That looks like a URL. Paste the text of the post, not a link to it.",
   "explore.warn_handle": "That looks like an @handle. Paste what they wrote, not their account.",
   "explore.seed_cap": "Not sure what to paste?",
@@ -582,7 +582,7 @@ export const en = {
   "explore.seed2": "A post you reread",
   "explore.seed3": "A line you wish you'd written",
   "explore.reading_title": "Reading the craft…",
-  "explore.reading_sub": "Pulling the move out of each post — not the post itself.",
+  "explore.reading_sub": "Pulling the move out of each post, not the post itself.",
   "explore.step1": "Reading the text you pasted",
   "explore.step2": "Separating the move from the post",
   "explore.step3": "Naming each technique",
@@ -599,7 +599,7 @@ export const en = {
   "explore.empty_warning": "Paste at least one post's text first.",
   "explore.empty_title": "No moves to show yet",
   "explore.empty_sub":
-    "Nothing came back from that text — it may have been too short, or all link. Paste a few full posts you admire and Pennedly will find the techniques worth borrowing.",
+    "Nothing came back from that text, it may have been too short, or all link. Paste a few full posts you admire and Pennedly will find the techniques worth borrowing.",
   "explore.empty_back": "Back to paste",
 
   // ── Style rules ────────────────────────────────────────────────

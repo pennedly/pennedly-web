@@ -1113,6 +1113,27 @@ test("Explore patterns", async ({ page }) => {
   await shoot(page, "explore-results");
 });
 
+test("Explore patterns — demo states", async ({ page }) => {
+  // Tester ?demo=1: 2-tweak panel (dark/state) over Input/Analyzing/Results/Empty.
+  await page.setViewportSize({ width: 1280, height: 1300 });
+  await setup(page);
+  await page.goto("/app/patterns/explore?demo=1");
+  await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
+  await page.waitForTimeout(800);
+  await shoot(page, "explore-demo-input"); // default Input, pre-filled & ready
+  await page.getByRole("button", { name: "Open tweaks" }).click();
+  await page.waitForTimeout(150);
+  await page.locator("select.twk-field").first().selectOption("Results");
+  await page.waitForTimeout(300);
+  await shoot(page, "explore-demo-results"); // cards + 2nd card "Added"
+  await page.locator("select.twk-field").first().selectOption("Empty");
+  await page.waitForTimeout(250);
+  await shoot(page, "explore-demo-empty");
+  await page.locator("select.twk-field").first().selectOption("Analyzing");
+  await page.waitForTimeout(800);
+  await shoot(page, "explore-demo-analyzing");
+});
+
 test("Autopilot", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 1400 });
   await setup(page);

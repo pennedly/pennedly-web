@@ -2,22 +2,24 @@
 
 // Explore patterns — paste the TEXT of posts you admire; Pennedly names the
 // reusable move and rewrites an example in your voice, then offers to fold the
-// do-rule into your role-book. Restyled 1:1 to design-export/PennedlyDesign
-// explore-* : input → analyzing → results / empty. Pennedly never opens links
-// or reads other accounts — you bring the words (the live caution + the backend
-// 422 both enforce "paste text, not a link"). Backend: POST …/patterns/analyze
-// (now returns kind + the spotted source line + a voice-matched example).
+// do-rule into your role-book. Rebuilt 1:1 to Explore-SPEC.html: input →
+// analyzing → results / empty. Pennedly never opens links or reads other
+// accounts — you bring the words (the live caution + the backend 422 both
+// enforce "paste text, not a link"). Backend: POST …/patterns/analyze.
+// A tester ?demo=1 panel (dark + state) drives every state on mock content.
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { ApiError, analyzePatterns, applyLintFix, getTokens } from "@/lib/api";
+import { ApiError, analyzePatterns, applyLintFix, fetchMe, getTokens } from "@/lib/api";
 import { captureEvent } from "@/lib/analytics";
 import { useSelectedAccountId } from "@/lib/account";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
 import { Button } from "@/components/ui/button";
 import { Toast, ToastHost } from "@/components/ui/toast";
+import { TweaksPanel, TweakSection, TweakToggle, TweakRadio, useTweaks } from "@/components/tweaks/TweaksPanel";
+import { DEMO_ADDED_RULE, DEMO_RESULT, DEMO_SAMPLE, EX_TWEAK_DEFAULTS } from "@/components/studio/explore-demo";
 import {
   IcArrowLeft,
   IcCheck,
@@ -32,9 +34,17 @@ import { cn } from "@/lib/cn";
 import type { Pattern, PatternStudyResult } from "@/lib/types";
 
 const MAXW = "720px";
+const IS_DEV = process.env.NODE_ENV === "development";
 
 type ToastItem = { id: number; message: string; tone: "success" | "error" };
 type Phase = "idle" | "analyzing" | "results" | "empty";
+
+const PHASE_BY_STATE: Record<string, Phase> = {
+  Input: "idle",
+  Analyzing: "analyzing",
+  Results: "results",
+  Empty: "empty",
+};
 
 const STEP_KEYS: MessageKey[] = [
   "explore.step1",
@@ -57,13 +67,27 @@ export default function ExplorePage() {
   const { t } = useTranslation();
   const accountId = useSelectedAccountId();
 
-  const [raw, setRaw] = useState("");
-  const [phase, setPhase] = useState<Phase>("idle");
+  const [demoParam] = useState(() =>
+    typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("demo") === "1" : false,
+  );
+  const [isTester, setIsTester] = useState(false);
+  const allow = demoParam && (IS_DEV || isTester);
+  const demoOn = allow;
+
+  const [raw, setRaw] = useState(() => (demoParam ? DEMO_SAMPLE : ""));
+  const [realPhase, setRealPhase] = useState<Phase>("idle");
   const [step, setStep] = useState(0);
-  const [result, setResult] = useState<PatternStudyResult | null>(null);
-  const [addedRules, setAddedRules] = useState<Set<string>>(new Set());
+  const [realResult, setRealResult] = useState<PatternStudyResult | null>(null);
+  const [addedRules, setAddedRules] = useState<Set<string>>(() =>
+    demoParam ? new Set([DEMO_ADDED_RULE]) : new Set(),
+  );
   const [addingRule, setAddingRule] = useState<string | null>(null);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
+  const [tw, setTw] = useTweaks(EX_TWEAK_DEFAULTS);
+  const demoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const phase: Phase = demoOn ? PHASE_BY_STATE[tw.state as string] ?? "idle" : realPhase;
+  const result = demoOn ? DEMO_RESULT : realResult;
 
   function toast(message: string, tone: ToastItem["tone"] = "success") {
     const id = Date.now() + Math.random();
@@ -71,9 +95,23 @@ export default function ExplorePage() {
     setTimeout(() => setToasts((s) => s.filter((x) => x.id !== id)), 4000);
   }
 
+  // tester check (gates ?demo=1 outside dev)
   useEffect(() => {
+    if (!getTokens()) return;
+    fetchMe().then((m) => setIsTester(m.is_tester === true)).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (demoParam) return;
     if (!getTokens()) router.push("/app/login");
-  }, [router]);
+  }, [router, demoParam]);
+
+  useEffect(() => {
+    if (!demoOn) return;
+    document.documentElement.classList.toggle("dark", !!tw.dark);
+  }, [demoOn, tw.dark]);
+
+  useEffect(() => () => { if (demoTimer.current) clearTimeout(demoTimer.current); }, []);
 
   // Decorative progress while the (real) analyze request is in flight.
   useEffect(() => {
@@ -97,13 +135,24 @@ export default function ExplorePage() {
   }, [raw]);
   const ready = samples.length > 0 && !issue;
 
+  function goIdle() {
+    if (demoOn) setTw("state", "Input");
+    else setRealPhase("idle");
+  }
+
   async function onAnalyze() {
+    if (demoOn) {
+      setTw("state", "Analyzing");
+      if (demoTimer.current) clearTimeout(demoTimer.current);
+      demoTimer.current = setTimeout(() => setTw("state", "Results"), STEP_KEYS.length * 650 + 450);
+      return;
+    }
     if (accountId === null || !ready) {
       if (samples.length === 0) toast(t("explore.empty_warning"), "error");
       return;
     }
-    setPhase("analyzing");
-    setResult(null);
+    setRealPhase("analyzing");
+    setRealResult(null);
     setAddedRules(new Set());
     captureEvent("ui.patterns_analyze_clicked", {
       account_id: accountId,
@@ -111,8 +160,8 @@ export default function ExplorePage() {
     });
     try {
       const res = await analyzePatterns(accountId, samples);
-      setResult(res);
-      setPhase(res.patterns.length > 0 ? "results" : "empty");
+      setRealResult(res);
+      setRealPhase(res.patterns.length > 0 ? "results" : "empty");
     } catch (e) {
       let msg = String(e);
       if (e instanceof ApiError) {
@@ -120,12 +169,18 @@ export default function ExplorePage() {
         msg = d?.message ?? d?.detail?.message ?? `${e.status}`;
       }
       toast(msg, "error");
-      setPhase("idle");
+      setRealPhase("idle");
     }
   }
 
   async function onAddToVoice(p: Pattern) {
-    if (accountId === null || !p.suggested_do_rule) return;
+    if (!p.suggested_do_rule) return;
+    if (demoOn) {
+      setAddedRules((s) => new Set(s).add(p.suggested_do_rule));
+      toast(t("explore.added"));
+      return;
+    }
+    if (accountId === null) return;
     setAddingRule(p.suggested_do_rule);
     captureEvent("ui.pattern_added_to_voice", { account_id: accountId });
     try {
@@ -223,7 +278,7 @@ export default function ExplorePage() {
               <span className="text-caption text-text-subtle">{t("explore.seed_cap")}</span>
               <button
                 type="button"
-                onClick={() => setRaw(SAMPLE_POSTS)}
+                onClick={() => setRaw(DEMO_SAMPLE)}
                 className="whitespace-nowrap rounded-full border border-border bg-surface-2 px-2.5 py-[5px] text-caption text-text-muted transition-colors hover:border-text/20 hover:bg-surface hover:text-text"
               >
                 {t("explore.seed_sample")}
@@ -297,7 +352,7 @@ export default function ExplorePage() {
                 </div>
                 <div className="mt-1 text-small text-text-subtle">{t("explore.results_cap")}</div>
               </div>
-              <Button variant="secondary" size="sm" onClick={() => setPhase("idle")} icon={<IcArrowLeft size={15} />}>
+              <Button variant="secondary" size="sm" onClick={goIdle} icon={<IcArrowLeft size={15} />}>
                 {t("explore.paste_more")}
               </Button>
             </div>
@@ -340,7 +395,7 @@ export default function ExplorePage() {
             </div>
             <div className="text-h2 font-semibold tracking-tight">{t("explore.empty_title")}</div>
             <div className="mt-2 max-w-[44ch] text-body leading-snug text-text-muted">{t("explore.empty_sub")}</div>
-            <Button variant="secondary" className="mt-5" onClick={() => setPhase("idle")} icon={<IcArrowLeft size={15} />}>
+            <Button variant="secondary" className="mt-5" onClick={goIdle} icon={<IcArrowLeft size={15} />}>
               {t("explore.empty_back")}
             </Button>
           </div>
@@ -352,6 +407,20 @@ export default function ExplorePage() {
           <Toast key={x.id} tone={x.tone} title={x.message} />
         ))}
       </ToastHost>
+
+      {allow && (
+        <TweaksPanel title="Explore patterns">
+          <TweakSection label="Appearance" />
+          <TweakToggle label="Dark mode" value={tw.dark} onChange={(v) => setTw("dark", v)} />
+          <TweakSection label="State" />
+          <TweakRadio
+            label="State"
+            value={tw.state}
+            options={["Input", "Analyzing", "Results", "Empty"]}
+            onChange={(v) => setTw("state", v)}
+          />
+        </TweaksPanel>
+      )}
     </div>
   );
 }
@@ -439,11 +508,3 @@ function PatternCard({
     </article>
   );
 }
-
-// A neutral sample set for the "Try a sample set" chip (mirrors the design's
-// SAMPLE_POSTS — illustrative admired posts the user can analyze immediately).
-const SAMPLE_POSTS = `I deleted 40,000 followers worth of old posts last night. Not because they were bad. Because they weren't me anymore. The account felt lighter by morning.
-
-Most advice is autobiography in disguise. When someone tells you how to succeed, they're really telling you how they survived. Take the data point, leave the certainty.
-
-Here's what nobody tells you about going viral: the post you worked hardest on is never the one that lands. It's the one you almost didn't publish.`;
