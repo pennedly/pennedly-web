@@ -941,4 +941,377 @@ export const it: Partial<Record<MessageKey, string>> = {
   "settings.tester_tag": "Tester",
   "settings.lang_toast": "Lingua aggiornata",
   "settings.disconnect_toast": "Account scollegato",
+
+  // ── Common (resto) ─────────────────────────────────────────────
+  "common.undo": "Annulla",
+
+  // ── Login (resto) ──────────────────────────────────────────────
+  "login.signing_google": "Apro Google…",
+
+  // ── Landing ────────────────────────────────────────────────────
+  "landing.sign_in": "Accedi",
+  "landing.status": "In sviluppo · beta su invito",
+  "landing.tagline": "Gestisci Threads da professionista, con la tua voce.",
+  "landing.lead_head":
+    "Pennedly scrive post e risposte virali nella tua voce, analizza cosa funziona e ti mostra cosa fa presa su ogni account che gestisci.",
+  "landing.lead_body": "Ogni parola la approvi tu.",
+  "landing.lead_emph": "E quando vuoi, attivi il pilota automatico.",
+  "landing.feat_viral_title": "Post virali nella tua voce",
+  "landing.feat_viral_desc":
+    "Bozze fatte per fare presa e per suonare come te, non come un'AI qualunque.",
+  "landing.feat_replies_title": "Risposte che suonano come te",
+  "landing.feat_replies_desc":
+    "Scrive le risposte ai tuoi commenti nella tua voce, così resti in ogni conversazione.",
+  "landing.feat_audits_title": "Audit settimanali + un coach",
+  "landing.feat_audits_desc":
+    "Ogni settimana rivede cosa ha funzionato e propone piccoli ritocchi. Tu approvi, lui misura l'effetto.",
+  "landing.feat_analytics_title": "Analisi, non rumore",
+  "landing.feat_analytics_desc":
+    "Vedi cosa fa presa davvero: quali post sono diventati virali, quali no e perché.",
+  "landing.feat_autopilot_title": "Pilota automatico, decidi tu",
+  "landing.feat_autopilot_desc":
+    "Affida post e risposte a un programma, oppure continua ad approvare ogni parola.",
+  "landing.feat_accounts_title": "Tutti gli account, in un posto",
+  "landing.feat_accounts_desc":
+    "Gestisci tutti i tuoi account Threads da un unico spazio di lavoro tranquillo.",
+  "landing.footer_privacy": "Informativa sulla privacy",
+  "landing.footer_terms": "Termini di servizio",
+  "landing.footer_data": "Cancellazione dei dati",
+  "landing.spec_draft": "Bozza",
+  "landing.spec_voice": "Nella tua voce",
+  "landing.spec_edit": "Modifica",
+  "landing.spec_approve": "Approva",
+  "landing.spec_text":
+    "La costanza batte il talento. Presentati ogni giorno e supererai in silenzio tutti quelli che aspettano l'ispirazione.",
+
+  // ── Studio ─────────────────────────────────────────────────────
+  "studio.composer_placeholder":
+    "Di cosa vuoi scrivere? Un argomento, un'opinione netta, un link…",
+  "studio.chip_lesson": "Una lezione di questa settimana",
+  "studio.chip_trend": "Reagisci a un trend",
+  "studio.chip_mentions": "Rispondi alle menzioni recenti",
+  "studio.chip_opinion": "Un'opinione impopolare",
+  "studio.generate": "Genera",
+  "studio.drafting_pre": "Scrivo",
+  "studio.drafting_post": "post nella tua voce",
+  "studio.tab_ready": "Pronto da pubblicare",
+  "studio.tab_drafts": "Bozze",
+  "studio.tab_published": "Pubblicato",
+  "studio.tab_rejected": "Rifiutato",
+  "studio.badge_draft": "Bozza",
+  "studio.badge_ready": "Pronto",
+  "studio.badge_published": "Pubblicato",
+  "studio.badge_rejected": "Rifiutato",
+  "studio.empty_draft_title": "Nessuna bozza in attesa",
+  "studio.empty_draft_sub":
+    "Descrivi un argomento qui sopra e Pennedly lo scrive nella tua voce.",
+  "studio.empty_draft_cta": "Scrivi qualcosa",
+  "studio.empty_ready_title": "Niente di pronto da pubblicare",
+  "studio.empty_ready_sub": "Approva le bozze e si mettono in fila qui.",
+  "studio.empty_published_title": "Ancora niente pubblicato",
+  "studio.empty_published_sub": "Pubblica una bozza e comparirà qui.",
+  "studio.empty_rejected_title": "Nessuna bozza rifiutata",
+  "studio.empty_rejected_sub": "Le bozze che scarti finiscono qui.",
+  "studio.error_title": "Impossibile caricare le tue bozze",
+  "studio.error_sub":
+    "Qualcosa è andato storto dalla nostra parte. Riprova.",
+  "studio.retry": "Riprova",
+  "studio.in_your_voice": "Nella tua voce",
+  "studio.ready_tag": "Pronto da pubblicare",
+  "studio.passed_on": "Scartato · non verrà pubblicato",
+  "studio.editing": "Modifica",
+  "studio.translated_to": "Tradotto in",
+  "studio.show_original": "Mostra originale",
+  "studio.translate": "Traduci",
+  "studio.translate_to": "Traduci in",
+  "studio.original": "Originale",
+  "studio.tweak_action": "Ritocca nella tua voce",
+  "studio.tweak_placeholder": "Cosa vuoi cambiare? es. rendilo più incisivo…",
+  "studio.tweak_s1": "Rendilo più incisivo",
+  "studio.tweak_s2": "Rendilo più corto",
+  "studio.tweak_s3": "Chiudi con una domanda",
+  "studio.tweak_s4": "Tono più caldo",
+  "studio.revising": "Riscrivo nella tua voce…",
+  "studio.revised": "Aggiornato proprio ora",
+  "studio.approve": "Approva",
+  "studio.publish": "Pubblica su Threads",
+  "studio.open_threads": "Apri in Threads",
+  "studio.send_back": "Rimanda alle bozze",
+  "studio.restore": "Riporta alle bozze",
+  "studio.edit": "Modifica",
+  "studio.reject": "Rifiuta la bozza",
+  "studio.cancel": "Annulla",
+  "studio.save": "Salva",
+  "studio.publish_title": "Pubblicare su Threads?",
+  "studio.publish_sub":
+    "Viene pubblicato subito e pubblicamente. Potrai comunque eliminarlo da Threads dopo.",
+  "studio.publish_now": "Pubblica",
+  "studio.too_long": "Troppo lungo da pubblicare",
+  "studio.toast_approved": "Approvato",
+  "studio.toast_moved_ready": "Spostato in «Pronto da pubblicare»",
+  "studio.toast_rejected": "Bozza rifiutata",
+  "studio.toast_moved_rejected": "Spostato in «Rifiutato»",
+  "studio.toast_restored": "Riportato alle bozze",
+  "studio.toast_edit_saved": "Modifica salvata",
+  "studio.toast_published": "Pubblicato su Threads",
+  "studio.fr_eyebrow": "Benvenuto in Pennedly",
+  "studio.fr_title": "Prima, catturiamo la tua voce.",
+  "studio.fr_lead":
+    "Pennedly scrive post e risposte che suonano come te. Configura la tua voce una volta e ogni bozza esce nel tuo tono.",
+  "studio.fr_step1_t": "Collega il tuo account Threads",
+  "studio.fr_step1_d":
+    "Solo lettura all'inizio, così Pennedly può imparare come scrivi.",
+  "studio.fr_step2_t": "Cattura la tua voce",
+  "studio.fr_step2_d":
+    "Un paio di minuti di domande, oppure lascia che Pennedly impari dai tuoi post.",
+  "studio.fr_step3_t": "Inizia a scrivere",
+  "studio.fr_step3_d": "Descrivi un argomento e approva ciò che suona giusto.",
+  "studio.fr_cta": "Configura la tua voce",
+  "studio.fr_minutes": "~2 minuti",
+  "studio.fr_disabled": "Configura la tua voce per iniziare a scrivere…",
+  "studio.replying_to": "in risposta a",
+
+  // ── Dashboard (resto) ──────────────────────────────────────────
+  "dashboard.voice_active": "Voce attiva",
+  "dashboard.voice_not_set": "Voce non configurata",
+  "dashboard.draft.replying_to": "in risposta a",
+  "dashboard.draft.reply_managed": "Bozza di risposta · gestita in Risposte",
+  "dashboard.draft.open_replies": "Apri Risposte",
+
+  // ── Role book (resto) ──────────────────────────────────────────
+  "rolebook.themes_include.note_placeholder": "Cosa copre (opzionale)",
+  "rolebook.themes_exclude.note_placeholder": "Perché è off-limits (opzionale)",
+  "rolebook.voice_characteristics.label_placeholder": "Nome breve (opzionale)",
+
+  // ── Voice (resto) ──────────────────────────────────────────────
+  "voice.analyzed_posts": "Estratto da {n} post",
+  "voice.updated_on": "Aggiornato {date}",
+  "voice.empty_title": "Pennedly non ha ancora imparato la tua voce",
+  "voice.empty_sub":
+    "Quando avrai pubblicato qualche post, Pennedly potrà rileggerli e abbozzare una voce di partenza: temi, caratteristiche e regole che puoi modificare. Niente viene condiviso finché non lo decidi tu.",
+  "voice.empty_cta": "Estrai la mia voce",
+  "voice.empty_note": "Puoi riscrivere o ri-estrarre qualsiasi parte in seguito.",
+  "voice.conflicts_pill": "{n} conflitti",
+  "voice.example_post": "Post",
+  "voice.example_reply": "Risposta",
+  "voice.example_kind": "Tipo di esempio",
+  "voice.original": "Originale",
+  "voice.original_editable": "Modificabile",
+  "voice.translated_pill": "Tradotto · {lang}",
+  "voice.translated_banner_lead": "Mostro la tua voce in {lang}.",
+  "voice.translated_banner":
+    "Questa è una traduzione di sola lettura dell'originale, torna all'originale per modificarla.",
+  "voice.translating": "Traduco la tua voce…",
+  "voice.view_original": "Vedi originale",
+
+  // ── Audits (cat + resto) ───────────────────────────────────────
+  "audits.cat.voice": "Voce",
+  "audits.cat.cadence": "Cadenza",
+  "audits.cat.topic": "Argomento",
+  "audits.cat.format": "Formato",
+  "audits.list_sub":
+    "Ogni settimana il coach di Pennedly analizza il tuo account e propone modifiche alla tua voce e alla tua strategia. Approvi ciò che è giusto, niente succede senza di te.",
+  "audits.of_word": "di",
+  "audits.wow": "sett/sett",
+  "audits.applies_immediately": "si applica subito",
+  "audits.ah_cap": "Orari di pubblicazione proposti",
+  "audits.ah_note": "Mostrati nel tuo orario locale",
+  "audits.save_note": "Salva nota",
+  "audits.edit_note": "Modifica",
+  "audits.empty_sub":
+    "Il coach di Pennedly analizza la tua voce e la tua strategia ogni settimana. Il primo audit arriva qui dopo qualche giorno di attività. Approverai sempre le modifiche prima che succeda qualcosa.",
+  "audits.pill_reviewed": "Tutto rivisto",
+  "audits.btn_approve": "Approva",
+  "audits.btn_reject": "Rifiuta",
+  "audits.toast_approved_title": "Modifica approvata",
+  "audits.toast_approved_sub": "Applicata. Pennedly ne misurerà l'effetto.",
+  "audits.toast_rejected_title": "Modifica rifiutata",
+  "audits.toast_rejected_sub": "Nella tua voce non cambia nulla.",
+  "audits.toast_note_saved": "Nota salvata",
+  "audits.toast_note_removed": "Nota rimossa",
+
+  // ── Pattern study (resto) ──────────────────────────────────────
+  "patterns.metric_likes": "mi piace",
+  "patterns.metric_comments": "commenti",
+  "patterns.empty_sub":
+    "Uno studio ha bisogno di almeno {need} post pubblicati per trovare schemi su cui contare. Continua a scrivere nello Studio, ci sei quasi.",
+  "patterns.study_cap":
+    "Dai tuoi ultimi {n} post · ordinati per forza della prova",
+  "patterns.intro_sub":
+    "Cosa muove davvero il rendimento dei tuoi post, scoperto rileggendo la tua storia e sostenuto dai tuoi numeri.",
+
+  // ── Rules (resto) ──────────────────────────────────────────────
+  "user_rules.kind_both": "per entrambi",
+  "style_rules.kind_both": "Entrambi",
+  "style_rules.kind_post": "Post",
+  "style_rules.kind_reply": "Risposte",
+  "style_rules.posts_only": "Solo post",
+  "style_rules.replies_only": "Solo risposte",
+  "style_rules.delete_q": "Eliminare?",
+  "style_rules.toast_rule_deleted": "Regola eliminata",
+  "style_rules.toast_added_post": "Regola aggiunta · applicata ai post",
+  "style_rules.toast_added_reply": "Regola aggiunta · applicata alle risposte",
+  "style_rules.r.no_antithesis.t": "Niente «non X, ma Y»",
+  "style_rules.r.no_antithesis.d":
+    "Evita il cliché dell'antitesi («non conta lo strumento, conta il mestiere»).",
+  "style_rules.r.no_rule_of_three.t": "Niente elenchi di tre",
+  "style_rules.r.no_rule_of_three.d":
+    "Evita la terzina ordinata che piace all'AI («veloce, semplice, affidabile»).",
+  "style_rules.r.no_baity_opener.t": "Niente aperture da modello",
+  "style_rules.r.no_baity_opener.d":
+    "Togli i ganci formulaici tipo «Diciamoci la verità» o «Ecco il punto».",
+  "style_rules.r.no_engagement_question.t": "Niente domande-esca",
+  "style_rules.r.no_engagement_question.d":
+    "Non chiudere ogni post con «Tu che ne pensi?».",
+  "style_rules.r.no_significance_formula.t": "Niente «perché conta»",
+  "style_rules.r.no_significance_formula.d":
+    "Togli l'importanza costruita a tavolino («e questo cambia tutto»).",
+  "style_rules.r.no_ai_buzzwords.t": "Niente parole-spia da AI",
+  "style_rules.r.no_ai_buzzwords.d":
+    "Evita «approfondire», «sfruttare il potenziale», «orchestrare».",
+  "style_rules.r.no_hedging.t": "Niente cautele",
+  "style_rules.r.no_hedging.d":
+    "Togli «probabilmente», «in un certo senso». Vai dritto al punto.",
+  "style_rules.r.no_elegant_variation.t": "Niente sinonimi ricercati",
+  "style_rules.r.no_elegant_variation.d":
+    "Non sostituire una parola semplice con una sfarzosa solo per non ripeterla.",
+  "style_rules.r.no_summary_closer.t": "Niente chiuse «in sintesi»",
+  "style_rules.r.no_summary_closer.d":
+    "Salta le chiuse «in conclusione» e «riassumendo».",
+  "style_rules.r.vary_rhythm.t": "Varia il ritmo delle frasi",
+  "style_rules.r.vary_rhythm.d":
+    "Alterna la lunghezza delle frasi, non marciare con righe tutte uguali.",
+  "style_rules.r.be_concrete.t": "Concreto invece che vago",
+  "style_rules.r.be_concrete.d":
+    "Preferisci dettagli ed esempi alle generalità astratte.",
+  "style_rules.r.plain_formatting.t": "Formattazione semplice",
+  "style_rules.r.plain_formatting.d":
+    "Niente elenchi decorativi né grassetto sparso in un post breve.",
+  "style_rules.r.no_capital_after_colon.t": "Minuscola dopo i due punti",
+  "style_rules.r.no_capital_after_colon.d":
+    "Tieni minuscola la parola dopo i due punti, come scrivono davvero le persone.",
+  "style_rules.r.human_punctuation.t": "Punteggiatura semplice",
+  "style_rules.r.human_punctuation.d":
+    "Virgolette dritte e trattini invece di lineette e «virgolette caporali».",
+
+  // ── Replies (resto) ────────────────────────────────────────────
+  "replies.auto_replied": "Risposta automatica di Pennedly",
+  "replies.posts_with_comments": "Post con commenti",
+  "replies.to_answer": "da rispondere",
+  "replies.comments_word": "comm.",
+  "replies.replying_under": "Rispondo sotto il tuo post",
+  "replies.all_caught_up": "Sei in pari",
+  "replies.open_in_threads": "Apri in Threads",
+  "replies.generate_reply": "Genera risposta",
+  "replies.publish_reply": "Pubblica risposta",
+  "replies.tag_replied": "risposto",
+  "replies.removed_meta": "Tolto dalla coda · non riceverà risposta",
+  "replies.translate_from": "Traduci da",
+  "replies.translated_from": "Tradotto da",
+  "replies.dialog_title": "Pubblicare questa risposta?",
+  "replies.dialog_sub":
+    "Viene pubblicata pubblicamente su Threads, in thread sotto il loro commento.",
+  "replies.toast_approved": "Risposta approvata",
+  "replies.toast_ready": "Pronta da pubblicare",
+  "replies.toast_published": "Risposta pubblicata",
+  "replies.toast_posted": "Pubblicata sotto il commento su Threads",
+  "replies.toast_updated": "Risposta aggiornata",
+  "replies.error_title": "Impossibile caricare le tue risposte",
+  "replies.error_sub":
+    "Qualcosa è andato storto nel caricare la coda. Riprova.",
+
+  // ── Mentions (resto) ───────────────────────────────────────────
+  "mentions.empty_title": "Ancora nessuna menzione",
+  "mentions.open_threads": "Apri in Threads",
+  "mentions.translate": "Traduci",
+  "mentions.translated": "Tradotto",
+  "mentions.show_original": "Mostra originale",
+  "mentions.updated_hourly": "Aggiornato ogni ora",
+  "mentions.error_title": "Impossibile caricare le tue menzioni",
+  "mentions.error":
+    "Qualcosa è andato storto nel raggiungere Threads. Pennedly riproverà al prossimo controllo orario, oppure riprova ora.",
+
+  // ── Autopilot (resto) ──────────────────────────────────────────
+  "autopilot.toast_rule_deleted": "Regola eliminata",
+  "autopilot.sends_utc": "invia alle {time} UTC",
+  "autopilot.jitter_exact": "Esatto (senza variazione)",
+  "autopilot.jitter_min": "± {n} min",
+  "autopilot.jitter_hint_exact": "Pubblica esattamente all'orario",
+  "autopilot.jitter_hint": "Pubblica entro ±{n} min",
+
+  // ── Feed (resto) ───────────────────────────────────────────────
+  "feed.empty_title": "Ancora nessun post pubblicato",
+  "feed.empty_cta": "Vai allo Studio",
+  "feed.sort_label": "Ordina i post",
+  "feed.sort_recent": "Recenti",
+  "feed.sort_top": "Più performanti",
+  "feed.published_posts": "post pubblicati",
+  "feed.on_par": "In linea",
+  "feed.updated": "Aggiornato proprio ora",
+  "feed.baseline_title": "La tua base",
+  "feed.baseline_sub_pre": "Media sui tuoi ultimi",
+  "feed.baseline_sub_post": "post · 30 giorni",
+  "feed.baseline_none": "Nessun post pubblicato negli ultimi 30 giorni",
+  "feed.settling": "Ancora in assestamento",
+  "feed.times_average": "× la media",
+  "feed.open_threads": "Apri su Threads",
+  "feed.views_over": "Visualizzazioni su",
+  "feed.your_average": "la tua media",
+  "feed.posted": "Pubblicato",
+  "feed.now": "Ora",
+  "feed.delete_post": "Elimina post",
+  "feed.delete_title": "Eliminare questo post?",
+  "feed.delete_sub":
+    "Lo rimuove da Threads e dal tuo feed. Non è reversibile.",
+  "feed.toast_deleted": "Post eliminato",
+  "feed.toast_deleted_sub": "Rimosso da Threads e dal tuo feed",
+  "feed.autoreply_sub_on": "Pennedly scriverà le risposte ai nuovi commenti",
+  "feed.autoreply_sub_off": "I nuovi commenti non riceveranno bozze di risposta",
+  "feed.error_title": "Impossibile caricare il tuo feed",
+  "feed.error_sub":
+    "Qualcosa è andato storto nel caricare il tuo feed. Riprova.",
+
+  // ── Stats (resto) ──────────────────────────────────────────────
+  "stats.updated_hourly": "Aggiornato ogni ora",
+  "stats.sub_this_period": "questo periodo",
+  "stats.avg_line": "media",
+  "stats.updated_daily": "Aggiornato ogni giorno",
+  "stats.delta_none": "nessun periodo precedente",
+  "stats.in_word": "in",
+  "stats.cap_per": "Per",
+  "stats.g_hour": "ora",
+  "stats.g_day": "giorno",
+  "stats.g_week": "settimana",
+  "stats.g_month": "mese",
+  "stats.empty_sub":
+    "Per mostrare tendenze significative, le statistiche hanno bisogno di almeno due settimane di attività. Continua a pubblicare nello Studio e il tuo rendimento prenderà forma qui.",
+  "stats.empty_meta1": "settimana finora",
+  "stats.empty_meta2": "post pubblicati",
+
+  // ── Altro (resto) ──────────────────────────────────────────────
+  "dashboard.draft.more_actions": "Altre azioni",
+  "nav.switch_account": "Cambia account",
+  "settings.restart_t": "Riavvia la configurazione voce",
+  "settings.restart_d":
+    "Rifai l'onboarding. Questo sostituisce la tua voce attuale.",
+  "settings.restart_cta": "Riavvia configurazione",
+
+  // ── Onboarding (resto) ─────────────────────────────────────────
+  "onboarding.mode_analyze_meta": "Ci vuole circa un minuto",
+  "onboarding.choice_locked": "Servono {need} post",
+  "onboarding.choice_locked_reason":
+    "Pennedly ha bisogno di almeno {need} post recenti da cui imparare. {handle} ne ha {have}. Per ora costruisci da zero; si sblocca quando avrai pubblicato di più.",
+  "onboarding.connecting": "Collego…",
+  "onboarding.connect_cta": "Collega l'account Threads",
+  "onboarding.back_to_settings": "Torna alle Impostazioni",
+  "onboarding.preview_pill": "Anteprima · niente viene salvato",
+  "onboarding.preview_pill_done": "Anteprima · niente è stato salvato",
+  "onboarding.preview_would_title": "La voce che Pennedly costruirebbe",
+  "onboarding.preview_would_sub":
+    "Generata davvero da {src}, ma in modalità anteprima non viene salvata. Esegui la configurazione normalmente per conservare questa voce.",
+  "onboarding.preview_src_scratch": "la tua descrizione",
+  "onboarding.preview_src_posts": "i post recenti di {handle}",
+  "onboarding.pv_summary_cap": "Riepilogo della voce",
+  "onboarding.pv_themes_cap": "Argomenti",
+  "onboarding.pv_sound_cap": "Come suoni",
 };

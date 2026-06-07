@@ -939,4 +939,376 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "settings.tester_tag": "Тестер",
   "settings.lang_toast": "Мову оновлено",
   "settings.disconnect_toast": "Акаунт відключено",
+
+  // ── Backfill: паритет з en (екрани редизайну) ──────────────────
+  // ── Shared / Login ─────────────────────────────────────────────
+  "common.undo": "Скасувати",
+  "login.signing_google": "Відкриваю Google…",
+
+  // ── Landing ────────────────────────────────────────────────────
+  "landing.sign_in": "Увійти",
+  "landing.status": "У розробці · бета за запрошеннями",
+  "landing.tagline": "Веди Threads як профі, своїм голосом.",
+  "landing.lead_head":
+    "Pennedly пише вірусні пости й відповіді твоїм голосом, проводить аудити й показує, що заходить на всіх твоїх акаунтах.",
+  "landing.lead_body": "Кожне слово схвалюєш ти.",
+  "landing.lead_emph": "А захочеш, вмикаєш автопілот.",
+  "landing.feat_viral_title": "Вірусні пости твоїм голосом",
+  "landing.feat_viral_desc":
+    "Чернетки, що заходять і звучать як ти, а не як нейромережа.",
+  "landing.feat_replies_title": "Відповіді, як пишеш ти",
+  "landing.feat_replies_desc":
+    "Готує відповіді на коментарі твоїм голосом, щоб ти був у кожній розмові.",
+  "landing.feat_audits_title": "Щотижневі аудити + коуч",
+  "landing.feat_audits_desc":
+    "Щотижня розбирає, що спрацювало, і пропонує дрібні правки. Ти схвалюєш, він міряє ефект.",
+  "landing.feat_analytics_title": "Аналітика без шуму",
+  "landing.feat_analytics_desc":
+    "Видно, що реально заходить: що вистрілило, що ні і чому.",
+  "landing.feat_autopilot_title": "Автопілот, якщо захочеш",
+  "landing.feat_autopilot_desc":
+    "Віддай постинг і відповіді на автомат за розкладом або схвалюй кожне слово.",
+  "landing.feat_accounts_title": "Усі акаунти в одному місці",
+  "landing.feat_accounts_desc":
+    "Веди всі свої Threads-акаунти з одного спокійного місця.",
+  "landing.footer_privacy": "Політика конфіденційності",
+  "landing.footer_terms": "Умови використання",
+  "landing.footer_data": "Видалення даних",
+  "landing.spec_draft": "Чернетка",
+  "landing.spec_voice": "Твоїм голосом",
+  "landing.spec_edit": "Правити",
+  "landing.spec_approve": "Схвалити",
+  "landing.spec_text":
+    "Постійність б'є талант. Викладай щодня, і тихо обженеш тих, хто чекає натхнення.",
+
+  // ── Studio ─────────────────────────────────────────────────────
+  "studio.composer_placeholder":
+    "Про що хочеш написати? Тема, гостра думка, посилання…",
+  "studio.chip_lesson": "Урок із цього тижня",
+  "studio.chip_trend": "Відреагувати на тренд",
+  "studio.chip_mentions": "Відповісти на згадки",
+  "studio.chip_opinion": "Непопулярна думка",
+  "studio.generate": "Згенерувати",
+  "studio.drafting_pre": "Пишу",
+  "studio.drafting_post": "постів твоїм голосом",
+  "studio.tab_ready": "Готово до публікації",
+  "studio.tab_drafts": "Чернетки",
+  "studio.tab_published": "Опубліковано",
+  "studio.tab_rejected": "Відхилено",
+  "studio.badge_draft": "Чернетка",
+  "studio.badge_ready": "Готово",
+  "studio.badge_published": "Опубліковано",
+  "studio.badge_rejected": "Відхилено",
+  "studio.empty_draft_title": "Чернеток поки немає",
+  "studio.empty_draft_sub":
+    "Опиши тему вище, і Pennedly напише її твоїм голосом.",
+  "studio.empty_draft_cta": "Написати",
+  "studio.empty_ready_title": "Нічого публікувати",
+  "studio.empty_ready_sub": "Схвалюй чернетки, і вони з'являться тут.",
+  "studio.empty_published_title": "Поки нічого не опубліковано",
+  "studio.empty_published_sub": "Опублікуй чернетку, і вона з'явиться тут.",
+  "studio.empty_rejected_title": "Відхилених немає",
+  "studio.empty_rejected_sub":
+    "Сюди потрапляють чернетки, від яких ти відмовився.",
+  "studio.error_title": "Не вдалося завантажити чернетки",
+  "studio.error_sub": "Щось пішло не так з нашого боку. Спробуй ще раз.",
+  "studio.retry": "Повторити",
+  "studio.in_your_voice": "У твоєму голосі",
+  "studio.ready_tag": "Готово до публікації",
+  "studio.passed_on": "Відкладено · не буде опубліковано",
+  "studio.editing": "Редагування",
+  "studio.translated_to": "Перекладено на",
+  "studio.show_original": "Показати оригінал",
+  "studio.translate": "Перекласти",
+  "studio.translate_to": "Перекласти на",
+  "studio.original": "Оригінал",
+  "studio.tweak_action": "Підправити твоїм голосом",
+  "studio.tweak_placeholder": "Що змінити? Наприклад, зробити бадьоріше…",
+  "studio.tweak_s1": "Зробити бадьоріше",
+  "studio.tweak_s2": "Зробити коротше",
+  "studio.tweak_s3": "Закінчити питанням",
+  "studio.tweak_s4": "Тепліший тон",
+  "studio.revising": "Переписую твоїм голосом…",
+  "studio.revised": "Щойно оновлено",
+  "studio.approve": "Схвалити",
+  "studio.publish": "Опублікувати у Threads",
+  "studio.open_threads": "Відкрити у Threads",
+  "studio.send_back": "Повернути в чернетки",
+  "studio.restore": "Повернути в чернетки",
+  "studio.edit": "Редагувати",
+  "studio.reject": "Відхилити чернетку",
+  "studio.cancel": "Скасувати",
+  "studio.save": "Зберегти",
+  "studio.publish_title": "Опублікувати у Threads?",
+  "studio.publish_sub":
+    "Пост з'явиться одразу й публічно. Видалити його можна буде прямо в Threads.",
+  "studio.publish_now": "Опублікувати",
+  "studio.too_long": "Задовгий для публікації",
+  "studio.toast_approved": "Схвалено",
+  "studio.toast_moved_ready": "У розділі «Готово до публікації»",
+  "studio.toast_rejected": "Чернетку відхилено",
+  "studio.toast_moved_rejected": "У розділі «Відхилено»",
+  "studio.toast_restored": "Повернено в чернетки",
+  "studio.toast_edit_saved": "Зміни збережено",
+  "studio.toast_published": "Опубліковано у Threads",
+  "studio.fr_eyebrow": "Ласкаво просимо до Pennedly",
+  "studio.fr_title": "Спершу налаштуймо твій голос.",
+  "studio.fr_lead":
+    "Pennedly пише пости й відповіді, що звучать як ти. Налаштуй голос один раз, і кожна чернетка буде у твоєму тоні.",
+  "studio.fr_step1_t": "Підключи акаунт Threads",
+  "studio.fr_step1_d":
+    "Спершу лише читання, щоб Pennedly вивчив твою манеру.",
+  "studio.fr_step2_t": "Налаштуй голос",
+  "studio.fr_step2_d":
+    "Пара хвилин запитань або Pennedly вчиться на твоїх постах.",
+  "studio.fr_step3_t": "Починай писати",
+  "studio.fr_step3_d": "Опиши тему й схвалюй те, що звучить вірно.",
+  "studio.fr_cta": "Налаштувати голос",
+  "studio.fr_minutes": "~2 хвилини",
+  "studio.fr_disabled": "Налаштуй голос, щоб почати писати…",
+  "studio.replying_to": "відповідає на",
+
+  // ── Dashboard (решта) ──────────────────────────────────────────
+  "dashboard.voice_active": "Голос активний",
+  "dashboard.voice_not_set": "Голос не налаштовано",
+  "dashboard.draft.replying_to": "відповідь на",
+  "dashboard.draft.reply_managed": "Чернетка відповіді · керування у Відповідях",
+  "dashboard.draft.open_replies": "Відкрити Відповіді",
+
+  // ── Role book (плейсхолдери) ───────────────────────────────────
+  "rolebook.themes_include.note_placeholder": "Що охоплює (необов'язково)",
+  "rolebook.themes_exclude.note_placeholder": "Чому під забороною (необов'язково)",
+  "rolebook.voice_characteristics.label_placeholder":
+    "Коротка назва (необов'язково)",
+
+  // ── Voice ──────────────────────────────────────────────────────
+  "voice.analyzed_posts": "Зібрано з постів: {n}",
+  "voice.updated_on": "Оновлено {date}",
+  "voice.empty_title": "Pennedly ще не вивчив твій голос",
+  "voice.empty_sub":
+    "Коли опублікуєш кілька постів, Pennedly перечитає їх і накидає стартовий голос: теми, характеристики та правила, які можна правити. Нічим не ділимося, поки ти сам не дозволиш.",
+  "voice.empty_cta": "Витягти мій голос",
+  "voice.empty_note": "Будь-яку частину потім можна переписати або витягти заново.",
+  "voice.conflicts_pill": "Конфліктів: {n}",
+  "voice.example_post": "Пост",
+  "voice.example_reply": "Відповідь",
+  "voice.example_kind": "Тип прикладу",
+  "voice.original": "Оригінал",
+  "voice.original_editable": "Редагований",
+  "voice.translated_pill": "Переклад · {lang}",
+  "voice.translated_banner_lead": "Показую твій голос мовою {lang}.",
+  "voice.translated_banner":
+    "Це переклад оригіналу лише для читання, повернись до оригіналу, щоб редагувати.",
+  "voice.translating": "Перекладаю голос…",
+  "voice.view_original": "До оригіналу",
+
+  // ── Audits ─────────────────────────────────────────────────────
+  "audits.cat.voice": "Голос",
+  "audits.cat.cadence": "Ритм",
+  "audits.cat.topic": "Тема",
+  "audits.cat.format": "Формат",
+  "audits.list_sub":
+    "Щотижня коуч Pennedly розбирає твій акаунт і пропонує зміни голосу та стратегії. Ти схвалюєш те, що вірно, без тебе нічого не відбувається.",
+  "audits.of_word": "з",
+  "audits.wow": "тижд/тижд",
+  "audits.applies_immediately": "застосовується одразу",
+  "audits.ah_cap": "Запропоновані години постингу",
+  "audits.ah_note": "Показано у твоєму місцевому часі",
+  "audits.save_note": "Зберегти нотатку",
+  "audits.edit_note": "Редагувати",
+  "audits.empty_sub":
+    "Коуч Pennedly розбирає твій голос і стратегію щотижня. Перший аудит з'явиться тут за кілька днів активності. Зміни ти завжди спершу схвалюєш сам.",
+  "audits.pill_reviewed": "Усе переглянуто",
+  "audits.btn_approve": "Схвалити",
+  "audits.btn_reject": "Відхилити",
+  "audits.toast_approved_title": "Зміну схвалено",
+  "audits.toast_approved_sub": "Застосовано. Pennedly виміряє ефект.",
+  "audits.toast_rejected_title": "Зміну відхилено",
+  "audits.toast_rejected_sub": "У твоєму голосі нічого не змінюється.",
+  "audits.toast_note_saved": "Нотатку збережено",
+  "audits.toast_note_removed": "Нотатку видалено",
+
+  // ── Pattern study ──────────────────────────────────────────────
+  "patterns.metric_likes": "вподобайок",
+  "patterns.metric_comments": "коментарів",
+  "patterns.empty_sub":
+    "Для дослідження потрібно щонайменше {need} опублікованих постів, щоб висновки були обґрунтованими. Пиши далі у Studio, ти вже майже біля цілі.",
+  "patterns.study_cap":
+    "З твоїх останніх {n} постів · упорядковано за силою доказів",
+  "patterns.intro_sub":
+    "Що насправді рухає результативність твоїх постів: знайдено за твоєю власною історією й підкріплено твоїми цифрами.",
+
+  // ── Rules ──────────────────────────────────────────────────────
+  "user_rules.kind_both": "для обох",
+  "style_rules.kind_both": "Обидва",
+  "style_rules.kind_post": "Пости",
+  "style_rules.kind_reply": "Відповіді",
+  "style_rules.posts_only": "Лише пости",
+  "style_rules.replies_only": "Лише відповіді",
+  "style_rules.delete_q": "Видалити?",
+  "style_rules.toast_rule_deleted": "Правило видалено",
+  "style_rules.toast_added_post": "Правило додано · застосовується до постів",
+  "style_rules.toast_added_reply": "Правило додано · застосовується до відповідей",
+  "style_rules.r.no_antithesis.t": "Без антитез «не X, а Y»",
+  "style_rules.r.no_antithesis.d":
+    "Уникай кліше антитези («справа не в інструменті, а в майстерності»).",
+  "style_rules.r.no_rule_of_three.t": "Без переліків по три",
+  "style_rules.r.no_rule_of_three.d":
+    "Уникай акуратних трійок, які любить AI («швидко, просто, надійно»).",
+  "style_rules.r.no_baity_opener.t": "Без шаблонних зачинів",
+  "style_rules.r.no_baity_opener.d":
+    "Прибери формульні гачки на кшталт «Будьмо чесні» чи «Ось у чому річ».",
+  "style_rules.r.no_engagement_question.t": "Без питань-приманок",
+  "style_rules.r.no_engagement_question.d":
+    "Не закінчуй кожен пост питанням «А ви як думаєте?».",
+  "style_rules.r.no_significance_formula.t": "Без формул «чому це важливо»",
+  "style_rules.r.no_significance_formula.d":
+    "Прибери натягнуту значущість («і це змінює все»).",
+  "style_rules.r.no_ai_buzzwords.t": "Без слів-маркерів AI",
+  "style_rules.r.no_ai_buzzwords.d":
+    "Уникай «занурюватися», «розкрити потенціал», «вибудувати».",
+  "style_rules.r.no_hedging.t": "Без обмовок",
+  "style_rules.r.no_hedging.d":
+    "Прибери «мабуть», «у певному сенсі». Кажи прямо.",
+  "style_rules.r.no_elegant_variation.t": "Без вишуканих синонімів",
+  "style_rules.r.no_elegant_variation.d":
+    "Не заміняй просте слово вишуканим лише заради різноманіття.",
+  "style_rules.r.no_summary_closer.t": "Без кінцівок «підсумовуючи»",
+  "style_rules.r.no_summary_closer.d":
+    "Без «на завершення» та «підсумовуючи».",
+  "style_rules.r.vary_rhythm.t": "Живий ритм речень",
+  "style_rules.r.vary_rhythm.d":
+    "Чергуй довжину фраз, а не однакові рядки.",
+  "style_rules.r.be_concrete.t": "Конкретика замість загальних слів",
+  "style_rules.r.be_concrete.d": "Конкретика й приклади замість абстракцій.",
+  "style_rules.r.plain_formatting.t": "Без вишуканого форматування",
+  "style_rules.r.plain_formatting.d":
+    "Без декоративних списків і жирного в короткому пості.",
+  "style_rules.r.no_capital_after_colon.t": "Мала літера після двокрапки",
+  "style_rules.r.no_capital_after_colon.d":
+    "Слово після двокрапки з малої, як пишуть люди.",
+  "style_rules.r.human_punctuation.t": "Проста пунктуація",
+  "style_rules.r.human_punctuation.d":
+    "Прямі лапки й дефіси замість тире та «лапок-ялинок».",
+
+  // ── Replies ────────────────────────────────────────────────────
+  "replies.auto_replied": "Авто-відповідь від Pennedly",
+  "replies.posts_with_comments": "Пости з коментарями",
+  "replies.to_answer": "відповісти",
+  "replies.comments_word": "комент.",
+  "replies.replying_under": "Відповідь під твоїм постом",
+  "replies.all_caught_up": "Усе опрацьовано",
+  "replies.open_in_threads": "Відкрити у Threads",
+  "replies.generate_reply": "Згенерувати відповідь",
+  "replies.publish_reply": "Опублікувати відповідь",
+  "replies.tag_replied": "відповідь опубліковано",
+  "replies.removed_meta": "Прибрано з черги · без відповіді",
+  "replies.translate_from": "Перекласти з",
+  "replies.translated_from": "Перекладено з",
+  "replies.dialog_title": "Опублікувати цю відповідь?",
+  "replies.dialog_sub":
+    "Відповідь з'явиться публічно у Threads, гілкою під їхнім коментарем.",
+  "replies.toast_approved": "Відповідь схвалено",
+  "replies.toast_ready": "Готово до публікації",
+  "replies.toast_published": "Відповідь опубліковано",
+  "replies.toast_posted": "Опубліковано гілкою під коментарем у Threads",
+  "replies.toast_updated": "Відповідь оновлено",
+  "replies.error_title": "Не вдалося завантажити відповіді",
+  "replies.error_sub":
+    "Щось пішло не так під час завантаження черги. Спробуй ще раз.",
+
+  // ── Mentions ───────────────────────────────────────────────────
+  "mentions.empty_title": "Згадок поки немає",
+  "mentions.open_threads": "Відкрити у Threads",
+  "mentions.translate": "Перекласти",
+  "mentions.translated": "Перекладено",
+  "mentions.show_original": "Показати оригінал",
+  "mentions.updated_hourly": "Оновлюється щогодини",
+  "mentions.error_title": "Не вдалося завантажити згадки",
+  "mentions.error":
+    "Щось пішло не так під час звернення до Threads. Pennedly спробує знову при наступній щогодинній перевірці, або повтори зараз.",
+
+  // ── Autopilot ──────────────────────────────────────────────────
+  "autopilot.toast_rule_deleted": "Правило видалено",
+  "autopilot.sends_utc": "надішле о {time} UTC",
+  "autopilot.jitter_exact": "Точно (без розкиду)",
+  "autopilot.jitter_min": "± {n} хв",
+  "autopilot.jitter_hint_exact": "Постить точно в зазначений час",
+  "autopilot.jitter_hint": "Постить у межах ±{n} хв",
+
+  // ── My Feed ────────────────────────────────────────────────────
+  "feed.empty_title": "Опублікованих постів поки немає",
+  "feed.empty_cta": "До Studio",
+  "feed.sort_label": "Сортувати пости",
+  "feed.sort_recent": "Свіжі",
+  "feed.sort_top": "Найкращі",
+  "feed.published_posts": "опублікованих постів",
+  "feed.on_par": "На рівні",
+  "feed.updated": "Оновлено щойно",
+  "feed.baseline_title": "Твоя база",
+  "feed.baseline_sub_pre": "Середнє за останні",
+  "feed.baseline_sub_post": "постів · 30 днів",
+  "feed.baseline_none": "Немає опублікованих постів за останні 30 днів",
+  "feed.settling": "Ще набирає",
+  "feed.times_average": "× від середнього",
+  "feed.open_threads": "Відкрити у Threads",
+  "feed.views_over": "Перегляди за",
+  "feed.your_average": "твоє середнє",
+  "feed.posted": "Опубліковано",
+  "feed.now": "Зараз",
+  "feed.delete_post": "Видалити пост",
+  "feed.delete_title": "Видалити цей пост?",
+  "feed.delete_sub":
+    "Пост видалиться з Threads і з твоєї стрічки. Скасувати не можна.",
+  "feed.toast_deleted": "Пост видалено",
+  "feed.toast_deleted_sub": "Видалено з Threads і з твоєї стрічки",
+  "feed.autoreply_sub_on": "Pennedly писатиме відповіді на нові коментарі",
+  "feed.autoreply_sub_off": "На нові коментарі відповіді не пишуться",
+  "feed.error_title": "Не вдалося завантажити стрічку",
+  "feed.error_sub":
+    "Щось пішло не так під час завантаження стрічки. Спробуй ще раз.",
+
+  // ── Stats ──────────────────────────────────────────────────────
+  "stats.updated_hourly": "Оновлюється щогодини",
+  "stats.sub_this_period": "за період",
+  "stats.avg_line": "сер.",
+  "stats.updated_daily": "Оновлюється щодня",
+  "stats.delta_none": "немає попереднього періоду",
+  "stats.in_word": "за",
+  "stats.cap_per": "За",
+  "stats.g_hour": "годину",
+  "stats.g_day": "день",
+  "stats.g_week": "тиждень",
+  "stats.g_month": "місяць",
+  "stats.empty_sub":
+    "Щоб показати осмислені тренди, статистиці потрібно хоча б два тижні активності. Публікуй далі у Studio, і картина складеться тут.",
+  "stats.empty_meta1": "тиждень поки",
+  "stats.empty_meta2": "постів опубліковано",
+
+  // ── Інше (решта) ───────────────────────────────────────────────
+  "dashboard.draft.more_actions": "Більше дій",
+  "nav.switch_account": "Змінити акаунт",
+  "settings.restart_t": "Перезапустити налаштування голосу",
+  "settings.restart_d":
+    "Пройти онбординг заново. Це замінить твій поточний голос.",
+  "settings.restart_cta": "Перезапустити",
+
+  // ── Onboarding (решта) ─────────────────────────────────────────
+  "onboarding.mode_analyze_meta": "Близько хвилини",
+  "onboarding.choice_locked": "Потрібно {need} постів",
+  "onboarding.choice_locked_reason":
+    "Pennedly потрібно хоча б {need} недавніх постів, щоб учитися. У {handle} їх {have}. Поки створи з нуля; розблокується, коли постів стане більше.",
+  "onboarding.connecting": "Підключаю…",
+  "onboarding.connect_cta": "Підключити акаунт Threads",
+  "onboarding.back_to_settings": "Назад у Налаштування",
+  "onboarding.preview_pill": "Перегляд · нічого не зберігається",
+  "onboarding.preview_pill_done": "Перегляд · нічого не збережено",
+  "onboarding.preview_would_title": "Голос, який Pennedly створив би",
+  "onboarding.preview_would_sub":
+    "Створено по-справжньому з {src}, але в режимі перегляду не зберігається. Запусти налаштування звичайно, щоб залишити цей голос.",
+  "onboarding.preview_src_scratch": "твого опису",
+  "onboarding.preview_src_posts": "недавніх постів {handle}",
+  "onboarding.pv_summary_cap": "Зведення голосу",
+  "onboarding.pv_themes_cap": "Теми",
+  "onboarding.pv_sound_cap": "Як ти звучиш",
 };
