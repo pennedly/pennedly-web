@@ -37,9 +37,13 @@ import {
 import { UI_LANGS, type UiLang } from "@/components/studio/studio-demo";
 
 export function fmt(n: number): string {
-  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
-  if (n >= 10_000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "K";
-  return n.toLocaleString("en-US");
+  // Round first: counts are whole, and the baseline card feeds in *averages*
+  // (avg_views/likes/comments/reposts) that arrive fractional — "52.333 likes"
+  // or "1.583 reposts" reads as a bug. Whole counts are unaffected.
+  const r = Math.round(n);
+  if (r >= 1_000_000) return (r / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
+  if (r >= 10_000) return (r / 1000).toFixed(1).replace(/\.0$/, "") + "K";
+  return r.toLocaleString("en-US");
 }
 
 export type FeedCardModel = {
