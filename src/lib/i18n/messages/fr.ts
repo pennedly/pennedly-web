@@ -956,6 +956,8 @@ export const fr: Partial<Record<MessageKey, string>> = {
     "Pennedly rédige des posts et des réponses viraux dans ta voix, audite ce qui marche et te montre ce qui prend sur chacun de tes comptes.",
   "landing.lead_body": "Tu valides chaque mot.",
   "landing.lead_emph": "Et si tu veux, tu actives le pilote automatique.",
+  "landing.feat_eyebrow": "Le produit",
+  "landing.feat_title": "Un espace de travail pour tous tes comptes.",
   "landing.feat_viral_title": "Des posts viraux dans ta voix",
   "landing.feat_viral_desc":
     "Des brouillons faits pour prendre et qui sonnent comme toi, pas comme une IA générique.",

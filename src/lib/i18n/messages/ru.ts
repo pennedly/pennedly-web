@@ -87,6 +87,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
     "Pennedly пишет вирусные посты и ответы твоим голосом, проводит аудиты и показывает, что заходит на всех твоих аккаунтах.",
   "landing.lead_body": "Каждое слово одобряешь ты.",
   "landing.lead_emph": "А захочешь, включаешь автопилот.",
+  "landing.feat_eyebrow": "Продукт",
+  "landing.feat_title": "Одно рабочее место для всех твоих аккаунтов.",
   "landing.feat_viral_title": "Вирусные посты твоим голосом",
   "landing.feat_viral_desc": "Черновики, которые заходят и звучат как ты, а не как нейросеть.",
   "landing.feat_replies_title": "Ответы, как пишешь ты",

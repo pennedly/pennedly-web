@@ -955,6 +955,8 @@ export const pt: Partial<Record<MessageKey, string>> = {
   "landing.lead_body": "Você aprova cada palavra.",
   "landing.lead_emph":
     "E o piloto automático fica ali, para quando você quiser.",
+  "landing.feat_eyebrow": "O produto",
+  "landing.feat_title": "Um só lugar para todas as suas contas.",
   "landing.feat_viral_title": "Posts virais na sua voz",
   "landing.feat_viral_desc":
     "Rascunhos feitos para engajar e soar como você, não como uma IA genérica.",

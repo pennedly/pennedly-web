@@ -87,6 +87,8 @@ export const en = {
     "Pennedly drafts viral posts and replies in your voice, audits what's working, and shows you what's landing across every account you run.",
   "landing.lead_body": "You approve every word.",
   "landing.lead_emph": "Autopilot's there when you want it.",
+  "landing.feat_eyebrow": "The product",
+  "landing.feat_title": "One workspace for every account you run.",
   "landing.feat_viral_title": "Viral posts in your voice",
   "landing.feat_viral_desc": "Drafts built to land and sound like you, not a generic AI.",
   "landing.feat_replies_title": "Replies that sound like you",

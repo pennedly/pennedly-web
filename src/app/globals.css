@@ -227,6 +227,8 @@
 /* Landing status-dot ping — canonical (mirrors ds/components.css §3.5): the ring
    holds at rest, then bursts out to 2.2× and fades. */
 @keyframes ping { 75%, 100% { transform: scale(2.2); opacity: 0; } }
+/* Landing "Studio" product-peek: blinking compose caret. */
+@keyframes caret-blink { 50% { opacity: 0; } }
 /* Onboarding stage entrance + the "done" check pop — transform-only, so a
    resting card never sticks invisible if interrupted. */
 @keyframes step-in { from { transform: translateY(8px); } to { transform: none; } }

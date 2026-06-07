@@ -1,51 +1,115 @@
-// landing-parts.jsx — sections for the public landing page.
-// All visuals reference the ink-on-paper tokens; no hardcoded colours.
+// landing-parts.jsx — sections for the public landing page (/).
+// Product-forward composition: a calm hero with a live "Studio" product peek, a
+// bento feature grid, and a legal footer. All visuals reference the ink-on-paper
+// tokens; no hardcoded colours. Self-contained (local Avatar; no app shell).
 
-function Mono({ text, size = 34, font = 13 }) {
-  return <span className="mono" style={{ width: size, height: size, fontSize: font }}>{text}</span>;
+const { useState: lpS, useRef: lpR, useEffect: lpE } = React;
+
+/* --------------------------------- Avatar ------------------------------ */
+// Real profile photo with the initials monogram as fallback (mirrors §3.4).
+function Avatar({ src, initials = "", size = 32 }) {
+  return (
+    <span className="avatar" style={{ width: size, height: size }}>
+      {src ? <img className="avatar-img" src={src} alt="" /> : <span className="avatar-mono" style={{ fontSize: Math.round(size * 0.42) }}>{initials}</span>}
+    </span>
+  );
 }
 
-/* ------------------------------ Top bar -------------------------------- */
+/* --------------------------- Language switcher ------------------------- */
+// Top-bar control; the page localizes to 8 locales (EN baseline). Selecting a
+// language sets the displayed locale; full copy swap is wired at the i18n layer.
+function LanguageSwitcher() {
+  const [open, setOpen] = lpS(false);
+  const [lang, setLang] = lpS(window.LAND_LANGS[0]);
+  const ref = lpR(null);
+  lpE(() => {
+    if (!open) return;
+    const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const onKey = (e) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("mousedown", onDoc); document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("mousedown", onDoc); document.removeEventListener("keydown", onKey); };
+  }, [open]);
+  return (
+    <div className="lang" ref={ref}>
+      <button className="lang-trigger" aria-haspopup="listbox" aria-expanded={open} aria-label="Change language" onClick={() => setOpen((v) => !v)}>
+        <window.IcGlobe size={16} />
+        <span className="lang-code">{lang.code}</span>
+        <window.IcChevDown size={14} className="lang-chev" />
+      </button>
+      {open && (
+        <div className="lang-menu" role="listbox" aria-label="Language">
+          {window.LAND_LANGS.map((l) => (
+            <button key={l.code} role="option" aria-selected={l.code === lang.code}
+              className={`lang-opt ${l.code === lang.code ? "is-on" : ""}`}
+              onClick={() => { setLang(l); setOpen(false); }}>
+              <span className="lang-opt-label">{l.label}</span>
+              <span className="lang-opt-code">{l.code}</span>
+              {l.code === lang.code && <window.IcCheck size={14} className="lang-opt-ok" />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------- Top bar ------------------------------- */
 function TopBar({ dark, onToggleTheme }) {
+  const L = window.LAND;
   return (
     <header className="land-top">
-      <div className="wrap">
+      <div className="wrap land-top-row">
         <div className="brand">
-          <window.Logo size={34} radius={10} className="bm" />
+          <window.Logo size={30} radius={9} className="bm" />
           <span className="bn">Pennedly</span>
         </div>
         <span className="sp" />
         <div className="actions">
+          <LanguageSwitcher />
           <button className="icon-btn" aria-label="Toggle theme" onClick={onToggleTheme}>
             {dark ? <window.IcSun size={17} /> : <window.IcMoon size={16} />}
           </button>
-          <a className="btn btn--secondary" href="Login.html">Sign in</a>
+          <a className="btn btn--primary" href="Login.html">{L.signIn}</a>
         </div>
       </div>
     </header>
   );
 }
 
-/* ----------------------------- Specimen -------------------------------- */
-function Specimen() {
-  const s = window.LAND_SAMPLE;
+/* --------------------------- Studio window peek ------------------------ */
+// A crisp peek of the product: an account rail + a composer drafting in voice.
+// Illustrative — not a live feed.
+function StudioWindow() {
+  const L = window.LAND, s = window.LAND_SAMPLE;
   return (
-    <div className="specimen land-rise" aria-hidden="true">
-      <div className="specimen-tilt">
-        <div className="spec-head">
-          <Mono text={s.initials} size={36} font={13} />
-          <div className="spec-id">
-            <div className="spec-name">{s.name}</div>
-            <div className="spec-handle">{s.handle}</div>
+    <div className="window land-rise" aria-hidden="true">
+      <div className="winbar">
+        <span className="dots"><i /><i /><i /></span>
+        <span className="url">{L.winUrl}<span className="url-path">{L.winPath}</span></span>
+      </div>
+      <div className="app">
+        <aside className="rail">
+          {window.LAND_ACCOUNTS.map((a, i) => (
+            <span key={i} className={`rail-acct ${i === 0 ? "is-active" : ""}`}><Avatar src={a.avatar} initials={a.initials} size={28} /></span>
+          ))}
+          <span className="rail-add" aria-hidden="true"><window.IcPlus size={15} /></span>
+        </aside>
+        <div className="compose">
+          <div className="compose-head">
+            <Avatar src={s.avatar} initials={s.initials} size={34} />
+            <div className="spec-id"><div className="spec-name">{s.name}</div><div className="spec-handle">{s.handle}</div></div>
+            <span className="badge"><span className="bdot" /> {L.draftLabel}</span>
           </div>
-          <span className="spec-badge"><span className="bdot" /> Draft</span>
-        </div>
-        <p className="spec-body">{s.text}</p>
-        <div className="spec-foot">
-          <span className="spec-tag"><window.IcSparkle size={13} className="vt" /> In your voice</span>
-          <div className="spec-actions">
-            <span className="spec-ghost"><window.IcPencil size={13} /> Edit</span>
-            <span className="spec-ink"><window.IcCheck size={13} /> Approve</span>
+          <p className="compose-text">{s.text}<span className="caret" /></p>
+          <div className="compose-tools">
+            <span className="chip chip--accent"><window.IcSparkle size={12} /> {L.voiceTag}</span>
+            <span className="chip"><window.IcVoice size={12} /> {L.toneTag}</span>
+          </div>
+          <div className="compose-foot">
+            <span className="foot-note">{L.composeNote}</span>
+            <span className="grow" />
+            <span className="ghost"><window.IcPencil size={13} /> {L.edit}</span>
+            <span className="ink"><window.IcCheck size={13} /> {L.approveBtn}</span>
           </div>
         </div>
       </div>
@@ -58,40 +122,46 @@ function Hero({ showSample }) {
   const L = window.LAND;
   return (
     <section className="hero">
-      <div className="wrap">
+      <div className={`wrap hero-grid ${showSample ? "" : "hero-grid--solo"}`}>
         <div className="hero-text land-rise">
           <span className="status"><span className="sdot" /> {L.status}</span>
-          <h1 className="hero-title">{L.tagline}</h1>
-          <div className="hero-lead">
-            <p className="lh">{L.leadHead}</p>
-            <p className="lb">{L.leadBody} <span className="le">{L.leadEmph}</span></p>
-          </div>
+          <h1 className="hero-title">{L.headline}</h1>
+          <p className="hero-lead">{L.lead}</p>
+          <p className="hero-approve">{L.approve} <span className="emph">{L.autopilot}</span></p>
           <div className="hero-cta">
-            <a className="btn btn--primary btn--lg" href="Login.html">Sign in <window.IcArrowRight size={17} /></a>
+            <a className="btn btn--primary btn--lg" href="Login.html">{L.signIn} <window.IcArrowRight size={17} /></a>
             <a className="contact" href={`mailto:${L.contactEmail}`}><window.IcMail size={15} className="c-ico" /> {L.contactEmail}</a>
           </div>
         </div>
-        {showSample && <Specimen />}
+        {showSample && <StudioWindow />}
       </div>
     </section>
   );
 }
 
-/* ----------------------------- Features -------------------------------- */
-const FEAT_ICONS = { voice: window.IcVoice, check: window.IcCheck, users: window.IcUsers, chart: window.IcChart };
+/* ----------------------------- Features (bento) ------------------------ */
+const FEAT_ICONS = { voice: window.IcVoice, replies: window.IcReplies, audits: window.IcAudit, analytics: window.IcChart, autopilot: window.IcBolt, accounts: window.IcUsers };
 function Features() {
+  const L = window.LAND;
   return (
     <section className="features">
       <div className="wrap">
-        <div className="feat-grid">
+        <div className="feat-head">
+          <span className="eyebrow">{L.featEyebrow}</span>
+          <h2 className="feat-title">{L.featTitle}</h2>
+        </div>
+        <div className="bento">
           {window.LAND_FEATURES.map((f) => {
             const Ico = FEAT_ICONS[f.ico] || window.IcCheck;
+            const span = f.span === "wide" ? "feat--wide" : f.span === "full" ? "feat--full" : "";
             return (
-              <div className="feat" key={f.title}>
-                <span className="feat-ico"><Ico size={17} /></span>
-                <div className="feat-t">{f.title}</div>
-                <div className="feat-d">{f.desc}</div>
-              </div>
+              <article className={`feat ${span}`} key={f.title}>
+                <span className="feat-ico"><Ico size={18} /></span>
+                <div className="feat-body">
+                  <h3 className="feat-t">{f.title}</h3>
+                  <p className="feat-d">{f.desc}</p>
+                </div>
+              </article>
             );
           })}
         </div>
@@ -104,20 +174,15 @@ function Features() {
 function Footer() {
   return (
     <footer className="land-foot">
-      <div className="wrap">
-        <span className="foot-brand">
-          <window.Logo size={20} radius={6} className="fm" />
-          © {new Date().getFullYear()} Pennedly
-        </span>
+      <div className="wrap land-foot-row">
+        <span className="foot-brand"><window.Logo size={20} radius={6} className="fm" /> © {new Date().getFullYear()} Pennedly</span>
         <span className="foot-sp" />
         <nav className="foot-links" aria-label="Legal">
-          {window.LAND_FOOTER.map((l) => (
-            <a key={l.label} href={l.href}>{l.label}</a>
-          ))}
+          {window.LAND_FOOTER.map((l) => <a key={l.label} href={l.href}>{l.label}</a>)}
         </nav>
       </div>
     </footer>
   );
 }
 
-Object.assign(window, { Mono, TopBar, Specimen, Hero, Features, Footer });
+Object.assign(window, { Avatar, LanguageSwitcher, TopBar, StudioWindow, Hero, Features, Footer });

@@ -953,6 +953,8 @@ export const uk: Partial<Record<MessageKey, string>> = {
     "Pennedly пише вірусні пости й відповіді твоїм голосом, проводить аудити й показує, що заходить на всіх твоїх акаунтах.",
   "landing.lead_body": "Кожне слово схвалюєш ти.",
   "landing.lead_emph": "А захочеш, вмикаєш автопілот.",
+  "landing.feat_eyebrow": "Продукт",
+  "landing.feat_title": "Одне робоче місце для всіх твоїх акаунтів.",
   "landing.feat_viral_title": "Вірусні пости твоїм голосом",
   "landing.feat_viral_desc":
     "Чернетки, що заходять і звучать як ти, а не як нейромережа.",

@@ -952,6 +952,8 @@ export const es: Partial<Record<MessageKey, string>> = {
     "Pennedly redacta publicaciones y respuestas virales con tu voz, audita lo que funciona y te muestra qué cala en cada cuenta que llevas.",
   "landing.lead_body": "Cada palabra la apruebas tú.",
   "landing.lead_emph": "Y si quieres, activas el piloto automático.",
+  "landing.feat_eyebrow": "El producto",
+  "landing.feat_title": "Un espacio de trabajo para todas tus cuentas.",
   "landing.feat_viral_title": "Publicaciones virales con tu voz",
   "landing.feat_viral_desc": "Borradores que calan y suenan a ti, no a una IA genérica.",
   "landing.feat_replies_title": "Respuestas que suenan a ti",
