@@ -15,6 +15,7 @@ import {
   clearTokens,
   createUserRule,
   deleteUserRule,
+  fetchMe,
   fetchStyleRules,
   fetchUserRules,
   getTokens,
@@ -32,9 +33,13 @@ import { Toast, ToastHost } from "@/components/ui/toast";
 import { cn } from "@/lib/cn";
 import { useDeferredCommit } from "@/lib/use-deferred-commit";
 import { IcCheck, IcFilter, IcPencil, IcPenLine, IcPlus, IcSliders, IcTrash } from "@/components/icons";
+import { TweaksPanel, TweakSection, TweakToggle, TweakRadio, useTweaks } from "@/components/tweaks/TweaksPanel";
+import { DEMO_BUILTIN, DEMO_FREEFORM, SR_TWEAK_DEFAULTS } from "@/components/studio/stylerules-demo";
 import type { StyleRule, StyleRuleCategory, UserRule } from "@/lib/types";
 
 const PUNCTUATION_RULE_KEY = "human_punctuation";
+const IS_DEV = process.env.NODE_ENV === "development";
+const SR_SCREENS = ["Default", "Catalog", "Loading"];
 
 const CATEGORIES: StyleRuleCategory[] = [
   "punctuation",
@@ -126,6 +131,19 @@ export default function StyleRulesEditor() {
 
   const deferred = useDeferredCommit();
 
+  // Tester ?demo=1: a tweak panel drives states on mock content.
+  const [demoParam] = useState(() =>
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("demo") === "1"
+      : false,
+  );
+  const [isTester, setIsTester] = useState(false);
+  const allow = demoParam && (IS_DEV || isTester);
+  const demoOn = allow;
+  const [tw, setTw] = useTweaks(SR_TWEAK_DEFAULTS);
+  const compact = demoOn && tw.density === "Compact";
+  const catalogOnly = demoOn && tw.screen === "Catalog";
+
   function toast(
     message: string,
     tone: Toast["tone"] = "success",
@@ -148,10 +166,17 @@ export default function StyleRulesEditor() {
   }
 
   useEffect(() => {
+    if (demoParam) return;
     if (!getTokens()) router.push("/app/login");
-  }, [router]);
+  }, [router, demoParam]);
 
   useEffect(() => {
+    if (!getTokens()) return;
+    fetchMe().then((m) => setIsTester(m.is_tester === true)).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (demoParam) return;
     if (accountId === null) return;
     setRules(null);
     fetchUserRules(accountId)
@@ -172,9 +197,30 @@ export default function StyleRulesEditor() {
     })();
   }, [accountId, router]);
 
+  // Demo: seed the real state from the tweak so the live render paths light up.
+  useEffect(() => {
+    if (!demoOn) return;
+    document.documentElement.classList.toggle("dark", !!tw.dark);
+  }, [demoOn, tw.dark]);
+
+  useEffect(() => {
+    if (!demoOn) return;
+    setBootError(null);
+    if (tw.screen === "Loading") {
+      setRules(null);
+      return;
+    }
+    setRules(DEMO_BUILTIN.map((r) => ({ ...r })));
+    setUserRules(tw.yourRules === "Empty" ? [] : DEMO_FREEFORM.map((r) => ({ ...r })));
+  }, [demoOn, tw.screen, tw.yourRules]);
+
   async function onToggle(rule: StyleRule) {
-    if (accountId === null) return;
     const next = !rule.enabled;
+    if (demoOn) {
+      setRules((rs) => rs?.map((r) => (r.key === rule.key ? { ...r, enabled: next } : r)) ?? rs);
+      return;
+    }
+    if (accountId === null) return;
     setRules((rs) => rs?.map((r) => (r.key === rule.key ? { ...r, enabled: next } : r)) ?? rs);
     setPending((p) => new Set(p).add(rule.key));
     captureEvent("ui.style_rule_toggled", { account_id: accountId, rule_key: rule.key, enabled: next });
@@ -194,7 +240,15 @@ export default function StyleRulesEditor() {
   }
 
   async function onAdd(body: string) {
-    if (accountId === null || !body.trim()) return;
+    if (!body.trim()) return;
+    if (demoOn) {
+      const r: UserRule = { id: Date.now(), kind: newKind, body: body.trim(), enabled: true, sort_order: userRules?.length ?? 0 };
+      setUserRules((rs) => [...(rs ?? []), r]);
+      setNewBody("");
+      toast(t("style_rules.toast_rule_added"));
+      return;
+    }
+    if (accountId === null) return;
     captureEvent("ui.user_rule_added", { account_id: accountId });
     try {
       const r = await createUserRule(accountId, { kind: newKind, body: body.trim() });
@@ -215,9 +269,22 @@ export default function StyleRulesEditor() {
 
   async function onEditRule(id: number, body: string) {
     setUserRules((rs) => rs?.map((r) => (r.id === id ? { ...r, body } : r)) ?? rs);
+    if (demoOn) return;
     try {
       await updateUserRule(id, { body });
     } catch (e) {
+      toast(String(e), "error");
+    }
+  }
+
+  async function onToggleUserRule(rule: UserRule) {
+    const next = !rule.enabled;
+    setUserRules((rs) => rs?.map((r) => (r.id === rule.id ? { ...r, enabled: next } : r)) ?? rs);
+    if (demoOn) return;
+    try {
+      await updateUserRule(rule.id, { enabled: next });
+    } catch (e) {
+      setUserRules((rs) => rs?.map((r) => (r.id === rule.id ? { ...r, enabled: rule.enabled } : r)) ?? rs);
       toast(String(e), "error");
     }
   }
@@ -230,6 +297,14 @@ export default function StyleRulesEditor() {
     const rule = list[idx];
     if (!rule) return;
     setUserRules((rs) => rs?.filter((r) => r.id !== id) ?? rs);
+    if (demoOn) {
+      toast(t("style_rules.toast_rule_deleted"), "success", {
+        duration: UNDO_MS,
+        undoLabel: t("common.undo"),
+        onUndo: () => setUserRules((rs) => insertAt(rs ?? [], idx, rule)),
+      });
+      return;
+    }
     const key = `userrule-${id}`;
     deferred.schedule(
       key,
@@ -349,7 +424,8 @@ export default function StyleRulesEditor() {
                         <div
                           key={rule.key}
                           className={cn(
-                            "flex items-start gap-3.5 border-t border-border px-4 py-4 transition-colors hover:bg-surface",
+                            "flex items-start gap-3.5 border-t border-border px-4 transition-colors hover:bg-surface",
+                            compact ? "py-2.5" : "py-4",
                             !rule.enabled && "opacity-95",
                           )}
                         >
@@ -362,13 +438,27 @@ export default function StyleRulesEditor() {
                             />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <span className={cn("text-small font-semibold", !rule.enabled && "text-text-subtle")}>
-                              {ruleTitle(rule, t)}
-                            </span>
-                            <p className={cn("mt-1 text-small leading-relaxed", rule.enabled ? "text-text-muted" : "text-text-subtle")}>
-                              {ruleDesc(rule, t)}
-                            </p>
-                            {rule.key === PUNCTUATION_RULE_KEY && (
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className={cn("text-small font-semibold", !rule.enabled && "text-text-subtle")}>
+                                {ruleTitle(rule, t)}
+                              </span>
+                              {rule.kind !== "both" && (
+                                <span
+                                  className={cn(
+                                    "shrink-0 rounded-sm border border-border bg-surface-2 px-2 py-0.5 text-caption font-semibold text-text-muted",
+                                    !rule.enabled && "opacity-70",
+                                  )}
+                                >
+                                  {rule.kind === "post" ? t("style_rules.posts_only") : t("style_rules.replies_only")}
+                                </span>
+                              )}
+                            </div>
+                            {!compact && (
+                              <p className={cn("mt-1 text-small leading-relaxed", rule.enabled ? "text-text-muted" : "text-text-subtle")}>
+                                {ruleDesc(rule, t)}
+                              </p>
+                            )}
+                            {!compact && rule.key === PUNCTUATION_RULE_KEY && (
                               <PunctuationDemo on={rule.enabled} t={t} />
                             )}
                           </div>
@@ -381,7 +471,7 @@ export default function StyleRulesEditor() {
             </section>
 
             {/* Freeform rules — Your rules (Q29: order-2, first after the intro) */}
-            <section className="order-2 overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
+            <section className={cn("order-2 overflow-hidden rounded-lg border border-border bg-surface shadow-sm", catalogOnly && "hidden")}>
               <div className="flex items-center gap-3 p-4">
                 <span className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-md border border-border bg-surface-2 text-text-muted">
                   <IcPenLine size={17} />
@@ -435,7 +525,7 @@ export default function StyleRulesEditor() {
                 <>
                   <div className="flex flex-col">
                     {userRules?.map((r) => (
-                      <FreeformRow key={r.id} rule={r} onEdit={onEditRule} onRemove={onDeleteRule} t={t} />
+                      <FreeformRow key={r.id} rule={r} onEdit={onEditRule} onRemove={onDeleteRule} onToggle={onToggleUserRule} t={t} />
                     ))}
                   </div>
                   <AddComposer
@@ -471,6 +561,27 @@ export default function StyleRulesEditor() {
           />
         ))}
       </ToastHost>
+
+      {allow && (
+        <TweaksPanel title="Style rules">
+          <TweakSection label="Appearance" />
+          <TweakToggle label="Dark mode" value={tw.dark} onChange={(v) => setTw("dark", v)} />
+          <TweakRadio
+            label="Density"
+            value={tw.density}
+            options={["Comfortable", "Compact"]}
+            onChange={(v) => setTw("density", v)}
+          />
+          <TweakSection label="Content" />
+          <TweakRadio
+            label="Your rules"
+            value={tw.yourRules}
+            options={["Some", "Empty"]}
+            onChange={(v) => setTw("yourRules", v)}
+          />
+          <TweakRadio label="Screen" value={tw.screen} options={SR_SCREENS} onChange={(v) => setTw("screen", v)} />
+        </TweaksPanel>
+      )}
     </div>
   );
 }
@@ -498,18 +609,23 @@ function FreeformRow({
   rule,
   onEdit,
   onRemove,
+  onToggle,
   t,
 }: {
   rule: UserRule;
   onEdit: (id: number, body: string) => void;
   onRemove: (id: number) => void;
+  onToggle: (rule: UserRule) => void;
   t: (k: MessageKey) => string;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(rule.body);
+  const [confirming, setConfirming] = useState(false);
   return (
     <div className="group flex items-start gap-3 border-t border-border px-4 py-3.5 transition-colors first:border-t-0 hover:bg-surface-2">
-      <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rotate-45 rounded-[2px] bg-text" />
+      <div className="mt-0.5 shrink-0">
+        <Switch checked={rule.enabled} onCheckedChange={() => onToggle(rule)} aria-label={rule.body} />
+      </div>
       {editing ? (
         <div className="flex flex-1 items-center gap-2">
           <input
@@ -551,26 +667,52 @@ function FreeformRow({
         </div>
       ) : (
         <>
-          <span className="min-w-0 flex-1 pt-px text-small leading-relaxed text-text">{rule.body}</span>
-          <span className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
-            <button
-              onClick={() => {
-                setDraft(rule.body);
-                setEditing(true);
-              }}
-              aria-label={t("common.save")}
-              className="grid h-8 w-8 place-items-center rounded-sm text-text-subtle transition-colors hover:bg-surface hover:text-text"
-            >
-              <IcPencil size={15} />
-            </button>
-            <button
-              onClick={() => onRemove(rule.id)}
-              aria-label={t("user_rules.delete")}
-              className="grid h-8 w-8 place-items-center rounded-sm text-text-subtle transition-colors hover:bg-danger/12 hover:text-danger"
-            >
-              <IcTrash size={15} />
-            </button>
+          <span className={cn("min-w-0 flex-1 pt-0.5 text-small leading-relaxed", rule.enabled ? "text-text" : "text-text-subtle")}>
+            {rule.body}
           </span>
+          {rule.kind !== "both" && (
+            <span className="mt-0.5 shrink-0 rounded-sm border border-border bg-surface-2 px-2 py-0.5 text-caption font-semibold text-text-muted">
+              {rule.kind === "post" ? t("style_rules.kind_post") : t("style_rules.kind_reply")}
+            </span>
+          )}
+          {confirming ? (
+            <span className="flex shrink-0 items-center gap-2">
+              <span className="whitespace-nowrap text-small font-semibold text-danger">{t("style_rules.delete_q")}</span>
+              <Button
+                size="sm"
+                variant="danger"
+                onClick={() => {
+                  onRemove(rule.id);
+                  setConfirming(false);
+                }}
+              >
+                {t("user_rules.delete")}
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setConfirming(false)}>
+                {t("common.cancel")}
+              </Button>
+            </span>
+          ) : (
+            <span className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+              <button
+                onClick={() => {
+                  setDraft(rule.body);
+                  setEditing(true);
+                }}
+                aria-label={t("common.save")}
+                className="grid h-8 w-8 place-items-center rounded-sm text-text-subtle transition-colors hover:bg-surface hover:text-text"
+              >
+                <IcPencil size={15} />
+              </button>
+              <button
+                onClick={() => setConfirming(true)}
+                aria-label={t("user_rules.delete")}
+                className="grid h-8 w-8 place-items-center rounded-sm text-text-subtle transition-colors hover:bg-danger/12 hover:text-danger"
+              >
+                <IcTrash size={15} />
+              </button>
+            </span>
+          )}
         </>
       )}
     </div>
@@ -594,23 +736,18 @@ function AddComposer({
   solo?: boolean;
   t: (k: MessageKey) => string;
 }): ReactNode {
+  const KINDS: [string, MessageKey][] = [
+    ["both", "style_rules.kind_both"],
+    ["post", "style_rules.kind_post"],
+    ["reply", "style_rules.kind_reply"],
+  ];
   return (
     <div
       className={cn(
-        "flex items-center gap-2.5 bg-surface-2 px-4 py-3.5",
+        "flex flex-wrap items-center gap-2.5 bg-surface-2 px-4 py-3.5",
         !solo && "border-t border-border",
       )}
     >
-      <select
-        value={kind}
-        onChange={(e) => setKind(e.target.value)}
-        aria-label="kind"
-        className="h-10 shrink-0 rounded-md border border-border bg-surface px-2.5 text-small text-text outline-none focus-visible:outline-2 focus-visible:outline-accent"
-      >
-        <option value="both">{t("user_rules.kind_both")}</option>
-        <option value="post">{t("user_rules.kind_post")}</option>
-        <option value="reply">{t("user_rules.kind_reply")}</option>
-      </select>
       <input
         value={body}
         onChange={(e) => setBody(e.target.value)}
@@ -619,8 +756,23 @@ function AddComposer({
         }}
         placeholder={t("style_rules.add_placeholder")}
         aria-label={t("style_rules.add_placeholder")}
-        className="h-10 min-w-0 flex-1 rounded-md border border-border bg-surface px-3 text-small text-text outline-none focus:border-accent"
+        className="h-10 min-w-0 flex-1 basis-60 rounded-md border border-border bg-surface px-3 text-small text-text outline-none focus:border-accent"
       />
+      <div className="inline-flex shrink-0 gap-0.5 rounded-md border border-border bg-surface p-0.5">
+        {KINDS.map(([k, key]) => (
+          <button
+            key={k}
+            type="button"
+            onClick={() => setKind(k)}
+            className={cn(
+              "h-8 rounded-sm px-3 text-small font-medium transition-colors",
+              kind === k ? "bg-text font-semibold text-bg" : "text-text-muted hover:text-text",
+            )}
+          >
+            {t(key)}
+          </button>
+        ))}
+      </div>
       <Button variant="primary" onClick={onAdd} disabled={!body.trim()} icon={<IcPlus size={16} />}>
         {t("style_rules.add_rule")}
       </Button>
