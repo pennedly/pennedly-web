@@ -89,7 +89,13 @@ export default function PatternsPage() {
         }
       }
     })();
-  }, [accountId, router, demoParam, locale, t]);
+    // Load once per account (+ on demo/auth change). Deliberately NOT keyed on
+    // `t`/`locale`: useTranslation() returns a fresh `t` every render, so
+    // depending on it re-ran the fetch every render → setRealPhase("loading")
+    // → fetch → "results" → re-render → loading… i.e. a loading↔results flicker
+    // every ~second. `t`/`locale` are read from the closure for the run label.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accountId, router, demoParam]);
 
   useEffect(() => {
     if (!demoOn) return;
