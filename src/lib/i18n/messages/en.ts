@@ -1090,6 +1090,7 @@ export const en = {
 
   // ── Sidebar bottom + Settings ─────────────────────────────────
   "nav.settings": "Settings",
+  "nav.switch_account": "Switch account",
   "shell.avatar_alt": "Profile photo",
   "shell.toggle_theme": "Toggle theme",
 
@@ -1119,18 +1120,18 @@ export const en = {
   "settings.intro_lead":
     "Manage your account, the language Pennedly speaks to you in, and the Threads accounts it writes for.",
   "settings.language_desc":
-    "Changes the app's labels and menus. Your drafts stay in the language you write them.",
+    "Changes the app's labels and menus. Your drafts stay in the language you write them in.",
   "settings.accounts_desc":
     "Pennedly drafts and posts for each connected account. Disconnecting stops all activity for that handle.",
   "settings.disconnect_q": "Disconnect {handle}?",
   "settings.disconnect_do": "Disconnect",
-  "settings.primary_tag": "Active",
+  "settings.primary_tag": "Primary",
   "settings.shortcut_voice_t": "Your voice",
   "settings.shortcut_voice_d":
-    "Shape how every draft sounds — themes, traits, and example posts.",
+    "Shape how every draft sounds: themes, traits, and example posts.",
   "settings.open_voice": "Open voice",
   "settings.restart_t": "Restart voice setup",
-  "settings.restart_d": "Walk through onboarding again — this replaces your current voice.",
+  "settings.restart_d": "Walk through onboarding again. This replaces your current voice.",
   "settings.restart_cta": "Restart setup",
   "settings.shortcut_preview_t": "Preview mode",
   "settings.shortcut_preview_d":

@@ -42,7 +42,12 @@ import { Toast, ToastHost } from "@/components/ui/toast";
 import { ConnectThreadsButton } from "@/components/ConnectThreadsButton";
 import { cn } from "@/lib/cn";
 import { IcCheck, IcEye, IcFlask, IcScan, IcStar, IcUnlink, IcVoice } from "@/components/icons";
+import { TweaksPanel, TweakSection, TweakToggle, TweakRadio, useTweaks } from "@/components/tweaks/TweaksPanel";
+import { DEMO_ACCOUNTS, DEMO_ME, SET_TWEAK_DEFAULTS } from "@/components/studio/settings-demo";
 import type { ConnectedAccount, Me } from "@/lib/types";
+
+const IS_DEV = process.env.NODE_ENV === "development";
+const SET_STATES = ["Default", "Disconnect", "Loading"];
 
 type Toast = { id: number; message: string; tone: "success" | "error" };
 
@@ -60,6 +65,13 @@ export default function SettingsPage() {
   const [confirmId, setConfirmId] = useState<number | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [demoParam] = useState(() =>
+    typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("demo") === "1" : false,
+  );
+  const [isTester, setIsTester] = useState(false);
+  const allow = demoParam && (IS_DEV || isTester);
+  const demoOn = allow;
+  const [tw, setTw] = useTweaks(SET_TWEAK_DEFAULTS);
 
   function toast(message: string, tone: Toast["tone"] = "success") {
     const id = Date.now() + Math.random();
@@ -68,6 +80,12 @@ export default function SettingsPage() {
   }
 
   useEffect(() => {
+    if (!getTokens()) return;
+    fetchMe().then((m) => setIsTester(m.is_tester === true)).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (demoParam) return;
     if (!getTokens()) {
       router.push("/app/login");
       return;
@@ -87,7 +105,24 @@ export default function SettingsPage() {
         setLoaded(true);
       }
     })();
-  }, [router]);
+  }, [router, demoParam]);
+
+  useEffect(() => {
+    if (!demoOn) return;
+    document.documentElement.classList.toggle("dark", !!tw.dark);
+  }, [demoOn, tw.dark]);
+
+  useEffect(() => {
+    if (!demoOn) return;
+    if (tw.state === "Loading") {
+      setLoaded(false);
+      return;
+    }
+    setMe(DEMO_ME);
+    setAccounts(DEMO_ACCOUNTS);
+    setConfirmId(tw.state === "Disconnect" ? DEMO_ACCOUNTS[1].id : null);
+    setLoaded(true);
+  }, [demoOn, tw.state]);
 
   function pickLocale(code: LocaleCode, name: string) {
     setLocale(code);
@@ -97,6 +132,12 @@ export default function SettingsPage() {
   }
 
   async function onDisconnect(a: ConnectedAccount) {
+    if (demoOn) {
+      setAccounts((list) => list.filter((x) => x.id !== a.id));
+      setConfirmId(null);
+      toast(`${t("settings.disconnect_toast")} · @${a.username ?? a.id}`);
+      return;
+    }
     setBusyId(a.id);
     captureEvent("ui.account_disconnect", { account_id: a.id });
     try {
@@ -334,6 +375,15 @@ export default function SettingsPage() {
           <Toast key={tt.id} tone={tt.tone} title={tt.message} />
         ))}
       </ToastHost>
+
+      {allow && (
+        <TweaksPanel title="Settings">
+          <TweakSection label="Appearance" />
+          <TweakToggle label="Dark mode" value={tw.dark} onChange={(v) => setTw("dark", v)} />
+          <TweakSection label="State" />
+          <TweakRadio label="State" value={tw.state} options={SET_STATES} onChange={(v) => setTw("state", v)} />
+        </TweaksPanel>
+      )}
     </div>
   );
 }

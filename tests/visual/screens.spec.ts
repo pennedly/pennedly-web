@@ -1283,6 +1283,46 @@ test("Settings", async ({ page }) => {
   await shoot(page, "settings");
 });
 
+test("Settings — demo states + account control", async ({ page }) => {
+  // Tester ?demo=1: Settings states via the panel, plus the sidebar account menu.
+  await page.setViewportSize({ width: 1280, height: 1600 });
+  await setup(page);
+  await page.goto("/app/settings?demo=1");
+  await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
+  await page.waitForTimeout(800);
+  await shoot(page, "settings-demo"); // default
+  await page.getByRole("button", { name: "Open tweaks" }).click();
+  await page.waitForTimeout(150);
+  await page.getByRole("radio", { name: "Disconnect" }).click();
+  await page.waitForTimeout(250);
+  await shoot(page, "settings-demo-disconnect");
+  await page.getByRole("radio", { name: "Loading" }).click();
+  await page.waitForTimeout(250);
+  await shoot(page, "settings-demo-loading");
+  await page.getByRole("radio", { name: "Default" }).click();
+  await page.waitForTimeout(200);
+  // open the sidebar account control menu (the entry point to Settings)
+  await page.getByRole("button", { name: /Mara Lin/ }).first().click();
+  await page.waitForTimeout(250);
+  await shoot(page, "settings-demo-account-menu");
+});
+
+test("Account control — single + none", async ({ page }) => {
+  // ?acct= drives the switcher's single-account and no-account states.
+  await page.setViewportSize({ width: 1280, height: 1600 });
+  await setup(page);
+  await page.goto("/app/settings?demo=1&acct=single");
+  await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
+  await page.waitForTimeout(1200);
+  await page.getByRole("button", { name: /Mara Lin/ }).first().click({ force: true });
+  await page.waitForTimeout(300);
+  await shoot(page, "account-control-single");
+  await page.goto("/app/settings?demo=1&acct=none");
+  await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
+  await page.waitForTimeout(700);
+  await shoot(page, "account-control-none");
+});
+
 test("Onboarding", async ({ page }) => {
   // Full-screen flow — no sidebar; wait on its own header instead of `aside`.
   await page.setViewportSize({ width: 1280, height: 1000 });

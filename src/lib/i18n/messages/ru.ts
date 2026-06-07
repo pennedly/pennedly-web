@@ -1090,6 +1090,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
 
   // ── Низ сайдбара + Настройки ──────────────────────────────────
   "nav.settings": "Настройки",
+  "nav.switch_account": "Сменить аккаунт",
   "shell.avatar_alt": "Фото профиля",
   "shell.toggle_theme": "Переключить тему",
   "error.title": "Не удалось загрузить страницу",
@@ -1121,13 +1122,13 @@ export const ru: Partial<Record<MessageKey, string>> = {
     "Pennedly пишет и постит для каждого подключённого аккаунта. Отключение останавливает всю активность для этого хэндла.",
   "settings.disconnect_q": "Отключить {handle}?",
   "settings.disconnect_do": "Отключить",
-  "settings.primary_tag": "Активный",
+  "settings.primary_tag": "Основной",
   "settings.shortcut_voice_t": "Твой голос",
   "settings.shortcut_voice_d":
-    "Настрой, как звучит каждый черновик — темы, черты и примеры постов.",
+    "Настрой, как звучит каждый черновик: темы, черты и примеры постов.",
   "settings.open_voice": "Открыть голос",
   "settings.restart_t": "Перезапустить настройку голоса",
-  "settings.restart_d": "Заново пройти онбординг — это заменит текущий голос.",
+  "settings.restart_d": "Заново пройти онбординг. Это заменит текущий голос.",
   "settings.restart_cta": "Перезапустить",
   "settings.shortcut_preview_t": "Режим превью",
   "settings.shortcut_preview_d":

@@ -20,6 +20,7 @@ import { useTranslation } from "@/lib/i18n";
 import { ConnectThreadsButton } from "@/components/ConnectThreadsButton";
 import { Avatar, nameOf } from "@/components/ui/avatar";
 import { IcCheck, IcChevDown, IcSettings } from "@/components/icons";
+import { DEMO_ACCOUNTS, DEMO_ME } from "@/components/studio/settings-demo";
 import type { ConnectedAccount, Me } from "@/lib/types";
 
 export function AccountSwitcher({ me, onLogout }: { me?: Me | null; onLogout?: () => void }) {
@@ -28,8 +29,21 @@ export function AccountSwitcher({ me, onLogout }: { me?: Me | null; onLogout?: (
   const [loaded, setLoaded] = useState(false);
   const [open, setOpen] = useState(false);
   const { t } = useTranslation();
+  const [demoParam] = useState(() =>
+    typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("demo") === "1" : false,
+  );
 
   useEffect(() => {
+    if (demoParam) {
+      const acct = new URLSearchParams(window.location.search).get("acct");
+      const list = acct === "none" ? [] : acct === "single" ? DEMO_ACCOUNTS.slice(0, 1) : DEMO_ACCOUNTS;
+      setAccounts(list);
+      if (list.length > 0 && (selected === null || !list.some((a) => a.id === selected))) {
+        setSelectedAccountId(list[0].id);
+      }
+      setLoaded(true);
+      return;
+    }
     (async () => {
       try {
         const list = await fetchMyAccounts();
@@ -52,6 +66,7 @@ export function AccountSwitcher({ me, onLogout }: { me?: Me | null; onLogout?: (
   if (accounts.length === 0) return <ConnectThreadsButton variant="primary" />;
 
   const selectedAccount = accounts.find((a) => a.id === selected) ?? accounts[0];
+  const effMe = demoParam ? DEMO_ME : me;
 
   return (
     <div className="relative">
@@ -68,72 +83,76 @@ export function AccountSwitcher({ me, onLogout }: { me?: Me | null; onLogout?: (
             <span className="block truncate text-caption text-text-subtle">@{selectedAccount.username}</span>
           )}
         </span>
-        <IcChevDown size={15} className="shrink-0 text-text-subtle" />
+        <IcChevDown size={15} className={`shrink-0 text-text-subtle transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
 
       {open && (
         <>
           <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} aria-hidden />
-          <div className="absolute bottom-full left-0 right-0 z-40 mb-1.5 overflow-hidden rounded-lg border border-border bg-surface shadow-lg">
-            {/* Signed-in user */}
-            {me && (
-              <div className="border-b border-border px-3 py-2.5">
-                <div className="truncate text-small font-medium leading-tight text-text">{me.email}</div>
-                <div className="mt-0.5 text-caption capitalize text-text-subtle">{me.tenant.plan_tier} plan</div>
-              </div>
-            )}
-
-            {/* Connected accounts (switch) + connect another */}
-            <div className="py-1">
-              {accounts.map((a) => {
-                const isSel = a.id === selectedAccount.id;
-                return (
-                  <button
-                    key={a.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedAccountId(a.id);
-                      setOpen(false);
-                      captureEvent("ui.account_switched", { account_id: a.id });
-                    }}
-                    className={`flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors ${
-                      isSel ? "bg-surface-2" : "hover:bg-surface-2"
-                    }`}
-                  >
-                    <Avatar account={a} size={26} />
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-small font-medium leading-tight">{nameOf(a)}</span>
-                      {a.username && <span className="block truncate text-caption text-text-subtle">@{a.username}</span>}
-                    </span>
-                    {isSel && <IcCheck size={15} className="shrink-0 text-text-subtle" />}
-                  </button>
-                );
-              })}
-              <ConnectThreadsButton variant="menu" />
+          <div className="absolute bottom-full left-0 right-0 z-40 mb-2 rounded-lg border border-border bg-surface p-1.5 shadow-lg">
+            {/* Switch account */}
+            <div className="px-2.5 pb-1 pt-1.5 text-caption font-semibold uppercase tracking-wide text-text-subtle">
+              {t("nav.switch_account")}
             </div>
-
-            {/* Settings + log out */}
-            <div className="border-t border-border py-1">
-              <Link
-                href="/app/settings"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-2.5 px-3 py-2 text-small text-text transition-colors hover:bg-surface-2"
-              >
-                <IcSettings size={16} className="text-text-subtle" /> {t("nav.settings")}
-              </Link>
-              {onLogout && (
+            {accounts.map((a) => {
+              const isSel = a.id === selectedAccount.id;
+              return (
                 <button
+                  key={a.id}
                   type="button"
                   onClick={() => {
+                    setSelectedAccountId(a.id);
                     setOpen(false);
-                    onLogout();
+                    captureEvent("ui.account_switched", { account_id: a.id });
                   }}
-                  className="w-full px-3 py-2 text-left text-small text-danger transition-colors hover:bg-surface-2"
+                  className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-surface-2"
                 >
-                  {t("dashboard.nav.logout")}
+                  <Avatar account={a} size={28} />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-small font-semibold leading-tight">{nameOf(a)}</span>
+                    {a.username && <span className="block truncate text-caption text-text-subtle">@{a.username}</span>}
+                  </span>
+                  {isSel ? (
+                    <IcCheck size={16} className="shrink-0 text-success" />
+                  ) : (
+                    <span className="w-4 shrink-0" />
+                  )}
                 </button>
-              )}
-            </div>
+              );
+            })}
+            <ConnectThreadsButton variant="menu" />
+
+            <div className="my-1.5 h-px bg-border" />
+
+            {/* Signed-in identity */}
+            {effMe && (
+              <div className="px-2.5 py-1">
+                <div className="truncate text-small font-semibold leading-tight text-text">{effMe.email}</div>
+                <div className="mt-0.5 inline-flex items-center gap-1.5 text-caption capitalize text-text-subtle">
+                  <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                  {effMe.tenant.plan_tier} plan
+                </div>
+              </div>
+            )}
+            <Link
+              href="/app/settings"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-small text-text transition-colors hover:bg-surface-2"
+            >
+              <IcSettings size={16} className="text-text-subtle" /> {t("nav.settings")}
+            </Link>
+            {onLogout && (
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  onLogout();
+                }}
+                className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-small text-danger transition-colors hover:bg-danger/10"
+              >
+                {t("dashboard.nav.logout")}
+              </button>
+            )}
           </div>
         </>
       )}
