@@ -53,20 +53,29 @@ import {
 } from "@/components/icons";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { AccountFace } from "@/components/ui/avatar";
 
 const CONTACT_EMAIL = "hello@pennedly.com";
 
 // The hero "Studio" peek is illustrative sample content (NOT a live feed and NOT
 // localized chrome) — it shows the product drafting in a sample creator's voice.
 const SAMPLE = {
-  name: "Mara Lin",
-  handle: "@mara.lin",
-  initials: "ML",
+  name: "Zakhar S.",
+  handle: "@reganomika1",
+  initials: "ZS",
+  avatar: "/avatars/zakhar.jpg",
   text: "The fastest way to find your voice online: publish the thing you're slightly embarrassed by. The polished version is everyone's. The embarrassing one is yours.",
   toneTag: "Warm, direct",
-  composeNote: "Drafting in Mara's voice",
+  composeNote: "Drafting in Zakhar's voice",
 };
-const RAIL = ["ML", "TP", "AR", "LM"]; // account-switcher rail (illustrative monograms)
+// Account-switcher rail: the active account shows the real photo; the others
+// stay illustrative monograms (other accounts the creator runs).
+const RAIL: { url?: string; initials: string }[] = [
+  { url: "/avatars/zakhar.jpg", initials: "ZS" },
+  { initials: "TP" },
+  { initials: "AR" },
+  { initials: "LM" },
+];
 const WIN_URL = "app.pennedly.com";
 const WIN_PATH = "/studio";
 
@@ -118,17 +127,6 @@ function DebugStyles() {
 }
 
 // ───────────────────────────── Pieces ───────────────────────────────────────
-
-function Mono({ initials, size }: { initials: string; size: number }) {
-  return (
-    <span
-      className="grid shrink-0 select-none place-items-center rounded-full bg-text font-mono font-semibold text-bg"
-      style={{ width: size, height: size, fontSize: Math.round(size * 0.42) }}
-    >
-      {initials}
-    </span>
-  );
-}
 
 function ThemeToggle() {
   const [dark, setDark] = useState(false);
@@ -183,15 +181,15 @@ function StudioWindow() {
       {/* app: account rail + composer */}
       <div className="flex min-h-[280px]">
         <aside className="flex w-[58px] shrink-0 flex-col items-center gap-2.5 border-r border-border bg-surface-2 py-4">
-          {RAIL.map((initials, i) => (
+          {RAIL.map((a, i) => (
             <span
-              key={initials}
+              key={a.initials}
               className={cn(
                 "rounded-full border-2 border-transparent p-0.5",
                 i === 0 && "border-text",
               )}
             >
-              <Mono initials={initials} size={28} />
+              <AccountFace url={a.url} initials={a.initials} size={28} />
             </span>
           ))}
           <span className="grid h-7 w-7 place-items-center rounded-full border border-dashed border-border text-text-subtle">
@@ -200,7 +198,7 @@ function StudioWindow() {
         </aside>
         <div className="flex min-w-0 flex-1 flex-col px-5 pb-4 pt-[18px]">
           <div className="flex items-center gap-[11px]">
-            <Mono initials={SAMPLE.initials} size={34} />
+            <AccountFace url={SAMPLE.avatar} initials={SAMPLE.initials} size={34} />
             <div className="min-w-0 flex-1">
               <div className="text-small font-semibold leading-[1.2]">{SAMPLE.name}</div>
               <div className="mt-px text-caption text-text-subtle">{SAMPLE.handle}</div>
