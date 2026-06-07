@@ -1161,6 +1161,37 @@ test("Voice", async ({ page }) => {
   await shoot(page, "voice-translated");
 });
 
+test("Voice — demo states", async ({ page }) => {
+  // Tester ?demo=1: a 2-tweak panel (dark + state) over the seven phases.
+  await page.setViewportSize({ width: 1280, height: 2400 });
+  await setup(page);
+  await page.goto("/app/role-book?demo=1");
+  await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
+  await page.waitForTimeout(900);
+  await shoot(page, "voice-demo-populated");
+  await page.getByRole("button", { name: "Open tweaks" }).click();
+  await page.waitForTimeout(150);
+  const sel = page.locator("select.twk-field").first();
+  await sel.selectOption("Check");
+  await page.waitForTimeout(300);
+  await shoot(page, "voice-demo-check");
+  await sel.selectOption("Translated");
+  await page.waitForTimeout(300);
+  await shoot(page, "voice-demo-translated");
+  await sel.selectOption("Re-extract");
+  await page.waitForTimeout(300);
+  await shoot(page, "voice-demo-reextract");
+  await sel.selectOption("Edit");
+  await page.waitForTimeout(300);
+  await shoot(page, "voice-demo-edit");
+  await sel.selectOption("Prompt");
+  await page.waitForTimeout(300);
+  await shoot(page, "voice-demo-prompt");
+  await sel.selectOption("Empty");
+  await page.waitForTimeout(300);
+  await shoot(page, "voice-demo-empty");
+});
+
 test("Style rules", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 1300 });
   await setup(page);

@@ -19,6 +19,7 @@ import {
   applyLintFix,
   clearTokens,
   extractVoice,
+  fetchMe,
   fetchRoleBook,
   getTokens,
   lintRoleBook,
@@ -65,6 +66,15 @@ import type {
   RoleBookThemeItem,
   RoleBookTraitItem,
 } from "@/lib/types";
+import { TweaksPanel, TweakSection, TweakToggle, TweakRadio, useTweaks } from "@/components/tweaks/TweaksPanel";
+import {
+  DEMO_BOOK,
+  DEMO_LINT,
+  DEMO_POSTS_ANALYZED,
+  DEMO_SECTIONS,
+  DEMO_SECTIONS_DE,
+  VC_TWEAK_DEFAULTS,
+} from "@/components/studio/voice-demo";
 
 type Toast = { id: number; message: string; tone: "success" | "error" };
 
@@ -219,6 +229,9 @@ const REEXTRACT_STEPS: MessageKey[] = [
   "voice.rx_step4",
 ];
 
+const IS_DEV = process.env.NODE_ENV === "development";
+const VC_STATES = ["Populated", "Edit", "Check", "Re-extract", "Translated", "Prompt", "Empty"];
+
 export default function VoiceEditor() {
   const router = useRouter();
   const { t, locale } = useTranslation();
@@ -246,6 +259,19 @@ export default function VoiceEditor() {
   const [translating, setTranslating] = useState(false);
   const transToken = useRef(0);
 
+  // Tester ?demo=1: a tweak panel drives every state on mock content.
+  const [demoParam] = useState(() =>
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("demo") === "1"
+      : false,
+  );
+  const [isTester, setIsTester] = useState(false);
+  const allow = demoParam && (IS_DEV || isTester);
+  const demoOn = allow;
+  const [tw, setTw] = useTweaks(VC_TWEAK_DEFAULTS);
+  const demoEdit = demoOn && tw.state === "Edit";
+  const promptOpen = demoOn && tw.state === "Prompt";
+
   function toast(message: string, tone: Toast["tone"] = "success") {
     const id = Date.now() + Math.random();
     setToasts((s) => [...s, { id, message, tone }]);
@@ -253,10 +279,17 @@ export default function VoiceEditor() {
   }
 
   useEffect(() => {
+    if (demoParam) return;
     if (!getTokens()) router.push("/app/login");
-  }, [router]);
+  }, [router, demoParam]);
 
   useEffect(() => {
+    if (!getTokens()) return;
+    fetchMe().then((m) => setIsTester(m.is_tester === true)).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (demoParam) return;
     if (accountId === null) return;
     setBook(null);
     setLintResult(null);
@@ -285,6 +318,45 @@ export default function VoiceEditor() {
     })();
   }, [accountId, router]);
 
+  // Demo: seed the real state vars from the tweak so the existing render paths
+  // light up each phase with no backend.
+  useEffect(() => {
+    if (!demoOn) return;
+    document.documentElement.classList.toggle("dark", !!tw.dark);
+  }, [demoOn, tw.dark]);
+
+  useEffect(() => {
+    if (!demoOn) return;
+    const st = tw.state;
+    setBootError(null);
+    setApplyingIdx(null);
+    setDismissed(new Set());
+    setTranslating(false);
+    if (st === "Empty") {
+      setBook(null);
+      setEmptyVoice(true);
+      setBusy(false);
+      setLintResult(null);
+      setTransLang(null);
+      setTranslated(null);
+      return;
+    }
+    setEmptyVoice(false);
+    setBook(DEMO_BOOK);
+    setSections(DEMO_SECTIONS);
+    setBusy(st === "Re-extract");
+    setStepIndex(2);
+    setLintResult(st === "Check" ? DEMO_LINT : null);
+    setLastRun(st === "Check" ? t("voice.just_now") : null);
+    if (st === "Translated") {
+      setTransLang("de");
+      setTranslated(DEMO_SECTIONS_DE);
+    } else {
+      setTransLang(null);
+      setTranslated(null);
+    }
+  }, [demoOn, tw.state, t]);
+
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
   // Visible conflicts (after local dismissals).
@@ -304,6 +376,11 @@ export default function VoiceEditor() {
   }
 
   async function saveSection(patch: Partial<RoleBookSections>) {
+    if (demoOn) {
+      setSections((s) => ({ ...s, ...patch }));
+      toast(t("voice.toast_saved"));
+      return;
+    }
     if (accountId === null) return;
     const next = { ...sections, ...patch };
     try {
@@ -321,6 +398,10 @@ export default function VoiceEditor() {
 
   // Q8: switch the read-only translation. null → back to the editable original.
   function onTranslate(lang: LanguageCode | null) {
+    if (demoOn) {
+      setTw("state", lang === null ? "Populated" : "Translated");
+      return;
+    }
     const token = ++transToken.current;
     if (lang === null) {
       setTransLang(null);
@@ -342,6 +423,10 @@ export default function VoiceEditor() {
   }
 
   async function onCheck() {
+    if (demoOn) {
+      setTw("state", "Check");
+      return;
+    }
     if (accountId === null) return;
     setChecking(true);
     setDismissed(new Set());
@@ -358,6 +443,11 @@ export default function VoiceEditor() {
   }
 
   async function onApply(fix: LintFix, idx: number) {
+    if (demoOn) {
+      setDismissed((s) => new Set(s).add(idx));
+      toast(t("rolebook.lint.toast_fix_applied"));
+      return;
+    }
     if (accountId === null) return;
     setApplyingIdx(idx);
     captureEvent("ui.lint_fix_applied", { account_id: accountId, fix_kind: fix.kind });
@@ -383,6 +473,11 @@ export default function VoiceEditor() {
   }
 
   function startReExtract() {
+    if (demoOn) {
+      setReDialog(false);
+      setTw("state", "Re-extract");
+      return;
+    }
     if (accountId === null) return;
     setReDialog(false);
     timers.current.forEach(clearTimeout);
@@ -438,10 +533,10 @@ export default function VoiceEditor() {
   const pill = readOnly ? (
     <TopbarPill tone="accent">{fill(t("voice.translated_pill"), { lang: transName })}</TopbarPill>
   ) : busy ? (
-    <TopbarPill tone="warning">{t("voice.busy")}</TopbarPill>
+    <TopbarPill tone="accent">{t("voice.busy")}</TopbarPill>
   ) : lintResult && issues > 0 ? (
-    <TopbarPill tone="warning">{fill(t("voice.to_resolve"), { n: issues })}</TopbarPill>
-  ) : lintResult ? (
+    <TopbarPill tone="warning">{fill(t("voice.conflicts_pill"), { n: issues })}</TopbarPill>
+  ) : book ? (
     <TopbarPill tone="success">{t("voice.in_sync")}</TopbarPill>
   ) : undefined;
 
@@ -452,7 +547,7 @@ export default function VoiceEditor() {
         {!book ? (
           emptyVoice ? (
             busy ? (
-              <ReExtractPanel stepIndex={stepIndex} steps={REEXTRACT_STEPS} t={t} />
+              <ReExtractPanel stepIndex={stepIndex} steps={REEXTRACT_STEPS} postCount={undefined} t={t} />
             ) : (
               <EmptyVoice onExtract={startReExtract} t={t} />
             )
@@ -532,7 +627,7 @@ export default function VoiceEditor() {
             )}
 
             {busy ? (
-              <ReExtractPanel stepIndex={stepIndex} steps={REEXTRACT_STEPS} t={t} />
+              <ReExtractPanel stepIndex={stepIndex} steps={REEXTRACT_STEPS} postCount={book?.posts_analyzed ?? undefined} t={t} />
             ) : (
               <>
                 {/* Voice check — hidden in the read-only translated view */}
@@ -551,16 +646,20 @@ export default function VoiceEditor() {
 
                 {/* Intro */}
                 <IntroSection
+                  key={demoOn ? `intro-${tw.state}` : "intro"}
                   value={displaySections.intro ?? ""}
                   readOnly={readOnly}
+                  initialEditing={demoEdit}
                   onSave={(text) => saveSection({ intro: text })}
                   t={t}
                 />
 
                 {/* Themes ± — Q60 typed {id, label, note} */}
                 <ThemesSection
+                  key={demoOn ? `ti-${tw.state}` : "ti"}
                   items={displaySections.themes_include ?? []}
                   readOnly={readOnly}
+                  initialEditing={demoEdit}
                   Icon={IcTags}
                   labelKey="rolebook.themes_include.label"
                   helperKey="rolebook.themes_include.helper"
@@ -628,7 +727,7 @@ export default function VoiceEditor() {
                 />
 
                 {/* Transparency */}
-                <details className="rounded-lg border border-border bg-surface p-5 shadow-sm">
+                <details open={promptOpen} className="rounded-lg border border-border bg-surface p-5 shadow-sm">
                   <summary className="cursor-pointer text-small font-semibold">
                     {t("rolebook.transparency.title")}
                     <span className="ml-2 font-normal text-caption text-text-subtle">
@@ -690,6 +789,20 @@ export default function VoiceEditor() {
           <Toast key={tt.id} tone={tt.tone} title={tt.message} />
         ))}
       </ToastHost>
+
+      {allow && (
+        <TweaksPanel title="Voice">
+          <TweakSection label="Appearance" />
+          <TweakToggle label="Dark mode" value={tw.dark} onChange={(v) => setTw("dark", v)} />
+          <TweakSection label="State" />
+          <TweakRadio
+            label="State"
+            value={tw.state}
+            options={VC_STATES}
+            onChange={(v) => setTw("state", v)}
+          />
+        </TweaksPanel>
+      )}
     </div>
   );
 }
@@ -728,6 +841,7 @@ function EmptyVoice({
       <Button className="mt-6" variant="primary" onClick={onExtract} icon={<IcScan size={18} />}>
         {t("voice.empty_cta")}
       </Button>
+      <p className="mt-3.5 text-caption text-text-subtle">{t("voice.empty_note")}</p>
     </section>
   );
 }
@@ -827,10 +941,19 @@ function TranslatedBanner({
     <div className="flex flex-wrap items-center gap-3 rounded-lg border border-accent/30 bg-accent/[0.06] px-4 py-3">
       {translating ? <Spinner /> : <IcGlobe size={17} className="shrink-0 text-accent" />}
       <div className="min-w-0 flex-1 text-small leading-snug text-text">
-        <b className="font-semibold">{l ? l.name : lang}</b>{" "}
-        <span className="text-text-muted">
-          {translating ? t("voice.translating") : t("voice.translated_banner")}
-        </span>
+        {translating ? (
+          <>
+            <b className="font-semibold">{l ? l.name : lang}</b>{" "}
+            <span className="text-text-muted">{t("voice.translating")}</span>
+          </>
+        ) : (
+          <>
+            <b className="font-semibold">
+              {fill(t("voice.translated_banner_lead"), { lang: l ? l.name : lang })}
+            </b>{" "}
+            <span className="text-text-muted">{t("voice.translated_banner")}</span>
+          </>
+        )}
       </div>
       <button onClick={onViewOriginal} className={buttonClasses({ variant: "secondary", size: "sm" })}>
         <IcPencil size={14} /> {t("voice.view_original")}
@@ -918,14 +1041,16 @@ function IntroSection({
   value,
   readOnly,
   onSave,
+  initialEditing,
   t,
 }: {
   value: string;
   readOnly?: boolean;
   onSave: (text: string) => Promise<void>;
+  initialEditing?: boolean;
   t: (k: MessageKey) => string;
 }) {
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(!!initialEditing);
   const [draft, setDraft] = useState(value);
   useEffect(() => setDraft(value), [value]);
   useEffect(() => {
@@ -981,6 +1106,7 @@ function ThemesSection({
   notePlaceholderKey,
   flagged,
   onSave,
+  initialEditing,
   t,
 }: {
   items: RoleBookThemeItem[];
@@ -993,9 +1119,10 @@ function ThemesSection({
   notePlaceholderKey: MessageKey;
   flagged?: Set<string>;
   onSave: (items: RoleBookThemeItem[]) => Promise<void>;
+  initialEditing?: boolean;
   t: (k: MessageKey) => string;
 }) {
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(!!initialEditing);
   const [draft, setDraft] = useState<RoleBookThemeItem[]>(items);
   useEffect(() => setDraft(items), [items]);
   useEffect(() => {
@@ -1601,15 +1728,17 @@ function ConflictCard({
 function ReExtractPanel({
   stepIndex,
   steps,
+  postCount,
   t,
 }: {
   stepIndex: number;
   steps: MessageKey[];
+  postCount?: number;
   t: (k: MessageKey) => string;
 }) {
   return (
     <section className="flex flex-col items-center rounded-xl border border-accent/40 bg-surface p-8 text-center shadow-md">
-      <span className="text-text" style={{ animation: "nibwrite 1.5s ease infinite" }}>
+      <span className="text-text" style={{ animation: "nib-write 1.5s var(--ease-standard) infinite" }}>
         <IcNib size={40} />
       </span>
       <div className="mt-4 text-h2 font-semibold tracking-tight">{t("voice.rx_title")}</div>
@@ -1651,7 +1780,7 @@ function ReExtractPanel({
                   state === "active" ? "font-medium text-text" : state === "done" ? "text-text" : "text-text-muted",
                 )}
               >
-                {t(k)}
+                {postCount && postCount > 0 ? fill(t(k), { n: postCount }) : t(k).replace(/\s*\{n\}/g, "")}
               </span>
             </div>
           );
