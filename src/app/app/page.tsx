@@ -466,6 +466,7 @@ export default function Studio() {
           <>
             <StudioComposer
               avatarText={(me?.display_name?.[0] ?? me?.email?.[0] ?? "M").toUpperCase()}
+              avatarUrl={me?.avatar_url ?? null}
               value={composerText}
               onChange={setComposerText}
               count={demoOn ? Number(tw.drafts) : batchCount}

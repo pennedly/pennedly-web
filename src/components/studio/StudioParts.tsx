@@ -610,6 +610,7 @@ const CHIPS: MessageKey[] = ["studio.chip_lesson", "studio.chip_trend", "studio.
 
 export function StudioComposer({
   avatarText,
+  avatarUrl,
   value,
   onChange,
   count,
@@ -620,6 +621,7 @@ export function StudioComposer({
   disabled,
 }: {
   avatarText: string;
+  avatarUrl?: string | null;
   value: string;
   onChange: (v: string) => void;
   count: number;
@@ -658,7 +660,7 @@ export function StudioComposer({
       ) : (
         <>
           <div className="flex items-start gap-3">
-            <Mono text={avatarText} size={38} />
+            <AccountFace url={avatarUrl} initials={avatarText} size={38} />
             <textarea
               value={value}
               onChange={(e) => {

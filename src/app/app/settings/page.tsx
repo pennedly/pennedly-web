@@ -34,9 +34,8 @@ import {
 } from "@/lib/i18n";
 import { captureEvent } from "@/lib/analytics";
 import { AppTopbar } from "@/components/AppTopbar";
-import { Avatar } from "@/components/ui/avatar";
+import { Avatar, AccountFace } from "@/components/ui/avatar";
 import { Button, buttonClasses } from "@/components/ui/button";
-import { Mono } from "@/components/ui/mono";
 import { Skeleton } from "@/components/ui/feedback";
 import { Toast, ToastHost } from "@/components/ui/toast";
 import { ConnectThreadsButton } from "@/components/ConnectThreadsButton";
@@ -186,7 +185,7 @@ export default function SettingsPage() {
             <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
               <h2 className="text-small font-semibold">{t("settings.account")}</h2>
               <div className="mt-4 flex items-center gap-3.5">
-                <Mono text={initial(me.display_name ?? me.email)} size={52} />
+                <AccountFace url={me.avatar_url} initials={initial(me.display_name ?? me.email)} size={52} />
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-body font-semibold">
                     {me.display_name ?? me.tenant.name}

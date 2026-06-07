@@ -15,6 +15,7 @@ export const DEMO_ME: Me = {
   tenant: { id: 1, name: "Mara Lin", slug: "mara", plan_tier: "creator", accounts_limit: 5 },
   is_tester: true,
   locale: "en",
+  avatar_url: null,
 };
 
 export const DEMO_ACCOUNTS: ConnectedAccount[] = [

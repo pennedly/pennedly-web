@@ -25,6 +25,9 @@ export type Me = {
   // Persisted UI language (one of the 8 codes), or null if never set.
   // Server-generated copy (weekly audit) is written in it.
   locale: string | null;
+  // The signed-in user's Google profile photo URL, or null (magic-link /
+  // dev-login, or a Google account without a picture).
+  avatar_url: string | null;
 };
 
 export type ConnectedAccount = {
