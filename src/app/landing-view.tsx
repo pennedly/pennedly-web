@@ -68,13 +68,14 @@ const SAMPLE = {
   toneTag: "Warm, direct",
   composeNote: "Drafting in Zakhar's voice",
 };
-// Account-switcher rail: the active account shows the real photo; the others
-// stay illustrative monograms (other accounts the creator runs).
+// Account-switcher rail: the four accounts the creator runs, each a real photo
+// (the active one is the same as the composer author). Monogram initials are the
+// fallback if a photo fails to load.
 const RAIL: { url?: string; initials: string }[] = [
   { url: "/avatars/zakhar.jpg", initials: "ZS" },
-  { initials: "TP" },
-  { initials: "AR" },
-  { initials: "LM" },
+  { url: "/avatars/acct-2.jpg", initials: "AM" },
+  { url: "/avatars/acct-3.jpg", initials: "DK" },
+  { url: "/avatars/acct-4.jpg", initials: "LM" },
 ];
 const WIN_URL = "app.pennedly.com";
 const WIN_PATH = "/studio";
