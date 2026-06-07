@@ -72,7 +72,7 @@ export default function FeedPage() {
   const [reference, setReference] = useState<FeedReference | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [bootError, setBootError] = useState<string | null>(null);
-  const [account, setAccount] = useState<{ name: string; handle: string; initials: string }>({ name: "You", handle: "you", initials: "Y" });
+  const [account, setAccount] = useState<{ name: string; handle: string; initials: string; avatarUrl: string | null }>({ name: "You", handle: "you", initials: "Y", avatarUrl: null });
   const [sort, setSort] = useState<"recent" | "top">("recent");
   const [growthOpen, setGrowthOpen] = useState<number | null>(null);
   const [growth, setGrowth] = useState<Record<number, number[]>>({});
@@ -100,7 +100,7 @@ export default function FeedPage() {
       const a = list.accounts.find((x) => x.id === accountId) ?? list.accounts[0];
       if (a) {
         const name = a.display_name ?? a.username ?? "You";
-        setAccount({ name, handle: a.username ?? "you", initials: name.slice(0, 2).toUpperCase() });
+        setAccount({ name, handle: a.username ?? "you", initials: name.slice(0, 2).toUpperCase(), avatarUrl: a.profile_picture_url });
       }
     }).catch(() => {});
   }, [accountId]);
@@ -321,6 +321,7 @@ export default function FeedPage() {
                   p={p}
                   baselineViews={baseline.views}
                   authorInitials={demoOn ? "ML" : account.initials}
+                  authorAvatar={demoOn ? null : account.avatarUrl}
                   authorName={demoOn ? "Mara Lin" : account.name}
                   authorHandle={demoOn ? "mara.lin" : account.handle}
                   growthOpen={growthOpen === p.id}

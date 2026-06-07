@@ -13,6 +13,7 @@ import { cn } from "@/lib/cn";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Mono } from "@/components/ui/mono";
+import { AccountFace } from "@/components/ui/avatar";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
 import {
   BrandMark,
@@ -345,7 +346,7 @@ export function DraftCard({
     >
       {/* head */}
       <div className="flex items-center gap-2.5">
-        <Mono text={card.author.initials} size={38} />
+        <AccountFace url={card.author.avatarUrl} initials={card.author.initials} size={38} />
         <div className="min-w-0 flex-1">
           <div className="truncate text-small font-semibold leading-[1.25]">{card.author.name}</div>
           <div className="flex flex-wrap items-center gap-x-1.5 text-caption text-text-subtle">
@@ -888,7 +889,7 @@ export function StudioPublishDialog({
 }: {
   open: boolean;
   text: string;
-  account: { name: string; handle: string | null; initials: string } | null;
+  account: { name: string; handle: string | null; initials: string; avatarUrl?: string | null } | null;
   publishing: boolean;
   onClose: () => void;
   onConfirm: () => void;
@@ -928,7 +929,7 @@ export function StudioPublishDialog({
         </div>
         {account && (
           <div className="mt-4 flex items-center gap-2.5 rounded-md border border-border bg-surface-2 px-3 py-2.5">
-            <Mono text={account.initials} size={30} />
+            <AccountFace url={account.avatarUrl} initials={account.initials} size={30} />
             <span className="min-w-0">
               <span className="block truncate text-small font-semibold">{account.name}</span>
               {account.handle && <span className="block truncate text-caption text-text-subtle">@{account.handle}</span>}

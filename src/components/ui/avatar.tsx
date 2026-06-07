@@ -46,3 +46,35 @@ export function Avatar({
   }
   return <Mono text={initialsOf(nameOf(account))} size={size} className={className} />;
 }
+
+// Like Avatar, but for places that already carry a flat author shape
+// ({ initials } + an optional photo URL) instead of a full ConnectedAccount —
+// the own-account author on Studio drafts, My Feed posts, and reply previews.
+// Shows the Threads photo when one is present, the initials monogram otherwise.
+export function AccountFace({
+  url,
+  initials,
+  size,
+  className,
+}: {
+  url?: string | null;
+  initials: string;
+  size: number;
+  className?: string;
+}) {
+  const { t } = useTranslation();
+  if (url) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={url}
+        alt={t("shell.avatar_alt")}
+        width={size}
+        height={size}
+        className={cn("shrink-0 rounded-full bg-surface-2 object-cover", className)}
+        style={{ width: size, height: size }}
+      />
+    );
+  }
+  return <Mono text={initials} size={size} className={className} />;
+}

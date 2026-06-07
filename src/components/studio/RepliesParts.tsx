@@ -12,6 +12,7 @@ import { cn } from "@/lib/cn";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Mono } from "@/components/ui/mono";
+import { AccountFace } from "@/components/ui/avatar";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
 import {
   IcCheck,
@@ -186,11 +187,13 @@ const CBADGE: Record<ReplyStatus, { tone: BadgeTone; key: MessageKey; dot: boole
 export function CommentCard({
   c,
   youInitials,
+  youAvatar,
   generating,
   h,
 }: {
   c: ReplyComment;
   youInitials: string;
+  youAvatar?: string | null;
   generating: boolean;
   h: ReplyHandlers;
 }) {
@@ -253,7 +256,7 @@ export function CommentCard({
           <span className="absolute bottom-4 left-[11px] top-[-2px] w-0.5 rounded bg-border" />
           <div className={cn("rounded-md border border-border bg-surface-2 px-[14px] py-3", status === "replied" && "border-success/30")}>
             <div className="mb-2 flex items-center gap-2">
-              <Mono text={youInitials} size={24} />
+              <AccountFace url={youAvatar} initials={youInitials} size={24} />
               <span className="text-small font-semibold">{t("replies.you")}</span>
               {!generating && <RaTag status={status} repliedTime={c.repliedTime} />}
             </div>

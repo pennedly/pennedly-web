@@ -108,6 +108,7 @@ export default function RepliesPage() {
   const [publishing, setPublishing] = useState(false);
   const [toasts, setToasts] = useState<ToastT[]>([]);
   const [youInitials, setYouInitials] = useState("Y");
+  const [youAvatar, setYouAvatar] = useState<string | null>(null);
 
   // demo
   const [tw, setTw] = useTweaks(REPLY_TWEAK_DEFAULTS);
@@ -136,6 +137,7 @@ export default function RepliesPage() {
       if (a) {
         const name = a.display_name ?? a.username ?? "You";
         setYouInitials(name.slice(0, 2).toUpperCase());
+        setYouAvatar(a.profile_picture_url);
       }
     }).catch(() => {});
   }, [accountId]);
@@ -434,7 +436,7 @@ export default function RepliesPage() {
                   <RepliesEmpty filter={filter} />
                 ) : (
                   visible.map((c) => (
-                    <CommentCard key={c.id} c={c} youInitials={youInitials} generating={generatingId === c.id} h={handlers} />
+                    <CommentCard key={c.id} c={c} youInitials={youInitials} youAvatar={demoOn ? null : youAvatar} generating={generatingId === c.id} h={handlers} />
                   ))
                 )}
               </div>

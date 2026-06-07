@@ -9,7 +9,7 @@ export type StudioCard = {
   id: number;
   status: StudioStatus;
   kind: "post" | "reply";
-  author: { name: string; handle: string | null; initials: string };
+  author: { name: string; handle: string | null; initials: string; avatarUrl?: string | null };
   body: string;
   // Pre-formatted relative time. Real mode passes a localized string; demo uses
   // short universal forms so there's no hydration/locale coupling in mock data.

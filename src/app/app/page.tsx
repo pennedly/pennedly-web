@@ -92,7 +92,7 @@ export default function Studio() {
     const n = raw ? Number(raw) : 3;
     return Number.isFinite(n) && n >= 1 && n <= 4 ? n : 3;
   });
-  const [selectedAccount, setSelectedAccount] = useState<{ name: string; handle: string | null; initials: string } | null>(null);
+  const [selectedAccount, setSelectedAccount] = useState<{ name: string; handle: string | null; initials: string; avatarUrl: string | null } | null>(null);
   const [publishTarget, setPublishTarget] = useState<{ card: StudioCard; account: { name: string; handle: string | null; initials: string } | null } | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [toasts, setToasts] = useState<ToastT[]>([]);
@@ -207,7 +207,7 @@ export default function Studio() {
         const name = a.display_name ?? a.username ?? `Account ${a.id}`;
         const parts = name.trim().split(/\s+/).filter(Boolean);
         const initials = (parts.length >= 2 ? parts[0][0] + parts[1][0] : name.slice(0, 2)).toUpperCase();
-        setSelectedAccount({ name, handle: a.username, initials: initials || "?" });
+        setSelectedAccount({ name, handle: a.username, initials: initials || "?", avatarUrl: a.profile_picture_url });
       })
       .catch(() => {});
   }, [accountId]);
@@ -425,7 +425,7 @@ export default function Studio() {
     id: d.id,
     status: statusOf(d),
     kind: d.content_type === "comment_reply" ? "reply" : "post",
-    author: { name: selectedAccount?.name ?? "…", handle: selectedAccount?.handle ?? null, initials: selectedAccount?.initials ?? "·" },
+    author: { name: selectedAccount?.name ?? "…", handle: selectedAccount?.handle ?? null, initials: selectedAccount?.initials ?? "·", avatarUrl: selectedAccount?.avatarUrl ?? null },
     body: edits[d.id] ?? d.generated_text,
     time: relativeTime(d.created_at, locale),
     reply: d.reply_to ? { who: d.reply_to.who ?? "", text: d.reply_to.text } : null,

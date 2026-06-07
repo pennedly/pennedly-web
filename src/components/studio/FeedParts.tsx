@@ -13,6 +13,7 @@ import { cn } from "@/lib/cn";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Mono } from "@/components/ui/mono";
+import { AccountFace } from "@/components/ui/avatar";
 import {
   IcArrowLeft,
   IcArrowUp,
@@ -337,6 +338,7 @@ export function FeedCard({
   p,
   baselineViews,
   authorInitials,
+  authorAvatar,
   authorName,
   authorHandle,
   growthOpen,
@@ -347,6 +349,7 @@ export function FeedCard({
   p: FeedCardModel;
   baselineViews: number;
   authorInitials: string;
+  authorAvatar?: string | null;
   authorName: string;
   authorHandle: string;
   growthOpen: boolean;
@@ -371,7 +374,7 @@ export function FeedCard({
     >
       {/* head */}
       <div className="flex items-center gap-[11px]">
-        <Mono text={authorInitials} size={38} />
+        <AccountFace url={authorAvatar} initials={authorInitials} size={38} />
         <div className="min-w-0 flex-1">
           <div className="truncate text-small font-semibold leading-[1.25]">{authorName}</div>
           <div className="flex flex-wrap items-center gap-x-1.5 text-caption text-text-subtle">
