@@ -93,6 +93,9 @@ const RULE_I18N: Record<string, { t: MessageKey; d: MessageKey }> = {
   plain_formatting: { t: "style_rules.r.plain_formatting.t", d: "style_rules.r.plain_formatting.d" },
   no_capital_after_colon: { t: "style_rules.r.no_capital_after_colon.t", d: "style_rules.r.no_capital_after_colon.d" },
   human_punctuation: { t: "style_rules.r.human_punctuation.t", d: "style_rules.r.human_punctuation.d" },
+  no_false_agency: { t: "style_rules.r.no_false_agency.t", d: "style_rules.r.no_false_agency.d" },
+  no_passive: { t: "style_rules.r.no_passive.t", d: "style_rules.r.no_passive.d" },
+  reader_in_room: { t: "style_rules.r.reader_in_room.t", d: "style_rules.r.reader_in_room.d" },
 };
 
 function ruleTitle(rule: StyleRule, t: (k: MessageKey) => string): string {

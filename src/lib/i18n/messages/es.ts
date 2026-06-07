@@ -1131,6 +1131,12 @@ export const es: Partial<Record<MessageKey, string>> = {
   "style_rules.toast_rule_deleted": "Regla eliminada",
   "style_rules.toast_added_post": "Regla añadida · se aplica a las publicaciones",
   "style_rules.toast_added_reply": "Regla añadida · se aplica a las respuestas",
+  "style_rules.r.no_false_agency.t": "Sin agencia falsa",
+  "style_rules.r.no_false_agency.d": "Las cosas no actúan, las personas sí. No escribas «los datos dicen» ni «la queja se volvió un arreglo»: di quién lo hizo.",
+  "style_rules.r.no_passive.t": "Sin voz pasiva",
+  "style_rules.r.no_passive.d": "Di quién actúa. Cambia «se decidió» o «se cometieron errores» por la persona que lo hace, al inicio.",
+  "style_rules.r.reader_in_room.t": "No narres desde lejos",
+  "style_rules.r.reader_in_room.d": "Evita generalidades altivas («la gente suele», «nadie hace»). Habla al lector de «tú», en una escena concreta.",
   "style_rules.r.no_antithesis.t": "Sin «no X, sino Y»",
   "style_rules.r.no_antithesis.d":
     "Evita el cliché de antítesis («no se trata de la herramienta, sino del oficio»).",

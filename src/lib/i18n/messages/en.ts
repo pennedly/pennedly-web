@@ -674,6 +674,12 @@ export const en = {
   // Q49: built-in rule titles + descriptions, keyed by the backend rule `key`
   // (the Russian `body` stays as the model prompt only). Display these, not the
   // backend strings, so the catalog is localized.
+  "style_rules.r.no_false_agency.t": "No false agency",
+  "style_rules.r.no_false_agency.d": "Things don't act, people do. Don't write \"the data says\" or \"the complaint became a fix\"; name who did it.",
+  "style_rules.r.no_passive.t": "No passive voice",
+  "style_rules.r.no_passive.d": "Name who acts. Replace \"it was decided\" or \"mistakes were made\" with the person doing it, up front.",
+  "style_rules.r.reader_in_room.t": "Don't narrate from a distance",
+  "style_rules.r.reader_in_room.d": "Skip lofty generalities (\"people tend to\", \"nobody does\"). Talk to the reader as \"you\", in a concrete scene.",
   "style_rules.r.no_antithesis.t": "No “not X, but Y”",
   "style_rules.r.no_antithesis.d": "Skip the antithesis cliché (“it's not about the tool, it's about the craft”).",
   "style_rules.r.no_rule_of_three.t": "No lists of three",

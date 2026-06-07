@@ -1142,6 +1142,12 @@ export const pt: Partial<Record<MessageKey, string>> = {
   "style_rules.toast_rule_deleted": "Regra excluída",
   "style_rules.toast_added_post": "Regra adicionada · aplicada aos posts",
   "style_rules.toast_added_reply": "Regra adicionada · aplicada às respostas",
+  "style_rules.r.no_false_agency.t": "Sem falsa agência",
+  "style_rules.r.no_false_agency.d": "Coisas não agem, pessoas sim. Não escreva «os dados dizem» ou «a reclamação virou correção»: diga quem fez.",
+  "style_rules.r.no_passive.t": "Sem voz passiva",
+  "style_rules.r.no_passive.d": "Diga quem age. Troque «foi decidido» ou «erros foram cometidos» pela pessoa que age, logo no começo.",
+  "style_rules.r.reader_in_room.t": "Não narre de longe",
+  "style_rules.r.reader_in_room.d": "Evite generalidades distantes («as pessoas costumam», «ninguém faz»). Fale com o leitor por «você», numa cena concreta.",
   "style_rules.r.no_antithesis.t": "Sem «não X, mas Y»",
   "style_rules.r.no_antithesis.d":
     "Evite o clichê da antítese («não é sobre a ferramenta, é sobre o ofício»).",

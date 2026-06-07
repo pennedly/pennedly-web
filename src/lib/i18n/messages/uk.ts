@@ -1151,6 +1151,12 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "style_rules.toast_rule_deleted": "Правило видалено",
   "style_rules.toast_added_post": "Правило додано · застосовується до постів",
   "style_rules.toast_added_reply": "Правило додано · застосовується до відповідей",
+  "style_rules.r.no_false_agency.t": "Без хибної суб'єктності",
+  "style_rules.r.no_false_agency.d": "Речі не діють, діють люди. Не пиши «дані кажуть» чи «скарга стала фіксом»; назви, хто це зробив.",
+  "style_rules.r.no_passive.t": "Без пасивного стану",
+  "style_rules.r.no_passive.d": "Називай, хто діє. Заміни «було вирішено» чи «було допущено помилки» на людину, яка це робить, на початку фрази.",
+  "style_rules.r.reader_in_room.t": "Не повчай збоку",
+  "style_rules.r.reader_in_room.d": "Без узагальнень звисока («люди зазвичай», «ніхто не»). Говори з читачем на «ти», через конкретну сцену.",
   "style_rules.r.no_antithesis.t": "Без антитез «не X, а Y»",
   "style_rules.r.no_antithesis.d":
     "Уникай кліше антитези («справа не в інструменті, а в майстерності»).",

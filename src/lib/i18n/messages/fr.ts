@@ -1158,6 +1158,12 @@ export const fr: Partial<Record<MessageKey, string>> = {
   "style_rules.toast_rule_deleted": "Règle supprimée",
   "style_rules.toast_added_post": "Règle ajoutée · appliquée aux posts",
   "style_rules.toast_added_reply": "Règle ajoutée · appliquée aux réponses",
+  "style_rules.r.no_false_agency.t": "Pas de fausse agentivité",
+  "style_rules.r.no_false_agency.d": "Les choses n'agissent pas, les gens oui. N'écris pas « les données disent » ni « la plainte est devenue un correctif » : nomme qui l'a fait.",
+  "style_rules.r.no_passive.t": "Pas de voix passive",
+  "style_rules.r.no_passive.d": "Nomme qui agit. Remplace « il a été décidé » ou « des erreurs ont été commises » par la personne qui agit, en tête.",
+  "style_rules.r.reader_in_room.t": "Ne raconte pas de loin",
+  "style_rules.r.reader_in_room.d": "Évite les généralités hautaines (« les gens ont tendance », « personne ne »). Parle au lecteur en « tu », dans une scène concrète.",
   "style_rules.r.no_antithesis.t": "Pas de « pas X, mais Y »",
   "style_rules.r.no_antithesis.d":
     "Évite le cliché de l'antithèse (« ce n'est pas l'outil qui compte, c'est le métier »).",

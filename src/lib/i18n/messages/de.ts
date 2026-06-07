@@ -1146,6 +1146,12 @@ export const de: Partial<Record<MessageKey, string>> = {
   "style_rules.toast_rule_deleted": "Regel gelöscht",
   "style_rules.toast_added_post": "Regel hinzugefügt · gilt für Beiträge",
   "style_rules.toast_added_reply": "Regel hinzugefügt · gilt für Antworten",
+  "style_rules.r.no_false_agency.t": "Keine falsche Handlungsmacht",
+  "style_rules.r.no_false_agency.d": "Dinge handeln nicht, Menschen schon. Schreib nicht „die Daten sagen“ oder „die Beschwerde wurde zum Fix“; nenn, wer es getan hat.",
+  "style_rules.r.no_passive.t": "Kein Passiv",
+  "style_rules.r.no_passive.d": "Nenn, wer handelt. Ersetz „es wurde entschieden“ oder „Fehler wurden gemacht“ durch die handelnde Person, gleich am Anfang.",
+  "style_rules.r.reader_in_room.t": "Nicht aus der Distanz erzählen",
+  "style_rules.r.reader_in_room.d": "Lass abgehobene Verallgemeinerungen („man neigt dazu“, „niemand tut“). Sprich den Leser direkt als „du“ an, in einer konkreten Szene.",
   "style_rules.r.no_antithesis.t": "Kein «nicht X, sondern Y»",
   "style_rules.r.no_antithesis.d":
     "Lass das Antithese-Klischee weg («es geht nicht um das Werkzeug, sondern um das Handwerk»).",
