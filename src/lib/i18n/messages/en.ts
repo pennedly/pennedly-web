@@ -789,11 +789,19 @@ export const en = {
   "mentions.back": "← dashboard",
   "mentions.title": "Mentions",
   "mentions.subtitle":
-    "Posts elsewhere on Threads that @-mention you. Updated hourly.",
-  "mentions.empty": "No mentions yet.",
-  "mentions.view": "view on Threads",
+    "Posts across Threads that @-mention you, a calm place to keep an eye on the conversation. Pennedly checks for new ones about once an hour.",
+  "mentions.empty_title": "No mentions yet",
+  "mentions.empty":
+    "When someone @-mentions you on Threads, it shows up here. Pennedly checks for new mentions about once an hour.",
+  "mentions.view": "Open on Threads",
+  "mentions.open_threads": "Open in Threads",
+  "mentions.translate": "Translate",
+  "mentions.translated": "Translated",
+  "mentions.show_original": "Show original",
   "mentions.updated_hourly": "Updated hourly",
-  "mentions.error": "We couldn't load your mentions. Please try again.",
+  "mentions.error_title": "Couldn't load your mentions",
+  "mentions.error":
+    "Something went wrong reaching Threads. Pennedly will try again on the next hourly check, or retry now.",
 
   // ── Posts (published) ──────────────────────────────────────────
   "dashboard.nav.posts": "posts",

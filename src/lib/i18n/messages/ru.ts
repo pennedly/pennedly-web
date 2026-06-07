@@ -789,11 +789,19 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "mentions.back": "← дашборд",
   "mentions.title": "Упоминания",
   "mentions.subtitle":
-    "Посты в Threads, где тебя упоминают (@). Обновляется раз в час.",
-  "mentions.empty": "Упоминаний пока нет.",
-  "mentions.view": "открыть в Threads",
+    "Посты по всему Threads, где тебя упоминают (@), спокойное место следить за разговором. Pennedly проверяет новые примерно раз в час.",
+  "mentions.empty_title": "Упоминаний пока нет",
+  "mentions.empty":
+    "Когда кто-то упомянёт тебя в Threads (@), это появится здесь. Pennedly проверяет новые упоминания примерно раз в час.",
+  "mentions.view": "Открыть в Threads",
+  "mentions.open_threads": "Открыть в Threads",
+  "mentions.translate": "Перевести",
+  "mentions.translated": "Переведено",
+  "mentions.show_original": "Показать оригинал",
   "mentions.updated_hourly": "Обновляется ежечасно",
-  "mentions.error": "Не удалось загрузить упоминания. Попробуйте ещё раз.",
+  "mentions.error_title": "Не удалось загрузить упоминания",
+  "mentions.error":
+    "Что-то пошло не так при обращении к Threads. Pennedly попробует снова при следующей ежечасной проверке, или повтори сейчас.",
 
   // ── Posts (published) ──────────────────────────────────────────
   "dashboard.nav.posts": "посты",

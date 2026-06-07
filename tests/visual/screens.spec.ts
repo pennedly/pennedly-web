@@ -972,6 +972,28 @@ test("Mentions", async ({ page }) => {
   await shoot(page, "mentions");
 });
 
+test("Mentions — demo states", async ({ page }) => {
+  // Tester ?demo=1: 2-tweak panel (dark + state) over the read-only feed.
+  await page.setViewportSize({ width: 1280, height: 1500 });
+  await setup(page);
+  await page.goto("/app/mentions?demo=1");
+  await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
+  await page.waitForTimeout(800);
+  await shoot(page, "mentions-demo"); // populated feed
+  await page.getByRole("button", { name: "Open tweaks" }).click();
+  await page.waitForTimeout(150);
+  const sel = page.locator("select.twk-field").first();
+  await sel.selectOption("Translated");
+  await page.waitForTimeout(300);
+  await shoot(page, "mentions-demo-translated");
+  await sel.selectOption("Empty");
+  await page.waitForTimeout(250);
+  await shoot(page, "mentions-demo-empty");
+  await sel.selectOption("Error");
+  await page.waitForTimeout(250);
+  await shoot(page, "mentions-demo-error");
+});
+
 test("Replies", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 1300 });
   await setup(page);
