@@ -1099,6 +1099,7 @@ export const en = {
   // ── Sidebar bottom + Settings ─────────────────────────────────
   "nav.settings": "Settings",
   "nav.switch_account": "Switch account",
+  "nav.more": "More",
   "shell.avatar_alt": "Profile photo",
   "shell.toggle_theme": "Toggle theme",
 

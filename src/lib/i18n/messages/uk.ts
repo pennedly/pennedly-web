@@ -1296,6 +1296,7 @@ export const uk: Partial<Record<MessageKey, string>> = {
   // ── Інше (решта) ───────────────────────────────────────────────
   "dashboard.draft.more_actions": "Більше дій",
   "nav.switch_account": "Змінити акаунт",
+  "nav.more": "Ще",
   "settings.restart_t": "Перезапустити налаштування голосу",
   "settings.restart_d":
     "Пройти онбординг заново. Це замінить твій поточний голос.",

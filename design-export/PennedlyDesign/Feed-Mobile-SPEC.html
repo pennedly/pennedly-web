@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Pennedly · My Feed — Mobile spec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="ds/tokens.css"/>
+<link rel="stylesheet" href="ds/components.css"/>
+<link rel="stylesheet" href="mobile/pennedly-mobile.css"/>
+<link rel="stylesheet" href="mobile/frame.css"/>
+<link rel="stylesheet" href="mobile/spec.css"/>
+</head>
+<body>
+<div class="layout">
+
+<aside class="toc">
+  <div class="doc-mark">
+    <span class="nib"><svg width="18" height="18" viewBox="0 0 512 512"><g fill="#ededed"><g transform="rotate(42 256 256)"><path d="M236 150 Q236 128 256 128 Q276 128 276 150 L276 300 L256 360 L236 300 Z"/><rect x="236" y="206" width="40" height="7"/></g></g></svg></span>
+    <b>Pennedly</b>
+  </div>
+  <div class="doc-sub">Mobile spec · My Feed</div>
+  <nav>
+    <a href="#s1"><span class="n">1</span> Screen identity</a>
+    <a href="#s2"><span class="n">2</span> The phone layout</a>
+    <a href="#s3"><span class="n">3</span> Shell on Feed</a>
+    <a href="#s4"><span class="n">4</span> Post-card foot — the fix</a>
+    <a href="#s5"><span class="n">5</span> Metrics, virality &amp; growth</a>
+    <a href="#s6"><span class="n">6</span> Reply post · auto-replies</a>
+    <a href="#s7"><span class="n">7</span> Feed states</a>
+    <a href="#s8"><span class="n">8</span> Anatomy &amp; values</a>
+    <a href="#s9"><span class="n">9</span> Web ↔ mobile</a>
+    <a href="#s10"><span class="n">10</span> Localization</a>
+    <a href="#s11"><span class="n">11</span> Checklist</a>
+  </nav>
+  <div class="meta">
+    Screen: <b>My Feed</b><br>
+    Route: <code>/app/feed</code><br>
+    Desktop spec: <a class="link" href="Feed-SPEC.html">Feed-SPEC.html</a><br>
+    Phone breakpoint: <code>≤ 600px</code> · ref 390<br>
+    Layer: <code>mobile/pennedly-mobile.css</code><br>
+    System: <a class="link" href="Pennedly Design System.html#m-components">DS · Mobile</a>
+  </div>
+</aside>
+
+<main>
+  <div class="doc-head">
+    <p class="kicker">Pennedly · Mobile spec · per-screen</p>
+    <h1 class="title">My Feed <span>/app/feed</span> — phone</h1>
+    <p class="lede">Your published posts, each read against your average. Same content, metrics, virality logic and states as <a class="link" href="Feed-SPEC.html">the desktop spec</a> — only the layout changes below 600px. Feed is where the <strong>card action-row problem</strong> bit hardest (Auto-replies / Growth / Open in Threads / ⋯ all in one row), so it’s the clearest demonstration of the shared two-tier foot. Frames are the real component layer at 390px, light and dark.</p>
+    <div class="filerow">
+      <span class="chip chip--mob">pennedly-mobile.css</span>
+      <span class="chip">feed-app.jsx</span>
+      <span class="chip">feed-card.jsx</span>
+      <span class="chip">shell-parts.jsx</span>
+      <span class="chip">ds/tokens.css</span>
+    </div>
+  </div>
+
+  <div class="note good"><b>What does not change.</b> The baseline-relative virality badge, the views/likes/comments/reposts metric set, the cumulative growth chart vs your average, auto-replies toggle, translate, delete, and the loading/empty/error states are all identical to desktop. Mobile is a layout pass only.</div>
+
+  <!-- 1 -->
+  <section id="s1">
+    <h2><span class="h2n">1</span>Screen identity</h2>
+    <div class="tbl-wrap"><table><tbody>
+      <tr><th style="width:210px">Route</th><td><code>/app/feed</code> — published-post analytics.</td></tr>
+      <tr><th>Desktop width</th><td><code>--content-wide</code> 960px.</td></tr>
+      <tr><th>Phone width</th><td>100% − 14px gutters; single column of post cards.</td></tr>
+      <tr><th>Top→bottom (phone)</th><td>Status bar → top bar (“My Feed”) → feed of <code>PostCard</code>s (or loading / empty / error) → tab bar (Feed active).</td></tr>
+    </tbody></table></div>
+  </section>
+
+  <!-- 2 -->
+  <section id="s2">
+    <h2><span class="h2n">2</span>The phone layout</h2>
+    <p class="section-note">Two post cards in context, light and dark. Each card: author + virality badge, body, metric block, auto-replies pill, and the two-tier foot.</p>
+    <div class="stage" id="stg-layout"></div>
+  </section>
+
+  <!-- 3 -->
+  <section id="s3">
+    <h2><span class="h2n">3</span><span class="stg stg--shell">shell</span>Shell on Feed</h2>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:200px">Slot</th><th>Feed value</th></tr></thead>
+      <tbody>
+        <tr><td>Top bar title</td><td>“My Feed”. No status pill (Feed has no voice state).</td></tr>
+        <tr><td>Top-bar actions</td><td>Theme toggle + account avatar.</td></tr>
+        <tr><td>Active tab</td><td>Feed.</td></tr>
+        <tr><td>Reduced metrics</td><td>The desktop “your average” summary header collapses into each card’s growth chart label, so no separate baseline strip is needed on a phone.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- 4 -->
+  <section id="s4">
+    <h2><span class="h2n">4</span><span class="stg stg--fix">fix</span>Post-card foot — the fix</h2>
+    <div class="fix">
+      <div class="fix-bad"><h5>Before</h5><p>“Auto-replies · Growth · Open in Threads · ⋯” share one row. On a phone it crams: “Open in Threads” wraps to two lines and the ⋯ overflows off the right edge.</p></div>
+      <div class="fix-good"><h5>After</h5><p>The auto-replies pill moves to its own meta line. The action row keeps one primary — <strong>Open on Threads</strong> (grows) — with Growth collapsed to a 44px icon and ⋯ as a 44px overflow holding Translate / Open / Delete.</p></div>
+    </div>
+    <div class="stage" id="stg-foot"></div>
+    <div class="note"><b>Overflow contents (⋯).</b> Show original (if translated) · Translate ▸ · Open on Threads · — · Delete post (danger). Identical to desktop; only the trigger collapses to 44×44.</div>
+  </section>
+
+  <!-- 5 -->
+  <section id="s5">
+    <h2><span class="h2n">5</span>Metrics, virality &amp; growth</h2>
+    <p class="section-note">The metric block goes vertical: the hero (views) on its own line, the three secondary metrics in an even row below (they wrap on long locales). The virality badge stays top-right of the header; “Growth” expands the cumulative chart inline, drawn against your-average.</p>
+    <div class="stage" id="stg-metrics"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:200px">Element</th><th>Phone behavior</th></tr></thead>
+      <tbody>
+        <tr><td><code>.m-metrics</code></td><td>surface-2 block; <code>m-metric-hero</code> row + <code>m-metric-subs</code> row.</td></tr>
+        <tr><td>Virality badge</td><td>Header right; “2.4× average” / “On par” / “Still settling”. Wraps before it clips.</td></tr>
+        <tr><td>Growth chart</td><td><code>viewBox</code> SVG at <code>width:100%</code>; baseline dashed line + “your average” label; last-point marker.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- 6 -->
+  <section id="s6">
+    <h2><span class="h2n">6</span>Reply post · auto-replies</h2>
+    <p class="section-note">A reply post adds the quoted-comment context block above the body; the “replied to @who” chip sits in the sub-line and wraps. The auto-replies pill toggles on/off (ink when on).</p>
+    <div class="stage" id="stg-reply"></div>
+  </section>
+
+  <!-- 7 -->
+  <section id="s7">
+    <h2><span class="h2n">7</span>Feed states</h2>
+    <div class="statebar"><span class="st">normal</span><span class="st">loading ×3</span><span class="st">empty</span><span class="st">error</span></div>
+    <div class="stage" id="stg-states"></div>
+  </section>
+
+  <!-- 8 -->
+  <section id="s8">
+    <h2><span class="h2n">8</span>Anatomy &amp; exact values</h2>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:210px">Element / class</th><th>Phone value</th></tr></thead>
+      <tbody>
+        <tr><td><code>.m-card</code></td><td>radius-lg; padding 14/16/12.</td></tr>
+        <tr><td><code>.m-card-head</code></td><td>avatar 38 + name/sub + virality badge (right).</td></tr>
+        <tr><td><code>.m-metrics</code></td><td>hero <code>text-h3</code> number + label; subs <code>text-small</code>, gap 18.</td></tr>
+        <tr><td><code>.ar-pill</code></td><td>own meta line; 36px tall; ink border when on.</td></tr>
+        <tr><td><code>.m-foot-row</code></td><td>Growth 44px icon · Open on Threads grow-primary · ⋯ 44px.</td></tr>
+        <tr><td><code>.m-trend svg</code></td><td>full-width; height auto; axis caption row below.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- 9 -->
+  <section id="s9">
+    <h2><span class="h2n">9</span>Web ↔ mobile</h2>
+    <div class="two">
+      <div class="pane web"><h4>Desktop ( &gt; 900 )</h4>
+        <ul>
+          <li>960px column; average-baseline summary at the top.</li>
+          <li>Metric row inline; foot is one row (pill + Growth + Open + ⋯).</li>
+          <li>Growth chart inline on expand.</li>
+        </ul>
+      </div>
+      <div class="pane mob"><h4>Phone ( ≤ 600 )</h4>
+        <ul>
+          <li>Edge-to-edge cards; baseline folds into each chart label.</li>
+          <li>Metric block vertical; foot is two-tier (pill line + action row).</li>
+          <li>Open on Threads is the grow-primary; Growth + ⋯ are 44px icons.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 -->
+  <section id="s10">
+    <h2><span class="h2n">10</span>Localization</h2>
+    <p class="section-note">“Open on Threads”, “Auto-replies on/off”, the virality phrases and metric labels all localize. On a phone: the primary wraps rather than clips; the auto-replies pill and virality badge wrap before truncating; metric labels (“views”) stay beside the number and wrap the row if a locale runs long. Never bake a metric or label into the chart image — the SVG text uses live <code>&lt;text&gt;</code>.</p>
+  </section>
+
+  <!-- 11 -->
+  <section id="s11">
+    <h2><span class="h2n">11</span>Checklist</h2>
+    <ul class="check">
+      <li>Post-card foot is two-tier: auto-replies pill on its own line; one grow-primary; Growth + ⋯ at 44×44.</li>
+      <li>“Open on Threads” wraps on long locales — never clipped, ⋯ never off-edge.</li>
+      <li>Metric block is vertical: hero line + secondary row; numbers tabular.</li>
+      <li>Virality badge sits top-right and wraps before truncating.</li>
+      <li>Growth chart is full-width SVG with live “your average” label.</li>
+      <li>Reply posts show the quoted-comment context; “replied to @who” wraps.</li>
+      <li>Loading = 3 skeletons; empty + error reachable; Retry present.</li>
+      <li>Correct in light and dark; no hardcoded colour.</li>
+    </ul>
+  </section>
+
+</main>
+</div>
+
+<script src="mobile/sprite.js"></script>
+<script src="mobile/mock.js"></script>
+<script>
+(function () {
+  var M = window.MOCK;
+  function set(id, html){ var e=document.getElementById(id); if(e) e.innerHTML=html; }
+  var top = M.top({ title:'My Feed' });
+  var tabs = M.tabs('feed');
+  var body = M.feedCard({ over:true, autoReplies:true }) + M.feedCard({ autoReplies:false });
+
+  set('stg-layout',
+    M.col(M.light(), M.phone({ top:top, body:body, tabs:tabs }), 'Two posts in context — virality, metrics, auto-replies, two-tier foot.') +
+    M.col(M.dark(), M.phone({ dark:true, top:top, body:body, tabs:tabs }), 'Dark tokens; layout identical.'));
+
+  set('stg-foot',
+    M.col(M.light('Default'), M.comp(M.feedCard({ over:true, autoReplies:true })), 'Growth icon · Open on Threads (grows) · ⋯.') +
+    M.col(M.dark('Dark'), M.comp(M.feedCard({ over:true, autoReplies:true }), { dark:true }), ''));
+
+  set('stg-metrics',
+    M.col(M.light('Metrics'), M.comp(M.feedCard({ over:true })), 'Hero views + secondary row; virality badge top-right.') +
+    M.col(M.light('Growth open'), M.comp(M.feedCard({ expanded:true, autoReplies:true })), 'Inline cumulative chart vs your average.'));
+
+  set('stg-reply',
+    M.col(M.light('Reply · auto on'), M.comp(M.feedCard({ reply:true, autoReplies:true })), 'Quoted comment + “replied to @who” in the sub-line.') +
+    M.col(M.light('Reply · auto off'), M.comp(M.feedCard({ reply:true, autoReplies:false })), 'Auto-replies off (subtle dot).'));
+
+  set('stg-states',
+    M.col(M.light('Loading'), M.phone({ top:top, tabs:tabs, body: M.skeletonCard() + M.skeletonCard() + M.skeletonCard() }), '3 skeleton cards.') +
+    M.col(M.light('Empty'), M.phone({ top:top, tabs:tabs, body: M.empty('feed') }), 'Friendly empty state.') +
+    M.col(M.light('Error'), M.phone({ top:top, tabs:tabs, body: M.errorBanner('Couldn’t load your feed','Something went wrong on our end.') }), 'Shared error banner with Retry.'));
+})();
+</script>
+</body>
+</html>

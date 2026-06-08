@@ -1299,6 +1299,7 @@ export const it: Partial<Record<MessageKey, string>> = {
   // ── Altro (resto) ──────────────────────────────────────────────
   "dashboard.draft.more_actions": "Altre azioni",
   "nav.switch_account": "Cambia account",
+  "nav.more": "Altro",
   "settings.restart_t": "Riavvia la configurazione voce",
   "settings.restart_d":
     "Rifai l'onboarding. Questo sostituisce la tua voce attuale.",

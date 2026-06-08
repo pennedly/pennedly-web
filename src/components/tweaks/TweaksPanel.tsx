@@ -22,6 +22,8 @@ const STYLE = `
 .twk-launch:hover{background:rgba(250,249,247,.95)}
 .twk-launch .dot{width:7px;height:7px;border-radius:999px;background:#34c759}
 .dark .twk-launch{background:rgba(32,31,29,.85);color:#ededed;border-color:rgba(255,255,255,.12)}
+/* Phone shell: lift the launcher clear of the bottom tab bar (58px + safe area). */
+@media (max-width:600px){.twk-launch{bottom:calc(58px + env(safe-area-inset-bottom) + 14px)}}
 
 .twk-panel{position:fixed;right:16px;bottom:16px;z-index:2147483646;width:280px;
   max-height:calc(100vh - 32px);display:flex;flex-direction:column;

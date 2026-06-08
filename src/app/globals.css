@@ -259,3 +259,13 @@
   from { transform: translateY(14px); }
   to   { transform: none; }
 }
+/* Mobile bottom-sheet entrance + its scrim fade (MobileSheet). Transform/opacity
+   only; auto-disabled under prefers-reduced-motion by the global rule above. */
+@keyframes sheet-up {
+  from { transform: translateY(14px); }
+  to   { transform: none; }
+}
+@keyframes scrim-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}

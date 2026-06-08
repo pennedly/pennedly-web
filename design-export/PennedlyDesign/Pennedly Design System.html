@@ -10,6 +10,26 @@
 <link rel="stylesheet" href="ds/tokens.css"/>
 <link rel="stylesheet" href="ds/doc.css"/>
 <link rel="stylesheet" href="ds/components.css"/>
+<link rel="stylesheet" href="mobile/pennedly-mobile.css"/>
+<link rel="stylesheet" href="mobile/frame.css"/>
+<style>
+/* Mobile-section helpers (doc chrome only) */
+.m-fix { display:grid; grid-template-columns:1fr 1fr; gap:0; border:1px solid var(--color-border); border-radius:var(--radius-lg); overflow:hidden; margin:16px 0; }
+.m-fix > div { padding:14px 16px; }
+.m-fix .mf-bad { background:color-mix(in srgb, var(--color-danger) 6%, var(--color-surface)); border-right:1px solid var(--color-border); }
+.m-fix .mf-good { background:color-mix(in srgb, var(--color-success) 6%, var(--color-surface)); }
+.m-fix h5 { margin:0 0 6px; font-size:12px; text-transform:uppercase; letter-spacing:0.04em; font-family:var(--font-mono); }
+.m-fix .mf-bad h5 { color:var(--color-danger); }
+.m-fix .mf-good h5 { color:var(--color-success); }
+.m-fix p { font-size:13.5px; margin:0; color:var(--color-text-muted); line-height:1.55; }
+@media (max-width:720px){ .m-fix { grid-template-columns:1fr; } .m-fix .mf-bad { border-right:none; border-bottom:1px solid var(--color-border); } }
+.spec-link { color:var(--color-accent); text-decoration:underline; text-underline-offset:2px; text-decoration-color:color-mix(in srgb,var(--color-accent) 40%,transparent); }
+.mtable { width:100%; border-collapse:collapse; font-size:13.5px; margin:8px 0 16px; }
+.mtable th, .mtable td { text-align:left; padding:9px 12px; border-bottom:1px solid var(--color-border); vertical-align:top; }
+.mtable thead th { font-size:11px; text-transform:uppercase; letter-spacing:0.04em; color:var(--color-text-subtle); font-weight:600; }
+.mtable tbody tr:last-child td { border-bottom:none; }
+.mtable code { font-family:var(--font-mono); font-size:0.86em; background:color-mix(in srgb,var(--color-text) 7%,transparent); padding:1px 5px; border-radius:4px; }
+</style>
 </head>
 <body>
 <div class="shell">
@@ -48,6 +68,11 @@
       <a href="#surfaces">Cards &amp; badges</a>
       <a href="#controls">Switch &amp; nav</a>
       <a href="#overlays">Dialog, toast, table</a>
+      <div class="toc-cap">Mobile</div>
+      <a href="#m-foundations">Phone foundations</a>
+      <a href="#m-shell">App shell &amp; nav</a>
+      <a href="#m-components">Components on mobile</a>
+      <a href="#m-l10n">Localization on a phone</a>
       <div class="toc-cap">Apply it</div>
       <a href="#rules">Usage rules</a>
       <a href="#rollout">Rollout plan</a>
@@ -327,6 +352,130 @@ th:      text-left text-caption font-semibold uppercase tracking-wide text-text-
 td/row:  px-3 py-3 border-b border-border text-text   ·   hover:bg-surface-2</code><button class="copy-btn r-copy" data-copy="#self"><span class="cb-label">Copy</span></button></div></div>
       </section>
 
+      <!-- ============================== MOBILE ============================== -->
+      <section class="sec" id="m-foundations">
+        <p class="eyebrow">Mobile</p>
+        <h2 class="h1">The app on a phone</h2>
+        <p class="body" style="max-width:74ch">The desktop redesign is done. This section is the shared rule set for the <strong>phone</strong> experience — the parts that are true on every <code>/app</code> screen. Nothing about the identity changes: same ink-on-paper, same semantic tokens, same light and dark, same eight locales, same states and flows. Only the <strong>layout</strong> adapts. Every phone below is the real component layer (<code>mobile/pennedly-mobile.css</code>) on the real tokens, shown at a 390px reference width in both themes.</p>
+
+        <div class="note"><strong>Per-screen detail lives in the specs.</strong> This page sets the cross-screen rules. Each screen then has its own pixel-level mobile spec: <a class="spec-link" href="Studio-Mobile-SPEC.html">Studio</a>, <a class="spec-link" href="Feed-Mobile-SPEC.html">Feed</a>, <a class="spec-link" href="Replies-Mobile-SPEC.html">Replies</a> are the canonical reference set; the remaining screens follow the same patterns.</p></div>
+
+        <h3 class="h2">Breakpoints</h3>
+        <p class="body" style="max-width:74ch">One new breakpoint introduces the phone shell. The existing tablet icon-rail (601–900) is unchanged, so the rework is additive.</p>
+        <table class="mtable">
+          <thead><tr><th style="width:150px">Range</th><th>Shell</th><th>What changes</th></tr></thead>
+          <tbody>
+            <tr><td><strong>≤ 600px</strong> · phone</td><td>Top bar + bottom tab bar + “More” drawer. No sidebar.</td><td>The whole mobile layer in this section engages. Reference width 390 (note 360 small-phone behavior).</td></tr>
+            <tr><td>601–900px · tablet</td><td>Existing collapsed <strong>icon-rail</strong> sidebar.</td><td>Unchanged from the shipped desktop build (the legacy <code>880px</code> rail).</td></tr>
+            <tr><td>&gt; 900px · desktop</td><td>Full 248px sidebar.</td><td>Unchanged.</td></tr>
+          </tbody>
+        </table>
+        <div class="note">Gate the phone layer on a single token: <code>@media (max-width: 600px)</code>. It supersedes the older per-screen <code>560px</code> tweaks (which only hid labels and padding); recommend consolidating those onto 600 as each screen adopts this layer.</div>
+
+        <h3 class="h2">Spacing, touch &amp; type</h3>
+        <table class="mtable">
+          <thead><tr><th style="width:200px">Token</th><th>Phone value</th><th>Why</th></tr></thead>
+          <tbody>
+            <tr><td>Content gutter</td><td><code>14px</code> left/right</td><td>Edge-to-edge cards without feeling cramped at 360–390.</td></tr>
+            <tr><td>Section gap</td><td><code>16px</code></td><td>Vertical rhythm in the scroll column (4px grid).</td></tr>
+            <tr><td>Card padding</td><td><code>14px 16px 12px</code></td><td>Tighter than desktop’s 16/18 to reclaim width.</td></tr>
+            <tr><td>Top bar / tab bar</td><td><code>52px</code> / <code>58px + safe-area</code></td><td>Tab bar adds <code>env(safe-area-inset-bottom)</code> for the home indicator.</td></tr>
+            <tr><td>Minimum touch target</td><td><code>44 × 44px</code></td><td>Every primary action, tab, foot button, form control, and sheet row.</td></tr>
+            <tr><td>Form field font</td><td><code>16px</code> on mobile</td><td>Below 16px iOS auto-zooms the viewport on focus — never below 16.</td></tr>
+            <tr><td>Type ramp</td><td>unchanged</td><td>The seven-step ramp already reads on a phone; only cap <code>display</code> (hero) sizes per screen. Body stays 15, inputs lift to 16.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="sec" id="m-shell">
+        <p class="eyebrow">Mobile</p>
+        <h2 class="h1">App shell &amp; navigation</h2>
+        <p class="body" style="max-width:74ch">On desktop the shell is a fixed left sidebar. On a phone it splits into three thumb-reachable pieces: a slim <strong>top bar</strong> (screen identity + a couple of contextual actions), a <strong>bottom tab bar</strong> (the daily destinations), and a <strong>“More” drawer</strong> (everything else, plus account and settings). This is the native phone pattern and keeps the most-used routes under the thumb.</p>
+
+        <div class="stage" id="stg-shell"></div>
+
+        <h3 class="h2">Top bar</h3>
+        <table class="mtable">
+          <thead><tr><th style="width:170px">Slot</th><th>Behavior</th></tr></thead>
+          <tbody>
+            <tr><td>Left</td><td>Screen title (<code>text-h3</code>, truncates with ellipsis) — or the brand mark + “Pennedly” on top-level/public screens. A back chevron prepends on drill-in screens (e.g. an Audit detail).</td></tr>
+            <tr><td>Center (optional)</td><td>A screen-specific <code>status-pill</code> may sit beside the title (Studio shows the voice state). If width is tight on a long locale, the pill drops into the content area instead of crowding the bar.</td></tr>
+            <tr><td>Right</td><td>Up to two utility icon buttons (e.g. theme, search) at 40px + the account avatar (32px → opens the account sheet). Frosted background, sticky.</td></tr>
+          </tbody>
+        </table>
+
+        <h3 class="h2">Bottom tab bar</h3>
+        <p class="body" style="max-width:74ch">Four core Workspace destinations plus <strong>More</strong>. The active tab is ink (not accent — matching the shipped sidebar’s active treatment); inactive tabs are subtle. Unread/queue counts ride the icon as a small accent bubble.</p>
+        <table class="mtable">
+          <thead><tr><th style="width:170px">Tester state</th><th>Tabs</th></tr></thead>
+          <tbody>
+            <tr><td>Tester (full nav)</td><td>Studio · Feed · Replies · Mentions · More — 5 tabs.</td></tr>
+            <tr><td>Non-tester</td><td>Replies &amp; Mentions are gated, so the bar gracefully collapses to <strong>Studio · Feed · More</strong> (3 tabs, evenly spread). The gated routes simply don’t render; nothing else moves.</td></tr>
+          </tbody>
+        </table>
+        <div class="stage" id="stg-tabs"></div>
+
+        <h3 class="h2">“More” drawer &amp; account sheet</h3>
+        <p class="body" style="max-width:74ch">“More” opens a bottom sheet carrying the remaining nav groups (Insight · Voice &amp; automation), an appearance toggle, Settings and Log out. Tapping the avatar opens the <strong>account sheet</strong> — the phone form of the desktop account popover: switch accounts, connect another, identity, Settings, Log out. Both dismiss on the scrim or the grip.</p>
+        <div class="stage" id="stg-sheets"></div>
+      </section>
+
+      <section class="sec" id="m-components">
+        <p class="eyebrow">Mobile</p>
+        <h2 class="h1">Components on mobile</h2>
+        <p class="body" style="max-width:74ch">Shared components get phone layouts here once, so every screen inherits the same behavior. Two of these are direct fixes for problems seen on a real iPhone.</p>
+
+        <h3 class="h2">Card action rows <span style="font-weight:500;color:var(--color-text-subtle);font-size:0.8em">— the canonical fix</span></h3>
+        <div class="m-fix">
+          <div class="mf-bad"><h5>Before · desktop row squeezed</h5><p>The foot (“Auto-replies / Growth / Open in Threads / ⋯”) is one horizontal row. On a phone it crams: “Open in Threads” wraps to two lines, the ⋯ runs off the edge, taps land on the wrong control.</p></div>
+          <div class="mf-good"><h5>After · two-tier foot</h5><p>A meta line that wraps freely, then <strong>one</strong> action row: at most one labelled primary (grows, 44px, wraps not clips) plus 44×44 icon buttons for secondary actions and the ⋯ overflow. Anything beyond moves into ⋯.</p></div>
+        </div>
+        <p class="body" style="max-width:74ch">This one pattern is reused by every card-bearing screen — Studio drafts, Feed posts, Replies comments — so the whole app feels consistent. Below: the same foot across all three (full cards in each screen’s spec).</p>
+        <div class="stage" id="stg-foot"></div>
+
+        <h3 class="h2">Composer <span style="font-weight:500;color:var(--color-text-subtle);font-size:0.8em">— the canonical fix</span></h3>
+        <div class="m-fix">
+          <div class="mf-bad"><h5>Before · chips collapse</h5><p>Chips + draft-count + “Generate” share one desktop row. On a phone the chips shrink into a cramped left column, “Generate” floats to the side, dead space opens up, and the placeholder title clips.</p></div>
+          <div class="mf-good"><h5>After · clean vertical stack</h5><p>Full-width textarea (placeholder fully visible), a <strong>horizontally scrollable</strong> chip row (chips keep full size, never crush), then a full-width action footer: draft-count select + Generate (grows). Nothing floats, no dead space.</p></div>
+        </div>
+        <div class="stage" id="stg-composer"></div>
+
+        <h3 class="h2">Filters, dialogs, toasts &amp; forms</h3>
+        <table class="mtable">
+          <thead><tr><th style="width:150px">Component</th><th>Phone adaptation</th></tr></thead>
+          <tbody>
+            <tr><td>Tabs / filters</td><td>Become a <strong>horizontally scrollable</strong> row (labels stay readable instead of collapsing to icons), sticky directly under the top bar.</td></tr>
+            <tr><td>Dialogs</td><td>Become <strong>bottom sheets</strong>: full-width, top-rounded, slide up, safe-area aware. Actions stack full-width, primary on top. Same content, same flow.</td></tr>
+            <tr><td>Toasts</td><td>Full-width minus 12px gutters, pinned <strong>above</strong> the tab bar. Undo/Retry stays reachable.</td></tr>
+            <tr><td>Metric rows</td><td>Hero metric on its own line; secondary metrics in an even row below (wrap if a locale runs long).</td></tr>
+            <tr><td>Forms</td><td>Single column, labels above, 44px controls, 16px text. Selects and inputs go full-width.</td></tr>
+          </tbody>
+        </table>
+        <div class="stage" id="stg-overlays"></div>
+      </section>
+
+      <section class="sec" id="m-l10n">
+        <p class="eyebrow">Mobile</p>
+        <h2 class="h1">Localization on a phone</h2>
+        <p class="body" style="max-width:74ch">Eight UI locales ship, and German, Russian and Ukrainian routinely run 30–40% longer than English. Phone widths are unforgiving, so the layout must never assume English label lengths. The rules:</p>
+        <div class="dd">
+          <div class="col do"><h5>Do</h5><ul>
+            <li>Let primary buttons <strong>wrap to a second line</strong> (<code>height:auto; min-height:44px; white-space:normal</code>) rather than clip.</li>
+            <li>Keep chips and filters in <strong>scrolling rows</strong> so long labels never crush.</li>
+            <li>Truncate names and handles with ellipsis; never let them push actions off-screen.</li>
+            <li>Let tab labels truncate, falling back to <strong>icon-only</strong> tabs when a locale is extreme.</li>
+          </ul></div>
+          <div class="col dont"><h5>Don’t</h5><ul>
+            <li>Pin any width to an English string length.</li>
+            <li>Bake text into an image — every label stays live text for the translator.</li>
+            <li>Force a single-line foot; collapse to the two-tier pattern instead.</li>
+            <li>Use em-dashes in copy, or shrink type below the ramp to “make it fit”.</li>
+          </ul></div>
+        </div>
+        <p class="body" style="max-width:74ch">Below, the same Studio surfaces rendered with German strings — the primary action wraps, chips scroll, and the tab labels truncate, all without breaking the grid.</p>
+        <div class="stage" id="stg-l10n"></div>
+      </section>
+
       <!-- ------------------------------ RULES ------------------------------- -->
       <section class="sec" id="rules">
         <p class="eyebrow">Apply it</p>
@@ -388,5 +537,70 @@ td/row:  px-3 py-3 border-b border-border text-text   ·   hover:bg-surface-2</c
 
 <script src="ds/data.js"></script>
 <script src="ds/app.js"></script>
+<script src="mobile/sprite.js"></script>
+<script src="mobile/mock.js"></script>
+<script>
+(function () {
+  var M = window.MOCK;
+  function set(id, html) { var el = document.getElementById(id); if (el) el.innerHTML = html; }
+
+  // shell — Studio in context, light + dark
+  var shellBody = M.composer('default') + M.filterbar('ready') + M.studioCard('ready');
+  set('stg-shell',
+    M.col(M.light(), M.phone({ top: M.top({ title: 'Studio', pill: 'success' }), body: shellBody }), 'The phone shell: slim top bar, scroll column, bottom tab bar. Studio shown.') +
+    M.col(M.dark(), M.phone({ dark: true, top: M.top({ title: 'Studio', pill: 'success' }), body: shellBody }), 'Same screen, dark. Tokens flip; no layout duplicated.'));
+
+  // tab bar — tester vs non-tester
+  set('stg-tabs',
+    M.col(M.light('Tester · 5 tabs'), M.phone({ variant: 'short', top: M.top({ title: 'Studio', pill: 'success' }), body: M.composer('default'), tabs: M.tabs('studio', { testers: true }) }), 'Studio · Feed · Replies · Mentions · More.') +
+    M.col(M.light('Non-tester · 3 tabs'), M.phone({ variant: 'short', top: M.top({ title: 'Studio', pill: 'success' }), body: M.composer('default'), tabs: M.tabs('studio', { testers: false }) }), 'Replies &amp; Mentions are gated, so the bar collapses to three and re-centers.'));
+
+  // sheets
+  set('stg-sheets',
+    M.col(M.light('More drawer'), M.phone({ top: M.top({ title: 'Studio', pill: 'success' }), body: M.composer('default'), overlay: M.moreSheet() }), 'Remaining nav groups + appearance + Settings + Log out.') +
+    M.col(M.light('Account sheet'), M.phone({ top: M.top({ title: 'Studio', pill: 'success' }), body: M.composer('default'), overlay: M.accountSheet() }), 'Tapping the avatar — switch account, connect, identity, log out.') +
+    M.col(M.dark('More · dark'), M.phone({ dark: true, top: M.top({ title: 'Studio', pill: 'success' }), body: M.composer('default'), overlay: M.moreSheet() }), 'Both sheets dismiss on the scrim or grip.'));
+
+  // foot pattern across the three screens
+  set('stg-foot',
+    M.col(M.light('Studio draft'), M.comp(M.studioCard('ready')), 'One primary (Publish) grows; everything else in ⋯.') +
+    M.col(M.light('Feed post'), M.comp(M.feedCard({ autoReplies: true })), 'Growth collapses to an icon; Open on Threads is primary; ⋯ holds Translate/Delete.') +
+    M.col(M.light('Replies draft'), M.comp(M.commentCard('draft')), 'Regenerate &amp; Edit become 44px icons; Approve grows.'));
+
+  // composer fix
+  set('stg-composer',
+    M.col(M.light('Composer · idle'), M.comp(M.composer('default')), 'Full-width field, scrolling chips, count + Generate footer.') +
+    M.col(M.light('Composer · drafting'), M.comp(M.composer('busy')), 'Busy state replaces the body with the nib animation.') +
+    M.col(M.dark('Composer · dark'), M.comp(M.composer('default'), { dark: true }), ''));
+
+  // overlays
+  set('stg-overlays',
+    M.col(M.light('Dialog → sheet'), M.phone({ top: M.top({ title: 'Studio', pill: 'success' }), body: M.composer('default'), overlay: M.dialogSheet() }), 'The publish confirm becomes a bottom sheet; actions stack full-width.') +
+    M.col(M.light('Toast'), M.phone({ top: M.top({ title: 'Studio', pill: 'success' }), body: M.composer('default') + M.studioCard('draft'), overlay: M.toast('success') }), 'Pinned above the tab bar with Undo still reachable.'));
+
+  // localization — German strings, built on the same classes
+  var ic = M.ic;
+  var deCard = '<article class="m-card"><div class="m-card-head"><img class="avatar-img" src="assets/avatars/mara.png" width="38" height="38" alt=""/>'
+    + '<div class="m-card-id"><div class="m-card-name">Mara Lin</div><div class="m-card-sub"><span>@mara.lin</span><span class="sep">·</span><span>vor 2 Std.</span></div></div>'
+    + '<span class="badge" style="background:color-mix(in srgb,var(--color-accent) 12%,var(--color-surface));color:var(--color-accent);border-color:color-mix(in srgb,var(--color-accent) 30%,transparent)"><span class="pill-dot"></span>Bereit</span></div>'
+    + '<p class="m-card-body">Der Trick beim Schreiben ist, den Einsatz beim Anfangen zu senken. Öffne das Dokument und schreibe absichtlich die schlechteste erste Zeile.</p>'
+    + '<div class="m-foot"><div class="m-foot-meta"><span class="cc-inline">218 / 500</span><span class="meta-sep"></span><span class="voice-tag">' + ic('check', 13) + 'Bereit zum Veröffentlichen</span></div>'
+    + '<div class="m-foot-row"><div class="m-menu-anchor"><button class="m-iconbtn--foot">' + ic('more', 18) + '</button></div>'
+    + '<button class="btn btn--primary m-btn m-btn--grow">' + ic('nib', 16) + 'In Threads veröffentlichen</button></div></div></article>';
+  var deComposer = '<div class="m-composer"><textarea class="m-composer-input" placeholder="Worüber möchtest du schreiben? Ein Thema, eine steile These, ein Link…"></textarea>'
+    + '<div class="m-chiprow"><button class="chip">' + ic('sparkle', 13) + 'Eine Lektion dieser Woche</button><button class="chip">' + ic('sparkle', 13) + 'Auf einen Trend reagieren</button><button class="chip">' + ic('sparkle', 13) + 'Eine unbeliebte Meinung</button></div>'
+    + '<div class="m-composer-foot"><select class="field count-select"><option>3 Entwürfe</option></select><button class="btn btn--primary m-gen">' + ic('nib', 16) + 'Generieren</button></div></div>';
+  var deTabs = '<nav class="m-tabbar">'
+    + '<a class="m-tab m-tab--active"><svg class="m-tab-ic"><use href="#i-nib"/></svg><span class="m-tab-badge">4</span><span class="m-tab-lbl">Studio</span></a>'
+    + '<a class="m-tab"><svg class="m-tab-ic"><use href="#i-feed"/></svg><span class="m-tab-lbl">Feed</span></a>'
+    + '<a class="m-tab"><svg class="m-tab-ic"><use href="#i-bubble"/></svg><span class="m-tab-badge">3</span><span class="m-tab-lbl">Antworten</span></a>'
+    + '<a class="m-tab"><svg class="m-tab-ic"><use href="#i-at"/></svg><span class="m-tab-lbl">Erwähnungen</span></a>'
+    + '<a class="m-tab"><svg class="m-tab-ic"><use href="#i-grid"/></svg><span class="m-tab-lbl">Mehr</span></a></nav>';
+  var deTop = '<header class="m-top"><div class="m-top-title">Studio</div><div class="m-top-spacer"></div><div class="m-top-actions"><button class="m-iconbtn">' + ic('moon', 18) + '</button><button class="m-avatar-btn"><img class="avatar-img" src="assets/avatars/mara.png" width="32" height="32" alt=""/></button></div></header>';
+  set('stg-l10n',
+    M.col(M.light('Deutsch'), M.phone({ top: deTop, body: deComposer + deCard, tabs: deTabs }), '“In Threads veröffentlichen” wraps to two lines instead of clipping; chips scroll; “Erwähnungen” truncates in the tab bar.') +
+    M.col(M.light('Foot · isolated'), M.comp(deCard), 'The two-tier foot keeps the primary at 44px even when the label doubles in length.'));
+})();
+</script>
 </body>
 </html>

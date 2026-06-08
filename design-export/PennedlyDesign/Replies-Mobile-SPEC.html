@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Pennedly · Replies — Mobile spec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="ds/tokens.css"/>
+<link rel="stylesheet" href="ds/components.css"/>
+<link rel="stylesheet" href="mobile/pennedly-mobile.css"/>
+<link rel="stylesheet" href="mobile/frame.css"/>
+<link rel="stylesheet" href="mobile/spec.css"/>
+</head>
+<body>
+<div class="layout">
+
+<aside class="toc">
+  <div class="doc-mark">
+    <span class="nib"><svg width="18" height="18" viewBox="0 0 512 512"><g fill="#ededed"><g transform="rotate(42 256 256)"><path d="M236 150 Q236 128 256 128 Q276 128 276 150 L276 300 L256 360 L236 300 Z"/><rect x="236" y="206" width="40" height="7"/></g></g></svg></span>
+    <b>Pennedly</b>
+  </div>
+  <div class="doc-sub">Mobile spec · Replies</div>
+  <nav>
+    <a href="#s1"><span class="n">1</span> Screen identity</a>
+    <a href="#s2"><span class="n">2</span> The phone layout</a>
+    <a href="#s3"><span class="n">3</span> Shell on Replies</a>
+    <a href="#s4"><span class="n">4</span> Comment-card foot — the fix</a>
+    <a href="#s5"><span class="n">5</span> The reply thread</a>
+    <a class="sub" href="#s5">— new · generating · draft</a>
+    <a class="sub" href="#s5">— approved · replied · skipped</a>
+    <a href="#s6"><span class="n">6</span> Edit &amp; translate</a>
+    <a href="#s7"><span class="n">7</span> Replies states</a>
+    <a href="#s8"><span class="n">8</span> Anatomy &amp; values</a>
+    <a href="#s9"><span class="n">9</span> Web ↔ mobile</a>
+    <a href="#s10"><span class="n">10</span> Localization</a>
+    <a href="#s11"><span class="n">11</span> Checklist</a>
+  </nav>
+  <div class="meta">
+    Screen: <b>Replies</b> <span style="color:var(--subtle)">(tester-gated)</span><br>
+    Route: <code>/app/replies</code><br>
+    Desktop spec: <a class="link" href="Replies-SPEC.html">Replies-SPEC.html</a><br>
+    Phone breakpoint: <code>≤ 600px</code> · ref 390<br>
+    Layer: <code>mobile/pennedly-mobile.css</code><br>
+    System: <a class="link" href="Pennedly Design System.html#m-components">DS · Mobile</a>
+  </div>
+</aside>
+
+<main>
+  <div class="doc-head">
+    <p class="kicker">Pennedly · Mobile spec · per-screen</p>
+    <h1 class="title">Replies <span>/app/replies</span> — phone</h1>
+    <p class="lede">Read a comment, draft a reply in your voice, edit, approve, publish — all inside the card. Same workflow, statuses and translation as <a class="link" href="Replies-SPEC.html">the desktop spec</a>; only the layout changes below 600px. The draft state packs three actions (Regenerate · Edit · Approve), so this is the second proof of the shared two-tier foot. Frames are the real component layer at 390px, light and dark.</p>
+    <div class="filerow">
+      <span class="chip chip--mob">pennedly-mobile.css</span>
+      <span class="chip">replies-app.jsx</span>
+      <span class="chip">replies-card.jsx</span>
+      <span class="chip">shell-parts.jsx</span>
+      <span class="chip">ds/tokens.css</span>
+    </div>
+  </div>
+
+  <div class="note good"><b>What does not change.</b> The new → generating → draft → approved → replied lifecycle, skip/restore, the 500-char reply limit, comment- and reply-translation, the threaded reply block, and loading/empty/error states are all identical to desktop. Mobile is a layout pass only.</div>
+
+  <!-- 1 -->
+  <section id="s1">
+    <h2><span class="h2n">1</span>Screen identity</h2>
+    <div class="tbl-wrap"><table><tbody>
+      <tr><th style="width:210px">Route</th><td><code>/app/replies</code> — tester-gated. On a phone the tab is present for testers and the bar collapses to 3 tabs for non-testers.</td></tr>
+      <tr><th>Desktop width</th><td><code>--content-wide</code> 960px.</td></tr>
+      <tr><th>Phone width</th><td>100% − 14px gutters; single column of <code>CommentCard</code>s, grouped under the post they answer.</td></tr>
+      <tr><th>Top→bottom (phone)</th><td>Status bar → top bar (“Replies”) → comment cards (or loading / empty / error) → tab bar (Replies active).</td></tr>
+    </tbody></table></div>
+  </section>
+
+  <!-- 2 -->
+  <section id="s2">
+    <h2><span class="h2n">2</span>The phone layout</h2>
+    <p class="section-note">Comment cards in context, light and dark. Each card: the incoming comment, the threaded reply block (once drafted), and the two-tier foot.</p>
+    <div class="stage" id="stg-layout"></div>
+  </section>
+
+  <!-- 3 -->
+  <section id="s3">
+    <h2><span class="h2n">3</span><span class="stg stg--shell">shell</span>Shell on Replies</h2>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:200px">Slot</th><th>Replies value</th></tr></thead>
+      <tbody>
+        <tr><td>Top bar title</td><td>“Replies”.</td></tr>
+        <tr><td>Active tab</td><td>Replies (badge = pending count). Hidden for non-testers — the bar shows Studio · Feed · More.</td></tr>
+        <tr><td>Post grouping</td><td>The desktop post-selector becomes a sticky group header above each cluster of comments (same data, narrower).</td></tr>
+        <tr><td>Remove control</td><td>The card’s ✕ “remove from queue” stays top-right of the head at a 32px tap target.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- 4 -->
+  <section id="s4">
+    <h2><span class="h2n">4</span><span class="stg stg--fix">fix</span>Comment-card foot — the fix</h2>
+    <div class="fix">
+      <div class="fix-bad"><h5>Before</h5><p>The draft state lines up Regenerate · Edit · Approve as three equal buttons. Squeezed onto a phone they shrink below a comfortable tap size and the labels start to clip.</p></div>
+      <div class="fix-good"><h5>After</h5><p>One primary per status grows to fill the row at 44px; the rest collapse to 44×44 icon buttons. Draft → <strong>Regenerate</strong> + <strong>Edit</strong> icons, <strong>Approve</strong> grows.</p></div>
+    </div>
+    <p class="section-note">Primary + collapsed actions per status:</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:120px">Status</th><th>Icons (44×44)</th><th>Primary (grows)</th></tr></thead>
+      <tbody>
+        <tr><td><b>new</b></td><td>—</td><td>Generate reply</td></tr>
+        <tr><td><b>draft</b></td><td>Regenerate · Edit</td><td>Approve</td></tr>
+        <tr><td><b>approved</b></td><td>Edit</td><td>Publish reply</td></tr>
+        <tr><td><b>editing</b></td><td>—</td><td>Cancel + Save</td></tr>
+        <tr><td><b>replied</b></td><td>—</td><td>Open in Threads (secondary)</td></tr>
+        <tr><td><b>skipped</b></td><td>—</td><td>Restore (ghost)</td></tr>
+      </tbody>
+    </table></div>
+    <div class="stage" id="stg-foot"></div>
+  </section>
+
+  <!-- 5 -->
+  <section id="s5">
+    <h2><span class="h2n">5</span>The reply thread</h2>
+    <p class="section-note">The drafted reply threads under the comment with a left rule (<code>.reply-thread</code>), a “You” author line with a status tag, and the reply text. The full lifecycle on a phone:</p>
+    <div class="stage" id="stg-thread"></div>
+  </section>
+
+  <!-- 6 -->
+  <section id="s6">
+    <h2><span class="h2n">6</span>Edit &amp; translate</h2>
+    <p class="section-note">Editing swaps the reply text for a textarea (16px, accent ring) + char meter; the foot becomes Cancel + Save. A foreign-language comment shows an inline “Translate from {lang}” toggle; the drafted reply can be translated independently.</p>
+    <div class="stage" id="stg-edit"></div>
+  </section>
+
+  <!-- 7 -->
+  <section id="s7">
+    <h2><span class="h2n">7</span>Replies states</h2>
+    <div class="statebar"><span class="st">normal</span><span class="st">generating</span><span class="st">loading ×3</span><span class="st">empty</span><span class="st">error</span></div>
+    <div class="stage" id="stg-states"></div>
+  </section>
+
+  <!-- 8 -->
+  <section id="s8">
+    <h2><span class="h2n">8</span>Anatomy &amp; exact values</h2>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:210px">Element / class</th><th>Phone value</th></tr></thead>
+      <tbody>
+        <tr><td><code>.m-card-head</code></td><td>avatar 38 + name/sub + status badge + ✕ remove (32px).</td></tr>
+        <tr><td><code>.reply-thread</code></td><td>padding-left 12; 2px left rule.</td></tr>
+        <tr><td><code>.reply-block</code></td><td>surface-2; success-tinted when replied.</td></tr>
+        <tr><td><code>.reply-edit</code></td><td>16px text; accent border + ring; auto-grows.</td></tr>
+        <tr><td><code>.m-foot-row</code></td><td>icons 44×44; one grow-primary; never &lt;44 tall.</td></tr>
+        <tr><td><code>.translate-row</code></td><td>wraps; accent toggle button.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- 9 -->
+  <section id="s9">
+    <h2><span class="h2n">9</span>Web ↔ mobile</h2>
+    <div class="two">
+      <div class="pane web"><h4>Desktop ( &gt; 900 )</h4>
+        <ul>
+          <li>960px column; post-selector rail.</li>
+          <li>Draft foot: Regenerate · Edit · Approve as three buttons in a row.</li>
+          <li>Reply thread indented; edit inline.</li>
+        </ul>
+      </div>
+      <div class="pane mob"><h4>Phone ( ≤ 600 )</h4>
+        <ul>
+          <li>Edge-to-edge; post grouping is a sticky header.</li>
+          <li>Draft foot: Regenerate + Edit icons (44px) + Approve grow-primary.</li>
+          <li>Reply thread keeps the left rule; edit textarea is 16px.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 -->
+  <section id="s10">
+    <h2><span class="h2n">10</span>Localization</h2>
+    <p class="section-note">Comments arrive in any language (translate inline); the reply UI localizes into 8 locales. On a phone: status tags (“drafted in your voice”, “approved · ready to publish”) wrap under the “You” line; the primary (“Publish reply” / “Generate reply”) wraps rather than clips; the translate toggles wrap. Author names and handles truncate with ellipsis.</p>
+  </section>
+
+  <!-- 11 -->
+  <section id="s11">
+    <h2><span class="h2n">11</span>Checklist</h2>
+    <ul class="check">
+      <li>Draft foot = Regenerate + Edit at 44×44 + Approve grow-primary; nothing under 44px.</li>
+      <li>Each status maps to exactly one primary per the table; labels wrap, never clip.</li>
+      <li>Reply thread keeps the left rule; replied block is success-tinted.</li>
+      <li>Edit textarea is 16px with the accent ring; char meter present; Cancel + Save.</li>
+      <li>Comment + reply translate toggles work and wrap.</li>
+      <li>✕ remove stays a reachable target on the head.</li>
+      <li>Generating shows the skeleton reply + nib note; loading/empty/error reachable.</li>
+      <li>Tab present for testers; bar collapses to 3 for non-testers.</li>
+      <li>Correct in light and dark; no hardcoded colour.</li>
+    </ul>
+  </section>
+
+</main>
+</div>
+
+<script src="mobile/sprite.js"></script>
+<script src="mobile/mock.js"></script>
+<script>
+(function () {
+  var M = window.MOCK;
+  function set(id, html){ var e=document.getElementById(id); if(e) e.innerHTML=html; }
+  var top = M.top({ title:'Replies' });
+  var tabs = M.tabs('replies');
+  var body = M.commentCard('new', { lang:true }) + M.commentCard('draft');
+
+  set('stg-layout',
+    M.col(M.light(), M.phone({ top:top, body:body, tabs:tabs }), 'New + draft comment cards in context.') +
+    M.col(M.dark(), M.phone({ dark:true, top:top, body:body, tabs:tabs }), 'Dark tokens; layout identical.'));
+
+  set('stg-foot',
+    M.col(M.light('draft'), M.comp(M.commentCard('draft')), 'Regenerate + Edit icons; Approve grows.') +
+    M.col(M.light('approved'), M.comp(M.commentCard('approved')), 'Edit icon; Publish reply grows.') +
+    M.col(M.dark('draft · dark'), M.comp(M.commentCard('draft'), { dark:true }), ''));
+
+  set('stg-thread',
+    M.col(M.light('new'), M.comp(M.commentCard('new'))) +
+    M.col(M.light('generating'), M.comp(M.commentCard('generating'))) +
+    M.col(M.light('draft'), M.comp(M.commentCard('draft'))) +
+    M.col(M.light('approved'), M.comp(M.commentCard('approved'))) +
+    M.col(M.light('replied'), M.comp(M.commentCard('replied'))) +
+    M.col(M.light('skipped'), M.comp(M.commentCard('skipped'))));
+
+  set('stg-edit',
+    M.col(M.light('Editing'), M.comp(M.commentCard('editing')), '16px textarea + char meter; Cancel + Save.') +
+    M.col(M.light('Translate'), M.comp(M.commentCard('new', { lang:true })), 'Inline “Translate from Spanish”.'));
+
+  set('stg-states',
+    M.col(M.light('Loading'), M.phone({ top:top, tabs:tabs, body: M.skeletonCard() + M.skeletonCard() + M.skeletonCard() }), '3 skeleton cards.') +
+    M.col(M.light('Empty'), M.phone({ top:top, tabs:tabs, body: M.empty('replies') }), 'Caught-up empty state.') +
+    M.col(M.light('Error'), M.phone({ top:top, tabs:tabs, body: M.errorBanner('Couldn’t load replies','Something went wrong on our end.') }), 'Shared error banner with Retry.'));
+})();
+</script>
+</body>
+</html>

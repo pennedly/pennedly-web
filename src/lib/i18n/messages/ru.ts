@@ -1099,6 +1099,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   // ── Низ сайдбара + Настройки ──────────────────────────────────
   "nav.settings": "Настройки",
   "nav.switch_account": "Сменить аккаунт",
+  "nav.more": "Ещё",
   "shell.avatar_alt": "Фото профиля",
   "shell.toggle_theme": "Переключить тему",
   "error.title": "Не удалось загрузить страницу",

@@ -1,72 +1,35 @@
 "use client";
 
-// Bottom-of-sidebar account + profile control: ONE tidy button showing the
-// active Threads account (real avatar + display name + @handle) that opens an
+// Bottom-of-sidebar account + profile control (desktop): ONE tidy button showing
+// the active Threads account (real avatar + display name + @handle) that opens an
 // upward menu — switch between connected accounts, connect another, jump to
 // Settings, and log out, with the signed-in user (email + plan) as a quiet
-// header. Replaces the old two-stacked-buttons (separate switcher + profile
-// menu), matching the design's single sidebar-foot account control.
+// header. The phone form of this control is the account SHEET (MobileAccountButton).
 //
-// Bootstraps from /api/me/accounts; if the persisted selection isn't in the
-// response (disconnected / switched user) it auto-selects the first active one.
+// Account loading (incl. the ?demo=1 review mode) lives in useConnectedAccounts,
+// shared with the mobile sheet so both render from one source.
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-import { fetchMyAccounts } from "@/lib/api";
-import { setSelectedAccountId, useSelectedAccountId } from "@/lib/account";
+import { setSelectedAccountId } from "@/lib/account";
 import { captureEvent } from "@/lib/analytics";
 import { useTranslation } from "@/lib/i18n";
+import { useConnectedAccounts } from "@/components/useConnectedAccounts";
 import { ConnectThreadsButton } from "@/components/ConnectThreadsButton";
 import { Avatar, nameOf } from "@/components/ui/avatar";
 import { IcCheck, IcChevDown, IcLogout, IcSettings } from "@/components/icons";
-import { DEMO_ACCOUNTS, DEMO_ME } from "@/components/studio/settings-demo";
-import type { ConnectedAccount, Me } from "@/lib/types";
+import type { Me } from "@/lib/types";
 
 export function AccountSwitcher({ me, onLogout }: { me?: Me | null; onLogout?: () => void }) {
-  const selected = useSelectedAccountId();
-  const [accounts, setAccounts] = useState<ConnectedAccount[]>([]);
-  const [loaded, setLoaded] = useState(false);
+  const { accounts, loaded, selectedAccount, effMe } = useConnectedAccounts(me);
   const [open, setOpen] = useState(false);
   const { t } = useTranslation();
-  const [demoParam] = useState(() =>
-    typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("demo") === "1" : false,
-  );
-
-  useEffect(() => {
-    if (demoParam) {
-      const acct = new URLSearchParams(window.location.search).get("acct");
-      const list = acct === "none" ? [] : acct === "single" ? DEMO_ACCOUNTS.slice(0, 1) : DEMO_ACCOUNTS;
-      setAccounts(list);
-      if (list.length > 0 && (selected === null || !list.some((a) => a.id === selected))) {
-        setSelectedAccountId(list[0].id);
-      }
-      setLoaded(true);
-      return;
-    }
-    (async () => {
-      try {
-        const list = await fetchMyAccounts();
-        const active = list.accounts.filter((a) => a.disconnected_at === null);
-        setAccounts(active);
-        if (active.length > 0 && (selected === null || !active.some((a) => a.id === selected))) {
-          setSelectedAccountId(active[0].id);
-        }
-      } catch {
-        /* silent — the switcher is a nice-to-have; pages handle their own auth */
-      } finally {
-        setLoaded(true);
-      }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   if (!loaded) return null;
   // Brand-new user / fresh Meta reviewer with nothing connected yet.
   if (accounts.length === 0) return <ConnectThreadsButton variant="primary" />;
-
-  const selectedAccount = accounts.find((a) => a.id === selected) ?? accounts[0];
-  const effMe = demoParam ? DEMO_ME : me;
+  if (!selectedAccount) return null;
 
   return (
     <div className="relative">

@@ -1261,6 +1261,7 @@ export const es: Partial<Record<MessageKey, string>> = {
   "stats.empty_meta2": "publicaciones publicadas",
   "dashboard.draft.more_actions": "Más acciones",
   "nav.switch_account": "Cambiar de cuenta",
+  "nav.more": "Más",
   "settings.restart_t": "Reiniciar la configuración de voz",
   "settings.restart_d": "Vuelve a pasar por el onboarding. Esto reemplaza tu voz actual.",
   "settings.restart_cta": "Reiniciar configuración",
