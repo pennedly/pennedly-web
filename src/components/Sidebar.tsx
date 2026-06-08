@@ -2,12 +2,12 @@
 
 // Left navigation for the whole /app area. Desktop (≥ md): a fixed left column —
 // brand (pen mark + "Drafting partner") over icon-nav groups, with the account
-// switcher + profile menu pinned at the bottom. Phone (≤ md): no sidebar — a
-// bottom tab bar (the four Workspace destinations + More) plus a "More" drawer
-// (the remaining nav groups + appearance + Settings + Log out); the per-screen
-// AppTopbar is the single top bar, and its avatar opens the account sheet.
-// Rendered once by src/app/app/layout.tsx; individual pages no longer carry
-// their own header/nav. Tester-only sections are hidden unless me.is_tester.
+// switcher + profile menu pinned at the bottom. Phone (≤ md): no persistent
+// sidebar — the single per-screen AppTopbar carries a hamburger that opens this
+// same nav as a slide-in drawer (brand + nav + account foot). Hamburger ↔ drawer
+// coordinate through the shared `mobileNav` store. Rendered once by
+// src/app/app/layout.tsx; individual pages no longer carry their own header/nav.
+// Tester-only sections are hidden unless me.is_tester.
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -16,10 +16,9 @@ import { useEffect, useState } from "react";
 import { clearTokens, fetchComments, fetchMe, getTokens, listAudits, listDrafts, setMyLocale } from "@/lib/api";
 import { captureEvent, resetIdentity } from "@/lib/analytics";
 import { useSelectedAccountId } from "@/lib/account";
+import { setMobileNavOpen, useMobileNavOpen } from "@/lib/mobileNav";
 import { getLocale, useTranslation, type MessageKey } from "@/lib/i18n";
 import { AccountSwitcher } from "@/components/AccountSwitcher";
-import { MobileSheet } from "@/components/MobileSheet";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   BrandMark,
   IcAt,
@@ -28,15 +27,12 @@ import {
   IcBolt,
   IcCompass,
   IcFeed,
-  IcLogout,
-  IcMore,
-  IcMoon,
   IcReplies,
-  IcSettings,
   IcStudio,
   IcStudy,
   IcPencil,
   IcVoice,
+  IcX,
   type IconProps,
 } from "@/components/icons";
 import type { Me } from "@/lib/types";
@@ -93,7 +89,7 @@ export function Sidebar() {
   const router = useRouter();
   const { t } = useTranslation();
   const [me, setMe] = useState<Me | null>(null);
-  const [moreOpen, setMoreOpen] = useState(false);
+  const navOpen = useMobileNavOpen();
   const [demoParam] = useState(
     () => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("demo") === "1",
   );
@@ -137,20 +133,14 @@ export function Sidebar() {
       .catch(() => {});
   }, []);
 
-  // Close the "More" drawer whenever the route changes.
+  // Close the mobile drawer whenever the route changes.
   useEffect(() => {
-    setMoreOpen(false);
+    setMobileNavOpen(false);
   }, [pathname]);
 
-  // Demo review (?demo=1) shows the full tester nav so every tab/state is
-  // reviewable; the real app gates Replies/Mentions/Autopilot on me.is_tester.
+  // Demo review (?demo=1) shows the full tester nav so every item is reviewable;
+  // the real app gates Replies/Mentions/Autopilot on me.is_tester.
   const isTester = demoParam ? true : (me?.is_tester ?? false);
-  // Bottom tab bar = the four Workspace destinations (tester-gated ones drop out
-  // for non-testers, collapsing the bar) + a More tab; the "More" drawer carries
-  // the remaining nav groups. "More" is active whenever no Workspace tab is.
-  const tabItems = GROUPS[0].items.filter((it) => !it.tester || isTester);
-  const moreGroups = GROUPS.slice(1);
-  const moreActive = !tabItems.some((it) => isActive(pathname, it.href, it.exact));
 
   function onLogout() {
     captureEvent("ui.logout_clicked");
@@ -163,12 +153,8 @@ export function Sidebar() {
     <Link href="/app" className="flex items-center gap-2.5 px-2 pb-4 pt-1">
       <BrandMark size={34} radius={9} className="shadow-sm" />
       <span className="min-w-0">
-        <span className="block text-h3 font-semibold leading-none">
-          {t("app.brand")}
-        </span>
-        <span className="mt-1 block text-caption text-text-subtle">
-          {t("nav.brand_tagline")}
-        </span>
+        <span className="block text-h3 font-semibold leading-none">{t("app.brand")}</span>
+        <span className="mt-1 block text-caption text-text-subtle">{t("nav.brand_tagline")}</span>
       </span>
     </Link>
   );
@@ -230,128 +216,40 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Desktop: fixed left column */}
+      {/* Desktop (≥ md): fixed left column. */}
       <aside className="z-30 hidden border-r border-border bg-bg md:fixed md:inset-y-0 md:left-0 md:flex md:w-62 md:flex-col md:px-3.5 md:py-4">
         {brand}
         {nav}
         {bottom}
       </aside>
 
-      {/* Phone (≤ md): bottom tab bar — Workspace destinations + More. Active tab
-          is ink (matching the sidebar); unread/queue counts ride the icon. */}
-      <nav
-        aria-label={t("nav.group.workspace")}
-        className="fixed inset-x-0 bottom-0 z-30 flex border-t border-border bg-bg/90 backdrop-blur-md md:hidden"
-        style={{ height: "calc(58px + env(safe-area-inset-bottom))", paddingBottom: "env(safe-area-inset-bottom)" }}
-      >
-        {tabItems.map((it) => {
-          const active = isActive(pathname, it.href, it.exact);
-          const Icon = it.icon;
-          const badge = it.badgeKey ? (counts[it.badgeKey] ?? 0) : 0;
-          return (
-            <Link
-              key={it.href}
-              href={it.href}
-              aria-current={active ? "page" : undefined}
-              className={`relative flex flex-1 flex-col items-center justify-center gap-1 ${
-                active ? "text-text" : "text-text-subtle"
-              }`}
+      {/* Phone (≤ md): slide-in drawer with the same nav, opened by the AppTopbar
+          hamburger (via the shared mobileNav store). Same brand + nav + account foot. */}
+      {navOpen && (
+        <div className="fixed inset-0 z-40 flex md:hidden">
+          <div
+            className="absolute inset-0 bg-ink-950/45 backdrop-blur-[1px]"
+            style={{ animation: "scrim-in 0.18s var(--ease-standard)" }}
+            onClick={() => setMobileNavOpen(false)}
+            aria-hidden
+          />
+          <aside
+            className="relative flex w-72 max-w-[82%] flex-col border-r border-border bg-bg px-3.5 py-4 shadow-lg"
+            style={{ animation: "drawer-in 0.22s var(--ease-entrance)" }}
+          >
+            <button
+              type="button"
+              onClick={() => setMobileNavOpen(false)}
+              aria-label="Close"
+              className="absolute right-2 top-2 grid h-9 w-9 place-items-center rounded-md text-text-muted transition-colors hover:bg-surface-2 hover:text-text"
             >
-              <span className="relative">
-                <Icon size={24} />
-                {badge > 0 && (
-                  <span className="absolute -right-2.5 -top-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full border-[1.5px] border-bg bg-accent px-1 text-[10px] font-semibold leading-none text-accent-foreground tabular-nums">
-                    {badge}
-                  </span>
-                )}
-              </span>
-              <span className={`text-[11px] capitalize leading-none ${active ? "font-semibold" : "font-medium"}`}>
-                {t(it.label)}
-              </span>
-            </Link>
-          );
-        })}
-        <button
-          type="button"
-          onClick={() => setMoreOpen(true)}
-          aria-label={t("nav.more")}
-          aria-current={moreActive ? "page" : undefined}
-          className={`relative flex flex-1 flex-col items-center justify-center gap-1 ${
-            moreActive ? "text-text" : "text-text-subtle"
-          }`}
-        >
-          <IcMore size={24} />
-          <span className={`text-[11px] capitalize leading-none ${moreActive ? "font-semibold" : "font-medium"}`}>
-            {t("nav.more")}
-          </span>
-        </button>
-      </nav>
-
-      {/* Phone: "More" drawer — remaining nav groups + appearance + Settings + Log out. */}
-      {moreOpen && (
-        <MobileSheet title={t("nav.more")} onClose={() => setMoreOpen(false)}>
-          {moreGroups.map((group) => {
-            const items = group.items.filter((it) => !it.tester || isTester);
-            if (items.length === 0) return null;
-            return (
-              <div key={group.title} className="mb-1">
-                <p className="px-2.5 pb-1 pt-3 text-caption font-semibold uppercase tracking-[0.06em] text-text-subtle">
-                  {t(group.title)}
-                </p>
-                {items.map((it) => {
-                  const active = isActive(pathname, it.href, it.exact);
-                  const Icon = it.icon;
-                  const badge = it.badgeKey ? (counts[it.badgeKey] ?? 0) : 0;
-                  return (
-                    <Link
-                      key={it.href}
-                      href={it.href}
-                      onClick={() => setMoreOpen(false)}
-                      aria-current={active ? "page" : undefined}
-                      className={`flex items-center gap-3 rounded-md px-2.5 py-2.5 text-body capitalize transition-colors ${
-                        active ? "bg-surface-2 font-semibold text-text" : "font-medium text-text active:bg-surface-2"
-                      }`}
-                    >
-                      <Icon size={20} className="shrink-0 text-text-muted" />
-                      <span className="flex-1 truncate">{t(it.label)}</span>
-                      {badge > 0 && (
-                        <span className="inline-flex h-[18px] min-w-[20px] items-center justify-center rounded-full border border-border bg-surface-2 px-1.5 text-caption font-semibold tabular-nums text-text-subtle">
-                          {badge}
-                        </span>
-                      )}
-                    </Link>
-                  );
-                })}
-              </div>
-            );
-          })}
-
-          <div className="my-2 h-px bg-border" />
-
-          {/* Appearance (light / dark) */}
-          <div className="flex items-center gap-3 px-2.5 py-1.5">
-            <IcMoon size={20} className="shrink-0 text-text-muted" />
-            <span className="flex-1 text-body">{t("shell.toggle_theme")}</span>
-            <ThemeToggle />
-          </div>
-          <Link
-            href="/app/settings"
-            onClick={() => setMoreOpen(false)}
-            className="flex items-center gap-3 rounded-md px-2.5 py-2.5 text-small text-text transition-colors active:bg-surface-2"
-          >
-            <IcSettings size={18} className="shrink-0 text-text-subtle" /> {t("nav.settings")}
-          </Link>
-          <button
-            type="button"
-            onClick={() => {
-              setMoreOpen(false);
-              onLogout();
-            }}
-            className="flex w-full items-center gap-3 rounded-md px-2.5 py-2.5 text-left text-small text-danger transition-colors active:bg-danger/10"
-          >
-            <IcLogout size={18} className="shrink-0" /> {t("dashboard.nav.logout")}
-          </button>
-        </MobileSheet>
+              <IcX size={18} />
+            </button>
+            {brand}
+            {nav}
+            {bottom}
+          </aside>
+        </div>
       )}
     </>
   );

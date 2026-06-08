@@ -1,11 +1,11 @@
 import { test, type Page } from "@playwright/test";
 
 // ── Mobile shell visual harness (≤ md / phone) ───────────────────────────────
-// Verifies the phone shell — slim top bar (title + theme + account avatar),
-// bottom tab bar (Workspace + More), the "More" drawer, and the account sheet —
-// at an iPhone-class 390px viewport, both themes. The desktop harness lives in
-// screens.spec.ts (1280px, waits on `aside`); at 390px `aside` is hidden, so we
-// wait on the top bar / tab controls instead.
+// Verifies the phone shell — a single slim top bar (hamburger + screen title +
+// theme) and the slide-in nav drawer (brand + grouped nav + account foot) — at
+// an iPhone-class 390px viewport, both themes. The desktop harness lives in
+// screens.spec.ts (1280px, waits on `aside`); at 390px the desktop `aside` is
+// hidden, so we wait on the top bar instead.
 //
 // Run:  npx playwright test tests/visual/mobile-shell.spec.ts
 // Out:  test-results/visual/mobile-*-{light,dark}.png
@@ -77,28 +77,18 @@ async function shoot(page: Page, name: string): Promise<void> {
   await page.evaluate(() => document.documentElement.classList.remove("dark"));
 }
 
-test("mobile shell — tab bar + sheets", async ({ page }) => {
+test("mobile shell — hamburger drawer", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 }); // iPhone 14/15
   await setup(page);
   await page.goto("/app?demo=1");
-  // Phone: no sidebar — wait on the top bar, then the bottom tab bar's More tab.
+  // Phone: no persistent sidebar/tab bar — wait on the single top bar.
   await page.waitForSelector("header", { state: "visible", timeout: 15_000 });
-  await page.getByRole("button", { name: "More", exact: true }).waitFor({ state: "visible", timeout: 15_000 });
   await page.waitForTimeout(500);
-  await shoot(page, "mobile-shell-studio"); // top bar + bottom tab bar over Studio
+  await shoot(page, "mobile-shell-studio"); // single top bar (hamburger + title), no bottom tab bar
 
-  // "More" drawer — remaining nav groups + appearance + Settings + Log out.
+  // Hamburger (aria-label = nav.more) → slide-in nav drawer (brand + grouped nav
+  // + account foot).
   await page.getByRole("button", { name: "More", exact: true }).click();
-  await page.getByRole("dialog").waitFor({ state: "visible", timeout: 10_000 });
-  await page.waitForTimeout(350);
-  await shoot(page, "mobile-shell-more");
-  await page.keyboard.press("Escape");
-  await page.waitForTimeout(300);
-
-  // Account sheet — the avatar in the top bar opens it (switch / connect /
-  // identity / Settings / Log out). aria-label is "Switch account".
-  await page.getByRole("button", { name: "Switch account", exact: true }).click();
-  await page.getByRole("dialog").waitFor({ state: "visible", timeout: 10_000 });
-  await page.waitForTimeout(350);
-  await shoot(page, "mobile-shell-account");
+  await page.waitForTimeout(450);
+  await shoot(page, "mobile-shell-drawer");
 });
