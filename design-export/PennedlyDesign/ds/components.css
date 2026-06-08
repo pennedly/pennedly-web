@@ -128,10 +128,7 @@ select.field { appearance: none; cursor: pointer;
   box-shadow: var(--shadow-lg); padding: 24px;
   animation: dialog-in var(--duration-slow) var(--ease-entrance);
 }
-/* transform-only (no opacity): resting opacity stays 1, so a dialog/card
-   never sticks invisible if the animation is interrupted. Screens used to
-   override this per-file; the canonical keyframes now live here only. */
-@keyframes dialog-in { from { transform: translateY(10px) scale(0.985); } to { transform: none; } }
+@keyframes dialog-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
 
 /* ----------------------------------- Toast --------------------------------- */
 .toast {
@@ -182,12 +179,6 @@ select.field { appearance: none; cursor: pointer;
 /* §3.6 — button sizes. sm/md(default)/lg. lg = hero & auth CTA (login, landing,
    onboarding, idle "run" actions). */
 .btn--lg { height: 46px; padding-inline: 22px; font-size: var(--text-body); border-radius: var(--radius-lg); }
-
-/* §3.7 — skeleton shimmer. Screens build their own `.skel-*` with the
-   surface-2 gradient + `animation: shimmer 1.4s linear infinite`; the
-   keyframes live here so no screen depends on another (e.g. voice/settings
-   used to borrow them from studio.css). */
-@keyframes shimmer { from { background-position: 220% 0; } to { background-position: -120% 0; } }
 
 /* §3.3 — standardized topbar status pill. dot + label, three tones.
    Usage: <span class="status-pill status-pill--success"><i class="pill-dot"/>Voice active</span> */

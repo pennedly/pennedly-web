@@ -153,14 +153,14 @@ function CardMenu({
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="grid h-[34px] w-[34px] place-items-center rounded-md border border-border bg-surface text-text-muted transition-colors hover:bg-surface-2 hover:text-text"
+        className="grid h-[34px] w-[34px] place-items-center rounded-md border border-border bg-surface text-text-muted transition-colors hover:bg-surface-2 hover:text-text max-md:h-11 max-md:w-11"
       >
         <IcMore size={17} />
       </button>
       {open && (
         <div
           role="menu"
-          className="absolute bottom-[calc(100%+8px)] right-0 z-30 max-h-[360px] min-w-[200px] overflow-y-auto rounded-lg border border-border bg-surface p-1.5 shadow-lg"
+          className="absolute bottom-[calc(100%+8px)] right-0 z-30 max-h-[360px] min-w-[200px] overflow-y-auto rounded-lg border border-border bg-surface p-1.5 shadow-lg max-md:left-0 max-md:right-auto"
           style={{ animation: "dialog-in var(--duration-base) var(--ease-entrance) both" }}
         >
           {mode === "root" ? (
@@ -480,7 +480,7 @@ export function DraftCard({
 
       {/* footer — hidden while revising */}
       {!revising && (
-        <div className={cn("flex flex-wrap items-center gap-2.5 border-t border-border", footCls)}>
+        <div className={cn("flex flex-wrap items-center gap-2.5 border-t border-border max-md:flex-col max-md:items-stretch", footCls)}>
           {renderFooter()}
         </div>
       )}
@@ -492,13 +492,14 @@ export function DraftCard({
       return (
         <>
           <span className="text-caption text-text-subtle">{t("studio.editing")}</span>
-          <div className="ml-auto flex items-center gap-2">
-            <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>
+          <div className="ml-auto flex items-center gap-2 max-md:w-full">
+            <Button size="sm" variant="ghost" onClick={() => setEditing(false)} className="max-md:min-h-[44px]">
               {t("studio.cancel")}
             </Button>
             <Button
               size="sm"
               variant="primary"
+              className="max-md:h-auto max-md:min-h-[44px] max-md:flex-1 max-md:whitespace-normal"
               icon={<IcCheck size={15} />}
               disabled={editText.trim().length === 0 || editText.length > DRAFT_LIMIT}
               onClick={() => {
@@ -522,13 +523,13 @@ export function DraftCard({
             <Stat Icon={IcBubble} n={card.stats?.replies ?? 0} />
             <Stat Icon={IcRepost} n={card.stats?.reposts ?? 0} />
           </div>
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex items-center gap-2 max-md:w-full">
             <CardMenu items={[]} translatedLang={translated?.lang ?? null} onTranslate={runTranslate} onShowOriginal={() => setTranslated(null)} />
             <a
               href={card.threadsUrl ?? "#"}
               target="_blank"
               rel="noopener noreferrer"
-              className={buttonClasses({ variant: "secondary", size: "sm" })}
+              className={buttonClasses({ variant: "secondary", size: "sm", className: "max-md:h-auto max-md:min-h-[44px] max-md:flex-1 max-md:whitespace-normal" })}
             >
               <IcExternal size={15} /> {t("studio.open_threads")}
             </a>
@@ -563,11 +564,11 @@ export function DraftCard({
     // draft | ready
     const voiceTag =
       status === "ready" ? (
-        <span className="hidden items-center gap-1.5 text-caption text-text-subtle min-[721px]:inline-flex">
+        <span className="inline-flex items-center gap-1.5 text-caption text-text-subtle">
           <IcCheck size={12} /> {t("studio.ready_tag")}
         </span>
       ) : (
-        <span className="hidden items-center gap-1.5 text-caption text-text-subtle min-[721px]:inline-flex">
+        <span className="inline-flex items-center gap-1.5 text-caption text-text-subtle">
           <IcSparkle size={12} /> {t("studio.in_your_voice")}
         </span>
       );
@@ -580,14 +581,14 @@ export function DraftCard({
           <span className="h-[3px] w-[3px] rounded-full bg-text-subtle" />
           {voiceTag}
         </div>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-2 max-md:w-full">
           <CardMenu items={menuItems} translatedLang={translated?.lang ?? null} onTranslate={runTranslate} onShowOriginal={() => setTranslated(null)} />
           {status === "draft" ? (
-            <Button size="sm" variant="primary" icon={<IcCheck size={15} />} onClick={() => h.onApprove(card)}>
+            <Button size="sm" variant="primary" className="max-md:h-auto max-md:min-h-[44px] max-md:flex-1 max-md:whitespace-normal" icon={<IcCheck size={15} />} onClick={() => h.onApprove(card)}>
               {t("studio.approve")}
             </Button>
           ) : (
-            <Button size="sm" variant="primary" icon={<IcStudio size={15} />} onClick={() => h.onPublish(card)}>
+            <Button size="sm" variant="primary" className="max-md:h-auto max-md:min-h-[44px] max-md:flex-1 max-md:whitespace-normal" icon={<IcStudio size={15} />} onClick={() => h.onPublish(card)}>
               {t("studio.publish")}
             </Button>
           )}
@@ -660,7 +661,7 @@ export function StudioComposer({
       ) : (
         <>
           <div className="flex items-start gap-3">
-            <AccountFace url={avatarUrl} initials={avatarText} size={38} />
+            <AccountFace url={avatarUrl} initials={avatarText} size={38} className="max-md:hidden" />
             <textarea
               value={value}
               onChange={(e) => {
@@ -677,21 +678,21 @@ export function StudioComposer({
             />
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2.5 border-t border-border pt-3">
-            <div className="flex min-w-0 flex-1 flex-wrap gap-1.5">
+            <div className="flex gap-1.5 [scrollbar-width:none] max-md:w-full max-md:flex-nowrap max-md:overflow-x-auto max-md:[mask-image:linear-gradient(90deg,#000_calc(100%-20px),transparent)] md:min-w-0 md:flex-1 md:flex-wrap">
               {CHIPS.map((k) => (
                 <button
                   key={k}
                   type="button"
                   onClick={() => onChange(t(k))}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 py-1.5 text-small font-medium text-text-muted transition-colors hover:border-text/20 hover:bg-surface-2 hover:text-text"
+                  className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-surface px-2.5 py-1.5 text-small font-medium text-text-muted transition-colors hover:border-text/20 hover:bg-surface-2 hover:text-text"
                 >
                   <IcSparkle size={13} className="text-text-subtle" />
                   {t(k)}
                 </button>
               ))}
             </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <div className="relative">
+            <div className="flex items-center gap-2 max-md:mt-2.5 max-md:w-full md:shrink-0">
+              <div className="relative max-md:shrink-0">
                 <select
                   value={count}
                   onChange={(e) => onCount(Number(e.target.value))}
@@ -706,7 +707,7 @@ export function StudioComposer({
                 </select>
                 <IcChevDown size={14} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-subtle" />
               </div>
-              <Button variant="primary" icon={<IcNib size={16} />} onClick={onGenerate} disabled={disabled || !value.trim()}>
+              <Button variant="primary" icon={<IcNib size={16} />} onClick={onGenerate} disabled={disabled || !value.trim()} className="max-md:h-auto max-md:min-h-[44px] max-md:flex-1 max-md:whitespace-normal">
                 {t("studio.generate")}
               </Button>
             </div>
@@ -736,7 +737,7 @@ export function FilterTabs({
 }) {
   const { t } = useTranslation();
   return (
-    <div role="tablist" className="sticky top-15 z-[5] flex items-center gap-1 rounded-md border border-border bg-surface-2 p-1">
+    <div role="tablist" className="sticky top-13 z-[5] flex items-center gap-1 rounded-md border border-border bg-surface-2 p-1 [scrollbar-width:none] max-md:overflow-x-auto md:top-15">
       {TABS.map((tab) => {
         const on = active === tab.key;
         return (
@@ -746,12 +747,12 @@ export function FilterTabs({
             aria-selected={on}
             onClick={() => onChange(tab.key)}
             className={cn(
-              "flex h-9 flex-1 items-center justify-center gap-2 rounded-sm border px-2.5 text-small font-medium transition-colors",
+              "flex h-9 items-center justify-center gap-2 rounded-sm border px-2.5 text-small font-medium transition-colors max-md:shrink-0 md:flex-1",
               on ? "border-border bg-surface font-semibold text-text shadow-sm" : "border-transparent text-text-muted hover:text-text",
             )}
           >
             <span className={cn("h-[7px] w-[7px] shrink-0 rounded-full", tab.dot)} />
-            <span className="hidden truncate min-[561px]:inline">{t(tab.label)}</span>
+            <span className="truncate">{t(tab.label)}</span>
             <span className={cn("text-caption tabular-nums", on ? "text-text-muted" : "text-text-subtle")}>{counts[tab.key]}</span>
           </button>
         );
@@ -909,7 +910,7 @@ export function StudioPublishDialog({
   const over = text.length > DRAFT_LIMIT;
   return (
     <div
-      className="fixed inset-0 z-40 grid place-items-center bg-ink-950/55 p-6 backdrop-blur-sm"
+      className="fixed inset-0 z-40 grid place-items-center bg-ink-950/55 p-6 backdrop-blur-sm max-md:place-items-end max-md:p-0"
       role="dialog"
       aria-modal="true"
       onMouseDown={(e) => {
@@ -917,7 +918,7 @@ export function StudioPublishDialog({
       }}
     >
       <div
-        className="w-full max-w-[420px] rounded-2xl border border-border bg-surface p-6 shadow-lg"
+        className="w-full max-w-[420px] rounded-2xl border border-border bg-surface p-6 shadow-lg max-md:max-w-none max-md:rounded-b-none max-md:rounded-t-2xl max-md:pb-[calc(24px+env(safe-area-inset-bottom))]"
         style={{ animation: "dialog-in var(--duration-slow) var(--ease-entrance) both" }}
       >
         <div className="flex gap-3">
@@ -944,11 +945,11 @@ export function StudioPublishDialog({
         <div className="mt-2.5">
           <CharMeter len={text.length} />
         </div>
-        <div className="mt-5 flex items-center justify-end gap-2.5">
-          <button onClick={onClose} disabled={publishing} className={buttonClasses({ variant: "ghost" })}>
+        <div className="mt-5 flex items-center justify-end gap-2.5 max-md:flex-col-reverse max-md:items-stretch max-md:gap-2">
+          <button onClick={onClose} disabled={publishing} className={buttonClasses({ variant: "ghost", className: "max-md:min-h-[44px] max-md:w-full" })}>
             {t("studio.cancel")}
           </button>
-          <Button variant="primary" icon={<IcCheck size={16} />} loading={publishing} disabled={publishing || over || text.length === 0} onClick={onConfirm}>
+          <Button variant="primary" className="max-md:min-h-[44px] max-md:w-full" icon={<IcCheck size={16} />} loading={publishing} disabled={publishing || over || text.length === 0} onClick={onConfirm}>
             {over ? t("studio.too_long") : t("studio.publish_now")}
           </Button>
         </div>

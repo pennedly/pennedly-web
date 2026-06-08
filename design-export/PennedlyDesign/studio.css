@@ -130,6 +130,15 @@ body {
   position: sticky; top: 0; z-index: 10;
 }
 .topbar-title { font-size: var(--text-h3); font-weight: 600; letter-spacing: -0.006em; }
+.topbar-voice {
+  display: inline-flex; align-items: center; gap: 7px; white-space: nowrap;
+  font-size: var(--text-small); color: var(--color-text-muted);
+  padding: 5px 11px 5px 9px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+}
+.topbar-voice .vdot { width: 7px; height: 7px; border-radius: var(--radius-full); background: var(--color-success); }
 .topbar-spacer { flex: 1 1 auto; }
 .topbar-actions { display: flex; align-items: center; gap: 8px; }
 
@@ -300,6 +309,9 @@ body {
   from { transform: translateY(10px); }
   to   { transform: none; }
 }
+/* Override DS keyframes (studio.css loads after components.css) so entrance
+   motion is transform-only — resting opacity stays 1, never invisible. */
+@keyframes dialog-in { from { transform: translateY(10px) scale(0.985); } to { transform: none; } }
 .draft--leaving { opacity: 0; transform: translateY(-6px) scale(0.99); }
 .draft--rejected { opacity: 0.72; }
 .draft--published { background: var(--color-surface-2); }
@@ -500,6 +512,7 @@ body {
   background-size: 220% 100%;
   animation: shimmer 1.4s linear infinite;
 }
+@keyframes shimmer { from { background-position: 220% 0; } to { background-position: -120% 0; } }
 
 /* ============================= EMPTY ============================= */
 .empty {
