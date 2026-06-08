@@ -60,10 +60,10 @@ export function ConnectThreadsButton({ variant = "primary", returnTo = "/app" }:
           type="button"
           onClick={onConnect}
           disabled={loading}
-          className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-small text-text transition-colors hover:bg-surface-2 disabled:opacity-50"
+          className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-small text-text transition-colors hover:bg-surface-2 disabled:opacity-50"
         >
-          <IcPlus size={16} className="text-text-subtle" />
-          {label}
+          <IcPlus size={16} className="shrink-0 text-text-subtle" />
+          <span className="min-w-0 flex-1">{label}</span>
         </button>
         {error && <span className="px-3 text-caption text-danger">{error}</span>}
       </div>
