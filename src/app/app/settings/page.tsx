@@ -161,7 +161,7 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-bg text-text">
       <AppTopbar maxW="720px" title={t("settings.title")} />
-      <main className="mx-auto max-w-[720px] space-y-5 px-5 pb-24 pt-7 md:px-6">
+      <main className="mx-auto max-w-[720px] space-y-4 px-3.5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4 md:space-y-5 md:px-6 md:pb-24 md:pt-7">
         {!loaded || !me ? (
           <div className="space-y-5">
             <Skeleton className="h-24 w-full rounded-lg" />
@@ -213,7 +213,7 @@ export default function SettingsPage() {
             <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
               <h2 className="text-small font-semibold">{t("settings.language")}</h2>
               <p className="mt-0.5 text-caption text-text-subtle">{t("settings.language_desc")}</p>
-              <div role="radiogroup" className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <div role="radiogroup" className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-2">
                 {LOCALES.map((l) => {
                   const active = l.code === locale;
                   return (
@@ -274,8 +274,8 @@ export default function SettingsPage() {
                       <div className="truncate text-caption text-text-subtle">@{a.username ?? a.id}</div>
                     </div>
                     {confirmId === a.id ? (
-                      <div className="flex shrink-0 items-center gap-2">
-                        <span className="text-caption text-text-subtle">
+                      <div className="flex shrink-0 items-center gap-2 max-md:w-full max-md:flex-wrap max-md:justify-end">
+                        <span className="text-caption text-text-subtle max-md:basis-full">
                           {t("settings.disconnect_q").replace("{handle}", `@${a.username ?? a.id}`)}
                         </span>
                         <Button
@@ -312,7 +312,7 @@ export default function SettingsPage() {
 
             {/* Shortcuts */}
             <section className="overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
-              <div className="flex items-center gap-3.5 p-4">
+              <div className="flex items-center gap-3.5 p-4 max-md:flex-wrap">
                 <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-border bg-surface-2 text-text-muted">
                   <IcVoice size={18} />
                 </span>
@@ -320,13 +320,16 @@ export default function SettingsPage() {
                   <div className="text-small font-semibold">{t("settings.shortcut_voice_t")}</div>
                   <div className="mt-0.5 text-caption text-text-subtle">{t("settings.shortcut_voice_d")}</div>
                 </div>
-                <Link href="/app/role-book" className={buttonClasses({ variant: "primary", size: "sm" })}>
+                <Link
+                  href="/app/role-book"
+                  className={`${buttonClasses({ variant: "primary", size: "sm" })} max-md:min-h-[44px] max-md:w-full max-md:basis-full`}
+                >
                   {t("settings.open_voice")}
                 </Link>
               </div>
               {/* Q33: a second row — restart the whole setup (re-runs onboarding,
                   replaces the current voice) vs the everyday edit above. */}
-              <div className="flex items-center gap-3.5 border-t border-border p-4">
+              <div className="flex items-center gap-3.5 border-t border-border p-4 max-md:flex-wrap">
                 <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-border bg-surface-2 text-text-muted">
                   <IcScan size={18} />
                 </span>
@@ -336,13 +339,13 @@ export default function SettingsPage() {
                 </div>
                 <Link
                   href="/app/onboarding"
-                  className={buttonClasses({ variant: "secondary", size: "sm" })}
+                  className={`${buttonClasses({ variant: "secondary", size: "sm" })} max-md:min-h-[44px] max-md:w-full max-md:basis-full`}
                 >
                   {t("settings.restart_cta")}
                 </Link>
               </div>
               {me.is_tester && (
-                <div className="flex items-center gap-3.5 border-t border-border p-4">
+                <div className="flex items-center gap-3.5 border-t border-border p-4 max-md:flex-wrap">
                   <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-border bg-surface-2 text-text-muted">
                     <IcFlask size={18} />
                   </span>
@@ -357,7 +360,7 @@ export default function SettingsPage() {
                   </div>
                   <Link
                     href="/app/onboarding?preview=1"
-                    className={buttonClasses({ variant: "secondary", size: "sm" })}
+                    className={`${buttonClasses({ variant: "secondary", size: "sm" })} max-md:min-h-[44px] max-md:w-full max-md:basis-full`}
                   >
                     <IcEye size={15} />
                     {t("settings.enter_preview")}
