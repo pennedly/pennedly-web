@@ -291,7 +291,7 @@ export default function FeedPage() {
   return (
     <div className="min-h-screen bg-bg text-text">
       <AppTopbar maxW="960px" title={t("feed.title")} pill={<TopbarPill tone="success">{t("feed.updated")}</TopbarPill>} />
-      <main className="mx-auto flex max-w-[960px] flex-col gap-5 px-5 pb-24 pt-7 md:px-6">
+      <main className="mx-auto flex max-w-[960px] flex-col gap-4 px-3.5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4 md:gap-5 md:px-6 md:pb-24 md:pt-7">
         <div className="flex flex-col gap-1">
           <h1 className="text-h1 font-semibold tracking-[-0.015em]">{t("feed.title")}</h1>
           <p className="text-body text-text-muted">{t("feed.subtitle")}</p>

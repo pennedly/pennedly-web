@@ -112,19 +112,19 @@ export function Baseline({
   return (
     <section className="rounded-xl border border-border bg-surface px-[22px] pb-5 pt-[18px] shadow-sm">
       <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-[9px]">
-          <span className="grid h-[30px] w-[30px] place-items-center rounded-md border border-border bg-surface-2 text-text-muted">
+        <div className="flex items-center gap-[9px] max-md:min-w-0">
+          <span className="grid h-[30px] w-[30px] place-items-center rounded-md border border-border bg-surface-2 text-text-muted max-md:shrink-0">
             <IcChart size={16} />
           </span>
-          <div>
+          <div className="max-md:min-w-0">
             <div className="text-h3 font-semibold leading-[1.1]">{t("feed.baseline_title")}</div>
-            <div className="whitespace-nowrap text-caption text-text-subtle">
+            <div className="whitespace-nowrap text-caption text-text-subtle max-md:whitespace-normal">
               {empty ? t("feed.baseline_none") : `${t("feed.baseline_sub_pre")} ${posts} ${t("feed.baseline_sub_post")}`}
             </div>
           </div>
         </div>
         {!empty && sparkline.length > 1 && (
-          <div className="hidden items-center gap-[9px] min-[561px]:flex">
+          <div className="flex items-center gap-[9px] max-md:shrink-0 max-md:flex-wrap max-md:justify-end max-md:gap-y-1">
             <Sparkline data={sparkline} />
             {deltaViews > 0 && (
               <span className="inline-flex items-center gap-1 text-small font-semibold text-success">
@@ -134,9 +134,9 @@ export function Baseline({
           </div>
         )}
       </div>
-      <div className="mt-[18px] grid grid-cols-4 gap-0 max-[560px]:grid-cols-2 max-[560px]:gap-y-4">
+      <div className="mt-[18px] grid grid-cols-4 gap-0 max-md:grid-cols-2 max-md:gap-y-4">
         {stats.map((s, i) => (
-          <div key={s.key} className={cn("border-l border-border px-[18px]", i === 0 && "border-l-0 pl-0", "max-[560px]:[&:nth-child(3)]:border-l-0")}>
+          <div key={s.key} className={cn("border-l border-border px-[18px]", i === 0 && "border-l-0 pl-0", "max-md:[&:nth-child(odd)]:border-l-0 max-md:[&:nth-child(odd)]:pl-0")}>
             <div className="text-h2 font-semibold tabular-nums leading-[1.1]">{fmt(s.val)}</div>
             <div className="mt-0.5 inline-flex items-center gap-1 text-caption text-text-subtle">
               <s.Icon size={12} /> {t(s.key)}
@@ -152,11 +152,11 @@ export function Baseline({
 export function FeedBar({ count, sort, onSort }: { count: number; sort: "recent" | "top"; onSort: (s: "recent" | "top") => void }) {
   const { t } = useTranslation();
   return (
-    <div className="flex items-center justify-between gap-3">
+    <div className="flex items-center justify-between gap-3 max-md:flex-wrap max-md:gap-y-2.5">
       <span className="text-small text-text-muted">
         <b className="font-semibold text-text">{count}</b> {t("feed.published_posts")}
       </span>
-      <div role="tablist" aria-label={t("feed.sort_label")} className="inline-flex gap-[3px] rounded-md border border-border bg-surface-2 p-[3px]">
+      <div role="tablist" aria-label={t("feed.sort_label")} className="inline-flex gap-[3px] rounded-md border border-border bg-surface-2 p-[3px] max-md:flex-wrap">
         {(["recent", "top"] as const).map((k) => (
           <button
             key={k}
@@ -179,7 +179,8 @@ export function FeedBar({ count, sort, onSort }: { count: number; sort: "recent"
 // ───────────────────────────── ViralityBadge ────────────────────────────────
 function ViralityBadge({ ratio, settling }: { ratio: number; settling?: boolean }) {
   const { t } = useTranslation();
-  const base = "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-[5px] text-caption font-semibold leading-none";
+  const base =
+    "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-[5px] text-caption font-semibold leading-none max-md:shrink-0 max-md:whitespace-normal max-md:text-balance max-md:leading-tight";
   if (settling)
     return (
       <span className={cn(base, "border-accent/28 bg-accent/12 text-accent")}>
@@ -272,7 +273,7 @@ function FeedMenu({
         aria-expanded={open}
         aria-label={t("dashboard.draft.more_actions")}
         onClick={() => setOpen((v) => !v)}
-        className="grid h-[34px] w-[34px] place-items-center rounded-md border border-border bg-surface text-text-muted transition-colors hover:bg-surface-2 hover:text-text"
+        className="grid h-[34px] w-[34px] place-items-center rounded-md border border-border bg-surface text-text-muted transition-colors hover:bg-surface-2 hover:text-text max-md:h-11 max-md:w-11 max-md:shrink-0"
       >
         <IcMore size={17} />
       </button>
@@ -412,8 +413,8 @@ export function FeedCard({
       {/* body */}
       <p className="mt-3 whitespace-pre-wrap text-body leading-[1.62] text-text">{body}</p>
       {translated && (
-        <div className="mt-[9px] inline-flex items-center gap-2 rounded-full border border-border bg-surface-2 px-2.5 py-[5px] text-caption text-text-subtle">
-          <IcGlobe size={13} /> {t("studio.translated_to")} {translated.lang.native}
+        <div className="mt-[9px] inline-flex items-center gap-2 rounded-full border border-border bg-surface-2 px-2.5 py-[5px] text-caption text-text-subtle max-md:flex max-md:max-w-full max-md:flex-wrap">
+          <IcGlobe size={13} className="max-md:shrink-0" /> {t("studio.translated_to")} {translated.lang.native}
           <span className="h-[3px] w-[3px] rounded-full bg-text-subtle" />
           <button type="button" onClick={() => setTranslated(null)} className="font-semibold text-accent transition-colors hover:text-accent/80">
             {t("studio.show_original")}
@@ -421,16 +422,18 @@ export function FeedCard({
         </div>
       )}
 
-      {/* metrics */}
-      <div className="mt-3.5 flex flex-wrap items-baseline gap-x-[22px] gap-y-2.5">
+      {/* metrics — desktop: one inline row; mobile: hero on its own line, subs in an even row below */}
+      <div className="mt-3.5 flex flex-wrap items-baseline gap-x-[22px] gap-y-2.5 max-md:flex-col max-md:items-stretch max-md:gap-y-3">
         <span className="mr-1 inline-flex items-baseline gap-[9px]">
           <IcEye size={18} className="self-center text-text-muted" />
-          <span className="text-h2 font-semibold tabular-nums">{fmt(p.views)}</span>
+          <span className="text-h2 font-semibold tabular-nums max-md:text-h3">{fmt(p.views)}</span>
           <span className="text-small text-text-subtle">{t("feed.views")}</span>
         </span>
-        <Sub Icon={IcHeart} n={p.likes} />
-        <Sub Icon={IcBubble} n={p.comments} />
-        <Sub Icon={IcRepost} n={p.reposts} />
+        <div className="contents max-md:flex max-md:flex-wrap max-md:items-baseline max-md:gap-x-[18px] max-md:gap-y-2.5">
+          <Sub Icon={IcHeart} n={p.likes} />
+          <Sub Icon={IcBubble} n={p.comments} />
+          <Sub Icon={IcRepost} n={p.reposts} />
+        </div>
       </div>
 
       {/* growth panel */}
@@ -457,26 +460,41 @@ export function FeedCard({
         </div>
       )}
 
-      {/* footer */}
-      <div className="mt-3.5 flex items-center gap-3 border-t border-border pt-[13px]">
+      {/* footer — desktop: one row; mobile two-tier (auto-replies pill on its own meta line, then action row) */}
+      <div className="mt-3.5 flex items-center gap-3 border-t border-border pt-[13px] max-md:flex-col max-md:items-stretch max-md:gap-2.5">
         <button
           type="button"
           aria-pressed={p.autoReply}
           onClick={() => h.onToggleAutoReply(p)}
           className={cn(
-            "inline-flex h-8 items-center gap-[7px] rounded-full border pl-[11px] pr-[13px] text-small font-medium transition-colors",
+            "inline-flex h-8 items-center gap-[7px] rounded-full border pl-[11px] pr-[13px] text-small font-medium transition-colors max-md:h-9 max-md:self-start",
             p.autoReply ? "border-accent/32 bg-accent/12 text-accent" : "border-border bg-surface-2 text-text-muted hover:border-text/20",
           )}
         >
           {p.autoReply ? <IcReply size={14} /> : <span className="h-[9px] w-[9px] rounded-full border-[1.6px] border-text-subtle" />}
           {p.autoReply ? t("feed.autoreply_on") : t("feed.autoreply_off")}
         </button>
-        <div className="ml-auto flex items-center gap-2">
-          <Button size="sm" variant="ghost" onClick={() => h.onToggleGrowth(p)} aria-expanded={growthOpen}>
-            <IcChart size={15} /> {t("feed.growth")}
-            <IcChevDown size={14} className={cn("transition-transform", growthOpen && "rotate-180")} />
+        <div className="ml-auto flex items-center gap-2 max-md:ml-0 max-md:w-full">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => h.onToggleGrowth(p)}
+            aria-expanded={growthOpen}
+            aria-label={t("feed.growth")}
+            className="max-md:h-11 max-md:w-11 max-md:shrink-0 max-md:gap-0 max-md:p-0"
+          >
+            <IcChart size={15} />
+            <span className="inline-flex items-center gap-2 max-md:hidden">
+              {t("feed.growth")}
+              <IcChevDown size={14} className={cn("transition-transform", growthOpen && "rotate-180")} />
+            </span>
           </Button>
-          <a href="#" target="_blank" rel="noopener noreferrer" className={buttonClasses({ variant: "primary", size: "sm" })}>
+          <a
+            href="#"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={buttonClasses({ variant: "primary", size: "sm", className: "max-md:h-auto max-md:min-h-[44px] max-md:flex-1 max-md:whitespace-normal" })}
+          >
             <IcExternal size={15} /> {t("feed.open_threads")}
           </a>
           <FeedMenu
@@ -568,7 +586,7 @@ export function ConfirmDelete({
   if (!open) return null;
   return (
     <div
-      className="fixed inset-0 z-40 grid place-items-center bg-ink-950/55 p-6 backdrop-blur-sm"
+      className="fixed inset-0 z-40 grid place-items-center bg-ink-950/55 p-6 backdrop-blur-sm max-md:place-items-end max-md:p-0"
       role="dialog"
       aria-modal="true"
       aria-label="Delete post"
@@ -576,7 +594,10 @@ export function ConfirmDelete({
         if (e.target === e.currentTarget && !deleting) onClose();
       }}
     >
-      <div className="w-full max-w-[420px] rounded-2xl border border-border bg-surface p-6 shadow-lg" style={{ animation: "dialog-in var(--duration-slow) var(--ease-entrance) both" }}>
+      <div
+        className="w-full max-w-[420px] rounded-2xl border border-border bg-surface p-6 shadow-lg max-md:max-w-none max-md:rounded-b-none max-md:rounded-t-2xl max-md:pb-[calc(24px+env(safe-area-inset-bottom))]"
+        style={{ animation: "dialog-in var(--duration-slow) var(--ease-entrance) both" }}
+      >
         <div className="flex items-start gap-3">
           <span className="grid h-[38px] w-[38px] shrink-0 place-items-center rounded-md border border-danger/28 bg-danger/12 text-danger">
             <IcTrash size={18} />
@@ -587,11 +608,11 @@ export function ConfirmDelete({
           </div>
         </div>
         <div className="mt-3.5 whitespace-pre-wrap rounded-md border border-border bg-surface-2 px-[14px] py-3 text-small leading-[1.55] text-text-muted">{text}</div>
-        <div className="mt-[22px] flex items-center justify-end gap-2.5">
-          <button onClick={onClose} disabled={deleting} className={buttonClasses({ variant: "ghost" })}>
+        <div className="mt-[22px] flex items-center justify-end gap-2.5 max-md:flex-col-reverse max-md:items-stretch max-md:gap-2">
+          <button onClick={onClose} disabled={deleting} className={buttonClasses({ variant: "ghost", className: "max-md:min-h-[44px] max-md:w-full" })}>
             {t("studio.cancel")}
           </button>
-          <Button variant="danger" icon={<IcTrash size={15} />} loading={deleting} onClick={onConfirm}>
+          <Button variant="danger" className="max-md:min-h-[44px] max-md:w-full" icon={<IcTrash size={15} />} loading={deleting} onClick={onConfirm}>
             {t("feed.delete_post")}
           </Button>
         </div>
