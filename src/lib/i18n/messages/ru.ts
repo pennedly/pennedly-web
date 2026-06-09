@@ -448,6 +448,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "audits.cstatus_rolledback": "Откатано",
   "audits.view_change": "Показать изменение",
   "audits.hide_change": "Скрыть изменение",
+  "audits.diff_now": "Сейчас",
+  "audits.diff_proposed": "Предлагается",
   "audits.add_note": "Добавить заметку",
   "audits.measuring": "измеряю эффект…",
   "audits.effect_engagement": "вовлечённость",

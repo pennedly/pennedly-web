@@ -333,6 +333,8 @@ export const it: Partial<Record<MessageKey, string>> = {
   "audits.cstatus_rolledback": "Annullato",
   "audits.view_change": "Vedi modifica",
   "audits.hide_change": "Nascondi modifica",
+  "audits.diff_now": "Ora",
+  "audits.diff_proposed": "Proposto",
   "audits.add_note": "Aggiungi una nota",
   "audits.measuring": "misuro l'effetto…",
   "audits.effect_engagement": "engagement",

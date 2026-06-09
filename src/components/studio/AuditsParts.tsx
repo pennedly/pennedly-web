@@ -67,7 +67,7 @@ export function AuditRow({ audit, onOpen }: { audit: AuditRowModel; onOpen: (id:
       {needs && <span className="absolute bottom-4 left-[-1px] top-4 w-[3px] rounded-full bg-accent" />}
       <span className="min-w-0 flex-1">
         <span className="block text-h3 font-semibold tracking-[-0.006em]">{audit.title}</span>
-        {audit.summary && <span className="mt-[5px] block text-small leading-[1.5] text-text-muted">{audit.summary}</span>}
+        {audit.summary && <span className="mt-[5px] block text-small leading-[1.5] text-text-muted max-md:line-clamp-2">{audit.summary}</span>}
         <span className="mt-2.5 flex flex-wrap items-center gap-[9px] text-caption text-text-subtle">
           <span>{audit.range}</span>
           <span className="opacity-50">·</span>
@@ -86,7 +86,7 @@ export function AuditRow({ audit, onOpen }: { audit: AuditRowModel; onOpen: (id:
           )}
         </span>
       </span>
-      <span className="flex shrink-0 items-center gap-3.5">
+      <span className="flex shrink-0 items-center gap-3.5 max-md:gap-2.5">
         {needs ? (
           <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/12 px-2.5 py-1 text-caption font-medium text-accent">
             <span className="h-1.5 w-1.5 rounded-full bg-current" />
@@ -95,7 +95,7 @@ export function AuditRow({ audit, onOpen }: { audit: AuditRowModel; onOpen: (id:
         ) : (
           <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-text/[0.06] px-2.5 py-1 text-caption font-medium text-text-muted">{t("audits.reviewed")}</span>
         )}
-        <IcChevDown size={18} className="-rotate-90 text-text-subtle max-[560px]:hidden" />
+        <IcChevDown size={18} className="-rotate-90 text-text-subtle" />
       </span>
     </button>
   );
@@ -166,12 +166,12 @@ export function AuditDetailView({ audit, onBack, h }: { audit: AuditDetailModel;
       </div>
 
       {/* coach narrative */}
-      <section className="rounded-xl border border-border bg-surface-2 px-[22px] py-5">
+      <section className="rounded-xl border border-border bg-surface-2 px-[22px] py-5 max-md:px-[18px]">
         <div className="mb-3.5 flex items-center gap-[11px]">
           <BrandMark size={34} radius={9} className="shadow-sm" />
           <span>
             <span className="block text-small font-semibold">{t("audits.coach_name")}</span>
-            <span className="block whitespace-nowrap text-caption text-text-subtle">
+            <span className="block whitespace-nowrap text-caption text-text-subtle max-md:whitespace-normal">
               {t("audits.coach_role")} · {audit.range}
             </span>
           </span>
@@ -245,11 +245,13 @@ function ChangeCard({ change, h }: { change: ChangeModel; h: AuditHandlers }) {
       {/* diff */}
       {diffOpen && change.diff && (
         <div className="mt-3 overflow-hidden rounded-md border border-border font-mono text-caption leading-[1.6]" style={{ animation: "card-in var(--duration-base) var(--ease-entrance) both" }}>
-          <div className="flex gap-2 whitespace-pre-wrap break-words bg-danger/[0.09] px-3 py-[7px] text-danger">
+          <div className="flex gap-2 whitespace-pre-wrap break-words bg-danger/[0.09] px-3 py-[7px] text-danger max-md:flex-wrap">
+            <span className="hidden basis-full font-sans text-caption font-semibold uppercase tracking-[0.04em] opacity-80 max-md:block">{t("audits.diff_now")}</span>
             <span className="opacity-70">−</span>
             <span>{change.diff.before}</span>
           </div>
-          <div className="flex gap-2 whitespace-pre-wrap break-words bg-success/10 px-3 py-[7px] text-success">
+          <div className="flex gap-2 whitespace-pre-wrap break-words bg-success/10 px-3 py-[7px] text-success max-md:flex-wrap">
+            <span className="hidden basis-full font-sans text-caption font-semibold uppercase tracking-[0.04em] opacity-80 max-md:block">{t("audits.diff_proposed")}</span>
             <span className="opacity-70">+</span>
             <span>{change.diff.after}</span>
           </div>
@@ -313,18 +315,18 @@ function ChangeCard({ change, h }: { change: ChangeModel; h: AuditHandlers }) {
       )}
 
       {/* footer */}
-      <div className="mt-3.5 flex flex-wrap items-center gap-3 border-t border-border pt-[13px]">
-        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
-          {change.status === "undecided" && <span className="whitespace-nowrap text-caption text-text-subtle">{t("audits.awaiting")} · {t("audits.applies_immediately")}</span>}
+      <div className="mt-3.5 flex flex-wrap items-center gap-3 border-t border-border pt-[13px] max-md:flex-col max-md:items-stretch">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3 max-md:w-full">
+          {change.status === "undecided" && <span className="whitespace-nowrap text-caption text-text-subtle max-md:whitespace-normal">{t("audits.awaiting")} · {t("audits.applies_immediately")}</span>}
           {change.status === "rejected" && <span className="text-caption text-text-subtle">{t("audits.you_rejected")}</span>}
           {change.status === "applied" && <EffectChip effectPct={change.effectPct ?? null} />}
         </div>
         {change.status === "undecided" && (
-          <div className="flex shrink-0 items-center gap-2">
-            <Button size="sm" variant="ghost" icon={<IcX size={15} />} onClick={() => h.onReject(change)}>
+          <div className="flex shrink-0 items-center gap-2 max-md:w-full max-md:flex-wrap">
+            <Button size="sm" variant="ghost" icon={<IcX size={15} />} onClick={() => h.onReject(change)} className="max-md:min-h-[44px] max-md:flex-1 max-md:basis-[150px]">
               {t("audits.btn_reject")}
             </Button>
-            <Button size="sm" variant="primary" icon={<IcCheck size={15} />} onClick={() => h.onApprove(change)}>
+            <Button size="sm" variant="primary" icon={<IcCheck size={15} />} onClick={() => h.onApprove(change)} className="max-md:min-h-[44px] max-md:flex-1 max-md:basis-[150px]">
               {t("audits.btn_approve")}
             </Button>
           </div>

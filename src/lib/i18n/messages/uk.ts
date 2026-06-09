@@ -331,6 +331,8 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "audits.cstatus_rolledback": "Відкочено",
   "audits.view_change": "Переглянути зміну",
   "audits.hide_change": "Сховати зміну",
+  "audits.diff_now": "Зараз",
+  "audits.diff_proposed": "Пропонується",
   "audits.add_note": "Додати нотатку",
   "audits.measuring": "вимірюю ефект…",
   "audits.effect_engagement": "залученість",

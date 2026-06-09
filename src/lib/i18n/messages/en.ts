@@ -445,6 +445,8 @@ export const en = {
   "audits.cstatus_rolledback": "Rolled back",
   "audits.view_change": "View change",
   "audits.hide_change": "Hide change",
+  "audits.diff_now": "Now",
+  "audits.diff_proposed": "Proposed",
   "audits.add_note": "Add a note",
   "audits.measuring": "measuring effect…",
   "audits.effect_engagement": "engagement",

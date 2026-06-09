@@ -165,7 +165,7 @@ export default function AuditsPage() {
 
   if (bootError) {
     return (
-      <main className="mx-auto max-w-2xl px-6 py-16">
+      <main className="mx-auto max-w-2xl px-3.5 py-16 md:px-6">
         <div className="rounded-lg border border-danger/40 bg-danger/10 p-4 text-small text-danger">{bootError}</div>
       </main>
     );
@@ -176,7 +176,7 @@ export default function AuditsPage() {
   return (
     <div className="min-h-screen bg-bg text-text">
       <AppTopbar maxW="720px" title={t("audits.title")} pill={pill} />
-      <main className="mx-auto flex max-w-[720px] flex-col gap-5 px-5 pb-24 pt-7 md:px-6">
+      <main className="mx-auto flex max-w-[720px] flex-col gap-4 px-3.5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4 md:gap-5 md:px-6 md:pb-24 md:pt-7">
         {showDetail ? (
           <AuditDetailView
             audit={{ id: openAuditData.id, title: openAuditData.title, range: openAuditData.range, postsAnalyzed: openAuditData.postsAnalyzed, narrative: openAuditData.narrative, changes: openAuditData.changes }}

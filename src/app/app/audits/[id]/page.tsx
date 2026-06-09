@@ -109,7 +109,7 @@ export default function AuditDetailPage() {
   }
   if (bootError || !audit) {
     return (
-      <main className="mx-auto max-w-2xl px-6 py-16">
+      <main className="mx-auto max-w-2xl px-3.5 py-16 md:px-6">
         <div className="rounded-lg border border-danger/40 bg-danger/10 p-4 text-small text-danger">{bootError ?? "Not found"}</div>
       </main>
     );
@@ -142,7 +142,7 @@ export default function AuditDetailPage() {
         title={t("audits.title")}
         pill={pending > 0 ? <TopbarPill tone="accent">{pending} {t("audits.to_review")}</TopbarPill> : <TopbarPill tone="success">{t("audits.pill_reviewed")}</TopbarPill>}
       />
-      <main className="mx-auto flex max-w-[720px] flex-col gap-5 px-5 pb-24 pt-7 md:px-6">
+      <main className="mx-auto flex max-w-[720px] flex-col gap-4 px-3.5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4 md:gap-5 md:px-6 md:pb-24 md:pt-7">
         <AuditDetailView
           audit={{ id: audit.id, title: `Week of ${fmtDate(audit.period_end, locale)}`, range: `${fmtDate(audit.period_start, locale)} – ${fmtDate(audit.period_end, locale)}`, postsAnalyzed: audit.posts_analyzed, narrative, changes }}
           onBack={() => router.push("/app/audits")}
