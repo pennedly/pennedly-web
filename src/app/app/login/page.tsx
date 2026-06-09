@@ -231,7 +231,7 @@ function EmailForm({
             onChange={(e) => setEmail(e.target.value)}
             placeholder={t("login.email_placeholder")}
             className={cn(
-              "h-[46px] w-full rounded-md border bg-surface px-[13px] text-body text-text outline-none transition-[border-color,box-shadow] duration-[120ms] placeholder:text-text-subtle focus:border-accent focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-accent)_18%,transparent)]",
+              "h-[46px] w-full rounded-md border bg-surface px-[13px] text-body text-text outline-none transition-[border-color,box-shadow] duration-[120ms] placeholder:text-text-subtle focus:border-accent focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-accent)_18%,transparent)] max-md:text-[16px]",
               error ? "border-danger" : "border-border",
             )}
           />
@@ -470,7 +470,7 @@ function DevDrawer({
               aria-label="Developer email"
               value={devEmail}
               onChange={(e) => setDevEmail(e.target.value)}
-              className="h-[38px] min-w-0 flex-1 rounded-md border border-border bg-surface px-[11px] font-mono text-small text-text outline-none transition-[border-color,box-shadow] duration-[120ms] focus:border-accent focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-accent)_18%,transparent)]"
+              className="h-[38px] min-w-0 flex-1 rounded-md border border-border bg-surface px-[11px] font-mono text-small text-text outline-none transition-[border-color,box-shadow] duration-[120ms] focus:border-accent focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-accent)_18%,transparent)] max-md:text-[16px]"
             />
             <button type="submit" disabled={!valid || pending} className={cn(SECONDARY_BTN, "h-[38px] shrink-0 px-3.5 text-small")}>
               {pending ? <Spinner /> : <IcArrowRight size={16} />} {pending ? t("login.dev_signing_in") : t("login.dev_submit")}
