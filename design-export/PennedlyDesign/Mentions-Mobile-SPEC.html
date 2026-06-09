@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Pennedly · Mentions — Mobile spec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="ds/tokens.css"/>
+<link rel="stylesheet" href="ds/components.css"/>
+<link rel="stylesheet" href="mobile/pennedly-mobile.css"/>
+<link rel="stylesheet" href="mobile/frame.css"/>
+<link rel="stylesheet" href="mobile/spec.css"/>
+</head>
+<body>
+<div class="layout">
+
+<aside class="toc">
+  <div class="doc-mark">
+    <span class="nib"><svg width="18" height="18" viewBox="0 0 512 512"><g fill="#ededed"><g transform="rotate(42 256 256)"><path d="M236 150 Q236 128 256 128 Q276 128 276 150 L276 300 L256 360 L236 300 Z"/><rect x="236" y="206" width="40" height="7"/></g></g></svg></span>
+    <b>Pennedly</b>
+  </div>
+  <div class="doc-sub">Mobile spec · Mentions</div>
+  <nav>
+    <a href="#s1"><span class="n">1</span> Screen identity</a>
+    <a href="#s2"><span class="n">2</span> The phone layout</a>
+    <a href="#s3"><span class="n">3</span> Shell: top bar + drawer</a>
+    <a class="sub" href="#s3">— drawer open</a>
+    <a href="#s4"><span class="n">4</span> Mention card — @username</a>
+    <a class="sub" href="#s4">— short · long · translate</a>
+    <a href="#s5"><span class="n">5</span> States</a>
+    <a class="sub" href="#s5">— loading · empty · error</a>
+    <a href="#s6"><span class="n">6</span> Anatomy &amp; values</a>
+    <a href="#s7"><span class="n">7</span> Web ↔ mobile</a>
+    <a href="#s8"><span class="n">8</span> Localization &amp; 360px</a>
+    <a href="#s9"><span class="n">9</span> Checklist</a>
+  </nav>
+  <div class="meta">
+    Screen: <b>Mentions</b> <span style="color:var(--subtle)">(tester-gated)</span><br>
+    Route: <code>/app/mentions</code><br>
+    Desktop spec: <a class="link" href="Mentions-SPEC.html">Mentions-SPEC.html</a><br>
+    Phone breakpoint: <code>≤ 600px</code> · ref 390<br>
+    Layer: <code>mobile/pennedly-mobile.css</code><br>
+    System: <a class="link" href="Pennedly Design System.html#m-shell">DS · Mobile</a>
+  </div>
+</aside>
+
+<main>
+  <div class="doc-head">
+    <p class="kicker">Pennedly · Mobile spec · per-screen</p>
+    <h1 class="title">Mentions <span>/app/mentions</span> — phone</h1>
+    <p class="lede">A read-only queue of posts where you were @-mentioned, so you can hop to Threads and respond yourself. Unlike Replies, there’s <strong>no AI drafting</strong> here — Mentions just collects and shows them. The simplest screen in the app: a single column of mention cards. Same tokens, content and states as <a class="link" href="Mentions-SPEC.html">the desktop spec</a> — only the layout changes below 600px, on the decided shell (hamburger + left drawer, freshness pill, no tab bar, free bottom edge). Frames are the real component layer at 390px, light and dark.</p>
+    <div class="filerow">
+      <span class="chip chip--mob">pennedly-mobile.css</span>
+      <span class="chip">mentions-app.jsx</span>
+      <span class="chip">mentions-parts.jsx</span>
+      <span class="chip">shell-parts.jsx</span>
+      <span class="chip">ds/tokens.css</span>
+    </div>
+  </div>
+
+  <div class="note good"><b>What does not change.</b> This is a read-only ingestion queue refreshed hourly — no reply composer, no approve/publish, no editing. The @-handle highlighting, the on-demand translation, and the loading/empty/error states are identical to desktop. Threads exposes only the mentioner’s <strong>@username</strong> — no avatar, no display name — so the card never invents one. Mobile is a layout pass; the only structural change is the shared app shell (tab bar → hamburger drawer).</div>
+
+  <!-- 1 -->
+  <section id="s1">
+    <h2><span class="h2n">1</span>Screen identity</h2>
+    <div class="tbl-wrap"><table><tbody>
+      <tr><th style="width:210px">Route</th><td><code>/app/mentions</code> — tester-gated (drawer row hidden for non-testers).</td></tr>
+      <tr><th>Desktop width</th><td><code>--content-wide</code> 960px; single column of mention cards.</td></tr>
+      <tr><th>Phone width</th><td>100% − 14px gutters; single column.</td></tr>
+      <tr><th>Top→bottom (phone)</th><td>Status bar → top bar (hamburger · “Mentions” · freshness pill · theme) → mention cards (or loading / empty / error) → <em>free bottom edge</em>.</td></tr>
+      <tr><th>Read-only</th><td>No composer, no status flow. Each card’s only action is “Open in Threads”.</td></tr>
+    </tbody></table></div>
+  </section>
+
+  <!-- 2 -->
+  <section id="s2">
+    <h2><span class="h2n">2</span>The phone layout</h2>
+    <p class="section-note">The whole screen in context, light and dark: a column of mention cards, each showing who mentioned you (@username + time), the mention text with @handles highlighted, and an “Open in Threads” action. The list runs to the free bottom edge.</p>
+    <div class="stage" id="stg-layout"></div>
+  </section>
+
+  <!-- 3 -->
+  <section id="s3">
+    <h2><span class="h2n">3</span><span class="stg stg--shell">shell</span>Shell: top bar + drawer</h2>
+    <p class="section-note">The shell is shared (see <a class="link" href="Pennedly Design System.html#m-shell">DS · App shell &amp; nav</a>). Mentions-specific shell values:</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:200px">Slot</th><th>Mentions value</th></tr></thead>
+      <tbody>
+        <tr><td>Hamburger</td><td>Far left, opens <code>.m-drawer</code> (active row = Mentions, tester-gated).</td></tr>
+        <tr><td>Title</td><td>“Mentions”; truncates before the pill on long locales.</td></tr>
+        <tr><td>Freshness pill</td><td>Clock “Updated hourly” — reflects the hourly ingestion. Drops below the title row only on a very long locale.</td></tr>
+        <tr><td>Top-bar action</td><td>Theme toggle only; account in the drawer foot.</td></tr>
+        <tr><td>Sticky</td><td>None — there’s no filter or switcher; the list scrolls straight under the top bar.</td></tr>
+      </tbody>
+    </table></div>
+    <div class="stage" id="stg-drawer"></div>
+  </section>
+
+  <!-- 4 -->
+  <section id="s4">
+    <h2><span class="h2n">4</span><span class="stg stg--fix">fix</span>Mention card — @username</h2>
+    <p class="section-note">Threads gives us only the mentioner’s <strong>@username</strong> — no reliable avatar, no display name. The card head is therefore <code>@username + time</code> only; we never draw a mentioner avatar or invent a name. The desktop card’s avatar + name simply drop.</p>
+    <div class="fix">
+      <div class="fix-bad"><h5>Before</h5><p>The desktop foot puts a translate toggle and “Open in Threads” on one line beside the text; squeezed onto a phone the button wraps awkwardly and the head avatar steals width that isn’t really ours to spend (no real avatar exists).</p></div>
+      <div class="fix-good"><h5>After</h5><p>Head = @username + time only. The mention text wraps freely with @handles in accent ink. Any translate toggle sits on its own meta line; “Open in Threads” is a full-width-grow secondary button (44px) below — the one reachable action.</p></div>
+    </div>
+    <div class="stage" id="stg-cards"></div>
+    <div class="note"><b>Rules.</b> Text wraps with <code>text-wrap:pretty</code>; @handles render as <code>.at-mention</code> (accent, 500). A long mention just grows the card — no clamp, no “see more” (this is the whole point of the screen). For a foreign-language mention, an inline “Translate from {lang}” swaps to the translation + “Show original”. The only action is “Open in Threads”; there is no overflow ⋯ because there’s nothing else to collapse.</div>
+  </section>
+
+  <!-- 5 -->
+  <section id="s5">
+    <h2><span class="h2n">5</span>States</h2>
+    <div class="statebar"><span class="st">loading ×3</span><span class="st">ready</span><span class="st">empty</span><span class="st">error</span></div>
+    <p class="section-note">Loading is 3 skeleton cards; ready is the populated list; empty is the friendly “no mentions yet”; error is the shared banner with Retry. No per-state chrome differs from the desktop beyond width.</p>
+    <div class="stage" id="stg-states"></div>
+  </section>
+
+  <!-- 6 -->
+  <section id="s6">
+    <h2><span class="h2n">6</span>Anatomy &amp; exact values</h2>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:210px">Element / class</th><th>Phone value</th></tr></thead>
+      <tbody>
+        <tr><td><code>.m-top</code></td><td>min-height 52; hamburger far-left; “Updated hourly” clock pill; theme toggle far-right.</td></tr>
+        <tr><td><code>.m-content--notab</code></td><td>padding 16/14; bottom = <code>26 + safe-area</code> (no tab bar); gap 16.</td></tr>
+        <tr><td><code>.m-card</code></td><td>radius-lg; padding 14/16/12; <code>card-in</code> entrance.</td></tr>
+        <tr><td><code>.m-cmt-head</code></td><td><b>@username + time only</b> — no avatar, no name.</td></tr>
+        <tr><td><code>.m-card-body</code></td><td>mention text; <code>text-wrap:pretty</code>; @handles as <code>.at-mention</code>.</td></tr>
+        <tr><td><code>.translate-row</code></td><td>own meta line; accent “Translate from {lang}” / “Show original”; wraps.</td></tr>
+        <tr><td><code>.m-foot-row</code></td><td>single grow-primary “Open in Threads” (secondary style), min-height 44.</td></tr>
+        <tr><td><code>.m-empty</code></td><td>@-glyph mark; “No mentions yet”.</td></tr>
+        <tr><td><code>.m-error</code></td><td>shared banner; Retry at 40px.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- 7 -->
+  <section id="s7">
+    <h2><span class="h2n">7</span>Web ↔ mobile</h2>
+    <div class="two">
+      <div class="pane web"><h4>Desktop ( &gt; 900 )</h4>
+        <ul>
+          <li>Fixed sidebar; 960px column; freshness pill in the topbar.</li>
+          <li>Card head shows avatar + name + handle + time.</li>
+          <li>Foot: translate toggle + “Open in Threads” on one line.</li>
+        </ul>
+      </div>
+      <div class="pane mob"><h4>Phone ( ≤ 600 )</h4>
+        <ul>
+          <li>No sidebar/tab bar; hamburger → drawer + account; free bottom edge.</li>
+          <li>Card head = @username + time only (no avatar/name).</li>
+          <li>Foot: translate on its own line; “Open in Threads” full-width-grow.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 -->
+  <section id="s8">
+    <h2><span class="h2n">8</span>Localization &amp; 360px</h2>
+    <p class="section-note">The freshness pill, the translate toggles and “Open in Threads” all localize into 8 locales; DE/RU/UK run ~30–40% longer. On a phone: “Open in Threads” wraps rather than clips; the translate toggle wraps; the @username truncates with ellipsis; the mention body wraps naturally. Mention text itself arrives in any language — translation is on-demand. Never bake a label into an image.</p>
+    <div class="note"><b>360px behavior.</b> No new breakpoint — the gutter stays 14px and cards just get ~30px narrower. Nothing here is width-fragile: the head is one short line, the body wraps, the single action grows to fit. The only visible change at 360 is the occasional second line on a long “Open in Threads” locale (still ≥44px). The drawer stays <code>min(82%, 312px)</code> → 82% (≈295px) at 360.</div>
+    <div class="stage" id="stg-narrow"></div>
+  </section>
+
+  <!-- 9 -->
+  <section id="s9">
+    <h2><span class="h2n">9</span>Checklist</h2>
+    <ul class="check">
+      <li>Below 600px there is no sidebar and no tab bar — one 52px top bar with a hamburger far-left and the “Updated hourly” clock pill.</li>
+      <li>Hamburger opens the left drawer (active = Mentions, tester-gated) + account at its foot; bottom edge free.</li>
+      <li>Card head = @username + time only — no mentioner avatar, no invented name.</li>
+      <li>Mention text wraps freely with @handles in accent; long mentions grow the card (no clamp).</li>
+      <li>Read-only: no composer, no status flow; the only action is “Open in Threads” (full-width-grow, 44px).</li>
+      <li>Foreign-language mentions show an inline translate toggle + “Show original”; both wrap.</li>
+      <li>Loading = 3 skeletons; empty = “No mentions yet”; error banner has Retry.</li>
+      <li>Labels wrap on long locales — never clipped; sanity-checked at 360px.</li>
+      <li>Correct in light and dark; no hardcoded colour.</li>
+    </ul>
+  </section>
+
+</main>
+</div>
+
+<script src="mobile/sprite.js"></script>
+<script src="mobile/mock.js"></script>
+<script>
+(function () {
+  var M = window.MOCK;
+  function set(id, html){ var e=document.getElementById(id); if(e) e.innerHTML=html; }
+
+  var top = M.top({ title:'Mentions', pill:'success', pillText:'Updated hourly', pillIcon:'clock', menu:true });
+
+  var m1 = M.mentionCard({ handle:'@writingroom', time:'2h ago', text:'just read @mara.lin’s thread on cutting 600 words before breakfast and had to sit down for a minute. the best writing advice is always the most uncomfortable one.' });
+  var m2 = M.mentionCard({ handle:'@devon_makes', time:'2h ago', text:'if you’re not following @mara.lin you’re missing the most honest writing account on here. start with her “worst first line on purpose” post and thank me later.' });
+  var mLong = M.mentionCard({ handle:'@ana.writes', time:'5h ago', text:'the way @mara.lin talks about consistency over intensity quietly reframed my whole year. I used to binge-post for a week and then vanish for a month; now I aim for three honest posts a week and it has changed everything about how it feels to write in public. thank you for doing it where the rest of us can learn from it.' });
+  var mEs = M.mentionCard({ handle:'@lottie.writes', time:'8h ago', text:'@mara.lin ¿cómo te mantienes constante sin quemarte? lo pregunto por mí, específicamente, hoy 😅', lang:'Spanish' });
+
+  var body = m1 + m2 + mEs;
+
+  /* 2 — full layout */
+  set('stg-layout',
+    M.col(M.light(), M.phone({ top:top, body:body, tabs:false }), 'Mentions in context — read-only cards, @handles highlighted, Open in Threads.') +
+    M.col(M.dark(), M.phone({ dark:true, top:top, body:body, tabs:false }), 'Identical layout, dark tokens.'));
+
+  /* 3 — drawer */
+  set('stg-drawer',
+    M.col(M.light('Drawer'), M.phone({ top:top, body:body, tabs:false, overlay:M.drawer('mentions') }), 'Hamburger → left drawer; active row = Mentions (tester-gated).') +
+    M.col(M.dark('Drawer · dark'), M.phone({ dark:true, top:top, body:body, tabs:false, overlay:M.drawer('mentions') }), ''));
+
+  /* 4 — cards: short, long, translate */
+  set('stg-cards',
+    M.col(M.light('Short'), M.comp(m1), '@username + time; text wraps; Open in Threads.') +
+    M.col(M.light('Long mention'), M.comp(mLong), 'A long mention just grows the card — no clamp.') +
+    M.col(M.light('Translate'), M.comp(mEs), 'Inline “Translate from Spanish”.') +
+    M.col(M.dark('Translate · dark'), M.comp(mEs, { dark:true }), ''));
+
+  /* 5 — states */
+  set('stg-states',
+    M.col(M.light('Loading'), M.phone({ top:top, tabs:false, body: M.skeletonCard() + M.skeletonCard() + M.skeletonCard() }), '3 skeleton cards.') +
+    M.col(M.light('Empty'), M.phone({ top:top, tabs:false, body: M.empty('mentions') }), 'Friendly “No mentions yet”.') +
+    M.col(M.light('Error'), M.phone({ top:top, tabs:false, body: M.errorBanner('Couldn’t load your mentions','Something went wrong on our end.') }), 'Shared error banner with Retry.') +
+    M.col(M.dark('Loading · dark'), M.phone({ dark:true, top:top, tabs:false, body: M.skeletonCard() + M.skeletonCard() + M.skeletonCard() }), ''));
+
+  /* 8 — 360 */
+  set('stg-narrow',
+    M.col(M.light('360 · list'), M.phone({ variant:'sm', top:top, body:body, tabs:false }), 'Same rules at 360 — only ~30px narrower; text just rewraps.') +
+    M.col(M.light('360 · long'), M.comp(mLong, { sm:true }), 'Long mention at 360px.') +
+    M.col(M.dark('360 · dark'), M.phone({ variant:'sm', dark:true, top:top, body:body, tabs:false }), ''));
+})();
+</script>
+</body>
+</html>

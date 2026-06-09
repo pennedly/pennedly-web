@@ -132,7 +132,7 @@ export default function MentionsPage() {
           </TopbarPill>
         }
       />
-      <main className="mx-auto max-w-[960px] space-y-5 px-5 pb-24 pt-7 md:px-6">
+      <main className="mx-auto max-w-[960px] space-y-4 px-3.5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4 md:space-y-5 md:px-6 md:pb-24 md:pt-7">
         <div className="flex flex-col gap-1">
           <h1 className="text-h1 font-semibold tracking-tight">{t("mentions.title")}</h1>
           <p className="max-w-[64ch] text-body text-text-muted">{t("mentions.subtitle")}</p>
@@ -232,7 +232,7 @@ function MentionCard({
       style={{ animation: "card-in 240ms var(--ease-entrance) both" }}
     >
       <div className="flex items-center gap-[11px]">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-surface-2 text-small font-semibold text-text-muted">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-surface-2 text-small font-semibold text-text-muted max-md:hidden">
           {initial}
         </span>
         <div className="min-w-0 flex-1">
@@ -246,7 +246,7 @@ function MentionCard({
             rel="noopener noreferrer"
             aria-label={t("mentions.view")}
             title={t("mentions.view")}
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-md text-text-subtle transition-colors hover:bg-surface-2 hover:text-text"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-md text-text-subtle transition-colors hover:bg-surface-2 hover:text-text max-md:hidden"
           >
             <IcExternal size={16} />
           </a>
@@ -255,10 +255,10 @@ function MentionCard({
 
       <p className="mt-3 whitespace-pre-wrap text-body leading-relaxed text-text">{highlightMentions(showText)}</p>
 
-      <div className="mt-[13px] flex flex-wrap items-center gap-2.5 border-t border-border pt-3">
+      <div className="mt-[13px] flex flex-wrap items-center gap-2.5 border-t border-border pt-3 max-md:flex-col max-md:items-stretch">
         {canTranslate ? (
           translated ? (
-            <span className="flex flex-1 flex-wrap items-center gap-2 text-caption">
+            <span className="flex flex-1 flex-wrap items-center gap-2 text-caption max-md:w-full">
               <span className="inline-flex items-center gap-1.5 text-text-subtle">
                 <IcGlobe size={13} /> {t("mentions.translated")}
               </span>
@@ -273,20 +273,20 @@ function MentionCard({
             <button
               onClick={onTranslate}
               disabled={busy}
-              className="inline-flex flex-1 items-center gap-1.5 text-caption font-medium text-accent underline-offset-2 hover:underline disabled:opacity-60"
+              className="inline-flex flex-1 items-center gap-1.5 text-caption font-medium text-accent underline-offset-2 hover:underline disabled:opacity-60 max-md:w-full"
             >
               {busy ? <Spinner size={13} /> : <IcGlobe size={13} />} {t("mentions.translate")}
             </button>
           )
         ) : (
-          <span className="flex-1" />
+          <span className="flex-1 max-md:hidden" />
         )}
         {m.permalink && (
           <a
             href={m.permalink}
             target="_blank"
             rel="noopener noreferrer"
-            className={cn("shrink-0", buttonClasses({ variant: "secondary", size: "sm" }))}
+            className={cn("max-md:w-full md:shrink-0", buttonClasses({ variant: "secondary", size: "sm", className: "max-md:h-auto max-md:min-h-[44px] max-md:whitespace-normal" }))}
           >
             <IcExternal size={15} /> {t("mentions.open_threads")}
           </a>
@@ -300,7 +300,7 @@ function SkeletonCard() {
   return (
     <div className="rounded-lg border border-border bg-surface px-[18px] pb-[13px] pt-[15px] shadow-sm" aria-hidden="true">
       <div className="flex items-center gap-[11px]">
-        <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-surface-2" />
+        <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-surface-2 max-md:hidden" />
         <div className="flex-1">
           <div className="h-3 w-36 animate-pulse rounded bg-surface-2" />
           <div className="mt-2 h-2.5 w-20 animate-pulse rounded bg-surface-2" />
