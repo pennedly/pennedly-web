@@ -79,7 +79,7 @@ const JITTERS = [0, 5, 15, 30];
 const IS_DEV = process.env.NODE_ENV === "development";
 const AP_STATES = ["On", "Off", "Edit", "Empty", "PolicyOff", "Replies", "Loading"];
 const SELECT =
-  "h-9 w-full rounded-md border border-border bg-surface px-2.5 text-small text-text transition-colors focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
+  "h-9 w-full rounded-md border border-border bg-surface px-2.5 text-small text-text transition-colors focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent max-md:min-h-[44px] max-md:text-[16px]";
 
 function fmtDate(iso: string | null, locale: string): string {
   if (!iso) return "";
@@ -312,7 +312,7 @@ export default function AutopilotPage() {
     return (
       <div className="min-h-screen bg-bg text-text">
         <AppTopbar title={t("autopilot.title")} />
-        <main className="mx-auto max-w-[720px] px-5 pb-24 pt-7 md:px-6">
+        <main className="mx-auto max-w-[720px] px-3.5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4 md:px-6 md:pb-24 md:pt-7">
           <div className="rounded-lg border border-danger/40 bg-danger/10 p-4 text-small text-danger">
             {bootError}
           </div>
@@ -330,14 +330,14 @@ export default function AutopilotPage() {
         title={t("autopilot.title")}
         pill={master ? <TopbarPill tone="success">{t("autopilot.active")}</TopbarPill> : undefined}
       />
-      <main className="mx-auto max-w-[720px] space-y-5 px-5 pb-24 pt-7 md:px-6">
+      <main className="mx-auto max-w-[720px] space-y-4 px-3.5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4 md:space-y-5 md:px-6 md:pb-24 md:pt-7">
         <div className="flex flex-col gap-1">
           <h1 className="text-h1 font-semibold">{t("autopilot.title")}</h1>
           <p className="max-w-[60ch] text-small text-text-muted">{t("autopilot.subtitle")}</p>
         </div>
 
         {!loaded ? (
-          <div className="space-y-5">
+          <div className="space-y-4 md:space-y-5">
             <Skeleton className="h-[90px] w-full rounded-xl" />
             <Skeleton className="h-40 w-full rounded-lg" />
           </div>
@@ -395,7 +395,7 @@ export default function AutopilotPage() {
             {/* Scheduled posts */}
             <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
               <div className="mb-4 flex items-center justify-between gap-3.5">
-                <div>
+                <div className="min-w-0">
                   <h2 className="text-h3 font-semibold tracking-tight">
                     {t("autopilot.schedules_title")}
                   </h2>
@@ -404,7 +404,7 @@ export default function AutopilotPage() {
                   </p>
                 </div>
                 {rules.length > 0 && (
-                  <Button size="sm" variant="secondary" onClick={onAdd} icon={<IcPlus size={15} />}>
+                  <Button size="sm" variant="secondary" onClick={onAdd} icon={<IcPlus size={15} />} className="shrink-0">
                     {t("autopilot.add")}
                   </Button>
                 )}
@@ -445,7 +445,7 @@ export default function AutopilotPage() {
                           onBlur={(e) => patchRule(r.id, { name: e.target.value.trim() || null })}
                           placeholder={t("autopilot.object_name_ph")}
                           aria-label={t("autopilot.object_name_ph")}
-                          className="h-9 min-w-0 flex-1 rounded-sm border border-transparent bg-transparent px-2 text-body font-semibold text-text transition-colors hover:border-border hover:bg-surface focus:border-accent focus:bg-surface focus:outline-none"
+                          className="h-9 min-w-0 flex-1 rounded-sm border border-transparent bg-transparent px-2 text-body font-semibold text-text transition-colors hover:border-border hover:bg-surface focus:border-accent focus:bg-surface focus:outline-none max-md:min-h-[44px] max-md:text-[16px]"
                         />
                         <Switch
                           checked={r.enabled}
@@ -460,7 +460,7 @@ export default function AutopilotPage() {
                           aria-label={t("autopilot.delete_object")}
                           title={t("autopilot.delete_object")}
                           className={cn(
-                            "grid h-9 w-9 shrink-0 place-items-center rounded-md transition-colors",
+                            "grid h-9 w-9 shrink-0 place-items-center rounded-md transition-colors max-md:h-11 max-md:w-11",
                             confirmDelete === r.id
                               ? "bg-danger/12 text-danger"
                               : "text-text-subtle hover:bg-surface hover:text-danger",
@@ -470,7 +470,7 @@ export default function AutopilotPage() {
                         </button>
                       </div>
 
-                      <div className="mt-3.5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                      <div className="mt-3.5 grid grid-cols-1 gap-3 md:grid-cols-3">
                         <label className="flex min-w-0 flex-col gap-1.5">
                           <span className="text-caption font-medium text-text-muted">
                             {t("autopilot.field_time")}
@@ -544,7 +544,7 @@ export default function AutopilotPage() {
                       </div>
 
                       <div className="mt-3.5 flex items-center justify-between gap-3 border-t border-border pt-3.5">
-                        <label className="flex items-center gap-2.5 text-small text-text-muted">
+                        <label className="flex min-w-0 items-center gap-2.5 text-small text-text-muted">
                           <Switch
                             checked={r.auto_reply}
                             onCheckedChange={(v) => patchRule(r.id, { auto_reply: v })}
@@ -553,7 +553,7 @@ export default function AutopilotPage() {
                           {t("autopilot.seed_label")}
                         </label>
                         {!r.enabled && (
-                          <span className="text-caption text-text-subtle">
+                          <span className="shrink-0 text-caption text-text-subtle">
                             {t("autopilot.paused")}
                           </span>
                         )}
@@ -568,7 +568,7 @@ export default function AutopilotPage() {
             {config && (
               <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
                 <div className="flex items-center justify-between gap-3.5">
-                  <div>
+                  <div className="min-w-0">
                     <h2 className="text-h3 font-semibold tracking-tight">
                       {t("autopilot.policy_title")}
                     </h2>
@@ -633,7 +633,7 @@ export default function AutopilotPage() {
             {/* Activity */}
             <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
               <div className="mb-4 flex items-center justify-between gap-3.5">
-                <div>
+                <div className="min-w-0">
                   <h2 className="text-h3 font-semibold tracking-tight">
                     {t("autopilot.activity_title")}
                   </h2>
@@ -644,7 +644,7 @@ export default function AutopilotPage() {
                 {hasActivity && (
                   <div
                     role="tablist"
-                    className="inline-flex gap-[3px] rounded-md border border-border bg-surface-2 p-[3px]"
+                    className="inline-flex shrink-0 gap-[3px] rounded-md border border-border bg-surface-2 p-[3px]"
                   >
                     {(["posts", "replies"] as const).map((tab) => (
                       <button
@@ -679,7 +679,7 @@ export default function AutopilotPage() {
               ) : (
                 <>
                   {activity!.rules.length > 0 && (
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                       {activity!.rules.map((r) => (
                         <div key={r.id} className="rounded-md border border-border bg-surface-2 p-3.5">
                           <div className="truncate text-caption text-text-subtle">
@@ -890,7 +890,7 @@ function PolicyRow({
   return (
     <div
       className={cn(
-        "flex flex-col items-start justify-between gap-3 py-3.5 sm:flex-row sm:items-center",
+        "flex flex-col items-start justify-between gap-3 py-3.5 md:flex-row md:items-center",
         first ? "pt-1" : "border-t border-border",
       )}
     >
@@ -898,7 +898,7 @@ function PolicyRow({
         <div className="text-small font-semibold">{title}</div>
         <div className="mt-0.5 text-caption leading-relaxed text-text-subtle">{desc}</div>
       </div>
-      <div className="w-full shrink-0 sm:w-auto">{children}</div>
+      <div className="w-full shrink-0 md:w-auto">{children}</div>
     </div>
   );
 }
