@@ -335,7 +335,7 @@ export default function StyleRulesEditor() {
     return (
       <div className="min-h-screen bg-bg text-text">
         <AppTopbar maxW="720px" title={t("style_rules.title")} />
-        <main className="mx-auto max-w-[720px] px-5 pb-24 pt-7 md:px-6">
+        <main className="mx-auto max-w-[720px] px-3.5 pb-24 pt-7 md:px-6">
           <div className="rounded-lg border border-danger/40 bg-danger/10 p-4 text-small text-danger">
             {bootError}
           </div>
@@ -365,7 +365,7 @@ export default function StyleRulesEditor() {
           ) : undefined
         }
       />
-      <main className="mx-auto max-w-[720px] space-y-5 px-5 pb-24 pt-7 md:px-6">
+      <main className="mx-auto max-w-[720px] space-y-4 px-3.5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4 md:space-y-5 md:px-6 md:pb-24 md:pt-7">
         {!rules ? (
           <div className="space-y-5">
             <Skeleton className="h-28 w-full rounded-lg" />
@@ -645,7 +645,7 @@ function FreeformRow({
                 setEditing(false);
               }
             }}
-            className="h-9 w-full rounded-md border border-accent bg-surface px-3 text-small text-text shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-accent)_16%,transparent)] outline-none"
+            className="h-9 w-full rounded-md border border-accent bg-surface px-3 text-small text-text shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-accent)_16%,transparent)] outline-none max-md:h-11 max-md:text-[16px]"
           />
           <Button
             size="sm"
@@ -696,21 +696,21 @@ function FreeformRow({
               </Button>
             </span>
           ) : (
-            <span className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+            <span className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 max-md:opacity-100">
               <button
                 onClick={() => {
                   setDraft(rule.body);
                   setEditing(true);
                 }}
                 aria-label={t("common.save")}
-                className="grid h-8 w-8 place-items-center rounded-sm text-text-subtle transition-colors hover:bg-surface hover:text-text"
+                className="grid h-8 w-8 max-md:h-10 max-md:w-10 place-items-center rounded-sm text-text-subtle transition-colors hover:bg-surface hover:text-text"
               >
                 <IcPencil size={15} />
               </button>
               <button
                 onClick={() => setConfirming(true)}
                 aria-label={t("user_rules.delete")}
-                className="grid h-8 w-8 place-items-center rounded-sm text-text-subtle transition-colors hover:bg-danger/12 hover:text-danger"
+                className="grid h-8 w-8 max-md:h-10 max-md:w-10 place-items-center rounded-sm text-text-subtle transition-colors hover:bg-danger/12 hover:text-danger"
               >
                 <IcTrash size={15} />
               </button>
@@ -759,7 +759,7 @@ function AddComposer({
         }}
         placeholder={t("style_rules.add_placeholder")}
         aria-label={t("style_rules.add_placeholder")}
-        className="h-10 min-w-0 flex-1 basis-60 rounded-md border border-border bg-surface px-3 text-small text-text outline-none focus:border-accent"
+        className="h-10 min-w-0 flex-1 basis-60 rounded-md border border-border bg-surface px-3 text-small text-text outline-none focus:border-accent max-md:h-11 max-md:basis-full max-md:text-[16px]"
       />
       <div className="inline-flex shrink-0 gap-0.5 rounded-md border border-border bg-surface p-0.5">
         {KINDS.map(([k, key]) => (
