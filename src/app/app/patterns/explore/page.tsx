@@ -218,7 +218,7 @@ export default function ExplorePage() {
           ) : undefined
         }
       />
-      <main className="mx-auto w-full max-w-[720px] space-y-5 px-5 pb-24 pt-7 md:px-6">
+      <main className="mx-auto w-full max-w-[720px] space-y-4 px-3.5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4 md:space-y-5 md:px-6 md:pb-24 md:pt-7">
         <div className="flex flex-col gap-1.5">
           <h1 className="text-h1 font-semibold tracking-tight">{t("explore.title")}</h1>
           <p className="max-w-[60ch] text-pretty text-body text-text-muted">{t("explore.subtitle")}</p>
@@ -247,10 +247,10 @@ export default function ExplorePage() {
                 onChange={(e) => setRaw(e.target.value)}
                 placeholder={t("explore.placeholder")}
                 spellCheck={false}
-                className="block min-h-[168px] w-full resize-y border-0 bg-transparent p-0.5 text-body leading-relaxed text-text outline-none placeholder:text-text-subtle"
+                className="block min-h-[168px] w-full resize-y border-0 bg-transparent p-0.5 text-body leading-relaxed text-text outline-none placeholder:text-text-subtle max-md:text-[16px]"
               />
-              <div className="mt-2.5 flex flex-wrap items-center gap-3 border-t border-border pt-3">
-                <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2.5">
+              <div className="mt-2.5 flex flex-wrap items-center gap-3 border-t border-border pt-3 max-md:flex-col max-md:items-stretch">
+                <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2.5 max-md:flex-col max-md:items-start">
                   <span
                     className={cn(
                       "inline-flex items-center gap-1.5 whitespace-nowrap text-caption tabular-nums",
@@ -261,32 +261,38 @@ export default function ExplorePage() {
                     {countLabel}
                   </span>
                   {issue && (
-                    <span className="inline-flex min-w-0 items-center gap-1.5 text-caption font-medium text-warning">
-                      <IcLink size={15} className="shrink-0" />
-                      <span className="truncate">{t(issue)}</span>
+                    <span className="inline-flex min-w-0 items-center gap-1.5 text-caption font-medium text-warning max-md:w-full max-md:items-start">
+                      <IcLink size={15} className="shrink-0 max-md:mt-0.5" />
+                      <span className="truncate max-md:whitespace-normal">{t(issue)}</span>
                     </span>
                   )}
                 </div>
-                <Button variant="primary" disabled={!ready} onClick={onAnalyze} icon={<IcCompass size={16} />}>
+                <Button
+                  variant="primary"
+                  disabled={!ready}
+                  onClick={onAnalyze}
+                  icon={<IcCompass size={16} />}
+                  className="max-md:h-auto max-md:min-h-[44px] max-md:w-full max-md:whitespace-normal"
+                >
                   {t("explore.analyze")}
                 </Button>
               </div>
             </div>
 
-            {/* Quiet seed chips */}
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-caption text-text-subtle">{t("explore.seed_cap")}</span>
+            {/* Quiet seed chips — wrap on desktop, scroll horizontally at full size on a phone. */}
+            <div className="flex items-center gap-2 [scrollbar-width:none] max-md:flex-nowrap max-md:overflow-x-auto max-md:[mask-image:linear-gradient(90deg,#000_calc(100%-20px),transparent)] md:flex-wrap">
+              <span className="shrink-0 text-caption text-text-subtle">{t("explore.seed_cap")}</span>
               <button
                 type="button"
                 onClick={() => setRaw(DEMO_SAMPLE)}
-                className="whitespace-nowrap rounded-full border border-border bg-surface-2 px-2.5 py-[5px] text-caption text-text-muted transition-colors hover:border-text/20 hover:bg-surface hover:text-text"
+                className="shrink-0 whitespace-nowrap rounded-full border border-border bg-surface-2 px-2.5 py-[5px] text-caption text-text-muted transition-colors hover:border-text/20 hover:bg-surface hover:text-text"
               >
                 {t("explore.seed_sample")}
               </button>
               {SEED_KEYS.map((k) => (
                 <span
                   key={k}
-                  className="whitespace-nowrap rounded-full border border-border bg-surface-2 px-2.5 py-[5px] text-caption text-text-subtle"
+                  className="shrink-0 whitespace-nowrap rounded-full border border-border bg-surface-2 px-2.5 py-[5px] text-caption text-text-subtle"
                 >
                   {t(k)}
                 </span>
@@ -489,17 +495,25 @@ function PatternCard({
       </div>
 
       {p.suggested_do_rule && (
-        <div className="mt-4 flex flex-wrap items-center gap-3">
-          <span className="inline-flex min-w-0 flex-1 basis-60 items-center gap-2.5 rounded-md border border-dashed border-border bg-surface-2 px-3 py-2.5 font-mono text-small leading-snug text-text">
+        <div className="mt-4 flex flex-wrap items-center gap-3 max-md:flex-col max-md:items-stretch">
+          <span className="inline-flex min-w-0 flex-1 basis-60 items-center gap-2.5 rounded-md border border-dashed border-border bg-surface-2 px-3 py-2.5 font-mono text-small leading-snug text-text max-md:flex-wrap max-md:items-start">
             <span className="shrink-0 font-medium text-success">{t("explore.do_label")}</span>
             <span className="min-w-0 text-pretty">{p.suggested_do_rule}</span>
           </span>
           {added ? (
-            <span className="inline-flex shrink-0 items-center gap-1.5 px-1.5 text-small font-semibold text-success">
+            <span className="inline-flex shrink-0 items-center gap-1.5 px-1.5 text-small font-semibold text-success max-md:justify-center max-md:py-1.5">
               <IcCheck size={15} /> {t("explore.added")}
             </span>
           ) : (
-            <Button variant="secondary" size="sm" loading={busy} disabled={busy} onClick={onAdd} icon={<IcPlus size={15} />}>
+            <Button
+              variant="secondary"
+              size="sm"
+              loading={busy}
+              disabled={busy}
+              onClick={onAdd}
+              icon={<IcPlus size={15} />}
+              className="max-md:h-auto max-md:min-h-[44px] max-md:w-full max-md:whitespace-normal"
+            >
               {t("explore.add_to_voice")}
             </Button>
           )}
