@@ -24,10 +24,17 @@ export const PERIODS: { key: StatPeriodKey; label: MessageKey; gran: Gran }[] = 
 ];
 
 // ─────────────────────────────── RangeSeg ───────────────────────────────────
+// Desktop (≥ md): a tight inline segmented row. Mobile (< md): full-width
+// horizontally scrollable segmented row so all 6 fixed periods stay reachable
+// with readable labels (the house scroll idiom + a right-edge mask fade).
 export function RangeSeg({ active, onChange }: { active: StatPeriodKey; onChange: (p: StatPeriodKey) => void }) {
   const { t } = useTranslation();
   return (
-    <div role="tablist" aria-label="Time period" className="inline-flex max-w-full gap-[3px] overflow-x-auto rounded-md border border-border bg-surface-2 p-[3px]">
+    <div
+      role="tablist"
+      aria-label="Time period"
+      className="inline-flex max-w-full gap-[3px] rounded-md border border-border bg-surface-2 p-[3px] [scrollbar-width:none] max-md:flex max-md:w-full max-md:flex-nowrap max-md:overflow-x-auto max-md:[mask-image:linear-gradient(90deg,#000_calc(100%-20px),transparent)] md:overflow-x-auto"
+    >
       {PERIODS.map((p) => {
         const on = active === p.key;
         return (
@@ -37,7 +44,7 @@ export function RangeSeg({ active, onChange }: { active: StatPeriodKey; onChange
             aria-selected={on}
             onClick={() => onChange(p.key)}
             className={cn(
-              "h-8 whitespace-nowrap rounded-sm border px-3.5 text-small font-medium transition-colors",
+              "whitespace-nowrap rounded-sm border px-3.5 text-small font-medium transition-colors max-md:h-9 max-md:shrink-0 md:h-8",
               on ? "border-border bg-surface font-semibold text-text shadow-sm" : "border-transparent text-text-muted hover:text-text",
             )}
           >
@@ -65,18 +72,36 @@ export function Delta({ pct }: { pct: number | null }) {
 }
 
 // ─────────────────────────────── SummaryCard ────────────────────────────────
-export function SummaryCard({ Icon, labelKey, value, sub, pct }: { Icon: (p: { size?: number }) => ReactNode; labelKey: MessageKey; value: string; sub: string; pct: number | null }) {
+// `hero` is the mobile-only Views card: it spans the full row at text-h1. The
+// other three stack into a 3-up row and step their number down to text-h3 (never
+// smaller) so they stay readable at 360px. Desktop (≥ md) is a flat 4-up grid —
+// every card stays text-h1 there, so the desktop layout is unchanged.
+export function SummaryCard({
+  Icon,
+  labelKey,
+  value,
+  sub,
+  pct,
+  hero = false,
+}: {
+  Icon: (p: { size?: number }) => ReactNode;
+  labelKey: MessageKey;
+  value: string;
+  sub: string;
+  pct: number | null;
+  hero?: boolean;
+}) {
   const { t } = useTranslation();
   return (
-    <div className="rounded-lg border border-border bg-surface px-[18px] py-4 shadow-sm">
-      <div className="flex items-center gap-2">
-        <span className="grid h-[26px] w-[26px] place-items-center rounded-sm border border-border bg-surface-2 text-text-muted">
+    <div className={cn("rounded-lg border border-border bg-surface py-4 shadow-sm", hero ? "px-[18px] max-md:order-first max-md:col-span-3" : "px-[18px] max-md:px-3.5")}>
+      <div className="flex items-center gap-2 max-md:gap-1.5">
+        <span className="grid h-[26px] w-[26px] shrink-0 place-items-center rounded-sm border border-border bg-surface-2 text-text-muted">
           <Icon size={14} />
         </span>
-        <span className="text-caption font-semibold uppercase tracking-[0.04em] text-text-subtle">{t(labelKey)}</span>
+        <span className="truncate text-caption font-semibold uppercase tracking-[0.04em] text-text-subtle">{t(labelKey)}</span>
       </div>
-      <div className="mt-3 text-h1 font-semibold tabular-nums leading-[1.1] tracking-[-0.015em]">{value}</div>
-      <div className="mt-2 flex items-center justify-between gap-2.5">
+      <div className={cn("mt-3 font-semibold tabular-nums leading-[1.1] tracking-[-0.015em]", hero ? "text-h1" : "text-h3 md:text-h1")}>{value}</div>
+      <div className="mt-2 flex items-center justify-between gap-2 max-md:flex-wrap md:gap-2.5">
         <span className="text-caption text-text-subtle">{sub}</span>
         <Delta pct={pct} />
       </div>
@@ -85,10 +110,81 @@ export function SummaryCard({ Icon, labelKey, value, sub, pct }: { Icon: (p: { s
 }
 
 // ─────────────────────────────── ColumnChart ────────────────────────────────
+// Average views per bucket. ≤ 8 buckets fill the panel width (bars flex:1 — the
+// desktop behaviour, unchanged). > 8 buckets (e.g. 3 months = ~12 weeks) would
+// crush into a smear on a phone, so the inner plot becomes width:max-content
+// with fixed ~40px bars inside an overflow-x-auto wrapper and scrolls sideways;
+// the dashed average line + above/below tinting + live (localized) bucket labels
+// all travel with the bars. The switch is driven by the actual bucket count, not
+// a CSS breakpoint, so desktop and mobile pick the same path for a given period.
 export function ColumnChart({ cap, headline, headlinePct, series }: { cap: string; headline: string; headlinePct: number | null; series: StatBucket[] }) {
   const { t } = useTranslation();
   const max = Math.max(1, ...series.map((b) => b.value));
   const avg = series.length ? series.reduce((a, b) => a + b.value, 0) / series.length : 0;
+  const wide = series.length > 8; // many buckets → fixed-width bars + horizontal scroll (mobile only)
+
+  // Per-cell sizing. Default: bars fill (flex:1). When `wide`, the fill stays on
+  // desktop (the 960px panel fits 12+ bars cleanly — byte-identical) but mobile
+  // drops to fixed 40px bars so they scroll instead of crushing into a smear.
+  const cellW = wide ? "max-md:w-10 max-md:shrink-0 md:min-w-0 md:flex-1" : "min-w-0 flex-1";
+
+  const bars = (
+    <div className="relative flex h-[150px] items-end gap-[7px]">
+      {series.map((b, i) => {
+        const above = b.value >= avg;
+        return (
+          <div key={i} className={cn("flex h-full items-end", cellW)} title={`${b.label}: ${fmt(b.value)}`}>
+            <div
+              className="w-full rounded-t-sm transition-[height]"
+              style={{
+                height: `${Math.max(3, (b.value / max) * 100)}%`,
+                backgroundColor: above ? "var(--color-accent)" : "color-mix(in srgb, var(--color-text) 18%, var(--color-surface-2))",
+              }}
+            />
+          </div>
+        );
+      })}
+      {/* average line — absolute inside the plot, so in the mobile scroll case it
+          spans the full max-content width and travels with the bars */}
+      <div className="pointer-events-none absolute inset-x-0 flex items-center" style={{ bottom: `${(avg / max) * 100}%` }}>
+        <div className="h-0 flex-1 border-t-[1.5px] border-dashed" style={{ borderColor: "color-mix(in srgb, var(--color-text) 42%, transparent)" }} />
+        <span className="bg-surface px-[5px] text-caption text-text-subtle">
+          {t("stats.avg_line")} {fmt(Math.round(avg))}
+        </span>
+      </div>
+    </div>
+  );
+
+  const labels = (
+    <div className="flex gap-[7px]">
+      {series.map((b, i) => (
+        // Live, localized text (never an image). Kept visible on mobile so short
+        // periods stay legible; truncates per-cell rather than overflowing.
+        <span key={i} className={cn("truncate text-center text-[0.6875rem] tabular-nums text-text-subtle", cellW)}>
+          {b.label}
+        </span>
+      ))}
+    </div>
+  );
+
+  // Non-wide periods keep the original markup exactly (no wrapper). Wide periods
+  // get an overflow-x-auto wrapper whose inner plot is w-max on mobile (scrolls)
+  // but full-width on desktop (fills, no scrollbar) — so desktop is unchanged.
+  const plot =
+    wide ? (
+      <div className="[scrollbar-width:thin] max-md:overflow-x-auto">
+        <div className="flex flex-col gap-[9px] max-md:w-max md:w-full">
+          {bars}
+          {labels}
+        </div>
+      </div>
+    ) : (
+      <div className="flex flex-col gap-[9px]">
+        {bars}
+        {labels}
+      </div>
+    );
+
   return (
     <section className="rounded-lg border border-border bg-surface px-5 pb-4 pt-[18px] shadow-sm">
       <div className="mb-[18px] flex items-start justify-between gap-4">
@@ -103,38 +199,7 @@ export function ColumnChart({ cap, headline, headlinePct, series }: { cap: strin
           </div>
         </div>
       </div>
-      <div className="flex flex-col gap-[9px]">
-        <div className="relative flex h-[150px] items-end gap-[7px]">
-          {series.map((b, i) => {
-            const above = b.value >= avg;
-            return (
-              <div key={i} className="flex h-full min-w-0 flex-1 items-end" title={`${b.label}: ${fmt(b.value)}`}>
-                <div
-                  className="w-full rounded-t-sm transition-[height]"
-                  style={{
-                    height: `${Math.max(3, (b.value / max) * 100)}%`,
-                    backgroundColor: above ? "var(--color-accent)" : "color-mix(in srgb, var(--color-text) 18%, var(--color-surface-2))",
-                  }}
-                />
-              </div>
-            );
-          })}
-          {/* average line */}
-          <div className="pointer-events-none absolute inset-x-0 flex items-center" style={{ bottom: `${(avg / max) * 100}%` }}>
-            <div className="h-0 flex-1 border-t-[1.5px] border-dashed" style={{ borderColor: "color-mix(in srgb, var(--color-text) 42%, transparent)" }} />
-            <span className="bg-surface px-[5px] text-caption text-text-subtle">
-              {t("stats.avg_line")} {fmt(Math.round(avg))}
-            </span>
-          </div>
-        </div>
-        <div className="flex gap-[7px]">
-          {series.map((b, i) => (
-            <span key={i} className="min-w-0 flex-1 truncate text-center text-[0.6875rem] tabular-nums text-text-subtle max-[460px]:hidden">
-              {b.label}
-            </span>
-          ))}
-        </div>
-      </div>
+      {plot}
     </section>
   );
 }
@@ -207,11 +272,11 @@ export function StatsEmpty() {
   );
 }
 
-function SkelCard() {
+function SkelCard({ hero = false }: { hero?: boolean }) {
   return (
-    <div className="rounded-lg border border-border bg-surface px-[18px] py-4 shadow-sm">
-      <div className="skel h-3 w-20 rounded" />
-      <div className="skel mt-3.5 h-7 w-[110px] rounded" />
+    <div className={cn("rounded-lg border border-border bg-surface py-4 shadow-sm", hero ? "px-[18px] max-md:col-span-3 max-md:order-first" : "px-[18px] max-md:px-3.5")}>
+      <div className="skel h-3 w-20 rounded max-md:w-12" />
+      <div className={cn("skel mt-3.5 h-7 w-[110px] rounded", !hero && "max-md:h-6 max-md:w-16")} />
       <div className="skel mt-3 h-2.5 w-full rounded" />
     </div>
   );
@@ -219,10 +284,12 @@ function SkelCard() {
 
 export function SkeletonDash() {
   return (
-    <div className="flex flex-col gap-5" aria-hidden>
-      <div className="grid grid-cols-4 gap-3.5 max-[760px]:grid-cols-2 max-[460px]:grid-cols-1">
+    // Mirrors the ready layout so nothing reflows on load: mobile = a 3-col grid
+    // with a full-width hero skel card + a 3-up row; desktop = a flat 4-up grid.
+    <div className="flex flex-col gap-4 md:gap-5" aria-hidden>
+      <div className="grid gap-3.5 max-md:grid-cols-3 md:grid-cols-4">
         <SkelCard />
-        <SkelCard />
+        <SkelCard hero />
         <SkelCard />
         <SkelCard />
       </div>
@@ -230,7 +297,7 @@ export function SkeletonDash() {
         <div className="skel mb-5 h-4 w-44 rounded" />
         <div className="skel h-[132px] w-full rounded-lg" />
       </div>
-      <div className="grid grid-cols-2 gap-3.5 max-[760px]:grid-cols-1">
+      <div className="grid grid-cols-2 gap-3.5 max-md:grid-cols-1">
         <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
           <div className="skel mb-[18px] h-4 w-36 rounded" />
           <div className="skel h-[110px] w-full rounded-lg" />

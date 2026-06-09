@@ -191,8 +191,8 @@ export default function StatsPage() {
   return (
     <div className="min-h-screen bg-bg text-text">
       <AppTopbar maxW="960px" title={t("stats.title")} pill={<TopbarPill tone="accent" icon={<IcChart size={13} />}>{t("stats.updated_daily")}</TopbarPill>} />
-      <main className="mx-auto flex max-w-[960px] flex-col gap-5 px-5 pb-24 pt-7 md:px-6">
-        <div className="flex flex-wrap items-end justify-between gap-4">
+      <main className="mx-auto flex max-w-[960px] flex-col gap-4 px-3.5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4 md:gap-5 md:px-6 md:pb-24 md:pt-7">
+        <div className="flex flex-wrap items-end justify-between gap-4 max-md:gap-3">
           <div className="flex flex-col gap-1">
             <h1 className="text-h1 font-semibold tracking-[-0.015em]">{t("stats.title")}</h1>
             <p className="text-body text-text-muted">{t("stats.subtitle")}</p>
@@ -206,9 +206,13 @@ export default function StatsPage() {
           <StatsEmpty />
         ) : model ? (
           <>
-            <div className="grid grid-cols-4 gap-3.5 max-[760px]:grid-cols-2 max-[460px]:grid-cols-1">
+            {/* Desktop: flat 4-up card grid (unchanged). Mobile: a 3-col grid
+                where the Views card becomes a full-width hero on its own row
+                (col-span-3 + order-first) and Posts/Likes/Replies form the 3-up
+                row beneath it. */}
+            <div className="grid gap-3.5 max-md:grid-cols-3 md:grid-cols-4">
               {STAT_CARDS.map((c) => (
-                <SummaryCard key={c.metric} Icon={c.Icon} labelKey={c.labelKey} value={cardValue(c.metric)} sub={cardSub(c.metric)} pct={cardPct(c.metric)} />
+                <SummaryCard key={c.metric} Icon={c.Icon} labelKey={c.labelKey} value={cardValue(c.metric)} sub={cardSub(c.metric)} pct={cardPct(c.metric)} hero={c.metric === "views"} />
               ))}
             </div>
             <ColumnChart cap={chartCap} headline={fmt(avgViewsPerPost)} headlinePct={model.deltas.views_pct} series={model.series} />
