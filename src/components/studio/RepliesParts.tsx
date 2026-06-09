@@ -75,11 +75,19 @@ export function PostMaster({
 }) {
   const { t } = useTranslation();
   return (
-    <aside className="sticky top-3 max-h-[calc(100vh-132px)] self-start overflow-hidden rounded-lg border border-border bg-surface shadow-sm max-[900px]:static max-[900px]:max-h-[300px]">
-      <div className="shrink-0 border-b border-border px-4 pb-[11px] pt-[13px] text-caption font-semibold uppercase tracking-[0.06em] text-text-subtle">
+    // Desktop (≥ md): sticky vertical post list (left master column).
+    // Mobile (max-md): a horizontal, swipeable scroll-snap row of fixed 220px
+    // chips, made sticky under the 52px top bar so you can change posts while
+    // scrolling a long comment list. The header label is desktop-only.
+    <aside className="sticky top-3 max-h-[calc(100vh-132px)] self-start overflow-hidden rounded-lg border border-border bg-surface shadow-sm max-md:top-13 max-md:z-10 max-md:max-h-none max-md:rounded-none max-md:border-x-0 max-md:bg-bg max-md:shadow-none">
+      <div className="shrink-0 border-b border-border px-4 pb-[11px] pt-[13px] text-caption font-semibold uppercase tracking-[0.06em] text-text-subtle max-md:hidden">
         {t("replies.posts_with_comments")}
       </div>
-      <div role="listbox" aria-label={t("replies.posts_with_comments")} className="flex flex-col overflow-y-auto">
+      <div
+        role="listbox"
+        aria-label={t("replies.posts_with_comments")}
+        className="flex flex-col overflow-y-auto [scrollbar-width:none] max-md:flex-row max-md:gap-2.5 max-md:overflow-x-auto max-md:overflow-y-hidden max-md:py-2 max-md:[scroll-snap-type:x_mandatory]"
+      >
         {posts.map((p, i) => {
           const c = countsByPost[p.id] ?? { total: 0, unanswered: 0 };
           const on = p.id === selected;
@@ -93,6 +101,9 @@ export function PostMaster({
                 "flex flex-col gap-2 border-l-[3px] px-4 py-[13px] text-left transition-colors hover:bg-surface-2",
                 i < posts.length - 1 && "border-b border-border",
                 on ? "border-l-accent bg-surface-2" : "border-l-transparent",
+                // Mobile chip: fixed 220px card, snaps to start, never crushed.
+                "max-md:w-[220px] max-md:shrink-0 max-md:rounded-lg max-md:border max-md:border-l max-md:border-border max-md:[scroll-snap-align:start]",
+                on && "max-md:border-accent max-md:border-l-accent max-md:ring-1 max-md:ring-accent/40",
               )}
             >
               <span className={cn("line-clamp-2 text-small leading-[1.45] text-text", on && "font-semibold")}>{p.text}</span>
@@ -122,14 +133,14 @@ export function PostContext({ post }: { post: ReplyPost }) {
   return (
     <div className="rounded-lg border border-border bg-surface px-[18px] py-4 shadow-sm">
       <div className="text-caption font-semibold uppercase tracking-[0.05em] text-text-subtle">{t("replies.replying_under")}</div>
-      <p className="mt-2 text-body leading-[1.55] text-text">{post.text}</p>
+      <p className="mt-2 text-body leading-[1.55] text-text max-md:line-clamp-2">{post.text}</p>
       <div className="mt-3 flex items-center justify-between gap-3">
         <span className="text-caption text-text-subtle">{post.time}</span>
         <a
           href={post.threadsUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-small font-medium text-accent hover:underline hover:underline-offset-2"
+          className="inline-flex shrink-0 items-center gap-1.5 text-small font-medium text-accent hover:underline hover:underline-offset-2"
         >
           {t("replies.open_in_threads")} <IcExternal size={14} />
         </a>
@@ -150,7 +161,9 @@ export function StatusFilter({
 }) {
   const { t } = useTranslation();
   return (
-    <div role="tablist" aria-label="Comment status" className="flex gap-1 rounded-md border border-border bg-surface-2 p-1">
+    // Not sticky on mobile (deliberate — only the switcher sticks). Labels are
+    // kept on mobile; the row scrolls horizontally instead of hiding them.
+    <div role="tablist" aria-label="Comment status" className="flex gap-1 rounded-md border border-border bg-surface-2 p-1 [scrollbar-width:none] max-md:overflow-x-auto">
       {REPLY_FILTERS.map((f) => {
         const on = active === f.key;
         return (
@@ -160,12 +173,12 @@ export function StatusFilter({
             aria-selected={on}
             onClick={() => onChange(f.key)}
             className={cn(
-              "inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-sm border px-2.5 text-small font-medium transition-colors",
+              "inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-sm border px-2.5 text-small font-medium transition-colors max-md:shrink-0",
               on ? "border-border bg-surface font-semibold text-text shadow-sm" : "border-transparent text-text-muted hover:text-text",
             )}
           >
             <span className={cn("h-[7px] w-[7px] shrink-0 rounded-full", f.dot)} />
-            <span className="hidden truncate min-[561px]:inline">{t(f.label)}</span>
+            <span className="truncate">{t(f.label)}</span>
             <span className={cn("text-caption tabular-nums", on ? "text-text-muted" : "text-text-subtle")}>{counts[f.key]}</span>
           </button>
         );
@@ -218,15 +231,17 @@ export function CommentCard({
       )}
       style={{ animation: "card-in var(--duration-slow) var(--ease-entrance) both" }}
     >
-      {/* head */}
-      <div className="flex items-center gap-[11px]">
-        <Mono text={c.author.initials} size={38} />
+      {/* head — Threads gives only the commenter's @username (no avatar, no
+          display name). Desktop keeps its Mono initials + name; on a phone we
+          collapse to @username + time only, with the @username truncating. */}
+      <div className="flex items-center gap-[11px] max-md:gap-2.5">
+        <Mono text={c.author.initials} size={38} className="max-md:hidden" />
         <div className="min-w-0 flex-1">
-          <div className="truncate text-small font-semibold leading-[1.25]">{c.author.name}</div>
-          <div className="flex flex-wrap items-center gap-1.5 text-caption text-text-subtle">
-            <span className="truncate">@{c.author.handle}</span>
-            <span className="opacity-60">·</span>
-            <span>{c.time}</span>
+          <div className="truncate text-small font-semibold leading-[1.25] max-md:hidden">{c.author.name}</div>
+          <div className="flex flex-wrap items-center gap-1.5 text-caption text-text-subtle max-md:flex-nowrap max-md:overflow-hidden">
+            <span className="truncate max-md:min-w-0 max-md:font-medium max-md:text-text">@{c.author.handle}</span>
+            <span className="opacity-60 max-md:shrink-0">·</span>
+            <span className="max-md:shrink-0">{c.time}</span>
           </div>
         </div>
         <Badge tone={badge.tone} dot={badge.dot}>
@@ -237,7 +252,7 @@ export function CommentCard({
             type="button"
             aria-label={t("replies.dismiss")}
             onClick={() => h.onSkip(c)}
-            className="grid h-7 w-7 shrink-0 place-items-center rounded-md border border-transparent bg-transparent text-text-subtle transition-colors hover:bg-danger/10 hover:text-danger"
+            className="grid h-7 w-7 shrink-0 place-items-center rounded-md border border-transparent bg-transparent text-text-subtle transition-colors hover:bg-danger/10 hover:text-danger max-md:h-11 max-md:w-11"
           >
             <IcX size={15} />
           </button>
@@ -255,8 +270,8 @@ export function CommentCard({
         <div className="relative mt-3.5 pl-[26px]">
           <span className="absolute bottom-4 left-[11px] top-[-2px] w-0.5 rounded bg-border" />
           <div className={cn("rounded-md border border-border bg-surface-2 px-[14px] py-3", status === "replied" && "border-success/30")}>
-            <div className="mb-2 flex items-center gap-2">
-              <AccountFace url={youAvatar} initials={youInitials} size={24} />
+            <div className="mb-2 flex items-center gap-2 max-md:flex-wrap max-md:gap-y-1">
+              <AccountFace url={youAvatar} initials={youInitials} size={24} className="max-md:shrink-0" />
               <span className="text-small font-semibold">{t("replies.you")}</span>
               {!generating && <RaTag status={status} repliedTime={c.repliedTime} />}
             </div>
@@ -285,7 +300,7 @@ export function CommentCard({
                     }
                   }}
                   rows={Math.min(10, Math.max(2, editBuffer.split("\n").length + 1))}
-                  className="w-full resize-y rounded-sm border border-accent bg-surface px-[11px] py-[9px] text-small leading-[1.6] text-text outline-none ring-[3px] ring-accent/[0.16]"
+                  className="w-full resize-y rounded-sm border border-accent bg-surface px-[11px] py-[9px] text-small leading-[1.6] text-text outline-none ring-[3px] ring-accent/[0.16] max-md:text-[16px]"
                 />
                 <div className="mt-[7px] flex justify-end">
                   <span className={cn("text-caption tabular-nums", editBuffer.length > REPLY_LIMIT ? "font-semibold text-danger" : "text-text-subtle")}>
@@ -303,9 +318,10 @@ export function CommentCard({
         </div>
       )}
 
-      {/* footer */}
+      {/* footer — two-tier on mobile: meta line wraps, then a full-width action
+          row with one grow-primary + 44×44 icon buttons. */}
       {!generating && (
-        <div className="mt-[13px] flex flex-wrap items-center gap-2.5 border-t border-border pt-3">
+        <div className="mt-[13px] flex flex-wrap items-center gap-2.5 border-t border-border pt-3 max-md:flex-col max-md:items-stretch">
           {renderFoot()}
         </div>
       )}
@@ -313,38 +329,60 @@ export function CommentCard({
   );
 
   function renderFoot() {
+    // Each action button group is wrapped so that on mobile (max-md) it becomes
+    // the full-width second tier under the meta line: the labelled primary grows
+    // to 44px and any Regenerate/Edit collapse to 44×44 icon buttons. Desktop
+    // keeps the buttons inline at the right with the original gap (gap-2.5).
     if (editing) {
       return (
         <>
-          <span className="flex-1" />
-          <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>
-            {t("studio.cancel")}
-          </Button>
-          <Button
-            size="sm"
-            variant="primary"
-            icon={<IcCheck size={15} />}
-            disabled={editBuffer.trim().length === 0 || editBuffer.length > REPLY_LIMIT}
-            onClick={() => {
-              h.onSaveEdit(c, editBuffer);
-              setEditing(false);
-            }}
-          >
-            {t("studio.save")}
-          </Button>
+          <span className="flex-1 max-md:hidden" />
+          <div className="flex items-center gap-2.5 max-md:w-full max-md:gap-2">
+            <Button size="sm" variant="ghost" onClick={() => setEditing(false)} className="max-md:min-h-[44px]">
+              {t("studio.cancel")}
+            </Button>
+            <Button
+              size="sm"
+              variant="primary"
+              icon={<IcCheck size={15} />}
+              className="max-md:h-auto max-md:min-h-[44px] max-md:flex-1 max-md:whitespace-normal"
+              disabled={editBuffer.trim().length === 0 || editBuffer.length > REPLY_LIMIT}
+              onClick={() => {
+                h.onSaveEdit(c, editBuffer);
+                setEditing(false);
+              }}
+            >
+              {t("studio.save")}
+            </Button>
+          </div>
         </>
       );
     }
 
-    const meta = (node: ReactNode) => <div className="flex flex-1 items-center gap-3.5 text-caption text-text-subtle">{node}</div>;
+    // On desktop the meta div is always present (flex-1) so the action group is
+    // pushed right; when there's no meta text we keep an empty spacer on desktop
+    // but drop it on mobile (where the action row is its own full-width tier).
+    const meta = (node: ReactNode) =>
+      node === null ? (
+        <div className="flex-1 max-md:hidden" />
+      ) : (
+        <div className="flex flex-1 items-center gap-3.5 text-caption text-text-subtle max-md:w-full max-md:flex-none">{node}</div>
+      );
+    // Action-row wrapper: right-aligned inline on desktop, full-width tier on mobile.
+    const actions = (node: ReactNode) => <div className="flex items-center gap-2.5 max-md:w-full max-md:gap-2">{node}</div>;
+    // Hide a button's text label on mobile (it becomes a 44×44 icon button).
+    const iconBtnCls = "max-md:h-11 max-md:w-11 max-md:shrink-0 max-md:gap-0 max-md:px-0";
+    const growCls = "max-md:h-auto max-md:min-h-[44px] max-md:flex-1 max-md:whitespace-normal";
 
     if (status === "new") {
       return (
         <>
           {meta(null)}
-          <Button size="sm" variant="primary" icon={<IcNib size={15} />} onClick={() => h.onGenerate(c)}>
-            {t("replies.generate_reply")}
-          </Button>
+          {actions(
+            <Button size="sm" variant="primary" className={growCls} icon={<IcNib size={15} />} onClick={() => h.onGenerate(c)}>
+              {t("replies.generate_reply")}
+            </Button>,
+          )}
         </>
       );
     }
@@ -352,15 +390,19 @@ export function CommentCard({
       return (
         <>
           {meta(c.lang ? <LangMeta lang={c.lang} /> : null)}
-          <Button size="sm" variant="ghost" icon={<IcTweak size={15} />} onClick={() => h.onGenerate(c)}>
-            {t("replies.regenerate")}
-          </Button>
-          <Button size="sm" variant="secondary" icon={<IcPencil size={15} />} onClick={() => { setEditBuffer(c.reply ?? ""); setEditing(true); }}>
-            {t("studio.edit")}
-          </Button>
-          <Button size="sm" variant="primary" icon={<IcCheck size={15} />} onClick={() => h.onApprove(c)}>
-            {t("studio.approve")}
-          </Button>
+          {actions(
+            <>
+              <Button size="sm" variant="ghost" className={iconBtnCls} icon={<IcTweak size={15} />} aria-label={t("replies.regenerate")} onClick={() => h.onGenerate(c)}>
+                <span className="max-md:hidden">{t("replies.regenerate")}</span>
+              </Button>
+              <Button size="sm" variant="secondary" className={iconBtnCls} icon={<IcPencil size={15} />} aria-label={t("studio.edit")} onClick={() => { setEditBuffer(c.reply ?? ""); setEditing(true); }}>
+                <span className="max-md:hidden">{t("studio.edit")}</span>
+              </Button>
+              <Button size="sm" variant="primary" className={growCls} icon={<IcCheck size={15} />} onClick={() => h.onApprove(c)}>
+                {t("studio.approve")}
+              </Button>
+            </>,
+          )}
         </>
       );
     }
@@ -368,12 +410,16 @@ export function CommentCard({
       return (
         <>
           {meta(c.lang ? <LangMeta lang={c.lang} /> : null)}
-          <Button size="sm" variant="secondary" icon={<IcPencil size={15} />} onClick={() => { setEditBuffer(c.reply ?? ""); setEditing(true); }}>
-            {t("studio.edit")}
-          </Button>
-          <Button size="sm" variant="primary" icon={<IcReply size={15} />} onClick={() => h.onPublish(c)}>
-            {t("replies.publish_reply")}
-          </Button>
+          {actions(
+            <>
+              <Button size="sm" variant="secondary" className={iconBtnCls} icon={<IcPencil size={15} />} aria-label={t("studio.edit")} onClick={() => { setEditBuffer(c.reply ?? ""); setEditing(true); }}>
+                <span className="max-md:hidden">{t("studio.edit")}</span>
+              </Button>
+              <Button size="sm" variant="primary" className={growCls} icon={<IcReply size={15} />} onClick={() => h.onPublish(c)}>
+                {t("replies.publish_reply")}
+              </Button>
+            </>,
+          )}
         </>
       );
     }
@@ -385,9 +431,11 @@ export function CommentCard({
               <IcCheck size={13} /> {t("replies.published")} {c.repliedTime}
             </span>,
           )}
-          <a href="#" target="_blank" rel="noopener noreferrer" className={buttonClasses({ variant: "secondary", size: "sm" })}>
-            <IcExternal size={15} /> {t("replies.open_in_threads")}
-          </a>
+          {actions(
+            <a href="#" target="_blank" rel="noopener noreferrer" className={buttonClasses({ variant: "secondary", size: "sm", className: growCls })}>
+              <IcExternal size={15} /> {t("replies.open_in_threads")}
+            </a>,
+          )}
         </>
       );
     }
@@ -395,9 +443,11 @@ export function CommentCard({
     return (
       <>
         {meta(<span>{t("replies.removed_meta")}</span>)}
-        <Button size="sm" variant="ghost" icon={<IcUndo size={15} />} onClick={() => h.onRestore(c)}>
-          {t("replies.restore")}
-        </Button>
+        {actions(
+          <Button size="sm" variant="ghost" className={growCls} icon={<IcUndo size={15} />} onClick={() => h.onRestore(c)}>
+            {t("replies.restore")}
+          </Button>,
+        )}
       </>
     );
   }
@@ -479,13 +529,15 @@ export function CommentSkeleton() {
 export function RepliesLoading() {
   const { t } = useTranslation();
   return (
-    <div className="grid grid-cols-[300px_1fr] items-start gap-[22px] max-[900px]:grid-cols-1">
-      <aside className="overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
-        <div className="border-b border-border px-4 pb-[11px] pt-[13px] text-caption font-semibold uppercase tracking-[0.06em] text-text-subtle">
+    <div className="grid grid-cols-[300px_1fr] items-start gap-[22px] max-md:grid-cols-1 max-md:gap-4">
+      {/* Desktop: vertical post-list skeleton. Mobile: horizontal switcher
+          skeleton (220px chips, scrolls), matching the live PostMaster. */}
+      <aside className="overflow-hidden rounded-lg border border-border bg-surface shadow-sm max-md:flex max-md:gap-2.5 max-md:overflow-x-auto max-md:rounded-none max-md:border-0 max-md:bg-transparent max-md:p-0 max-md:shadow-none [scrollbar-width:none]">
+        <div className="border-b border-border px-4 pb-[11px] pt-[13px] text-caption font-semibold uppercase tracking-[0.06em] text-text-subtle max-md:hidden">
           {t("replies.posts_with_comments")}
         </div>
         {[0, 1, 2].map((i) => (
-          <div key={i} className="space-y-2 border-b border-border px-4 py-[13px] last:border-0">
+          <div key={i} className="space-y-2 border-b border-border px-4 py-[13px] last:border-0 max-md:w-[220px] max-md:shrink-0 max-md:space-y-2 max-md:rounded-lg max-md:border max-md:border-border max-md:py-[13px] max-md:last:border">
             <div className="skel h-3 w-[92%] rounded" />
             <div className="skel h-2.5 w-[50%] rounded" />
           </div>
@@ -542,7 +594,7 @@ export function PublishReplyDialog({
   if (!open) return null;
   return (
     <div
-      className="fixed inset-0 z-40 grid place-items-center bg-ink-950/55 p-6 backdrop-blur-sm"
+      className="fixed inset-0 z-40 grid place-items-center bg-ink-950/55 p-6 backdrop-blur-sm max-md:place-items-end max-md:p-0"
       role="dialog"
       aria-modal="true"
       aria-label="Publish reply"
@@ -555,7 +607,7 @@ export function PublishReplyDialog({
       tabIndex={-1}
     >
       <div
-        className="w-full max-w-[420px] rounded-2xl border border-border bg-surface p-6 shadow-lg"
+        className="w-full max-w-[420px] rounded-2xl border border-border bg-surface p-6 shadow-lg max-md:max-w-none max-md:rounded-b-none max-md:rounded-t-2xl max-md:pb-[calc(24px+env(safe-area-inset-bottom))]"
         style={{ animation: "dialog-in var(--duration-slow) var(--ease-entrance) both" }}
       >
         <div className="flex items-start gap-3">
@@ -576,11 +628,11 @@ export function PublishReplyDialog({
         <div className="mt-3.5 max-h-[220px] overflow-y-auto whitespace-pre-wrap rounded-md border border-border bg-surface-2 p-3.5 text-body leading-[1.6] text-text">
           {reply}
         </div>
-        <div className="mt-[22px] flex items-center justify-end gap-2.5">
-          <button onClick={onClose} disabled={publishing} className={buttonClasses({ variant: "ghost" })}>
+        <div className="mt-[22px] flex items-center justify-end gap-2.5 max-md:flex-col-reverse max-md:items-stretch max-md:gap-2">
+          <button onClick={onClose} disabled={publishing} className={buttonClasses({ variant: "ghost", className: "max-md:min-h-[44px] max-md:w-full" })}>
             {t("studio.cancel")}
           </button>
-          <Button variant="primary" icon={<IcReply size={16} />} loading={publishing} onClick={onConfirm}>
+          <Button variant="primary" className="max-md:min-h-[44px] max-md:w-full" icon={<IcReply size={16} />} loading={publishing} onClick={onConfirm}>
             {t("replies.publish_reply")}
           </Button>
         </div>
