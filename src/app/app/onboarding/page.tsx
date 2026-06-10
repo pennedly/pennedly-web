@@ -454,7 +454,7 @@ function ChooseStep({
                 <m.Icon size={20} />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="flex items-center gap-[9px]">
+                <span className="flex items-center gap-[9px] max-[560px]:flex-wrap">
                   <span className="text-h3 font-semibold tracking-[-0.006em]">{t(m.title)}</span>
                   {m.recommended && !disabled && (
                     <span
@@ -624,7 +624,7 @@ function ChipInput({
             }
             if (e.key === "Backspace" && !text && value.length) remove(value[value.length - 1]);
           }}
-          className="min-w-[90px] flex-1 bg-transparent px-1 py-[5px] text-small text-text outline-none placeholder:text-text-subtle"
+          className="min-w-[90px] flex-1 bg-transparent px-1 py-[5px] text-small text-text outline-none placeholder:text-text-subtle max-md:text-[16px]"
         />
       </div>
       {remaining.length > 0 && (
@@ -686,7 +686,7 @@ function ScratchStep({
           value={desc}
           onChange={(e) => setDesc(e.target.value)}
           placeholder={t("onboarding.form_intro_ph")}
-          className="min-h-[92px] w-full resize-y rounded-md border border-border bg-surface px-3 py-[11px] text-small leading-relaxed text-text outline-none transition-[border-color,box-shadow] duration-[120ms] placeholder:text-text-subtle focus:border-accent focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-accent)_18%,transparent)]"
+          className="min-h-[92px] w-full resize-y rounded-md border border-border bg-surface px-3 py-[11px] text-small leading-relaxed text-text outline-none transition-[border-color,box-shadow] duration-[120ms] placeholder:text-text-subtle focus:border-accent focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-accent)_18%,transparent)] max-md:text-[16px]"
         />
         <div className="mt-[9px] flex flex-wrap gap-[7px]">
           {STARTERS.map((s, i) => (
