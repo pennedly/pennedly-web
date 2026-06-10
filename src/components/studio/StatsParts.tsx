@@ -250,6 +250,174 @@ export function DistributionBars({ cap, tiers }: { cap: string; tiers: { viral: 
   );
 }
 
+// ─────────────────────────────── TopPostsPanel ──────────────────────────────
+// "What worked" — the window's top posts by views, each with its metrics and
+// the same "N× your average" verdict the feed uses. Rows link out to Threads
+// when the post still has a URL.
+export type TopPostRow = {
+  text: string;
+  dateISO: string;
+  views: number;
+  likes: number;
+  comments: number;
+  vs: number | null; // views ÷ window average; null when the average is 0
+  url: string | null;
+};
+
+function vsLabel(vs: number): string {
+  const v = Math.round(vs * 10) / 10;
+  return `${v}×`;
+}
+
+export function TopPostsPanel({ cap, rows }: { cap: string; rows: TopPostRow[] }) {
+  const { t, locale } = useTranslation();
+  return (
+    <section className="rounded-lg border border-border bg-surface px-5 pb-4 pt-[18px] shadow-sm">
+      <div className="mb-2">
+        <div className="text-h3 font-semibold tracking-[-0.006em]">{t("stats.top_title")}</div>
+        <div className="mt-[3px] text-caption text-text-subtle">{cap}</div>
+      </div>
+      <div className="flex flex-col">
+        {rows.map((r, i) => {
+          const date = new Date(r.dateISO).toLocaleDateString(locale, { month: "short", day: "numeric" });
+          const vsTone = r.vs === null ? "" : r.vs >= 1.5 ? "text-success" : r.vs >= 0.7 ? "text-text" : "text-text-subtle";
+          const inner = (
+            <>
+              <span className="w-5 shrink-0 pt-px text-caption font-semibold tabular-nums text-text-subtle">{i + 1}</span>
+              <span className="min-w-0 flex-1">
+                <span className="line-clamp-2 text-small leading-snug text-text">{r.text}</span>
+                <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-caption tabular-nums text-text-subtle">
+                  <span>{date}</span>
+                  <span className="inline-flex items-center gap-1"><IcEye size={12} /> {fmt(r.views)}</span>
+                  <span className="inline-flex items-center gap-1"><IcHeart size={12} /> {fmt(r.likes)}</span>
+                  <span className="inline-flex items-center gap-1"><IcBubble size={12} /> {fmt(r.comments)}</span>
+                </span>
+              </span>
+              {r.vs !== null && (
+                <span className="shrink-0 text-right">
+                  <span className={cn("block text-h3 font-semibold tabular-nums leading-none", vsTone)}>{vsLabel(r.vs)}</span>
+                  <span className="mt-1 block text-caption text-text-subtle">{t("feed.your_average")}</span>
+                </span>
+              )}
+            </>
+          );
+          const rowCls = "flex items-start gap-3 border-t border-border py-3 first:border-t-0";
+          return r.url ? (
+            <a key={i} href={r.url} target="_blank" rel="noopener noreferrer" className={cn(rowCls, "-mx-2 rounded-md px-2 transition-colors hover:bg-surface-2")}>
+              {inner}
+            </a>
+          ) : (
+            <div key={i} className={rowCls}>
+              {inner}
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+// ─────────────────────────────── BestTimesPanel ─────────────────────────────
+// "When your posts land" — average views per post grouped by local publish
+// hour and by weekday. The best slot (preferring slots with ≥2 posts, so one
+// lucky post doesn't crown an hour) is tinted accent and named in a chip.
+export type TimeSlotRow = { slot: number; posts: number; avg: number };
+
+function bestOf(slots: TimeSlotRow[]): TimeSlotRow | null {
+  const candidates = slots.filter((s) => s.posts >= 2);
+  const pool = candidates.length ? candidates : slots.filter((s) => s.posts >= 1);
+  if (!pool.length) return null;
+  return pool.reduce((a, b) => (b.avg > a.avg ? b : a));
+}
+
+function TimeBars({
+  heading,
+  slots,
+  labelFor,
+  postsWord,
+  bestWord,
+}: {
+  heading: string;
+  slots: TimeSlotRow[];
+  labelFor: (slot: number) => string;
+  postsWord: string;
+  bestWord: string;
+}) {
+  const max = Math.max(1, ...slots.map((s) => s.avg));
+  const best = bestOf(slots);
+  const many = slots.length > 8; // many bars → fixed width + horizontal scroll on mobile
+  const cellW = many ? "max-md:w-9 max-md:shrink-0 md:min-w-0 md:flex-1" : "min-w-0 flex-1";
+  const bars = (
+    <div className={cn("flex gap-[7px]", many && "max-md:w-max")}>
+      {slots.map((s) => {
+        const isBest = best !== null && s.slot === best.slot && s.posts > 0;
+        return (
+          <div
+            key={s.slot}
+            className={cn("flex min-w-0 flex-col items-center gap-1.5", cellW)}
+            title={`${labelFor(s.slot)}: ${fmt(Math.round(s.avg))} · ${s.posts} ${postsWord}`}
+          >
+            <div className="flex h-[96px] w-full items-end">
+              <div
+                className="w-full rounded-t-sm transition-[height]"
+                style={{
+                  height: s.posts ? `${Math.max(4, (s.avg / max) * 100)}%` : "2px",
+                  backgroundColor: isBest
+                    ? "var(--color-accent)"
+                    : s.posts
+                      ? "color-mix(in srgb, var(--color-text) 18%, var(--color-surface-2))"
+                      : "color-mix(in srgb, var(--color-text) 7%, var(--color-surface-2))",
+                }}
+              />
+            </div>
+            <span className="w-full truncate text-center text-[0.6875rem] tabular-nums text-text-subtle">{labelFor(s.slot)}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+  return (
+    <div className="min-w-0">
+      <div className="mb-2.5 flex items-center justify-between gap-2">
+        <span className="text-caption font-semibold uppercase tracking-[0.04em] text-text-subtle">{heading}</span>
+        {best && (
+          <span
+            className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border px-2 py-0.5 text-caption font-semibold text-accent"
+            style={{
+              background: "color-mix(in srgb, var(--color-accent) 10%, var(--color-surface))",
+              borderColor: "color-mix(in srgb, var(--color-accent) 26%, transparent)",
+            }}
+          >
+            {bestWord} · {labelFor(best.slot)}
+          </span>
+        )}
+      </div>
+      {many ? <div className="[scrollbar-width:thin] max-md:overflow-x-auto">{bars}</div> : bars}
+    </div>
+  );
+}
+
+export function BestTimesPanel({ cap, byHour, byWeekday }: { cap: string; byHour: TimeSlotRow[]; byWeekday: TimeSlotRow[] }) {
+  const { t, locale } = useTranslation();
+  const hourLabel = (h: number) => new Date(2026, 0, 1, h).toLocaleTimeString(locale, { hour: "numeric" });
+  // Jan 2024 starts on a Monday, so day-of-month = ISO weekday 1..7.
+  const dayLabel = (d: number) => new Date(Date.UTC(2024, 0, d)).toLocaleDateString(locale, { weekday: "short", timeZone: "UTC" });
+  // Weekdays always render the full Mon..Sun shape; empty days show a stub.
+  const week: TimeSlotRow[] = Array.from({ length: 7 }, (_, i) => byWeekday.find((s) => s.slot === i + 1) ?? { slot: i + 1, posts: 0, avg: 0 });
+  return (
+    <section className="rounded-lg border border-border bg-surface px-5 pb-4 pt-[18px] shadow-sm">
+      <div className="mb-[18px]">
+        <div className="text-h3 font-semibold tracking-[-0.006em]">{t("stats.times_title")}</div>
+        <div className="mt-[3px] text-caption text-text-subtle">{cap}</div>
+      </div>
+      <div className="grid gap-6 md:grid-cols-2 md:gap-8">
+        <TimeBars heading={t("stats.by_hour")} slots={byHour} labelFor={hourLabel} postsWord={t("stats.posts_word")} bestWord={t("stats.best_chip")} />
+        <TimeBars heading={t("stats.by_weekday")} slots={week} labelFor={dayLabel} postsWord={t("stats.posts_word")} bestWord={t("stats.best_chip")} />
+      </div>
+    </section>
+  );
+}
+
 // ───────────────────────────── empty / skeleton ─────────────────────────────
 export function StatsEmpty() {
   const { t } = useTranslation();

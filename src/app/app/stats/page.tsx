@@ -17,6 +17,7 @@ import { IcChart } from "@/components/icons";
 import { TweaksPanel, TweakSection, TweakToggle, TweakRadio, useTweaks } from "@/components/tweaks/TweaksPanel";
 import { fmt } from "@/components/studio/FeedParts";
 import {
+  BestTimesPanel,
   ColumnChart,
   DistributionBars,
   PERIODS,
@@ -25,6 +26,9 @@ import {
   STAT_CARDS,
   StatsEmpty,
   SummaryCard,
+  type TimeSlotRow,
+  type TopPostRow,
+  TopPostsPanel,
 } from "@/components/studio/StatsParts";
 import { STATS_DEMO, STATS_TWEAK_DEFAULTS, type Gran, type StatBucket, type StatPeriodKey } from "@/components/studio/stats-demo";
 import type { StatsResponse } from "@/lib/types";
@@ -125,6 +129,9 @@ export default function StatsPage() {
         },
         series: d.series,
         tiers: d.tiers,
+        top: d.top.map<TopPostRow>((p) => ({ text: p.text, dateISO: p.dateISO, views: p.views, likes: p.likes, comments: p.comments, vs: p.vs, url: p.url })),
+        byHour: d.byHour.map<TimeSlotRow>((s) => ({ slot: s.slot, posts: s.posts, avg: s.avg })),
+        byWeekday: d.byWeekday.map<TimeSlotRow>((s) => ({ slot: s.slot, posts: s.posts, avg: s.avg })),
       };
     }
     if (!stats) return null;
@@ -139,6 +146,9 @@ export default function StatsPage() {
       },
       series: stats.series.map<StatBucket>((b) => ({ label: fmtBucket(b.bucket_start, gran, locale), value: b.avg_views })),
       tiers: { viral: c.tier_counts.viral, good: c.tier_counts.good, average: c.tier_counts.mid, weak: c.tier_counts.flop },
+      top: (stats.top_posts ?? []).map<TopPostRow>((p) => ({ text: p.text, dateISO: p.published_at, views: p.views, likes: p.likes, comments: p.comments, vs: p.vs_avg, url: p.threads_url })),
+      byHour: (stats.by_hour ?? []).map<TimeSlotRow>((s) => ({ slot: s.slot, posts: s.posts, avg: s.avg_views })),
+      byWeekday: (stats.by_weekday ?? []).map<TimeSlotRow>((s) => ({ slot: s.slot, posts: s.posts, avg: s.avg_views })),
     };
   }, [demoOn, period, stats, gran, locale]);
 
@@ -216,6 +226,10 @@ export default function StatsPage() {
               ))}
             </div>
             <ColumnChart cap={chartCap} headline={fmt(avgViewsPerPost)} headlinePct={model.deltas.views_pct} series={model.series} />
+            {model.top.length > 0 && <TopPostsPanel cap={`${t("stats.top_cap")} · ${periodLabel}`} rows={model.top} />}
+            {period !== "today" && period !== "yesterday" && model.byHour.length > 0 && (
+              <BestTimesPanel cap={`${t("stats.times_cap")} · ${periodLabel}`} byHour={model.byHour} byWeekday={model.byWeekday} />
+            )}
             <DistributionBars cap={tierCap} tiers={model.tiers} />
           </>
         ) : null}

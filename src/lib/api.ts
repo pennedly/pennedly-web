@@ -629,6 +629,9 @@ export async function fetchStats(
   const qs = new URLSearchParams();
   if (opts?.weeks != null) qs.set("weeks", String(opts.weeks));
   else qs.set("period", opts?.period ?? "7d");
+  // Viewer's local-time offset for the by_hour/by_weekday publish-time
+  // panels (minutes to ADD to UTC — the inverse of getTimezoneOffset).
+  qs.set("tz_offset", String(-new Date().getTimezoneOffset()));
   return fetchApi<StatsResponse>(`/api/accounts/${accountId}/stats?${qs}`);
 }
 

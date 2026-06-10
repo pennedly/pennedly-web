@@ -191,12 +191,35 @@ export type StatsBucket = {
   label: string | null;
 };
 
+export type StatsTopPost = {
+  post_id: number;
+  text: string; // snippet (≤160 chars)
+  published_at: string;
+  views: number;
+  likes: number;
+  comments: number;
+  viral_tier: string | null;
+  threads_url: string | null;
+  // views ÷ the window's avg views/post ("N× your average"); null when the
+  // window average is 0.
+  vs_avg: number | null;
+};
+
+export type StatsTimeSlot = {
+  slot: number; // local publish hour 0-23 (by_hour) / ISO weekday 1=Mon..7=Sun (by_weekday)
+  posts: number;
+  avg_views: number;
+};
+
 export type StatsResponse = {
   period: string;
   current: PeriodSummary;
   previous: PeriodSummary | null;
   deltas: StatsDeltas | null;
   series: StatsBucket[];
+  top_posts: StatsTopPost[];
+  by_hour: StatsTimeSlot[];
+  by_weekday: StatsTimeSlot[];
 };
 
 export type GeneratedDraft = {
