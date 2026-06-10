@@ -1082,7 +1082,7 @@ function IntroSection({
           onChange={(e) => setDraft(e.target.value)}
           rows={5}
           placeholder={t("rolebook.intro.placeholder")}
-          className="min-h-[120px] w-full resize-y rounded-md border border-accent bg-surface px-3 py-2.5 text-body leading-relaxed text-text shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-accent)_16%,transparent)] outline-none"
+          className="min-h-[120px] w-full resize-y rounded-md border border-accent bg-surface px-3 py-2.5 text-body leading-relaxed text-text shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-accent)_16%,transparent)] outline-none max-md:text-[16px]"
         />
       ) : value ? (
         <p className="whitespace-pre-wrap text-body leading-relaxed text-text">{value}</p>
@@ -1163,13 +1163,13 @@ function ThemesSection({
                   value={x.label}
                   onChange={(e) => set(i, "label", e.target.value)}
                   placeholder={t(placeholderKey)}
-                  className="h-9 w-full rounded-sm border border-border bg-surface px-2.5 text-small font-medium text-text outline-none focus:border-accent"
+                  className="h-9 w-full rounded-sm border border-border bg-surface px-2.5 text-small font-medium text-text outline-none focus:border-accent max-md:text-[16px]"
                 />
                 <input
                   value={x.note ?? ""}
                   onChange={(e) => set(i, "note", e.target.value)}
                   placeholder={t(notePlaceholderKey)}
-                  className="h-8 w-full rounded-sm border border-border bg-surface px-2.5 text-small text-text-muted outline-none focus:border-accent"
+                  className="h-8 w-full rounded-sm border border-border bg-surface px-2.5 text-small text-text-muted outline-none focus:border-accent max-md:text-[16px]"
                 />
               </div>
               <button
@@ -1275,14 +1275,14 @@ function TraitsSection({
                   value={x.label ?? ""}
                   onChange={(e) => set(i, "label", e.target.value)}
                   placeholder={t("rolebook.voice_characteristics.label_placeholder")}
-                  className="h-9 w-full rounded-sm border border-border bg-surface px-2.5 text-small font-medium text-text outline-none focus:border-accent"
+                  className="h-9 w-full rounded-sm border border-border bg-surface px-2.5 text-small font-medium text-text outline-none focus:border-accent max-md:text-[16px]"
                 />
                 <textarea
                   value={x.text}
                   rows={2}
                   onChange={(e) => set(i, "text", e.target.value)}
                   placeholder={t("rolebook.voice_characteristics.placeholder")}
-                  className="min-h-[60px] w-full resize-y rounded-sm border border-border bg-surface px-2.5 py-2 text-small leading-relaxed text-text outline-none focus:border-accent"
+                  className="min-h-[60px] w-full resize-y rounded-sm border border-border bg-surface px-2.5 py-2 text-small leading-relaxed text-text outline-none focus:border-accent max-md:text-[16px]"
                 />
               </div>
               <button
@@ -1397,7 +1397,7 @@ function RulesSection({
                 rows={2}
                 onChange={(e) => set(i, e.target.value)}
                 placeholder={t(placeholderKey)}
-                className="min-h-[60px] w-full resize-y rounded-sm border border-border bg-surface px-2.5 py-2 text-small leading-relaxed text-text outline-none focus:border-accent"
+                className="min-h-[60px] w-full resize-y rounded-sm border border-border bg-surface px-2.5 py-2 text-small leading-relaxed text-text outline-none focus:border-accent max-md:text-[16px]"
               />
               <button
                 onClick={() => setDraft((d) => d.filter((_, j) => j !== i))}
@@ -1513,7 +1513,7 @@ function ExamplesSection({
                   rows={2}
                   onChange={(e) => set(i, "text", e.target.value)}
                   placeholder={t("rolebook.examples.placeholder")}
-                  className="min-h-[60px] w-full resize-y rounded-sm border border-border bg-surface px-2.5 py-2 text-small leading-relaxed text-text outline-none focus:border-accent"
+                  className="min-h-[60px] w-full resize-y rounded-sm border border-border bg-surface px-2.5 py-2 text-small leading-relaxed text-text outline-none focus:border-accent max-md:text-[16px]"
                 />
               </div>
               <button
