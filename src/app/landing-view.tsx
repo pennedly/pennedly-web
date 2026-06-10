@@ -247,7 +247,10 @@ function LandingContent({ showSample }: { showSample: boolean }) {
         <div className={cn(WRAP, "flex items-center gap-3")}>
           <div className="flex items-center gap-2.5">
             <BrandMark size={30} radius={9} className="shadow-sm" />
-            <span className="text-h3 font-semibold tracking-[-0.01em]">Pennedly</span>
+            {/* Logo-only below 400px so the topbar (lang + theme + Sign in) never
+                crowds the CTA into a mid-word wrap; the wordmark returns at the
+                design's 412px mobile width and up. */}
+            <span className="text-h3 font-semibold tracking-[-0.01em] max-[400px]:hidden">Pennedly</span>
           </div>
           <span className="flex-1" />
           <div className="flex items-center gap-[9px]">
@@ -256,7 +259,7 @@ function LandingContent({ showSample }: { showSample: boolean }) {
             <Link
               href="/app/login"
               data-fx="btnprimary"
-              className="inline-flex h-10 items-center rounded-md bg-primary px-4 text-small font-medium text-primary-foreground transition-[background-color,transform] duration-[120ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] hover:bg-[color-mix(in_srgb,var(--color-primary)_88%,var(--color-bg))] active:translate-y-[0.5px]"
+              className="inline-flex h-10 items-center whitespace-nowrap rounded-md bg-primary px-4 text-small font-medium text-primary-foreground transition-[background-color,transform] duration-[120ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] hover:bg-[color-mix(in_srgb,var(--color-primary)_88%,var(--color-bg))] active:translate-y-[0.5px]"
             >
               {t("landing.sign_in")}
             </Link>
