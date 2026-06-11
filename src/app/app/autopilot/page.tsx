@@ -26,7 +26,7 @@ import {
 } from "@/lib/api";
 import { captureEvent } from "@/lib/analytics";
 import { useSelectedAccountId } from "@/lib/account";
-import { useTranslation, useLocale } from "@/lib/i18n";
+import { useTranslation, useLocale, pluralUnit } from "@/lib/i18n";
 import { useTesterGuard } from "@/lib/tester";
 import { localHourToUtc, localUtcOffsetLabel, utcHourToLocal } from "@/lib/timezone";
 import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
@@ -765,21 +765,16 @@ export default function AutopilotPage() {
                 </div>
               ) : (
                 <>
-                  <div className="mb-4 flex flex-wrap items-baseline gap-x-5 gap-y-1.5 rounded-md border border-border bg-surface-2 px-4 py-3">
+                  <div className="mb-[14px] flex flex-wrap items-center gap-3 rounded-md border border-border bg-surface-2 px-4 py-[13px]">
                     <span className="text-caption font-semibold uppercase tracking-wide text-text-subtle">
                       {t("autopilot.activity_alltime")}
                     </span>
-                    <span className="text-h3 font-semibold tabular-nums">
-                      {activity!.posts_total}
-                      <small className="ml-1 text-caption font-medium text-text-subtle">
-                        {t("autopilot.activity_posts")}
-                      </small>
-                    </span>
-                    <span className="text-h3 font-semibold tabular-nums">
-                      {activity!.replies_total}
-                      <small className="ml-1 text-caption font-medium text-text-subtle">
-                        {t("autopilot.activity_replies")}
-                      </small>
+                    <span className="text-body text-text-muted">
+                      <b className="font-semibold tabular-nums text-text">{activity!.posts_total}</b>{" "}
+                      {pluralUnit(locale, "posts", activity!.posts_total)}
+                      <span className="mx-1 text-text-subtle opacity-50">·</span>
+                      <b className="font-semibold tabular-nums text-text">{activity!.replies_total}</b>{" "}
+                      {pluralUnit(locale, "replies", activity!.replies_total)}
                     </span>
                   </div>
                   {activity!.rules.length > 0 && (
@@ -789,19 +784,17 @@ export default function AutopilotPage() {
                           <div className="truncate text-caption text-text-subtle">
                             {r.name || `#${r.id}`}
                           </div>
-                          <div className="mt-2 flex items-baseline gap-3">
-                            <span className="text-h3 font-semibold tabular-nums">
-                              {r.posts_total}
-                              <small className="ml-1 text-caption font-medium text-text-subtle">
-                                {t("autopilot.activity_posts")}
-                              </small>
-                            </span>
-                            {r.last_post_at && (
-                              <span className="text-caption text-text-subtle">
-                                {t("autopilot.activity_last")} {fmtDate(r.last_post_at, locale)}
-                              </span>
-                            )}
+                          <div className="mt-2 text-h3 font-semibold tabular-nums">
+                            {r.posts_total}
+                            <small className="ml-1 text-caption font-medium text-text-subtle">
+                              {pluralUnit(locale, "posts", r.posts_total)}
+                            </small>
                           </div>
+                          {r.last_post_at && (
+                            <div className="mt-[7px] text-caption text-text-subtle">
+                              {t("autopilot.activity_last")} {fmtDate(r.last_post_at, locale)}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
