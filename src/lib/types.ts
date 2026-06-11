@@ -182,13 +182,12 @@ export type StatsDeltas = {
 };
 
 export type StatsBucket = {
+  // Local-time bucket start, naive ISO (the client formats it per locale).
+  // Gap-filled: every bucket in the window is present, empty ones zero.
   bucket_start: string;
   posts: number;
   avg_views: number;
   sum_views: number;
-  // For the per-post today/yesterday series (Q58): a short post snippet to
-  // label each bar. null in the time-bucketed series.
-  label: string | null;
 };
 
 export type StatsTopPost = {

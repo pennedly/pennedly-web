@@ -3,7 +3,7 @@
 // live screen maps StatsResponse into the same shapes.
 
 export type StatPeriodKey = "today" | "yesterday" | "7d" | "30d" | "90d" | "all";
-export type Gran = "hour" | "day" | "week" | "month";
+export type Gran = "hour" | "day" | "week";
 
 export type StatTotals = { posts: number; views: number; likes: number; comments: number };
 export type StatBucket = { label: string; value: number }; // avg views per post in the bucket
@@ -37,6 +37,30 @@ const P3 = "Your first hundred posts are the tuition. Stop grading them like the
 const P4 = "Write the way you talk to one friend, not the way you present to a room.";
 const P5 = "A draft a day isn't discipline. It's just lowering the price of starting.";
 
+// ── gap-filled trend-series builders (demo only) ──────────────────────────
+// The live screen formats labels from the backend's bucket_start; these bake
+// equivalent EN labels + zero-filled gaps so the ?demo=1 review shows the same
+// continuous axis (hourly / daily / weekly) the real data produces.
+const hourLabel = (h: number) => new Date(2026, 0, 1, h).toLocaleTimeString("en-US", { hour: "numeric" });
+const dateLabel = (m: number, d: number) => new Date(2026, m, d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+const hourly = (spikes: Record<number, number>, upto = 24): StatBucket[] =>
+  Array.from({ length: upto }, (_, h) => ({ label: hourLabel(h), value: spikes[h] ?? 0 }));
+const weekday = (values: number[]): StatBucket[] => {
+  const W = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  return values.map((v, i) => ({ label: W[i], value: v }));
+};
+const daily = (values: number[], m: number, d: number): StatBucket[] =>
+  values.map((v, i) => { const dt = new Date(2026, m, d + i); return { label: dateLabel(dt.getMonth(), dt.getDate()), value: v }; });
+const weekly = (values: number[], m: number, d: number): StatBucket[] =>
+  values.map((v, i) => { const dt = new Date(2026, m, d + i * 7); return { label: dateLabel(dt.getMonth(), dt.getDate()), value: v }; });
+
+// 30 daily values (May 12 → Jun 10), ~8 quiet days zero-filled.
+const D30 = [12400, 0, 15200, 9800, 0, 17800, 11200, 14200, 0, 21000, 8600, 0, 16400, 12800, 19200, 0, 10400, 13600, 22600, 0, 9200, 15800, 0, 11000, 18400, 13200, 0, 16800, 20400, 14600];
+// 13 weekly values (Mar 9 → Jun 1).
+const W90 = [9800, 11200, 12600, 15400, 13800, 17200, 14600, 12000, 16800, 13200, 18400, 15600, 14200];
+// 24 weekly values (Jan 6 → mid-Jun) — the account's whole life, two quiet opening weeks.
+const WALL = [0, 4200, 6800, 7400, 8600, 9200, 0, 11400, 10800, 12800, 13600, 11200, 14200, 15800, 13200, 16400, 17800, 14600, 18200, 15400, 19600, 16800, 21000, 17400];
+
 // Three tweaks (no account/density — see spec §6).
 export const STATS_TWEAK_DEFAULTS = {
   dark: false,
@@ -49,14 +73,8 @@ export const STATS_DEMO: Record<StatPeriodKey, StatPeriodData> = {
     gran: "hour",
     current: { posts: 3, views: 42600, likes: 300, comments: 22 },
     prev: { posts: 3, views: 31000, likes: 230, comments: 18 },
-    series: [
-      { label: "6 AM", value: 8200 },
-      { label: "9 AM", value: 16400 },
-      { label: "12 PM", value: 11200 },
-      { label: "3 PM", value: 21800 },
-      { label: "6 PM", value: 13600 },
-      { label: "9 PM", value: 9400 },
-    ],
+    // 22 hours, not 24 — "today" is a partial day (live ends at the current hour).
+    series: hourly({ 6: 8200, 9: 16400, 12: 11200, 15: 21800, 18: 13600, 21: 9400 }, 22),
     tiers: { viral: 1, good: 1, average: 1, weak: 0 },
     top: [
       { text: P1, dateISO: "2026-06-10T15:00:00Z", views: 21800, likes: 156, comments: 12, vs: 1.5, url: null },
@@ -70,14 +88,7 @@ export const STATS_DEMO: Record<StatPeriodKey, StatPeriodData> = {
     gran: "hour",
     current: { posts: 2, views: 31000, likes: 240, comments: 17 },
     prev: { posts: 1, views: 12000, likes: 90, comments: 6 },
-    series: [
-      { label: "7 AM", value: 6400 },
-      { label: "10 AM", value: 12800 },
-      { label: "1 PM", value: 18200 },
-      { label: "4 PM", value: 9600 },
-      { label: "7 PM", value: 14400 },
-      { label: "10 PM", value: 7200 },
-    ],
+    series: hourly({ 7: 6400, 10: 12800, 13: 18200, 16: 9600, 19: 14400, 22: 7200 }),
     tiers: { viral: 0, good: 1, average: 1, weak: 0 },
     top: [
       { text: P2, dateISO: "2026-06-09T13:00:00Z", views: 18200, likes: 142, comments: 11, vs: 1.2, url: null },
@@ -90,15 +101,7 @@ export const STATS_DEMO: Record<StatPeriodKey, StatPeriodData> = {
     gran: "day",
     current: { posts: 7, views: 98000, likes: 980, comments: 56 },
     prev: { posts: 6, views: 78000, likes: 720, comments: 44 },
-    series: [
-      { label: "Mon", value: 9200 },
-      { label: "Tue", value: 16400 },
-      { label: "Wed", value: 11000 },
-      { label: "Thu", value: 22600 },
-      { label: "Fri", value: 13200 },
-      { label: "Sat", value: 18000 },
-      { label: "Sun", value: 7600 },
-    ],
+    series: weekday([9200, 16400, 11000, 22600, 13200, 18000, 7600]),
     tiers: { viral: 1, good: 2, average: 3, weak: 1 },
     top: [
       { text: P1, dateISO: "2026-06-08T15:00:00Z", views: 38200, likes: 312, comments: 24, vs: 2.7, url: null },
@@ -124,15 +127,10 @@ export const STATS_DEMO: Record<StatPeriodKey, StatPeriodData> = {
     ],
   },
   "30d": {
-    gran: "week",
+    gran: "day",
     current: { posts: 21, views: 318000, likes: 3100, comments: 235 },
     prev: { posts: 16, views: 232000, likes: 2300, comments: 180 },
-    series: [
-      { label: "May 4", value: 12400 },
-      { label: "May 11", value: 17800 },
-      { label: "May 18", value: 14200 },
-      { label: "May 25", value: 21000 },
-    ],
+    series: daily(D30, 4, 12),
     tiers: { viral: 3, good: 6, average: 9, weak: 3 },
     top: [
       { text: P2, dateISO: "2026-05-28T09:00:00Z", views: 64000, likes: 520, comments: 41, vs: 4.2, url: null },
@@ -162,16 +160,7 @@ export const STATS_DEMO: Record<StatPeriodKey, StatPeriodData> = {
     gran: "week",
     current: { posts: 48, views: 642000, likes: 5800, comments: 430 },
     prev: { posts: 32, views: 392000, likes: 3600, comments: 270 },
-    series: [
-      { label: "Mar", value: 9800 },
-      { label: "", value: 11200 },
-      { label: "Apr", value: 12600 },
-      { label: "", value: 15400 },
-      { label: "May", value: 13800 },
-      { label: "", value: 17200 },
-      { label: "Jun", value: 14600 },
-      { label: "", value: 12000 },
-    ],
+    series: weekly(W90, 2, 9),
     tiers: { viral: 6, good: 14, average: 20, weak: 8 },
     top: [
       { text: P3, dateISO: "2026-04-14T09:00:00Z", views: 86000, likes: 710, comments: 58, vs: 6.4, url: null },
@@ -199,17 +188,10 @@ export const STATS_DEMO: Record<StatPeriodKey, StatPeriodData> = {
     ],
   },
   all: {
-    gran: "month",
+    gran: "week",
     current: { posts: 168, views: 1600000, likes: 14200, comments: 1060 },
     prev: null,
-    series: [
-      { label: "Jan", value: 7400 },
-      { label: "Feb", value: 8600 },
-      { label: "Mar", value: 9200 },
-      { label: "Apr", value: 11400 },
-      { label: "May", value: 12800 },
-      { label: "Jun", value: 14200 },
-    ],
+    series: weekly(WALL, 0, 6),
     tiers: { viral: 18, good: 50, average: 70, weak: 30 },
     top: [
       { text: P3, dateISO: "2026-04-14T09:00:00Z", views: 86000, likes: 710, comments: 58, vs: 9.0, url: null },

@@ -1277,7 +1277,6 @@ export const pt: Partial<Record<MessageKey, string>> = {
   "stats.g_hour": "hora",
   "stats.g_day": "dia",
   "stats.g_week": "semana",
-  "stats.g_month": "mês",
   "stats.empty_sub":
     "As estatísticas precisam de ao menos duas semanas de atividade para mostrar tendências com sentido. Continue publicando no Studio e seu desempenho toma forma aqui.",
   "stats.empty_meta1": "semana até agora",

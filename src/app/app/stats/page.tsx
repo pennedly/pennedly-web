@@ -40,13 +40,15 @@ function pct(cur: number, prev: number | null | undefined): number | null {
   return ((cur - prev) / prev) * 100;
 }
 
-function fmtBucket(iso: string, gran: Gran, locale: string): string {
+function fmtBucket(iso: string, gran: Gran, locale: string, dense: boolean): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
   if (gran === "hour") return d.toLocaleTimeString(locale, { hour: "numeric" });
-  if (gran === "day") return d.toLocaleDateString(locale, { weekday: "short" });
-  if (gran === "week") return d.toLocaleDateString(locale, { month: "short", day: "numeric" });
-  return d.toLocaleDateString(locale, { month: "short" });
+  // 7d (≤8 bars) reads best as weekday names; 30d (dense) needs dates so the
+  // repeating Mon…Sun pattern isn't ambiguous across weeks.
+  if (gran === "day")
+    return d.toLocaleDateString(locale, dense ? { month: "short", day: "numeric" } : { weekday: "short" });
+  return d.toLocaleDateString(locale, { month: "short", day: "numeric" }); // week
 }
 
 export default function StatsPage() {
@@ -144,7 +146,7 @@ export default function StatsPage() {
         likes_pct: stats.deltas?.likes_pct ?? null,
         comments_pct: stats.deltas?.comments_pct ?? null,
       },
-      series: stats.series.map<StatBucket>((b) => ({ label: fmtBucket(b.bucket_start, gran, locale), value: b.avg_views })),
+      series: stats.series.map<StatBucket>((b) => ({ label: fmtBucket(b.bucket_start, gran, locale, stats.series.length > 8), value: b.avg_views })),
       tiers: { viral: c.tier_counts.viral, good: c.tier_counts.good, average: c.tier_counts.mid, weak: c.tier_counts.flop },
       top: (stats.top_posts ?? []).map<TopPostRow>((p) => ({ text: p.text, dateISO: p.published_at, views: p.views, likes: p.likes, comments: p.comments, vs: p.vs_avg, url: p.threads_url })),
       byHour: (stats.by_hour ?? []).map<TimeSlotRow>((s) => ({ slot: s.slot, posts: s.posts, avg: s.avg_views })),
@@ -193,7 +195,7 @@ export default function StatsPage() {
   };
 
   const avgViewsPerPost = model && model.current.posts ? Math.round(model.current.views / model.current.posts) : 0;
-  const GRAN_KEY: Record<Gran, MessageKey> = { hour: "stats.g_hour", day: "stats.g_day", week: "stats.g_week", month: "stats.g_month" };
+  const GRAN_KEY: Record<Gran, MessageKey> = { hour: "stats.g_hour", day: "stats.g_day", week: "stats.g_week" };
   const granWord = t(GRAN_KEY[gran]);
   const chartCap = `${t("stats.cap_per")} ${granWord} · ${periodLabel}`;
   const tierCap = `${model?.current.posts ?? 0} ${t("stats.posts_word")} ${t("stats.spread_cap")} · ${periodLabel}`;

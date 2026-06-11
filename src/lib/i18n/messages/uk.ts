@@ -1296,7 +1296,6 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "stats.g_hour": "годину",
   "stats.g_day": "день",
   "stats.g_week": "тиждень",
-  "stats.g_month": "місяць",
   "stats.empty_sub":
     "Щоб показати осмислені тренди, статистиці потрібно хоча б два тижні активності. Публікуй далі у Studio, і картина складеться тут.",
   "stats.empty_meta1": "тиждень поки",

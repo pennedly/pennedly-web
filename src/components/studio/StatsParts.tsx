@@ -14,13 +14,16 @@ import { IcArrowDown, IcArrowUp, IcBubble, IcChart, IcEye, IcHeart, IcNib } from
 import { fmt } from "@/components/studio/FeedParts";
 import type { Gran, StatBucket, StatPeriodKey } from "@/components/studio/stats-demo";
 
+// Granularity matches the backend's gap-filled series: today/yesterday hourly,
+// 7d/30d daily, 90d/all weekly. The chart axis is continuous (empty buckets are
+// zero bars), so a quiet week still reads as a quiet week, not "two bars".
 export const PERIODS: { key: StatPeriodKey; label: MessageKey; gran: Gran }[] = [
   { key: "today", label: "stats.period.today", gran: "hour" },
   { key: "yesterday", label: "stats.period.yesterday", gran: "hour" },
   { key: "7d", label: "stats.period.7d", gran: "day" },
-  { key: "30d", label: "stats.period.30d", gran: "week" },
+  { key: "30d", label: "stats.period.30d", gran: "day" },
   { key: "90d", label: "stats.period.90d", gran: "week" },
-  { key: "all", label: "stats.period.all", gran: "month" },
+  { key: "all", label: "stats.period.all", gran: "week" },
 ];
 
 // ─────────────────────────────── RangeSeg ───────────────────────────────────
@@ -120,8 +123,16 @@ export function SummaryCard({
 export function ColumnChart({ cap, headline, headlinePct, series }: { cap: string; headline: string; headlinePct: number | null; series: StatBucket[] }) {
   const { t } = useTranslation();
   const max = Math.max(1, ...series.map((b) => b.value));
-  const avg = series.length ? series.reduce((a, b) => a + b.value, 0) / series.length : 0;
+  // Average over the buckets that actually have posts — a gap-filled axis is
+  // mostly zeros on a quiet account, and averaging those in would drag the
+  // dashed "typical post" line down to near zero.
+  const posted = series.filter((b) => b.value > 0);
+  const avg = posted.length ? posted.reduce((a, b) => a + b.value, 0) / posted.length : 0;
   const wide = series.length > 8; // many buckets → fixed-width bars + horizontal scroll (mobile only)
+  // With a dense axis (24 hours, 30 days) per-bar labels collide — show every
+  // Nth so ~8 land; the rest keep an empty cell so the bars stay aligned, and
+  // every bar's full label still shows on hover (the title attribute).
+  const labelStride = Math.max(1, Math.ceil(series.length / 8));
 
   // Per-cell sizing. Default: bars fill (flex:1). When `wide`, the fill stays on
   // desktop (the 960px panel fits 12+ bars cleanly — byte-identical) but mobile
@@ -158,10 +169,12 @@ export function ColumnChart({ cap, headline, headlinePct, series }: { cap: strin
   const labels = (
     <div className="flex gap-[7px]">
       {series.map((b, i) => (
-        // Live, localized text (never an image). Kept visible on mobile so short
-        // periods stay legible; truncates per-cell rather than overflowing.
-        <span key={i} className={cn("truncate text-center text-[0.6875rem] tabular-nums text-text-subtle", cellW)}>
-          {b.label}
+        // Live, localized text (never an image). Sparse on a dense axis so
+        // labels don't collide; the empty cells keep the bars aligned, and the
+        // shown label may overflow into its (blank) neighbours so a date like
+        // "Jun 3" isn't truncated to "Ju…" in a 30px-wide daily cell.
+        <span key={i} className={cn("overflow-visible whitespace-nowrap text-center text-[0.6875rem] tabular-nums text-text-subtle", cellW)}>
+          {i % labelStride === 0 ? b.label : ""}
         </span>
       ))}
     </div>

@@ -1084,7 +1084,6 @@ export const en = {
   "stats.g_hour": "hour",
   "stats.g_day": "day",
   "stats.g_week": "week",
-  "stats.g_month": "month",
   "stats.empty_sub": "Stats need at least two weeks of activity to show meaningful trends. Keep publishing in the Studio and your performance will take shape here.",
   "stats.empty_meta1": "week so far",
   "stats.empty_meta2": "posts published",

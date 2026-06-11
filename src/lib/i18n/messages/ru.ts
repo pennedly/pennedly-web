@@ -1084,7 +1084,6 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "stats.g_hour": "час",
   "stats.g_day": "день",
   "stats.g_week": "неделю",
-  "stats.g_month": "месяц",
   "stats.empty_sub": "Чтобы показать осмысленные тренды, статистике нужно хотя бы две недели активности. Продолжай публиковать в Студии, и картина сложится здесь.",
   "stats.empty_meta1": "неделя пока",
   "stats.empty_meta2": "поста опубликовано",
