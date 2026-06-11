@@ -27,15 +27,17 @@
     <a href="#s2"><span class="n">2</span> The phone layout</a>
     <a href="#s3"><span class="n">3</span> Shell: top bar + drawer</a>
     <a href="#s4"><span class="n">4</span> Period + summary fold</a>
-    <a href="#s5"><span class="n">5</span> The bar chart</a>
-    <a class="sub" href="#s5">— few vs many buckets</a>
-    <a href="#s6"><span class="n">6</span> Best posting hours</a>
-    <a href="#s7"><span class="n">7</span> States</a>
-    <a class="sub" href="#s7">— loading · empty · error</a>
-    <a href="#s8"><span class="n">8</span> Anatomy &amp; values</a>
-    <a href="#s9"><span class="n">9</span> Web ↔ mobile</a>
-    <a href="#s10"><span class="n">10</span> Localization &amp; 360px</a>
-    <a href="#s11"><span class="n">11</span> Checklist</a>
+    <a href="#s5"><span class="n">5</span> The trend chart</a>
+    <a class="sub" href="#s5">— few vs many · gap-fill</a>
+    <a href="#s6"><span class="n">6</span> Top posts <em>(new)</em></a>
+    <a href="#s7"><span class="n">7</span> Best times to post <em>(new)</em></a>
+    <a href="#s8"><span class="n">8</span> Performance spread</a>
+    <a href="#s9"><span class="n">9</span> States</a>
+    <a class="sub" href="#s9">— loading · ready · empty</a>
+    <a href="#s10"><span class="n">10</span> Anatomy &amp; values</a>
+    <a href="#s11"><span class="n">11</span> Web ↔ mobile</a>
+    <a href="#s12"><span class="n">12</span> Localization &amp; 360px</a>
+    <a href="#s13"><span class="n">13</span> Checklist</a>
   </nav>
   <div class="meta">
     Screen: <b>Stats</b><br>
@@ -51,7 +53,7 @@
   <div class="doc-head">
     <p class="kicker">Pennedly · Mobile spec · per-screen</p>
     <h1 class="title">Stats <span>/app/stats</span> — phone</h1>
-    <p class="lede">Account-level analytics: engagement over a chosen period, as summary numbers + charts. On a phone the charts and the period selector are what break — they overflow the width. This spec makes them fit cleanly at <strong>390px</strong> (sanity-checked at 360): a horizontally scrollable period selector, stacked summary metrics, and a full-width bar chart that scrolls sideways when a period has many buckets so bars stay legible. Read-only, same tokens and computed numbers as <a class="link" href="Stats-SPEC.html">the desktop spec</a>; only the layout changes below 600px, on the decided shell (hamburger + drawer, no tab bar, free bottom edge). Frames are the real component layer at 390px, light and dark.</p>
+    <p class="lede">Account-level analytics on a phone: the headline numbers, <strong>what worked</strong>, <strong>when to post</strong>, and <strong>how viral</strong> posts were — over a chosen period. Since the last pass the screen grew two panels (<strong>Top posts</strong>, <strong>Best times to post</strong>) and the trend chart was rebuilt into a continuous, gap-filled axis. This spec fits all of it cleanly at <strong>390px</strong> (sanity-checked at 360): a horizontally-scrollable period selector, a stacked summary (Views hero + 3-up), a bar chart that fills for short windows and scrolls sideways for long ones, top-5 posts, the by-hour / by-day timing charts, and the viral-tier spread. Read-only, same tokens and computed numbers as <a class="link" href="Stats-SPEC.html">the desktop spec</a>; only the layout changes below 600px, on the decided shell (hamburger + drawer, no tab bar, free bottom edge). Frames are the real component layer at 390px, light and dark.</p>
     <div class="filerow">
       <span class="chip chip--mob">pennedly-mobile.css</span>
       <span class="chip">stats-app.jsx</span>
@@ -61,24 +63,26 @@
     </div>
   </div>
 
-  <div class="note good"><b>What does not change.</b> The 6 fixed backend periods (Today / Yesterday / 7 days / Month / 3 months / All time), the computed summary totals + “vs previous period” deltas, the average-views-per-bucket bar chart with its dashed average line and above/below tinting, and the local-timezone hours breakdown are all from the backend — read-only, no per-post drilldown, no invented metrics. (The posts-per-week chart stays removed.) Mobile is a layout pass; the only structural change is the shared app shell.</div>
+  <div class="note good"><b>What does not change.</b> The 6 fixed backend periods (Today / Yesterday / 7 days / Month / 3 months / All time), the computed summary totals + “vs previous period” deltas, the gap-filled average-views chart with its dashed average and above/below tinting, the “× your average” verdicts, the best-slot rule, and the local-timezone timing charts are all from the backend — read-only, no per-post drilldown beyond the link out, no invented metrics. Mobile is a layout pass; the only structural change is the shared app shell.</div>
+
+  <div class="note warn"><b>States are Live / Loading / Empty — no error state by design.</b> (The previous draft showed a shared error banner; that is removed.) Loading is a skeleton that mirrors the ready layout so nothing reflows. Empty is “Not enough data yet”.</div>
 
   <!-- 1 -->
   <section id="s1">
     <h2><span class="h2n">1</span>Screen identity</h2>
     <div class="tbl-wrap"><table><tbody>
       <tr><th style="width:210px">Route</th><td><code>/app/stats</code> — read-only aggregate analytics.</td></tr>
-      <tr><th>Desktop width</th><td><code>--content-wide</code> 960px; summary grid + side-by-side panels.</td></tr>
-      <tr><th>Phone width</th><td>100% − 14px gutters; everything stacks to a single column.</td></tr>
-      <tr><th>Top→bottom (phone)</th><td>Status bar → top bar (hamburger · “Stats” · freshness pill · theme) → period selector → summary metrics → bar-chart panel → hours panel → <em>free bottom edge</em>.</td></tr>
-      <tr><th>Read-only</th><td>The period selector swaps everything; bars/cards are not interactive beyond that.</td></tr>
+      <tr><th>Desktop width</th><td><code>--content-wide</code> 960px; summary grid + full-width panels.</td></tr>
+      <tr><th>Phone width</th><td>100% − 14px gutters; everything stacks to a single column; free bottom edge.</td></tr>
+      <tr><th>Top→bottom (phone)</th><td>Status bar → top bar (hamburger · “Stats” · freshness pill · theme) → period selector → summary (Views hero + 3-up) → trend chart → top posts → best times → performance spread → <em>free bottom edge</em>.</td></tr>
+      <tr><th>Read-only</th><td>The period selector swaps everything; rows tap out to Threads; otherwise nothing mutates.</td></tr>
     </tbody></table></div>
   </section>
 
   <!-- 2 -->
   <section id="s2">
     <h2><span class="h2n">2</span>The phone layout</h2>
-    <p class="section-note">The whole screen in context, light and dark: the scrollable period selector, the stacked summary (hero Views + a 3-up row), the full-width bar chart with its dashed average, and the best-hours panel. Everything runs to the free bottom edge.</p>
+    <p class="section-note">The whole screen in context, light and dark: the scrollable period selector, the stacked summary, the gap-filled bar chart, top posts, best-times charts, and the tier spread. Everything runs to the free bottom edge (the frame clips; the real screen scrolls).</p>
     <div class="stage" id="stg-layout"></div>
   </section>
 
@@ -91,9 +95,9 @@
       <tbody>
         <tr><td>Hamburger</td><td>Far left, opens <code>.m-drawer</code> (active row = Stats).</td></tr>
         <tr><td>Title</td><td>“Stats”; truncates before the pill on long locales.</td></tr>
-        <tr><td>Freshness pill</td><td>“Updated daily” — sits by the title if it fits, else drops below as the first content row.</td></tr>
+        <tr><td>Freshness pill</td><td>“Updated daily” with the chart glyph — sits by the title if it fits, else drops below as the first content row.</td></tr>
         <tr><td>Top-bar action</td><td>Theme toggle only; account in the drawer foot.</td></tr>
-        <tr><td>Sticky</td><td>None — the period selector scrolls with the content (it’s short; the screen isn’t long enough to need it pinned).</td></tr>
+        <tr><td>Tab bar</td><td>None — no bottom tab bar; the bottom edge is free (safe-area inset).</td></tr>
       </tbody>
     </table></div>
     <div class="stage" id="stg-drawer"></div>
@@ -105,100 +109,121 @@
     <p class="section-note">On desktop the 6 periods sit in one segmented row and the summary is a 4-up card grid. Both overflow a phone. The fold:</p>
     <div class="fix">
       <div class="fix-bad"><h5>Before</h5><p>Six period buttons crush below tap size or wrap raggedly; four summary cards in a row shrink their numbers until the deltas clip.</p></div>
-      <div class="fix-good"><h5>After</h5><p>The period selector becomes a <strong>horizontally scrollable</strong> segmented row (all 6 reachable, labels readable, active highlighted). The summary <strong>stacks</strong>: the hero metric (Views) on its own card with its avg/post + delta, then a 3-up row (Posts · Likes · Replies) each with its delta.</p></div>
+      <div class="fix-good"><h5>After</h5><p>The period selector becomes a <strong>horizontally scrollable</strong> segmented row (all 6 reachable, ≥44px tap, active highlighted, right-edge mask fade). The summary <strong>stacks</strong>: the hero metric (Views) on its own card at <code>text-h1</code> with its avg/post + delta, then a 3-up row (Posts · Likes · Comments) stepped down to <code>text-h3</code> — never smaller.</p></div>
     </div>
     <div class="stage" id="stg-period"></div>
-    <div class="note"><b>Rules.</b> Period row is <code>overflow-x:auto</code> with a right-edge mask fade; buttons are <code>flex:0 0 auto</code>, 36px tall. Deltas are tabular: up = success, down = danger, “no prior period” for All time. The hero number uses <code>text-h1</code>; the 3-up cells step to <code>text-h3</code> — never smaller, so they stay readable.</div>
+    <div class="note"><b>Rules.</b> Period row is <code>overflow-x:auto</code> with a right-edge mask fade; buttons are <code>flex:0 0 auto</code>, ≥36px tall (≥44 hit). Deltas are tabular: up = success, down = danger, “no prior period” for All time. The hero number uses <code>text-h1</code>; the 3-up cells step to <code>text-h3</code> — readable at 360.</div>
   </section>
 
   <!-- 5 -->
   <section id="s5">
-    <h2><span class="h2n">5</span><span class="stg stg--fix">fix</span>The bar chart</h2>
-    <p class="section-note">A bar chart of average views per bucket: a dashed line marks the period average, and bars are tinted <strong>above</strong> (solid accent) vs <strong>below</strong> (muted) it. The fit strategy:</p>
+    <h2><span class="h2n">5</span><span class="stg stg--fix">fix</span>The trend chart</h2>
+    <p class="section-note">A bar chart of average views per bucket on a <strong>continuous, gap-filled axis</strong>: every bucket in the window is present, empty buckets render as a tiny zero stub (so a quiet stretch reads as quiet, not “two bars”). A dashed line marks the average <strong>of the posted buckets only</strong>; bars are tinted <strong>above</strong> (solid accent) vs <strong>at/below</strong> (muted). The fit strategy:</p>
     <div class="fix">
-      <div class="fix-bad"><h5>Before</h5><p>A 12-bucket period (3 months) packed into 360px becomes a crushed smear — bars hairline-thin, labels overlapping into noise.</p></div>
-      <div class="fix-good"><h5>After</h5><p>Short periods (≤8 buckets) fill the width responsively. Longer periods keep a readable bar width (40px) and <strong>scroll horizontally</strong> — bars and date labels stay legible, the dashed average travels with them. Never a smear.</p></div>
+      <div class="fix-bad"><h5>Before</h5><p>A ~30-bucket month (daily) packed into 360px becomes a crushed smear — bars hairline-thin, labels overlapping into noise.</p></div>
+      <div class="fix-good"><h5>After</h5><p>Short windows (≤8 buckets) fill the width responsively. Longer windows keep a readable bar width (~40px) and <strong>scroll horizontally</strong> — bars + sparse date labels stay legible, the dashed average travels with them. Never a smear.</p></div>
     </div>
     <div class="stage" id="stg-chart"></div>
-    <div class="note"><b>Rules.</b> The plot is fixed-height (156px); bars are % of the period max; the dashed average sits at <code>avg ÷ max</code> with a small “avg N” label. Bucket labels localize (weekday / date / month per the backend granularity). When buckets &gt; 8 the inner plot is <code>width:max-content</code> inside an <code>overflow-x:auto</code> wrapper; otherwise bars are <code>flex:1</code>.</div>
+    <div class="note"><b>Rules.</b> Plot is fixed-height (156px); bars are % of the window max; empty buckets are a 2px <code>.m-colbar--zero</code> stub. The dashed average sits at <code>avg ÷ max</code> (posted-only) with an “avg N” label. Granularity is per period: hourly (Today/Yesterday) · daily (7 days/Month) · weekly (3 months/All time), in the viewer’s local time. When buckets &gt; 8 the inner plot is <code>width:max-content</code> inside an <code>overflow-x:auto</code> wrapper with fixed 40px columns; labels go sparse (~8) so dates aren’t a wall. Otherwise bars are <code>flex:1</code> and every label shows.</div>
   </section>
 
   <!-- 6 -->
   <section id="s6">
-    <h2><span class="h2n">6</span>Best posting hours</h2>
-    <p class="section-note">The hours breakdown shows when the account’s posts land best, in the <strong>viewer’s local timezone</strong>. On a phone it’s a compact bar row across the day with the peak window highlighted, plus a one-line takeaway. (The desktop’s wider panel folds to this small chart — same data, less chrome.)</p>
-    <div class="stage" id="stg-hours"></div>
-    <div class="note"><b>Local time.</b> Hour buckets and the “strongest window” headline render in the viewer’s timezone — never the server’s. The peak bar(s) take solid accent; the rest are muted. No posts-per-week chart (deliberately removed).</div>
+    <h2><span class="h2n">6</span><span class="stg stg--fix">new</span>Top posts</h2>
+    <p class="section-note">The window’s <strong>top 5 posts by views</strong>. Each row: a rank index, a 2-line snippet (<code>line-clamp-2</code>), a meta line (date + views / likes / comments with small glyphs), and a right-side verdict <strong>“N× your average”</strong> — the same metric the Feed uses, colour-graded: <strong>success ≥ 1.5×</strong>, plain <strong>≥ 0.7×</strong>, muted below. The whole row taps out to Threads while the post has a URL.</p>
+    <div class="stage" id="stg-top"></div>
+    <div class="note"><b>Phone rules.</b> Two-column row (rank · body); the body holds the clamped snippet then a foot line with meta on the left (wraps) and the verdict pinned right, staying legible. Whole-row tap target (no tiny hit areas). Numbers tabular.</div>
   </section>
 
   <!-- 7 -->
   <section id="s7">
-    <h2><span class="h2n">7</span>States</h2>
-    <div class="statebar"><span class="st">loading</span><span class="st">ready</span><span class="st">empty</span><span class="st">error</span></div>
-    <p class="section-note">Loading shows a skeleton period selector + summary + chart placeholders; ready is a populated period; empty is “not enough data yet”; error is the shared banner with Retry.</p>
-    <div class="stage" id="stg-states"></div>
+    <h2><span class="h2n">7</span><span class="stg stg--fix">new</span>Best times to post</h2>
+    <p class="section-note">Two mini bar charts: <strong>By hour</strong> (local publish hour) and <strong>By day of week</strong> (Mon→Sun, the full week always drawn, empty days stubbed). Bars are avg views/post for that slot; the <strong>best slot</strong> — preferring slots with ≥ 2 posts, so one lucky post can’t crown an hour — is tinted accent and named in a “<strong>Best · …</strong>” chip. On desktop the two charts sit side-by-side; on a phone they <strong>stack</strong>, and the hour chart scrolls horizontally if it has many bars.</p>
+    <div class="stage" id="stg-best"></div>
+    <div class="note"><b>Local time + visibility.</b> Hour buckets and the “Best · …” chip render in the viewer’s timezone — never the server’s. The panel is <strong>hidden entirely for Today / Yesterday</strong> (the window is too short to be meaningful) — see the period fold.</div>
   </section>
 
   <!-- 8 -->
   <section id="s8">
-    <h2><span class="h2n">8</span>Anatomy &amp; exact values</h2>
+    <h2><span class="h2n">8</span>Performance spread</h2>
+    <p class="section-note">The viral-tier distribution: four tiers — <strong>Viral</strong> (3×+) · <strong>Good</strong> (1.5–3×) · <strong>Average</strong> (0.7–1.5×) · <strong>Weak</strong> (below 0.7×) — each a row with a colour dot, name, faint sub-label, count, percent, and a thin proportion bar. Tier colours: viral = success, good = accent, average/weak = graded ink mixes. Rows stack full-width on a phone.</p>
+    <div class="stage" id="stg-spread"></div>
+  </section>
+
+  <!-- 9 -->
+  <section id="s9">
+    <h2><span class="h2n">9</span>States</h2>
+    <div class="statebar"><span class="st">loading</span><span class="st">ready</span><span class="st">empty</span></div>
+    <p class="section-note">Loading mirrors the ready layout (skeleton selector + summary + chart + panels) so nothing reflows; ready is a populated period; empty is “not enough data yet”. <strong>No error state.</strong></p>
+    <div class="stage" id="stg-states"></div>
+  </section>
+
+  <!-- 10 -->
+  <section id="s10">
+    <h2><span class="h2n">10</span>Anatomy &amp; exact values</h2>
     <div class="tbl-wrap"><table>
       <thead><tr><th style="width:210px">Element / class</th><th>Phone value</th></tr></thead>
       <tbody>
-        <tr><td><code>.m-rangeseg</code></td><td>scrollable segmented row; <code>.m-range-btn</code> 36px, active = surface + shadow; mask fade.</td></tr>
-        <tr><td><code>.m-statsum</code></td><td>hero card (Views, <code>text-h1</code>) + 3-up <code>.m-stat-grid</code> (Posts/Likes/Replies, <code>text-h3</code>).</td></tr>
+        <tr><td><code>.m-rangeseg</code></td><td>scrollable segmented row; <code>.m-range-btn</code> 36px (≥44 hit), active = surface + shadow; right mask fade.</td></tr>
+        <tr><td><code>.m-statsum</code></td><td>hero card (Views, <code>text-h1</code>) + 3-up <code>.m-stat-grid</code> (Posts/Likes/Comments, <code>text-h3</code>).</td></tr>
         <tr><td><code>.m-delta</code></td><td>up = success / down = danger / flat = “no prior period”; tabular.</td></tr>
-        <tr><td><code>.m-spanel</code></td><td>titled chart panel; head = title + caption + headline number.</td></tr>
-        <tr><td><code>.m-colplot</code></td><td>156px; bars % of max; <code>.m-colbar--above</code> accent / <code>--below</code> muted.</td></tr>
-        <tr><td><code>.m-colavg</code></td><td>dashed average line at <code>avg ÷ max</code> + “avg N” label.</td></tr>
-        <tr><td><code>.m-chart-inner.is-wide</code></td><td><code>width:max-content</code> in an <code>overflow-x:auto</code> wrapper; 40px bars + labels when buckets &gt; 8.</td></tr>
-        <tr><td><code>.m-hours</code></td><td>compact hour-of-day bar row; peak = accent; local-time headline + caption.</td></tr>
+        <tr><td><code>.m-colplot</code></td><td>156px; bars % of max; <code>.m-colbar--above</code> accent / <code>--below</code> muted / <code>--zero</code> 2px stub.</td></tr>
+        <tr><td><code>.m-colavg</code></td><td>dashed average at <code>avg ÷ max</code> (posted-only) + “avg N” label.</td></tr>
+        <tr><td><code>.m-chart-inner.is-wide</code></td><td><code>width:max-content</code> in an <code>overflow-x:auto</code> wrapper; 40px bars + sparse labels when buckets &gt; 8.</td></tr>
+        <tr><td><code>.m-toppost</code></td><td>rank · body (snippet <code>line-clamp-2</code> + meta + verdict); whole row links to Threads.</td></tr>
+        <tr><td><code>.m-tp-verdict--up/mid/low</code></td><td>“N× your average”; success ≥1.5× / plain ≥0.7× / muted below.</td></tr>
+        <tr><td><code>.m-besttimes</code></td><td>two stacked blocks; <code>.m-bt-bar--best</code> accent; hour block scrolls (<code>.is-wide</code>) when many bars.</td></tr>
+        <tr><td><code>.m-distlist</code></td><td>tier rows; <code>.m-tier-viral/good/average/weak</code>; count + % + proportion bar.</td></tr>
         <tr><td><code>.m-content--notab</code></td><td>bottom inset = <code>26 + safe-area</code> (no tab bar).</td></tr>
       </tbody>
     </table></div>
   </section>
 
-  <!-- 9 -->
-  <section id="s9">
-    <h2><span class="h2n">9</span>Web ↔ mobile</h2>
+  <!-- 11 -->
+  <section id="s11">
+    <h2><span class="h2n">11</span>Web ↔ mobile</h2>
     <div class="two">
       <div class="pane web"><h4>Desktop ( &gt; 900 )</h4>
         <ul>
           <li>Fixed sidebar; 960px column; freshness pill in the topbar.</li>
           <li>Period selector in one row; summary as a 4-up card grid.</li>
-          <li>Bar chart fills width; hours panel side-by-side.</li>
+          <li>Trend fills width (many = denser, no scroll); best-times charts side-by-side.</li>
+          <li>Top posts rows + tier spread full-width.</li>
         </ul>
       </div>
       <div class="pane mob"><h4>Phone ( ≤ 600 )</h4>
         <ul>
           <li>No sidebar/tab bar; hamburger → drawer + account; free bottom edge.</li>
-          <li>Period selector scrolls; summary stacks (hero + 3-up).</li>
-          <li>Bar chart full-width, scrolls when many buckets; hours panel stacks below.</li>
+          <li>Period selector scrolls; summary stacks (Views hero + 3-up).</li>
+          <li>Trend full-width; ≤8 fill, &gt;8 fixed 40px + scroll; best-times stack (hour scrolls).</li>
+          <li>Top posts + tier rows stack; meta wraps, verdict stays right.</li>
         </ul>
       </div>
     </div>
   </section>
 
-  <!-- 10 -->
-  <section id="s10">
-    <h2><span class="h2n">10</span>Localization &amp; 360px</h2>
-    <p class="section-note">Period labels, card labels, the “avg” chart label, the hours headline/caption and delta text all localize into 8 locales; DE/RU/UK run ~30–40% longer. On a phone: the period row scrolls so longer labels stay readable; summary labels wrap inside their cell; the chart’s bucket labels are live SVG/DOM text (never baked into an image) and localize; the hours caption wraps. Numbers are tabular and locale-formatted.</p>
-    <div class="note"><b>360px behavior.</b> No new breakpoint — the gutter stays 14px; the period row and the wide chart already scroll, so they’re unaffected; the 3-up summary row stays 3 columns (numbers are short) and only the cell labels rewrap. The hero number and chart simply get ~30px narrower. The drawer stays <code>min(82%, 312px)</code> → 82% (≈295px) at 360.</div>
+  <!-- 12 -->
+  <section id="s12">
+    <h2><span class="h2n">12</span>Localization &amp; 360px</h2>
+    <p class="section-note">Period labels, card labels, the “avg” chart label, the bucket labels, the “× your average” verdict, the “Best · …” chips, tier names and delta text all localize into 8 locales (en/ru/uk/de/es/fr/it/pt); DE/RU/UK run ~30–40% longer. On a phone: the period row scrolls so longer labels stay readable; summary labels wrap inside their cell; the chart’s bucket labels are live DOM text (never baked into an image) and localize; the best-times titles/chips and tier sub-labels wrap. Numbers are tabular and locale-formatted.</p>
+    <div class="note"><b>360px behavior.</b> No new breakpoint — the gutter stays 14px; the period row and the wide chart already scroll, so they’re unaffected; the 3-up summary row stays 3 columns (numbers are short) and only the cell labels rewrap; the hero number and chart get ~30px narrower. The best-times “By day of week” bars hold their 7 stubs; the hour chart scrolls if needed. The drawer stays <code>min(82%, 312px)</code> → ≈295px at 360.</div>
     <div class="stage" id="stg-narrow"></div>
   </section>
 
-  <!-- 11 -->
-  <section id="s11">
-    <h2><span class="h2n">11</span>Checklist</h2>
+  <!-- 13 -->
+  <section id="s13">
+    <h2><span class="h2n">13</span>Checklist</h2>
     <ul class="check">
-      <li>Below 600px there is no sidebar and no tab bar — one 52px top bar with a hamburger far-left and the freshness pill.</li>
-      <li>Hamburger opens the left drawer (active = Stats) + account at its foot; bottom edge free.</li>
-      <li>Period selector is a horizontally scrollable segmented row; all 6 reachable; labels readable; active highlighted.</li>
-      <li>Summary stacks: hero Views on its own card + a 3-up row (Posts/Likes/Replies); each metric carries its delta; All time = “no prior period”.</li>
-      <li>Bar chart has the dashed average line + above/below tinting; short periods fill width; long periods (e.g. 3 months) scroll horizontally with readable 40px bars — never a smear.</li>
-      <li>Bucket labels localize (live text) and stay legible.</li>
-      <li>Hours breakdown shows best posting hours in the viewer’s local timezone, peak highlighted; no posts-per-week chart.</li>
-      <li>Loading = skeleton selector + summary + chart; empty = “not enough data yet”; error banner has Retry.</li>
+      <li>Below 600px there is no sidebar and no tab bar — one top bar with a hamburger far-left and the “Updated daily” chart-glyph pill; bottom edge free.</li>
+      <li>Hamburger opens the left drawer (active = Stats) + account at its foot.</li>
+      <li>Period selector is a horizontally scrollable segmented row; all 6 reachable; ≥44px hit; labels readable; active highlighted; right mask fade.</li>
+      <li>Summary stacks: hero Views (<code>text-h1</code>) + a 3-up row (Posts/Likes/Comments at <code>text-h3</code>); each metric carries its delta; All time = “no prior period”.</li>
+      <li>Trend is gap-filled (every bucket; empty = 2px stub); dashed average over posted buckets only; above = accent, at/below = muted; ≤8 fill, long windows keep 40px bars + scroll with sparse labels — never a smear.</li>
+      <li>Bucket labels localize (live text), in the viewer’s local time; granularity hour/day/week per period.</li>
+      <li>Top posts: top-5 by views, rank + 2-line snippet + meta + “N× your average” (success ≥1.5× / plain ≥0.7× / muted below); whole row taps to Threads.</li>
+      <li>Best times: By hour + By day of week (full week, empty days stubbed); best slot (≥2 posts) accent + “Best · …” chip; stacked; hour scrolls when many; <strong>hidden for Today/Yesterday</strong>.</li>
+      <li>Performance spread: 4 tiers (Viral/Good/Average/Weak) with count + % + bar; viral=success, good=accent, average/weak ink mixes.</li>
+      <li>Loading = skeleton mirroring the layout; empty = “not enough data yet”; <strong>no error state</strong>.</li>
       <li>Labels wrap on long locales — never clipped; sanity-checked at 360px.</li>
       <li>Correct in light and dark; no hardcoded colour.</li>
     </ul>
@@ -214,17 +239,19 @@
   var M = window.MOCK;
   function set(id, html){ var e=document.getElementById(id); if(e) e.innerHTML=html; }
 
-  var top = M.top({ title:'Stats', pill:'success', pillText:'Updated daily', pillIcon:'clock', menu:true });
+  var top = M.top({ title:'Stats', pill:'success', pillText:'Updated daily', pillIcon:'chart', menu:true });
 
-  var chart7d  = M.statsPanel('Average views per post', 'Per day · 7 days', M.statsBarChart('7d'), '14K');
-  var chart3mo = M.statsPanel('Average views per post', 'Per week · 3 months', M.statsBarChart('3mo'), '13.4K');
-  var hours    = M.statsPanel('Best posting hours', 'When your posts land best', M.statsHours());
+  var trend7d  = M.statsPanel('Average views per post', 'Per day · 7 days', M.statsBarChart('7d'), '14K');
+  var trendMo  = M.statsPanel('Average views per post', 'Per day · month', M.statsBarChart('month'), '15.1K');
+  var topPanel = M.statsPanel('Top posts', 'By views · 7 days', M.statsTopPosts());
+  var bestPanel= M.statsPanel('Best times to post', 'Avg views / post by publish time · 7 days', M.statsBestTimes());
+  var spread   = M.statsPanel('Performance spread', '7 posts vs your baseline · 7 days', M.statsSpread('7d'));
 
-  var body = M.statsPeriods('7d') + M.statsSummary('7d') + chart7d + hours;
+  var body = M.statsPeriods('7d') + M.statsSummary('7d') + trend7d + topPanel + bestPanel + spread;
 
   /* 2 — full layout */
   set('stg-layout',
-    M.col(M.light(), M.phone({ top:top, body:body, tabs:false }), 'Stats in context — period selector, stacked summary, bar chart, best hours.') +
+    M.col(M.light(), M.phone({ top:top, body:body, tabs:false }), 'Stats in context — period, summary, gap-filled chart, top posts, best times, spread.') +
     M.col(M.dark(), M.phone({ dark:true, top:top, body:body, tabs:false }), 'Identical layout, dark tokens.'));
 
   /* 3 — drawer */
@@ -234,33 +261,42 @@
 
   /* 4 — period + summary */
   set('stg-period',
-    M.col(M.light('7 days'), M.comp(M.statsPeriods('7d') + '<div style="height:14px"></div>' + M.statsSummary('7d')), 'Scrollable periods + stacked summary.') +
-    M.col(M.light('3 months'), M.comp(M.statsPeriods('3mo') + '<div style="height:14px"></div>' + M.statsSummary('3mo')), 'Period swap updates every metric.') +
+    M.col(M.light('7 days'), M.comp(M.statsPeriods('7d') + '<div style="height:14px"></div>' + M.statsSummary('7d')), 'Scrollable periods + stacked summary (Views hero + 3-up).') +
+    M.col(M.light('Month'), M.comp(M.statsPeriods('month') + '<div style="height:14px"></div>' + M.statsSummary('month')), 'Period swap updates every metric.') +
     M.col(M.light('All time'), M.comp(M.statsPeriods('all') + '<div style="height:14px"></div>' + M.statsSummary('all')), 'All time → deltas read “no prior period”.') +
     M.col(M.dark('Dark'), M.comp(M.statsPeriods('7d') + '<div style="height:14px"></div>' + M.statsSummary('7d'), { dark:true }), ''));
 
   /* 5 — bar chart: few vs many buckets */
   set('stg-chart',
-    M.col(M.light('7 days · fills'), M.comp(chart7d), '≤8 buckets fill the width; dashed avg; above/below tint.') +
-    M.col(M.light('3 months · scrolls'), M.comp(chart3mo), '12 buckets keep 40px bars and scroll sideways — readable, not a smear.') +
-    M.col(M.dark('3 months · dark'), M.comp(chart3mo, { dark:true }), ''));
+    M.col(M.light('7 days · fills'), M.comp(trend7d), '≤8 buckets fill the width; dashed avg (posted-only); above/below tint.') +
+    M.col(M.light('Month · scrolls'), M.comp(trendMo), '~30 daily buckets keep 40px bars + sparse labels and scroll — gap stubs visible, never a smear.') +
+    M.col(M.dark('Month · dark'), M.comp(trendMo, { dark:true }), ''));
 
-  /* 6 — hours */
-  set('stg-hours',
-    M.col(M.light('Best hours'), M.comp(hours), 'Local-time hour buckets; peak window highlighted.') +
-    M.col(M.dark('Best hours · dark'), M.comp(hours, { dark:true }), ''));
+  /* 6 — top posts */
+  set('stg-top',
+    M.col(M.light('Top posts'), M.comp(topPanel), 'Top-5 by views; verdict “N× your average”, colour-graded; whole row → Threads.') +
+    M.col(M.dark('Top posts · dark'), M.comp(topPanel, { dark:true }), ''));
 
-  /* 7 — states */
+  /* 7 — best times */
+  set('stg-best',
+    M.col(M.light('Best times'), M.comp(bestPanel), 'By hour + By day of week, stacked; best slot accent + “Best · …” chip.') +
+    M.col(M.dark('Best times · dark'), M.comp(bestPanel, { dark:true }), ''));
+
+  /* 8 — performance spread */
+  set('stg-spread',
+    M.col(M.light('Spread'), M.comp(spread), 'Four viral tiers; count + % + proportion bar.') +
+    M.col(M.dark('Spread · dark'), M.comp(spread, { dark:true }), ''));
+
+  /* 9 — states */
   set('stg-states',
-    M.col(M.light('Loading'), M.phone({ top:top, tabs:false, body: M.statsSkeleton() }), 'Skeleton selector + summary + chart.') +
+    M.col(M.light('Loading'), M.phone({ top:top, tabs:false, body: M.statsSkeleton() }), 'Skeleton mirrors the layout — selector + summary + chart + panels.') +
     M.col(M.light('Empty'), M.phone({ top:top, tabs:false, body: M.statsEmpty() }), '“Not enough data yet”.') +
-    M.col(M.light('Error'), M.phone({ top:top, tabs:false, body: M.errorBanner('Couldn’t load your stats','Something went wrong on our end.') }), 'Shared error banner with Retry.') +
     M.col(M.dark('Loading · dark'), M.phone({ dark:true, top:top, tabs:false, body: M.statsSkeleton() }), ''));
 
-  /* 10 — 360 */
+  /* 12 — 360 */
   set('stg-narrow',
     M.col(M.light('360 · dashboard'), M.phone({ variant:'sm', top:top, body:body, tabs:false }), 'Same rules at 360 — period row + wide chart scroll; numbers stay tabular.') +
-    M.col(M.light('360 · chart'), M.comp(chart3mo, { sm:true }), '12-bucket chart still scrolls cleanly at 360.') +
+    M.col(M.light('360 · chart'), M.comp(trendMo, { sm:true }), '~30-bucket chart still scrolls cleanly at 360.') +
     M.col(M.dark('360 · dark'), M.phone({ variant:'sm', dark:true, top:top, body:body, tabs:false }), ''));
 })();
 </script>

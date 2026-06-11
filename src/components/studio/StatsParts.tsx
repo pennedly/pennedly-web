@@ -10,7 +10,7 @@ import { type ReactNode } from "react";
 
 import { cn } from "@/lib/cn";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
-import { IcArrowDown, IcArrowUp, IcBubble, IcChart, IcEye, IcHeart, IcNib } from "@/components/icons";
+import { IcArrowDown, IcArrowUp, IcBubble, IcChart, IcClock, IcEye, IcHeart, IcNib } from "@/components/icons";
 import { fmt } from "@/components/studio/FeedParts";
 import type { Gran, StatBucket, StatPeriodKey } from "@/components/studio/stats-demo";
 
@@ -129,34 +129,44 @@ export function ColumnChart({ cap, headline, headlinePct, series }: { cap: strin
   const posted = series.filter((b) => b.value > 0);
   const avg = posted.length ? posted.reduce((a, b) => a + b.value, 0) / posted.length : 0;
   const wide = series.length > 8; // many buckets → fixed-width bars + horizontal scroll (mobile only)
-  // With a dense axis (24 hours, 30 days) per-bar labels collide — show every
-  // Nth so ~8 land; the rest keep an empty cell so the bars stay aligned, and
-  // every bar's full label still shows on hover (the title attribute).
-  const labelStride = Math.max(1, Math.ceil(series.length / 8));
+  // Sparse labels (spec §2.5): ~8 evenly-spaced indices INCLUDING the first and
+  // last bucket, positioned absolutely at each bar's centre so a date like
+  // "Jun 3" overflows freely into its blank neighbours instead of truncating.
+  const want = Math.min(8, series.length);
+  const labelIdx = new Set<number>();
+  for (let i = 0; i < want; i++) labelIdx.add(Math.round((i * (series.length - 1)) / (want - 1 || 1)));
 
-  // Per-cell sizing. Default: bars fill (flex:1). When `wide`, the fill stays on
-  // desktop (the 960px panel fits 12+ bars cleanly — byte-identical) but mobile
-  // drops to fixed 40px bars so they scroll instead of crushing into a smear.
-  const cellW = wide ? "max-md:w-10 max-md:shrink-0 md:min-w-0 md:flex-1" : "min-w-0 flex-1";
+  // Default: bars fill (flex:1). When `wide`, desktop still fills (the 960px
+  // panel fits 12+ bars cleanly) but mobile drops to fixed 34px bars that scroll
+  // instead of crushing into a smear.
+  const cellW = wide ? "max-md:w-[34px] max-md:shrink-0 md:min-w-0 md:flex-1" : "min-w-0 flex-1";
 
   const bars = (
-    <div className="relative flex h-[150px] items-end gap-[7px]">
+    <div className="relative flex h-[156px] items-end gap-[6px] md:h-[164px]">
       {series.map((b, i) => {
+        // Empty bucket (no posts) → a tiny lighter zero stub, so a quiet stretch
+        // reads as quiet rather than collapsing the axis (spec .colbar--zero).
+        const empty = b.value <= 0;
         const above = b.value >= avg;
         return (
-          <div key={i} className={cn("flex h-full items-end", cellW)} title={`${b.label}: ${fmt(b.value)}`}>
+          <div key={i} className={cn("flex h-full items-end", cellW)} title={`${b.label}: ${empty ? "0" : fmt(b.value)}`}>
             <div
-              className="w-full rounded-t-sm transition-[height]"
+              className="w-full rounded-t-[4px] transition-[height]"
               style={{
-                height: `${Math.max(3, (b.value / max) * 100)}%`,
-                backgroundColor: above ? "var(--color-accent)" : "color-mix(in srgb, var(--color-text) 18%, var(--color-surface-2))",
+                minHeight: empty ? "2px" : undefined,
+                height: empty ? "2px" : `${Math.max(3, (b.value / max) * 100)}%`,
+                backgroundColor: empty
+                  ? "color-mix(in srgb, var(--color-text) 8%, var(--color-surface-2))"
+                  : above
+                    ? "var(--color-accent)"
+                    : "color-mix(in srgb, var(--color-text) 18%, var(--color-surface-2))",
               }}
             />
           </div>
         );
       })}
-      {/* average line — absolute inside the plot, so in the mobile scroll case it
-          spans the full max-content width and travels with the bars */}
+      {/* dashed average (posted buckets only) — absolute inside the plot, so in
+          the mobile scroll case it spans the full max-content width with the bars */}
       <div className="pointer-events-none absolute inset-x-0 flex items-center" style={{ bottom: `${(avg / max) * 100}%` }}>
         <div className="h-0 flex-1 border-t-[1.5px] border-dashed" style={{ borderColor: "color-mix(in srgb, var(--color-text) 42%, transparent)" }} />
         <span className="bg-surface px-[5px] text-caption text-text-subtle">
@@ -167,36 +177,39 @@ export function ColumnChart({ cap, headline, headlinePct, series }: { cap: strin
   );
 
   const labels = (
-    <div className="flex gap-[7px]">
-      {series.map((b, i) => (
-        // Live, localized text (never an image). Sparse on a dense axis so
-        // labels don't collide; the empty cells keep the bars aligned, and the
-        // shown label may overflow into its (blank) neighbours so a date like
-        // "Jun 3" isn't truncated to "Ju…" in a 30px-wide daily cell.
-        <span key={i} className={cn("overflow-visible whitespace-nowrap text-center text-[0.6875rem] tabular-nums text-text-subtle", cellW)}>
-          {i % labelStride === 0 ? b.label : ""}
-        </span>
-      ))}
+    // Live, localized text (never an image). Each shown label is absolutely
+    // centred on its bar; the container fills the (full-width or max-content) plot.
+    <div className="relative block h-[15px]">
+      {series.map((b, i) =>
+        labelIdx.has(i) ? (
+          <span
+            key={i}
+            className="absolute -translate-x-1/2 whitespace-nowrap text-[0.6875rem] tabular-nums text-text-subtle"
+            style={{ left: `${((i + 0.5) / series.length) * 100}%` }}
+          >
+            {b.label}
+          </span>
+        ) : null,
+      )}
     </div>
   );
 
-  // Non-wide periods keep the original markup exactly (no wrapper). Wide periods
-  // get an overflow-x-auto wrapper whose inner plot is w-max on mobile (scrolls)
-  // but full-width on desktop (fills, no scrollbar) — so desktop is unchanged.
-  const plot =
-    wide ? (
-      <div className="[scrollbar-width:thin] max-md:overflow-x-auto">
-        <div className="flex flex-col gap-[9px] max-md:w-max md:w-full">
-          {bars}
-          {labels}
-        </div>
-      </div>
-    ) : (
-      <div className="flex flex-col gap-[9px]">
+  // Non-wide periods keep the markup simple. Wide periods get an overflow-x-auto
+  // wrapper whose inner plot is w-max on mobile (scrolls) but full-width on
+  // desktop (fills, no scrollbar) — so desktop is unchanged.
+  const plot = wide ? (
+    <div className="[scrollbar-width:thin] max-md:overflow-x-auto">
+      <div className="flex flex-col gap-[13px] max-md:w-max md:w-full">
         {bars}
         {labels}
       </div>
-    );
+    </div>
+  ) : (
+    <div className="flex flex-col gap-[13px]">
+      {bars}
+      {labels}
+    </div>
+  );
 
   return (
     <section className="rounded-lg border border-border bg-surface px-5 pb-4 pt-[18px] shadow-sm">
@@ -296,27 +309,27 @@ export function TopPostsPanel({ cap, rows }: { cap: string; rows: TopPostRow[] }
           const vsTone = r.vs === null ? "" : r.vs >= 1.5 ? "text-success" : r.vs >= 0.7 ? "text-text" : "text-text-subtle";
           const inner = (
             <>
-              <span className="w-5 shrink-0 pt-px text-caption font-semibold tabular-nums text-text-subtle">{i + 1}</span>
-              <span className="min-w-0 flex-1">
-                <span className="line-clamp-2 text-small leading-snug text-text">{r.text}</span>
-                <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-caption tabular-nums text-text-subtle">
-                  <span>{date}</span>
-                  <span className="inline-flex items-center gap-1"><IcEye size={12} /> {fmt(r.views)}</span>
-                  <span className="inline-flex items-center gap-1"><IcHeart size={12} /> {fmt(r.likes)}</span>
-                  <span className="inline-flex items-center gap-1"><IcBubble size={12} /> {fmt(r.comments)}</span>
+              <span className="pt-0.5 font-mono text-small tabular-nums text-text-subtle">{i + 1}</span>
+              <span className="min-w-0">
+                <span className="line-clamp-2 text-body leading-[1.45] text-text">{r.text}</span>
+                <span className="mt-[7px] flex flex-wrap items-center gap-[13px] text-caption tabular-nums text-text-subtle">
+                  <span className="whitespace-nowrap">{date}</span>
+                  <span className="inline-flex items-center gap-[5px] whitespace-nowrap"><IcEye size={13} className="opacity-70" /> {fmt(r.views)}</span>
+                  <span className="inline-flex items-center gap-[5px] whitespace-nowrap"><IcHeart size={13} className="opacity-70" /> {fmt(r.likes)}</span>
+                  <span className="inline-flex items-center gap-[5px] whitespace-nowrap"><IcBubble size={13} className="opacity-70" /> {fmt(r.comments)}</span>
                 </span>
               </span>
               {r.vs !== null && (
-                <span className="shrink-0 text-right">
-                  <span className={cn("block text-h3 font-semibold tabular-nums leading-none", vsTone)}>{vsLabel(r.vs)}</span>
-                  <span className="mt-1 block text-caption text-text-subtle">{t("feed.your_average")}</span>
+                <span className="pt-px text-right">
+                  <span className={cn("block text-h3 font-semibold tabular-nums tracking-[-0.006em]", vsTone)}>{vsLabel(r.vs)}</span>
+                  <span className="mt-0.5 block text-caption font-medium text-text-subtle">{t("feed.your_average")}</span>
                 </span>
               )}
             </>
           );
-          const rowCls = "flex items-start gap-3 border-t border-border py-3 first:border-t-0";
+          const rowCls = "grid grid-cols-[22px_1fr_auto] items-start gap-[15px] rounded-[9px] border-t border-border px-1.5 py-[14px] first:border-t-0";
           return r.url ? (
-            <a key={i} href={r.url} target="_blank" rel="noopener noreferrer" className={cn(rowCls, "-mx-2 rounded-md px-2 transition-colors hover:bg-surface-2")}>
+            <a key={i} href={r.url} target="_blank" rel="noopener noreferrer" className={cn(rowCls, "transition-colors hover:bg-surface-2")}>
               {inner}
             </a>
           ) : (
@@ -361,7 +374,7 @@ function TimeBars({
   const many = slots.length > 8; // many bars → fixed width + horizontal scroll on mobile
   const cellW = many ? "max-md:w-9 max-md:shrink-0 md:min-w-0 md:flex-1" : "min-w-0 flex-1";
   const bars = (
-    <div className={cn("flex gap-[7px]", many && "max-md:w-max")}>
+    <div className={cn("flex gap-[6px]", many && "max-md:w-max")}>
       {slots.map((s) => {
         const isBest = best !== null && s.slot === best.slot && s.posts > 0;
         return (
@@ -370,20 +383,23 @@ function TimeBars({
             className={cn("flex min-w-0 flex-col items-center gap-1.5", cellW)}
             title={`${labelFor(s.slot)}: ${fmt(Math.round(s.avg))} · ${s.posts} ${postsWord}`}
           >
-            <div className="flex h-[96px] w-full items-end">
+            <div className="flex h-[106px] w-full items-end">
               <div
-                className="w-full rounded-t-sm transition-[height]"
+                className="w-full rounded-t-[3px] transition-[height]"
                 style={{
-                  height: s.posts ? `${Math.max(4, (s.avg / max) * 100)}%` : "2px",
+                  minHeight: "2px",
+                  height: s.posts ? `${Math.max(3, (s.avg / max) * 100)}%` : "2px",
                   backgroundColor: isBest
                     ? "var(--color-accent)"
                     : s.posts
-                      ? "color-mix(in srgb, var(--color-text) 18%, var(--color-surface-2))"
+                      ? "color-mix(in srgb, var(--color-text) 16%, var(--color-surface-2))"
                       : "color-mix(in srgb, var(--color-text) 7%, var(--color-surface-2))",
                 }}
               />
             </div>
-            <span className="w-full truncate text-center text-[0.6875rem] tabular-nums text-text-subtle">{labelFor(s.slot)}</span>
+            <span className={cn("w-full truncate text-center text-[10.5px] tabular-nums", isBest ? "font-semibold text-accent" : "text-text-subtle")}>
+              {labelFor(s.slot)}
+            </span>
           </div>
         );
       })}
@@ -391,17 +407,17 @@ function TimeBars({
   );
   return (
     <div className="min-w-0">
-      <div className="mb-2.5 flex items-center justify-between gap-2">
-        <span className="text-caption font-semibold uppercase tracking-[0.04em] text-text-subtle">{heading}</span>
+      <div className="mb-3.5 flex items-center justify-between gap-2">
+        <span className="text-small font-semibold text-text">{heading}</span>
         {best && (
           <span
-            className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border px-2 py-0.5 text-caption font-semibold text-accent"
+            className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-[9px] py-[3px] text-caption font-semibold text-accent"
             style={{
-              background: "color-mix(in srgb, var(--color-accent) 10%, var(--color-surface))",
-              borderColor: "color-mix(in srgb, var(--color-accent) 26%, transparent)",
+              background: "color-mix(in srgb, var(--color-accent) 12%, var(--color-surface))",
+              borderColor: "color-mix(in srgb, var(--color-accent) 28%, transparent)",
             }}
           >
-            {bestWord} · {labelFor(best.slot)}
+            <IcClock size={12} /> {bestWord} · {labelFor(best.slot)}
           </span>
         )}
       </div>
@@ -423,7 +439,7 @@ export function BestTimesPanel({ cap, byHour, byWeekday }: { cap: string; byHour
         <div className="text-h3 font-semibold tracking-[-0.006em]">{t("stats.times_title")}</div>
         <div className="mt-[3px] text-caption text-text-subtle">{cap}</div>
       </div>
-      <div className="grid gap-6 md:grid-cols-2 md:gap-8">
+      <div className="grid gap-6 md:grid-cols-2 md:gap-5">
         <TimeBars heading={t("stats.by_hour")} slots={byHour} labelFor={hourLabel} postsWord={t("stats.posts_word")} bestWord={t("stats.best_chip")} />
         <TimeBars heading={t("stats.by_weekday")} slots={week} labelFor={dayLabel} postsWord={t("stats.posts_word")} bestWord={t("stats.best_chip")} />
       </div>
@@ -463,10 +479,20 @@ function SkelCard({ hero = false }: { hero?: boolean }) {
   );
 }
 
+function SkelPanel({ barH, titleW }: { barH: number; titleW: number }) {
+  return (
+    <div className="rounded-lg border border-border bg-surface px-5 pb-4 pt-[18px] shadow-sm">
+      <div className="skel h-4 rounded" style={{ width: `${titleW}px` }} />
+      <div className="skel mt-[18px] w-full rounded-lg" style={{ height: `${barH}px` }} />
+    </div>
+  );
+}
+
 export function SkeletonDash() {
   return (
-    // Mirrors the ready layout so nothing reflows on load: mobile = a 3-col grid
-    // with a full-width hero skel card + a 3-up row; desktop = a flat 4-up grid.
+    // Mirrors the ready layout exactly so nothing reflows on load: the summary
+    // grid (mobile = Views hero + 3-up; desktop = 4-up) then the four stacked
+    // panels (trend · top posts · best times · spread).
     <div className="flex flex-col gap-4 md:gap-5" aria-hidden>
       <div className="grid gap-3.5 max-md:grid-cols-3 md:grid-cols-4">
         <SkelCard />
@@ -474,20 +500,10 @@ export function SkeletonDash() {
         <SkelCard />
         <SkelCard />
       </div>
-      <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
-        <div className="skel mb-5 h-4 w-44 rounded" />
-        <div className="skel h-[132px] w-full rounded-lg" />
-      </div>
-      <div className="grid grid-cols-2 gap-3.5 max-md:grid-cols-1">
-        <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
-          <div className="skel mb-[18px] h-4 w-36 rounded" />
-          <div className="skel h-[110px] w-full rounded-lg" />
-        </div>
-        <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
-          <div className="skel mb-[18px] h-4 w-36 rounded" />
-          <div className="skel h-[110px] w-full rounded-lg" />
-        </div>
-      </div>
+      <SkelPanel barH={164} titleW={176} />
+      <SkelPanel barH={120} titleW={120} />
+      <SkelPanel barH={106} titleW={150} />
+      <SkelPanel barH={96} titleW={150} />
     </div>
   );
 }
