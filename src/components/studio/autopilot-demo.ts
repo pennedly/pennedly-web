@@ -39,6 +39,10 @@ export const DEMO_CONFIG: AutopilotConfig = {
   reply_enabled: true,
   reply_audience: "fans",
   replies_per_day: 25,
+  reply_frequency: "hourly",
+  reply_quiet_start_hour: 21, // 21:00 UTC → a populated quiet window in the demo
+  reply_quiet_end_hour: 6,
+  reply_skip_low_value: true,
 };
 
 export const DEMO_ACTIVITY: AutopostActivity = {

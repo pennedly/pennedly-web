@@ -607,6 +607,31 @@ export default function AutopilotPage() {
                     </select>
                   </PolicyRow>
                   <PolicyRow
+                    title={t("autopilot.policy_skip_t")}
+                    desc={t("autopilot.policy_skip_d")}
+                  >
+                    <Switch
+                      checked={config.reply_skip_low_value}
+                      onCheckedChange={(v) => onReply({ reply_skip_low_value: v })}
+                      aria-label={t("autopilot.policy_skip_t")}
+                    />
+                  </PolicyRow>
+                  <PolicyRow
+                    title={t("autopilot.policy_freq_t")}
+                    desc={t("autopilot.policy_freq_d")}
+                  >
+                    <select
+                      value={config.reply_frequency}
+                      onChange={(e) => onReply({ reply_frequency: e.target.value })}
+                      className={cn(SELECT, "min-w-[168px]")}
+                    >
+                      <option value="asap">{t("autopilot.freq_asap")}</option>
+                      <option value="hourly">{t("autopilot.freq_hourly")}</option>
+                      <option value="few_daily">{t("autopilot.freq_few_daily")}</option>
+                      <option value="daily">{t("autopilot.freq_daily")}</option>
+                    </select>
+                  </PolicyRow>
+                  <PolicyRow
                     title={t("autopilot.policy_cap_t")}
                     desc={t("autopilot.policy_cap_d")}
                   >
@@ -626,6 +651,68 @@ export default function AutopilotPage() {
                         ))}
                     </select>
                   </PolicyRow>
+                  <PolicyRow
+                    title={t("autopilot.policy_quiet_t")}
+                    desc={t("autopilot.policy_quiet_d")}
+                  >
+                    <Switch
+                      checked={
+                        config.reply_quiet_start_hour !== null &&
+                        config.reply_quiet_end_hour !== null
+                      }
+                      onCheckedChange={(v) =>
+                        onReply(
+                          v
+                            ? {
+                                reply_quiet_start_hour: localHourToUtc(23),
+                                reply_quiet_end_hour: localHourToUtc(8),
+                              }
+                            : { reply_quiet_start_hour: null, reply_quiet_end_hour: null },
+                        )
+                      }
+                      aria-label={t("autopilot.policy_quiet_t")}
+                    />
+                  </PolicyRow>
+                  {config.reply_quiet_start_hour !== null &&
+                    config.reply_quiet_end_hour !== null && (
+                      <div className="flex flex-wrap items-center gap-2 border-t border-border py-3.5">
+                        <span className="text-caption text-text-muted">
+                          {t("autopilot.quiet_from")}
+                        </span>
+                        <select
+                          value={utcHourToLocal(config.reply_quiet_start_hour)}
+                          onChange={(e) =>
+                            onReply({ reply_quiet_start_hour: localHourToUtc(Number(e.target.value)) })
+                          }
+                          className={cn(SELECT, "w-auto min-w-[88px]")}
+                        >
+                          {HOURS.map((h) => (
+                            <option key={h} value={h}>
+                              {String(h).padStart(2, "0")}:00
+                            </option>
+                          ))}
+                        </select>
+                        <span className="text-caption text-text-muted">
+                          {t("autopilot.quiet_to")}
+                        </span>
+                        <select
+                          value={utcHourToLocal(config.reply_quiet_end_hour)}
+                          onChange={(e) =>
+                            onReply({ reply_quiet_end_hour: localHourToUtc(Number(e.target.value)) })
+                          }
+                          className={cn(SELECT, "w-auto min-w-[88px]")}
+                        >
+                          {HOURS.map((h) => (
+                            <option key={h} value={h}>
+                              {String(h).padStart(2, "0")}:00
+                            </option>
+                          ))}
+                        </select>
+                        <span className="text-caption text-text-subtle">
+                          {localUtcOffsetLabel()}
+                        </span>
+                      </div>
+                    )}
                 </div>
               </section>
             )}

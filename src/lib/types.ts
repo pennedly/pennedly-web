@@ -435,6 +435,12 @@ export type AutopilotConfig = {
   reply_enabled: boolean;
   reply_audience: string; // "fans" | "all_except_trolls" | "questions"
   replies_per_day: number;
+  reply_frequency: string; // "asap" | "hourly" | "few_daily" | "daily"
+  // Optional auto-reply quiet window, stored as whole UTC hours (the UI
+  // converts to/from local time, like the post hours). Both null = no window.
+  reply_quiet_start_hour: number | null;
+  reply_quiet_end_hour: number | null;
+  reply_skip_low_value: boolean; // skip pure-reaction junk + concluded threads
 };
 
 // ── Autopost objects (autopilot redesign) ────────────────────────────
