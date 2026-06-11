@@ -638,6 +638,8 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "autopilot.activity_today": "сьогодні",
   "autopilot.activity_posts": "постів",
   "autopilot.activity_replies": "відповідей",
+  "autopilot.activity_alltime": "За весь час",
+  "autopilot.activity_last": "останній",
   "autopilot.activity_last_post": "останній пост",
   "autopilot.activity_recent": "Недавні автопости",
   "autopilot.activity_replies_recent": "Недавні автовідповіді",

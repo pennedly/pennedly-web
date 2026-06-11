@@ -192,7 +192,7 @@ export default function AutopilotPage() {
     setTopics(DEMO_TOPICS);
     setRules(st === "Empty" ? [] : DEMO_RULES.map((r) => ({ ...r })));
     setConfig({ ...DEMO_CONFIG, reply_enabled: st !== "PolicyOff" });
-    setActivity(st === "Empty" ? { rules: [], posts: [], replies: [] } : DEMO_ACTIVITY);
+    setActivity(st === "Empty" ? { rules: [], posts_total: 0, replies_total: 0, posts: [], replies: [] } : DEMO_ACTIVITY);
     setActTab(st === "Replies" ? "replies" : "posts");
     setLoaded(true);
   }, [demoOn, tw.state]);
@@ -765,6 +765,23 @@ export default function AutopilotPage() {
                 </div>
               ) : (
                 <>
+                  <div className="mb-4 flex flex-wrap items-baseline gap-x-5 gap-y-1.5 rounded-md border border-border bg-surface-2 px-4 py-3">
+                    <span className="text-caption font-semibold uppercase tracking-wide text-text-subtle">
+                      {t("autopilot.activity_alltime")}
+                    </span>
+                    <span className="text-h3 font-semibold tabular-nums">
+                      {activity!.posts_total}
+                      <small className="ml-1 text-caption font-medium text-text-subtle">
+                        {t("autopilot.activity_posts")}
+                      </small>
+                    </span>
+                    <span className="text-h3 font-semibold tabular-nums">
+                      {activity!.replies_total}
+                      <small className="ml-1 text-caption font-medium text-text-subtle">
+                        {t("autopilot.activity_replies")}
+                      </small>
+                    </span>
+                  </div>
                   {activity!.rules.length > 0 && (
                     <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                       {activity!.rules.map((r) => (
@@ -774,17 +791,16 @@ export default function AutopilotPage() {
                           </div>
                           <div className="mt-2 flex items-baseline gap-3">
                             <span className="text-h3 font-semibold tabular-nums">
-                              {r.posts_today}
+                              {r.posts_total}
                               <small className="ml-1 text-caption font-medium text-text-subtle">
                                 {t("autopilot.activity_posts")}
                               </small>
                             </span>
-                            <span className="text-h3 font-semibold tabular-nums">
-                              {r.replies_today}
-                              <small className="ml-1 text-caption font-medium text-text-subtle">
-                                {t("autopilot.activity_replies")}
-                              </small>
-                            </span>
+                            {r.last_post_at && (
+                              <span className="text-caption text-text-subtle">
+                                {t("autopilot.activity_last")} {fmtDate(r.last_post_at, locale)}
+                              </span>
+                            )}
                           </div>
                         </div>
                       ))}

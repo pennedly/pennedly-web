@@ -473,9 +473,9 @@ export type AutopostActivityRule = {
   name: string | null;
   enabled: boolean;
   last_post_at: string | null;
-  posts_today: number;
-  last_reply_at: string | null;
-  replies_today: number;
+  // All-time posts this object published (auto-replies are account-level, not
+  // per-object — the account totals live on AutopostActivity).
+  posts_total: number;
 };
 
 export type AutopostActivityPost = {
@@ -501,6 +501,9 @@ export type AutopostActivityReply = {
 
 export type AutopostActivity = {
   rules: AutopostActivityRule[];
+  // Account-wide all-time tallies for the header.
+  posts_total: number;
+  replies_total: number;
   posts: AutopostActivityPost[];
   replies: AutopostActivityReply[];
 };

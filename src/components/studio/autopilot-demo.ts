@@ -47,10 +47,12 @@ export const DEMO_CONFIG: AutopilotConfig = {
 
 export const DEMO_ACTIVITY: AutopostActivity = {
   rules: [
-    { id: 1, name: "Morning thought", enabled: true, last_post_at: "2026-06-07T07:04:00Z", posts_today: 14, last_reply_at: "2026-06-07T07:32:00Z", replies_today: 38 },
-    { id: 2, name: "Midday craft note", enabled: true, last_post_at: "2026-06-06T12:12:00Z", posts_today: 11, last_reply_at: null, replies_today: 0 },
-    { id: 3, name: "Evening question", enabled: false, last_post_at: "2026-06-06T18:28:00Z", posts_today: 6, last_reply_at: "2026-06-06T19:06:00Z", replies_today: 22 },
+    { id: 1, name: "Morning thought", enabled: true, last_post_at: "2026-06-07T07:04:00Z", posts_total: 142 },
+    { id: 2, name: "Midday craft note", enabled: true, last_post_at: "2026-06-06T12:12:00Z", posts_total: 118 },
+    { id: 3, name: "Evening question", enabled: false, last_post_at: "2026-06-06T18:28:00Z", posts_total: 63 },
   ],
+  posts_total: 323,
+  replies_total: 1184,
   posts: [
     { post_id: 1, rule_id: 1, rule_name: "Morning thought", text: "the draft you're avoiding is usually the one worth writing. open the doc, write one bad sentence, and let it pull you in.", published_at: "2026-06-07T07:04:00Z", views: 9400, likes: 187, comments: 14, threads_url: "https://www.threads.net/@mara.lin/post/ap1" },
     { post_id: 2, rule_id: 2, rule_name: "Midday craft note", text: "editing is just deciding, over and over, what you actually meant. the cuts are where the voice shows up.", published_at: "2026-06-06T12:12:00Z", views: 6100, likes: 132, comments: 9, threads_url: "https://www.threads.net/@mara.lin/post/ap2" },

@@ -640,6 +640,8 @@ export const it: Partial<Record<MessageKey, string>> = {
   "autopilot.activity_today": "oggi",
   "autopilot.activity_posts": "post",
   "autopilot.activity_replies": "risposte",
+  "autopilot.activity_alltime": "Da sempre",
+  "autopilot.activity_last": "ultimo",
   "autopilot.activity_last_post": "ultimo post",
   "autopilot.activity_recent": "Auto-post recenti",
   "autopilot.activity_replies_recent": "Auto-risposte recenti",

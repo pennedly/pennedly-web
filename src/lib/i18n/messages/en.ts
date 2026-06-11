@@ -865,6 +865,8 @@ export const en = {
   "autopilot.activity_today": "today",
   "autopilot.activity_posts": "posts",
   "autopilot.activity_replies": "replies",
+  "autopilot.activity_alltime": "All time",
+  "autopilot.activity_last": "last",
   "autopilot.activity_last_post": "last post",
   "autopilot.activity_recent": "Recent auto-posts",
   "autopilot.activity_replies_recent": "Recent auto-replies",
