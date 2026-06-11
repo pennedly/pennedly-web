@@ -39,7 +39,6 @@ import { cn } from "@/lib/cn";
 import {
   IcBubble,
   IcCheck,
-  IcBolt,
   IcClock,
   IcExternal,
   IcEye,
@@ -358,7 +357,7 @@ export default function AutopilotPage() {
                     : "border-border bg-surface-2 text-text-muted",
                 )}
               >
-                <IcBolt size={24} />
+                <IcClock size={24} />
               </span>
               <div className="min-w-0 flex-1">
                 <div className="text-h2 font-semibold tracking-tight">{t("autopilot.title")}</div>
@@ -609,6 +608,7 @@ export default function AutopilotPage() {
                   <PolicyRow
                     title={t("autopilot.policy_skip_t")}
                     desc={t("autopilot.policy_skip_d")}
+                    hero
                   >
                     <Switch
                       checked={config.reply_skip_low_value}
@@ -910,17 +910,19 @@ export default function AutopilotPage() {
       {/* Turn-on confirmation */}
       {confirmOn && (
         <div
-          className="fixed inset-0 z-40 grid place-items-center bg-ink-950/55 p-6 backdrop-blur-sm"
+          className="fixed inset-0 z-40 grid place-items-center bg-ink-950/55 p-6 backdrop-blur-sm max-md:items-end max-md:p-0"
           role="dialog"
           aria-modal="true"
           onMouseDown={(e) => {
             if (e.target === e.currentTarget) setConfirmOn(false);
           }}
         >
-          <div className="w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-lg">
+          {/* Desktop: a centered modal. Phone: a bottom sheet (rounded top,
+              full-width, primary action on top within thumb reach). */}
+          <div className="w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-lg max-md:max-w-none max-md:rounded-b-none max-md:rounded-t-2xl max-md:pb-[calc(env(safe-area-inset-bottom)+20px)]">
             <div className="flex items-start gap-3">
               <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-accent/30 bg-accent/12 text-accent">
-                <IcBolt size={18} />
+                <IcClock size={18} />
               </span>
               <div>
                 <h2 className="text-h3 font-semibold">{t("autopilot.confirm_title")}</h2>
@@ -929,13 +931,17 @@ export default function AutopilotPage() {
                 </p>
               </div>
             </div>
-            <div className="mt-5 flex items-center justify-end gap-2.5">
-              <button onClick={() => setConfirmOn(false)} className={buttonClasses({ variant: "ghost" })}>
+            <div className="mt-5 flex items-center justify-end gap-2.5 max-md:mt-6 max-md:flex-col-reverse max-md:items-stretch">
+              <button
+                onClick={() => setConfirmOn(false)}
+                className={cn(buttonClasses({ variant: "ghost" }), "max-md:min-h-[44px] max-md:w-full")}
+              >
                 {t("common.cancel")}
               </button>
               <Button
                 variant="primary"
-                icon={<IcBolt size={15} />}
+                icon={<IcClock size={15} />}
+                className="max-md:min-h-[44px] max-md:w-full"
                 onClick={() => {
                   setConfirmOn(false);
                   doSetMaster(true);
@@ -983,13 +989,38 @@ function PolicyRow({
   title,
   desc,
   first = false,
+  hero = false,
   children,
 }: {
   title: string;
   desc: string;
   first?: boolean;
+  // The "only reply when it adds value" row — the policy's behavioral brain.
+  // It breaks out of the divider flow into a lightly accent-tinted panel with a
+  // marker dot, so it reads as the weighted control, not just another toggle.
+  hero?: boolean;
   children: ReactNode;
 }) {
+  if (hero) {
+    return (
+      <div
+        className="my-2 flex flex-col items-start justify-between gap-3 rounded-md border px-3.5 py-3 md:flex-row md:items-center"
+        style={{
+          background: "color-mix(in srgb, var(--color-accent) 6%, var(--color-surface))",
+          borderColor: "color-mix(in srgb, var(--color-accent) 22%, var(--color-border))",
+        }}
+      >
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-small font-semibold">
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
+            {title}
+          </div>
+          <div className="mt-0.5 text-caption leading-relaxed text-text-subtle">{desc}</div>
+        </div>
+        <div className="w-full shrink-0 md:w-auto">{children}</div>
+      </div>
+    );
+  }
   return (
     <div
       className={cn(
