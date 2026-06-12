@@ -287,6 +287,20 @@ export type ScheduleResult = {
   scheduled_at: string | null;
 };
 
+// Content Calendar — one upcoming entry, manual (a scheduled draft) or a
+// projected autopilot occurrence. Times are ISO-8601 UTC.
+export type CalendarEntry = {
+  id: string; // "draft-<id>" (manual) | "rule-<id>-<date>" (projection)
+  source: "manual" | "autopilot";
+  status: "scheduled" | "failed" | "projected";
+  scheduled_at: string;
+  text: string | null; // null for projections — written at post time
+  rule_name?: string | null;
+  error?: string | null;
+};
+
+export type CalendarFeed = { entries: CalendarEntry[] };
+
 export type PublishResult = {
   draft_id: number;
   status: string;

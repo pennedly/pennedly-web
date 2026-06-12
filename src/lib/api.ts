@@ -17,6 +17,7 @@ import type {
   AutopilotConfig,
   AutopostActivity,
   AutopostRule,
+  CalendarFeed,
   AutopostRulesResponse,
   AuditDetail,
   AuditsList,
@@ -473,6 +474,27 @@ export async function unscheduleDraft(
   return fetchApi<ScheduleResult>(`/api/drafts/${draftId}/unschedule`, {
     method: "POST",
   });
+}
+
+// Re-arm a draft whose scheduled publish failed (worker retries next tick).
+export async function retryScheduledDraft(
+  draftId: number,
+): Promise<ScheduleResult> {
+  return fetchApi<ScheduleResult>(`/api/drafts/${draftId}/retry`, {
+    method: "POST",
+  });
+}
+
+// The content Calendar window — scheduled/failed drafts + autopilot projection.
+export async function fetchCalendar(
+  accountId: number,
+  fromIso: string,
+  toIso: string,
+): Promise<CalendarFeed> {
+  const qs = new URLSearchParams({ from: fromIso, to: toIso });
+  return fetchApi<CalendarFeed>(
+    `/api/accounts/${accountId}/calendar?${qs.toString()}`,
+  );
 }
 
 // ── Comments / replies ───────────────────────────────────────────

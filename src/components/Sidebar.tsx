@@ -23,6 +23,7 @@ import {
   BrandMark,
   IcAt,
   IcAudit,
+  IcCalendar,
   IcChart,
   IcBolt,
   IcCompass,
@@ -54,6 +55,7 @@ const GROUPS: { title: MessageKey; items: NavItem[] }[] = [
     title: "nav.group.workspace",
     items: [
       { href: "/app", label: "nav.studio", icon: IcStudio, exact: true, badgeKey: "studio" },
+      { href: "/app/calendar", label: "nav.calendar", icon: IcCalendar },
       { href: "/app/feed", label: "dashboard.nav.feed", icon: IcFeed },
       { href: "/app/replies", label: "dashboard.nav.replies", icon: IcReplies, tester: true, badgeKey: "replies" },
       { href: "/app/mentions", label: "dashboard.nav.mentions", icon: IcAt, tester: true },

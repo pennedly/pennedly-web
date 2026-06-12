@@ -102,6 +102,7 @@ export const IcStudy = (p: IconProps) => <Svg {...p}><circle cx="11" cy="11" r="
 export const IcBolt = (p: IconProps) => <Svg {...p}><path d="M13 3 5 13h6l-1 8 8-10h-6l1-8Z" /></Svg>;
 export const IcPlus = (p: IconProps) => <Svg {...p}><path d="M12 5v14M5 12h14" /></Svg>;
 export const IcClock = (p: IconProps) => <Svg {...p}><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></Svg>;
+export const IcCalendar = (p: IconProps) => <Svg {...p}><rect x="4" y="5.5" width="16" height="15" rx="2.5" /><path d="M4 9.5h16M8.5 3.5v4M15.5 3.5v4" /></Svg>;
 export const IcSkip = (p: IconProps) => <Svg {...p}><path d="M6 5v14M18 5v14M9 12h7M9 12l3-3M9 12l3 3" /></Svg>;
 export const IcGlobe = (p: IconProps) => <Svg {...p}><circle cx="12" cy="12" r="8.5" /><path d="M3.5 12h17M12 3.5c2.5 2.3 2.5 14.7 0 17M12 3.5c-2.5 2.3-2.5 14.7 0 17" /></Svg>;
 export const IcAt = (p: IconProps) => <Svg {...p}><circle cx="12" cy="12" r="3.6" /><path d="M15.6 8.6v4.6a2.4 2.4 0 0 0 4.8 0v-1.2a8.4 8.4 0 1 0-3.2 6.6" /></Svg>;
