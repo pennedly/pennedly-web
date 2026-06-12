@@ -34,6 +34,7 @@ import {
   IcSend,
   IcSparkle,
   IcStudio,
+  IcTrash,
   IcTweak,
   IcUndo,
   IcVoice,
@@ -61,6 +62,9 @@ export type CardHandlers = {
   onTweak: (c: StudioCard, instruction: string) => Promise<string>;
   /** Translate the body inline; resolves to the translated text. */
   onTranslate: (c: StudioCard, lang: UiLang) => Promise<string>;
+  /** Hard-delete the draft from the queue (Undo-safe in the page). The
+   *  endpoint refuses only a published draft, so it's offered everywhere else. */
+  onDelete: (c: StudioCard) => void;
 };
 
 // ─────────────────────────────── CharMeter ──────────────────────────────────
@@ -330,6 +334,13 @@ export function DraftCard({
     }
   } else if (status === "rejected") {
     if (demo) menuItems.push({ label: t("studio.restore"), Icon: IcUndo, onClick: () => h.onRestore(card) });
+  }
+  // Hard-delete clears the draft from the queue. Offered on every
+  // non-published, non-reply draft (the endpoint refuses only published) —
+  // notably on an *approved* card, where there was no removal action before.
+  // Undo-safe: the page drops it optimistically behind an Undo toast.
+  if (status === "draft" || status === "ready" || status === "rejected") {
+    menuItems.push({ label: t("studio.delete"), Icon: IcTrash, onClick: () => h.onDelete(card), danger: true });
   }
 
   const cardPad = compact ? "px-4 pb-[11px] pt-[13px]" : "px-[18px] pb-3.5 pt-4";

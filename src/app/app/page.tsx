@@ -15,6 +15,7 @@ import {
   ApiError,
   approveDraft,
   clearTokens,
+  deleteDraft,
   fetchMe,
   fetchMyAccounts,
   fetchOnboardingStatus,
@@ -316,6 +317,43 @@ export default function Studio() {
     });
   }
 
+  function realDelete(card: StudioCard) {
+    const idx = drafts.findIndex((d) => d.id === card.id);
+    const original = drafts[idx];
+    if (!original) return;
+    captureEvent("ui.delete_clicked", { draft_id: card.id });
+    // Re-insert near the original slot on undo or on a failed commit.
+    const restore = () =>
+      setDrafts((p) => {
+        if (p.some((d) => d.id === card.id)) return p;
+        const next = [...p];
+        next.splice(Math.min(idx, next.length), 0, original);
+        return next;
+      });
+    setDrafts((p) => p.filter((d) => d.id !== card.id));
+    const key = `delete-${card.id}`;
+    deferred.schedule(
+      key,
+      async () => {
+        try {
+          await deleteDraft(card.id);
+        } catch (e) {
+          restore();
+          toast(String(e), "error");
+        }
+      },
+      UNDO_MS,
+    );
+    toast(t("studio.toast_deleted"), "success", {
+      duration: UNDO_MS,
+      undoLabel: t("common.undo"),
+      onUndo: () => {
+        deferred.cancel(key);
+        restore();
+      },
+    });
+  }
+
   async function realPublishConfirm() {
     if (publishTarget === null) return;
     const card = publishTarget.card;
@@ -376,6 +414,7 @@ export default function Studio() {
       const r = await translateText(card.body, lang.code);
       return r.translated_text;
     },
+    onDelete: realDelete,
   };
 
   // ════════════════════ DEMO handlers ════════════════════
@@ -411,6 +450,23 @@ export default function Studio() {
       await new Promise((r) => setTimeout(r, 600));
       if (lang.code === "ru") return "Постоянство бьёт талант. Появляйся каждый день, держи планку посильной, и пусть всё решает накопленный эффект.";
       return `[${lang.native}] ${card.body}`;
+    },
+    onDelete: (card) => {
+      const from = demoCards.findIndex((c) => c.id === card.id);
+      const original = demoCards[from];
+      if (!original) return;
+      setDemoCards((p) => p.filter((c) => c.id !== card.id));
+      toast(t("studio.toast_deleted"), "success", {
+        duration: UNDO_MS,
+        undoLabel: t("common.undo"),
+        onUndo: () =>
+          setDemoCards((p) => {
+            if (p.some((c) => c.id === card.id)) return p;
+            const next = [...p];
+            next.splice(Math.min(from, next.length), 0, original);
+            return next;
+          }),
+      });
     },
   };
 
