@@ -418,7 +418,7 @@ export default function RepliesPage() {
         ) : phase === "empty" || !activePost ? (
           <RepliesEmpty filter="all" />
         ) : (
-          <div className="grid grid-cols-[300px_1fr] items-start gap-[22px] max-md:grid-cols-1 max-md:gap-4">
+          <div className="flex flex-col gap-4 md:gap-5">
             <PostMaster
               posts={posts}
               countsByPost={countsByPost}

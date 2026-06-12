@@ -6,7 +6,7 @@
 // StatusFilter + CommentCard (comment + threaded reply, inline buttons per
 // status, inline translate-row, edit/generating sub-states) + PublishReplyDialog.
 
-import { useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 
 import { cn } from "@/lib/cn";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
@@ -15,6 +15,8 @@ import { Mono } from "@/components/ui/mono";
 import { AccountFace } from "@/components/ui/avatar";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
 import {
+  IcArrowLeft,
+  IcArrowRight,
   IcCheck,
   IcExternal,
   IcGlobe,
@@ -74,56 +76,163 @@ export function PostMaster({
   onSelect: (id: string) => void;
 }) {
   const { t } = useTranslation();
+  const railRef = useRef<HTMLDivElement>(null);
+  // Does the rail overflow on each side? Drives the arrows + edge fades.
+  const [over, setOver] = useState({ left: false, right: false });
+
+  const recompute = useCallback(() => {
+    const el = railRef.current;
+    if (!el) return;
+    const max = el.scrollWidth - el.clientWidth;
+    setOver({ left: el.scrollLeft > 1, right: el.scrollLeft < max - 1 });
+  }, []);
+
+  useEffect(() => {
+    recompute();
+    const el = railRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(recompute);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [recompute, posts.length]);
+
+  // Keep the active chip in view when the selection changes (keyboard / programmatic).
+  useEffect(() => {
+    const el = railRef.current;
+    if (!el || selected == null) return;
+    el.querySelector<HTMLElement>(`[data-pm-id="${CSS.escape(selected)}"]`)?.scrollIntoView({
+      behavior: "smooth",
+      inline: "nearest",
+      block: "nearest",
+    });
+  }, [selected]);
+
+  function pageScroll(dir: -1 | 1) {
+    const el = railRef.current;
+    if (el) el.scrollBy({ left: dir * Math.max(296, el.clientWidth * 0.8), behavior: "smooth" });
+  }
+
+  // Click-drag to pan (desktop mouse). `moved` suppresses the click that would
+  // otherwise select a chip at the end of a drag; touch swipes natively.
+  const drag = useRef<{ x: number; left: number; moved: boolean } | null>(null);
+  const suppressClick = useRef(false);
+  function onPointerDown(e: React.PointerEvent) {
+    suppressClick.current = false;
+    if (e.pointerType === "touch") return;
+    const el = railRef.current;
+    if (el) drag.current = { x: e.clientX, left: el.scrollLeft, moved: false };
+  }
+  function onPointerMove(e: React.PointerEvent) {
+    const el = railRef.current;
+    if (!el || !drag.current) return;
+    const dx = e.clientX - drag.current.x;
+    if (Math.abs(dx) > 3) drag.current.moved = true;
+    el.scrollLeft = drag.current.left - dx;
+  }
+  function onPointerEnd() {
+    if (drag.current?.moved) suppressClick.current = true;
+    drag.current = null;
+  }
+  function onWheel(e: React.WheelEvent) {
+    const el = railRef.current;
+    if (el && e.shiftKey && e.deltaY !== 0) el.scrollLeft += e.deltaY;
+  }
+  function onKeyDown(e: React.KeyboardEvent) {
+    if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+    e.preventDefault();
+    const idx = posts.findIndex((p) => p.id === selected);
+    const target = posts[e.key === "ArrowRight" ? Math.min(posts.length - 1, idx + 1) : Math.max(0, idx - 1)];
+    if (target) onSelect(target.id);
+  }
+
+  const arrowCls =
+    "absolute top-1/2 z-10 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full border border-border bg-surface text-text-muted shadow-md transition-colors hover:bg-surface-2 hover:text-text max-md:hidden";
+
   return (
-    // Desktop (≥ md): sticky vertical post list (left master column).
-    // Mobile (max-md): a horizontal, swipeable scroll-snap row of fixed 220px
-    // chips, made sticky under the 52px top bar so you can change posts while
-    // scrolling a long comment list. The header label is desktop-only.
-    <aside className="sticky top-3 max-h-[calc(100vh-132px)] self-start overflow-hidden rounded-lg border border-border bg-surface shadow-sm max-md:top-13 max-md:z-10 max-md:max-h-none max-md:rounded-none max-md:border-x-0 max-md:bg-bg max-md:shadow-none">
-      <div className="shrink-0 border-b border-border px-4 pb-[11px] pt-[13px] text-caption font-semibold uppercase tracking-[0.06em] text-text-subtle max-md:hidden">
+    // Horizontal post switcher — the single way to change posts, sticky under the
+    // top bar on every width so it stays in reach while a long comment list
+    // scrolls. (Replaces the old desktop left master column.) On a phone it
+    // swipes; on desktop, arrows / edge-fades / click-drag / shift-wheel / ←→.
+    <div className="sticky top-3 z-10 bg-bg/85 backdrop-blur max-md:top-13">
+      <div className="mb-2 text-caption font-semibold uppercase tracking-[0.06em] text-text-subtle">
         {t("replies.posts_with_comments")}
+        <span className="ml-1.5 opacity-70">· {posts.length}</span>
       </div>
-      <div
-        role="listbox"
-        aria-label={t("replies.posts_with_comments")}
-        className="flex flex-col overflow-y-auto [scrollbar-width:none] max-md:flex-row max-md:gap-2.5 max-md:overflow-x-auto max-md:overflow-y-hidden max-md:py-2 max-md:[scroll-snap-type:x_mandatory]"
-      >
-        {posts.map((p, i) => {
-          const c = countsByPost[p.id] ?? { total: 0, unanswered: 0 };
-          const on = p.id === selected;
-          return (
-            <button
-              key={p.id}
-              role="option"
-              aria-selected={on}
-              onClick={() => onSelect(p.id)}
-              className={cn(
-                "flex flex-col gap-2 border-l-[3px] px-4 py-[13px] text-left transition-colors hover:bg-surface-2",
-                i < posts.length - 1 && "border-b border-border",
-                on ? "border-l-accent bg-surface-2" : "border-l-transparent",
-                // Mobile chip: fixed 220px card, snaps to start, never crushed.
-                "max-md:w-[220px] max-md:shrink-0 max-md:rounded-lg max-md:border max-md:border-l max-md:border-border max-md:[scroll-snap-align:start]",
-                on && "max-md:border-accent max-md:border-l-accent max-md:ring-1 max-md:ring-accent/40",
-              )}
-            >
-              <span className={cn("line-clamp-2 text-small leading-[1.45] text-text", on && "font-semibold")}>{p.text}</span>
-              <span className="flex flex-wrap items-center gap-[7px] text-caption text-text-subtle">
-                <span>{p.time}</span>
-                <span className="opacity-50">·</span>
-                <span>
-                  {c.total} {t("replies.comments_word")}
-                </span>
-                {c.unanswered > 0 && (
-                  <span className="ml-auto rounded-full border border-accent/30 bg-accent/12 px-2 py-px text-caption font-semibold text-accent">
-                    {c.unanswered} {t("replies.to_answer")}
-                  </span>
-                )}
-              </span>
+      <div className="relative">
+        {over.left && (
+          <>
+            <div aria-hidden className="pointer-events-none absolute inset-y-0 left-0 z-[5] w-10 bg-gradient-to-r from-bg to-transparent max-md:hidden" />
+            <button type="button" aria-label={t("replies.scroll_prev")} onClick={() => pageScroll(-1)} className={cn(arrowCls, "left-1")}>
+              <IcArrowLeft size={15} />
             </button>
-          );
-        })}
+          </>
+        )}
+        <div
+          ref={railRef}
+          role="listbox"
+          tabIndex={0}
+          aria-label={t("replies.posts_with_comments")}
+          onScroll={recompute}
+          onWheel={onWheel}
+          onKeyDown={onKeyDown}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerEnd}
+          onPointerLeave={onPointerEnd}
+          className="flex gap-2.5 overflow-x-auto pb-1 [scrollbar-width:none] [scroll-snap-type:x_proximity] focus:outline-none [&::-webkit-scrollbar]:hidden"
+        >
+          {posts.map((p) => {
+            const c = countsByPost[p.id] ?? { total: 0, unanswered: 0 };
+            const on = p.id === selected;
+            return (
+              <button
+                key={p.id}
+                data-pm-id={p.id}
+                role="option"
+                aria-selected={on}
+                onClick={() => {
+                  if (suppressClick.current) {
+                    suppressClick.current = false;
+                    return;
+                  }
+                  onSelect(p.id);
+                }}
+                className={cn(
+                  "flex w-[280px] shrink-0 flex-col gap-2 rounded-lg border bg-surface px-3.5 py-3 text-left transition-colors [scroll-snap-align:start] hover:bg-surface-2 max-md:w-[220px]",
+                  on ? "border-accent ring-1 ring-accent/40" : "border-border",
+                )}
+              >
+                <span className={cn("line-clamp-2 text-small leading-[1.45] text-text", on && "font-semibold")}>{p.text}</span>
+                <span className="flex flex-wrap items-center gap-[7px] text-caption text-text-subtle">
+                  <span>{p.time}</span>
+                  <span className="opacity-50">·</span>
+                  <span>
+                    {c.total} {t("replies.comments_word")}
+                  </span>
+                  {c.unanswered > 0 ? (
+                    <span className="ml-auto rounded-full border border-accent/30 bg-accent/12 px-2 py-px text-caption font-semibold text-accent">
+                      {c.unanswered} {t("replies.to_answer")}
+                    </span>
+                  ) : (
+                    <span className="ml-auto rounded-full border border-success/30 bg-success/12 px-2 py-px text-caption font-semibold text-success">
+                      {t("replies.all_answered")}
+                    </span>
+                  )}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        {over.right && (
+          <>
+            <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 z-[5] w-10 bg-gradient-to-l from-bg to-transparent max-md:hidden" />
+            <button type="button" aria-label={t("replies.scroll_next")} onClick={() => pageScroll(1)} className={cn(arrowCls, "right-1")}>
+              <IcArrowRight size={15} />
+            </button>
+          </>
+        )}
       </div>
-    </aside>
+    </div>
   );
 }
 
