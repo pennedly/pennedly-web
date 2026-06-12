@@ -25,6 +25,7 @@ import {
   publishDraft,
   refineDraft,
   rejectDraft,
+  scheduleDraft,
   translateText,
 } from "@/lib/api";
 import { captureEvent, identify } from "@/lib/analytics";
@@ -70,6 +71,7 @@ type ToastT = {
 // Map a backend draft into the unified card model the UI renders.
 function statusOf(d: DraftSummary): StudioStatus {
   if (d.published) return "published";
+  if (d.scheduled_at && d.status === "approved") return "scheduled";
   if (d.status === "approved") return "ready";
   if (d.status === "rejected") return "rejected";
   return "draft";
@@ -95,6 +97,7 @@ export default function Studio() {
   const [selectedAccount, setSelectedAccount] = useState<{ name: string; handle: string | null; initials: string; avatarUrl: string | null } | null>(null);
   const [publishTarget, setPublishTarget] = useState<{ card: StudioCard; account: { name: string; handle: string | null; initials: string } | null } | null>(null);
   const [publishing, setPublishing] = useState(false);
+  const [scheduling, setScheduling] = useState(false);
   const [toasts, setToasts] = useState<ToastT[]>([]);
   const [bootError, setBootError] = useState<string | null>(null);
   const [needsVoiceSetup, setNeedsVoiceSetup] = useState(false);
@@ -331,6 +334,24 @@ export default function Studio() {
     }
   }
 
+  async function realScheduleConfirm(iso: string) {
+    if (publishTarget === null) return;
+    const card = publishTarget.card;
+    setScheduling(true);
+    captureEvent("ui.schedule_confirmed", { draft_id: card.id });
+    try {
+      const result = await scheduleDraft(card.id, iso);
+      setDrafts((p) => p.map((d) => (d.id === card.id ? { ...d, scheduled_at: result.scheduled_at, schedule_failed: false } : d)));
+      setPublishTarget(null);
+      setTab("scheduled");
+      toast(t("studio.toast_scheduled"), "success");
+    } catch (e) {
+      toast(String(e), "error");
+    } finally {
+      setScheduling(false);
+    }
+  }
+
   const realHandlers: CardHandlers = {
     onApprove: realApprove,
     onReject: realReject,
@@ -431,12 +452,14 @@ export default function Studio() {
     reply: d.reply_to ? { who: d.reply_to.who ?? "", text: d.reply_to.text } : null,
     threadsUrl: d.threads_url,
     stats: null,
+    scheduledAt: d.scheduled_at,
   }));
   const cards = demoOn ? demoCards : realCards;
 
   const counts: Record<StudioStatus, number> = {
     ready: cards.filter((c) => c.status === "ready").length,
     draft: cards.filter((c) => c.status === "draft").length,
+    scheduled: cards.filter((c) => c.status === "scheduled").length,
     published: cards.filter((c) => c.status === "published").length,
     rejected: cards.filter((c) => c.status === "rejected").length,
   };
@@ -505,8 +528,9 @@ export default function Studio() {
         text={publishTarget?.card.body ?? ""}
         account={publishTarget?.account ?? null}
         publishing={publishing}
+        scheduling={scheduling}
         onClose={() => {
-          if (!publishing) setPublishTarget(null);
+          if (!publishing && !scheduling) setPublishTarget(null);
         }}
         onConfirm={() => {
           if (demoOn) {
@@ -519,6 +543,19 @@ export default function Studio() {
             setPublishTarget(null);
           } else {
             realPublishConfirm();
+          }
+        }}
+        onSchedule={(iso) => {
+          if (demoOn) {
+            const card = publishTarget?.card;
+            if (card) {
+              setDemoCards((p) => p.map((c) => (c.id === card.id ? { ...c, status: "scheduled", scheduledAt: iso } : c)));
+              setTab("scheduled");
+              toast(t("studio.toast_scheduled"), "success");
+            }
+            setPublishTarget(null);
+          } else {
+            realScheduleConfirm(iso);
           }
         }}
       />

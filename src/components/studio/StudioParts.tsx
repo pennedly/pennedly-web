@@ -21,6 +21,7 @@ import {
   IcBubble,
   IcCheck,
   IcChevDown,
+  IcClock,
   IcExternal,
   IcGlobe,
   IcHeart,
@@ -96,6 +97,7 @@ export function CharMeter({ len, showBar = true }: { len: number; showBar?: bool
 const BADGE: Record<StudioStatus, { tone: BadgeTone; key: MessageKey }> = {
   draft: { tone: "neutral", key: "studio.badge_draft" },
   ready: { tone: "accent", key: "studio.badge_ready" },
+  scheduled: { tone: "accent", key: "studio.badge_scheduled" },
   published: { tone: "good", key: "studio.badge_published" },
   rejected: { tone: "bad", key: "studio.badge_rejected" },
 };
@@ -268,7 +270,7 @@ export function DraftCard({
    *  backend endpoint doesn't exist yet (send-back / restore / edit-on-ready). */
   demo?: boolean;
 }) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const compact = density === "compact";
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(card.body);
@@ -549,6 +551,30 @@ export function DraftCard({
       );
     }
 
+    // Scheduled — queued for a future time; managed (reschedule / unschedule /
+    // publish-now) from the Calendar. Studio just shows when it goes out.
+    if (status === "scheduled") {
+      return (
+        <>
+          <span className="inline-flex items-center gap-1.5 text-caption text-text-subtle">
+            <IcClock size={12} />
+            {card.scheduledAt
+              ? `${t("studio.goes_out")} ${new Date(card.scheduledAt).toLocaleString(locale, {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}`
+              : t("studio.badge_scheduled")}
+          </span>
+          <div className="ml-auto">
+            <CardMenu items={menuItems} translatedLang={translated?.lang ?? null} onTranslate={runTranslate} onShowOriginal={() => setTranslated(null)} />
+          </div>
+        </>
+      );
+    }
+
     // reply drafts (Q62) are read-only in Studio — managed in Replies.
     if (card.kind === "reply" && replyReadOnly) {
       return (
@@ -722,6 +748,7 @@ export function StudioComposer({
 const TABS: { key: StudioStatus; label: MessageKey; dot: string }[] = [
   { key: "ready", label: "studio.tab_ready", dot: "bg-accent" },
   { key: "draft", label: "studio.tab_drafts", dot: "bg-ink-400" },
+  { key: "scheduled", label: "studio.tab_scheduled", dot: "bg-accent" },
   { key: "published", label: "studio.tab_published", dot: "bg-success" },
   { key: "rejected", label: "studio.tab_rejected", dot: "bg-danger" },
 ];
@@ -784,6 +811,7 @@ export function SkeletonCard() {
 const EMPTY: Record<StudioStatus, { title: MessageKey; sub: MessageKey }> = {
   draft: { title: "studio.empty_draft_title", sub: "studio.empty_draft_sub" },
   ready: { title: "studio.empty_ready_title", sub: "studio.empty_ready_sub" },
+  scheduled: { title: "studio.empty_scheduled_title", sub: "studio.empty_scheduled_sub" },
   published: { title: "studio.empty_published_title", sub: "studio.empty_published_sub" },
   rejected: { title: "studio.empty_rejected_title", sub: "studio.empty_rejected_sub" },
 };
@@ -887,34 +915,81 @@ export function StudioPublishDialog({
   text,
   account,
   publishing,
+  scheduling = false,
   onClose,
   onConfirm,
+  onSchedule,
 }: {
   open: boolean;
   text: string;
   account: { name: string; handle: string | null; initials: string; avatarUrl?: string | null } | null;
   publishing: boolean;
+  scheduling?: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  onSchedule?: (scheduledAtIso: string) => void;
 }) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  const [mode, setMode] = useState<"now" | "schedule">("now");
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
+  const busy = publishing || scheduling;
+
+  // On open: reset to "now" and pre-fill a sensible default (the next hour).
+  useEffect(() => {
+    if (!open) return;
+    setMode("now");
+    const d = new Date(Date.now() + 60 * 60 * 1000);
+    d.setMinutes(0, 0, 0);
+    const p = (n: number) => String(n).padStart(2, "0");
+    setDate(`${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`);
+    setTime(`${p(d.getHours())}:${p(d.getMinutes())}`);
+  }, [open]);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !publishing) onClose();
+      if (e.key === "Escape" && !busy) onClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, publishing, onClose]);
+  }, [open, busy, onClose]);
+
   if (!open) return null;
   const over = text.length > DRAFT_LIMIT;
+  const empty = text.length === 0;
+
+  // Local date + time → an instant; valid only when ≥ 5 min out.
+  const localDt = date && time ? new Date(`${date}T${time}`) : null;
+  const validDt = localDt !== null && !Number.isNaN(localDt.getTime());
+  const farEnough = validDt && localDt!.getTime() >= Date.now() + 5 * 60 * 1000;
+  const utcLabel = validDt ? `= ${localDt!.toISOString().slice(11, 16)} UTC` : "";
+  const whenLabel = validDt
+    ? localDt!.toLocaleString(locale, { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
+    : "";
+
+  const seg = (key: "now" | "schedule", icon: ReactNode, label: string) => (
+    <button
+      type="button"
+      onClick={() => setMode(key)}
+      className={cn(
+        "inline-flex flex-1 items-center justify-center gap-1.5 rounded-sm border px-3 py-2 text-small font-medium transition-colors",
+        mode === key ? "border-border bg-surface text-text shadow-sm" : "border-transparent text-text-muted hover:text-text",
+      )}
+    >
+      {icon}
+      {label}
+    </button>
+  );
+  const fieldCls = "h-9 rounded-md border border-border bg-surface px-2.5 text-small text-text outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 max-md:h-11 max-md:text-[16px]";
+
   return (
     <div
       className="fixed inset-0 z-40 grid place-items-center bg-ink-950/55 p-6 backdrop-blur-sm max-md:place-items-end max-md:p-0"
       role="dialog"
       aria-modal="true"
       onMouseDown={(e) => {
-        if (e.target === e.currentTarget && !publishing) onClose();
+        if (e.target === e.currentTarget && !busy) onClose();
       }}
     >
       <div
@@ -930,8 +1005,31 @@ export function StudioPublishDialog({
             <p className="mt-1 text-small text-text-muted">{t("studio.publish_sub")}</p>
           </div>
         </div>
+
+        <div className="mt-4 flex gap-1 rounded-md border border-border bg-surface-2 p-1">
+          {seg("now", <IcSend size={15} />, t("studio.publish_now"))}
+          {seg("schedule", <IcClock size={15} />, t("studio.schedule"))}
+        </div>
+
+        {mode === "schedule" && (
+          <div className="mt-3 grid grid-cols-2 gap-2.5">
+            <label className="flex flex-col gap-1 text-caption font-medium text-text-subtle">
+              {t("studio.sched_date")}
+              <input type="date" value={date} min={new Date().toISOString().slice(0, 10)} onChange={(e) => setDate(e.target.value)} className={fieldCls} />
+            </label>
+            <label className="flex flex-col gap-1 text-caption font-medium text-text-subtle">
+              {t("studio.sched_time")}
+              <input type="time" value={time} onChange={(e) => setTime(e.target.value)} className={fieldCls} />
+            </label>
+            <p className="col-span-2 inline-flex items-center gap-1.5 text-caption text-text-subtle">
+              <IcClock size={12} />
+              {utcLabel} · {t("studio.sched_min")}
+            </p>
+          </div>
+        )}
+
         {account && (
-          <div className="mt-4 flex items-center gap-2.5 rounded-md border border-border bg-surface-2 px-3 py-2.5">
+          <div className="mt-3.5 flex items-center gap-2.5 rounded-md border border-border bg-surface-2 px-3 py-2.5">
             <AccountFace url={account.avatarUrl} initials={account.initials} size={30} />
             <span className="min-w-0">
               <span className="block truncate text-small font-semibold">{account.name}</span>
@@ -939,19 +1037,34 @@ export function StudioPublishDialog({
             </span>
           </div>
         )}
-        <div className="mt-3.5 max-h-[220px] overflow-y-auto whitespace-pre-wrap rounded-md border border-border bg-surface-2 p-3.5 text-body leading-[1.6] text-text">
+        <div className="mt-3.5 max-h-[180px] overflow-y-auto whitespace-pre-wrap rounded-md border border-border bg-surface-2 p-3.5 text-body leading-[1.6] text-text">
           {text}
         </div>
         <div className="mt-2.5">
           <CharMeter len={text.length} />
         </div>
         <div className="mt-5 flex items-center justify-end gap-2.5 max-md:flex-col-reverse max-md:items-stretch max-md:gap-2">
-          <button onClick={onClose} disabled={publishing} className={buttonClasses({ variant: "ghost", className: "max-md:min-h-[44px] max-md:w-full" })}>
+          <button onClick={onClose} disabled={busy} className={buttonClasses({ variant: "ghost", className: "max-md:min-h-[44px] max-md:w-full" })}>
             {t("studio.cancel")}
           </button>
-          <Button variant="primary" className="max-md:min-h-[44px] max-md:w-full" icon={<IcCheck size={16} />} loading={publishing} disabled={publishing || over || text.length === 0} onClick={onConfirm}>
-            {over ? t("studio.too_long") : t("studio.publish_now")}
-          </Button>
+          {mode === "now" ? (
+            <Button variant="primary" className="max-md:min-h-[44px] max-md:w-full" icon={<IcCheck size={16} />} loading={publishing} disabled={busy || over || empty} onClick={onConfirm}>
+              {over ? t("studio.too_long") : t("studio.publish_now")}
+            </Button>
+          ) : (
+            <Button
+              variant="primary"
+              className="max-md:min-h-[44px] max-md:w-full"
+              icon={<IcClock size={16} />}
+              loading={scheduling}
+              disabled={busy || over || empty || !farEnough}
+              onClick={() => {
+                if (farEnough && localDt) onSchedule?.(localDt.toISOString());
+              }}
+            >
+              {over ? t("studio.too_long") : `${t("studio.schedule_for")} ${whenLabel}`}
+            </Button>
+          )}
         </div>
       </div>
     </div>

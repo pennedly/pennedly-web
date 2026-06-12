@@ -3,7 +3,7 @@
 // API. The live Studio maps its DraftSummary list into the same StudioCard
 // shape, so the card component renders one model for both real + demo.
 
-export type StudioStatus = "draft" | "ready" | "published" | "rejected";
+export type StudioStatus = "draft" | "ready" | "scheduled" | "published" | "rejected";
 
 export type StudioCard = {
   id: number;
@@ -11,6 +11,8 @@ export type StudioCard = {
   kind: "post" | "reply";
   author: { name: string; handle: string | null; initials: string; avatarUrl?: string | null };
   body: string;
+  // For a `scheduled` card — the future UTC instant it will publish at (ISO).
+  scheduledAt?: string | null;
   // Pre-formatted relative time. Real mode passes a localized string; demo uses
   // short universal forms so there's no hydration/locale coupling in mock data.
   time: string;
@@ -58,6 +60,16 @@ export const DEMO_CARDS: StudioCard[] = [
     author: MARA,
     time: "2h",
     body: "Consistency beats talent. Show up every day, keep the bar low enough to clear when you're tired, and let the compounding do the rest. Most people quit one post before it would have worked.",
+    stats: null,
+  },
+  {
+    id: 9007,
+    status: "scheduled",
+    kind: "post",
+    author: MARA,
+    time: "1h",
+    body: "The draft you're avoiding is usually the one worth writing. Open the doc, write one bad sentence, and let it pull you in.",
+    scheduledAt: "2026-06-18T09:00:00.000Z",
     stats: null,
   },
   {

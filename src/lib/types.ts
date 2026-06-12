@@ -259,6 +259,11 @@ export type DraftSummary = {
   // row behind it. Lets the dashboard hide "Publish" + link out instead.
   published: boolean;
   threads_url: string | null;
+  // Manual scheduling (Calendar) — the future UTC time this approved post is
+  // queued for (null = not scheduled) + whether its last scheduled publish
+  // failed. Drives the Studio "Scheduled · date" badge + the Scheduled filter.
+  scheduled_at: string | null;
+  schedule_failed: boolean;
   // Q62: for a reply draft (content_type === "comment_reply"), the comment it
   // answers — who wrote it + their text. null for posts. Studio renders these
   // read-only (generation/approval happen on /app/replies).
@@ -275,6 +280,11 @@ export type ApprovalResult = {
   status: string;
   approved_content_id: number | null;
   edited?: boolean;
+};
+
+export type ScheduleResult = {
+  draft_id: number;
+  scheduled_at: string | null;
 };
 
 export type PublishResult = {

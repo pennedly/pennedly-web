@@ -49,6 +49,7 @@ import type {
   PublishResult,
   RefineResult,
   RoleBook,
+  ScheduleResult,
   RoleBookSections,
   StyleRule,
   StyleRulesList,
@@ -449,6 +450,27 @@ export async function deleteDraft(
 
 export async function publishDraft(draftId: number): Promise<PublishResult> {
   return fetchApi<PublishResult>(`/api/drafts/${draftId}/publish`, {
+    method: "POST",
+  });
+}
+
+// Pin an approved post draft to a future UTC time (the worker publishes it
+// then). Re-call to reschedule. `scheduledAtIso` is a full ISO-8601 instant.
+export async function scheduleDraft(
+  draftId: number,
+  scheduledAtIso: string,
+): Promise<ScheduleResult> {
+  return fetchApi<ScheduleResult>(`/api/drafts/${draftId}/schedule`, {
+    method: "POST",
+    body: JSON.stringify({ scheduled_at: scheduledAtIso }),
+  });
+}
+
+// Drop a draft's schedule — back to a plain approved draft.
+export async function unscheduleDraft(
+  draftId: number,
+): Promise<ScheduleResult> {
+  return fetchApi<ScheduleResult>(`/api/drafts/${draftId}/unschedule`, {
     method: "POST",
   });
 }
