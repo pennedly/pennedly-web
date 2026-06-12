@@ -1096,7 +1096,6 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "studio.sched_date": "Дата",
   "studio.sched_time": "Час",
   "studio.sched_min": "щонайменше за 5 хв",
-  "studio.schedule_for": "Запланувати на",
   "studio.toast_scheduled": "Заплановано",
   "studio.tab_scheduled": "Заплановані",
   "studio.badge_scheduled": "Заплановано",

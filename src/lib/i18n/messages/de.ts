@@ -1101,7 +1101,6 @@ export const de: Partial<Record<MessageKey, string>> = {
   "studio.sched_date": "Datum",
   "studio.sched_time": "Uhrzeit",
   "studio.sched_min": "mindestens 5 Min ab jetzt",
-  "studio.schedule_for": "Planen für",
   "studio.toast_scheduled": "Geplant",
   "studio.tab_scheduled": "Geplant",
   "studio.badge_scheduled": "Geplant",

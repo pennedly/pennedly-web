@@ -929,7 +929,7 @@ export function StudioPublishDialog({
   onConfirm: () => void;
   onSchedule?: (scheduledAtIso: string) => void;
 }) {
-  const { t, locale } = useTranslation();
+  const { t } = useTranslation();
   const [mode, setMode] = useState<"now" | "schedule">("now");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
@@ -964,9 +964,6 @@ export function StudioPublishDialog({
   const validDt = localDt !== null && !Number.isNaN(localDt.getTime());
   const farEnough = validDt && localDt!.getTime() >= Date.now() + 5 * 60 * 1000;
   const utcLabel = validDt ? `= ${localDt!.toISOString().slice(11, 16)} UTC` : "";
-  const whenLabel = validDt
-    ? localDt!.toLocaleString(locale, { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
-    : "";
 
   const seg = (key: "now" | "schedule", icon: ReactNode, label: string) => (
     <button
@@ -1062,7 +1059,7 @@ export function StudioPublishDialog({
                 if (farEnough && localDt) onSchedule?.(localDt.toISOString());
               }}
             >
-              {over ? t("studio.too_long") : `${t("studio.schedule_for")} ${whenLabel}`}
+              {over ? t("studio.too_long") : t("studio.schedule")}
             </Button>
           )}
         </div>

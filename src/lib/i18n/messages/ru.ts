@@ -173,7 +173,6 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "studio.sched_date": "Дата",
   "studio.sched_time": "Время",
   "studio.sched_min": "минимум через 5 минут",
-  "studio.schedule_for": "Запланировать на",
   "studio.toast_scheduled": "Запланировано",
   "studio.tab_scheduled": "Запланированные",
   "studio.badge_scheduled": "Запланировано",

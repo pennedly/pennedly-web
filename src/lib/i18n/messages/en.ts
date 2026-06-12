@@ -173,7 +173,6 @@ export const en = {
   "studio.sched_date": "Date",
   "studio.sched_time": "Time",
   "studio.sched_min": "at least 5 min from now",
-  "studio.schedule_for": "Schedule for",
   "studio.toast_scheduled": "Scheduled",
   "studio.tab_scheduled": "Scheduled",
   "studio.badge_scheduled": "Scheduled",
