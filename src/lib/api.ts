@@ -90,7 +90,16 @@ export class ApiError extends Error {
   status: number;
   detail: unknown;
   constructor(status: number, detail: unknown) {
-    super(`API ${status}`);
+    // Surface the backend's reason (FastAPI returns `{detail: "..."}`) in the
+    // message so a toast says *why* — e.g. "monthly reply limit reached (429)"
+    // instead of a bare "API 429".
+    const reason =
+      typeof detail === "string"
+        ? detail
+        : detail && typeof detail === "object" && typeof (detail as { detail?: unknown }).detail === "string"
+          ? (detail as { detail: string }).detail
+          : "";
+    super(reason ? `${reason} (${status})` : `API ${status}`);
     this.status = status;
     this.detail = detail;
   }
