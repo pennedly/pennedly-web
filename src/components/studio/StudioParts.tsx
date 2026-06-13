@@ -37,6 +37,7 @@ import {
   IcSend,
   IcSparkle,
   IcStudio,
+  IcThread,
   IcTrash,
   IcTweak,
   IcUndo,
@@ -56,6 +57,17 @@ export const DRAFT_LIMIT = 500;
 export const MEDIA_MAX = 10;
 const MEDIA_MAX_BYTES = 8 * 1024 * 1024;
 const MEDIA_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+// Mirror of the backend `thread_split` rule: a line of only `---` separates the
+// parts of a thread chain. Returns a single segment for an ordinary post, so
+// callers branch on length. Each part must stay within DRAFT_LIMIT (Threads
+// caps a single post at 500 chars).
+export function splitThreadSegments(text: string): string[] {
+  const parts = text.split(/^[ \t]*---[ \t]*$/m).map((p) => p.trim());
+  const segments = parts.filter((p) => p.length > 0);
+  return segments.length > 0 ? segments : [text.trim()];
+}
+
 export type Density = "comfortable" | "compact";
 
 export type CardHandlers = {
@@ -304,6 +316,15 @@ export function DraftCard({
   const shownBody = translated ? translated.body : card.body;
   const charLen = (translated ? translated.body : card.body).length;
 
+  // Thread chains: a body with `---`-only lines publishes as a multi-part
+  // thread. We render the parts stacked, and in edit mode meter each part
+  // against the per-post limit (the total can exceed it across parts).
+  const viewSegments = splitThreadSegments(shownBody);
+  const isThreadView = viewSegments.length > 1;
+  const editSegments = splitThreadSegments(editText);
+  const isThreadEdit = editSegments.length > 1;
+  const editThreadOverLimit = editSegments.some((s) => s.length > DRAFT_LIMIT);
+
   async function runTweak(instruction: string) {
     if (!instruction.trim() || revising) return;
     setTweakOpen(false);
@@ -472,8 +493,51 @@ export function DraftCard({
             rows={Math.min(12, Math.max(3, editText.split("\n").length + 1))}
             className="w-full resize-y rounded-md border border-accent bg-surface px-3 py-2.5 text-body leading-[1.62] text-text ring-[3px] ring-accent/[0.18] focus:outline-none"
           />
-          <div className="mt-2.5">
-            <CharMeter len={editText.length} />
+          <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-2">
+            <button
+              type="button"
+              onClick={() => setEditText((tx) => `${tx.trimEnd()}\n---\n`)}
+              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 py-1 text-caption text-text-muted transition-colors hover:bg-surface-2 hover:text-text"
+            >
+              <IcThread size={13} /> {t("studio.thread_new_part")}
+            </button>
+            {isThreadEdit ? (
+              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-caption">
+                {editSegments.map((s, i) => (
+                  <span
+                    key={i}
+                    className={cn(
+                      "tabular-nums",
+                      s.length > DRAFT_LIMIT ? "font-semibold text-danger" : "text-text-subtle",
+                    )}
+                  >
+                    {t("studio.thread_part")} {i + 1} · {s.length}/{DRAFT_LIMIT}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <CharMeter len={editText.length} />
+            )}
+          </div>
+        </div>
+      ) : isThreadView ? (
+        <div className={cn(compact ? "mt-[9px]" : "mt-3")}>
+          <div className="mb-1.5 inline-flex items-center gap-1.5 text-caption text-text-muted">
+            <IcThread size={13} /> {t("studio.thread_badge")} · {viewSegments.length}
+          </div>
+          <div className="flex flex-col gap-1.5">
+            {viewSegments.map((seg, i) => (
+              <div
+                key={i}
+                className={cn(
+                  "whitespace-pre-wrap rounded-md border border-border bg-surface-2/40 px-3 py-2 leading-[1.6] text-text",
+                  compact ? "text-small" : "text-body",
+                  status === "published" && "text-text-muted",
+                )}
+              >
+                {seg}
+              </div>
+            ))}
           </div>
         </div>
       ) : (
@@ -623,7 +687,10 @@ export function DraftCard({
               variant="primary"
               className="max-md:h-auto max-md:min-h-[44px] max-md:flex-1 max-md:whitespace-normal"
               icon={<IcCheck size={15} />}
-              disabled={editText.trim().length === 0 || editText.length > DRAFT_LIMIT}
+              disabled={
+                editText.trim().length === 0 ||
+                (isThreadEdit ? editThreadOverLimit : editText.length > DRAFT_LIMIT)
+              }
               onClick={() => {
                 h.onSaveEdit(card, editText);
                 setEditing(false);
