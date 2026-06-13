@@ -21,7 +21,9 @@ import {
   getTokens,
   publishDraft,
   restoreComment,
+  setDraftMedia,
   skipComment,
+  uploadMedia,
 } from "@/lib/api";
 import { captureEvent } from "@/lib/analytics";
 import { useSelectedAccountId } from "@/lib/account";
@@ -342,6 +344,14 @@ export default function RepliesPage() {
       if (draftId !== null) setEdits((s) => ({ ...s, [draftId]: text }));
       toast(t("replies.toast_updated"));
     },
+    onUploadImage: async (file) => {
+      if (accountId === null) throw new Error("no account");
+      return uploadMedia(accountId, file);
+    },
+    onSetMedia: async (c, media) => {
+      const draftId = findDraftId(c.id);
+      if (draftId !== null) await setDraftMedia(draftId, media);
+    },
   };
 
   // ════════════ demo handlers ════════════
@@ -374,6 +384,8 @@ export default function RepliesPage() {
       demoSet(c.id, { reply: text });
       toast(t("replies.toast_updated"));
     },
+    onUploadImage: async (file) => ({ url: URL.createObjectURL(file) }),
+    onSetMedia: async (c, media) => demoSet(c.id, { media }),
   };
 
   const handlers = demoOn ? demoHandlers : realHandlers;

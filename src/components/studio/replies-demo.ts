@@ -20,6 +20,8 @@ export type ReplyComment = {
   replyTranslated?: string | null;
   time: string;
   repliedTime?: string | null;
+  // One image attached to the reply draft (relative /media/... URL).
+  media?: { url: string; alt?: string | null }[];
 };
 
 export type ReplyPost = {

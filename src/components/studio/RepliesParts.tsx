@@ -8,6 +8,7 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 
+import { mediaUrl } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { Button, buttonClasses } from "@/components/ui/button";
@@ -20,6 +21,7 @@ import {
   IcCheck,
   IcExternal,
   IcGlobe,
+  IcImage,
   IcNib,
   IcPencil,
   IcReplies,
@@ -61,6 +63,10 @@ export type ReplyHandlers = {
   onSkip: (c: ReplyComment) => void; // ✕ remove from queue
   onRestore: (c: ReplyComment) => void;
   onSaveEdit: (c: ReplyComment, text: string) => void;
+  // Attach one image to a reply draft (the backend supports an image on a
+  // reply; carousel/video in replies is unverified, so it's a single image).
+  onUploadImage: (file: File) => Promise<{ url: string }>;
+  onSetMedia: (c: ReplyComment, media: { url: string }[]) => Promise<void>;
 };
 
 // ─────────────────────────────── PostMaster ─────────────────────────────────
@@ -306,6 +312,85 @@ const CBADGE: Record<ReplyStatus, { tone: BadgeTone; key: MessageKey; dot: boole
 };
 
 // ─────────────────────────────── CommentCard ────────────────────────────────
+const REPLY_IMG_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+// One image on a reply draft (the backend caps a reply at a single image).
+function ReplyImage({ c, h }: { c: ReplyComment; h: ReplyHandlers }) {
+  const { t } = useTranslation();
+  const [media, setMedia] = useState<{ url: string }[]>(c.media ?? []);
+  const [uploading, setUploading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  async function pick() {
+    const f = fileRef.current?.files?.[0];
+    if (fileRef.current) fileRef.current.value = "";
+    if (!f) return;
+    setErr(null);
+    if (!REPLY_IMG_TYPES.includes(f.type)) return setErr(t("studio.image_bad_type"));
+    if (f.size > 8 * 1024 * 1024) return setErr(t("studio.image_too_large"));
+    setUploading(true);
+    try {
+      const { url } = await h.onUploadImage(f);
+      const next = [{ url }];
+      setMedia(next);
+      await h.onSetMedia(c, next);
+    } catch {
+      setErr(t("studio.image_failed"));
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function remove() {
+    const prev = media;
+    setMedia([]);
+    setErr(null);
+    try {
+      await h.onSetMedia(c, []);
+    } catch {
+      setMedia(prev);
+      setErr(t("studio.image_failed"));
+    }
+  }
+
+  return (
+    <div className="mt-2.5">
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        onChange={pick}
+        className="hidden"
+      />
+      {media.length === 0 ? (
+        <button
+          type="button"
+          disabled={uploading}
+          onClick={() => fileRef.current?.click()}
+          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 py-1 text-caption text-text-muted transition-colors hover:bg-surface-2 hover:text-text disabled:opacity-60"
+        >
+          <IcImage size={14} /> {uploading ? t("studio.image_uploading") : t("studio.add_image")}
+        </button>
+      ) : (
+        <div className="relative h-[72px] w-[72px] overflow-hidden rounded-md border border-border bg-surface-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={mediaUrl(media[0].url)} alt="" className="h-full w-full object-cover" />
+          <button
+            type="button"
+            aria-label={t("studio.remove_image")}
+            onClick={remove}
+            className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full border border-border bg-surface text-text shadow-sm transition-colors hover:bg-surface-2"
+          >
+            <IcX size={12} />
+          </button>
+        </div>
+      )}
+      {err && <p className="mt-1 text-caption text-danger">{err}</p>}
+    </div>
+  );
+}
+
 export function CommentCard({
   c,
   youInitials,
@@ -421,6 +506,7 @@ export function CommentCard({
               <>
                 <p className="whitespace-pre-wrap text-small leading-[1.6] text-text">{replyBody}</p>
                 {c.replyLang && <TranslateRow lang={c.replyLang} on={rpTr} onToggle={() => setRpTr((v) => !v)} className="mt-2" />}
+                {(status === "draft" || status === "approved") && <ReplyImage c={c} h={h} />}
               </>
             )}
           </div>
