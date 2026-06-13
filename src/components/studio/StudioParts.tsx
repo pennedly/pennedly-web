@@ -11,6 +11,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { cn } from "@/lib/cn";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
+import type { Idea } from "@/lib/types";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Mono } from "@/components/ui/mono";
 import { AccountFace } from "@/components/ui/avatar";
@@ -654,6 +655,7 @@ export function StudioComposer({
   count,
   onCount,
   onGenerate,
+  onIdeas,
   busy,
   busyCount,
   disabled,
@@ -665,11 +667,27 @@ export function StudioComposer({
   count: number;
   onCount: (n: number) => void;
   onGenerate: () => void;
+  onIdeas: () => Promise<Idea[]>;
   busy: boolean;
   busyCount: number;
   disabled?: boolean;
 }) {
   const { t } = useTranslation();
+  const [ideas, setIdeas] = useState<Idea[] | null>(null);
+  const [ideasBusy, setIdeasBusy] = useState(false);
+  const [ideasErr, setIdeasErr] = useState(false);
+  async function loadIdeas() {
+    setIdeasBusy(true);
+    setIdeasErr(false);
+    try {
+      setIdeas(await onIdeas());
+    } catch {
+      setIdeasErr(true);
+      setIdeas(null);
+    } finally {
+      setIdeasBusy(false);
+    }
+  }
   return (
     <section
       className={cn(
@@ -716,6 +734,15 @@ export function StudioComposer({
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2.5 border-t border-border pt-3">
             <div className="flex gap-1.5 [scrollbar-width:none] max-md:w-full max-md:flex-nowrap max-md:overflow-x-auto max-md:[mask-image:linear-gradient(90deg,#000_calc(100%-20px),transparent)] md:min-w-0 md:flex-1 md:flex-wrap">
+              <button
+                type="button"
+                onClick={loadIdeas}
+                disabled={disabled || ideasBusy}
+                aria-expanded={ideas !== null}
+                className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-accent/40 bg-accent/10 px-2.5 py-1.5 text-small font-medium text-accent transition-colors hover:bg-accent/15 disabled:opacity-50"
+              >
+                <IcSparkle size={13} className={ideasBusy ? "animate-pulse" : ""} /> {t("studio.ideas")}
+              </button>
               {CHIPS.map((k) => (
                 <button
                   key={k}
@@ -749,6 +776,57 @@ export function StudioComposer({
               </Button>
             </div>
           </div>
+          {(ideasBusy || ideas !== null || ideasErr) && (
+            <div className="mt-3 border-t border-border pt-3">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="inline-flex items-center gap-1.5 text-caption font-semibold uppercase tracking-[0.05em] text-text-subtle">
+                  <IcSparkle size={12} className="text-accent" /> {t("studio.ideas_title")}
+                </span>
+                {ideas !== null && !ideasBusy && (
+                  <div className="flex items-center gap-0.5">
+                    <button type="button" onClick={loadIdeas} aria-label={t("studio.ideas_refresh")} className="grid h-7 w-7 place-items-center rounded-md text-text-subtle transition-colors hover:bg-surface-2 hover:text-text">
+                      <IcReload size={13} />
+                    </button>
+                    <button type="button" onClick={() => setIdeas(null)} aria-label={t("studio.ideas_close")} className="grid h-7 w-7 place-items-center rounded-md text-text-subtle transition-colors hover:bg-surface-2 hover:text-text">
+                      <IcX size={13} />
+                    </button>
+                  </div>
+                )}
+              </div>
+              {ideasBusy ? (
+                <div className="flex items-center gap-2 px-1 py-3 text-small text-text-muted">
+                  <IcSparkle size={14} className="animate-pulse text-accent" /> {t("studio.ideas_loading")}
+                </div>
+              ) : ideasErr ? (
+                <div className="flex items-center justify-between gap-2 px-1 py-2 text-small text-text-muted">
+                  <span>{t("studio.ideas_error")}</span>
+                  <button type="button" onClick={loadIdeas} className="font-medium text-accent hover:underline">
+                    {t("studio.ideas_retry")}
+                  </button>
+                </div>
+              ) : ideas && ideas.length > 0 ? (
+                <ul className="flex flex-col gap-1.5">
+                  {ideas.map((idea, i) => (
+                    <li key={i}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onChange(idea.hook);
+                          setIdeas(null);
+                        }}
+                        className="w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-left transition-colors hover:border-accent/45 hover:bg-accent/[0.04]"
+                      >
+                        <span className="block text-small font-medium leading-snug text-text">{idea.hook}</span>
+                        {idea.angle && <span className="mt-0.5 block text-caption text-text-subtle">{idea.angle}</span>}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="px-1 py-2 text-small text-text-muted">{t("studio.ideas_empty")}</div>
+              )}
+            </div>
+          )}
         </>
       )}
     </section>

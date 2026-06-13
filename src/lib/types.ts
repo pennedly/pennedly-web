@@ -233,6 +233,19 @@ export type GeneratedDraft = {
   latency_ms: number;
 };
 
+export type Idea = {
+  hook: string;
+  angle: string;
+};
+
+export type IdeasResult = {
+  ideas: Idea[];
+  model: string;
+  prompt_tokens: number;
+  completion_tokens: number;
+  latency_ms: number;
+};
+
 export type BatchGenerateError = {
   error_kind: "quota" | "generation" | "unknown";
   detail: string;

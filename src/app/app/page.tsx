@@ -19,6 +19,7 @@ import {
   fetchMe,
   fetchMyAccounts,
   fetchOnboardingStatus,
+  generateIdeas,
   generatePost,
   generatePostBatch,
   getTokens,
@@ -551,6 +552,20 @@ export default function Studio() {
               count={demoOn ? Number(tw.drafts) : batchCount}
               onCount={(n) => (demoOn ? setTw("drafts", String(n)) : persistBatchCount(n))}
               onGenerate={demoOn ? demoGenerate : realGenerate}
+              onIdeas={
+                demoOn
+                  ? async () => {
+                      await new Promise((r) => setTimeout(r, 850));
+                      return [
+                        { hook: "The fastest way to find your voice online: publish the thing you're slightly embarrassed by.", angle: "Contrarian take on polish vs. authenticity" },
+                        { hook: "Crickets are data, not a verdict.", angle: "Reframe a quiet post as a signal, not a failure" },
+                        { hook: "I stopped chasing viral and my reach went up. Here's what I did instead.", angle: "Counterintuitive growth story from your own runs" },
+                        { hook: "Consistency beats talent, but only if you make the bar low enough to clear when you're tired.", angle: "Practical systems angle on showing up" },
+                        { hook: "Most people quit one post before it would have worked.", angle: "Short, punchy motivation in your voice" },
+                      ];
+                    }
+                  : async () => (accountId === null ? [] : (await generateIdeas(accountId)).ideas)
+              }
               busy={generating}
               busyCount={busyCount}
               disabled={!demoOn && accountId === null}

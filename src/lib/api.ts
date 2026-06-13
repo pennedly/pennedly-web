@@ -31,6 +31,7 @@ import type {
   FeedResponse,
   FromScratchInput,
   GeneratedDraft,
+  IdeasResult,
   OnboardingPreview,
   OnboardingResult,
   OnboardingStatus,
@@ -392,6 +393,16 @@ export async function generatePost(
       topic_id: topicId ?? null,
       prompt: prompt?.trim() || null,
     }),
+  });
+}
+
+export async function generateIdeas(
+  accountId: number,
+  count = 8,
+): Promise<IdeasResult> {
+  return fetchApi<IdeasResult>("/api/generation/ideas", {
+    method: "POST",
+    body: JSON.stringify({ account_id: accountId, count }),
   });
 }
 
