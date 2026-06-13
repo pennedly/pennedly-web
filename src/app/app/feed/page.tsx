@@ -167,6 +167,7 @@ export default function FeedPage() {
           reposts: fp.reposts,
           settling: fp.is_fresh,
           autoReply: fp.auto_reply ?? (replyMode === "all"),
+          media: fp.media ?? [],
         }));
     return sort === "top" ? [...list].sort((a, b) => b.views - a.views) : list;
   }, [demoOn, demoPosts, posts, sort, locale, replyMode]);

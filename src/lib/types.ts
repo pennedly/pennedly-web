@@ -454,6 +454,9 @@ export type FeedPost = {
   vs_avg_views: number | null; // views ÷ recent-average views
   is_fresh: boolean; // published < 24h ago — still settling
   auto_reply: boolean | null; // per-post override; null = inherit the account reply_mode
+  // Images carried by the post (Pennedly-published posts only; relative
+  // /media/... URLs — wrap in api.mediaUrl()). Empty for text-only/external.
+  media: { url: string; alt: string | null }[];
 };
 
 export type FeedReference = {

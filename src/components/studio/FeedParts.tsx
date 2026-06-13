@@ -9,6 +9,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
+import { mediaUrl } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { Button, buttonClasses } from "@/components/ui/button";
@@ -22,17 +23,20 @@ import {
   IcCheck,
   IcChevDown,
   IcClock,
+  IcExpand,
   IcExternal,
   IcEye,
   IcFeed,
   IcGlobe,
   IcHeart,
+  IcImage,
   IcMore,
   IcReply,
   IcRepost,
   IcStudio,
   IcTrash,
   IcUndo,
+  IcX,
 } from "@/components/icons";
 import { UI_LANGS, type UiLang } from "@/components/studio/studio-demo";
 
@@ -60,6 +64,7 @@ export type FeedCardModel = {
   reposts: number;
   settling?: boolean;
   autoReply: boolean;
+  media?: { url: string; alt?: string | null }[];
 };
 
 export type FeedHandlers = {
@@ -339,6 +344,164 @@ function FeedMenu({
 }
 
 // ─────────────────────────────── FeedCard ───────────────────────────────────
+type FeedPic = { url: string; alt?: string | null };
+
+// Images on a published post: a single image, or a swipeable carousel. Click to
+// open the lightbox. Renders nothing for a text-only post. (Video/GIF/link/poll/
+// quote variants from the spec are deferred until the feed carries that data.)
+function FeedMedia({ media }: { media?: FeedPic[] | null }) {
+  const { t } = useTranslation();
+  const [idx, setIdx] = useState(0);
+  const [lightbox, setLightbox] = useState<number | null>(null);
+  const [broken, setBroken] = useState<Record<number, boolean>>({});
+  if (!media || media.length === 0) return null;
+  const total = media.length;
+  const cur = Math.min(idx, total - 1);
+
+  const frame = (i: number) =>
+    broken[i] ? (
+      <div className="flex aspect-[3/2] w-full flex-col items-center justify-center gap-2 bg-surface-2 text-center text-text-subtle">
+        <span className="grid h-10 w-10 place-items-center rounded-md border border-border">
+          <IcImage size={20} />
+        </span>
+        <span className="text-small font-semibold text-text-muted">{t("feed.image_unavailable")}</span>
+      </div>
+    ) : (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={mediaUrl(media[i].url)}
+        alt={media[i].alt ?? ""}
+        onError={() => setBroken((b) => ({ ...b, [i]: true }))}
+        className="h-full w-full object-cover"
+      />
+    );
+
+  return (
+    <div className="mt-3.5 max-md:mt-3">
+      {total === 1 ? (
+        <button
+          type="button"
+          onClick={() => setLightbox(0)}
+          className="relative block w-full overflow-hidden rounded-md border border-border bg-surface-2"
+        >
+          <div className="aspect-[3/2] w-full">{frame(0)}</div>
+          <span className="pointer-events-none absolute bottom-2.5 right-2.5 inline-flex items-center gap-[5px] rounded-full bg-black/60 px-[9px] py-1 text-caption font-semibold text-white backdrop-blur-sm">
+            <IcExpand size={13} /> {t("feed.expand")}
+          </span>
+        </button>
+      ) : (
+        <div className="relative overflow-hidden rounded-md border border-border bg-surface-2">
+          <div
+            className="flex transition-transform duration-300 ease-out motion-reduce:transition-none"
+            style={{ transform: `translateX(-${cur * 100}%)` }}
+          >
+            {media.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setLightbox(i)}
+                className="block aspect-[3/2] w-full shrink-0"
+              >
+                {frame(i)}
+              </button>
+            ))}
+          </div>
+          <span className="pointer-events-none absolute right-2.5 top-2.5 rounded-full bg-black/60 px-[9px] py-1 text-caption font-semibold text-white backdrop-blur-sm">
+            {cur + 1} / {total}
+          </span>
+          {cur > 0 && (
+            <button
+              type="button"
+              aria-label={t("feed.prev")}
+              onClick={() => setIdx(cur - 1)}
+              className="absolute left-2.5 top-1/2 hidden h-8 w-8 -translate-y-1/2 place-items-center rounded-full bg-black/50 text-white backdrop-blur-sm md:grid"
+            >
+              <IcArrowLeft size={16} />
+            </button>
+          )}
+          {cur < total - 1 && (
+            <button
+              type="button"
+              aria-label={t("feed.next")}
+              onClick={() => setIdx(cur + 1)}
+              className="absolute right-2.5 top-1/2 hidden h-8 w-8 -translate-y-1/2 place-items-center rounded-full bg-black/50 text-white backdrop-blur-sm md:grid"
+            >
+              <IcArrowLeft size={16} className="rotate-180" />
+            </button>
+          )}
+          <div className="absolute bottom-2.5 left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-black/40 px-[9px] py-[5px] backdrop-blur-sm">
+            {media.map((_, i) => (
+              <span key={i} className={cn("h-1.5 w-1.5 rounded-full", i === cur ? "bg-white" : "bg-white/50")} />
+            ))}
+          </div>
+        </div>
+      )}
+      {lightbox !== null && (
+        <FeedLightbox media={media} start={lightbox} onClose={() => setLightbox(null)} />
+      )}
+    </div>
+  );
+}
+
+function FeedLightbox({ media, start, onClose }: { media: FeedPic[]; start: number; onClose: () => void }) {
+  const { t } = useTranslation();
+  const [i, setI] = useState(start);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft") setI((x) => Math.max(0, x - 1));
+      if (e.key === "ArrowRight") setI((x) => Math.min(media.length - 1, x + 1));
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [media.length, onClose]);
+  const m = media[Math.min(i, media.length - 1)];
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col bg-black/90 backdrop-blur-sm" onClick={onClose}>
+      <div className="flex items-center gap-3 px-4 py-3.5 text-white" onClick={(e) => e.stopPropagation()}>
+        <button
+          type="button"
+          aria-label={t("feed.close")}
+          onClick={onClose}
+          className="grid h-[34px] w-[34px] place-items-center rounded-full bg-white/15 hover:bg-white/25"
+        >
+          <IcX size={18} />
+        </button>
+        {media.length > 1 && <span className="font-mono text-xs text-white/80">{i + 1} / {media.length}</span>}
+      </div>
+      <div className="relative grid min-h-0 flex-1 place-items-center px-4 py-2" onClick={(e) => e.stopPropagation()}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={mediaUrl(m.url)} alt={m.alt ?? ""} className="max-h-full max-w-full rounded-md border border-white/15 object-contain" />
+        {media.length > 1 && i > 0 && (
+          <button
+            type="button"
+            aria-label={t("feed.prev")}
+            onClick={() => setI(i - 1)}
+            className="absolute left-[18px] top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white/15 text-white"
+          >
+            <IcArrowLeft size={18} />
+          </button>
+        )}
+        {media.length > 1 && i < media.length - 1 && (
+          <button
+            type="button"
+            aria-label={t("feed.next")}
+            onClick={() => setI(i + 1)}
+            className="absolute right-[18px] top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white/15 text-white"
+          >
+            <IcArrowLeft size={18} className="rotate-180" />
+          </button>
+        )}
+      </div>
+      {m.alt && (
+        <div className="px-[18px] pb-[18px] pt-3 text-center text-small text-white/75" onClick={(e) => e.stopPropagation()}>
+          {m.alt}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function FeedCard({
   p,
   baselineViews,
@@ -421,6 +584,9 @@ export function FeedCard({
           </button>
         </div>
       )}
+
+      {/* media — images carried by the post (between text and metrics) */}
+      <FeedMedia media={p.media} />
 
       {/* metrics — desktop: one inline row; mobile: hero on its own line, subs in an even row below */}
       <div className="mt-3.5 flex flex-wrap items-baseline gap-x-[22px] gap-y-2.5 max-md:flex-col max-md:items-stretch max-md:gap-y-3">
