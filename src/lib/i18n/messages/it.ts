@@ -998,16 +998,18 @@ export const it: Partial<Record<MessageKey, string>> = {
   // ── Landing ────────────────────────────────────────────────────
   "landing.sign_in": "Accedi",
   "landing.status": "In sviluppo · beta su invito",
-  "landing.tagline": "Gestisci Threads da professionista, con la tua voce.",
-  "landing.lead_head":
-    "Pennedly scrive post e risposte virali nella tua voce, analizza cosa funziona e ti mostra cosa fa presa su ogni account che gestisci.",
+  "landing.trust1": "All'inizio solo lettura",
+  "landing.trust2": "Niente viene pubblicato senza la tua approvazione",
+  "landing.trust3": "Disconnetti quando vuoi",
+  "landing.founder": "Creato da un creator che lo usa ogni giorno sui propri account Threads.",
+  "landing.tagline": "I post ti danno visibilità. Le risposte ti danno follower.",
+  "landing.lead_head": "Pennedly scrive post e risposte con la tua voce, capisce cosa funziona con il tuo pubblico e gestisce tutti i tuoi account, in qualsiasi lingua.",
   "landing.lead_body": "Ogni parola la approvi tu.",
-  "landing.lead_emph": "E quando vuoi, attivi il pilota automatico.",
+  "landing.lead_emph": "L'automazione è opzionale, mai l'impostazione predefinita.",
   "landing.feat_eyebrow": "Il prodotto",
   "landing.feat_title": "Un unico spazio per tutti i tuoi account.",
-  "landing.feat_viral_title": "Post virali nella tua voce",
-  "landing.feat_viral_desc":
-    "Bozze fatte per fare presa e per suonare come te, non come un'AI qualunque.",
+  "landing.feat_viral_title": "Post che suonano come te",
+  "landing.feat_viral_desc": "Bozze costruite dai tuoi post migliori, così suonano come te e non come un'IA generica.",
   "landing.feat_replies_title": "Risposte che suonano come te",
   "landing.feat_replies_desc":
     "Scrive le risposte ai tuoi commenti nella tua voce, così resti in ogni conversazione.",
@@ -1015,8 +1017,7 @@ export const it: Partial<Record<MessageKey, string>> = {
   "landing.feat_audits_desc":
     "Ogni settimana rivede cosa ha funzionato e propone piccoli ritocchi. Tu approvi, lui misura l'effetto.",
   "landing.feat_analytics_title": "Analisi, non rumore",
-  "landing.feat_analytics_desc":
-    "Vedi cosa fa presa davvero: quali post sono diventati virali, quali no e perché.",
+  "landing.feat_analytics_desc": "Scopri cosa funziona davvero: quali post sono decollati, quali hanno floppato e perché.",
   "landing.feat_autopilot_title": "Pilota automatico, decidi tu",
   "landing.feat_autopilot_desc":
     "Affida post e risposte a un programma, oppure continua ad approvare ogni parola.",

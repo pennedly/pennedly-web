@@ -323,7 +323,7 @@ function LandingContent({ showSample }: { showSample: boolean }) {
                 data-fx="btnprimary"
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-primary px-[22px] text-body font-medium text-primary-foreground transition-[background-color,transform] duration-[180ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] hover:bg-[color-mix(in_srgb,var(--color-primary)_88%,var(--color-bg))] active:translate-y-[0.5px]"
               >
-                {t("landing.sign_in")} <IcArrowRight size={17} />
+                {t("landing.cta")} <IcArrowRight size={17} />
               </Link>
               <a
                 href={`mailto:${CONTACT_EMAIL}`}
@@ -333,6 +333,27 @@ function LandingContent({ showSample }: { showSample: boolean }) {
                 <IcMail size={15} className="text-text-subtle" /> {CONTACT_EMAIL}
               </a>
             </div>
+            {/* Trust strip — lift the reassurances that otherwise hide behind login */}
+            <ul
+              className={cn(
+                "mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-small text-text-muted",
+                !showSample && "min-[881px]:justify-center",
+              )}
+            >
+              {[t("landing.trust1"), t("landing.trust2"), t("landing.trust3")].map((s) => (
+                <li key={s} className="inline-flex items-center gap-1.5">
+                  <IcCheck size={15} className="text-success" /> {s}
+                </li>
+              ))}
+            </ul>
+            <p
+              className={cn(
+                "mt-3.5 max-w-[44ch] text-small text-text-subtle [text-wrap:pretty]",
+                !showSample && "min-[881px]:mx-auto",
+              )}
+            >
+              {t("landing.founder")}
+            </p>
           </div>
           {showSample && <StudioWindow />}
         </div>

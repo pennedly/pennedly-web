@@ -994,15 +994,18 @@ export const es: Partial<Record<MessageKey, string>> = {
   "login.signing_google": "Abriendo Google…",
   "landing.sign_in": "Iniciar sesión",
   "landing.status": "En desarrollo · beta por invitación",
-  "landing.tagline": "Lleva Threads como un pro, con tu propia voz.",
-  "landing.lead_head":
-    "Pennedly redacta publicaciones y respuestas virales con tu voz, audita lo que funciona y te muestra qué cala en cada cuenta que llevas.",
+  "landing.trust1": "Solo lectura al principio",
+  "landing.trust2": "Nada se publica sin tu aprobación",
+  "landing.trust3": "Desconecta cuando quieras",
+  "landing.founder": "Hecho por un creador que lo usa cada día en sus propias cuentas de Threads.",
+  "landing.tagline": "Los posts te dan visibilidad. Las respuestas te dan seguidores.",
+  "landing.lead_head": "Pennedly redacta posts y respuestas con tu voz, aprende qué conecta con tu audiencia y gestiona todas tus cuentas, en cualquier idioma.",
   "landing.lead_body": "Cada palabra la apruebas tú.",
-  "landing.lead_emph": "Y si quieres, activas el piloto automático.",
+  "landing.lead_emph": "La automatización es opcional, nunca la opción por defecto.",
   "landing.feat_eyebrow": "El producto",
   "landing.feat_title": "Un espacio de trabajo para todas tus cuentas.",
-  "landing.feat_viral_title": "Publicaciones virales con tu voz",
-  "landing.feat_viral_desc": "Borradores que calan y suenan a ti, no a una IA genérica.",
+  "landing.feat_viral_title": "Posts que suenan a ti",
+  "landing.feat_viral_desc": "Borradores creados a partir de tus mejores posts, para que suenen a ti y no a una IA genérica.",
   "landing.feat_replies_title": "Respuestas que suenan a ti",
   "landing.feat_replies_desc":
     "Redacta respuestas a tus comentarios con tu voz, así sigues en cada conversación.",
@@ -1010,8 +1013,7 @@ export const es: Partial<Record<MessageKey, string>> = {
   "landing.feat_audits_desc":
     "Cada semana revisa qué funcionó y propone pequeños ajustes. Tú apruebas; él mide el efecto.",
   "landing.feat_analytics_title": "Analítica, no ruido",
-  "landing.feat_analytics_desc":
-    "Ve qué cala de verdad: qué publicaciones se hicieron virales, cuáles fracasaron y por qué.",
+  "landing.feat_analytics_desc": "Ve qué funciona de verdad: qué posts despegaron, cuáles fracasaron y por qué.",
   "landing.feat_autopilot_title": "Piloto automático, tú decides",
   "landing.feat_autopilot_desc":
     "Delega publicaciones y respuestas por horario, o sigue aprobando cada palabra.",

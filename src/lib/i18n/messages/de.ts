@@ -1001,16 +1001,18 @@ export const de: Partial<Record<MessageKey, string>> = {
   "login.signing_google": "Öffne Google…",
   "landing.sign_in": "Anmelden",
   "landing.status": "In Entwicklung · Beta nur mit Einladung",
-  "landing.tagline": "Führe Threads wie ein Profi, in deiner eigenen Stimme.",
-  "landing.lead_head":
-    "Pennedly schreibt virale Beiträge und Antworten in deiner Stimme, prüft, was funktioniert, und zeigt dir, was auf jedem deiner Konten ankommt.",
+  "landing.trust1": "Zu Beginn nur Lesezugriff",
+  "landing.trust2": "Nichts wird gepostet, bevor du es freigibst",
+  "landing.trust3": "Jederzeit trennbar",
+  "landing.founder": "Von einem Creator gebaut, der es täglich auf seinen eigenen Threads-Accounts nutzt.",
+  "landing.tagline": "Posts machen dich sichtbar. Antworten bringen dir Follower.",
+  "landing.lead_head": "Pennedly schreibt Posts und Antworten in deiner Stimme, erkennt, was bei deinem Publikum ankommt, und betreut alle deine Accounts, in jeder Sprache.",
   "landing.lead_body": "Jedes Wort gibst du frei.",
-  "landing.lead_emph": "Und willst du, schaltest du den Autopilot dazu.",
+  "landing.lead_emph": "Automatisierung ist optional, niemals Standard.",
   "landing.feat_eyebrow": "Das Produkt",
   "landing.feat_title": "Ein Arbeitsplatz für all deine Konten.",
-  "landing.feat_viral_title": "Virale Beiträge in deiner Stimme",
-  "landing.feat_viral_desc":
-    "Entwürfe, die ankommen und nach dir klingen, nicht nach einer 08/15-KI.",
+  "landing.feat_viral_title": "Posts, die nach dir klingen",
+  "landing.feat_viral_desc": "Entwürfe aus deinen eigenen besten Posts, damit sie klingen wie von dir, nicht wie generische KI.",
   "landing.feat_replies_title": "Antworten, wie du sie schreibst",
   "landing.feat_replies_desc":
     "Pennedly entwirft Antworten auf deine Kommentare in deiner Stimme, damit du in jedem Gespräch dabei bist.",
@@ -1018,8 +1020,7 @@ export const de: Partial<Record<MessageKey, string>> = {
   "landing.feat_audits_desc":
     "Jede Woche schaut sich Pennedly an, was funktioniert hat, und schlägt kleine Anpassungen vor. Du gibst frei, Pennedly misst den Effekt.",
   "landing.feat_analytics_title": "Analysen, kein Rauschen",
-  "landing.feat_analytics_desc":
-    "Sieh, was wirklich ankommt: welche Beiträge viral gingen, welche floppten und warum.",
+  "landing.feat_analytics_desc": "Sieh, was wirklich ankommt: welche Posts durchstarteten, welche floppten und warum.",
   "landing.feat_autopilot_title": "Autopilot, deine Entscheidung",
   "landing.feat_autopilot_desc":
     "Gib Posten und Antworten nach Zeitplan ab oder gib weiterhin jedes Wort frei.",

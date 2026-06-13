@@ -995,18 +995,18 @@ export const pt: Partial<Record<MessageKey, string>> = {
   "login.signing_google": "Abrindo o Google…",
   "landing.sign_in": "Entrar",
   "landing.status": "Em desenvolvimento · beta por convite",
-  "landing.tagline":
-    "Toque seu Threads como um profissional, na sua própria voz.",
-  "landing.lead_head":
-    "O Pennedly escreve posts e respostas virais na sua voz, audita o que está funcionando e mostra o que engaja em cada conta que você toca.",
+  "landing.trust1": "Somente leitura no início",
+  "landing.trust2": "Nada é publicado sem a sua aprovação",
+  "landing.trust3": "Desconecte quando quiser",
+  "landing.founder": "Feito por um criador que o usa todos os dias nas próprias contas do Threads.",
+  "landing.tagline": "Os posts te dão visibilidade. As respostas te dão seguidores.",
+  "landing.lead_head": "O Pennedly escreve posts e respostas com a sua voz, percebe o que funciona com o seu público e cuida de todas as suas contas, em qualquer idioma.",
   "landing.lead_body": "Você aprova cada palavra.",
-  "landing.lead_emph":
-    "E o piloto automático fica ali, para quando você quiser.",
+  "landing.lead_emph": "A automação é opcional, nunca o padrão.",
   "landing.feat_eyebrow": "O produto",
   "landing.feat_title": "Um só lugar para todas as suas contas.",
-  "landing.feat_viral_title": "Posts virais na sua voz",
-  "landing.feat_viral_desc":
-    "Rascunhos feitos para engajar e soar como você, não como uma IA genérica.",
+  "landing.feat_viral_title": "Posts que soam como você",
+  "landing.feat_viral_desc": "Rascunhos feitos a partir dos seus melhores posts, para soarem como você e não como uma IA genérica.",
   "landing.feat_replies_title": "Respostas que soam como você",
   "landing.feat_replies_desc":
     "Ele escreve respostas aos seus comentários na sua voz, para você ficar em cada conversa.",
@@ -1014,8 +1014,7 @@ export const pt: Partial<Record<MessageKey, string>> = {
   "landing.feat_audits_desc":
     "Toda semana ele revê o que funcionou e sugere pequenos ajustes. Você aprova; ele mede o efeito.",
   "landing.feat_analytics_title": "Análise, sem ruído",
-  "landing.feat_analytics_desc":
-    "Veja o que de fato engaja: quais posts viralizaram, quais fracassaram e por quê.",
+  "landing.feat_analytics_desc": "Veja o que realmente funciona: quais posts decolaram, quais fracassaram e por quê.",
   "landing.feat_autopilot_title": "Piloto automático, você decide",
   "landing.feat_autopilot_desc":
     "Delegue posts e respostas numa agenda, ou continue aprovando cada palavra.",

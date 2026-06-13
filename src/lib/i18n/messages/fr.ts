@@ -998,16 +998,18 @@ export const fr: Partial<Record<MessageKey, string>> = {
   // ── Landing ────────────────────────────────────────────────────
   "landing.sign_in": "Se connecter",
   "landing.status": "En développement · bêta sur invitation",
-  "landing.tagline": "Gère Threads comme un pro, dans ta propre voix.",
-  "landing.lead_head":
-    "Pennedly rédige des posts et des réponses viraux dans ta voix, audite ce qui marche et te montre ce qui prend sur chacun de tes comptes.",
+  "landing.trust1": "Lecture seule au départ",
+  "landing.trust2": "Rien n'est publié sans votre accord",
+  "landing.trust3": "Déconnexion à tout moment",
+  "landing.founder": "Créé par un créateur qui l'utilise chaque jour sur ses propres comptes Threads.",
+  "landing.tagline": "Les posts vous rendent visible. Les réponses vous font gagner des abonnés.",
+  "landing.lead_head": "Pennedly rédige posts et réponses dans votre voix, repère ce qui marche auprès de votre audience et gère tous vos comptes, dans toutes les langues.",
   "landing.lead_body": "Tu valides chaque mot.",
-  "landing.lead_emph": "Et si tu veux, tu actives le pilote automatique.",
+  "landing.lead_emph": "L'automatisation est optionnelle, jamais par défaut.",
   "landing.feat_eyebrow": "Le produit",
   "landing.feat_title": "Un espace de travail pour tous tes comptes.",
-  "landing.feat_viral_title": "Des posts viraux dans ta voix",
-  "landing.feat_viral_desc":
-    "Des brouillons faits pour prendre et qui sonnent comme toi, pas comme une IA générique.",
+  "landing.feat_viral_title": "Des posts qui vous ressemblent",
+  "landing.feat_viral_desc": "Des brouillons tirés de vos meilleurs posts, pour qu'ils sonnent comme vous, pas comme une IA générique.",
   "landing.feat_replies_title": "Des réponses qui sonnent comme toi",
   "landing.feat_replies_desc":
     "Il rédige les réponses à tes commentaires dans ta voix, pour que tu restes dans chaque conversation.",
@@ -1015,8 +1017,7 @@ export const fr: Partial<Record<MessageKey, string>> = {
   "landing.feat_audits_desc":
     "Chaque semaine, il examine ce qui a marché et propose de petits ajustements. Tu valides, il mesure l'effet.",
   "landing.feat_analytics_title": "De l'analyse, pas du bruit",
-  "landing.feat_analytics_desc":
-    "Vois ce qui prend vraiment : quels posts sont devenus viraux, lesquels ont flopé, et pourquoi.",
+  "landing.feat_analytics_desc": "Voyez ce qui marche vraiment : quels posts ont décollé, lesquels ont floppé, et pourquoi.",
   "landing.feat_autopilot_title": "Le pilote automatique, à ta main",
   "landing.feat_autopilot_desc":
     "Confie la publication et les réponses à un planning, ou continue de valider chaque mot.",
