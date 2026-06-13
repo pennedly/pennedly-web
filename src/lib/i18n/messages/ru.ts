@@ -1089,6 +1089,9 @@ export const ru: Partial<Record<MessageKey, string>> = {
   // ── Статистика ────────────────────────────────────────────────
   "dashboard.nav.stats": "статистика",
   "stats.title": "Статистика",
+  "stats.followers_title": "Подписчики",
+  "stats.followers_collecting": "Собираем данные о подписчиках",
+  "stats.followers_collecting_sub": "Threads отдаёт только сегодняшнее число, поэтому линия роста наберётся за ближайшие дни.",
   "stats.subtitle": "Как твои тексты заходят в целом: цифры, которые важны, во времени.",
   "stats.empty": "Постов пока нет. Статистика появится здесь, как начнёшь публиковать.",
   "stats.card_posts": "Постов",

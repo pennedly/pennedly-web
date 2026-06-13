@@ -9,7 +9,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { ApiError, clearTokens, fetchMe, fetchStats, getTokens } from "@/lib/api";
+import { ApiError, clearTokens, fetchFollowers, fetchMe, fetchStats, getTokens } from "@/lib/api";
 import { useSelectedAccountId } from "@/lib/account";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
@@ -20,6 +20,7 @@ import {
   BestTimesPanel,
   ColumnChart,
   DistributionBars,
+  FollowerChart,
   PERIODS,
   RangeSeg,
   SkeletonDash,
@@ -31,9 +32,15 @@ import {
   TopPostsPanel,
 } from "@/components/studio/StatsParts";
 import { STATS_DEMO, STATS_TWEAK_DEFAULTS, type Gran, type StatBucket, type StatPeriodKey } from "@/components/studio/stats-demo";
-import type { StatsResponse } from "@/lib/types";
+import type { FollowerHistory, StatsResponse } from "@/lib/types";
 
 const IS_DEV = process.env.NODE_ENV === "development";
+
+// Demo follower-growth series (ascending) for the ?demo=1 review.
+const DEMO_FOLLOWER_POINTS = Array.from({ length: 14 }, (_, i) => ({
+  day: `2026-06-${String(i + 1).padStart(2, "0")}`,
+  count: 1820 + i * 24 + (i % 3) * 9,
+}));
 
 function pct(cur: number, prev: number | null | undefined): number | null {
   if (prev === null || prev === undefined || prev === 0) return null;
@@ -62,6 +69,7 @@ export default function StatsPage() {
 
   const [period, setPeriod] = useState<StatPeriodKey>("7d");
   const [stats, setStats] = useState<StatsResponse | null>(null);
+  const [followers, setFollowers] = useState<FollowerHistory | null>(null);
   const [loading, setLoading] = useState(true);
   const [bootError, setBootError] = useState<string | null>(null);
 
@@ -96,6 +104,16 @@ export default function StatsPage() {
       }
     })();
   }, [accountId, period, router, demoParam]);
+
+  // Follower-growth line — independent of `period` (the endpoint returns the
+  // full series), fetched once per account, fail-soft so it never blocks the
+  // dashboard if the insight is unavailable.
+  useEffect(() => {
+    if (demoParam || accountId === null) return;
+    fetchFollowers(accountId)
+      .then(setFollowers)
+      .catch(() => setFollowers(null));
+  }, [accountId, demoParam]);
 
   // demo: dark + sync period from tweak + brief loading on period change
   useEffect(() => {
@@ -228,6 +246,7 @@ export default function StatsPage() {
               ))}
             </div>
             <ColumnChart cap={chartCap} headline={fmt(avgViewsPerPost)} headlinePct={model.deltas.views_pct} series={model.series} />
+            <FollowerChart cap={t("stats.followers_title")} points={demoOn ? DEMO_FOLLOWER_POINTS : (followers?.points ?? [])} />
             {model.top.length > 0 && <TopPostsPanel cap={`${t("stats.top_cap")} · ${periodLabel}`} rows={model.top} />}
             {period !== "today" && period !== "yesterday" && model.byHour.length > 0 && (
               <BestTimesPanel cap={`${t("stats.times_cap")} · ${periodLabel}`} byHour={model.byHour} byWeekday={model.byWeekday} />

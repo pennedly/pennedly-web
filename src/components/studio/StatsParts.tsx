@@ -230,6 +230,64 @@ export function ColumnChart({ cap, headline, headlinePct, series }: { cap: strin
   );
 }
 
+// ─────────────────────────── FollowerChart ──────────────────────────────────
+export function FollowerChart({ cap, points }: { cap: string; points: { day: string; count: number }[] }) {
+  const { t, locale } = useTranslation();
+  const enough = points.length >= 2;
+  const latest = points.length ? points[points.length - 1].count : null;
+  const gained = enough ? points[points.length - 1].count - points[0].count : null;
+  return (
+    <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="text-caption font-semibold uppercase tracking-[0.06em] text-text-subtle">{cap}</span>
+        {latest !== null && (
+          <span className="flex items-baseline gap-2">
+            <b className="text-h2 font-semibold leading-none tabular-nums text-text">{latest.toLocaleString(locale)}</b>
+            {gained !== null && gained !== 0 && (
+              <span className={cn("text-small font-medium tabular-nums", gained > 0 ? "text-success" : "text-danger")}>
+                {gained > 0 ? "+" : ""}
+                {gained.toLocaleString(locale)}
+              </span>
+            )}
+          </span>
+        )}
+      </div>
+      {enough ? (
+        <FollowerLine series={points.map((p) => p.count)} />
+      ) : (
+        <div className="mt-4 flex flex-col items-center gap-1.5 rounded-md border border-dashed border-border bg-surface-2 px-4 py-9 text-center">
+          <IcChart size={20} className="text-text-subtle" />
+          <span className="text-small font-medium text-text">{t("stats.followers_collecting")}</span>
+          <span className="max-w-[42ch] text-caption text-text-subtle">{t("stats.followers_collecting_sub")}</span>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function FollowerLine({ series }: { series: number[] }) {
+  const W = 600;
+  const H = 120;
+  const PAD = 10;
+  const min = Math.min(...series);
+  const max = Math.max(...series);
+  // Min-max scale, not 0-based: follower counts are large and day-to-day growth
+  // is small, so a 0-baseline would flatten the line into a straight edge.
+  const span = max - min || 1;
+  const n = series.length;
+  const x = (i: number) => PAD + (i / (n - 1)) * (W - PAD * 2);
+  const y = (v: number) => H - PAD - ((v - min) / span) * (H - PAD * 2);
+  const curve = series.map((v, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(" ");
+  const area = `${curve} L${x(n - 1).toFixed(1)} ${H} L${x(0).toFixed(1)} ${H} Z`;
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="auto" role="img" aria-label="Followers over time" className="mt-4 block">
+      <path d={area} fill="var(--color-accent)" fillOpacity="0.1" />
+      <path d={curve} fill="none" stroke="var(--color-accent)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={x(n - 1)} cy={y(series[n - 1])} r="3.6" fill="var(--color-accent)" stroke="var(--color-surface)" strokeWidth="2" />
+    </svg>
+  );
+}
+
 // ─────────────────────────── DistributionBars ───────────────────────────────
 const TIER_META: { key: "viral" | "good" | "average" | "weak"; nameKey: MessageKey; subKey: MessageKey; color: string }[] = [
   { key: "viral", nameKey: "stats.tier_viral", subKey: "stats.tier_viral_sub", color: "var(--color-success)" },

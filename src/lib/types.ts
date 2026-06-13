@@ -460,6 +460,11 @@ export type FeedResponse = {
   count: number;
 };
 
+// Follower-growth line on Stats. Daily snapshots (Threads has no history, so it
+// accrues from connect-time); `latest` is the most recent count or null if none.
+export type FollowerPoint = { day: string; count: number };
+export type FollowerHistory = { points: FollowerPoint[]; latest: number | null };
+
 // Per-account autopilot config. Default off; the user assembles their own
 // from a few clear controls. The autopilot worker reads this to decide
 // what to post / reply automatically.

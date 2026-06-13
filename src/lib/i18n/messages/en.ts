@@ -1089,6 +1089,9 @@ export const en = {
   // ── Stats (analytics) ─────────────────────────────────────────
   "dashboard.nav.stats": "stats",
   "stats.title": "Stats",
+  "stats.followers_title": "Followers",
+  "stats.followers_collecting": "Collecting your follower data",
+  "stats.followers_collecting_sub": "Threads gives only today's count, so the growth line fills in over the next few days.",
   "stats.subtitle": "How your writing is performing in aggregate, the numbers that matter, over time.",
   "stats.empty": "No posts yet. Stats appear here as you publish.",
   "stats.card_posts": "Posts",

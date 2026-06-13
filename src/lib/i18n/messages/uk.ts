@@ -875,6 +875,9 @@ export const uk: Partial<Record<MessageKey, string>> = {
   // ── Stats ──────────────────────────────────────────────────────
   "dashboard.nav.stats": "статистика",
   "stats.title": "Статистика",
+  "stats.followers_title": "Підписники",
+  "stats.followers_collecting": "Збираємо дані про підписників",
+  "stats.followers_collecting_sub": "Threads дає лише сьогоднішнє число, тож лінія росту набереться за найближчі дні.",
   "stats.subtitle": "Як справи в твого акаунта за останні тижні.",
   "stats.empty":
     "Постів поки немає. Статистика з'явиться тут, коли почнеш публікувати.",

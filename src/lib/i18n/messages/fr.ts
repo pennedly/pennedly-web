@@ -878,6 +878,9 @@ export const fr: Partial<Record<MessageKey, string>> = {
   // ── Stats ──────────────────────────────────────────────────────
   "dashboard.nav.stats": "stats",
   "stats.title": "Statistiques",
+  "stats.followers_title": "Abonnés",
+  "stats.followers_collecting": "Collecte de vos données d'abonnés",
+  "stats.followers_collecting_sub": "Threads ne donne que le chiffre du jour, la courbe de croissance se remplit donc sur les prochains jours.",
   "stats.subtitle": "Comment se porte ton compte ces dernières semaines.",
   "stats.empty":
     "Aucun post pour l'instant. Les stats apparaissent ici au fur et à mesure que tu publies.",

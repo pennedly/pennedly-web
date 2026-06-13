@@ -29,6 +29,7 @@ import type {
   DeletePostResult,
   DraftsList,
   FeedResponse,
+  FollowerHistory,
   FromScratchInput,
   GeneratedDraft,
   IdeasResult,
@@ -697,6 +698,15 @@ export async function fetchStats(
   // panels (minutes to ADD to UTC — the inverse of getTimezoneOffset).
   qs.set("tz_offset", String(-new Date().getTimezoneOffset()));
   return fetchApi<StatsResponse>(`/api/accounts/${accountId}/stats?${qs}`);
+}
+
+export async function fetchFollowers(
+  accountId: number,
+  days = 120,
+): Promise<FollowerHistory> {
+  return fetchApi<FollowerHistory>(
+    `/api/accounts/${accountId}/followers?days=${days}`,
+  );
 }
 
 // ── Autopilot ────────────────────────────────────────────────────
