@@ -81,6 +81,15 @@ export const en = {
 
   // ── Landing (public marketing page, /) ─────────────────────────
   "landing.sign_in": "Sign in",
+  "landing.vt_eyebrow": "Try it free",
+  "landing.vt_title": "Hear it in your own voice",
+  "landing.vt_sub": "Paste a few of your posts and watch Pennedly draft replies that sound like you. No signup.",
+  "landing.vt_placeholder": "Paste 3-5 of your posts here, one per paragraph…",
+  "landing.vt_cta": "Show me my voice",
+  "landing.vt_running": "Reading your voice…",
+  "landing.vt_hint": "Free · nothing is saved",
+  "landing.vt_error": "Couldn't run the voice test. Try again in a moment.",
+  "landing.vt_to": "Replying to:",
   "landing.status": "In development · invite-only beta",
   "landing.trust1": "Read-only to start",
   "landing.trust2": "Nothing posts until you approve",

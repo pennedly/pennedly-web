@@ -81,6 +81,15 @@ export const ru: Partial<Record<MessageKey, string>> = {
 
   // ── Landing (публичная страница, /) ────────────────────────────
   "landing.sign_in": "Войти",
+  "landing.vt_eyebrow": "Попробуй бесплатно",
+  "landing.vt_title": "Услышь это своим голосом",
+  "landing.vt_sub": "Вставь несколько своих постов и посмотри, как Pennedly пишет ответы в твоём голосе. Без регистрации.",
+  "landing.vt_placeholder": "Вставь сюда 3-5 своих постов, по одному на абзац…",
+  "landing.vt_cta": "Показать мой голос",
+  "landing.vt_running": "Читаю твой голос…",
+  "landing.vt_hint": "Бесплатно · ничего не сохраняется",
+  "landing.vt_error": "Не удалось. Попробуй ещё раз через минуту.",
+  "landing.vt_to": "Ответ на:",
   "landing.status": "В разработке · бета по приглашениям",
   "landing.trust1": "Сначала только чтение",
   "landing.trust2": "Ничего не публикуется без твоего одобрения",

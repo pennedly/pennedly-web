@@ -31,6 +31,7 @@ import type {
   FeedResponse,
   FollowerHistory,
   FromScratchInput,
+  VoiceTestResponse,
   GeneratedDraft,
   IdeasResult,
   OnboardingPreview,
@@ -707,6 +708,13 @@ export async function fetchFollowers(
   return fetchApi<FollowerHistory>(
     `/api/accounts/${accountId}/followers?days=${days}`,
   );
+}
+
+export async function voiceTest(posts: string[]): Promise<VoiceTestResponse> {
+  return fetchApi<VoiceTestResponse>("/api/voice-test", {
+    method: "POST",
+    body: JSON.stringify({ posts }),
+  });
 }
 
 // ── Autopilot ────────────────────────────────────────────────────

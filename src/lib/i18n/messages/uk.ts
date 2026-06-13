@@ -1002,6 +1002,15 @@ export const uk: Partial<Record<MessageKey, string>> = {
 
   // ── Landing ────────────────────────────────────────────────────
   "landing.sign_in": "Увійти",
+  "landing.vt_eyebrow": "Спробуй безкоштовно",
+  "landing.vt_title": "Почуй це своїм голосом",
+  "landing.vt_sub": "Встав кілька своїх постів і подивись, як Pennedly пише відповіді у твоєму голосі. Без реєстрації.",
+  "landing.vt_placeholder": "Встав сюди 3-5 своїх постів, по одному на абзац…",
+  "landing.vt_cta": "Показати мій голос",
+  "landing.vt_running": "Читаю твій голос…",
+  "landing.vt_hint": "Безкоштовно · нічого не зберігається",
+  "landing.vt_error": "Не вдалося. Спробуй ще раз за хвилину.",
+  "landing.vt_to": "Відповідь на:",
   "landing.status": "У розробці · бета за запрошеннями",
   "landing.trust1": "Спочатку лише читання",
   "landing.trust2": "Нічого не публікується без твого схвалення",

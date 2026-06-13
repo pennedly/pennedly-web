@@ -465,6 +465,10 @@ export type FeedResponse = {
 export type FollowerPoint = { day: string; count: number };
 export type FollowerHistory = { points: FollowerPoint[]; latest: number | null };
 
+// Public Voice Test (landing demo): paste posts → sample replies in your voice.
+export type VoiceSample = { comment: string; reply: string };
+export type VoiceTestResponse = { samples: VoiceSample[] };
+
 // Per-account autopilot config. Default off; the user assembles their own
 // from a few clear controls. The autopilot worker reads this to decide
 // what to post / reply automatically.

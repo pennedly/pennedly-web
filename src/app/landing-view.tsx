@@ -24,7 +24,7 @@
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 
-import { fetchMe, getTokens } from "@/lib/api";
+import { fetchMe, getTokens, voiceTest } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import {
   TweaksPanel,
@@ -236,6 +236,81 @@ function StudioWindow() {
   );
 }
 
+// Public Voice Test — paste a few posts, get sample replies in that voice.
+// No auth (the /api/voice-test endpoint is public + rate-limited); nothing is
+// saved. The instant-wow companion to the "Get early access" CTA.
+function VoiceTestSection() {
+  const { t } = useTranslation();
+  const [posts, setPosts] = useState("");
+  const [samples, setSamples] = useState<{ comment: string; reply: string }[] | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  async function run() {
+    const list = posts
+      .split(/\n{2,}/)
+      .map((p) => p.trim())
+      .filter(Boolean)
+      .slice(0, 10);
+    if (list.length === 0 || busy) return;
+    setBusy(true);
+    setFailed(false);
+    try {
+      const r = await voiceTest(list);
+      setSamples(r.samples);
+    } catch {
+      setFailed(true);
+      setSamples(null);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="shrink-0 border-t border-border py-[52px]">
+      <div className={WRAP}>
+        <div className="mb-7 text-center">
+          <span className="text-caption font-semibold uppercase tracking-[0.07em] text-accent">{t("landing.vt_eyebrow")}</span>
+          <h2 className="mt-2 text-balance text-[clamp(1.6rem,3.6vw,2.3rem)] font-semibold tracking-[-0.02em]">{t("landing.vt_title")}</h2>
+          <p className="mx-auto mt-2.5 max-w-[52ch] text-h3 font-[450] leading-[1.5] text-text-muted [text-wrap:pretty]">{t("landing.vt_sub")}</p>
+        </div>
+        <div className="mx-auto max-w-[680px]">
+          <textarea
+            value={posts}
+            onChange={(e) => setPosts(e.target.value)}
+            placeholder={t("landing.vt_placeholder")}
+            rows={5}
+            className="w-full resize-y rounded-lg border border-border bg-surface p-4 text-body leading-[1.6] text-text shadow-sm placeholder:text-text-subtle focus:border-accent focus:outline-none focus:ring-[3px] focus:ring-accent/[0.18]"
+          />
+          <div className="mt-3.5 flex flex-wrap items-center gap-x-4 gap-y-2.5">
+            <button
+              type="button"
+              onClick={run}
+              disabled={busy || !posts.trim()}
+              data-fx="btnprimary"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-primary px-[22px] text-body font-medium text-primary-foreground transition-[background-color,transform] duration-[180ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] hover:bg-[color-mix(in_srgb,var(--color-primary)_88%,var(--color-bg))] active:translate-y-[0.5px] disabled:opacity-50"
+            >
+              {busy ? t("landing.vt_running") : t("landing.vt_cta")}
+            </button>
+            <span className="text-small text-text-subtle">{t("landing.vt_hint")}</span>
+          </div>
+          {failed && <p className="mt-4 text-small text-danger">{t("landing.vt_error")}</p>}
+          {samples && samples.length > 0 && (
+            <ul className="mt-6 flex flex-col gap-3">
+              {samples.map((s, i) => (
+                <li key={i} className="rounded-lg border border-border bg-surface p-4 shadow-sm">
+                  <span className="block text-small text-text-subtle">{t("landing.vt_to")} {s.comment}</span>
+                  <span className="mt-1.5 block text-body leading-[1.55] text-text [text-wrap:pretty]">{s.reply}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // The full marketing page (no shell wrapper). `showSample` toggles the hero
 // product peek. Used both for the live page and inside the viewport-preview iframe.
 function LandingContent({ showSample }: { showSample: boolean }) {
@@ -358,6 +433,8 @@ function LandingContent({ showSample }: { showSample: boolean }) {
           {showSample && <StudioWindow />}
         </div>
       </section>
+
+      <VoiceTestSection />
 
       {/* Features (bento) */}
       <section className="shrink-0 border-t border-border py-[52px] pb-[60px]">

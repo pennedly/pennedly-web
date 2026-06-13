@@ -1005,6 +1005,15 @@ export const fr: Partial<Record<MessageKey, string>> = {
 
   // ── Landing ────────────────────────────────────────────────────
   "landing.sign_in": "Se connecter",
+  "landing.vt_eyebrow": "Essayez gratuitement",
+  "landing.vt_title": "Entendez-le dans votre voix",
+  "landing.vt_sub": "Collez quelques-uns de vos posts et voyez Pennedly rédiger des réponses qui vous ressemblent. Sans inscription.",
+  "landing.vt_placeholder": "Collez ici 3-5 de vos posts, un par paragraphe…",
+  "landing.vt_cta": "Montrez-moi ma voix",
+  "landing.vt_running": "Lecture de votre voix…",
+  "landing.vt_hint": "Gratuit · rien n'est enregistré",
+  "landing.vt_error": "Le test n'a pas pu s'exécuter. Réessayez dans un instant.",
+  "landing.vt_to": "En réponse à :",
   "landing.status": "En développement · bêta sur invitation",
   "landing.trust1": "Lecture seule au départ",
   "landing.trust2": "Rien n'est publié sans votre accord",
