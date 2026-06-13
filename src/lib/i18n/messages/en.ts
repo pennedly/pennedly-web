@@ -81,6 +81,15 @@ export const en = {
 
   // ── Landing (public marketing page, /) ─────────────────────────
   "landing.sign_in": "Sign in",
+  "landing.why_eyebrow": "The difference",
+  "landing.why_title": "Most AI copies your old posts. Pennedly learns what's landing now.",
+  "landing.why_sub": "It's a loop, not a one-shot: every week it reviews what worked, adjusts your voice, and quietly rolls back anything that hurt your reach.",
+  "landing.why_step1_t": "Drafts in your voice",
+  "landing.why_step1_d": "Built from your own best posts.",
+  "landing.why_step2_t": "Sees what lands",
+  "landing.why_step2_d": "Tracks the effect of every change.",
+  "landing.why_step3_t": "Adjusts every week",
+  "landing.why_step3_d": "Keeps what works, rolls back what doesn't.",
   "landing.vt_eyebrow": "Try it free",
   "landing.vt_title": "Hear it in your own voice",
   "landing.vt_sub": "Paste a few of your posts and watch Pennedly draft replies that sound like you. No signup.",

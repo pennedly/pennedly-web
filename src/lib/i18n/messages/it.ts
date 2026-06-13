@@ -1005,6 +1005,15 @@ export const it: Partial<Record<MessageKey, string>> = {
 
   // ── Landing ────────────────────────────────────────────────────
   "landing.sign_in": "Accedi",
+  "landing.why_eyebrow": "La differenza",
+  "landing.why_title": "La maggior parte delle IA copia i tuoi vecchi post. Pennedly impara cosa funziona adesso.",
+  "landing.why_sub": "È un ciclo, non un colpo singolo: ogni settimana controlla cosa ha funzionato, regola la tua voce e annulla in silenzio ciò che ha danneggiato la tua copertura.",
+  "landing.why_step1_t": "Scrive con la tua voce",
+  "landing.why_step1_d": "Dai tuoi post migliori.",
+  "landing.why_step2_t": "Vede cosa funziona",
+  "landing.why_step2_d": "Misura l'effetto di ogni modifica.",
+  "landing.why_step3_t": "Si regola ogni settimana",
+  "landing.why_step3_d": "Tiene ciò che funziona, annulla il resto.",
   "landing.vt_eyebrow": "Provalo gratis",
   "landing.vt_title": "Sentilo con la tua voce",
   "landing.vt_sub": "Incolla qualche tuo post e guarda Pennedly scrivere risposte che suonano come te. Senza registrazione.",

@@ -22,7 +22,7 @@
 // forced interactive states · freeze animations.
 
 import Link from "next/link";
-import { useEffect, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useState, type ReactNode } from "react";
 
 import { fetchMe, getTokens, voiceTest } from "@/lib/api";
 import { cn } from "@/lib/cn";
@@ -311,6 +311,43 @@ function VoiceTestSection() {
   );
 }
 
+// Differentiation strip — the closed-loop coach is the thing rivals (e.g.
+// Replia) can't copy: draft -> measure -> adjust, every week. Complements the
+// reply-first hero, doesn't replace it.
+function WhyPennedlySection() {
+  const { t } = useTranslation();
+  const steps: { tk: MessageKey; dk: MessageKey }[] = [
+    { tk: "landing.why_step1_t", dk: "landing.why_step1_d" },
+    { tk: "landing.why_step2_t", dk: "landing.why_step2_d" },
+    { tk: "landing.why_step3_t", dk: "landing.why_step3_d" },
+  ];
+  return (
+    <section className="shrink-0 border-t border-border bg-surface-2/50 py-[56px]">
+      <div className={cn(WRAP, "text-center")}>
+        <span className="text-caption font-semibold uppercase tracking-[0.07em] text-accent">{t("landing.why_eyebrow")}</span>
+        <h2 className="mx-auto mt-3 max-w-[26ch] text-balance text-[clamp(1.7rem,3.6vw,2.4rem)] font-semibold leading-[1.14] tracking-[-0.02em]">{t("landing.why_title")}</h2>
+        <p className="mx-auto mt-3.5 max-w-[58ch] text-h3 font-[450] leading-[1.5] text-text-muted [text-wrap:pretty]">{t("landing.why_sub")}</p>
+        <div className="mt-9 flex flex-col items-stretch justify-center gap-3 min-[760px]:flex-row min-[760px]:items-center">
+          {steps.map((s, i) => (
+            <Fragment key={s.tk}>
+              <div className="flex-1 rounded-lg border border-border bg-surface p-5 text-left shadow-sm min-[760px]:max-w-[256px]">
+                <span className="grid h-7 w-7 place-items-center rounded-full bg-accent/12 text-small font-semibold text-accent">{i + 1}</span>
+                <h3 className="mt-3 text-h3 font-semibold tracking-[-0.01em]">{t(s.tk)}</h3>
+                <p className="mt-1 text-small leading-[1.45] text-text-muted">{t(s.dk)}</p>
+              </div>
+              {i < steps.length - 1 && (
+                <span className="mx-auto rotate-90 text-text-subtle min-[760px]:rotate-0" aria-hidden>
+                  <IcArrowRight size={20} />
+                </span>
+              )}
+            </Fragment>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // The full marketing page (no shell wrapper). `showSample` toggles the hero
 // product peek. Used both for the live page and inside the viewport-preview iframe.
 function LandingContent({ showSample }: { showSample: boolean }) {
@@ -489,6 +526,8 @@ function LandingContent({ showSample }: { showSample: boolean }) {
           </div>
         </div>
       </section>
+
+      <WhyPennedlySection />
 
       {/* Footer */}
       <footer className="shrink-0 border-t border-border pb-[30px] pt-6">
