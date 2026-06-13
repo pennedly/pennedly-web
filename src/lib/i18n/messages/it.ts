@@ -680,6 +680,11 @@ export const it: Partial<Record<MessageKey, string>> = {
   "autopilot.policy_title": "Policy di auto-risposta",
   "autopilot.policy_sub":
     "Quando è attiva, le risposte vengono scritte nella tua voce e inviate automaticamente.",
+    "autopilot.reply_mode_label": "Modalità risposta automatica",
+    "autopilot.reply_mode_off": "Off",
+    "autopilot.reply_mode_all": "Tutti",
+    "autopilot.reply_mode_selected": "Selezionati",
+    "autopilot.reply_mode_selected_hint": "Le risposte automatiche vanno solo ai post che segni in Il mio Feed.",
   "autopilot.policy_audience_t": "A chi risponde",
   "autopilot.policy_audience_d":
     "Scegli il pubblico i cui commenti ricevono una risposta automatica.",

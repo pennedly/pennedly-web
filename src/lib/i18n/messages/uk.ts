@@ -678,6 +678,11 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "autopilot.policy_title": "Політика автовідповіді",
   "autopilot.policy_sub":
     "Коли ввімкнено, відповіді пишуться у твоєму голосі й надсилаються автоматично.",
+    "autopilot.reply_mode_label": "Режим авто-відповідей",
+    "autopilot.reply_mode_off": "Вимк",
+    "autopilot.reply_mode_all": "Усі пости",
+    "autopilot.reply_mode_selected": "Вибрані",
+    "autopilot.reply_mode_selected_hint": "Авто-відповіді йдуть лише на пости, які ти відмітив у Стрічці.",
   "autopilot.policy_audience_t": "Кому відповідає",
   "autopilot.policy_audience_d":
     "Обери аудиторію, чиї коментарі отримують автоматичну відповідь.",

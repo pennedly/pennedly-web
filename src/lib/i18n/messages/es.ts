@@ -680,6 +680,11 @@ export const es: Partial<Record<MessageKey, string>> = {
   "autopilot.policy_title": "Política de auto-respuesta",
   "autopilot.policy_sub":
     "Cuando está activa, las respuestas se redactan con tu voz y se envían automáticamente.",
+    "autopilot.reply_mode_label": "Modo de autorrespuesta",
+    "autopilot.reply_mode_off": "Apagado",
+    "autopilot.reply_mode_all": "Todos",
+    "autopilot.reply_mode_selected": "Seleccionados",
+    "autopilot.reply_mode_selected_hint": "Las autorrespuestas van solo a los posts que marcas en Mi Feed.",
   "autopilot.policy_audience_t": "A quién responde",
   "autopilot.policy_audience_d":
     "Elige la audiencia cuyos comentarios reciben una respuesta automática.",

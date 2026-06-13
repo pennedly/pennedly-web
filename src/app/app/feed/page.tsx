@@ -13,6 +13,7 @@ import {
   ApiError,
   clearTokens,
   deletePost,
+  fetchAutopilot,
   fetchFeed,
   fetchMe,
   fetchMyAccounts,
@@ -74,6 +75,8 @@ export default function FeedPage() {
   const [bootError, setBootError] = useState<string | null>(null);
   const [account, setAccount] = useState<{ name: string; handle: string; initials: string; avatarUrl: string | null }>({ name: "You", handle: "you", initials: "Y", avatarUrl: null });
   const [sort, setSort] = useState<"recent" | "top">("recent");
+  // The account reply mode resolves a post's NULL (inherit) auto_reply for display.
+  const [replyMode, setReplyMode] = useState<"off" | "all" | "selected">("all");
   const [growthOpen, setGrowthOpen] = useState<number | null>(null);
   const [growth, setGrowth] = useState<Record<number, number[]>>({});
   const [deleteTarget, setDeleteTarget] = useState<FeedCardModel | null>(null);
@@ -132,6 +135,14 @@ export default function FeedPage() {
     })();
   }, [accountId, router, demoParam]);
 
+  // Reply mode for resolving NULL (inherit) per-post flags — fail-soft.
+  useEffect(() => {
+    if (demoParam || accountId === null) return;
+    fetchAutopilot(accountId)
+      .then((c) => setReplyMode(c.reply_mode))
+      .catch(() => {});
+  }, [accountId, demoParam]);
+
   useEffect(() => {
     if (!demoOn) return;
     document.documentElement.classList.toggle("dark", !!tw.dark);
@@ -155,10 +166,10 @@ export default function FeedPage() {
           comments: fp.comments_count,
           reposts: fp.reposts,
           settling: fp.is_fresh,
-          autoReply: fp.auto_reply,
+          autoReply: fp.auto_reply ?? (replyMode === "all"),
         }));
     return sort === "top" ? [...list].sort((a, b) => b.views - a.views) : list;
-  }, [demoOn, demoPosts, posts, sort, locale]);
+  }, [demoOn, demoPosts, posts, sort, locale, replyMode]);
 
   const baseline = demoOn
     ? FEED_DEMO_BASELINE

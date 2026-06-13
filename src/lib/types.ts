@@ -441,7 +441,7 @@ export type FeedPost = {
   viral_score: number | null;
   vs_avg_views: number | null; // views ÷ recent-average views
   is_fresh: boolean; // published < 24h ago — still settling
-  auto_reply: boolean; // per-post: does the auto-reply sweep answer comments here
+  auto_reply: boolean | null; // per-post override; null = inherit the account reply_mode
 };
 
 export type FeedReference = {
@@ -469,7 +469,8 @@ export type AutopilotConfig = {
   posts_per_day: number;
   quiet_start_hour: number | null;
   quiet_end_hour: number | null;
-  reply_enabled: boolean;
+  reply_enabled: boolean; // legacy mirror of (reply_mode !== "off"), kept for back-compat
+  reply_mode: "off" | "all" | "selected"; // off | every post | only flagged posts
   reply_audience: string; // "fans" | "all_except_trolls" | "questions"
   replies_per_day: number;
   reply_frequency: string; // "asap" | "hourly" | "few_daily" | "daily"

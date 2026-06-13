@@ -37,6 +37,7 @@ export const DEMO_CONFIG: AutopilotConfig = {
   quiet_start_hour: null,
   quiet_end_hour: null,
   reply_enabled: true,
+  reply_mode: "all",
   reply_audience: "fans",
   replies_per_day: 25,
   reply_frequency: "hourly",

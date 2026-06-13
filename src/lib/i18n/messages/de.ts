@@ -685,6 +685,11 @@ export const de: Partial<Record<MessageKey, string>> = {
   "autopilot.policy_title": "Auto-Antwort-Richtlinie",
   "autopilot.policy_sub":
     "Wenn an, werden Antworten in deiner Stimme entworfen und automatisch gesendet.",
+    "autopilot.reply_mode_label": "Auto-Antwort-Modus",
+    "autopilot.reply_mode_off": "Aus",
+    "autopilot.reply_mode_all": "Alle Posts",
+    "autopilot.reply_mode_selected": "Ausgewählte",
+    "autopilot.reply_mode_selected_hint": "Auto-Antworten gehen nur an Posts, die du im Feed markierst.",
   "autopilot.policy_audience_t": "Wem wird geantwortet",
   "autopilot.policy_audience_d":
     "Wähle die Zielgruppe, deren Kommentare eine automatische Antwort bekommen.",

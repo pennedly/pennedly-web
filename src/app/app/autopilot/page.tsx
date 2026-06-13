@@ -190,7 +190,7 @@ export default function AutopilotPage() {
     setMaster(st !== "Off");
     setTopics(DEMO_TOPICS);
     setRules(st === "Empty" ? [] : DEMO_RULES.map((r) => ({ ...r })));
-    setConfig({ ...DEMO_CONFIG, reply_enabled: st !== "PolicyOff" });
+    setConfig({ ...DEMO_CONFIG, reply_mode: st === "PolicyOff" ? "off" : "all", reply_enabled: st !== "PolicyOff" });
     setActivity(st === "Empty" ? { rules: [], posts_total: 0, replies_total: 0, posts: [], replies: [] } : DEMO_ACTIVITY);
     setActTab(st === "Replies" ? "replies" : "posts");
     setLoaded(true);
@@ -226,12 +226,20 @@ export default function AutopilotPage() {
   async function onReply(patch: Partial<AutopilotConfig>) {
     if (config === null) return;
     if (demoOn) {
-      setConfig((c) => (c ? { ...c, ...patch } : c));
+      setConfig((c) => {
+        if (!c) return c;
+        const n = { ...c, ...patch };
+        n.reply_enabled = n.reply_mode !== "off";
+        return n;
+      });
       return;
     }
     if (accountId === null) return;
     const prev = config;
     const next = { ...config, ...patch };
+    // Keep the legacy boolean in sync with the mode so an old backend (during
+    // the deploy window) still reads the right reply master.
+    next.reply_enabled = next.reply_mode !== "off";
     setConfig(next);
     captureEvent("ui.autopilot_reply_policy", { account_id: accountId, ...patch });
     try {
@@ -566,26 +574,53 @@ export default function AutopilotPage() {
             {/* Auto-reply policy */}
             {config && (
               <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
-                <div className="flex items-center justify-between gap-3.5">
-                  <div className="min-w-0">
-                    <h2 className="text-h3 font-semibold tracking-tight">
-                      {t("autopilot.policy_title")}
-                    </h2>
-                    <p className="mt-0.5 text-small text-text-subtle">
-                      {t("autopilot.policy_sub")}
-                    </p>
-                  </div>
-                  <Switch
-                    checked={config.reply_enabled}
-                    onCheckedChange={(v) => onReply({ reply_enabled: v })}
-                    aria-label={t("autopilot.reply_enabled")}
-                  />
+                <div className="min-w-0">
+                  <h2 className="text-h3 font-semibold tracking-tight">
+                    {t("autopilot.policy_title")}
+                  </h2>
+                  <p className="mt-0.5 text-small text-text-subtle">
+                    {t("autopilot.policy_sub")}
+                  </p>
                 </div>
+                {/* 3-way reply mode: off / every post / only the posts you flag */}
+                <div
+                  role="group"
+                  aria-label={t("autopilot.reply_mode_label")}
+                  className="mt-3.5 inline-flex w-full rounded-lg border border-border bg-surface-2 p-0.5 text-small sm:w-auto"
+                >
+                  {(["off", "all", "selected"] as const).map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => onReply({ reply_mode: m })}
+                      aria-pressed={config.reply_mode === m}
+                      className={cn(
+                        "flex-1 whitespace-nowrap rounded-md px-3.5 py-1.5 font-medium transition-colors sm:flex-initial",
+                        config.reply_mode === m
+                          ? "bg-surface text-text shadow-sm"
+                          : "text-text-muted hover:text-text",
+                      )}
+                    >
+                      {t(
+                        m === "off"
+                          ? "autopilot.reply_mode_off"
+                          : m === "all"
+                            ? "autopilot.reply_mode_all"
+                            : "autopilot.reply_mode_selected",
+                      )}
+                    </button>
+                  ))}
+                </div>
+                {config.reply_mode === "selected" && (
+                  <p className="mt-2.5 text-small text-text-subtle">
+                    {t("autopilot.reply_mode_selected_hint")}
+                  </p>
+                )}
 
                 <div
                   className={cn(
                     "mt-4 flex flex-col transition-opacity",
-                    !config.reply_enabled && "pointer-events-none opacity-50",
+                    config.reply_mode === "off" && "pointer-events-none opacity-50",
                   )}
                 >
                   <PolicyRow
