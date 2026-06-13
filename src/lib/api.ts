@@ -28,6 +28,8 @@ import type {
   DeleteDraftResult,
   DeletePostResult,
   DraftsList,
+  MediaItem,
+  MediaUploadResponse,
   FeedResponse,
   FollowerHistory,
   FromScratchInput,
@@ -153,7 +155,9 @@ async function rawFetch(
   if (accessToken) {
     headers.set("Authorization", `Bearer ${accessToken}`);
   }
-  if (init?.body && !headers.has("Content-Type")) {
+  // FormData must keep the browser-generated multipart boundary — never force
+  // a JSON content type on it (that's how file uploads go out).
+  if (init?.body && !(init.body instanceof FormData) && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
   return fetch(`${BASE_URL}${path}`, { ...init, headers });
@@ -505,6 +509,41 @@ export async function retryScheduledDraft(
   return fetchApi<ScheduleResult>(`/api/drafts/${draftId}/retry`, {
     method: "POST",
   });
+}
+
+// ── Media (images on posts) ──────────────────────────────────────
+
+// Upload one image for an account. Multipart — the browser sets the
+// boundary. Returns a relative `/media/...` URL to attach to a draft.
+export async function uploadMedia(
+  accountId: number,
+  file: File,
+): Promise<MediaUploadResponse> {
+  const form = new FormData();
+  form.append("file", file);
+  return fetchApi<MediaUploadResponse>(`/api/accounts/${accountId}/media`, {
+    method: "POST",
+    body: form,
+  });
+}
+
+// Attach (or clear, with []) the images on a post draft. URLs must be ones
+// uploadMedia returned; capped at 10 (the Threads carousel max).
+export async function setDraftMedia(
+  draftId: number,
+  media: MediaItem[],
+): Promise<{ draft_id: number; media: MediaItem[] }> {
+  return fetchApi(`/api/drafts/${draftId}/media`, {
+    method: "PUT",
+    body: JSON.stringify({ media }),
+  });
+}
+
+// Absolute URL for a stored media path so the <img> resolves against the
+// backend host (the web app and the media live on different origins).
+// Already-absolute URLs (http/blob/data) pass through unchanged.
+export function mediaUrl(url: string): string {
+  return /^[a-z]+:/i.test(url) ? url : `${BASE_URL}${url}`;
 }
 
 // The content Calendar window — scheduled/failed drafts + autopilot projection.

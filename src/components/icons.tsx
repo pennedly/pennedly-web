@@ -94,6 +94,7 @@ export const IcEye = (p: IconProps) => <Svg {...p}><path d="M2.5 12S6 5.5 12 5.5
 export const IcFeed = (p: IconProps) => <Svg {...p}><path d="M3 14l4-5 4 4 3-6 3 5h4" /></Svg>;
 export const IcChart = (p: IconProps) => <Svg {...p}><path d="M4 19V5M4 19h16" /><path d="M8 16l3.5-4 3 2.5L19 8" /></Svg>;
 export const IcTrash = (p: IconProps) => <Svg {...p}><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13" /></Svg>;
+export const IcImage = (p: IconProps) => <Svg {...p}><rect x="3" y="3" width="18" height="18" rx="2.5" /><circle cx="8.5" cy="9" r="1.5" /><path d="M21 15l-5-5L6 21" /></Svg>;
 export const IcArrowUp = (p: IconProps) => <Svg {...p}><path d="M12 19V6M6 11l6-6 6 6" /></Svg>;
 export const IcArrowDown = (p: IconProps) => <Svg {...p}><path d="M12 5v13M6 13l6 6 6-6" /></Svg>;
 export const IcArrowLeft = (p: IconProps) => <Svg {...p}><path d="M19 12H5M11 6l-6 6 6 6" /></Svg>;

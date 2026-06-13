@@ -258,6 +258,16 @@ export type BatchGenerateResult = {
   succeeded: number;
 };
 
+// One image attached to a post draft. `url` is a relative `/media/...` path
+// the backend serves — wrap it in `api.mediaUrl()` before putting it in <img>.
+export type MediaItem = { url: string };
+
+export type MediaUploadResponse = {
+  url: string;
+  content_type: string;
+  bytes: number;
+};
+
 export type DraftSummary = {
   id: number;
   account_id: number;
@@ -281,6 +291,8 @@ export type DraftSummary = {
   // answers — who wrote it + their text. null for posts. Studio renders these
   // read-only (generation/approval happen on /app/replies).
   reply_to: { who: string | null; text: string } | null;
+  // Images attached to a post draft (empty for text-only posts or replies).
+  media: MediaItem[];
 };
 
 export type DraftsList = {

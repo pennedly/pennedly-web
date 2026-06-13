@@ -28,7 +28,9 @@ import {
   refineDraft,
   rejectDraft,
   scheduleDraft,
+  setDraftMedia,
   translateText,
+  uploadMedia,
 } from "@/lib/api";
 import { captureEvent, identify } from "@/lib/analytics";
 import { isOnboardingSkipped, useSelectedAccountId } from "@/lib/account";
@@ -416,6 +418,14 @@ export default function Studio() {
       return r.translated_text;
     },
     onDelete: realDelete,
+    onUploadImage: async (file) => {
+      if (accountId === null) throw new Error("no account");
+      return uploadMedia(accountId, file);
+    },
+    onSetMedia: async (card, media) => {
+      await setDraftMedia(card.id, media);
+      setDrafts((p) => p.map((d) => (d.id === card.id ? { ...d, media } : d)));
+    },
   };
 
   // ════════════════════ DEMO handlers ════════════════════
@@ -469,6 +479,10 @@ export default function Studio() {
           }),
       });
     },
+    onUploadImage: async (file) => ({ url: URL.createObjectURL(file) }),
+    onSetMedia: async (card, media) => {
+      setDemoCards((p) => p.map((c) => (c.id === card.id ? { ...c, media } : c)));
+    },
   };
 
   function demoGenerate() {
@@ -510,6 +524,7 @@ export default function Studio() {
     threadsUrl: d.threads_url,
     stats: null,
     scheduledAt: d.scheduled_at,
+    media: d.media ?? [],
   }));
   const cards = demoOn ? demoCards : realCards;
 

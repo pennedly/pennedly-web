@@ -9,6 +9,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
+import { mediaUrl } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import type { Idea } from "@/lib/types";
@@ -26,6 +27,7 @@ import {
   IcExternal,
   IcGlobe,
   IcHeart,
+  IcImage,
   IcMore,
   IcNib,
   IcPencil,
@@ -49,6 +51,11 @@ import {
 } from "@/components/studio/studio-demo";
 
 export const DRAFT_LIMIT = 500;
+// Images per post (Threads carousel max) + the upload limits the backend
+// enforces, mirrored client-side so we reject before the round-trip.
+export const MEDIA_MAX = 10;
+const MEDIA_MAX_BYTES = 8 * 1024 * 1024;
+const MEDIA_TYPES = ["image/jpeg", "image/png", "image/webp"];
 export type Density = "comfortable" | "compact";
 
 export type CardHandlers = {
@@ -66,6 +73,10 @@ export type CardHandlers = {
   /** Hard-delete the draft from the queue (Undo-safe in the page). The
    *  endpoint refuses only a published draft, so it's offered everywhere else. */
   onDelete: (c: StudioCard) => void;
+  /** Upload one image file for this draft's account; resolves to its URL. */
+  onUploadImage: (file: File) => Promise<{ url: string }>;
+  /** Persist the draft's full image list (attach or remove). */
+  onSetMedia: (c: StudioCard, media: { url: string }[]) => Promise<void>;
 };
 
 // ─────────────────────────────── CharMeter ──────────────────────────────────
@@ -284,6 +295,10 @@ export function DraftCard({
   const [revising, setRevising] = useState(false);
   const [revised, setRevised] = useState(false);
   const [translated, setTranslated] = useState<{ lang: UiLang; body: string } | null>(null);
+  const [media, setMedia] = useState<{ url: string }[]>(card.media ?? []);
+  const [uploading, setUploading] = useState(false);
+  const [mediaError, setMediaError] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const status = card.status;
   const shownBody = translated ? translated.body : card.body;
@@ -306,6 +321,50 @@ export function DraftCard({
   async function runTranslate(lang: UiLang) {
     const body = await h.onTranslate(card, lang);
     setTranslated({ lang, body });
+  }
+
+  // ── images (post drafts only, before publish) ──
+  const canEditMedia =
+    card.kind === "post" && (status === "draft" || status === "ready") && !replyReadOnly;
+
+  async function onPickFile() {
+    const input = fileRef.current;
+    const file = input?.files?.[0];
+    if (input) input.value = ""; // let the same file be re-picked
+    if (!file) return;
+    setMediaError(null);
+    if (!MEDIA_TYPES.includes(file.type)) {
+      setMediaError(t("studio.image_bad_type"));
+      return;
+    }
+    if (file.size > MEDIA_MAX_BYTES) {
+      setMediaError(t("studio.image_too_large"));
+      return;
+    }
+    setUploading(true);
+    try {
+      const { url } = await h.onUploadImage(file);
+      const next = [...media, { url }];
+      setMedia(next);
+      await h.onSetMedia(card, next);
+    } catch {
+      setMediaError(t("studio.image_failed"));
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function removeImage(idx: number) {
+    const prev = media;
+    const next = media.filter((_, i) => i !== idx);
+    setMedia(next);
+    setMediaError(null);
+    try {
+      await h.onSetMedia(card, next);
+    } catch {
+      setMedia(prev); // revert on failure
+      setMediaError(t("studio.image_failed"));
+    }
   }
 
   // ── ⋯-menu items per status ──
@@ -436,6 +495,55 @@ export function DraftCard({
           >
             {t("studio.show_original")}
           </button>
+        </div>
+      )}
+
+      {/* media — attached image thumbnails + attach control (post drafts) */}
+      {(media.length > 0 || canEditMedia) && !editing && !revising && (
+        <div className="mt-3">
+          {media.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {media.map((m, i) => (
+                <div
+                  key={m.url}
+                  className="relative h-[72px] w-[72px] overflow-hidden rounded-md border border-border bg-surface-2"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={mediaUrl(m.url)} alt="" className="h-full w-full object-cover" />
+                  {canEditMedia && (
+                    <button
+                      type="button"
+                      aria-label={t("studio.remove_image")}
+                      onClick={() => removeImage(i)}
+                      className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full border border-border bg-surface text-text shadow-sm transition-colors hover:bg-surface-2"
+                    >
+                      <IcX size={12} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+          {canEditMedia && media.length < MEDIA_MAX && (
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={onPickFile}
+                className="hidden"
+              />
+              <button
+                type="button"
+                disabled={uploading}
+                onClick={() => fileRef.current?.click()}
+                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-caption text-text-muted transition-colors hover:bg-surface-2 hover:text-text disabled:opacity-60"
+              >
+                <IcImage size={14} /> {uploading ? t("studio.image_uploading") : t("studio.add_image")}
+              </button>
+              {mediaError && <span className="text-caption text-danger">{mediaError}</span>}
+            </div>
+          )}
         </div>
       )}
 
