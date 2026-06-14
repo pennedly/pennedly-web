@@ -98,6 +98,7 @@ export const IcImage = (p: IconProps) => <Svg {...p}><rect x="3" y="3" width="18
 export const IcThread = (p: IconProps) => <Svg {...p}><path d="M5 6h14M5 12h9M5 18h5" /></Svg>;
 export const IcExpand = (p: IconProps) => <Svg {...p}><path d="M9 4.5H4.5V9M15 4.5h4.5V9M9 19.5H4.5V15M15 19.5h4.5V15" /></Svg>;
 export const IcVideo = (p: IconProps) => <Svg {...p}><rect x="3" y="6" width="13" height="12" rx="2.5" /><path d="M16 9.6 L20.5 7 L20.5 17 L16 14.4 Z" /></Svg>;
+export const IcPlay = (p: IconProps) => <Svg {...p} filled><path d="M8 5 L19 12 L8 19 Z" /></Svg>;
 export const IcArrowUp = (p: IconProps) => <Svg {...p}><path d="M12 19V6M6 11l6-6 6 6" /></Svg>;
 export const IcArrowDown = (p: IconProps) => <Svg {...p}><path d="M12 5v13M6 13l6 6 6-6" /></Svg>;
 export const IcArrowLeft = (p: IconProps) => <Svg {...p}><path d="M19 12H5M11 6l-6 6 6 6" /></Svg>;

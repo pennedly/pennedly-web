@@ -32,6 +32,7 @@ import {
   IcGlobe,
   IcHeart,
   IcImage,
+  IcPlay,
   IcMore,
   IcReply,
   IcRepost,
@@ -66,7 +67,7 @@ export type FeedCardModel = {
   reposts: number;
   settling?: boolean;
   autoReply: boolean;
-  media?: { url: string; alt?: string | null }[];
+  media?: { url: string; alt?: string | null; type?: string | null; poster?: string | null }[];
 };
 
 export type FeedHandlers = {
@@ -346,7 +347,7 @@ function FeedMenu({
 }
 
 // ─────────────────────────────── FeedCard ───────────────────────────────────
-type FeedPic = { url: string; alt?: string | null };
+type FeedPic = { url: string; alt?: string | null; type?: string | null; poster?: string | null };
 
 // Images on a published post: a single image, or a swipeable carousel. Click to
 // open the lightbox. Renders nothing for a text-only post. (Video/GIF/link/poll/
@@ -361,23 +362,56 @@ export function FeedMedia({ media }: { media?: FeedPic[] | null }) {
   const total = media.length;
   const cur = Math.min(idx, total - 1);
 
-  const frame = (i: number) =>
-    broken[i] ? (
-      <div className="flex aspect-[3/2] w-full flex-col items-center justify-center gap-2 bg-surface-2 text-center text-text-subtle">
-        <span className="grid h-10 w-10 place-items-center rounded-md border border-border">
-          <IcImage size={20} />
-        </span>
-        <span className="text-small font-semibold text-text-muted">{t("feed.image_unavailable")}</span>
-      </div>
-    ) : (
+  const frame = (i: number) => {
+    const m = media[i];
+    if (broken[i]) {
+      return (
+        <div className="flex aspect-[3/2] w-full flex-col items-center justify-center gap-2 bg-surface-2 text-center text-text-subtle">
+          <span className="grid h-10 w-10 place-items-center rounded-md border border-border">
+            <IcImage size={20} />
+          </span>
+          <span className="text-small font-semibold text-text-muted">{t("feed.image_unavailable")}</span>
+        </div>
+      );
+    }
+    if (m.type === "video") {
+      return (
+        <div className="relative h-full w-full bg-black">
+          {m.poster ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={mediaUrl(m.poster)}
+              alt={m.alt ?? ""}
+              onError={() => setBroken((b) => ({ ...b, [i]: true }))}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <video
+              src={mediaUrl(m.url)}
+              muted
+              playsInline
+              preload="metadata"
+              className="h-full w-full object-cover"
+            />
+          )}
+          <span className="pointer-events-none absolute inset-0 grid place-items-center">
+            <span className="grid h-12 w-12 place-items-center rounded-full bg-black/55 pl-0.5 text-white backdrop-blur-sm">
+              <IcPlay size={22} />
+            </span>
+          </span>
+        </div>
+      );
+    }
+    return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
-        src={mediaUrl(media[i].url)}
-        alt={media[i].alt ?? ""}
+        src={mediaUrl(m.url)}
+        alt={m.alt ?? ""}
         onError={() => setBroken((b) => ({ ...b, [i]: true }))}
         className="h-full w-full object-cover"
       />
     );
+  };
 
   return (
     <div className="mt-3.5 max-md:mt-3">
@@ -473,8 +507,19 @@ function FeedLightbox({ media, start, onClose }: { media: FeedPic[]; start: numb
         {media.length > 1 && <span className="font-mono text-xs text-white/80">{i + 1} / {media.length}</span>}
       </div>
       <div className="relative grid min-h-0 flex-1 place-items-center px-4 py-2" onClick={(e) => e.stopPropagation()}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={mediaUrl(m.url)} alt={m.alt ?? ""} className="max-h-full max-w-full rounded-md border border-white/15 object-contain" />
+        {m.type === "video" ? (
+          <video
+            src={mediaUrl(m.url)}
+            poster={m.poster ? mediaUrl(m.poster) : undefined}
+            controls
+            autoPlay
+            playsInline
+            className="max-h-full max-w-full rounded-md border border-white/15 object-contain"
+          />
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={mediaUrl(m.url)} alt={m.alt ?? ""} className="max-h-full max-w-full rounded-md border border-white/15 object-contain" />
+        )}
         {media.length > 1 && i > 0 && (
           <button
             type="button"

@@ -128,6 +128,22 @@ export default function MediaGallery() {
         <Section title="broken image → fallback">
           <FeedMedia media={[{ url: "/media/0/does-not-exist.jpg" }]} />
         </Section>
+        <Section title="video → poster + play badge (click opens player)">
+          <FeedMedia
+            media={[
+              { url: "/media/0/sample.mp4", type: "video", poster: ph("video", 265), alt: "A sample video" },
+            ]}
+          />
+        </Section>
+        <Section title="carousel · image + video mix">
+          <FeedMedia
+            media={[
+              { url: ph("1", 210) },
+              { url: "/media/0/sample.mp4", type: "video", poster: ph("2", 150) },
+              { url: ph("3", 30) },
+            ]}
+          />
+        </Section>
         <Section title="none (text-only) → renders nothing">
           <div className="text-caption text-text-subtle">
             <FeedMedia media={[]} />
