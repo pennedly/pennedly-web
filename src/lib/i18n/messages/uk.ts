@@ -1151,6 +1151,7 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "studio.gif_searching": "Пошук…",
   "studio.gif_no_results": "GIF не знайдено — спробуй інакше",
   "studio.gif_hint": "Почни вводити для пошуку GIPHY",
+  "link.dismiss": "Прибрати попередній перегляд",
   "studio.cancel": "Скасувати",
   "studio.save": "Зберегти",
   "studio.publish_title": "Опублікувати у Threads?",

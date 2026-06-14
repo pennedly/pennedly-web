@@ -5,6 +5,7 @@ import { useState, type ReactNode } from "react";
 import { FeedMedia } from "@/components/studio/FeedParts";
 import { ReplyImage, type ReplyHandlers } from "@/components/studio/RepliesParts";
 import { DraftCard, type CardHandlers } from "@/components/studio/StudioParts";
+import { LinkPreviewCard } from "@/components/studio/LinkPreviewCard";
 import type { ReplyComment } from "@/components/studio/replies-demo";
 import type { StudioCard } from "@/components/studio/studio-demo";
 
@@ -181,6 +182,52 @@ export default function MediaGallery() {
             density="comfortable"
             h={mockCardHandlers}
           />
+        </Section>
+
+        <h2 className="mb-3 mt-8 text-h3 font-semibold">Link preview</h2>
+        <Section title="full card — image + title + description + domain">
+          <LinkPreviewCard
+            url="https://example.com/article"
+            preview={{
+              url: "https://example.com/article",
+              title: "How creators turn one Threads post into a week of content",
+              description:
+                "A practical workflow for repurposing a single idea across formats without burning out.",
+              image: ph("link", 200),
+              site_name: "example.com",
+            }}
+          />
+        </Section>
+        <Section title="minimal — title + domain, no image">
+          <LinkPreviewCard
+            url="https://blog.test/post"
+            preview={{
+              url: "https://blog.test/post",
+              title: "A title-only link card",
+              description: null,
+              image: null,
+              site_name: "blog.test",
+            }}
+          />
+        </Section>
+        <Section title="composer variant — Remove button (onDismiss)">
+          <LinkPreviewCard
+            url="https://news.test/x"
+            preview={{
+              url: "https://news.test/x",
+              title: "A dismissable preview in the composer",
+              description: "Authors can hide the card before publishing.",
+              image: ph("news", 280),
+              site_name: "news.test",
+            }}
+            onDismiss={() => {}}
+          />
+        </Section>
+        <Section title="no preview available → renders nothing">
+          <div className="text-caption text-text-subtle">
+            <LinkPreviewCard url="https://nopreview.test" preview={null} />
+            (no card — correct)
+          </div>
         </Section>
 
         <p className="mt-10 text-caption text-text-subtle">

@@ -1149,6 +1149,7 @@ export const pt: Partial<Record<MessageKey, string>> = {
   "studio.gif_searching": "Pesquisando…",
   "studio.gif_no_results": "Nenhum GIF encontrado — tente outra busca",
   "studio.gif_hint": "Digite para pesquisar no GIPHY",
+  "link.dismiss": "Remover pré-visualização",
   "studio.cancel": "Cancelar",
   "studio.save": "Salvar",
   "studio.publish_title": "Publicar no Threads?",

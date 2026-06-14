@@ -10,11 +10,13 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { mediaUrl } from "@/lib/api";
+import { extractFirstUrl } from "@/lib/links";
 import { cn } from "@/lib/cn";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Mono } from "@/components/ui/mono";
 import { AccountFace } from "@/components/ui/avatar";
+import { LinkPreviewCard } from "@/components/studio/LinkPreviewCard";
 import {
   IcArrowLeft,
   IcArrowUp,
@@ -530,6 +532,10 @@ export function FeedCard({
   const [translated, setTranslated] = useState<{ lang: UiLang; body: string } | null>(null);
   const ratio = baselineViews > 0 ? p.views / baselineViews : 0;
   const body = translated ? translated.body : p.text;
+  // Link card: only when the post carries no image media (Threads shows a card
+  // OR media, not both) and the body has a URL. Extracted from the original
+  // text so a translation doesn't change which link is previewed.
+  const linkUrl = !p.media || p.media.length === 0 ? extractFirstUrl(p.text) : null;
 
   async function runTranslate(lang: UiLang) {
     const tx = await h.onTranslate(p, lang);
@@ -588,6 +594,8 @@ export function FeedCard({
 
       {/* media — images carried by the post (between text and metrics) */}
       <FeedMedia media={p.media} />
+      {/* link card — built from OG metadata when the post links out (no media) */}
+      {linkUrl && <LinkPreviewCard url={linkUrl} />}
 
       {/* metrics — desktop: one inline row; mobile: hero on its own line, subs in an even row below */}
       <div className="mt-3.5 flex flex-wrap items-baseline gap-x-[22px] gap-y-2.5 max-md:flex-col max-md:items-stretch max-md:gap-y-3">

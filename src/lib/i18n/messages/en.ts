@@ -218,6 +218,7 @@ export const en = {
   "studio.gif_searching": "Searching…",
   "studio.gif_no_results": "No GIFs found — try another search",
   "studio.gif_hint": "Type to search GIPHY",
+  "link.dismiss": "Remove preview",
   "studio.cancel": "Cancel",
   "studio.save": "Save",
   "studio.publish_title": "Publish to Threads?",

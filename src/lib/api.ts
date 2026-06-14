@@ -38,6 +38,7 @@ import type {
   VoiceTestResponse,
   GeneratedDraft,
   IdeasResult,
+  LinkPreview,
   OnboardingPreview,
   OnboardingResult,
   OnboardingStatus,
@@ -565,6 +566,17 @@ export async function setDraftGif(
     method: "PUT",
     body: JSON.stringify({ gif }),
   });
+}
+
+// Fetch an OpenGraph preview card for a URL found in a post body. Resolves to
+// null when the backend can't build one (blocked/unfetchable/no-OG/rate-limited)
+// — callers simply render nothing in that case.
+export async function fetchLinkPreview(url: string): Promise<LinkPreview | null> {
+  try {
+    return await fetchApi<LinkPreview>(`/api/link-preview?url=${encodeURIComponent(url)}`);
+  } catch {
+    return null;
+  }
 }
 
 // The content Calendar window — scheduled/failed drafts + autopilot projection.

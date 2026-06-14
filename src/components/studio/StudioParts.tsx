@@ -10,6 +10,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { mediaUrl } from "@/lib/api";
+import { extractFirstUrl } from "@/lib/links";
 import { cn } from "@/lib/cn";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import type { GifResult, Idea } from "@/lib/types";
@@ -17,6 +18,7 @@ import { Button, buttonClasses } from "@/components/ui/button";
 import { Mono } from "@/components/ui/mono";
 import { AccountFace } from "@/components/ui/avatar";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
+import { LinkPreviewCard } from "@/components/studio/LinkPreviewCard";
 import {
   BrandMark,
   IcArrowLeft,
@@ -321,6 +323,7 @@ export function DraftCard({
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [gif, setGif] = useState<StudioCard["gif"]>(card.gif ?? null);
   const [gifOpen, setGifOpen] = useState(false);
+  const [linkDismissed, setLinkDismissed] = useState(false);
   const [gifQuery, setGifQuery] = useState("");
   const [gifResults, setGifResults] = useState<GifResult[]>([]);
   const [gifSearching, setGifSearching] = useState(false);
@@ -361,6 +364,12 @@ export function DraftCard({
   // ── images (post drafts only, before publish) ──
   const canEditMedia =
     card.kind === "post" && (status === "draft" || status === "ready") && !replyReadOnly;
+  // Link card in the composer: a post draft that links out, with no image/GIF
+  // attached (Threads renders a card OR media, not both) and not dismissed.
+  const linkUrl =
+    card.kind === "post" && media.length === 0 && !gif && !linkDismissed
+      ? extractFirstUrl(card.body)
+      : null;
 
   async function onPickFile() {
     const input = fileRef.current;
@@ -631,6 +640,11 @@ export function DraftCard({
             {t("studio.show_original")}
           </button>
         </div>
+      )}
+
+      {/* link card — OG preview when the draft links out (no image/GIF attached) */}
+      {linkUrl && !editing && !revising && (
+        <LinkPreviewCard url={linkUrl} onDismiss={() => setLinkDismissed(true)} />
       )}
 
       {/* media — attached images / GIF + attach controls (post drafts) */}

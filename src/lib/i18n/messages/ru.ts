@@ -218,6 +218,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "studio.gif_searching": "Поиск…",
   "studio.gif_no_results": "Ничего не найдено — попробуй иначе",
   "studio.gif_hint": "Начни вводить для поиска GIPHY",
+  "link.dismiss": "Убрать превью",
   "studio.cancel": "Отмена",
   "studio.save": "Сохранить",
   "studio.publish_title": "Опубликовать в Threads?",

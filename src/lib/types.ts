@@ -279,6 +279,16 @@ export type DraftGif = {
   alt: string | null;
 };
 
+// An OpenGraph link-preview card, built server-side from a URL in a post body
+// (Threads' API returns only the raw URL, so Pennedly generates the card).
+export type LinkPreview = {
+  url: string;
+  title: string | null;
+  description: string | null;
+  image: string | null;
+  site_name: string | null;
+};
+
 export type DraftSummary = {
   id: number;
   account_id: number;
