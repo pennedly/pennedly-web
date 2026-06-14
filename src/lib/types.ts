@@ -354,6 +354,7 @@ export type CommentSummary = {
   draft_text: string | null;
   draft_status: string | null; // "pending" | "approved" | "rejected"
   draft_is_skip: boolean | null;
+  draft_media: { url: string; alt: string | null }[]; // images on the reply draft
   replied_at: string | null;
   reply_threads_post_id: string | null;
   // Q3: the reply went out via the Autopilot auto-reply sweep, not a manual

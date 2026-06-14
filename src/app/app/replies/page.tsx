@@ -208,6 +208,7 @@ export default function RepliesPage() {
         reply: edits[c.ai_draft_id ?? -1] ?? c.draft_text ?? null,
         time: relativeTime(c.created_at, locale),
         repliedTime: relativeTime(c.replied_at, locale) || null,
+        media: c.draft_media ?? [],
       });
     }
     const ordered = [...pmap.values()].sort((a, b) => {
