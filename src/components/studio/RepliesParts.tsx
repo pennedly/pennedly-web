@@ -315,7 +315,8 @@ const CBADGE: Record<ReplyStatus, { tone: BadgeTone; key: MessageKey; dot: boole
 const REPLY_IMG_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 // One image on a reply draft (the backend caps a reply at a single image).
-function ReplyImage({ c, h }: { c: ReplyComment; h: ReplyHandlers }) {
+// Exported so the dev /gallery route can render it in every state.
+export function ReplyImage({ c, h }: { c: ReplyComment; h: ReplyHandlers }) {
   const { t } = useTranslation();
   const [media, setMedia] = useState<{ url: string }[]>(c.media ?? []);
   const [uploading, setUploading] = useState(false);

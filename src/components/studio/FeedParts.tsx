@@ -349,7 +349,8 @@ type FeedPic = { url: string; alt?: string | null };
 // Images on a published post: a single image, or a swipeable carousel. Click to
 // open the lightbox. Renders nothing for a text-only post. (Video/GIF/link/poll/
 // quote variants from the spec are deferred until the feed carries that data.)
-function FeedMedia({ media }: { media?: FeedPic[] | null }) {
+// Exported so the dev /gallery route can render it in every state.
+export function FeedMedia({ media }: { media?: FeedPic[] | null }) {
   const { t } = useTranslation();
   const [idx, setIdx] = useState(0);
   const [lightbox, setLightbox] = useState<number | null>(null);
