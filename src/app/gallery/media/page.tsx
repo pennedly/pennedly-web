@@ -85,6 +85,11 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 export default function MediaGallery() {
   const [dark, setDark] = useState(false);
 
+  // ⚠️ DEMO ONLY — an intentional bug to show CI catching a regression.
+  // This stands in for any real break (a crash, a broken button, a wrong
+  // label). It lives on the demo branch only and is reverted before merge.
+  throw new Error("DEMO_BUG: intentional CI-failure demo — not a real bug");
+
   function toggleDark() {
     document.documentElement.classList.toggle("dark");
     setDark((d) => !d);
