@@ -52,9 +52,21 @@ const mockCardHandlers: CardHandlers = {
   onTranslate: async () => "translated",
   onUploadImage: async () => ({ url: ph("uploaded", 200) }),
   onSetMedia: async () => {},
+  onSearchGiphy: async () =>
+    Array.from({ length: 9 }, (_, i) => ({
+      id: `g${i}`,
+      url: ph(`GIF ${i + 1}`, (i * 41) % 360),
+      preview_url: ph(`GIF ${i + 1}`, (i * 41) % 360),
+      alt: `Sample GIF ${i + 1}`,
+    })),
+  onSetGif: async () => {},
 };
 
-function mockDraft(id: number, media: { url: string; alt?: string | null }[]): StudioCard {
+function mockDraft(
+  id: number,
+  media: { url: string; alt?: string | null }[],
+  gif?: StudioCard["gif"],
+): StudioCard {
   return {
     id,
     status: "draft",
@@ -63,6 +75,7 @@ function mockDraft(id: number, media: { url: string; alt?: string | null }[]): S
     body: "A sample post draft in your voice. Brief a topic and Pennedly writes a few takes you can approve, tweak, or pass on.",
     time: "now",
     media,
+    gif: gif ?? null,
   };
 }
 
@@ -150,6 +163,21 @@ export default function MediaGallery() {
               { url: ph("2", 150), alt: "A second photo with alt text" },
               { url: ph("3", 30) },
             ])}
+            density="comfortable"
+            h={mockCardHandlers}
+          />
+        </Section>
+        <Section title="empty · GIF button enabled → click GIF to open the GIPHY picker">
+          <DraftCard card={mockDraft(103, [])} density="comfortable" h={mockCardHandlers} />
+        </Section>
+        <Section title="GIF attached → tile + remove + “Powered by GIPHY”">
+          <DraftCard
+            card={mockDraft(104, [], {
+              gif_id: "demo",
+              url: ph("GIF", 290),
+              preview_url: ph("GIF", 290),
+              alt: "A looping sample GIF",
+            })}
             density="comfortable"
             h={mockCardHandlers}
           />

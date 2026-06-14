@@ -27,7 +27,9 @@ import type {
   DecisionsResponse,
   DeleteDraftResult,
   DeletePostResult,
+  DraftGif,
   DraftsList,
+  GifResult,
   MediaItem,
   MediaUploadResponse,
   FeedResponse,
@@ -544,6 +546,25 @@ export async function setDraftMedia(
 // Already-absolute URLs (http/blob/data) pass through unchanged.
 export function mediaUrl(url: string): string {
   return /^[a-z]+:/i.test(url) ? url : `${BASE_URL}${url}`;
+}
+
+// Search GIPHY through our server-side proxy (the key stays on the backend).
+export async function searchGiphy(q: string, limit = 18): Promise<GifResult[]> {
+  const r = await fetchApi<{ results: GifResult[] }>(
+    `/api/giphy/search?q=${encodeURIComponent(q)}&limit=${limit}`,
+  );
+  return r.results;
+}
+
+// Attach (or clear, with null) a GIF on a post draft.
+export async function setDraftGif(
+  draftId: number,
+  gif: DraftGif | null,
+): Promise<{ draft_id: number; gif: DraftGif | null }> {
+  return fetchApi(`/api/drafts/${draftId}/gif`, {
+    method: "PUT",
+    body: JSON.stringify({ gif }),
+  });
 }
 
 // The content Calendar window — scheduled/failed drafts + autopilot projection.
