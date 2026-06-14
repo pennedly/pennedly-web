@@ -104,7 +104,7 @@ export default function Studio() {
     return Number.isFinite(n) && n >= 1 && n <= 4 ? n : 3;
   });
   const [selectedAccount, setSelectedAccount] = useState<{ name: string; handle: string | null; initials: string; avatarUrl: string | null } | null>(null);
-  const [publishTarget, setPublishTarget] = useState<{ card: StudioCard; account: { name: string; handle: string | null; initials: string } | null } | null>(null);
+  const [publishTarget, setPublishTarget] = useState<{ card: StudioCard; account: { name: string; handle: string | null; initials: string } | null; mode: "now" | "schedule" } | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [scheduling, setScheduling] = useState(false);
   const [toasts, setToasts] = useState<ToastT[]>([]);
@@ -407,9 +407,9 @@ export default function Studio() {
   const realHandlers: CardHandlers = {
     onApprove: realApprove,
     onReject: realReject,
-    onPublish: (card) => {
-      captureEvent("ui.publish_clicked", { draft_id: card.id });
-      setPublishTarget({ card, account: selectedAccount });
+    onPublish: (card, mode = "now") => {
+      captureEvent("ui.publish_clicked", { draft_id: card.id, mode });
+      setPublishTarget({ card, account: selectedAccount, mode });
     },
     onSendBack: () => {},
     onRestore: () => {},
@@ -466,7 +466,7 @@ export default function Studio() {
     onReject: (card) => demoMove(card, "rejected", t("studio.toast_rejected"), t("studio.toast_moved_rejected")),
     onSendBack: (card) => demoMove(card, "draft", t("studio.toast_restored"), undefined, false),
     onRestore: (card) => demoMove(card, "draft", t("studio.toast_restored"), undefined, false),
-    onPublish: (card) => setPublishTarget({ card, account: card.author }),
+    onPublish: (card, mode = "now") => setPublishTarget({ card, account: card.author, mode }),
     onSaveEdit: (card, text) => {
       setDemoCards((p) => p.map((c) => (c.id === card.id ? { ...c, body: text } : c)));
       toast(t("studio.toast_edit_saved"), "success", { duration: 2600 });
@@ -644,6 +644,7 @@ export default function Studio() {
         open={publishTarget !== null}
         text={publishTarget?.card.body ?? ""}
         account={publishTarget?.account ?? null}
+        initialMode={publishTarget?.mode ?? "now"}
         publishing={publishing}
         scheduling={scheduling}
         onClose={() => {

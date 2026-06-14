@@ -4,10 +4,11 @@ import { useState, type ReactNode } from "react";
 
 import { FeedMedia } from "@/components/studio/FeedParts";
 import { ReplyImage, type ReplyHandlers } from "@/components/studio/RepliesParts";
-import { DraftCard, type CardHandlers } from "@/components/studio/StudioParts";
+import { DraftCard, StudioComposer, type CardHandlers } from "@/components/studio/StudioParts";
 import { LinkPreviewCard } from "@/components/studio/LinkPreviewCard";
 import type { ReplyComment } from "@/components/studio/replies-demo";
 import type { StudioCard } from "@/components/studio/studio-demo";
+import type { Idea } from "@/lib/types";
 
 // Self-contained placeholder (data-URI SVG) — renders with no network/backend.
 const ph = (label: string, hue: number) =>
@@ -55,6 +56,34 @@ const mockCardHandlers: CardHandlers = {
   onSetMedia: async () => {},
   onSetVideo: async () => {},
 };
+
+const DEMO_IDEAS: Idea[] = [
+  { hook: "The fastest way to find your voice online: publish the thing you're slightly embarrassed by.", angle: "Contrarian take on polish vs. authenticity" },
+  { hook: "Crickets are data, not a verdict.", angle: "Reframe a quiet post as a signal, not a failure" },
+  { hook: "I stopped chasing viral and my reach went up. Here's what I did instead.", angle: "Counterintuitive growth story from your own runs" },
+  { hook: "Most people quit one post before it would have worked.", angle: "Short, punchy motivation in your voice" },
+];
+
+function ComposerDemo() {
+  const [value, setValue] = useState("");
+  const [count, setCount] = useState(3);
+  return (
+    <StudioComposer
+      avatarText="ML"
+      value={value}
+      onChange={setValue}
+      count={count}
+      onCount={setCount}
+      onGenerate={noop}
+      onIdeas={async () => {
+        await new Promise((r) => setTimeout(r, 400));
+        return DEMO_IDEAS;
+      }}
+      busy={false}
+      busyCount={0}
+    />
+  );
+}
 
 function mockDraft(
   id: number,
@@ -162,6 +191,11 @@ export default function MediaGallery() {
           <ReplyImage c={mockComment([{ url: ph("reply", 260) }])} h={mockHandlers} />
         </Section>
 
+        <h2 className="mb-3 mt-8 text-h3 font-semibold">Composer — generate row (chips + Ideas)</h2>
+        <Section title="idle · chips in ONE horizontally-scrolling row · Ideas + count + Generate">
+          <ComposerDemo />
+        </Section>
+
         <h2 className="mb-3 mt-8 text-h3 font-semibold">Composer (Studio draft card)</h2>
         <Section title="empty · Add image + Add video chips">
           <DraftCard card={mockDraft(100, [])} density="comfortable" h={mockCardHandlers} />
@@ -183,6 +217,18 @@ export default function MediaGallery() {
         <Section title="video attached · preview + remove + processing hint">
           <DraftCard
             card={mockDraft(103, [], { url: "/media/0/sample.mp4" })}
+            density="comfortable"
+            h={mockCardHandlers}
+          />
+        </Section>
+
+        <h2 className="mb-3 mt-8 text-h3 font-semibold">Ready card — scheduling Option A (Schedule + Publish)</h2>
+        <Section title="ready · secondary Schedule + primary Publish (send icon)">
+          <DraftCard card={{ ...mockDraft(110, []), status: "ready" }} density="comfortable" h={mockCardHandlers} />
+        </Section>
+        <Section title="scheduled · 'Goes out …' foot + Scheduled badge">
+          <DraftCard
+            card={{ ...mockDraft(111, []), status: "scheduled", scheduledAt: "2026-06-16T14:30:00.000Z" }}
             density="comfortable"
             h={mockCardHandlers}
           />

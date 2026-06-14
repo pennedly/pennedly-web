@@ -22,6 +22,7 @@ import { LinkPreviewCard } from "@/components/studio/LinkPreviewCard";
 import {
   BrandMark,
   IcArrowLeft,
+  IcArrowUp,
   IcBubble,
   IcCheck,
   IcChevDown,
@@ -80,7 +81,9 @@ export type Density = "comfortable" | "compact";
 export type CardHandlers = {
   onApprove: (c: StudioCard) => void;
   onReject: (c: StudioCard) => void;
-  onPublish: (c: StudioCard) => void;
+  /** Open the publish dialog; `mode` picks the dialog's initial tab
+   *  (Publish → "now", Schedule → "schedule"). Defaults to "now". */
+  onPublish: (c: StudioCard, mode?: "now" | "schedule") => void;
   onSendBack: (c: StudioCard) => void;
   onRestore: (c: StudioCard) => void;
   /** Persist an edited body into page state (card.body re-flows via props). */
@@ -989,9 +992,17 @@ export function DraftCard({
               {t("studio.approve")}
             </Button>
           ) : (
-            <Button size="sm" variant="primary" className="max-md:h-auto max-md:min-h-[44px] max-md:flex-1 max-md:whitespace-normal" icon={<IcStudio size={15} />} onClick={() => h.onPublish(card)}>
-              {t("studio.publish")}
-            </Button>
+            <>
+              {/* Option A — scheduling is discoverable on the card: a secondary
+                  "Schedule" beside the primary "Publish" (both open the dialog,
+                  in the matching mode). */}
+              <Button size="sm" variant="secondary" className="max-md:h-auto max-md:min-h-[44px] max-md:flex-1 max-md:whitespace-normal" icon={<IcClock size={15} />} onClick={() => h.onPublish(card, "schedule")}>
+                {t("studio.schedule")}
+              </Button>
+              <Button size="sm" variant="primary" className="max-md:h-auto max-md:min-h-[44px] max-md:flex-1 max-md:whitespace-normal" icon={<IcSend size={15} />} onClick={() => h.onPublish(card, "now")}>
+                {t("studio.publish")}
+              </Button>
+            </>
           )}
         </div>
       </>
@@ -1096,7 +1107,7 @@ export function StudioComposer({
             />
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2.5 border-t border-border pt-3">
-            <div className="flex gap-1.5 [scrollbar-width:none] max-md:w-full max-md:flex-nowrap max-md:overflow-x-auto max-md:[mask-image:linear-gradient(90deg,#000_calc(100%-20px),transparent)] md:min-w-0 md:flex-1 md:flex-wrap">
+            <div className="flex flex-nowrap gap-1.5 overflow-x-auto [scrollbar-width:none] [mask-image:linear-gradient(90deg,#000_calc(100%-20px),transparent)] max-md:w-full md:min-w-0 md:flex-1">
               <button
                 type="button"
                 onClick={loadIdeas}
@@ -1168,7 +1179,7 @@ export function StudioComposer({
                   </button>
                 </div>
               ) : ideas && ideas.length > 0 ? (
-                <ul className="flex flex-col gap-1.5">
+                <ul className="flex max-h-[348px] flex-col gap-1.5 overflow-y-auto max-md:max-h-none max-md:overflow-visible">
                   {ideas.map((idea, i) => (
                     <li key={i}>
                       <button
@@ -1177,10 +1188,15 @@ export function StudioComposer({
                           onChange(idea.hook);
                           setIdeas(null);
                         }}
-                        className="w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-left transition-colors hover:border-accent/45 hover:bg-accent/[0.04]"
+                        className="group flex w-full items-start gap-2.5 rounded-lg border border-border bg-surface px-3 py-2.5 text-left transition-colors hover:border-accent/45 hover:bg-accent/[0.04]"
                       >
-                        <span className="block text-small font-medium leading-snug text-text">{idea.hook}</span>
-                        {idea.angle && <span className="mt-0.5 block text-caption text-text-subtle">{idea.angle}</span>}
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-body font-semibold leading-snug text-text [text-wrap:pretty]">{idea.hook}</span>
+                          {idea.angle && <span className="mt-0.5 block text-small text-text-muted [text-wrap:pretty]">{idea.angle}</span>}
+                        </span>
+                        <span className="mt-0.5 inline-flex shrink-0 items-center gap-1 text-caption font-medium text-accent opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 max-md:opacity-100">
+                          <IcArrowUp size={14} /> {t("studio.ideas_use")}
+                        </span>
                       </button>
                     </li>
                   ))}
@@ -1371,6 +1387,7 @@ export function StudioPublishDialog({
   onClose,
   onConfirm,
   onSchedule,
+  initialMode = "now",
 }: {
   open: boolean;
   text: string;
@@ -1380,6 +1397,7 @@ export function StudioPublishDialog({
   onClose: () => void;
   onConfirm: () => void;
   onSchedule?: (scheduledAtIso: string) => void;
+  initialMode?: "now" | "schedule";
 }) {
   const { t } = useTranslation();
   const [mode, setMode] = useState<"now" | "schedule">("now");
@@ -1387,16 +1405,17 @@ export function StudioPublishDialog({
   const [time, setTime] = useState("");
   const busy = publishing || scheduling;
 
-  // On open: reset to "now" and pre-fill a sensible default (the next hour).
+  // On open: set the requested mode (Publish → now, Schedule → schedule) and
+  // pre-fill a sensible default time (the next hour).
   useEffect(() => {
     if (!open) return;
-    setMode("now");
+    setMode(initialMode);
     const d = new Date(Date.now() + 60 * 60 * 1000);
     d.setMinutes(0, 0, 0);
     const p = (n: number) => String(n).padStart(2, "0");
     setDate(`${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`);
     setTime(`${p(d.getHours())}:${p(d.getMinutes())}`);
-  }, [open]);
+  }, [open, initialMode]);
 
   useEffect(() => {
     if (!open) return;

@@ -147,6 +147,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "studio.ideas_empty": "Идей пока нет.",
   "studio.ideas_refresh": "Ещё идеи",
   "studio.ideas_close": "Закрыть",
+  "studio.ideas_use": "Применить",
   "studio.drafting_pre": "Пишу",
   "studio.drafting_post": "постов твоим голосом",
   "studio.tab_ready": "Готово к публикации",

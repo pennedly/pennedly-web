@@ -1082,6 +1082,7 @@ export const de: Partial<Record<MessageKey, string>> = {
   "studio.ideas_empty": "Gerade keine Ideen.",
   "studio.ideas_refresh": "Mehr Ideen",
   "studio.ideas_close": "Schließen",
+  "studio.ideas_use": "Verwenden",
   "studio.drafting_pre": "Schreibe",
   "studio.drafting_post": "Beiträge in deiner Stimme",
   "studio.tab_ready": "Bereit zum Veröffentlichen",

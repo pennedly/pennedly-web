@@ -1078,6 +1078,7 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "studio.ideas_empty": "Ідей поки немає.",
   "studio.ideas_refresh": "Ще ідеї",
   "studio.ideas_close": "Закрити",
+  "studio.ideas_use": "Застосувати",
   "studio.drafting_pre": "Пишу",
   "studio.drafting_post": "постів твоїм голосом",
   "studio.tab_ready": "Готово до публікації",

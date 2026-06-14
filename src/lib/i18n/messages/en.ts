@@ -147,6 +147,7 @@ export const en = {
   "studio.ideas_empty": "No ideas right now.",
   "studio.ideas_refresh": "More ideas",
   "studio.ideas_close": "Close",
+  "studio.ideas_use": "Use",
   "studio.drafting_pre": "Drafting",
   "studio.drafting_post": "posts in your voice",
   "studio.tab_ready": "Ready to publish",

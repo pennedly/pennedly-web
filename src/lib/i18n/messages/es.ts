@@ -1075,6 +1075,7 @@ export const es: Partial<Record<MessageKey, string>> = {
   "studio.ideas_empty": "Ahora mismo no hay ideas.",
   "studio.ideas_refresh": "Más ideas",
   "studio.ideas_close": "Cerrar",
+  "studio.ideas_use": "Usar",
   "studio.drafting_pre": "Redactando",
   "studio.drafting_post": "publicaciones con tu voz",
   "studio.tab_ready": "Listo para publicar",
