@@ -589,8 +589,10 @@ export default function Studio() {
         ) : (
           <>
             <StudioComposer
-              avatarText={(me?.display_name?.[0] ?? me?.email?.[0] ?? "M").toUpperCase()}
-              avatarUrl={me?.avatar_url ?? null}
+              // The composer writes AS the active Threads account, so its avatar
+              // is that account's photo — not the signed-in Pennedly user's.
+              avatarText={selectedAccount?.initials ?? "·"}
+              avatarUrl={selectedAccount?.avatarUrl ?? null}
               value={composerText}
               onChange={setComposerText}
               count={demoOn ? Number(tw.drafts) : batchCount}
