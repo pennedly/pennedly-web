@@ -824,10 +824,10 @@ export function DraftCard({
                       key={g.id}
                       type="button"
                       onClick={() => pickGif(g)}
-                      className="aspect-square overflow-hidden rounded-sm border border-border bg-surface-2 transition-colors hover:border-accent/50"
+                      className="relative aspect-square overflow-hidden rounded-sm border border-border bg-surface-2 transition-colors hover:border-accent/50"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={g.preview_url} alt={g.alt ?? ""} className="h-full w-full object-cover" />
+                      <img src={g.preview_url} alt={g.alt ?? ""} className="absolute inset-0 h-full w-full object-cover" />
                     </button>
                   ))}
                 </div>
