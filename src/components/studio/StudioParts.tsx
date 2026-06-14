@@ -818,16 +818,16 @@ export function DraftCard({
               {gifSearching ? (
                 <div className="py-7 text-center text-caption text-text-subtle">{t("studio.gif_searching")}</div>
               ) : gifResults.length > 0 ? (
-                <div className="grid max-h-[220px] grid-cols-3 gap-1.5 overflow-y-auto p-2">
+                <div className="flex gap-2 overflow-x-auto p-2">
                   {gifResults.map((g) => (
                     <button
                       key={g.id}
                       type="button"
                       onClick={() => pickGif(g)}
-                      className="relative aspect-square overflow-hidden rounded-sm border border-border bg-surface-2 transition-colors hover:border-accent/50"
+                      className="h-24 shrink-0 overflow-hidden rounded-sm border border-border bg-surface-2 transition-colors hover:border-accent/50"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={g.preview_url} alt={g.alt ?? ""} className="absolute inset-0 h-full w-full object-cover" />
+                      <img src={g.preview_url} alt={g.alt ?? ""} className="h-full w-auto max-w-none" />
                     </button>
                   ))}
                 </div>
