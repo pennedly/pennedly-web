@@ -53,11 +53,13 @@ const mockCardHandlers: CardHandlers = {
   onTranslate: async () => "translated",
   onUploadImage: async () => ({ url: ph("uploaded", 200) }),
   onSetMedia: async () => {},
+  onSetVideo: async () => {},
 };
 
 function mockDraft(
   id: number,
   media: { url: string; alt?: string | null }[],
+  video?: { url: string } | null,
 ): StudioCard {
   return {
     id,
@@ -67,6 +69,7 @@ function mockDraft(
     body: "A sample post draft in your voice. Brief a topic and Pennedly writes a few takes you can approve, tweak, or pass on.",
     time: "now",
     media,
+    video: video ?? null,
   };
 }
 
@@ -160,7 +163,10 @@ export default function MediaGallery() {
         </Section>
 
         <h2 className="mb-3 mt-8 text-h3 font-semibold">Composer (Studio draft card)</h2>
-        <Section title="1 image · ALT empty + gated Video chip">
+        <Section title="empty · Add image + Add video chips">
+          <DraftCard card={mockDraft(100, [])} density="comfortable" h={mockCardHandlers} />
+        </Section>
+        <Section title="1 image · ALT empty + Add image only (video hidden)">
           <DraftCard card={mockDraft(101, [{ url: ph("1", 210) }])} density="comfortable" h={mockCardHandlers} />
         </Section>
         <Section title="carousel (3) · drag to reorder · one ALT set (green)">
@@ -170,6 +176,13 @@ export default function MediaGallery() {
               { url: ph("2", 150), alt: "A second photo with alt text" },
               { url: ph("3", 30) },
             ])}
+            density="comfortable"
+            h={mockCardHandlers}
+          />
+        </Section>
+        <Section title="video attached · preview + remove + processing hint">
+          <DraftCard
+            card={mockDraft(103, [], { url: "/media/0/sample.mp4" })}
             density="comfortable"
             h={mockCardHandlers}
           />

@@ -60,6 +60,10 @@ export const DRAFT_LIMIT = 500;
 export const MEDIA_MAX = 10;
 const MEDIA_MAX_BYTES = 8 * 1024 * 1024;
 const MEDIA_TYPES = ["image/jpeg", "image/png", "image/webp"];
+// A post carries EITHER images OR one video. Mirror the backend's video caps
+// client-side so we reject before uploading.
+const VIDEO_MAX_BYTES = 100 * 1024 * 1024;
+const VIDEO_TYPES = ["video/mp4", "video/quicktime"];
 
 // Mirror of the backend `thread_split` rule: a line of only `---` separates the
 // parts of a thread chain. Returns a single segment for an ordinary post, so
@@ -88,10 +92,13 @@ export type CardHandlers = {
   /** Hard-delete the draft from the queue (Undo-safe in the page). The
    *  endpoint refuses only a published draft, so it's offered everywhere else. */
   onDelete: (c: StudioCard) => void;
-  /** Upload one image file for this draft's account; resolves to its URL. */
+  /** Upload one image OR video file for this draft's account (same endpoint);
+   *  resolves to its URL. */
   onUploadImage: (file: File) => Promise<{ url: string }>;
   /** Persist the draft's full image list (attach / remove / reorder / alt). */
   onSetMedia: (c: StudioCard, media: { url: string; alt?: string | null }[]) => Promise<void>;
+  /** Persist the draft's single video (attach with {url} / clear with null). */
+  onSetVideo: (c: StudioCard, video: { url: string } | null) => Promise<void>;
 };
 
 // ─────────────────────────────── CharMeter ──────────────────────────────────
@@ -311,12 +318,15 @@ export function DraftCard({
   const [revised, setRevised] = useState(false);
   const [translated, setTranslated] = useState<{ lang: UiLang; body: string } | null>(null);
   const [media, setMedia] = useState<{ url: string; alt?: string | null }[]>(card.media ?? []);
+  const [video, setVideo] = useState<{ url: string } | null>(card.video ?? null);
   const [uploading, setUploading] = useState(false);
+  const [videoUploading, setVideoUploading] = useState(false);
   const [mediaError, setMediaError] = useState<string | null>(null);
   const [altIdx, setAltIdx] = useState<number | null>(null);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [linkDismissed, setLinkDismissed] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLInputElement>(null);
 
   const status = card.status;
   const shownBody = translated ? translated.body : card.body;
@@ -353,10 +363,10 @@ export function DraftCard({
   // ── images (post drafts only, before publish) ──
   const canEditMedia =
     card.kind === "post" && (status === "draft" || status === "ready") && !replyReadOnly;
-  // Link card in the composer: a post draft that links out, with no image
-  // attached (Threads renders a card OR media, not both) and not dismissed.
+  // Link card in the composer: a post draft that links out, with no image OR
+  // video attached (Threads renders a card OR media, not both) and not dismissed.
   const linkUrl =
-    card.kind === "post" && media.length === 0 && !linkDismissed
+    card.kind === "post" && media.length === 0 && video === null && !linkDismissed
       ? extractFirstUrl(card.body)
       : null;
 
@@ -417,6 +427,45 @@ export function DraftCard({
     const [moved] = next.splice(from, 1);
     next.splice(to, 0, moved);
     void persistMedia(next);
+  }
+
+  // ── video (post drafts only; mutually exclusive with images) ──
+  async function onPickVideo() {
+    const input = videoRef.current;
+    const file = input?.files?.[0];
+    if (input) input.value = ""; // let the same file be re-picked
+    if (!file) return;
+    setMediaError(null);
+    if (!VIDEO_TYPES.includes(file.type)) {
+      setMediaError(t("studio.video_bad_type"));
+      return;
+    }
+    if (file.size > VIDEO_MAX_BYTES) {
+      setMediaError(t("studio.video_too_large"));
+      return;
+    }
+    setVideoUploading(true);
+    try {
+      const { url } = await h.onUploadImage(file); // same upload endpoint
+      setVideo({ url });
+      await h.onSetVideo(card, { url });
+    } catch {
+      setMediaError(t("studio.video_failed"));
+    } finally {
+      setVideoUploading(false);
+    }
+  }
+
+  async function removeVideo() {
+    const prev = video;
+    setVideo(null);
+    setMediaError(null);
+    try {
+      await h.onSetVideo(card, null);
+    } catch {
+      setVideo(prev); // revert on failure
+      setMediaError(t("studio.video_failed"));
+    }
   }
 
   // ── ⋯-menu items per status ──
@@ -598,9 +647,33 @@ export function DraftCard({
         <LinkPreviewCard url={linkUrl} onDismiss={() => setLinkDismissed(true)} />
       )}
 
-      {/* media — attached images + attach controls (post drafts) */}
-      {(media.length > 0 || canEditMedia) && !editing && !revising && (
+      {/* media — attached images / video + attach controls (post drafts) */}
+      {(media.length > 0 || video !== null || canEditMedia) && !editing && !revising && (
         <div className="mt-3">
+          {/* attached video preview (mutually exclusive with images) */}
+          {video !== null && (
+            <div className="space-y-1.5">
+              <div className="relative">
+                <video
+                  src={mediaUrl(video.url)}
+                  controls
+                  playsInline
+                  className="block max-h-[200px] w-full rounded-md border border-border object-contain bg-black"
+                />
+                {canEditMedia && (
+                  <button
+                    type="button"
+                    aria-label={t("studio.remove_video")}
+                    onClick={removeVideo}
+                    className="absolute right-1.5 top-1.5 grid h-6 w-6 place-items-center rounded-full border border-border bg-surface text-text shadow-sm transition-colors hover:bg-surface-2"
+                  >
+                    <IcX size={13} />
+                  </button>
+                )}
+              </div>
+              <p className="text-caption text-text-subtle">{t("studio.video_processing_hint")}</p>
+            </div>
+          )}
           {media.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {media.map((m, i) => (
@@ -686,7 +759,15 @@ export function DraftCard({
                 onChange={onPickFile}
                 className="hidden"
               />
-              {media.length < MEDIA_MAX && (
+              <input
+                ref={videoRef}
+                type="file"
+                accept="video/mp4,video/quicktime"
+                onChange={onPickVideo}
+                className="hidden"
+              />
+              {/* Add image — hidden while a video is attached (mutual exclusion). */}
+              {video === null && media.length < MEDIA_MAX && (
                 <button
                   type="button"
                   disabled={uploading}
@@ -696,14 +777,19 @@ export function DraftCard({
                   <IcImage size={14} /> {uploading ? t("studio.image_uploading") : t("studio.add_image")}
                 </button>
               )}
-              {/* video stays gated (upload pipeline pending) */}
-              <span
-                title={t("studio.media_soon")}
-                className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-caption text-text-subtle opacity-60"
-              >
-                <IcVideo size={14} /> {t("studio.video")}
-                <span className="rounded-full bg-accent/12 px-1.5 text-[9.5px] font-semibold text-accent">{t("studio.soon")}</span>
-              </span>
+              {/* Add video — hidden while images are attached or a video is
+                  already attached (one video, mutually exclusive with images). */}
+              {video === null && media.length === 0 && (
+                <button
+                  type="button"
+                  disabled={videoUploading}
+                  title={t("studio.video_excl")}
+                  onClick={() => videoRef.current?.click()}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-caption text-text-muted transition-colors hover:bg-surface-2 hover:text-text disabled:opacity-60"
+                >
+                  <IcVideo size={14} /> {videoUploading ? t("studio.video_uploading") : t("studio.add_video")}
+                </button>
+              )}
               {media.length > 1 && (
                 <span className="text-caption text-text-subtle">{t("studio.media_reorder_hint")}</span>
               )}

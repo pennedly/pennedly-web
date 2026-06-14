@@ -262,6 +262,10 @@ export type BatchGenerateResult = {
 // the backend serves — wrap it in `api.mediaUrl()` before putting it in <img>.
 export type MediaItem = { url: string };
 
+// The single video attached to a post draft (mutually exclusive with images).
+// `url` is a relative `/media/...` path — wrap in `api.mediaUrl()`.
+export type DraftVideo = { url: string };
+
 export type MediaUploadResponse = {
   url: string;
   content_type: string;
@@ -303,6 +307,9 @@ export type DraftSummary = {
   reply_to: { who: string | null; text: string } | null;
   // Images attached to a post draft (empty for text-only posts or replies).
   media: MediaItem[];
+  // The one video attached to a post draft (null for text-only/image posts or
+  // replies). Mutually exclusive with `media`.
+  video: DraftVideo | null;
 };
 
 export type DraftsList = {

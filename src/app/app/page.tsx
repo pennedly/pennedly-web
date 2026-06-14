@@ -29,6 +29,7 @@ import {
   rejectDraft,
   scheduleDraft,
   setDraftMedia,
+  setDraftVideo,
   translateText,
   uploadMedia,
 } from "@/lib/api";
@@ -424,7 +425,17 @@ export default function Studio() {
     },
     onSetMedia: async (card, media) => {
       await setDraftMedia(card.id, media);
-      setDrafts((p) => p.map((d) => (d.id === card.id ? { ...d, media } : d)));
+      // Attaching images clears any video server-side (mutual exclusion).
+      setDrafts((p) =>
+        p.map((d) => (d.id === card.id ? { ...d, media, video: media.length ? null : d.video } : d)),
+      );
+    },
+    onSetVideo: async (card, video) => {
+      await setDraftVideo(card.id, video);
+      // Attaching a video clears images server-side (mutual exclusion).
+      setDrafts((p) =>
+        p.map((d) => (d.id === card.id ? { ...d, video, media: video ? [] : d.media } : d)),
+      );
     },
   };
 
@@ -481,7 +492,14 @@ export default function Studio() {
     },
     onUploadImage: async (file) => ({ url: URL.createObjectURL(file) }),
     onSetMedia: async (card, media) => {
-      setDemoCards((p) => p.map((c) => (c.id === card.id ? { ...c, media } : c)));
+      setDemoCards((p) =>
+        p.map((c) => (c.id === card.id ? { ...c, media, video: media.length ? null : c.video } : c)),
+      );
+    },
+    onSetVideo: async (card, video) => {
+      setDemoCards((p) =>
+        p.map((c) => (c.id === card.id ? { ...c, video, media: video ? [] : c.media } : c)),
+      );
     },
   };
 
@@ -525,6 +543,7 @@ export default function Studio() {
     stats: null,
     scheduledAt: d.scheduled_at,
     media: d.media ?? [],
+    video: d.video ?? null,
   }));
   const cards = demoOn ? demoCards : realCards;
 

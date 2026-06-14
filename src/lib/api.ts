@@ -28,6 +28,7 @@ import type {
   DeleteDraftResult,
   DeletePostResult,
   DraftsList,
+  DraftVideo,
   MediaItem,
   MediaUploadResponse,
   FeedResponse,
@@ -537,6 +538,19 @@ export async function setDraftMedia(
   return fetchApi(`/api/drafts/${draftId}/media`, {
     method: "PUT",
     body: JSON.stringify({ media }),
+  });
+}
+
+// Attach (or clear, with null) the single video on a post draft. The URL must
+// be one uploadMedia returned (same endpoint as images). Attaching a video
+// clears any attached images (mutual exclusion).
+export async function setDraftVideo(
+  draftId: number,
+  video: DraftVideo | null,
+): Promise<{ draft_id: number; video: DraftVideo | null }> {
+  return fetchApi(`/api/drafts/${draftId}/video`, {
+    method: "PUT",
+    body: JSON.stringify({ video }),
   });
 }
 
