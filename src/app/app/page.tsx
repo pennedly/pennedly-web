@@ -89,6 +89,10 @@ export default function Studio() {
   const [me, setMe] = useState<Me | null>(null);
   const accountId = useSelectedAccountId();
   const [drafts, setDrafts] = useState<DraftSummary[]>([]);
+  // True while the first real drafts fetch is in flight, so the list shows a
+  // skeleton instead of flashing the empty state. Starts true (the initial
+  // render is a load); cleared once a fetch settles (or in demo mode).
+  const [draftsLoading, setDraftsLoading] = useState(true);
   const [edits, setEdits] = useState<Record<number, string>>({});
   const [tab, setTab] = useState<StudioStatus>("ready");
   const [composerText, setComposerText] = useState("");
@@ -175,8 +179,12 @@ export default function Studio() {
 
   // ── load drafts on account change ──
   useEffect(() => {
-    if (demoParam) return;
-    if (accountId === null) return;
+    if (demoParam) {
+      setDraftsLoading(false); // demo uses the Tweaks state, not a real fetch
+      return;
+    }
+    if (accountId === null) return; // still resolving — keep the skeleton up
+    setDraftsLoading(true);
     (async () => {
       try {
         const ob = await fetchOnboardingStatus(accountId);
@@ -197,6 +205,8 @@ export default function Studio() {
           clearTokens();
           router.push("/app/login");
         }
+      } finally {
+        setDraftsLoading(false);
       }
     })();
   }, [accountId, router]);
@@ -608,7 +618,7 @@ export default function Studio() {
             <FilterTabs active={tab} counts={counts} onChange={setTab} />
 
             <div className={density === "compact" ? "flex flex-col gap-2.5" : "flex flex-col gap-3.5"}>
-              {feedState === "Loading" ? (
+              {feedState === "Loading" || (!demoOn && draftsLoading) ? (
                 <>
                   <SkeletonCard />
                   <SkeletonCard />
