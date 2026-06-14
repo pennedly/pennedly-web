@@ -42,7 +42,11 @@ jobs:
       # no auth/backend, plus a real dark-toggle click). The visual harness
       # tests/visual/*.spec.ts is a local design-review tool (screenshots, no
       # assertions) — not a CI gate — so it stays excluded here.
-      - run: npx playwright test tests/smoke.spec.ts tests/pages-smoke.spec.ts tests/gallery-smoke.spec.ts
+      # authed-e2e.spec.ts is the hermetic LOGGED-IN path: it seeds a fake
+      # session + selected account and mocks the backend, then drives the
+      # Studio dashboard like a real user (boot → tabs → publish dialog →
+      # success toast). No real backend, deterministic.
+      - run: npx playwright test tests/smoke.spec.ts tests/pages-smoke.spec.ts tests/gallery-smoke.spec.ts tests/authed-e2e.spec.ts
         env:
           # The smoke suite hits no backend; a placeholder keeps the
           # client bundle's NEXT_PUBLIC_API_URL defined at build time.
