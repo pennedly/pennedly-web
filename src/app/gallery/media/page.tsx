@@ -4,7 +4,9 @@ import { useState, type ReactNode } from "react";
 
 import { FeedMedia } from "@/components/studio/FeedParts";
 import { ReplyImage, type ReplyHandlers } from "@/components/studio/RepliesParts";
+import { DraftCard, type CardHandlers } from "@/components/studio/StudioParts";
 import type { ReplyComment } from "@/components/studio/replies-demo";
+import type { StudioCard } from "@/components/studio/studio-demo";
 
 // Self-contained placeholder (data-URI SVG) — renders with no network/backend.
 const ph = (label: string, hue: number) =>
@@ -34,6 +36,32 @@ function mockComment(media: { url: string }[]): ReplyComment {
     text: "Sample comment to answer.",
     time: "2h",
     reply: "A sample reply draft in your voice.",
+    media,
+  };
+}
+
+const mockCardHandlers: CardHandlers = {
+  onApprove: noop,
+  onReject: noop,
+  onPublish: noop,
+  onSendBack: noop,
+  onRestore: noop,
+  onSaveEdit: noop,
+  onDelete: noop,
+  onTweak: async () => "tweaked",
+  onTranslate: async () => "translated",
+  onUploadImage: async () => ({ url: ph("uploaded", 200) }),
+  onSetMedia: async () => {},
+};
+
+function mockDraft(id: number, media: { url: string; alt?: string | null }[]): StudioCard {
+  return {
+    id,
+    status: "draft",
+    kind: "post",
+    author: { name: "Mara Lin", handle: "mara.lin", initials: "ML" },
+    body: "A sample post draft in your voice. Brief a topic and Pennedly writes a few takes you can approve, tweak, or pass on.",
+    time: "now",
     media,
   };
 }
@@ -109,6 +137,22 @@ export default function MediaGallery() {
         </Section>
         <Section title="attached — thumbnail + remove">
           <ReplyImage c={mockComment([{ url: ph("reply", 260) }])} h={mockHandlers} />
+        </Section>
+
+        <h2 className="mb-3 mt-8 text-h3 font-semibold">Composer (Studio draft card)</h2>
+        <Section title="1 image · ALT empty + gated Video/GIF chips">
+          <DraftCard card={mockDraft(101, [{ url: ph("1", 210) }])} density="comfortable" h={mockCardHandlers} />
+        </Section>
+        <Section title="carousel (3) · drag to reorder · one ALT set (green)">
+          <DraftCard
+            card={mockDraft(102, [
+              { url: ph("1", 210) },
+              { url: ph("2", 150), alt: "A second photo with alt text" },
+              { url: ph("3", 30) },
+            ])}
+            density="comfortable"
+            h={mockCardHandlers}
+          />
         </Section>
 
         <p className="mt-10 text-caption text-text-subtle">

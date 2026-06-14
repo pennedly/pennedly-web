@@ -21,7 +21,7 @@ export type StudioCard = {
   stats?: { likes: number; replies: number; reposts: number } | null;
   // Attached images (post cards) — relative `/media/...` URLs or, in demo,
   // local blob: URLs. Rendered as thumbnails; resolved via api.mediaUrl().
-  media?: { url: string }[];
+  media?: { url: string; alt?: string | null }[];
 };
 
 // The 8 UI locales offered by the card ⋯ → Translate submenu (English = the

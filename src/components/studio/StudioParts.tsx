@@ -25,10 +25,12 @@ import {
   IcChevDown,
   IcClock,
   IcExternal,
+  IcGif,
   IcGlobe,
   IcHeart,
   IcImage,
   IcMore,
+  IcVideo,
   IcNib,
   IcPencil,
   IcReload,
@@ -87,8 +89,8 @@ export type CardHandlers = {
   onDelete: (c: StudioCard) => void;
   /** Upload one image file for this draft's account; resolves to its URL. */
   onUploadImage: (file: File) => Promise<{ url: string }>;
-  /** Persist the draft's full image list (attach or remove). */
-  onSetMedia: (c: StudioCard, media: { url: string }[]) => Promise<void>;
+  /** Persist the draft's full image list (attach / remove / reorder / alt). */
+  onSetMedia: (c: StudioCard, media: { url: string; alt?: string | null }[]) => Promise<void>;
 };
 
 // ─────────────────────────────── CharMeter ──────────────────────────────────
@@ -307,9 +309,11 @@ export function DraftCard({
   const [revising, setRevising] = useState(false);
   const [revised, setRevised] = useState(false);
   const [translated, setTranslated] = useState<{ lang: UiLang; body: string } | null>(null);
-  const [media, setMedia] = useState<{ url: string }[]>(card.media ?? []);
+  const [media, setMedia] = useState<{ url: string; alt?: string | null }[]>(card.media ?? []);
   const [uploading, setUploading] = useState(false);
   const [mediaError, setMediaError] = useState<string | null>(null);
+  const [altIdx, setAltIdx] = useState<number | null>(null);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const status = card.status;
@@ -386,6 +390,25 @@ export function DraftCard({
       setMedia(prev); // revert on failure
       setMediaError(t("studio.image_failed"));
     }
+  }
+
+  async function persistMedia(next: { url: string; alt?: string | null }[]) {
+    const prev = media;
+    setMedia(next);
+    try {
+      await h.onSetMedia(card, next);
+    } catch {
+      setMedia(prev);
+      setMediaError(t("studio.image_failed"));
+    }
+  }
+
+  function reorderMedia(from: number, to: number) {
+    if (from === to || from < 0 || to < 0) return;
+    const next = [...media];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    void persistMedia(next);
   }
 
   // ── ⋯-menu items per status ──
@@ -562,7 +585,7 @@ export function DraftCard({
         </div>
       )}
 
-      {/* media — attached image thumbnails + attach control (post drafts) */}
+      {/* media — attached images (drag to reorder · ALT) + attach controls */}
       {(media.length > 0 || canEditMedia) && !editing && !revising && (
         <div className="mt-3">
           {media.length > 0 && (
@@ -570,25 +593,78 @@ export function DraftCard({
               {media.map((m, i) => (
                 <div
                   key={m.url}
-                  className="relative h-[72px] w-[72px] overflow-hidden rounded-md border border-border bg-surface-2"
+                  draggable={canEditMedia && media.length > 1}
+                  onDragStart={() => setDragIdx(i)}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => {
+                    if (dragIdx !== null) reorderMedia(dragIdx, i);
+                    setDragIdx(null);
+                  }}
+                  onDragEnd={() => setDragIdx(null)}
+                  className={cn(
+                    "relative h-[72px] w-[72px] overflow-hidden rounded-md border border-border bg-surface-2",
+                    canEditMedia && media.length > 1 && "cursor-grab",
+                    dragIdx === i && "opacity-50",
+                  )}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={mediaUrl(m.url)} alt="" className="h-full w-full object-cover" />
+                  <img src={mediaUrl(m.url)} alt={m.alt ?? ""} className="h-full w-full object-cover" />
                   {canEditMedia && (
-                    <button
-                      type="button"
-                      aria-label={t("studio.remove_image")}
-                      onClick={() => removeImage(i)}
-                      className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full border border-border bg-surface text-text shadow-sm transition-colors hover:bg-surface-2"
-                    >
-                      <IcX size={12} />
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        aria-label={t("studio.remove_image")}
+                        onClick={() => removeImage(i)}
+                        className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full border border-border bg-surface text-text shadow-sm transition-colors hover:bg-surface-2"
+                      >
+                        <IcX size={12} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAltIdx(i)}
+                        aria-label={t("studio.alt_label")}
+                        className={cn(
+                          "absolute bottom-1 left-1 inline-flex h-[18px] items-center gap-0.5 rounded-sm px-1 text-[9.5px] font-bold tracking-wide text-white backdrop-blur-sm",
+                          m.alt ? "bg-success/90" : "bg-black/55",
+                        )}
+                      >
+                        {m.alt && <IcCheck size={9} />} ALT
+                      </button>
+                    </>
                   )}
                 </div>
               ))}
             </div>
           )}
-          {canEditMedia && media.length < MEDIA_MAX && (
+
+          {canEditMedia && altIdx !== null && media[altIdx] && (
+            <div className="mt-2 rounded-md border border-accent/40 bg-surface-2 p-2.5">
+              <div className="mb-1 text-caption text-text-muted">
+                {t("studio.alt_label")} · {t("studio.alt_hint")}
+              </div>
+              <textarea
+                autoFocus
+                defaultValue={media[altIdx].alt ?? ""}
+                onKeyDown={(e) => {
+                  if ((e.metaKey || e.ctrlKey) && e.key === "Enter")
+                    (e.target as HTMLTextAreaElement).blur();
+                  if (e.key === "Escape") setAltIdx(null);
+                }}
+                onBlur={(e) => {
+                  const v = e.target.value.trim();
+                  const cur = altIdx;
+                  void persistMedia(media.map((mm, ii) => (ii === cur ? { ...mm, alt: v || null } : mm)));
+                  setAltIdx(null);
+                }}
+                rows={2}
+                maxLength={1000}
+                placeholder={t("studio.alt_placeholder")}
+                className="w-full resize-y rounded-sm border border-border bg-surface px-2.5 py-2 text-small text-text outline-none focus:border-accent max-md:text-[16px]"
+              />
+            </div>
+          )}
+
+          {canEditMedia && (
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <input
                 ref={fileRef}
@@ -597,14 +673,34 @@ export function DraftCard({
                 onChange={onPickFile}
                 className="hidden"
               />
-              <button
-                type="button"
-                disabled={uploading}
-                onClick={() => fileRef.current?.click()}
-                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-caption text-text-muted transition-colors hover:bg-surface-2 hover:text-text disabled:opacity-60"
+              {media.length < MEDIA_MAX && (
+                <button
+                  type="button"
+                  disabled={uploading}
+                  onClick={() => fileRef.current?.click()}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-caption text-text-muted transition-colors hover:bg-surface-2 hover:text-text disabled:opacity-60"
+                >
+                  <IcImage size={14} /> {uploading ? t("studio.image_uploading") : t("studio.add_image")}
+                </button>
+              )}
+              {/* gated — drawn per spec; video upload + GIPHY are pending */}
+              <span
+                title={t("studio.media_soon")}
+                className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-caption text-text-subtle opacity-60"
               >
-                <IcImage size={14} /> {uploading ? t("studio.image_uploading") : t("studio.add_image")}
-              </button>
+                <IcVideo size={14} /> {t("studio.video")}
+                <span className="rounded-full bg-accent/12 px-1.5 text-[9.5px] font-semibold text-accent">{t("studio.soon")}</span>
+              </span>
+              <span
+                title={t("studio.media_soon")}
+                className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-caption text-text-subtle opacity-60"
+              >
+                <IcGif size={14} /> GIF
+                <span className="rounded-full bg-accent/12 px-1.5 text-[9.5px] font-semibold text-accent">{t("studio.soon")}</span>
+              </span>
+              {media.length > 1 && (
+                <span className="text-caption text-text-subtle">{t("studio.media_reorder_hint")}</span>
+              )}
               {mediaError && <span className="text-caption text-danger">{mediaError}</span>}
             </div>
           )}
