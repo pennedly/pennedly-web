@@ -1143,6 +1143,8 @@ export const pt: Partial<Record<MessageKey, string>> = {
   "studio.thread_badge": "Sequência",
   "studio.thread_new_part": "Nova parte",
   "studio.thread_part": "Parte",
+  "studio.thread_rule_hint": "Uma linha apenas com --- inicia uma nova parte.",
+  "studio.thread_over_hint": "Uma parte ultrapassa o limite de 500 caracteres — encurte-a antes de aprovar ou publicar. O Pennedly nunca corta uma parte em silêncio.",
   "studio.alt_label": "Texto alternativo",
   "studio.alt_hint": "descreva a imagem para leitores de tela",
   "studio.alt_placeholder": "ex. Uma mesa ensolarada com um caderno aberto",

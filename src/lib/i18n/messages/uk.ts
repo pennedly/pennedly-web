@@ -1145,6 +1145,8 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "studio.thread_badge": "Нитка",
   "studio.thread_new_part": "Нова частина",
   "studio.thread_part": "Частина",
+  "studio.thread_rule_hint": "Рядок лише з --- починає нову частину.",
+  "studio.thread_over_hint": "Одна з частин довша за 500 символів — скоротіть її, перш ніж схвалювати чи публікувати. Pennedly ніколи не обрізає частину мовчки.",
   "studio.alt_label": "Alt-текст",
   "studio.alt_hint": "опишіть зображення для незрячих",
   "studio.alt_placeholder": "напр. Залитий сонцем стіл із розгорнутим блокнотом",

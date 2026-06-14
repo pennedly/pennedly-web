@@ -1150,6 +1150,8 @@ export const de: Partial<Record<MessageKey, string>> = {
   "studio.thread_badge": "Thread",
   "studio.thread_new_part": "Neuer Teil",
   "studio.thread_part": "Teil",
+  "studio.thread_rule_hint": "Eine Zeile mit nur --- beginnt einen neuen Teil.",
+  "studio.thread_over_hint": "Ein Teil überschreitet das Limit von 500 Zeichen — kürze ihn, bevor du freigeben oder veröffentlichen kannst. Pennedly kürzt einen Teil nie stillschweigend.",
   "studio.alt_label": "Alt-Text",
   "studio.alt_hint": "Bild für Screenreader beschreiben",
   "studio.alt_placeholder": "z. B. Ein sonniger Schreibtisch mit offenem Notizbuch",

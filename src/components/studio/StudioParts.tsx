@@ -21,6 +21,7 @@ import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { LinkPreviewCard } from "@/components/studio/LinkPreviewCard";
 import {
   BrandMark,
+  IcAlert,
   IcArrowLeft,
   IcArrowUp,
   IcBubble,
@@ -602,6 +603,18 @@ export function DraftCard({
               <CharMeter len={editText.length} />
             )}
           </div>
+          {isThreadEdit &&
+            (editThreadOverLimit ? (
+              <div className="mt-2 flex items-start gap-1.5 rounded-md border border-danger/30 bg-danger/[0.06] px-2.5 py-2 text-caption text-text-muted">
+                <IcAlert size={14} className="mt-px shrink-0 text-danger" />
+                <span>{t("studio.thread_over_hint")}</span>
+              </div>
+            ) : (
+              <div className="mt-2 flex items-center gap-1.5 text-caption text-text-subtle">
+                <IcThread size={13} className="shrink-0" />
+                <span>{t("studio.thread_rule_hint")}</span>
+              </div>
+            ))}
         </div>
       ) : isThreadView ? (
         <div className={cn(compact ? "mt-[9px]" : "mt-3")}>

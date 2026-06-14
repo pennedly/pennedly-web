@@ -212,6 +212,8 @@ export const en = {
   "studio.thread_badge": "Thread",
   "studio.thread_new_part": "New part",
   "studio.thread_part": "Part",
+  "studio.thread_rule_hint": "A line with only --- starts a new part.",
+  "studio.thread_over_hint": "A part is over the 500-character limit — trim it before you can approve or publish. Pennedly never truncates a part.",
   "studio.alt_label": "Alt text",
   "studio.alt_hint": "describe the image for screen readers",
   "studio.alt_placeholder": "e.g. A sunlit desk with an open notebook",

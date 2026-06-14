@@ -212,6 +212,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "studio.thread_badge": "Нить",
   "studio.thread_new_part": "Новая часть",
   "studio.thread_part": "Часть",
+  "studio.thread_rule_hint": "Строка только из --- начинает новую часть.",
+  "studio.thread_over_hint": "Одна из частей длиннее 500 символов — сократите её, прежде чем одобрять или публиковать. Pennedly не обрезает части молча.",
   "studio.alt_label": "Alt-текст",
   "studio.alt_hint": "опишите картинку для незрячих",
   "studio.alt_placeholder": "напр. Залитый солнцем стол с раскрытым блокнотом",
