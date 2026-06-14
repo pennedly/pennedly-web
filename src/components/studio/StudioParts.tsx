@@ -13,7 +13,7 @@ import { mediaUrl } from "@/lib/api";
 import { extractFirstUrl } from "@/lib/links";
 import { cn } from "@/lib/cn";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
-import type { GifResult, Idea } from "@/lib/types";
+import type { Idea } from "@/lib/types";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Mono } from "@/components/ui/mono";
 import { AccountFace } from "@/components/ui/avatar";
@@ -27,7 +27,6 @@ import {
   IcChevDown,
   IcClock,
   IcExternal,
-  IcGif,
   IcGlobe,
   IcHeart,
   IcImage,
@@ -37,7 +36,6 @@ import {
   IcPencil,
   IcReload,
   IcReply,
-  IcSearch,
   IcRepost,
   IcSend,
   IcSparkle,
@@ -94,10 +92,6 @@ export type CardHandlers = {
   onUploadImage: (file: File) => Promise<{ url: string }>;
   /** Persist the draft's full image list (attach / remove / reorder / alt). */
   onSetMedia: (c: StudioCard, media: { url: string; alt?: string | null }[]) => Promise<void>;
-  /** Search Tenor (server-proxied) for the composer GIF picker. */
-  onSearchTenor: (q: string) => Promise<GifResult[]>;
-  /** Attach (or clear, with null) a GIF on the draft. */
-  onSetGif: (c: StudioCard, gif: GifResult | null) => Promise<void>;
 };
 
 // ─────────────────────────────── CharMeter ──────────────────────────────────
@@ -321,12 +315,7 @@ export function DraftCard({
   const [mediaError, setMediaError] = useState<string | null>(null);
   const [altIdx, setAltIdx] = useState<number | null>(null);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
-  const [gif, setGif] = useState<StudioCard["gif"]>(card.gif ?? null);
-  const [gifOpen, setGifOpen] = useState(false);
   const [linkDismissed, setLinkDismissed] = useState(false);
-  const [gifQuery, setGifQuery] = useState("");
-  const [gifResults, setGifResults] = useState<GifResult[]>([]);
-  const [gifSearching, setGifSearching] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const status = card.status;
@@ -364,17 +353,12 @@ export function DraftCard({
   // ── images (post drafts only, before publish) ──
   const canEditMedia =
     card.kind === "post" && (status === "draft" || status === "ready") && !replyReadOnly;
-  // Link card in the composer: a post draft that links out, with no image/GIF
+  // Link card in the composer: a post draft that links out, with no image
   // attached (Threads renders a card OR media, not both) and not dismissed.
   const linkUrl =
-    card.kind === "post" && media.length === 0 && !gif && !linkDismissed
+    card.kind === "post" && media.length === 0 && !linkDismissed
       ? extractFirstUrl(card.body)
       : null;
-  // GIF publish is gated off: Threads accepts only Tenor GIFs, and Google
-  // closed the Tenor API to new clients (Jan 2026), so no key is obtainable.
-  // The whole Tenor picker below stays implemented behind this flag — flip it
-  // to true (and set TENOR_API_KEY) the moment a GIF provider is available.
-  const gifEnabled: boolean = false;
 
   async function onPickFile() {
     const input = fileRef.current;
@@ -433,44 +417,6 @@ export function DraftCard({
     const [moved] = next.splice(from, 1);
     next.splice(to, 0, moved);
     void persistMedia(next);
-  }
-
-  async function runGifSearch(query: string) {
-    if (!query.trim()) {
-      setGifResults([]);
-      return;
-    }
-    setGifSearching(true);
-    try {
-      setGifResults(await h.onSearchTenor(query.trim()));
-    } catch {
-      setGifResults([]);
-    } finally {
-      setGifSearching(false);
-    }
-  }
-
-  async function pickGif(g: GifResult) {
-    setGif({ gif_id: g.id, url: g.url, preview_url: g.preview_url, alt: g.alt });
-    setGifOpen(false);
-    setGifResults([]);
-    setGifQuery("");
-    setMediaError(null);
-    try {
-      await h.onSetGif(card, g);
-    } catch {
-      setMediaError(t("studio.image_failed"));
-    }
-  }
-
-  async function removeGif() {
-    const prev = gif;
-    setGif(null);
-    try {
-      await h.onSetGif(card, null);
-    } catch {
-      setGif(prev);
-    }
   }
 
   // ── ⋯-menu items per status ──
@@ -647,37 +593,15 @@ export function DraftCard({
         </div>
       )}
 
-      {/* link card — OG preview when the draft links out (no image/GIF attached) */}
+      {/* link card — OG preview when the draft links out (no image attached) */}
       {linkUrl && !editing && !revising && (
         <LinkPreviewCard url={linkUrl} onDismiss={() => setLinkDismissed(true)} />
       )}
 
-      {/* media — attached images / GIF + attach controls (post drafts) */}
-      {(media.length > 0 || gif || canEditMedia) && !editing && !revising && (
+      {/* media — attached images + attach controls (post drafts) */}
+      {(media.length > 0 || canEditMedia) && !editing && !revising && (
         <div className="mt-3">
-          {gif && (
-            <div className="relative inline-block max-w-[240px] overflow-hidden rounded-md border border-border bg-surface-2">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={gif.url} alt={gif.alt ?? ""} className="block max-h-[180px] w-full object-cover" />
-              <span className="absolute left-1.5 top-1.5 rounded-full bg-black/60 px-1.5 py-0.5 text-[9.5px] font-bold tracking-wide text-white backdrop-blur-sm">
-                GIF
-              </span>
-              {canEditMedia && (
-                <button
-                  type="button"
-                  aria-label={t("studio.remove_gif")}
-                  onClick={removeGif}
-                  className="absolute right-1.5 top-1.5 grid h-5 w-5 place-items-center rounded-full border border-border bg-surface text-text shadow-sm transition-colors hover:bg-surface-2"
-                >
-                  <IcX size={12} />
-                </button>
-              )}
-              <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 to-transparent px-2 py-1 text-[9px] text-white">
-                {t("studio.gif_powered")}
-              </span>
-            </div>
-          )}
-          {!gif && media.length > 0 && (
+          {media.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {media.map((m, i) => (
                 <div
@@ -753,7 +677,7 @@ export function DraftCard({
             </div>
           )}
 
-          {canEditMedia && !gif && (
+          {canEditMedia && (
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <input
                 ref={fileRef}
@@ -780,82 +704,10 @@ export function DraftCard({
                 <IcVideo size={14} /> {t("studio.video")}
                 <span className="rounded-full bg-accent/12 px-1.5 text-[9.5px] font-semibold text-accent">{t("studio.soon")}</span>
               </span>
-              {/* GIF — opens the Tenor picker (mutually exclusive with images).
-                  Gated off via `gifEnabled` until a GIF provider is obtainable
-                  (Threads = Tenor only; Tenor API closed to new clients). */}
-              {gifEnabled ? (
-                <button
-                  type="button"
-                  disabled={media.length > 0}
-                  title={media.length > 0 ? t("studio.gif_excl") : undefined}
-                  onClick={() => setGifOpen((v) => !v)}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-caption text-text-muted transition-colors hover:bg-surface-2 hover:text-text disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <IcGif size={14} /> GIF
-                </button>
-              ) : (
-                <span
-                  title={t("studio.media_soon")}
-                  className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-caption text-text-subtle opacity-60"
-                >
-                  <IcGif size={14} /> GIF
-                  <span className="rounded-full bg-accent/12 px-1.5 text-[9.5px] font-semibold text-accent">{t("studio.soon")}</span>
-                </span>
-              )}
               {media.length > 1 && (
                 <span className="text-caption text-text-subtle">{t("studio.media_reorder_hint")}</span>
               )}
               {mediaError && <span className="text-caption text-danger">{mediaError}</span>}
-            </div>
-          )}
-
-          {gifEnabled && canEditMedia && !gif && gifOpen && (
-            <div className="mt-2 rounded-lg border border-border bg-surface shadow-sm">
-              <div className="flex items-center gap-2 border-b border-border px-3 py-2">
-                <IcSearch size={15} className="shrink-0 text-text-subtle" />
-                <input
-                  autoFocus
-                  value={gifQuery}
-                  onChange={(e) => {
-                    setGifQuery(e.target.value);
-                    void runGifSearch(e.target.value);
-                  }}
-                  placeholder={t("studio.gif_search")}
-                  className="min-w-0 flex-1 bg-transparent text-small text-text outline-none placeholder:text-text-subtle max-md:text-[16px]"
-                />
-                <button
-                  type="button"
-                  aria-label={t("studio.gif_close")}
-                  onClick={() => setGifOpen(false)}
-                  className="text-text-subtle transition-colors hover:text-text"
-                >
-                  <IcX size={14} />
-                </button>
-              </div>
-              {gifSearching ? (
-                <div className="py-7 text-center text-caption text-text-subtle">{t("studio.gif_searching")}</div>
-              ) : gifResults.length > 0 ? (
-                <div className="flex gap-2 overflow-x-auto p-2">
-                  {gifResults.map((g) => (
-                    <button
-                      key={g.id}
-                      type="button"
-                      onClick={() => pickGif(g)}
-                      className="h-24 shrink-0 overflow-hidden rounded-sm border border-border bg-surface-2 transition-colors hover:border-accent/50"
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={g.preview_url} alt={g.alt ?? ""} className="h-full w-auto max-w-none" />
-                    </button>
-                  ))}
-                </div>
-              ) : gifQuery.trim() ? (
-                <div className="py-7 text-center text-caption text-text-subtle">{t("studio.gif_no_results")}</div>
-              ) : (
-                <div className="py-7 text-center text-caption text-text-subtle">{t("studio.gif_hint")}</div>
-              )}
-              <div className="border-t border-border py-1.5 text-center text-[10px] text-text-subtle">
-                {t("studio.gif_powered")}
-              </div>
             </div>
           )}
         </div>

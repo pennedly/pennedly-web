@@ -268,17 +268,6 @@ export type MediaUploadResponse = {
   bytes: number;
 };
 
-// A GIF search result from the Tenor proxy.
-export type GifResult = { id: string; url: string; preview_url: string; alt: string | null };
-
-// A GIF attached to a post draft (mutually exclusive with images).
-export type DraftGif = {
-  gif_id: string;
-  url: string;
-  preview_url: string | null;
-  alt: string | null;
-};
-
 // An OpenGraph link-preview card, built server-side from a URL in a post body
 // (Threads' API returns only the raw URL, so Pennedly generates the card).
 export type LinkPreview = {
@@ -314,8 +303,6 @@ export type DraftSummary = {
   reply_to: { who: string | null; text: string } | null;
   // Images attached to a post draft (empty for text-only posts or replies).
   media: MediaItem[];
-  // A Tenor GIF attached to a post draft (mutually exclusive with images).
-  gif: DraftGif | null;
 };
 
 export type DraftsList = {

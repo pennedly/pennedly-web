@@ -53,20 +53,11 @@ const mockCardHandlers: CardHandlers = {
   onTranslate: async () => "translated",
   onUploadImage: async () => ({ url: ph("uploaded", 200) }),
   onSetMedia: async () => {},
-  onSearchTenor: async () =>
-    Array.from({ length: 9 }, (_, i) => ({
-      id: `g${i}`,
-      url: ph(`GIF ${i + 1}`, (i * 41) % 360),
-      preview_url: ph(`GIF ${i + 1}`, (i * 41) % 360),
-      alt: `Sample GIF ${i + 1}`,
-    })),
-  onSetGif: async () => {},
 };
 
 function mockDraft(
   id: number,
   media: { url: string; alt?: string | null }[],
-  gif?: StudioCard["gif"],
 ): StudioCard {
   return {
     id,
@@ -76,7 +67,6 @@ function mockDraft(
     body: "A sample post draft in your voice. Brief a topic and Pennedly writes a few takes you can approve, tweak, or pass on.",
     time: "now",
     media,
-    gif: gif ?? null,
   };
 }
 
@@ -154,7 +144,7 @@ export default function MediaGallery() {
         </Section>
 
         <h2 className="mb-3 mt-8 text-h3 font-semibold">Composer (Studio draft card)</h2>
-        <Section title="1 image · ALT empty + gated Video/GIF chips">
+        <Section title="1 image · ALT empty + gated Video chip">
           <DraftCard card={mockDraft(101, [{ url: ph("1", 210) }])} density="comfortable" h={mockCardHandlers} />
         </Section>
         <Section title="carousel (3) · drag to reorder · one ALT set (green)">
@@ -164,21 +154,6 @@ export default function MediaGallery() {
               { url: ph("2", 150), alt: "A second photo with alt text" },
               { url: ph("3", 30) },
             ])}
-            density="comfortable"
-            h={mockCardHandlers}
-          />
-        </Section>
-        <Section title="empty · GIF gated off (Tenor API closed to new clients) → disabled “Soon” chip">
-          <DraftCard card={mockDraft(103, [])} density="comfortable" h={mockCardHandlers} />
-        </Section>
-        <Section title="GIF attached → tile + remove + “Powered by Tenor”">
-          <DraftCard
-            card={mockDraft(104, [], {
-              gif_id: "demo",
-              url: ph("GIF", 290),
-              preview_url: ph("GIF", 290),
-              alt: "A looping sample GIF",
-            })}
             density="comfortable"
             h={mockCardHandlers}
           />

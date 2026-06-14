@@ -28,8 +28,6 @@ import {
   refineDraft,
   rejectDraft,
   scheduleDraft,
-  searchTenor,
-  setDraftGif,
   setDraftMedia,
   translateText,
   uploadMedia,
@@ -428,16 +426,6 @@ export default function Studio() {
       await setDraftMedia(card.id, media);
       setDrafts((p) => p.map((d) => (d.id === card.id ? { ...d, media } : d)));
     },
-    onSearchTenor: (q) => searchTenor(q),
-    onSetGif: async (card, gif) => {
-      const dg = gif
-        ? { gif_id: gif.id, url: gif.url, preview_url: gif.preview_url, alt: gif.alt }
-        : null;
-      await setDraftGif(card.id, dg);
-      setDrafts((p) =>
-        p.map((d) => (d.id === card.id ? { ...d, gif: dg, media: dg ? [] : d.media } : d)),
-      );
-    },
   };
 
   // ════════════════════ DEMO handlers ════════════════════
@@ -495,29 +483,6 @@ export default function Studio() {
     onSetMedia: async (card, media) => {
       setDemoCards((p) => p.map((c) => (c.id === card.id ? { ...c, media } : c)));
     },
-    onSearchTenor: async (q) =>
-      Array.from({ length: 9 }, (_, i) => {
-        const u =
-          "data:image/svg+xml," +
-          encodeURIComponent(
-            `<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect width='100%' height='100%' fill='hsl(${(i * 40) % 360} 55% 52%)'/><text x='50%' y='50%' fill='white' font-size='20' text-anchor='middle' dominant-baseline='middle'>${q} ${i + 1}</text></svg>`,
-          );
-        return { id: `demo-gif-${i}`, url: u, preview_url: u, alt: `${q} ${i + 1}` };
-      }),
-    onSetGif: async (card, gif) =>
-      setDemoCards((p) =>
-        p.map((c) =>
-          c.id === card.id
-            ? {
-                ...c,
-                gif: gif
-                  ? { gif_id: gif.id, url: gif.url, preview_url: gif.preview_url, alt: gif.alt }
-                  : null,
-                media: gif ? [] : c.media,
-              }
-            : c,
-        ),
-      ),
   };
 
   function demoGenerate() {
@@ -560,7 +525,6 @@ export default function Studio() {
     stats: null,
     scheduledAt: d.scheduled_at,
     media: d.media ?? [],
-    gif: d.gif ?? null,
   }));
   const cards = demoOn ? demoCards : realCards;
 
