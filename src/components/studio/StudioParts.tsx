@@ -370,6 +370,11 @@ export function DraftCard({
     card.kind === "post" && media.length === 0 && !gif && !linkDismissed
       ? extractFirstUrl(card.body)
       : null;
+  // GIF publish is gated off: Threads accepts only Tenor GIFs, and Google
+  // closed the Tenor API to new clients (Jan 2026), so no key is obtainable.
+  // The whole Tenor picker below stays implemented behind this flag — flip it
+  // to true (and set TENOR_API_KEY) the moment a GIF provider is available.
+  const gifEnabled: boolean = false;
 
   async function onPickFile() {
     const input = fileRef.current;
@@ -775,16 +780,28 @@ export function DraftCard({
                 <IcVideo size={14} /> {t("studio.video")}
                 <span className="rounded-full bg-accent/12 px-1.5 text-[9.5px] font-semibold text-accent">{t("studio.soon")}</span>
               </span>
-              {/* GIF — opens the Tenor picker (mutually exclusive with images) */}
-              <button
-                type="button"
-                disabled={media.length > 0}
-                title={media.length > 0 ? t("studio.gif_excl") : undefined}
-                onClick={() => setGifOpen((v) => !v)}
-                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-caption text-text-muted transition-colors hover:bg-surface-2 hover:text-text disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <IcGif size={14} /> GIF
-              </button>
+              {/* GIF — opens the Tenor picker (mutually exclusive with images).
+                  Gated off via `gifEnabled` until a GIF provider is obtainable
+                  (Threads = Tenor only; Tenor API closed to new clients). */}
+              {gifEnabled ? (
+                <button
+                  type="button"
+                  disabled={media.length > 0}
+                  title={media.length > 0 ? t("studio.gif_excl") : undefined}
+                  onClick={() => setGifOpen((v) => !v)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-caption text-text-muted transition-colors hover:bg-surface-2 hover:text-text disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <IcGif size={14} /> GIF
+                </button>
+              ) : (
+                <span
+                  title={t("studio.media_soon")}
+                  className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-caption text-text-subtle opacity-60"
+                >
+                  <IcGif size={14} /> GIF
+                  <span className="rounded-full bg-accent/12 px-1.5 text-[9.5px] font-semibold text-accent">{t("studio.soon")}</span>
+                </span>
+              )}
               {media.length > 1 && (
                 <span className="text-caption text-text-subtle">{t("studio.media_reorder_hint")}</span>
               )}
@@ -792,7 +809,7 @@ export function DraftCard({
             </div>
           )}
 
-          {canEditMedia && !gif && gifOpen && (
+          {gifEnabled && canEditMedia && !gif && gifOpen && (
             <div className="mt-2 rounded-lg border border-border bg-surface shadow-sm">
               <div className="flex items-center gap-2 border-b border-border px-3 py-2">
                 <IcSearch size={15} className="shrink-0 text-text-subtle" />

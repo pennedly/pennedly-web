@@ -168,7 +168,7 @@ export default function MediaGallery() {
             h={mockCardHandlers}
           />
         </Section>
-        <Section title="empty · GIF button enabled → click GIF to open the Tenor picker">
+        <Section title="empty · GIF gated off (Tenor API closed to new clients) → disabled “Soon” chip">
           <DraftCard card={mockDraft(103, [])} density="comfortable" h={mockCardHandlers} />
         </Section>
         <Section title="GIF attached → tile + remove + “Powered by Tenor”">
