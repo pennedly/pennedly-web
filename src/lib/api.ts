@@ -549,10 +549,10 @@ export function mediaUrl(url: string): string {
   return /^[a-z]+:/i.test(url) ? url : `${BASE_URL}${url}`;
 }
 
-// Search GIPHY through our server-side proxy (the key stays on the backend).
-export async function searchGiphy(q: string, limit = 18): Promise<GifResult[]> {
+// Search Tenor through our server-side proxy (the key stays on the backend).
+export async function searchTenor(q: string, limit = 18): Promise<GifResult[]> {
   const r = await fetchApi<{ results: GifResult[] }>(
-    `/api/giphy/search?q=${encodeURIComponent(q)}&limit=${limit}`,
+    `/api/tenor/search?q=${encodeURIComponent(q)}&limit=${limit}`,
   );
   return r.results;
 }

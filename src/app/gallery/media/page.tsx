@@ -53,7 +53,7 @@ const mockCardHandlers: CardHandlers = {
   onTranslate: async () => "translated",
   onUploadImage: async () => ({ url: ph("uploaded", 200) }),
   onSetMedia: async () => {},
-  onSearchGiphy: async () =>
+  onSearchTenor: async () =>
     Array.from({ length: 9 }, (_, i) => ({
       id: `g${i}`,
       url: ph(`GIF ${i + 1}`, (i * 41) % 360),
@@ -168,10 +168,10 @@ export default function MediaGallery() {
             h={mockCardHandlers}
           />
         </Section>
-        <Section title="empty · GIF button enabled → click GIF to open the GIPHY picker">
+        <Section title="empty · GIF button enabled → click GIF to open the Tenor picker">
           <DraftCard card={mockDraft(103, [])} density="comfortable" h={mockCardHandlers} />
         </Section>
-        <Section title="GIF attached → tile + remove + “Powered by GIPHY”">
+        <Section title="GIF attached → tile + remove + “Powered by Tenor”">
           <DraftCard
             card={mockDraft(104, [], {
               gif_id: "demo",

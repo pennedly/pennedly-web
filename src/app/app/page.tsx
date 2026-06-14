@@ -28,7 +28,7 @@ import {
   refineDraft,
   rejectDraft,
   scheduleDraft,
-  searchGiphy,
+  searchTenor,
   setDraftGif,
   setDraftMedia,
   translateText,
@@ -428,7 +428,7 @@ export default function Studio() {
       await setDraftMedia(card.id, media);
       setDrafts((p) => p.map((d) => (d.id === card.id ? { ...d, media } : d)));
     },
-    onSearchGiphy: (q) => searchGiphy(q),
+    onSearchTenor: (q) => searchTenor(q),
     onSetGif: async (card, gif) => {
       const dg = gif
         ? { gif_id: gif.id, url: gif.url, preview_url: gif.preview_url, alt: gif.alt }
@@ -495,7 +495,7 @@ export default function Studio() {
     onSetMedia: async (card, media) => {
       setDemoCards((p) => p.map((c) => (c.id === card.id ? { ...c, media } : c)));
     },
-    onSearchGiphy: async (q) =>
+    onSearchTenor: async (q) =>
       Array.from({ length: 9 }, (_, i) => {
         const u =
           "data:image/svg+xml," +

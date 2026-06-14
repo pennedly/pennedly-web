@@ -94,8 +94,8 @@ export type CardHandlers = {
   onUploadImage: (file: File) => Promise<{ url: string }>;
   /** Persist the draft's full image list (attach / remove / reorder / alt). */
   onSetMedia: (c: StudioCard, media: { url: string; alt?: string | null }[]) => Promise<void>;
-  /** Search GIPHY (server-proxied) for the composer GIF picker. */
-  onSearchGiphy: (q: string) => Promise<GifResult[]>;
+  /** Search Tenor (server-proxied) for the composer GIF picker. */
+  onSearchTenor: (q: string) => Promise<GifResult[]>;
   /** Attach (or clear, with null) a GIF on the draft. */
   onSetGif: (c: StudioCard, gif: GifResult | null) => Promise<void>;
 };
@@ -437,7 +437,7 @@ export function DraftCard({
     }
     setGifSearching(true);
     try {
-      setGifResults(await h.onSearchGiphy(query.trim()));
+      setGifResults(await h.onSearchTenor(query.trim()));
     } catch {
       setGifResults([]);
     } finally {
@@ -775,7 +775,7 @@ export function DraftCard({
                 <IcVideo size={14} /> {t("studio.video")}
                 <span className="rounded-full bg-accent/12 px-1.5 text-[9.5px] font-semibold text-accent">{t("studio.soon")}</span>
               </span>
-              {/* GIF — opens the GIPHY picker (mutually exclusive with images) */}
+              {/* GIF — opens the Tenor picker (mutually exclusive with images) */}
               <button
                 type="button"
                 disabled={media.length > 0}

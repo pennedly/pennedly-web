@@ -268,7 +268,7 @@ export type MediaUploadResponse = {
   bytes: number;
 };
 
-// A GIF search result from the GIPHY proxy.
+// A GIF search result from the Tenor proxy.
 export type GifResult = { id: string; url: string; preview_url: string; alt: string | null };
 
 // A GIF attached to a post draft (mutually exclusive with images).
@@ -314,7 +314,7 @@ export type DraftSummary = {
   reply_to: { who: string | null; text: string } | null;
   // Images attached to a post draft (empty for text-only posts or replies).
   media: MediaItem[];
-  // A GIPHY GIF attached to a post draft (mutually exclusive with images).
+  // A Tenor GIF attached to a post draft (mutually exclusive with images).
   gif: DraftGif | null;
 };
 
