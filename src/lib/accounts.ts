@@ -53,6 +53,14 @@ function subscribe(fn: () => void): () => void {
   };
 }
 
+/** Subscribe to account-presence changes — fires after `refreshAccountsPresence`
+ *  resolves (i.e. after a connect / disconnect). Lets list consumers (the
+ *  account switcher) re-fetch the account list, not just the presence boolean,
+ *  so the switcher can't show a stale list after a Settings disconnect. */
+export function subscribeAccountsChanged(fn: () => void): () => void {
+  return subscribe(fn);
+}
+
 /** Reactively read whether the user has ≥1 connected account.
  *  Returns null until the first check resolves. SSR returns null. */
 export function useHasConnectedAccounts(): boolean | null {
