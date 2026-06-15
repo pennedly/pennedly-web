@@ -49,6 +49,7 @@ import {
   IcSun,
   IcUsers,
   IcVoice,
+  IcX,
   type IconProps,
 } from "@/components/icons";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
@@ -239,24 +240,37 @@ function StudioWindow() {
 // Public Voice Test — paste a few posts, get sample replies in that voice.
 // No auth (the /api/voice-test endpoint is public + rate-limited); nothing is
 // saved. The instant-wow companion to the "Get early access" CTA.
+// Voice Test — Variant C: explicit per-post input as numbered cards. The
+// visitor pastes a post, presses "Add post" → it collapses into a numbered
+// card above the field (so a paragraph break inside a post never splits it),
+// repeats (cap 5 in the UI), then runs. 1:1 with the CD Landing spec.
+const VT_CAP = 5;
 function VoiceTestSection() {
   const { t } = useTranslation();
-  const [posts, setPosts] = useState("");
+  const [posts, setPosts] = useState<string[]>([]);
+  const [draft, setDraft] = useState("");
   const [samples, setSamples] = useState<{ comment: string; reply: string }[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
 
+  function addPost() {
+    const v = draft.trim();
+    if (!v || posts.length >= VT_CAP) return;
+    setPosts((p) => [...p, v]);
+    setDraft("");
+  }
+  function removePost(i: number) {
+    setPosts((p) => p.filter((_, j) => j !== i));
+  }
+
   async function run() {
-    const list = posts
-      .split(/\n{2,}/)
-      .map((p) => p.trim())
-      .filter(Boolean)
-      .slice(0, 10);
-    if (list.length === 0 || busy) return;
+    // Include a not-yet-added draft so the visitor never loses typed text.
+    const all = [...posts, ...(draft.trim() ? [draft.trim()] : [])].slice(0, 10);
+    if (all.length === 0 || busy) return;
     setBusy(true);
     setFailed(false);
     try {
-      const r = await voiceTest(list);
+      const r = await voiceTest(all);
       setSamples(r.samples);
     } catch {
       setFailed(true);
@@ -265,6 +279,8 @@ function VoiceTestSection() {
       setBusy(false);
     }
   }
+
+  const canRun = posts.length > 0 || draft.trim().length > 0;
 
   return (
     <section className="shrink-0 border-t border-border py-[52px]">
@@ -275,18 +291,57 @@ function VoiceTestSection() {
           <p className="mx-auto mt-2.5 max-w-[52ch] text-h3 font-[450] leading-[1.5] text-text-muted [text-wrap:pretty]">{t("landing.vt_sub")}</p>
         </div>
         <div className="mx-auto max-w-[680px]">
-          <textarea
-            value={posts}
-            onChange={(e) => setPosts(e.target.value)}
-            placeholder={t("landing.vt_placeholder")}
-            rows={5}
-            className="w-full resize-y rounded-lg border border-border bg-surface p-4 text-body leading-[1.6] text-text shadow-sm placeholder:text-text-subtle focus:border-accent focus:outline-none focus:ring-[3px] focus:ring-accent/[0.18]"
-          />
+          {/* numbered post cards — each is one post; an internal paragraph break stays in */}
+          {posts.length > 0 && (
+            <ul className="mb-[13px] flex flex-col gap-2.5">
+              {posts.map((p, i) => (
+                <li key={i} className="flex items-start gap-3 rounded-lg border border-border bg-surface px-3.5 py-[13px] shadow-sm">
+                  <span className="mt-px grid h-6 w-6 shrink-0 place-items-center rounded-full border border-accent/[0.26] bg-accent/[0.12] text-caption font-semibold tabular-nums text-accent">{i + 1}</span>
+                  <p className="min-w-0 flex-1 whitespace-pre-wrap text-small leading-[1.55] text-text [text-wrap:pretty]">{p}</p>
+                  <button
+                    type="button"
+                    aria-label={`${t("landing.vt_remove")} ${i + 1}`}
+                    onClick={() => removePost(i)}
+                    className="mt-px grid h-7 w-7 shrink-0 place-items-center rounded-md border border-transparent text-text-subtle transition-colors hover:border-danger/30 hover:bg-danger/[0.09] hover:text-danger max-md:h-11 max-md:w-11"
+                  >
+                    <IcX size={15} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          {/* compose field + Add post, or a cap note once 5 posts are in */}
+          {posts.length >= VT_CAP ? (
+            <div className="flex w-full items-center justify-center gap-[7px] rounded-md border border-dashed border-border px-[15px] py-3 text-small text-text-subtle [text-wrap:pretty] max-md:min-h-[46px]">
+              <IcPlus size={14} className="shrink-0 opacity-60" /> {t("landing.vt_cap")}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-[11px]">
+              <textarea
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") addPost();
+                }}
+                placeholder={t("landing.vt_compose_ph")}
+                rows={2}
+                className="min-h-16 w-full resize-y rounded-lg border border-border bg-surface px-3.5 py-3 text-[16px] leading-[1.55] text-text placeholder:text-text-subtle focus:border-accent focus:outline-none focus:ring-[3px] focus:ring-accent/[0.18]"
+              />
+              <button
+                type="button"
+                onClick={addPost}
+                disabled={!draft.trim()}
+                className="inline-flex items-center gap-[7px] self-start rounded-md border border-dashed border-accent/40 bg-accent/[0.06] px-[15px] py-2.5 text-small font-semibold text-accent transition-colors hover:border-accent hover:bg-accent/[0.12] disabled:opacity-50 max-md:min-h-[46px] max-md:w-full max-md:justify-center"
+              >
+                <IcPlus size={15} /> {t("landing.vt_add")}
+              </button>
+            </div>
+          )}
           <div className="mt-3.5 flex flex-wrap items-center gap-x-4 gap-y-2.5">
             <button
               type="button"
               onClick={run}
-              disabled={busy || !posts.trim()}
+              disabled={busy || !canRun}
               data-fx="btnprimary"
               className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-primary px-[22px] text-body font-medium text-primary-foreground transition-[background-color,transform] duration-[180ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] hover:bg-[color-mix(in_srgb,var(--color-primary)_88%,var(--color-bg))] active:translate-y-[0.5px] disabled:opacity-50"
             >
