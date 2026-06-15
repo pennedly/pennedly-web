@@ -712,6 +712,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "user_rules.confirm_delete": "Удалить?",
   "style_rules.punctuation_note":
     "Пока включено, длинные тире и кавычки-ёлочки заменяются на обычный дефис и прямые кавычки, и в подсказке для AI, и при автоматической чистке текста. Выключи, чтобы оставить привычную типографику.",
+  "style_rules.punct_example_from": "погоди — серьёзно? «да»… точно",
   "style_rules.toast.enabled": "правило включено",
   "style_rules.toast.disabled": "правило выключено",
   "style_rules.eyebrow": "Правила генерации",

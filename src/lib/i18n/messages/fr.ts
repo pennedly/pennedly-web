@@ -485,6 +485,7 @@ export const fr: Partial<Record<MessageKey, string>> = {
   "user_rules.confirm_delete": "Supprimer ?",
   "style_rules.punctuation_note":
     "Quand elle est active, les tirets cadratins et les « guillemets » sont réécrits en trait d'union simple et guillemets droits — dans le prompt comme dans le nettoyage automatique. Désactive-la pour garder la typographie native.",
+  "style_rules.punct_example_from": "attends — vraiment ? « oui »… c'est sûr",
   "style_rules.toast.enabled": "règle activée",
   "style_rules.toast.disabled": "règle désactivée",
   "style_rules.eyebrow": "Règles de génération",

@@ -709,6 +709,7 @@ export const en = {
   "user_rules.confirm_delete": "Delete?",
   "style_rules.punctuation_note":
     "While on, em dashes and «guillemets» are rewritten to a plain hyphen and straight quotes, both in the prompt and the automatic cleanup. Turn it off to keep native typography.",
+  "style_rules.punct_example_from": "wait — really? «yes»… for sure",
   "style_rules.toast.enabled": "rule on",
   "style_rules.toast.disabled": "rule off",
   "style_rules.eyebrow": "Generation rules",

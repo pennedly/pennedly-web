@@ -206,7 +206,12 @@ export default function RepliesPage() {
         author: { name, handle: name, initials: name.slice(0, 2).toUpperCase() },
         text: c.text ?? "",
         reply: edits[c.ai_draft_id ?? -1] ?? c.draft_text ?? null,
-        time: relativeTime(c.created_at, locale),
+        // Real reply timestamp from Meta (published_at), not created_at — the
+        // latter is just when the row landed in our DB (≈ now at backfill),
+        // which made every comment read "just now". published_at can be null
+        // (Meta doesn't always return a time for replies) → relativeTime("")
+        // and the UI then drops the "·" + time chip instead of faking it.
+        time: relativeTime(c.published_at, locale),
         repliedTime: relativeTime(c.replied_at, locale) || null,
         media: c.draft_media ?? [],
       });

@@ -484,6 +484,7 @@ export const it: Partial<Record<MessageKey, string>> = {
   "user_rules.confirm_delete": "Eliminare?",
   "style_rules.punctuation_note":
     "Quando è attiva, le lineette e le «virgolette caporali» vengono riscritte come trattino semplice e virgolette dritte — sia nel prompt sia nella pulizia automatica. Disattivala per mantenere la tipografia nativa.",
+  "style_rules.punct_example_from": "aspetta — davvero? «sì»… di sicuro",
   "style_rules.toast.enabled": "regola attivata",
   "style_rules.toast.disabled": "regola disattivata",
   "style_rules.eyebrow": "Regole di generazione",

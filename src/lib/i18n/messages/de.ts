@@ -488,6 +488,7 @@ export const de: Partial<Record<MessageKey, string>> = {
   "user_rules.confirm_delete": "Löschen?",
   "style_rules.punctuation_note":
     "Wenn an, werden Geviertstriche und «Guillemets» zu einem einfachen Bindestrich und geraden Anführungszeichen umgeschrieben — sowohl im Prompt als auch in der automatischen Bereinigung. Schalte es aus, um native Typografie zu behalten.",
+  "style_rules.punct_example_from": "warte — wirklich? «ja»… ganz sicher",
   "style_rules.toast.enabled": "Regel an",
   "style_rules.toast.disabled": "Regel aus",
   "style_rules.eyebrow": "Generierungsregeln",

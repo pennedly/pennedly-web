@@ -34,7 +34,7 @@ import {
   uploadMedia,
 } from "@/lib/api";
 import { captureEvent, identify } from "@/lib/analytics";
-import { isOnboardingSkipped, useSelectedAccountId } from "@/lib/account";
+import { isOnboardingSkipped, setSelectedAccountId, useSelectedAccountId } from "@/lib/account";
 import { useTranslation } from "@/lib/i18n";
 import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
 import { Toast, ToastHost } from "@/components/ui/toast";
@@ -165,6 +165,23 @@ export default function Studio() {
       const u = params.get("username");
       toast(u ? `@${u} · ${t("accounts.connected")}` : t("accounts.connected"));
       captureEvent("threads.connect_succeeded");
+      // Switch the active account to the one just connected (mirrors the
+      // onboarding flow), otherwise the dashboard lingers on the previously
+      // selected profile. Prefer the username from the OAuth return query;
+      // fall back to the newest account by connected_at.
+      void (async () => {
+        try {
+          const list = await fetchMyAccounts();
+          const active = list.accounts.filter((a) => a.disconnected_at === null);
+          if (active.length === 0) return;
+          const justConnected =
+            (u ? active.find((a) => a.username === u) : undefined) ??
+            active.reduce((a, b) => (b.connected_at > a.connected_at ? b : a));
+          setSelectedAccountId(justConnected.id);
+        } catch {
+          /* the account switcher will still auto-select on its own fetch */
+        }
+      })();
     } else if (err) {
       toast(err === "account_limit" ? t("accounts.connect_limit") : t("accounts.connect_error"), "error");
       captureEvent("threads.connect_failed", { reason: err });

@@ -485,6 +485,7 @@ export const pt: Partial<Record<MessageKey, string>> = {
   "user_rules.confirm_delete": "Excluir?",
   "style_rules.punctuation_note":
     "Quando ativa, travessões e «aspas angulares» são reescritos como hífen simples e aspas retas — no prompt e na limpeza automática. Desligue para manter a tipografia nativa.",
+  "style_rules.punct_example_from": "espera — sério? «sim»… com certeza",
   "style_rules.toast.enabled": "regra ativada",
   "style_rules.toast.disabled": "regra desativada",
   "style_rules.eyebrow": "Regras de geração",

@@ -484,6 +484,7 @@ export const es: Partial<Record<MessageKey, string>> = {
   "user_rules.confirm_delete": "¿Eliminar?",
   "style_rules.punctuation_note":
     "Mientras esté activa, las rayas y las «comillas angulares» se reescriben a un guion simple y comillas rectas — tanto en el prompt como en la limpieza automática. Desactívala para conservar la tipografía nativa.",
+  "style_rules.punct_example_from": "espera — ¿en serio? «sí»… seguro",
   "style_rules.toast.enabled": "regla activada",
   "style_rules.toast.disabled": "regla desactivada",
   "style_rules.eyebrow": "Reglas de generación",

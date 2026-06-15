@@ -435,8 +435,14 @@ export function CommentCard({
           <div className="truncate text-small font-semibold leading-[1.25] max-md:hidden">{c.author.name}</div>
           <div className="flex flex-wrap items-center gap-1.5 text-caption text-text-subtle max-md:flex-nowrap max-md:overflow-hidden">
             <span className="truncate max-md:min-w-0 max-md:font-medium max-md:text-text">@{c.author.handle}</span>
-            <span className="opacity-60 max-md:shrink-0">·</span>
-            <span className="max-md:shrink-0">{c.time}</span>
+            {/* Meta doesn't always give a reply time → c.time is "". Drop the
+                "·" + time chip rather than rendering a misleading "just now". */}
+            {c.time && (
+              <>
+                <span className="opacity-60 max-md:shrink-0">·</span>
+                <span className="max-md:shrink-0">{c.time}</span>
+              </>
+            )}
           </div>
         </div>
         <Badge tone={badge.tone} dot={badge.dot}>

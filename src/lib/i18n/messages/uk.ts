@@ -482,6 +482,7 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "user_rules.confirm_delete": "Видалити?",
   "style_rules.punctuation_note":
     "Коли ввімкнено, тире та «лапки-ялинки» переписуються на простий дефіс і прямі лапки — і в промпті, і в автоматичному очищенні. Вимкни, щоб зберегти рідну типографіку.",
+  "style_rules.punct_example_from": "зачекай — справді? «так»… точно",
   "style_rules.toast.enabled": "правило увімкнено",
   "style_rules.toast.disabled": "правило вимкнено",
   "style_rules.eyebrow": "Правила генерації",

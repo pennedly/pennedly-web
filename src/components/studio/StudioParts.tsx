@@ -49,6 +49,7 @@ import {
   IcVoice,
   IcX,
 } from "@/components/icons";
+import { Spinner } from "@/components/ui/feedback";
 import {
   UI_LANGS,
   type StudioCard,
@@ -1182,7 +1183,7 @@ export function StudioComposer({
               </div>
               {ideasBusy ? (
                 <div className="flex items-center gap-2 px-1 py-3 text-small text-text-muted">
-                  <IcSparkle size={14} className="animate-pulse text-accent" /> {t("studio.ideas_loading")}
+                  <Spinner size={14} className="text-accent" /> {t("studio.ideas_loading")}
                 </div>
               ) : ideasErr ? (
                 <div className="flex items-center justify-between gap-2 px-1 py-2 text-small text-text-muted">

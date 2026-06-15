@@ -454,7 +454,9 @@ function ChooseStep({
                 <m.Icon size={20} />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="flex items-center gap-[9px] max-[560px]:flex-wrap">
+                {/* pr-7 keeps the title row (esp. the badge) clear of the
+                    absolute top-right check (right-4) on the selected card. */}
+                <span className="flex items-center gap-[9px] pr-7 max-[560px]:flex-wrap">
                   <span className="text-h3 font-semibold tracking-[-0.006em]">{t(m.title)}</span>
                   {m.recommended && !disabled && (
                     <span
@@ -977,9 +979,15 @@ function OnboardingDemo({ tw }: { tw: ObTweaks }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tw.jump]);
 
-  // Keep a valid selection when analyze is locked.
+  // Pre-select the recommended option on the choose step (analyze when there
+  // are enough posts, else scratch) — and keep a valid selection when locked.
   useEffect(() => {
-    if (stage === "choose" && !enoughPosts && chosen !== "scratch") setChosen("scratch");
+    if (stage !== "choose") return;
+    if (!enoughPosts) {
+      if (chosen !== "scratch") setChosen("scratch");
+    } else if (chosen === null) {
+      setChosen("analyze");
+    }
   }, [stage, enoughPosts, chosen]);
 
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
@@ -1165,6 +1173,16 @@ export default function OnboardingPage() {
   // Revisit = arrived already set up (came from Settings): Connect is done,
   // show "Back to Settings". First-run shows "Skip for now".
   const firstRun = !alreadySetUp;
+
+  // Pre-select the recommended option once the choose step opens: analyze when
+  // there are enough posts (the recommended branch), else scratch. So the user
+  // lands on a valid default and "Continue" isn't dead on arrival — they just
+  // confirm or switch. Only fills an empty selection; never overrides a choice.
+  useEffect(() => {
+    if (stage === "choose" && status && mode === null) {
+      setMode(enoughPosts ? "analyze" : "scratch");
+    }
+  }, [stage, status, mode, enoughPosts]);
 
   async function onConnect() {
     setConnectStatus("connecting");

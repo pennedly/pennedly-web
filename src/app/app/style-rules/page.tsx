@@ -109,8 +109,10 @@ function ruleDesc(rule: StyleRule, t: (k: MessageKey) => string): string {
 
 // Q44: the human_punctuation rule is a deterministic stripper — show its live
 // before→after on a sample, applying the same typographic swaps output_guard
-// does (em-dash → hyphen, «guillemets» → straight quotes, … → ...).
-const PUNCT_DEMO_FROM = "wait — really? «yes»… for sure";
+// does (em-dash → hyphen, «guillemets» → straight quotes, … → ...). The "from"
+// sample is localized per UI locale (style_rules.punct_example_from) so the
+// transformation is legible in each language's own typography; the "to" half
+// is always derived via humanizePunctuation(from), never stored.
 function humanizePunctuation(s: string): string {
   return s.replace(/—/g, "-").replace(/[«»]/g, '"').replace(/…/g, "...");
 }
@@ -592,16 +594,17 @@ export default function StyleRulesEditor() {
 // Q44: live before→after for the human_punctuation stripper. The note explains
 // it's typographic + opt-in; the demo shows the actual swap on a sample.
 function PunctuationDemo({ on, t }: { on: boolean; t: (k: MessageKey) => string }) {
+  const demoFrom = t("style_rules.punct_example_from");
   return (
     <>
       <p className="mt-1.5 text-caption leading-relaxed text-warning">
         {t("style_rules.punctuation_note")}
       </p>
       <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md border border-border bg-surface-2 px-3 py-2 font-mono text-caption">
-        <code className="text-text-subtle">{PUNCT_DEMO_FROM}</code>
+        <code className="text-text-subtle">{demoFrom}</code>
         <span className="shrink-0 text-text-subtle">→</span>
         <code className={cn("font-medium", on ? "text-success" : "text-text-subtle")}>
-          {on ? humanizePunctuation(PUNCT_DEMO_FROM) : PUNCT_DEMO_FROM}
+          {on ? humanizePunctuation(demoFrom) : demoFrom}
         </code>
       </div>
     </>
