@@ -227,7 +227,10 @@ export default function StatsPage() {
             <h1 className="text-h1 font-semibold tracking-[-0.015em]">{t("stats.title")}</h1>
             <p className="text-body text-text-muted">{t("stats.subtitle")}</p>
           </div>
-          {phase !== "empty" && <RangeSeg active={period} onChange={onPeriod} />}
+          {/* Always show the period selector — even on an empty period — so a
+              no-data period (e.g. "Today" before posting) never traps the user;
+              StatsEmpty renders only in the content area below. */}
+          <RangeSeg active={period} onChange={onPeriod} />
         </div>
 
         {phase === "loading" ? (
