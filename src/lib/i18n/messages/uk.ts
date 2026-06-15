@@ -1026,6 +1026,7 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "landing.vt_hint": "Безкоштовно · нічого не зберігається",
   "landing.vt_error": "Не вдалося. Спробуй ще раз за хвилину.",
   "landing.vt_to": "Відповідь на:",
+  "landing.vt_restart": "Змінити дописи",
   "landing.vt_add": "Додати допис",
   "landing.vt_remove": "Видалити допис",
   "landing.vt_cap": "Це максимум — видаліть один, щоб додати ще.",

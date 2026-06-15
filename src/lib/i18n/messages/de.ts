@@ -1032,6 +1032,7 @@ export const de: Partial<Record<MessageKey, string>> = {
   "landing.vt_hint": "Kostenlos · nichts wird gespeichert",
   "landing.vt_error": "Der Voice-Test ist fehlgeschlagen. Versuche es gleich noch einmal.",
   "landing.vt_to": "Antwort auf:",
+  "landing.vt_restart": "Beiträge bearbeiten",
   "landing.vt_add": "Beitrag hinzufügen",
   "landing.vt_remove": "Beitrag entfernen",
   "landing.vt_cap": "Das ist das Maximum — entferne einen, um einen weiteren hinzuzufügen.",

@@ -1025,6 +1025,7 @@ export const es: Partial<Record<MessageKey, string>> = {
   "landing.vt_hint": "Gratis · no se guarda nada",
   "landing.vt_error": "No se pudo ejecutar la prueba. Inténtalo de nuevo en un momento.",
   "landing.vt_to": "Respondiendo a:",
+  "landing.vt_restart": "Editar publicaciones",
   "landing.vt_add": "Añadir publicación",
   "landing.vt_remove": "Quitar publicación",
   "landing.vt_cap": "Es el máximo: quita una para añadir otra.",

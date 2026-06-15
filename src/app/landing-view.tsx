@@ -35,6 +35,7 @@ import {
 } from "@/components/tweaks/TweaksPanel";
 import {
   BrandMark,
+  IcArrowLeft,
   IcArrowRight,
   IcAudit,
   IcBolt,
@@ -258,15 +259,22 @@ function VoiceTestSection() {
     if (!v || posts.length >= VT_CAP) return;
     setPosts((p) => [...p, v]);
     setDraft("");
+    setSamples(null); // editing the input invalidates a previously shown result
   }
   function removePost(i: number) {
     setPosts((p) => p.filter((_, j) => j !== i));
+    setSamples(null);
   }
 
   async function run() {
-    // Include a not-yet-added draft so the visitor never loses typed text.
+    // Fold a not-yet-added draft into the cards first, so the compose field
+    // clears — no dangling half-typed input is left behind after the run.
     const all = [...posts, ...(draft.trim() ? [draft.trim()] : [])].slice(0, 10);
     if (all.length === 0 || busy) return;
+    if (draft.trim()) {
+      setPosts(all);
+      setDraft("");
+    }
     setBusy(true);
     setFailed(false);
     try {
@@ -310,55 +318,71 @@ function VoiceTestSection() {
               ))}
             </ul>
           )}
-          {/* compose field + Add post, or a cap note once 5 posts are in */}
-          {posts.length >= VT_CAP ? (
-            <div className="flex w-full items-center justify-center gap-[7px] rounded-md border border-dashed border-border px-[15px] py-3 text-small text-text-subtle [text-wrap:pretty] max-md:min-h-[46px]">
-              <IcPlus size={14} className="shrink-0 opacity-60" /> {t("landing.vt_cap")}
-            </div>
-          ) : (
-            <div className="flex flex-col gap-[11px]">
-              <textarea
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") addPost();
-                }}
-                placeholder={t("landing.vt_compose_ph")}
-                rows={2}
-                className="min-h-16 w-full resize-y rounded-lg border border-border bg-surface px-3.5 py-3 text-[16px] leading-[1.55] text-text placeholder:text-text-subtle focus:border-accent focus:outline-none focus:ring-[3px] focus:ring-accent/[0.18]"
-              />
-              <button
-                type="button"
-                onClick={addPost}
-                disabled={!draft.trim()}
-                className="inline-flex items-center gap-[7px] self-start rounded-md border border-dashed border-accent/40 bg-accent/[0.06] px-[15px] py-2.5 text-small font-semibold text-accent transition-colors hover:border-accent hover:bg-accent/[0.12] disabled:opacity-50 max-md:min-h-[46px] max-md:w-full max-md:justify-center"
-              >
-                <IcPlus size={15} /> {t("landing.vt_add")}
-              </button>
-            </div>
+          {/* Input (cards' compose field + Run) shows until a result is in;
+              once the voice is shown, it collapses to just the cards + results.
+              Editing the cards (remove) clears the result and brings it back. */}
+          {!samples && (
+            <>
+              {/* compose field + Add post, or a cap note once 5 posts are in */}
+              {posts.length >= VT_CAP ? (
+                <div className="flex w-full items-center justify-center gap-[7px] rounded-md border border-dashed border-border px-[15px] py-3 text-small text-text-subtle [text-wrap:pretty] max-md:min-h-[46px]">
+                  <IcPlus size={14} className="shrink-0 opacity-60" /> {t("landing.vt_cap")}
+                </div>
+              ) : (
+                <div className="flex flex-col gap-[11px]">
+                  <textarea
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") addPost();
+                    }}
+                    placeholder={t("landing.vt_compose_ph")}
+                    rows={2}
+                    className="min-h-16 w-full resize-y rounded-lg border border-border bg-surface px-3.5 py-3 text-[16px] leading-[1.55] text-text placeholder:text-text-subtle focus:border-accent focus:outline-none focus:ring-[3px] focus:ring-accent/[0.18]"
+                  />
+                  <button
+                    type="button"
+                    onClick={addPost}
+                    disabled={!draft.trim()}
+                    className="inline-flex items-center gap-[7px] self-start rounded-md border border-dashed border-accent/40 bg-accent/[0.06] px-[15px] py-2.5 text-small font-semibold text-accent transition-colors hover:border-accent hover:bg-accent/[0.12] disabled:opacity-50 max-md:min-h-[46px] max-md:w-full max-md:justify-center"
+                  >
+                    <IcPlus size={15} /> {t("landing.vt_add")}
+                  </button>
+                </div>
+              )}
+              <div className="mt-3.5 flex flex-wrap items-center gap-x-4 gap-y-2.5">
+                <button
+                  type="button"
+                  onClick={run}
+                  disabled={busy || !canRun}
+                  data-fx="btnprimary"
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-primary px-[22px] text-body font-medium text-primary-foreground transition-[background-color,transform] duration-[180ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] hover:bg-[color-mix(in_srgb,var(--color-primary)_88%,var(--color-bg))] active:translate-y-[0.5px] disabled:opacity-50"
+                >
+                  {busy ? t("landing.vt_running") : t("landing.vt_cta")}
+                </button>
+                <span className="text-small text-text-subtle">{t("landing.vt_hint")}</span>
+              </div>
+            </>
           )}
-          <div className="mt-3.5 flex flex-wrap items-center gap-x-4 gap-y-2.5">
-            <button
-              type="button"
-              onClick={run}
-              disabled={busy || !canRun}
-              data-fx="btnprimary"
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-primary px-[22px] text-body font-medium text-primary-foreground transition-[background-color,transform] duration-[180ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] hover:bg-[color-mix(in_srgb,var(--color-primary)_88%,var(--color-bg))] active:translate-y-[0.5px] disabled:opacity-50"
-            >
-              {busy ? t("landing.vt_running") : t("landing.vt_cta")}
-            </button>
-            <span className="text-small text-text-subtle">{t("landing.vt_hint")}</span>
-          </div>
           {failed && <p className="mt-4 text-small text-danger">{t("landing.vt_error")}</p>}
           {samples && samples.length > 0 && (
-            <ul className="mt-6 flex flex-col gap-3">
-              {samples.map((s, i) => (
-                <li key={i} className="rounded-lg border border-border bg-surface p-4 shadow-sm">
-                  <span className="block text-small text-text-subtle">{t("landing.vt_to")} {s.comment}</span>
-                  <span className="mt-1.5 block text-body leading-[1.55] text-text [text-wrap:pretty]">{s.reply}</span>
-                </li>
-              ))}
-            </ul>
+            <div className="mt-6">
+              <button
+                type="button"
+                onClick={() => setSamples(null)}
+                className="mb-3 inline-flex items-center gap-1.5 text-small font-medium text-accent transition-colors hover:underline"
+              >
+                <IcArrowLeft size={14} /> {t("landing.vt_restart")}
+              </button>
+              <ul className="flex flex-col gap-3">
+                {samples.map((s, i) => (
+                  <li key={i} className="rounded-lg border border-border bg-surface p-4 shadow-sm">
+                    <span className="block text-small text-text-subtle">{t("landing.vt_to")} {s.comment}</span>
+                    <span className="mt-1.5 block text-body leading-[1.55] text-text [text-wrap:pretty]">{s.reply}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </div>
       </div>

@@ -99,6 +99,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "landing.vt_hint": "Бесплатно · ничего не сохраняется",
   "landing.vt_error": "Не удалось. Попробуй ещё раз через минуту.",
   "landing.vt_to": "Ответ на:",
+  "landing.vt_restart": "Изменить посты",
   "landing.vt_add": "Добавить пост",
   "landing.vt_remove": "Удалить пост",
   "landing.vt_cap": "Это максимум — удалите один, чтобы добавить ещё.",

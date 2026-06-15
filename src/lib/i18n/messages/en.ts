@@ -99,6 +99,7 @@ export const en = {
   "landing.vt_hint": "Free · nothing is saved",
   "landing.vt_error": "Couldn't run the voice test. Try again in a moment.",
   "landing.vt_to": "Replying to:",
+  "landing.vt_restart": "Edit posts",
   "landing.vt_add": "Add post",
   "landing.vt_remove": "Remove post",
   "landing.vt_cap": "That's the max — remove one to add another.",
