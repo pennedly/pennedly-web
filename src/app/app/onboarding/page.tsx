@@ -458,7 +458,7 @@ function ChooseStep({
                   <span className="text-h3 font-semibold tracking-[-0.006em]">{t(m.title)}</span>
                   {m.recommended && !disabled && (
                     <span
-                      className="rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.03em] text-accent"
+                      className="shrink-0 whitespace-nowrap rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.03em] text-accent"
                       style={{
                         background: "color-mix(in srgb, var(--color-accent) 12%, var(--color-surface))",
                         borderColor: "color-mix(in srgb, var(--color-accent) 28%, transparent)",
@@ -468,7 +468,7 @@ function ChooseStep({
                     </span>
                   )}
                   {disabled && (
-                    <span className="inline-flex items-center gap-[5px] rounded-full border border-border bg-surface px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.03em] text-text-muted">
+                    <span className="inline-flex shrink-0 items-center gap-[5px] whitespace-nowrap rounded-full border border-border bg-surface px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.03em] text-text-muted">
                       <IcLock size={12} /> {t("onboarding.choice_locked").replace("{need}", String(MIN_POSTS))}
                     </span>
                   )}
