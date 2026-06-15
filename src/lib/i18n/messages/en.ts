@@ -986,6 +986,7 @@ export const en = {
   "autopilot.policy_title": "Auto-reply policy",
   "autopilot.policy_sub": "When on, replies are drafted in your voice and sent automatically.",
   "autopilot.reply_mode_label": "Auto-reply mode",
+  "autopilot.reply_mode_row_label": "Reply to comments",
   "autopilot.reply_mode_off": "Off",
   "autopilot.reply_mode_all": "All posts",
   "autopilot.reply_mode_selected": "Selected",

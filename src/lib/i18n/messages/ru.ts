@@ -986,6 +986,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "autopilot.policy_title": "Политика авто-ответов",
   "autopilot.policy_sub": "Когда включено, ответы пишутся в твоём голосе и отправляются автоматически.",
   "autopilot.reply_mode_label": "Режим авто-ответов",
+  "autopilot.reply_mode_row_label": "Отвечать на комментарии",
   "autopilot.reply_mode_off": "Выкл",
   "autopilot.reply_mode_all": "Все посты",
   "autopilot.reply_mode_selected": "Выбранные",

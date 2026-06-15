@@ -582,34 +582,38 @@ export default function AutopilotPage() {
                     {t("autopilot.policy_sub")}
                   </p>
                 </div>
-                {/* 3-way reply mode: off / every post / only the posts you flag */}
-                <div
-                  role="group"
-                  aria-label={t("autopilot.reply_mode_label")}
-                  className="mt-3.5 inline-flex w-full rounded-lg border border-border bg-surface-2 p-0.5 text-small sm:w-auto"
-                >
-                  {(["off", "all", "selected"] as const).map((m) => (
-                    <button
-                      key={m}
-                      type="button"
-                      onClick={() => onReply({ reply_mode: m })}
-                      aria-pressed={config.reply_mode === m}
-                      className={cn(
-                        "flex-1 whitespace-nowrap rounded-md px-3.5 py-1.5 font-medium transition-colors sm:flex-initial",
-                        config.reply_mode === m
-                          ? "bg-surface text-text shadow-sm"
-                          : "text-text-muted hover:text-text",
-                      )}
-                    >
-                      {t(
-                        m === "off"
-                          ? "autopilot.reply_mode_off"
-                          : m === "all"
-                            ? "autopilot.reply_mode_all"
-                            : "autopilot.reply_mode_selected",
-                      )}
-                    </button>
-                  ))}
+                {/* 3-way reply mode: a visible "Reply to comments" label beside the
+                    off / all / selected segment (CD Autopilot-SPEC `rmode-row`). */}
+                <div className="mt-3.5 flex flex-wrap items-center justify-between gap-x-4 gap-y-2.5">
+                  <span className="text-small font-semibold text-text">{t("autopilot.reply_mode_row_label")}</span>
+                  <div
+                    role="group"
+                    aria-label={t("autopilot.reply_mode_label")}
+                    className="inline-flex rounded-lg border border-border bg-surface-2 p-0.5 text-small max-sm:w-full sm:w-auto"
+                  >
+                    {(["off", "all", "selected"] as const).map((m) => (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => onReply({ reply_mode: m })}
+                        aria-pressed={config.reply_mode === m}
+                        className={cn(
+                          "flex-1 whitespace-nowrap rounded-md px-3.5 py-1.5 font-medium transition-colors sm:flex-initial",
+                          config.reply_mode === m
+                            ? "bg-surface text-text shadow-sm"
+                            : "text-text-muted hover:text-text",
+                        )}
+                      >
+                        {t(
+                          m === "off"
+                            ? "autopilot.reply_mode_off"
+                            : m === "all"
+                              ? "autopilot.reply_mode_all"
+                              : "autopilot.reply_mode_selected",
+                        )}
+                      </button>
+                    ))}
+                  </div>
                 </div>
                 {config.reply_mode === "selected" && (
                   <p className="mt-2.5 text-small text-text-subtle">

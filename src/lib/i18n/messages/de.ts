@@ -686,6 +686,7 @@ export const de: Partial<Record<MessageKey, string>> = {
   "autopilot.policy_sub":
     "Wenn an, werden Antworten in deiner Stimme entworfen und automatisch gesendet.",
     "autopilot.reply_mode_label": "Auto-Antwort-Modus",
+    "autopilot.reply_mode_row_label": "Auf Kommentare antworten",
     "autopilot.reply_mode_off": "Aus",
     "autopilot.reply_mode_all": "Alle Posts",
     "autopilot.reply_mode_selected": "Ausgewählte",

@@ -679,6 +679,7 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "autopilot.policy_sub":
     "Коли ввімкнено, відповіді пишуться у твоєму голосі й надсилаються автоматично.",
     "autopilot.reply_mode_label": "Режим авто-відповідей",
+    "autopilot.reply_mode_row_label": "Відповідати на коментарі",
     "autopilot.reply_mode_off": "Вимк",
     "autopilot.reply_mode_all": "Усі пости",
     "autopilot.reply_mode_selected": "Вибрані",
