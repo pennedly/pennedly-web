@@ -210,6 +210,15 @@ export type StatsTimeSlot = {
   avg_views: number;
 };
 
+// Best-time-to-post heatmap cell. weekday: ISO 1=Mon..7=Sun. block: 0=morning
+// (06–11) · 1=day (12–17) · 2=evening (18–23) · 3=night (00–05), viewer-local.
+export type HeatCell = {
+  weekday: number;
+  block: number;
+  posts: number;
+  avg_views: number;
+};
+
 export type StatsResponse = {
   period: string;
   current: PeriodSummary;
@@ -219,6 +228,8 @@ export type StatsResponse = {
   top_posts: StatsTopPost[];
   by_hour: StatsTimeSlot[];
   by_weekday: StatsTimeSlot[];
+  // Best-time-to-post heatmap: avg views per weekday × time-of-day block.
+  heatmap: HeatCell[];
   // ISO timestamp of the last metrics pull from Threads (hourly cron or a
   // manual refresh), or null if never synced — drives the "updated N ago" label.
   refreshed_at: string | null;

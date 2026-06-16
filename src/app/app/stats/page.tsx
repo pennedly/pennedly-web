@@ -18,10 +18,10 @@ import { IcChart, IcReload } from "@/components/icons";
 import { TweaksPanel, TweakSection, TweakToggle, TweakRadio, useTweaks } from "@/components/tweaks/TweaksPanel";
 import { fmt } from "@/components/studio/FeedParts";
 import {
-  BestTimesPanel,
   ColumnChart,
   DistributionBars,
   FollowerChart,
+  HeatmapPanel,
   PERIODS,
   RangeSeg,
   SkeletonDash,
@@ -42,6 +42,20 @@ const DEMO_FOLLOWER_POINTS = Array.from({ length: 14 }, (_, i) => ({
   day: `2026-06-${String(i + 1).padStart(2, "0")}`,
   count: 1820 + i * 24 + (i % 3) * 9,
 }));
+
+// Demo best-time heatmap (?demo=1): evenings + weekends hottest, nights coolest —
+// fills the whole grid so the colour range reads clearly.
+const DEMO_HEATMAP = (() => {
+  const blockBase = [4200, 9000, 16500, 2400]; // morning, day, evening, night
+  const out: { weekday: number; block: number; posts: number; avg_views: number }[] = [];
+  for (let block = 0; block < 4; block++)
+    for (let wd = 1; wd <= 7; wd++) {
+      const weekend = wd >= 6 ? 1.45 : 1;
+      const wobble = 0.8 + (((wd * 7 + block * 3) % 5) * 0.1);
+      out.push({ weekday: wd, block, posts: 2, avg_views: Math.round(blockBase[block] * weekend * wobble) });
+    }
+  return out;
+})();
 
 function pct(cur: number, prev: number | null | undefined): number | null {
   if (prev === null || prev === undefined || prev === 0) return null;
@@ -213,6 +227,7 @@ export default function StatsPage() {
         top: d.top.map<TopPostRow>((p) => ({ text: p.text, dateISO: p.dateISO, views: p.views, likes: p.likes, comments: p.comments, vs: p.vs, url: p.url })),
         byHour: d.byHour.map<TimeSlotRow>((s) => ({ slot: s.slot, posts: s.posts, avg: s.avg })),
         byWeekday: d.byWeekday.map<TimeSlotRow>((s) => ({ slot: s.slot, posts: s.posts, avg: s.avg })),
+        heatmap: DEMO_HEATMAP,
       };
     }
     if (!stats) return null;
@@ -230,6 +245,7 @@ export default function StatsPage() {
       top: (stats.top_posts ?? []).map<TopPostRow>((p) => ({ text: p.text, dateISO: p.published_at, views: p.views, likes: p.likes, comments: p.comments, vs: p.vs_avg, url: p.threads_url })),
       byHour: (stats.by_hour ?? []).map<TimeSlotRow>((s) => ({ slot: s.slot, posts: s.posts, avg: s.avg_views })),
       byWeekday: (stats.by_weekday ?? []).map<TimeSlotRow>((s) => ({ slot: s.slot, posts: s.posts, avg: s.avg_views })),
+      heatmap: stats.heatmap ?? [],
     };
   }, [demoOn, period, stats, gran, locale]);
 
@@ -337,8 +353,8 @@ export default function StatsPage() {
               <p className="px-1 text-caption leading-relaxed text-text-subtle">{t("stats.since_connect_note")}</p>
             </div>
             {model.top.length > 0 && <TopPostsPanel cap={`${t("stats.top_cap")} · ${periodLabel}`} rows={model.top} />}
-            {period !== "today" && period !== "yesterday" && model.byHour.length > 0 && (
-              <BestTimesPanel cap={`${t("stats.times_cap")} · ${periodLabel}`} byHour={model.byHour} byWeekday={model.byWeekday} />
+            {period !== "today" && period !== "yesterday" && model.heatmap.length > 0 && (
+              <HeatmapPanel cap={`${t("stats.heat_sub")} · ${periodLabel}`} cells={model.heatmap} />
             )}
             <DistributionBars cap={tierCap} tiers={model.tiers} />
           </>

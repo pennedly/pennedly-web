@@ -505,6 +505,91 @@ export function BestTimesPanel({ cap, byHour, byWeekday }: { cap: string; byHour
   );
 }
 
+// ─────────────────────────────── Heatmap ────────────────────────────────────
+export type HeatCellRow = { weekday: number; block: number; posts: number; avg_views: number };
+
+// Cool → warm so the difference is obvious at a glance (the founder's ask):
+// low avg views = cool blue, high = warm coral. Index 0 = empty (no posts).
+const HEAT_COLORS = ["", "#85B7EB", "#5DCAA5", "#EF9F27", "#D85A30"];
+const HEAT_BLOCK_KEYS: MessageKey[] = [
+  "stats.block_morning",
+  "stats.block_day",
+  "stats.block_evening",
+  "stats.block_night",
+];
+
+// Best-time-to-post heatmap: weekday (cols) × time-of-day block (rows), each
+// cell shaded by its avg views relative to the busiest cell. Replaces the old
+// by-hour / by-weekday bar pair with a single 2-D read.
+export function HeatmapPanel({ cap, cells }: { cap: string; cells: HeatCellRow[] }) {
+  const { t, locale } = useTranslation();
+  // Jan 2024 starts on a Monday, so day-of-month = ISO weekday 1..7.
+  const dayLabel = (d: number) =>
+    new Date(Date.UTC(2024, 0, d)).toLocaleDateString(locale, { weekday: "short", timeZone: "UTC" });
+  const byKey = new Map<string, HeatCellRow>();
+  for (const c of cells) byKey.set(`${c.weekday}-${c.block}`, c);
+  const max = cells.reduce((m, c) => (c.posts > 0 && c.avg_views > m ? c.avg_views : m), 0);
+  const level = (c: HeatCellRow | undefined): number => {
+    if (!c || c.posts <= 0 || max <= 0) return 0;
+    const r = c.avg_views / max;
+    return r <= 0.25 ? 1 : r <= 0.5 ? 2 : r <= 0.75 ? 3 : 4;
+  };
+  const hasData = cells.some((c) => c.posts > 0);
+  const DAYS = [1, 2, 3, 4, 5, 6, 7];
+  return (
+    <section className="rounded-lg border border-border bg-surface px-5 pb-4 pt-[18px] shadow-sm">
+      <div className="mb-[18px]">
+        <div className="text-h3 font-semibold tracking-[-0.006em]">{t("stats.heatmap_title")}</div>
+        <div className="mt-[3px] text-caption text-text-subtle">{cap}</div>
+      </div>
+      {!hasData ? (
+        <p className="py-6 text-center text-small text-text-subtle">{t("stats.heat_empty")}</p>
+      ) : (
+        <>
+          <div className="overflow-x-auto">
+            <div className="grid min-w-[320px] gap-1" style={{ gridTemplateColumns: "minmax(54px,auto) repeat(7, minmax(0,1fr))" }}>
+              <div />
+              {DAYS.map((wd) => (
+                <div key={`h${wd}`} className="pb-0.5 text-center text-caption font-medium capitalize text-text-subtle">
+                  {dayLabel(wd)}
+                </div>
+              ))}
+              {[0, 1, 2, 3].flatMap((block) => [
+                <div key={`l${block}`} className="flex items-center pr-2 text-caption font-medium text-text-muted">
+                  {t(HEAT_BLOCK_KEYS[block])}
+                </div>,
+                ...DAYS.map((wd) => {
+                  const c = byKey.get(`${wd}-${block}`);
+                  const lvl = level(c);
+                  const title =
+                    c && c.posts > 0
+                      ? `${dayLabel(wd)} · ${t(HEAT_BLOCK_KEYS[block])} — ${fmt(Math.round(c.avg_views))} ${t("stats.cap_per")} · ${c.posts} ${t("stats.posts_word")}`
+                      : `${dayLabel(wd)} · ${t(HEAT_BLOCK_KEYS[block])} — ${t("stats.heat_no_posts")}`;
+                  return (
+                    <div
+                      key={`${wd}-${block}`}
+                      title={title}
+                      className={cn("h-8 rounded-[5px] border", lvl === 0 ? "border-border bg-surface-2" : "border-transparent")}
+                      style={lvl === 0 ? undefined : { background: HEAT_COLORS[lvl] }}
+                    />
+                  );
+                }),
+              ])}
+            </div>
+          </div>
+          <div className="mt-3 flex items-center justify-end gap-1.5 text-caption text-text-subtle">
+            <span>{t("stats.heat_low")}</span>
+            {[1, 2, 3, 4].map((l) => (
+              <span key={l} className="h-3 w-5 rounded-[3px]" style={{ background: HEAT_COLORS[l] }} />
+            ))}
+            <span>{t("stats.heat_high")}</span>
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
 // ───────────────────────────── empty / skeleton ─────────────────────────────
 export function StatsEmpty() {
   const { t } = useTranslation();
