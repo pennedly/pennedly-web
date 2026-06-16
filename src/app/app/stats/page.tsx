@@ -6,14 +6,15 @@
 // line) → tier distribution. Real fetchStats wiring preserved; a tester ?demo=1
 // panel (dark/state/period) drives every state. No error state (per spec).
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { ApiError, clearTokens, fetchFollowers, fetchMe, fetchStats, getTokens } from "@/lib/api";
+import { ApiError, clearTokens, fetchFollowers, fetchMe, fetchStats, getTokens, refreshStats } from "@/lib/api";
 import { useSelectedAccountId } from "@/lib/account";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
-import { IcChart } from "@/components/icons";
+import { Button } from "@/components/ui/button";
+import { IcChart, IcReload } from "@/components/icons";
 import { TweaksPanel, TweakSection, TweakToggle, TweakRadio, useTweaks } from "@/components/tweaks/TweaksPanel";
 import { fmt } from "@/components/studio/FeedParts";
 import {
@@ -58,6 +59,26 @@ function fmtBucket(iso: string, gran: Gran, locale: string, dense: boolean): str
   return d.toLocaleDateString(locale, { month: "short", day: "numeric" }); // week
 }
 
+// "Updated 5 minutes ago" — localized via Intl.RelativeTimeFormat; null →
+// "not synced yet". Recomputed each render from refreshed_at (no live ticking).
+function relTime(iso: string | null, locale: string, t: (k: MessageKey) => string): string {
+  if (!iso) return t("stats.never_synced");
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return t("stats.never_synced");
+  const diffSec = Math.round((then - Date.now()) / 1000); // negative = in the past
+  const abs = Math.abs(diffSec);
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+  const rel =
+    abs < 60
+      ? rtf.format(diffSec, "second")
+      : abs < 3600
+        ? rtf.format(Math.round(diffSec / 60), "minute")
+        : abs < 86400
+          ? rtf.format(Math.round(diffSec / 3600), "hour")
+          : rtf.format(Math.round(diffSec / 86400), "day");
+  return `${t("stats.updated_prefix")} ${rel}`;
+}
+
 export default function StatsPage() {
   const router = useRouter();
   const { t, locale } = useTranslation();
@@ -72,6 +93,8 @@ export default function StatsPage() {
   const [followers, setFollowers] = useState<FollowerHistory | null>(null);
   const [loading, setLoading] = useState(true);
   const [bootError, setBootError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const autoDone = useRef<number | null>(null);
 
   const [tw, setTw] = useTweaks(STATS_TWEAK_DEFAULTS);
 
@@ -129,6 +152,44 @@ export default function StatsPage() {
     const id = setTimeout(() => setLoading(false), 700);
     return () => clearTimeout(id);
   }, [demoOn, tw.period]);
+
+  // ── on-demand refresh of ALL metrics (post views/likes/reposts/comments +
+  // follower count) — the Refresh button + an auto-pull when the screen opens.
+  const reload = useCallback(async () => {
+    if (accountId === null) return;
+    const [s, f] = await Promise.allSettled([
+      fetchStats(accountId, { period }),
+      fetchFollowers(accountId),
+    ]);
+    if (s.status === "fulfilled") setStats(s.value);
+    if (f.status === "fulfilled") setFollowers(f.value);
+  }, [accountId, period]);
+
+  const doRefresh = useCallback(
+    async (force: boolean) => {
+      if (demoParam || accountId === null) return;
+      setRefreshing(true);
+      try {
+        const r = await refreshStats(accountId, force);
+        if (r.refreshed) await reload(); // pulled fresh data → re-read it
+      } catch {
+        /* fail-soft — keep showing the data we already have */
+      } finally {
+        setRefreshing(false);
+      }
+    },
+    [accountId, demoParam, reload],
+  );
+
+  // Auto-refresh once when the screen opens for an account. The server throttles
+  // (a recently-synced account is a no-op), and the ref guards against re-pulling
+  // on every period change / re-render; re-opening the same account won't re-pull.
+  useEffect(() => {
+    if (demoParam || accountId === null) return;
+    if (autoDone.current === accountId) return;
+    autoDone.current = accountId;
+    void doRefresh(false);
+  }, [accountId, demoParam, doRefresh]);
 
   const periodLabel = t(PERIODS.find((p) => p.key === period)?.label ?? "stats.period.7d");
   const gran: Gran = PERIODS.find((p) => p.key === period)?.gran ?? "day";
@@ -220,7 +281,29 @@ export default function StatsPage() {
 
   return (
     <div className="min-h-screen bg-bg text-text">
-      <AppTopbar maxW="960px" title={t("stats.title")} pill={<TopbarPill tone="accent" icon={<IcChart size={13} />}>{t("stats.updated_daily")}</TopbarPill>} />
+      <AppTopbar
+        maxW="960px"
+        title={t("stats.title")}
+        pill={
+          <TopbarPill tone="accent" icon={<IcChart size={13} />}>
+            {refreshing
+              ? t("stats.refreshing")
+              : relTime(demoOn ? new Date().toISOString() : (stats?.refreshed_at ?? null), locale, t)}
+          </TopbarPill>
+        }
+        actions={
+          <Button
+            size="sm"
+            variant="secondary"
+            icon={<IcReload size={14} />}
+            loading={refreshing}
+            onClick={() => doRefresh(true)}
+            aria-label={t("stats.refresh")}
+          >
+            <span className="max-sm:hidden">{t("stats.refresh")}</span>
+          </Button>
+        }
+      />
       <main className="mx-auto flex max-w-[960px] flex-col gap-4 px-3.5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4 md:gap-5 md:px-6 md:pb-24 md:pt-7">
         <div className="flex flex-wrap items-end justify-between gap-4 max-md:gap-3">
           <div className="flex flex-col gap-1">
@@ -249,7 +332,10 @@ export default function StatsPage() {
               ))}
             </div>
             <ColumnChart cap={chartCap} headline={fmt(avgViewsPerPost)} headlinePct={model.deltas.views_pct} series={model.series} />
-            <FollowerChart cap={t("stats.followers_title")} points={demoOn ? DEMO_FOLLOWER_POINTS : (followers?.points ?? [])} />
+            <div className="flex flex-col gap-1.5">
+              <FollowerChart cap={t("stats.followers_title")} points={demoOn ? DEMO_FOLLOWER_POINTS : (followers?.points ?? [])} />
+              <p className="px-1 text-caption leading-relaxed text-text-subtle">{t("stats.since_connect_note")}</p>
+            </div>
             {model.top.length > 0 && <TopPostsPanel cap={`${t("stats.top_cap")} · ${periodLabel}`} rows={model.top} />}
             {period !== "today" && period !== "yesterday" && model.byHour.length > 0 && (
               <BestTimesPanel cap={`${t("stats.times_cap")} · ${periodLabel}`} byHour={model.byHour} byWeekday={model.byWeekday} />

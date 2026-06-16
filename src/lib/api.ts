@@ -42,6 +42,7 @@ import type {
   OnboardingResult,
   OnboardingStatus,
   PostGrowth,
+  RefreshStatsResponse,
   StatsPeriod,
   StatsResponse,
   GeneratedReply,
@@ -778,6 +779,20 @@ export async function fetchFollowers(
 ): Promise<FollowerHistory> {
   return fetchApi<FollowerHistory>(
     `/api/accounts/${accountId}/followers?days=${days}`,
+  );
+}
+
+// Pull fresh metrics for ALL analytics numbers on demand (post views/likes/
+// reposts/comments + follower count). `force=true` is the explicit Refresh
+// button (short anti-double-click guard); `force=false` is the screen's
+// open-auto-refresh (gentler 2-min guard). Server-throttled either way.
+export async function refreshStats(
+  accountId: number,
+  force = false,
+): Promise<RefreshStatsResponse> {
+  return fetchApi<RefreshStatsResponse>(
+    `/api/accounts/${accountId}/stats/refresh?force=${force}`,
+    { method: "POST" },
   );
 }
 

@@ -219,6 +219,19 @@ export type StatsResponse = {
   top_posts: StatsTopPost[];
   by_hour: StatsTimeSlot[];
   by_weekday: StatsTimeSlot[];
+  // ISO timestamp of the last metrics pull from Threads (hourly cron or a
+  // manual refresh), or null if never synced — drives the "updated N ago" label.
+  refreshed_at: string | null;
+};
+
+// POST /accounts/{id}/stats/refresh — pulls fresh metrics on demand (all recent
+// post insights + the follower count). `refreshed` is false when the throttle
+// short-circuited because the data is already recent.
+export type RefreshStatsResponse = {
+  refreshed: boolean;
+  refreshed_at: string | null;
+  posts: number;
+  followers: number;
 };
 
 export type GeneratedDraft = {
