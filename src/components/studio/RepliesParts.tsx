@@ -75,11 +75,17 @@ export function PostMaster({
   countsByPost,
   selected,
   onSelect,
+  hasMore = false,
+  loadingMore = false,
+  onLoadMore,
 }: {
   posts: ReplyPost[];
   countsByPost: Record<string, { total: number; unanswered: number }>;
   selected: string | null;
   onSelect: (id: string) => void;
+  hasMore?: boolean;
+  loadingMore?: boolean;
+  onLoadMore?: () => void;
 }) {
   const { t } = useTranslation();
   const railRef = useRef<HTMLDivElement>(null);
@@ -91,7 +97,12 @@ export function PostMaster({
     if (!el) return;
     const max = el.scrollWidth - el.clientWidth;
     setOver({ left: el.scrollLeft > 1, right: el.scrollLeft < max - 1 });
-  }, []);
+    // Infinite scroll: pull the next page as the rail nears its right end, so
+    // the post list grows toward all of the account's posts.
+    if (onLoadMore && hasMore && !loadingMore && max > 0 && el.scrollLeft >= max - 600) {
+      onLoadMore();
+    }
+  }, [onLoadMore, hasMore, loadingMore]);
 
   useEffect(() => {
     recompute();
@@ -228,6 +239,11 @@ export function PostMaster({
               </button>
             );
           })}
+          {loadingMore && (
+            <div className="flex w-[80px] shrink-0 items-center justify-center rounded-lg border border-border bg-surface" aria-hidden>
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-border border-t-accent" />
+            </div>
+          )}
         </div>
         {over.right && (
           <>

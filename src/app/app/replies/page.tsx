@@ -7,7 +7,7 @@
 // approve → publish (confirm dialog). Real API wiring is preserved; a tester-only
 // ?demo=1 panel (dark + state) drives every state on mock data.
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -89,6 +89,11 @@ function relativeTime(iso: string | null, locale: string): string {
 
 const FILTER_KEYS: ReplyFilter[] = ["all", "needs", "drafts", "replied", "skipped"];
 
+// How many comments we pull per page. The Replies screen loads more as the
+// post rail scrolls toward its right end (infinite scroll), so the post list
+// grows toward all of the account's posts instead of just the newest few.
+const PAGE_SIZE = 50;
+
 export default function RepliesPage() {
   const router = useRouter();
   const { t, locale } = useTranslation();
@@ -111,6 +116,14 @@ export default function RepliesPage() {
   const [toasts, setToasts] = useState<ToastT[]>([]);
   const [youInitials, setYouInitials] = useState("Y");
   const [youAvatar, setYouAvatar] = useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  // Latest-comments ref so loadMore() reads the current offset without being
+  // re-created on every change; a synchronous in-flight guard dedupes the
+  // rapid scroll events that fire as the rail nears its right end.
+  const commentsRef = useRef<CommentSummary[]>([]);
+  commentsRef.current = comments;
+  const loadingMoreRef = useRef(false);
 
   // demo
   const [tw, setTw] = useTweaks(REPLY_TWEAK_DEFAULTS);
@@ -149,11 +162,13 @@ export default function RepliesPage() {
     if (demoParam) return;
     if (accountId === null) return;
     setLoaded(false);
+    loadingMoreRef.current = false;
     (async () => {
       try {
-        const list = await fetchComments(accountId, { limit: 50 });
+        const list = await fetchComments(accountId, { limit: PAGE_SIZE });
         setComments(list.comments);
         setCounts(list.status_counts ?? {});
+        setHasMore(list.comments.length >= PAGE_SIZE);
       } catch (e) {
         if (e instanceof ApiError && e.status === 401) {
           clearTokens();
@@ -176,13 +191,42 @@ export default function RepliesPage() {
   async function reload() {
     if (accountId === null) return;
     try {
-      const list = await fetchComments(accountId, { limit: 50 });
+      // Re-fetch the window the user has already scrolled open (capped at the
+      // API max of 100) so an action's refresh doesn't collapse the list back
+      // to the first page.
+      const limit = Math.min(100, Math.max(PAGE_SIZE, commentsRef.current.length));
+      const list = await fetchComments(accountId, { limit });
       setComments(list.comments);
       setCounts(list.status_counts ?? {});
+      setHasMore(list.comments.length >= limit);
     } catch {
       /* keep current on transient failure */
     }
   }
+
+  // Infinite scroll: append the next page as the post rail nears its right end.
+  const loadMore = useCallback(async () => {
+    if (loadingMoreRef.current || accountId === null) return;
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+    try {
+      const list = await fetchComments(accountId, {
+        limit: PAGE_SIZE,
+        offset: commentsRef.current.length,
+      });
+      setComments((prev) => {
+        const seen = new Set(prev.map((c) => c.id));
+        return [...prev, ...list.comments.filter((c) => !seen.has(c.id))];
+      });
+      setHasMore(list.comments.length >= PAGE_SIZE);
+      if (list.status_counts) setCounts(list.status_counts);
+    } catch {
+      /* keep current on transient failure */
+    } finally {
+      loadingMoreRef.current = false;
+      setLoadingMore(false);
+    }
+  }, [accountId]);
 
   // ── build posts + comments-by-post (real or demo) ──
   const { posts, byPost } = useMemo(() => {
@@ -445,6 +489,9 @@ export default function RepliesPage() {
                 setSelectedPost(id);
                 setFilter("all");
               }}
+              hasMore={!demoOn && hasMore}
+              loadingMore={loadingMore}
+              onLoadMore={loadMore}
             />
             <div className="flex min-w-0 flex-col gap-4">
               <PostContext post={activePost} />

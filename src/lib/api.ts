@@ -595,10 +595,11 @@ export async function fetchCalendar(
 
 export async function fetchComments(
   accountId: number,
-  params?: { limit?: number; status?: string },
+  params?: { limit?: number; offset?: number; status?: string },
 ): Promise<CommentsList> {
   const qs = new URLSearchParams();
   if (params?.limit) qs.set("limit", String(params.limit));
+  if (params?.offset) qs.set("offset", String(params.offset));
   if (params?.status) qs.set("status", params.status);
   const suffix = qs.toString() ? `?${qs.toString()}` : "";
   return fetchApi<CommentsList>(
