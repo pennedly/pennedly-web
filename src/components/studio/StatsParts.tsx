@@ -128,88 +128,29 @@ export function ColumnChart({ cap, headline, headlinePct, series }: { cap: strin
   // dashed "typical post" line down to near zero.
   const posted = series.filter((b) => b.value > 0);
   const avg = posted.length ? posted.reduce((a, b) => a + b.value, 0) / posted.length : 0;
-  const wide = series.length > 8; // many buckets → fixed-width bars + horizontal scroll (mobile only)
   // Sparse labels (spec §2.5): ~8 evenly-spaced indices INCLUDING the first and
-  // last bucket, positioned absolutely at each bar's centre so a date like
-  // "Jun 3" overflows freely into its blank neighbours instead of truncating.
+  // last bucket, absolutely centred under their point so a date like "Jun 3"
+  // overflows freely into its neighbours instead of truncating.
   const want = Math.min(8, series.length);
   const labelIdx = new Set<number>();
   for (let i = 0; i < want; i++) labelIdx.add(Math.round((i * (series.length - 1)) / (want - 1 || 1)));
 
-  // Default: bars fill (flex:1). When `wide`, desktop still fills (the 960px
-  // panel fits 12+ bars cleanly) but mobile drops to fixed 34px bars that scroll
-  // instead of crushing into a smear.
-  const cellW = wide ? "max-md:w-[34px] max-md:shrink-0 md:min-w-0 md:flex-1" : "min-w-0 flex-1";
-
-  const bars = (
-    <div className="relative flex h-[156px] items-end gap-[6px] md:h-[164px]">
-      {series.map((b, i) => {
-        // Empty bucket (no posts) → a tiny lighter zero stub, so a quiet stretch
-        // reads as quiet rather than collapsing the axis (spec .colbar--zero).
-        const empty = b.value <= 0;
-        const above = b.value >= avg;
-        return (
-          <div key={i} className={cn("flex h-full items-end", cellW)} title={`${b.label}: ${empty ? "0" : fmt(b.value)}`}>
-            <div
-              className="w-full rounded-t-[4px] transition-[height]"
-              style={{
-                minHeight: empty ? "2px" : undefined,
-                height: empty ? "2px" : `${Math.max(3, (b.value / max) * 100)}%`,
-                backgroundColor: empty
-                  ? "color-mix(in srgb, var(--color-text) 8%, var(--color-surface-2))"
-                  : above
-                    ? "var(--color-accent)"
-                    : "color-mix(in srgb, var(--color-text) 18%, var(--color-surface-2))",
-              }}
-            />
-          </div>
-        );
-      })}
-      {/* dashed average (posted buckets only) — absolute inside the plot, so in
-          the mobile scroll case it spans the full max-content width with the bars */}
-      <div className="pointer-events-none absolute inset-x-0 flex items-center" style={{ bottom: `${(avg / max) * 100}%` }}>
-        <div className="h-0 flex-1 border-t-[1.5px] border-dashed" style={{ borderColor: "color-mix(in srgb, var(--color-text) 42%, transparent)" }} />
-        <span className="bg-surface px-[5px] text-caption text-text-subtle">
-          {t("stats.avg_line")} {fmt(Math.round(avg))}
-        </span>
-      </div>
-    </div>
-  );
-
-  const labels = (
-    // Live, localized text (never an image). Each shown label is absolutely
-    // centred on its bar; the container fills the (full-width or max-content) plot.
-    <div className="relative block h-[15px]">
-      {series.map((b, i) =>
-        labelIdx.has(i) ? (
-          <span
-            key={i}
-            className="absolute -translate-x-1/2 whitespace-nowrap text-[0.6875rem] tabular-nums text-text-subtle"
-            style={{ left: `${((i + 0.5) / series.length) * 100}%` }}
-          >
-            {b.label}
-          </span>
-        ) : null,
-      )}
-    </div>
-  );
-
-  // Non-wide periods keep the markup simple. Wide periods get an overflow-x-auto
-  // wrapper whose inner plot is w-max on mobile (scrolls) but full-width on
-  // desktop (fills, no scrollbar) — so desktop is unchanged.
-  const plot = wide ? (
-    <div className="[scrollbar-width:thin] max-md:overflow-x-auto">
-      <div className="flex flex-col gap-[13px] max-md:w-max md:w-full">
-        {bars}
-        {labels}
-      </div>
-    </div>
-  ) : (
-    <div className="flex flex-col gap-[13px]">
-      {bars}
-      {labels}
-    </div>
-  );
+  // Area-line geometry (replaces the old columns). 0-based y so the dashed
+  // average sits true to scale. The SVG stretches to fill a fixed-height plot
+  // (preserveAspectRatio="none") with a non-scaling stroke so the line stays
+  // crisp at any width; the avg line + axis labels are HTML overlays so their
+  // text never distorts with the stretch.
+  const W = 600;
+  const H = 150;
+  const PADX = 4;
+  const PADT = 12;
+  const PADB = 4;
+  const xAt = (i: number) => (series.length <= 1 ? W / 2 : PADX + (i / (series.length - 1)) * (W - PADX * 2));
+  const yAt = (v: number) => H - PADB - (v / max) * (H - PADT - PADB);
+  const line = series.map((b, i) => `${i === 0 ? "M" : "L"}${xAt(i).toFixed(1)} ${yAt(b.value).toFixed(1)}`).join(" ");
+  const area = line
+    ? `${line} L${xAt(series.length - 1).toFixed(1)} ${(H - PADB).toFixed(1)} L${xAt(0).toFixed(1)} ${(H - PADB).toFixed(1)} Z`
+    : "";
 
   return (
     <section className="rounded-lg border border-border bg-surface px-5 pb-4 pt-[18px] shadow-sm">
@@ -225,7 +166,39 @@ export function ColumnChart({ cap, headline, headlinePct, series }: { cap: strin
           </div>
         </div>
       </div>
-      {plot}
+      <div className="flex flex-col gap-[13px]">
+        <div className="relative h-[156px] md:h-[164px]">
+          <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" width="100%" height="100%" role="img" aria-label={t("stats.weekly_views_title")} className="block">
+            <path d={area} fill="var(--color-accent)" fillOpacity="0.12" />
+            <path d={line} fill="none" stroke="var(--color-accent)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+            {series.map((b, i) => (
+              <rect key={i} x={(i / series.length) * W} y={0} width={W / series.length} height={H} fill="transparent">
+                <title>{`${b.label}: ${b.value > 0 ? fmt(b.value) : "0"}`}</title>
+              </rect>
+            ))}
+          </svg>
+          {/* dashed average (posted buckets only) — HTML overlay so the text stays crisp */}
+          <div className="pointer-events-none absolute inset-x-0 flex items-center" style={{ top: `${(yAt(avg) / H) * 100}%` }}>
+            <div className="h-0 flex-1 border-t-[1.5px] border-dashed" style={{ borderColor: "color-mix(in srgb, var(--color-text) 42%, transparent)" }} />
+            <span className="bg-surface px-[5px] text-caption text-text-subtle">
+              {t("stats.avg_line")} {fmt(Math.round(avg))}
+            </span>
+          </div>
+        </div>
+        <div className="relative block h-[15px]">
+          {series.map((b, i) =>
+            labelIdx.has(i) ? (
+              <span
+                key={i}
+                className="absolute -translate-x-1/2 whitespace-nowrap text-[0.6875rem] tabular-nums text-text-subtle"
+                style={{ left: `${((i + 0.5) / series.length) * 100}%` }}
+              >
+                {b.label}
+              </span>
+            ) : null,
+          )}
+        </div>
+      </div>
     </section>
   );
 }
