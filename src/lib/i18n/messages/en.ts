@@ -1003,6 +1003,7 @@ export const en = {
   "autopilot.policy_freq_t": "How often to reply",
   "autopilot.policy_freq_d": "How quickly autopilot answers new comments. The daily cap still applies.",
   "autopilot.freq_asap": "As they come (~15 min)",
+  "autopilot.freq_half_hourly": "About every 30 min",
   "autopilot.freq_hourly": "About once an hour",
   "autopilot.freq_few_daily": "A few times a day",
   "autopilot.freq_daily": "Once a day",

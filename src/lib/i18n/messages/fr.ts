@@ -761,6 +761,7 @@ export const fr: Partial<Record<MessageKey, string>> = {
   "autopilot.policy_freq_t": "À quelle fréquence répondre",
   "autopilot.policy_freq_d": "À quelle vitesse le pilote répond aux nouveaux commentaires. La limite quotidienne reste valable.",
   "autopilot.freq_asap": "Dès leur arrivée (~15 min)",
+  "autopilot.freq_half_hourly": "Environ toutes les 30 min",
   "autopilot.freq_hourly": "Environ une fois par heure",
   "autopilot.freq_few_daily": "Quelques fois par jour",
   "autopilot.freq_daily": "Une fois par jour",

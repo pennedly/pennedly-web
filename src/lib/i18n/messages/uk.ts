@@ -758,6 +758,7 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "autopilot.policy_freq_t": "Як часто відповідати",
   "autopilot.policy_freq_d": "Як швидко автопілот відповідає на нові коментарі. Денний ліміт зберігається.",
   "autopilot.freq_asap": "Одразу (~15 хв)",
+  "autopilot.freq_half_hourly": "Приблизно раз на півгодини",
   "autopilot.freq_hourly": "Приблизно раз на годину",
   "autopilot.freq_few_daily": "Кілька разів на день",
   "autopilot.freq_daily": "Раз на день",

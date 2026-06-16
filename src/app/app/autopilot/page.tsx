@@ -672,6 +672,7 @@ export default function AutopilotPage() {
                       className={cn(SELECT, "min-w-[168px]")}
                     >
                       <option value="asap">{t("autopilot.freq_asap")}</option>
+                      <option value="half_hourly">{t("autopilot.freq_half_hourly")}</option>
                       <option value="hourly">{t("autopilot.freq_hourly")}</option>
                       <option value="few_daily">{t("autopilot.freq_few_daily")}</option>
                       <option value="daily">{t("autopilot.freq_daily")}</option>

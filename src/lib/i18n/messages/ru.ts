@@ -1003,6 +1003,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "autopilot.policy_freq_t": "Как часто отвечать",
   "autopilot.policy_freq_d": "Как быстро автопилот отвечает на новые комментарии. Дневной лимит при этом сохраняется.",
   "autopilot.freq_asap": "Сразу (~15 мин)",
+  "autopilot.freq_half_hourly": "Примерно раз в полчаса",
   "autopilot.freq_hourly": "Примерно раз в час",
   "autopilot.freq_few_daily": "Несколько раз в день",
   "autopilot.freq_daily": "Раз в день",

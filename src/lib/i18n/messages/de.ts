@@ -765,6 +765,7 @@ export const de: Partial<Record<MessageKey, string>> = {
   "autopilot.policy_freq_t": "Wie oft antworten",
   "autopilot.policy_freq_d": "Wie schnell der Autopilot neue Kommentare beantwortet. Das Tageslimit gilt weiterhin.",
   "autopilot.freq_asap": "Sofort (~15 Min.)",
+  "autopilot.freq_half_hourly": "Etwa alle 30 Min.",
   "autopilot.freq_hourly": "Etwa stündlich",
   "autopilot.freq_few_daily": "Ein paar Mal am Tag",
   "autopilot.freq_daily": "Einmal am Tag",
