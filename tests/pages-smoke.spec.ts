@@ -21,6 +21,7 @@ const APP_PAGES = [
   "/app/stats",
   "/app/replies",
   "/app/autopilot",
+  "/app/scenarios",
   "/app/patterns",
   "/app/onboarding",
   "/app/settings",

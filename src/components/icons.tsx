@@ -113,6 +113,9 @@ export const IcGlobe = (p: IconProps) => <Svg {...p}><circle cx="12" cy="12" r="
 export const IcAt = (p: IconProps) => <Svg {...p}><circle cx="12" cy="12" r="3.6" /><path d="M15.6 8.6v4.6a2.4 2.4 0 0 0 4.8 0v-1.2a8.4 8.4 0 1 0-3.2 6.6" /></Svg>;
 export const IcStar = (p: IconProps) => <Svg {...p}><path d="M12 4.2l2.4 4.86 5.36.78-3.88 3.78.92 5.34L12 16.18 7.2 18.74l.92-5.34L4.24 9.62l5.36-.78Z" /></Svg>;
 export const IcArchive = (p: IconProps) => <Svg {...p}><path d="M4 8.5h16V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V8.5Z" /><path d="M3 4.5h18v4H3zM9.5 12.5h5" /></Svg>;
+/* scenarios — repeat-loop (the scenario glyph; never a bolt) + gift (Акция) */
+export const IcRepeat = (p: IconProps) => <Svg {...p}><path d="M17 2l3 3-3 3" /><path d="M20 5H9a5 5 0 0 0-5 5v1" /><path d="M7 22l-3-3 3-3" /><path d="M4 19h11a5 5 0 0 0 5-5v-1" /></Svg>;
+export const IcGift = (p: IconProps) => <Svg {...p}><rect x="4" y="10" width="16" height="10" rx="1.5" /><path d="M3 7h18v3H3zM12 7v13" /><path d="M12 7C12 5 10.7 3.5 9 3.5 7.9 3.5 7 4.4 7 5.5S7.9 7 9 7h3ZM12 7c0-2 1.3-3.5 3-3.5 1.1 0 2 .9 2 2S16.1 7 15 7h-3Z" /></Svg>;
 
 /* "Drafting Line" brand mark — filled glyph in a rounded paper tile.
    Uses semantic CSS vars so the tile/pen flip with the theme automatically. */

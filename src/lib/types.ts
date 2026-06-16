@@ -590,6 +590,64 @@ export type AutopostActivity = {
   replies: AutopostActivityReply[];
 };
 
+// ── Scenarios — recurring/conditional content; «Акция» (promo) is the first
+// template. Mirrors api/scenarios.py ScenarioOut + PromoFields. ──────────────
+export type ScenarioTemplate = "promo" | "custom" | "rubric" | "seasonal";
+
+export type ScenarioPromoFields = {
+  ask: string;
+  reward: string;
+  require_follow: boolean;
+  require_like: boolean;
+  reply_instruction: string;
+  schedule: "daily" | "every_n_days";
+  n_days: number;
+};
+
+export type Scenario = {
+  id: number;
+  name: string;
+  template: ScenarioTemplate;
+  enabled: boolean;
+  trigger_cfg: Record<string, unknown>;
+  condition_cfg: Record<string, unknown> | null;
+  action_cfg: Record<string, unknown>;
+  structured: ScenarioPromoFields | null;
+  instruction: string;
+  reply_instruction: string;
+  next_run_at: string | null;
+  last_run_at: string | null;
+};
+
+export type ScenariosResponse = { scenarios: Scenario[] };
+
+export type ScenarioCreate = {
+  name: string;
+  template: ScenarioTemplate;
+  enabled?: boolean;
+  promo?: ScenarioPromoFields;
+  trigger?: Record<string, unknown>;
+  condition?: Record<string, unknown> | null;
+  action?: Record<string, unknown>;
+  instruction?: string;
+};
+
+export type ScenarioUpdate = {
+  name?: string;
+  enabled?: boolean;
+  promo?: ScenarioPromoFields;
+  trigger?: Record<string, unknown>;
+  condition?: Record<string, unknown> | null;
+  action?: Record<string, unknown>;
+  instruction?: string;
+};
+
+export type ScenarioPreview = {
+  cta: string;
+  instruction: string;
+  reply_instruction: string;
+};
+
 // The account's own manual generation rules (layered over the role_book +
 // the built-in default rules). kind ∈ {"post","reply"}.
 export type UserRule = {

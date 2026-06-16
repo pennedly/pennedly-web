@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Pennedly · Scenarios — Mobile spec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="ds/tokens.css"/>
+<link rel="stylesheet" href="ds/components.css"/>
+<link rel="stylesheet" href="mobile/pennedly-mobile.css"/>
+<link rel="stylesheet" href="mobile/frame.css"/>
+<link rel="stylesheet" href="mobile/spec.css"/>
+<link rel="stylesheet" href="scenarios-mobile.css"/>
+</head>
+<body>
+<div class="layout">
+
+<aside class="toc">
+  <div class="doc-mark">
+    <span class="nib"><svg width="18" height="18" viewBox="0 0 512 512"><g fill="#ededed"><g transform="rotate(42 256 256)"><path d="M236 150 Q236 128 256 128 Q276 128 276 150 L276 300 L256 360 L236 300 Z"/><rect x="236" y="206" width="40" height="7"/></g></g></svg></span>
+    <b>Pennedly</b>
+  </div>
+  <div class="doc-sub">Mobile spec · Scenarios</div>
+  <nav>
+    <a href="#s1"><span class="n">1</span> Screen identity</a>
+    <a href="#s2"><span class="n">2</span> The phone layout</a>
+    <a href="#s3"><span class="n">3</span> Shell: top bar + drawer</a>
+    <a href="#s4"><span class="n">4</span> Список сценариев</a>
+    <a class="sub" href="#s4">— карточка + состояния</a>
+    <a href="#s5"><span class="n">5</span> Выбор шаблона</a>
+    <a href="#s6"><span class="n">6</span> Редактор «Акция»</a>
+    <a class="sub" href="#s6">— превью + состояния</a>
+    <a href="#s7"><span class="n">7</span> Редактор «Свой»</a>
+    <a href="#s8"><span class="n">8</span> Все состояния</a>
+    <a href="#s9"><span class="n">9</span> Anatomy &amp; values</a>
+    <a href="#s10"><span class="n">10</span> Web ↔ mobile</a>
+    <a href="#s11"><span class="n">11</span> Localization &amp; 360px</a>
+    <a href="#s12"><span class="n">12</span> Checklist</a>
+  </nav>
+  <div class="meta">
+    Screen: <b>Scenarios</b><br>
+    Route: <code>/app/scenarios</code> · tester-gated<br>
+    Desktop spec: <a class="link" href="Scenarios-WEB-SPEC.html">Scenarios-WEB-SPEC.html</a><br>
+    Phone breakpoint: <code>≤ 600px</code> · ref 390<br>
+    Nav: drawer → <b>Voice &amp; automation</b> (перед Autopilot)<br>
+    Layer: <code>scenarios-mobile.css</code> · <code>mobile/pennedly-mobile.css</code><br>
+    Iconography: scenario = <b>repeat-loop</b> · Акция = <b>gift</b> · Свой = <b>sliders</b> · авто-ответ = <b>bubble</b>. <b>No bolt.</b>
+  </div>
+</aside>
+
+<main>
+  <div class="doc-head">
+    <p class="kicker">Pennedly · Mobile spec · per-screen</p>
+    <h1 class="title">Scenarios <span>/app/scenarios</span> — phone</h1>
+    <p class="lede">A <strong>scenario</strong> is recurring or conditional content in the author’s voice — <strong>КОГДА</strong> (trigger) → <strong>ЕСЛИ</strong> (condition) → <strong>СГЕНЕРИРОВАТЬ</strong> (post/reply) <strong>С ИНСТРУКЦИЕЙ</strong> on top of the voice. This is the phone pass for all four screens — <strong>List</strong>, <strong>Template picker</strong>, the <strong>«Акция»</strong> editor, and the <strong>«Свой»</strong> editor — designed for the narrow viewport: no sidebar, a hamburger drawer, a free bottom edge, every control 16px text / ≥44px tap, the desktop two-column editor folded to <strong>form → sticky-less preview → full-width save bar</strong>, and the delete confirm as a <strong>bottom sheet</strong>. Frames are the real product layer (<code>pennedly-mobile.css</code> on <code>ds/tokens.css</code>) at <strong>390px</strong>, light and dark, sanity-checked at 360. Placeholders are the RU «Соня» case (a daily birth-date mini-reading); the feature itself is generic. <strong>Off by default for every scenario.</strong></p>
+    <div class="filerow">
+      <span class="chip chip--mob">scenarios-mobile.css</span>
+      <span class="chip chip--mob">pennedly-mobile.css</span>
+      <span class="chip">ds/tokens.css</span>
+      <span class="chip">ds/components.css</span>
+      <span class="chip">mobile/mock.js</span>
+    </div>
+  </div>
+
+  <div class="note good"><b>What does not change from desktop.</b> The model (КОГДА → ЕСЛИ → СГЕНЕРИРОВАТЬ · С ИНСТРУКЦИЕЙ), the four screens, every state, OFF-by-default, the «Акция» fields and live preview, and the read-only run-times all come from the same backend. Mobile is a layout pass; the only structural change is the shared app shell (hamburger + drawer instead of a sidebar). <b>Hours are UTC server-side, shown in the viewer’s local timezone.</b></div>
+
+  <div class="note warn"><b>Where the Scenarios tab lives.</b> No bottom tab bar — nav is the hamburger <code>.m-drawer</code>. <b>Scenarios</b> sits in <b>Voice &amp; automation</b>, <b>before Autopilot</b>, tester-gated (Scenarios = intent, Autopilot = the executor). Icon = <b>repeat-loop</b>, never a bolt.</div>
+
+  <!-- 1 -->
+  <section id="s1">
+    <h2><span class="h2n">1</span>Screen identity</h2>
+    <div class="tbl-wrap"><table><tbody>
+      <tr><th style="width:210px">Route</th><td><code>/app/scenarios</code> (list) · <code>…/new</code> (template picker) · <code>…/:id</code> (editor). tester-gated · OFF by default.</td></tr>
+      <tr><th>Desktop width</th><td><code>--content-wide</code> 960px; list cards full-width; editor is two columns (form + sticky preview). See <a class="link" href="Scenarios-WEB-SPEC.html">desktop spec</a>.</td></tr>
+      <tr><th>Phone width</th><td>100% − 14px gutters; everything stacks; free bottom edge (safe-area).</td></tr>
+      <tr><th>Top→bottom (list)</th><td>Status bar → top bar (hamburger · “Сценарии” · status pill · ＋) → intro → scenario cards → free bottom edge.</td></tr>
+      <tr><th>Top→bottom (editor)</th><td>Status bar → top bar (back · “Акция” · badge) → form sections → live preview section → save bar (Сохранить / Сохранить и включить / Удалить) → free bottom edge.</td></tr>
+      <tr><th>Iconography</th><td>Scenario = <b>repeat-loop</b>; Акция = <b>gift</b>; Свой = <b>sliders</b>; Рубрика = <b>layers</b>; Сезонное = <b>calendar</b>; авто-ответ = <b>chat bubble</b>. <b>No bolt.</b></td></tr>
+    </tbody></table></div>
+  </section>
+
+  <!-- 2 -->
+  <section id="s2">
+    <h2><span class="h2n">2</span>The phone layout</h2>
+    <p class="section-note">The list in context, light and dark — intro, the status pill (some scenarios on), and the scenario cards. Everything runs to the free bottom edge (the frame clips; the real screen scrolls).</p>
+    <div class="stage" id="stg-layout"></div>
+  </section>
+
+  <!-- 3 -->
+  <section id="s3">
+    <h2><span class="h2n">3</span><span class="stg stg--shell">shell</span>Shell: top bar + drawer</h2>
+    <p class="section-note">The shell is shared. Scenarios-specific shell values:</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:200px">Slot</th><th>Scenarios value</th></tr></thead>
+      <tbody>
+        <tr><td>Hamburger</td><td>Far left, opens <code>.m-drawer</code> (active row = Scenarios, <b>repeat</b> glyph; Voice &amp; automation, before Autopilot; tester-gated).</td></tr>
+        <tr><td>Title</td><td>“Сценарии”; truncates before the pill on long locales.</td></tr>
+        <tr><td>Status pill</td><td>When ≥1 scenario on → <code>status-pill--success</code> “N активны” with a live dot; none on → no pill (title only).</td></tr>
+        <tr><td>Top-bar action</td><td>＋ (new scenario) + theme toggle; account in the drawer foot.</td></tr>
+        <tr><td>Tab bar</td><td>None — free bottom edge (safe-area inset).</td></tr>
+      </tbody>
+    </table></div>
+    <div class="stage" id="stg-drawer"></div>
+  </section>
+
+  <!-- 4 -->
+  <section id="s4">
+    <h2><span class="h2n">4</span><span class="stg stg--fix">screen 1</span>Список сценариев</h2>
+    <p class="section-note">Each scenario is a full-width card: a template icon, the name, the <strong>template badge</strong> (Акция / Рубрика / Сезонное / Свой), an on/off <strong>toggle</strong> (top-right), a one-line trigger description, then <strong>«след. запуск»</strong> / <strong>«последний запуск»</strong> and a full-width <strong>«Открыть»</strong>. Off → dimmed, “— на паузе”. States: list / empty / loading / error.</p>
+    <div class="fix">
+      <div class="fix-bad"><h5>Before</h5><p>The desktop card’s one-row footer (runs left, “Открыть” right) and the title-row badges crush below 360.</p></div>
+      <div class="fix-good"><h5>After</h5><p>Badge + toggle wrap under the name; the runs sit in a two-column row above a <strong>full-width “Открыть”</strong>; the whole card is a comfortable tap target.</p></div>
+    </div>
+    <div class="stage" id="stg-list"></div>
+    <h3>4.1 — Пусто / Загрузка / Ошибка</h3>
+    <p class="section-note">Empty explains the model + offers template chips + “Создать сценарий”. Loading mirrors the card layout with skeletons. Error is an inline banner with “Повторить”.</p>
+    <div class="stage" id="stg-list-states"></div>
+  </section>
+
+  <!-- 5 -->
+  <section id="s5">
+    <h2><span class="h2n">5</span><span class="stg stg--fix">screen 2</span>Выбор шаблона</h2>
+    <p class="section-note">A full screen (route <code>…/new</code>) of <strong>full-width, stacked, tappable template cards</strong> — <strong>Акция</strong> and <strong>Свой</strong> are live; <strong>Рубрика</strong> and <strong>Сезонное</strong> are “скоро” (dimmed, not tappable). Each card: icon, name, a short explanation, and a chevron.</p>
+    <div class="stage" id="stg-tpl"></div>
+  </section>
+
+  <!-- 6 -->
+  <section id="s6">
+    <h2><span class="h2n">6</span><span class="stg stg--fix">screen 3</span>Редактор «Акция»</h2>
+    <p class="section-note">The desktop two-column (form + sticky preview) <strong>folds to a single column</strong>: form sections first (Что за акция · Когда запускать · Как отвечать), then the <strong>live preview as its own section</strong> (assembled CTA + a mock post + a sample reply), then the <strong>save bar</strong>. Every field is 16px / ≥44px; the schedule is a full-width two-segment control; delete is a <strong>bottom sheet</strong>.</p>
+    <div class="fix">
+      <div class="fix-bad"><h5>Before</h5><p>A 380px sticky preview beside the form has nowhere to go on a phone; the three save buttons in a row are too small to tap safely.</p></div>
+      <div class="fix-good"><h5>After</h5><p>Preview drops below the form as a normal section; the save bar stacks <strong>full-width</strong> (“Сохранить и включить” primary on top); delete opens a confirm sheet.</p></div>
+    </div>
+    <div class="stage" id="stg-promo"></div>
+    <h3>6.1 — Состояния</h3>
+    <p class="section-note">New/empty (preview = empty invite, no “Удалить”) · preview-loading (skeleton in the preview section) · «Раз в N дней» schedule · saving (spinners) · validation error (field + banner) · delete sheet.</p>
+    <div class="stage" id="stg-promo-states"></div>
+    <div class="note"><b>Rules.</b> Gift glyph in the «Акция» badge. The assembled CTA recomputes from “что просим” + “что даём” (+ subscribe/like); while it recomputes the preview section shows skeleton lines. Saving leaves the scenario OFF; “Сохранить и включить” flips it on. Delete is irreversible — confirmed in a bottom sheet (danger primary on top).</div>
+  </section>
+
+  <!-- 7 -->
+  <section id="s7">
+    <h2><span class="h2n">7</span><span class="stg stg--fix">screen 4</span>Редактор «Свой»</h2>
+    <p class="section-note">Simpler than «Акция»: one section of stacked fields straight from the model — <strong>Название</strong> · <strong>КОГДА</strong> (trigger) · <strong>ЕСЛИ</strong> (condition, optional) · <strong>СГЕНЕРИРОВАТЬ</strong> (action) · <strong>С ИНСТРУКЦИЕЙ</strong> (on top of the voice) — then the same preview section and save bar. Each label carries its model-key chip.</p>
+    <div class="stage" id="stg-custom"></div>
+    <div class="note"><b>«Свой» = «Акция» without the wrapper.</b> Same four model parts, set directly through selects rather than friendly “что просим / что даём” fields. The preview depends on the chosen <b>action</b>: “Пост” → a single mock post; “Ответ в комментариях” → the comment→reply mechanic.</div>
+  </section>
+
+  <!-- 8 -->
+  <section id="s8">
+    <h2><span class="h2n">8</span>Все состояния</h2>
+    <div class="statebar"><span class="st">Список</span><span class="st">Пусто</span><span class="st">Загрузка</span><span class="st">Ошибка</span><span class="st">Шаблоны</span><span class="st">Новый</span><span class="st">Заполнен</span><span class="st">Превью-загрузка</span><span class="st">Сохранение</span><span class="st">Ошибка валидации</span><span class="st">Удаление-sheet</span></div>
+    <p class="section-note">A compact gallery of the editor states beside the list states — every one designed for the phone.</p>
+    <div class="stage" id="stg-states"></div>
+  </section>
+
+  <!-- 9 -->
+  <section id="s9">
+    <h2><span class="h2n">9</span>Anatomy &amp; exact values</h2>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:210px">Element / class</th><th>Phone value</th></tr></thead>
+      <tbody>
+        <tr><td><code>.m-scncard</code></td><td>list card; icon tile + name + badge + toggle (top-right); desc; runs row; full-width “Открыть”. <code>.is-off</code> → opacity .78.</td></tr>
+        <tr><td><code>.m-scn-badge</code> / <code>--promo</code></td><td>template badge: Акция (accent-tint, gift) · Свой (neutral, sliders) · Рубрика · Сезонное.</td></tr>
+        <tr><td><code>.m-scntpl</code> / <code>--promo</code> / <code>.is-soon</code></td><td>full-width tappable template card; “скоро” → dimmed, non-tappable; chevron affordance.</td></tr>
+        <tr><td><code>.m-ap2sec</code> / <code>.m-ap2head</code></td><td>reused section card; title/sub left, action right (form & preview sections).</td></tr>
+        <tr><td><code>.m-field</code> / <code>.m-select</code></td><td>reused: label above a full-width 16px / 44px control. Label carries <code>.m-scn-fkey</code> (КОГДА/ЕСЛИ/…).</td></tr>
+        <tr><td><code>.m-scn-trow</code> + <code>.m-toggle</code></td><td>require-subscribe / require-like toggle rows.</td></tr>
+        <tr><td><code>.m-scn-seg</code> / <code>.m-scn-segbtn</code></td><td>full-width two-segment schedule control (Ежедневно / Раз в N дней), each ≥44px, labels wrap.</td></tr>
+        <tr><td><code>.m-scn-prevcta</code></td><td>assembled призыв-CTA (accent-tint); the mock post + reply reuse <code>.m-autopost</code> / <code>.m-autoreply</code>.</td></tr>
+        <tr><td><code>.m-scn-savebar</code></td><td>stacked full-width buttons: Сохранить и включить (primary) · Сохранить (secondary) · Удалить (ghost/danger).</td></tr>
+        <tr><td><code>.m-sheet</code> (delete)</td><td>confirm bottom sheet; grip; trash mark; “Удалить” danger on top, “Отмена” below; safe-area padding.</td></tr>
+        <tr><td><code>.m-empty</code> / <code>.m-error</code> / <code>.skel-line</code></td><td>reused empty / error / skeleton primitives.</td></tr>
+        <tr><td><code>.m-content--notab</code></td><td>bottom inset = <code>26 + safe-area</code> (no tab bar).</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- 10 -->
+  <section id="s10">
+    <h2><span class="h2n">10</span>Web ↔ mobile</h2>
+    <div class="two">
+      <div class="pane web"><h4>Desktop ( &gt; 880 )</h4>
+        <ul>
+          <li>Fixed sidebar; 960px column; status pill in topbar; hover states on cards/buttons.</li>
+          <li>List: card footer in one row (runs left, “Открыть” right).</li>
+          <li>Template picker: 2×2 grid.</li>
+          <li>Editor: two columns — form + <strong>sticky</strong> preview (380px).</li>
+          <li>Delete = inline confirm in the action bar.</li>
+        </ul>
+      </div>
+      <div class="pane mob"><h4>Phone ( ≤ 600 )</h4>
+        <ul>
+          <li>No sidebar/tab bar; hamburger → drawer + account; free bottom edge.</li>
+          <li>List: badge+toggle wrap under name; runs row; full-width “Открыть”.</li>
+          <li>Template picker: full-width stacked cards.</li>
+          <li>Editor: form → preview section → full-width save bar (no sticky).</li>
+          <li>Delete = bottom sheet (danger primary on top).</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11 -->
+  <section id="s11">
+    <h2><span class="h2n">11</span>Localization &amp; 360px</h2>
+    <p class="section-note">All end-user copy — the intro, template names/descriptions, the «Акция» field labels (“Что просим написать в комментах”, “Что даём взамен”), the schedule segments, the model keys, the run-time labels, empty/error — localizes into 8 locales (en/ru/uk/de/es/fr/it/pt); RU/DE run ~30–40% longer. On a phone: template badges wrap under the name; the schedule segment labels wrap inside their ≥44px buttons; field labels wrap above their full-width control; the save buttons hold 16px and wrap to a second line rather than clip.</p>
+    <div class="note"><b>360px behavior.</b> No new breakpoint — gutters stay 14px; cards, template cards, and editor fields are already one column; the schedule segment stays two equal cells (labels wrap to two lines); the save bar stays full-width stacked; the delete sheet stays full-width with the danger primary on top. Long RU/DE labels (“Что просим написать в комментах”, “Сохранить и включить”) wrap and never clip; selects/inputs hold 16px / ≥44px. The drawer stays <code>min(82%, 312px)</code> → ≈295px at 360.</div>
+    <div class="stage" id="stg-narrow"></div>
+  </section>
+
+  <!-- 12 -->
+  <section id="s12">
+    <h2><span class="h2n">12</span>Checklist</h2>
+    <ul class="check">
+      <li>Below 600px: no sidebar, no tab bar — one top bar with a hamburger far-left, the title, (when ≥1 on) a “N активны” success pill with a live dot, and a ＋ action; bottom edge free.</li>
+      <li>Hamburger opens the drawer (active = Scenarios, repeat glyph, Voice &amp; automation, before Autopilot, tester-gated) + account at its foot.</li>
+      <li>Scenario icon = repeat-loop; Акция = gift; Свой = sliders; Рубрика = layers; Сезонное = calendar; auto-reply = chat bubble; <strong>no bolt</strong>.</li>
+      <li>List card: icon · name · template badge · on/off toggle · trigger desc · «след. запуск» / «последний запуск» · full-width «Открыть»; off → dimmed + “— на паузе”.</li>
+      <li>List states: list · empty (model explainer + template chips + “Создать сценарий”) · loading (skeletons mirroring the card) · error (banner + “Повторить”).</li>
+      <li>Template picker: full-width stacked cards; Акция + Свой live; Рубрика + Сезонное “скоро” (dimmed, non-tappable).</li>
+      <li>«Акция» editor: form sections (Что просим · Что даём · subscribe/like toggles · schedule Ежедневно / Раз в N дней + N · Как отвечать) → live preview section (CTA + mock post + reply) → save bar; all 16px / ≥44px.</li>
+      <li>«Акция» states: new/empty (empty preview, no “Удалить”) · filled · preview-loading (skeleton) · Раз в N дней · saving (spinners) · validation error (field + banner) · delete bottom sheet.</li>
+      <li>«Свой» editor: Название · КОГДА · ЕСЛИ (optional) · СГЕНЕРИРОВАТЬ · С ИНСТРУКЦИЕЙ; simpler than «Акция»; preview depends on the action.</li>
+      <li>OFF by default; “Сохранить” leaves off, “Сохранить и включить” turns on; delete confirmed in a bottom sheet (danger primary on top).</li>
+      <li>Correct in light and dark; only semantic tokens; copy survives the longest of 8 locales — never clipped; sanity-checked at 360px.</li>
+    </ul>
+  </section>
+
+</main>
+</div>
+
+<script src="mobile/sprite.js"></script>
+<script src="mobile/mock.js"></script>
+<script src="scenarios-mobile-spec.js"></script>
+</body>
+</html>

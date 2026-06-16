@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pennedly · Scenarios WEB (десктоп) — Спецификация (пиксель-в-пиксель)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="ds/tokens.css" />
+<link rel="stylesheet" href="ds/components.css" />
+<link rel="stylesheet" href="scenarios.css" />
+<style>
+:root{
+  --font-sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --font-mono:"Geist Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --bg:#efedea; --surface:#ffffff; --surface-2:#f6f5f2; --border:#dcd9d2;
+  --text:#171717; --muted:#565550; --subtle:#6f6e69; --accent:#2f4cc4;
+  --code-bg:#f6f5f2; --good:#2c7350; --warn:#8a5b16; --danger:#b23b30;
+  --radius:14px;
+}
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%; scroll-behavior:smooth;}
+body{margin:0; background:var(--bg); color:var(--text);
+  font-family:var(--font-sans); font-size:15px; line-height:1.62;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;}
+.layout{display:grid; grid-template-columns:300px minmax(0,1fr); gap:0; max-width:1340px; margin:0 auto;}
+
+.toc{position:sticky; top:0; align-self:start; height:100vh; overflow-y:auto;
+  padding:34px 22px 40px 32px; border-right:1px solid var(--border);}
+.toc .doc-mark{display:flex; align-items:center; gap:10px; margin-bottom:6px;}
+.toc .doc-mark .nib{width:30px; height:30px; border-radius:8px; background:var(--text); display:grid; place-items:center; flex:0 0 auto;}
+.toc .doc-mark b{font-size:16px; font-weight:600; letter-spacing:-0.01em;}
+.toc .doc-sub{font-size:12px; color:var(--subtle); letter-spacing:0.02em; margin:0 0 22px 40px; text-transform:uppercase;}
+.toc nav{display:flex; flex-direction:column; gap:1px;}
+.toc nav a{display:flex; gap:9px; padding:6px 10px; border-radius:8px; text-decoration:none;
+  color:var(--muted); font-size:13.5px; line-height:1.35; transition:background .12s, color .12s;}
+.toc nav a:hover{background:var(--surface-2); color:var(--text);}
+.toc nav a .n{font-variant-numeric:tabular-nums; color:var(--subtle); font-weight:600; flex:0 0 16px;}
+.toc nav a.sub{padding-left:30px; font-size:12.5px; color:var(--subtle);}
+.toc .meta{margin-top:24px; padding-top:18px; border-top:1px solid var(--border); font-size:12px; color:var(--subtle); line-height:1.7;}
+.toc .meta code{font-family:var(--font-mono); font-size:11px;}
+.toc .meta b{color:var(--text);}
+.toc .meta a{color:var(--accent); text-decoration:none;}
+
+main{padding:40px 56px 120px; min-width:0;}
+.kicker{font-family:var(--font-mono); font-size:12px; letter-spacing:0.04em; color:var(--accent); text-transform:uppercase; margin:0 0 10px;}
+h1.title{font-size:34px; line-height:1.1; letter-spacing:-0.025em; font-weight:600; margin:0 0 14px; text-wrap:balance;}
+h1.title span{color:var(--subtle); font-weight:500;}
+.lede{font-size:16px; color:var(--muted); max-width:78ch; margin:0 0 14px; text-wrap:pretty;}
+.filerow{display:flex; flex-wrap:wrap; gap:6px; margin:18px 0 6px;}
+.chip{font-family:var(--font-mono); font-size:11.5px; padding:4px 9px; border-radius:9999px; background:var(--surface); border:1px solid var(--border); color:var(--muted);}
+.chip--new{border-color:color-mix(in srgb, var(--accent) 40%, var(--border)); color:var(--accent);}
+
+section{margin-top:52px; scroll-margin-top:20px;}
+h2{font-size:21px; line-height:1.25; letter-spacing:-0.012em; font-weight:600; margin:0 0 4px; padding-top:10px;}
+h2 .h2n{font-family:var(--font-mono); font-size:14px; color:var(--accent); margin-right:10px; font-weight:500;}
+.section-note{color:var(--muted); font-size:14px; max-width:84ch; margin:6px 0 18px; text-wrap:pretty;}
+h3{font-size:15.5px; font-weight:600; letter-spacing:-0.005em; margin:30px 0 10px; padding-bottom:7px; border-bottom:1px solid var(--border);}
+h3 .stg{font-family:var(--font-mono); font-size:11px; color:var(--accent); border:1px solid var(--border); border-radius:6px; padding:1px 7px; margin-right:8px; text-transform:uppercase; letter-spacing:0.04em;}
+h3 .stg--shell{color:var(--good);}
+h3 .stg--new{color:var(--accent); border-color:color-mix(in srgb, var(--accent) 40%, var(--border));}
+h4{font-size:13px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.04em; margin:22px 0 8px;}
+
+p{margin:0 0 12px; text-wrap:pretty;}
+ul,ol{margin:0 0 12px; padding-left:22px;}
+li{margin:3px 0;}
+code{font-family:var(--font-mono); font-size:0.86em; background:var(--code-bg); border:1px solid var(--border); padding:1px 5px; border-radius:5px; white-space:nowrap;}
+.tok{color:var(--accent);}
+strong{font-weight:600;}
+a.link{color:var(--accent); text-decoration:underline; text-underline-offset:2px; text-decoration-color:color-mix(in srgb,var(--accent) 40%,transparent);}
+
+.tbl-wrap{overflow-x:auto; margin:0 0 16px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface);}
+table{width:100%; border-collapse:collapse; font-size:13px;}
+th,td{text-align:left; padding:9px 13px; border-bottom:1px solid var(--border); vertical-align:top;}
+thead th{font-size:11px; text-transform:uppercase; letter-spacing:0.04em; color:var(--subtle); font-weight:600; background:var(--surface-2);}
+tbody tr:last-child td{border-bottom:none;}
+td code, th code{white-space:nowrap;}
+td.val{font-family:var(--font-mono); font-size:12px; color:var(--text);}
+td .mono2{font-family:var(--font-mono); font-size:11.5px; color:var(--subtle);}
+
+.note{border:1px solid var(--border); border-left:3px solid var(--accent); background:var(--surface);
+  border-radius:10px; padding:12px 16px; margin:14px 0; font-size:13.5px; color:var(--muted);}
+.note.warn{border-left-color:var(--warn);}
+.note.danger{border-left-color:var(--danger);}
+.note.good{border-left-color:var(--good);}
+.note b{color:var(--text);}
+.pane code, .check code, .note code, .section-note code, p code, td code, th code, li code{white-space:normal; overflow-wrap:anywhere;}
+.two{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+.two h4{margin-top:0;}
+.pane{border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); padding:16px 18px; min-width:0;}
+.pane.web{border-top:3px solid var(--text);}
+.pane.mob{border-top:3px solid var(--accent);}
+.pane ul{margin:0; padding-left:20px;}
+
+.check{list-style:none; padding:0; margin:0 0 8px;}
+.check li{position:relative; padding:5px 0 5px 26px; border-bottom:1px dashed var(--border); font-size:13.5px;}
+.check li:last-child{border-bottom:none;}
+.check li::before{content:"☐"; position:absolute; left:2px; top:4px; color:var(--subtle); font-size:14px;}
+.tagline{display:inline-block; font-size:11px; font-family:var(--font-mono); color:var(--accent); border:1px solid var(--border); border-radius:9999px; padding:2px 8px; margin-left:6px;}
+.statebar{display:flex; flex-wrap:wrap; gap:6px; margin:2px 0 14px;}
+.statebar .st{font-family:var(--font-mono); font-size:11px; padding:3px 9px; border-radius:6px; background:var(--surface-2); border:1px solid var(--border); color:var(--muted);}
+
+/* ───────────────────── LIVE FRAMES (real DS components) ───────────────────── */
+.frames{display:flex; flex-direction:column; gap:16px; margin:16px 0 6px;}
+.frow{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+@media(max-width:1040px){ .frow{grid-template-columns:1fr;} }
+.fr{display:flex; flex-direction:column; gap:9px; min-width:0;}
+.fr-head{display:inline-flex; align-items:center; gap:7px; font-family:var(--font-mono); font-size:11px; letter-spacing:.02em; color:var(--subtle);}
+.fr-head .dh{width:8px; height:8px; border-radius:9999px; background:var(--border);}
+.fr-head .dh--dark{background:#0a0a0a; border:1px solid #3a3a3a;}
+.frame{background:var(--color-bg); border:1px solid var(--color-border); border-radius:18px; padding:22px; overflow:hidden;}
+.frame *{box-sizing:border-box;}
+
+/* skeleton shimmer (mirrors scenarios.css; restated for the doc host) */
+@keyframes shimmer{ from{background-position:220% 0} to{background-position:-120% 0} }
+
+/* flow-model strip in the header */
+.modelstrip{display:flex; flex-wrap:wrap; gap:10px; margin:18px 0 4px;}
+.modelstep{display:flex; flex-direction:column; gap:3px; flex:1 1 200px; min-width:180px; padding:13px 15px; border:1px solid var(--border); border-radius:12px; background:var(--surface);}
+.modelstep .ms-k{font-family:var(--font-mono); font-size:11px; letter-spacing:0.05em; text-transform:uppercase; color:var(--accent);}
+.modelstep .ms-t{font-size:14px; font-weight:600;}
+.modelstep .ms-d{font-size:12.5px; color:var(--subtle); line-height:1.45;}
+
+@media (max-width:980px){
+  .layout{grid-template-columns:1fr;}
+  .toc{position:static; height:auto; border-right:none; border-bottom:1px solid var(--border);}
+  .toc nav{display:grid; grid-template-columns:1fr 1fr; gap:1px 14px;}
+  main{padding:28px 22px 90px;}
+  .two{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<aside class="toc">
+  <div class="doc-mark">
+    <span class="nib"><svg width="18" height="18" viewBox="0 0 512 512"><g fill="#ededed"><g transform="rotate(42 256 256)"><path d="M236 150 Q236 128 256 128 Q276 128 276 150 L276 300 L256 360 L236 300 Z"/><rect x="236" y="206" width="40" height="7"/></g></g></svg></span>
+    <b>Pennedly</b>
+  </div>
+  <div class="doc-sub">Спецификация · Scenarios · WEB</div>
+  <nav>
+    <a href="#s1"><span class="n">1</span> Идентификация экрана</a>
+    <a href="#s2"><span class="n">2</span> Модель «Сценарий»</a>
+    <a href="#s3"><span class="n">3</span> Список сценариев</a>
+    <a class="sub" href="#s3-card">— карточка сценария</a>
+    <a class="sub" href="#s3-states">— пусто / загрузка / ошибка</a>
+    <a href="#s4"><span class="n">4</span> Выбор шаблона</a>
+    <a href="#s5"><span class="n">5</span> Редактор «Акция»</a>
+    <a class="sub" href="#s5-anatomy">— анатомия + превью</a>
+    <a class="sub" href="#s5-states">— все состояния</a>
+    <a href="#s6"><span class="n">6</span> Редактор «Свой»</a>
+    <a href="#s7"><span class="n">7</span> Раскладка · Web ↔ Mobile</a>
+    <a href="#s8"><span class="n">8</span> Значения · контракт</a>
+    <a href="#s9"><span class="n">9</span> Локализация и 360px</a>
+    <a href="#s10"><span class="n">10</span> Чек-лист</a>
+  </nav>
+  <div class="meta">
+    Экран: <b>Scenarios</b><br>
+    Маршрут: <code>/app/scenarios</code> · tester-gated<br>
+    Группа nav: <b>Voice &amp; automation</b> (перед Autopilot)<br>
+    Тип: <b>полный app-shell</b> (sidebar = да)<br>
+    Назначение: <b>повторяющийся / условный контент</b> · OFF по умолчанию<br>
+    Ширина: <code>--content-wide</code> 960<br>
+    Иконография: <b>петля-повтор</b> (сценарий) · Акция = <b>подарок</b> · Свой = <b>слайдеры</b> · авто-ответ = <b>чат-бабл</b>. <b>Молний нет.</b><br>
+    Источник: <code>scenarios-app.jsx</code>, <code>scenarios-parts.jsx</code>, <code>scenarios-data.jsx</code>, <code>scenarios.css</code><br>
+    Токены: <code>ds/tokens.css</code>, <code>ds/components.css</code><br>
+    Телефон: <a href="Scenarios-MOBILE-SPEC.html">Scenarios-MOBILE-SPEC.html</a>
+  </div>
+</aside>
+
+<main>
+  <div class="doc-head">
+    <p class="kicker">Pennedly · Спецификация · Документация экрана</p>
+    <h1 class="title">Scenarios <span>/app/scenarios · десктоп</span> — пиксель-в-пиксель</h1>
+    <p class="lede"><b>Сценарий</b> — это повторяющийся или условный контент в вашем голосе по схеме <b>КОГДА</b> (триггер) → <b>ЕСЛИ</b> (условие) → <b>СГЕНЕРИРОВАТЬ</b> (пост/ответ) <b>С ИНСТРУКЦИЕЙ</b> поверх голоса. Это фундаментальный инструмент Pennedly, а не узкая фича: на нём строятся промо-кампании, регулярные рубрики, сезонные посты и любые свои автоматизации. Первый и главный шаблон — <b>«Акция»</b> (промо-кампания: просим что-то в комментах → присылаем отклик в ответ). Документ покрывает четыре экрана — <b>Список</b>, <b>Выбор шаблона</b>, редактор <b>«Акция»</b> и редактор <b>«Свой»</b> — одним проходом: живые фреймы (реальные DS-компоненты, <b>светлая И тёмная</b> темы), пронумерованная анатомия, все состояния, маппинг Web↔Mobile, локализация в 8 языков и чек-лист. Плейсхолдеры — кейс <b>Сони</b> (ежедневный мини-разбор по дате рождения), но фича generic.</p>
+    <div class="modelstrip">
+      <div class="modelstep"><span class="ms-k">когда · trigger</span><span class="ms-t">Наступает момент</span><span class="ms-d">Расписание, новый комментарий, упоминание…</span></div>
+      <div class="modelstep"><span class="ms-k">если · condition</span><span class="ms-t">Выполнено условие</span><span class="ms-d">Необязательно: подписка, дата в тексте, тон…</span></div>
+      <div class="modelstep"><span class="ms-k">сгенерировать · action</span><span class="ms-t">Pennedly создаёт</span><span class="ms-d">Пост, ответ в комментах или тред…</span></div>
+      <div class="modelstep"><span class="ms-k">с инструкцией</span><span class="ms-t">Поверх вашего голоса</span><span class="ms-d">Специфика сценария — то, чего нет в голосе.</span></div>
+    </div>
+    <div class="filerow">
+      <span class="chip">scenarios-app.jsx</span>
+      <span class="chip">scenarios-parts.jsx</span>
+      <span class="chip">scenarios-data.jsx</span>
+      <span class="chip">scenarios.css</span>
+      <span class="chip">shell-parts.jsx</span>
+      <span class="chip">ds/tokens.css</span>
+      <span class="chip">ds/components.css</span>
+      <span class="chip chip--new">+ nav: Scenarios</span>
+      <span class="chip chip--new">+ template «Акция»</span>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>Состояния одним взглядом.</b> Четыре экрана. <b>Список:</b> список · пусто · загрузка (скелетоны) · ошибка. <b>Выбор шаблона:</b> Акция (готов) · Свой (готов) · Рубрика/Сезонное (скоро). <b>Редактор «Акция»:</b> новый/пусто · заполнен · превью-загрузка · превью-готово · сохранение · ошибка валидации · удаление-confirm. <b>Редактор «Свой»:</b> триггер/условие/действие/инструкция. Все сценарии <b>OFF по умолчанию</b> — включаются явно, кнопкой «Сохранить и включить» или тумблером в списке.
+  </div>
+
+  <div class="note warn">
+    <b>Куда встаёт таб «Сценарии».</b> В группе <code>Voice &amp; automation</code>, <b>перед Autopilot</b>, tester-gated. Логика: <b>Scenarios = намерение</b> (что и когда генерировать), <b>Autopilot = исполнитель</b> (общий мастер-рубильник постинга и авто-ответов). Сценарии задают повторяющийся контент; Autopilot решает, исполнять ли его автоматически. Иконка nav — <b>петля-повтор</b> (<code>IcRepeat</code>), не молния.
+  </div>
+
+  <!-- ===================== 1 ===================== -->
+  <section id="s1">
+    <h2><span class="h2n">1</span>Идентификация экрана</h2>
+    <p class="section-note">Маршрут, назначение, ширина, раскладка сверху вниз: <code>sidebar | main(topbar + scroll(content))</code>. Контент зависит от экрана: список карточек · сетка шаблонов · редактор (форма + липкий предпросмотр).</p>
+    <div class="tbl-wrap"><table><tbody>
+      <tr><th style="width:210px;">Маршрут</th><td><code>/app/scenarios</code> (список) · <code>/app/scenarios/new</code> (выбор шаблона) · <code>/app/scenarios/:id</code> (редактор). Пункт <b>Scenarios</b> в группе <b>Voice &amp; automation</b>, <b>перед Autopilot</b>, <b>tester-gated</b>.</td></tr>
+      <tr><th>Тип</th><td><b>Полный app-shell</b>: <code>&lt;window.Sidebar active="scenarios"/&gt;</code>. Каркас 1:1 из Studio/Autopilot.</td></tr>
+      <tr><th>Назначение / тон</th><td>Повторяющийся и условный контент в голосе автора. <b>OFF по умолчанию</b>; «вы у руля». Фундаментальный инструмент, не узкая фича.</td></tr>
+      <tr><th>Ширина контента</th><td><b>wide</b> = <code class="tok">--content-wide</code> 960px. Топбар выровнен через <code>.topbar-inner.topbar--wide</code>.</td></tr>
+      <tr><th>Топбар</th><td>Заголовок «Scenarios» + <b>статус-pill</b>: <code>.status-pill--success</code> «N активны» с живой точкой, если есть включённые сценарии; нейтральный «Все выключены» иначе. + действия: тема + Settings.</td></tr>
+      <tr><th>Модель</th><td><b>КОГДА</b> (trigger) → <b>ЕСЛИ</b> (condition, optional) → <b>СГЕНЕРИРОВАТЬ</b> (action) <b>С ИНСТРУКЦИЕЙ</b> поверх голоса. Шаблон — пресет этой схемы.</td></tr>
+      <tr><th>Шаблоны</th><td><b>Акция</b> (готов) · <b>Свой</b> (готов, advanced) · <b>Рубрика</b> / <b>Сезонное</b> (скоро). Каждый = каркас «когда→если→сгенерировать».</td></tr>
+      <tr><th>Иконография</th><td>Сценарий — <b>петля-повтор</b>; Акция — <b>подарок</b>; Свой — <b>слайдеры</b>; Рубрика — <b>колонки</b>; Сезонное — <b>ветка</b>; авто-ответ — <b>чат-бабл</b>. <b>Молний нет.</b></td></tr>
+      <tr><th>Фазы (state)</th><td>loading (skeleton) · ready · empty · <b>error</b> (для списка и сохранения).</td></tr>
+      <tr><th>Backend-правда</th><td>Все часы — UTC на сервере, показываются/выбираются в локальной TZ зрителя. OFF для всех по умолчанию. Worker исполняет включённые сценарии в рамках Autopilot-политики.</td></tr>
+    </tbody></table></div>
+  </section>
+
+  <!-- ===================== 2 ===================== -->
+  <section id="s2">
+    <h2><span class="h2n">2</span>Модель «Сценарий»</h2>
+    <p class="section-note">Каждый сценарий — это одно правило по схеме из четырёх частей. Шаблон лишь предзаполняет их понятными словами. Эта же схема показывается компактной строкой-<code>.flowline</code> на карточках и в шапке редакторов.</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:170px;">Часть</th><th>Что задаёт</th><th>Примеры значений</th></tr></thead>
+      <tbody>
+        <tr><td><b>КОГДА</b> <span class="mono2">trigger</span></td><td>Что запускает сценарий.</td><td class="val">Ежедневно · Раз в N дней · По времени (HH:00) · На новый комментарий · На упоминание</td></tr>
+        <tr><td><b>ЕСЛИ</b> <span class="mono2">condition · optional</span></td><td>Доп. фильтр — сценарий срабатывает только если выполнено.</td><td class="val">Без условия · только подписчики · есть дата в тексте · тон позитивный · только будни</td></tr>
+        <tr><td><b>СГЕНЕРИРОВАТЬ</b> <span class="mono2">action</span></td><td>Что Pennedly создаёт.</td><td class="val">Пост · Ответ в комментариях · Тред</td></tr>
+        <tr><td><b>С ИНСТРУКЦИЕЙ</b> <span class="mono2">instruction</span></td><td>Специфика поверх голоса — то, чего нет в общем Voice.</td><td class="val">«одна карта дня, 2–3 предложения, совет на день»</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note good"><b>Шаблон «Акция»</b> = пресет: КОГДА «ежедневно/раз в N дней» → ЕСЛИ «есть нужный ответ в комменте (+ подписка/лайк опц.)» → СГЕНЕРИРОВАТЬ «ответ-отклик» С ИНСТРУКЦИЕЙ как отвечать. Автор не видит сырую схему — он заполняет понятные поля «что просим / что даём».</div>
+  </section>
+
+  <!-- ===================== 3 ===================== -->
+  <section id="s3">
+    <h2><span class="h2n">3</span>Экран 1 — Список сценариев</h2>
+    <p class="section-note">Заголовок «Scenarios» + кнопка <b>«Новый сценарий»</b>. Ниже — список карточек. Каждая карточка: иконка-шаблон, название, <b>бейдж шаблона</b>, тумблер вкл/выкл, краткое описание триггера, <b>«след. запуск»</b> и <b>«последний запуск»</b>, кнопка «Открыть». Полный экран — светлая и тёмная темы:</p>
+    <div class="frames" id="f-list"></div>
+
+    <h3 id="s3-card">3.1 — Карточка сценария <code>.sc-card</code></h3>
+    <p class="section-note">Включённый сценарий — иконка с success-тинтом, статус «Включён», заполненные «след. запуск/последний запуск». Выключенный — приглушён (opacity .78), «след. запуск» = «— на паузе».</p>
+    <div class="frames" id="f-card"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:230px;">Элемент / класс</th><th>Описание</th></tr></thead>
+      <tbody>
+        <tr><td><code>.sc-card</code> / <code>--on</code> / <code>--off</code></td><td><code>surface; border; radius-lg; shadow-sm; padding 17/19</code>. Hover → border темнее + shadow-md. Off → opacity .78.</td></tr>
+        <tr><td><code>.sc-card-icon</code></td><td>40×40 (radius-md). Иконка шаблона. On → success-тинт.</td></tr>
+        <tr><td><code>.sc-card-name</code> + <code>.tpl-badge</code></td><td>Название (h3) + бейдж шаблона: <b>Акция</b> (accent-tint, подарок) · <b>Свой</b> (нейтральный, слайдеры) · Рубрика · Сезонное.</td></tr>
+        <tr><td><code>.sc-card-desc</code></td><td>Краткое описание механики/триггера одной строкой («Просим дату рождения → присылаем разбор в ответ»).</td></tr>
+        <tr><td><code>.sc-card-toggle</code></td><td>Статус «Включён/Выключен» + <code>.switch</code>. Тумблер вкл/выкл прямо в списке (toast на флипе).</td></tr>
+        <tr><td><code>.sc-card-foot</code> · <code>.sc-run</code> ×2</td><td>«след. запуск» (Завтра, 9:00 / «— на паузе») + «последний запуск» (Сегодня, 9:02 / «ещё не запускался»). tabular-nums, в локальной TZ.</td></tr>
+        <tr><td><code>.sc-card-actions</code></td><td>«Открыть» (<code>.btn--secondary.btn--sm</code>) → редактор сценария.</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 id="s3-states">3.2 — Пусто / Загрузка / Ошибка</h3>
+    <div class="statebar"><span class="st">Список</span><span class="st">Пусто</span><span class="st">Загрузка</span><span class="st">Ошибка</span></div>
+    <p class="section-note">Пусто — объяснение модели + четыре подсказки-шаблона + «Создать сценарий». Загрузка — скелетоны, повторяющие раскладку карточек. Ошибка — inline-баннер с «Повторить».</p>
+    <div class="frames" id="f-list-empty"></div>
+    <div class="frames" id="f-list-aux"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:120px;">State</th><th>Что рендерится</th></tr></thead>
+      <tbody>
+        <tr><td><b>Пусто</b></td><td class="val"><code>.sc-empty</code>: mark-петля + «Пока нет сценариев» + объяснение «когда→если→сгенерировать» + чипы-шаблоны (Акция/Рубрика/Сезонное/Свой) + «Создать сценарий».</td></tr>
+        <tr><td><b>Загрузка</b></td><td class="val"><code>.sc-skel-card</code> ×3 — shimmer 1.4s, повторяет раскладку (иконка + тексты + тумблер + футер). <code>aria-hidden</code>.</td></tr>
+        <tr><td><b>Ошибка</b></td><td class="val"><code>.sc-error</code> — danger-tint баннер «Не удалось загрузить сценарии» + «Повторить». Работа в безопасности.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- ===================== 4 ===================== -->
+  <section id="s4">
+    <h2><span class="h2n">4</span>Экран 2 — Выбор шаблона</h2>
+    <p class="section-note">Открывается по «Новый сценарий». Сетка карточек 2×2: <b>Акция</b> и <b>Свой</b> доступны; <b>Рубрика</b> и <b>Сезонное</b> помечены «скоро» (приглушены, не кликабельны). Каждая карточка — иконка, название, короткое пояснение и CTA «Выбрать».</p>
+    <div class="frames" id="f-tpl"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:140px;">Шаблон</th><th>Состояние</th><th>Пояснение</th></tr></thead>
+      <tbody>
+        <tr><td><b>Акция</b> 🎁</td><td class="val">готов</td><td>Промо-кампания: просим что-то в комментах → присылаем отклик в ответ. Розыгрыши, лид-магниты, мини-разборы.</td></tr>
+        <tr><td><b>Свой</b></td><td class="val">готов · advanced</td><td>Полный контроль над схемой когда/если/сгенерировать/инструкция. Для нестандартного.</td></tr>
+        <tr><td><b>Рубрика</b></td><td class="val">скоро</td><td>Регулярный формат по расписанию — «карта дня», «совет недели».</td></tr>
+        <tr><td><b>Сезонное</b></td><td class="val">скоро</td><td>Привязка к датам/сезонам — праздники, годовщины, начало сезона.</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note"><b>Почему «Свой» доступен сразу, а Рубрика/Сезонное — позже.</b> «Свой» — это прямой доступ к базовой схеме, он покрывает любые кейсы уже сейчас. Рубрика и Сезонное — это удобные предзаполненные пресеты той же схемы; они появятся, когда отработаем UX на «Акции».</div>
+  </section>
+
+  <!-- ===================== 5 ===================== -->
+  <section id="s5">
+    <h2><span class="h2n">5</span>Экран 3 — Редактор «Акция» <span class="tagline">главный экран</span></h2>
+    <p class="section-note">Двухколоночный: слева форма (что за акция · когда запускать · как отвечать), справа <b>липкий живой предпросмотр</b> (собранный призыв-CTA + пример поста + пример отклика). На телефоне предпросмотр уходит под форму. Кнопки: <b>Сохранить</b> · <b>Сохранить и включить</b> · <b>Удалить</b>.</p>
+
+    <h3 id="s5-anatomy">5.1 — Анатомия + живой предпросмотр</h3>
+    <div class="frames" id="f-promo"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:230px;">Элемент / класс</th><th>Описание</th></tr></thead>
+      <tbody>
+        <tr><td><code>.sc-editor</code></td><td><code>grid; minmax(0,1fr) 380px; gap 22</code>. ≤880px → 1 колонка, превью под формой (<code>.sc-preview</code> теряет sticky).</td></tr>
+        <tr><td>Форма · «Что за акция»</td><td><b>Название</b> · <b>«Что просим написать в комментах»</b> (плейсхолдер «свою дату рождения») · <b>«Что даём взамен»</b> («короткий мини-разбор прямо в комментах») · тумблеры <b>«Требовать подписку»</b> / <b>«Требовать лайк»</b>.</td></tr>
+        <tr><td>Форма · «Когда запускать»</td><td>Сегмент <b>«Ежедневно (первым постом дня)»</b> / <b>«Раз в N дней»</b>; во втором режиме — поле N + подсказка. Время в локальной TZ (UTC+1).</td></tr>
+        <tr><td>Форма · «Как отвечать»</td><td>Многострочное поле — инструкция поверх голоса для каждого ответа в комментах.</td></tr>
+        <tr><td><code>.sc-preview</code> · <code>.sc-prev-cta</code></td><td><b>Собранный призыв</b> — Pennedly формирует CTA из «что просим» + «что даём» (+ подписка/лайк). accent-tint.</td></tr>
+        <tr><td><code>.mockpost</code> + <code>.mockreply</code></td><td>Пример поста (мок Threads: avatar/handle/текст/stats) + пример отклика: коммент с датой → авто-ответ бота (тег чат-бабл «авто-ответ»).</td></tr>
+        <tr><td><code>.sc-actionbar</code></td><td>«Сохранить» (secondary) · «Сохранить и включить» (primary, ✓) · spacer · «Удалить» (ghost, есть только у существующего).</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 id="s5-states">5.2 — Все состояния</h3>
+    <div class="statebar"><span class="st">Новый/пусто</span><span class="st">Заполнен</span><span class="st">Превью-загрузка</span><span class="st">Превью-готово</span><span class="st">Раз в N дней</span><span class="st">Сохранение</span><span class="st">Ошибка</span><span class="st">Удаление-confirm</span></div>
+    <p class="section-note">Новый/пусто — поля пустые с плейсхолдерами, превью — пустое приглашение, «Удалить» скрыта. Заполнен/превью-готово показан выше (§5.1).</p>
+    <div class="frames" id="f-promo-new"></div>
+    <p class="section-note">Превью пересобирается при изменении полей: пока считает — <b>скелетон в панели превью</b>; режим «Раз в N дней» — поле N в расписании.</p>
+    <div class="frames" id="f-promo-prev"></div>
+    <p class="section-note"><b>Сохранение</b> — кнопки со спиннером, заблокированы. <b>Ошибка валидации</b> — обязательное поле подсвечено + danger-баннер; <b>удаление</b> — inline-confirm «Удалить этот сценарий?» (Отмена / Удалить).</p>
+    <div class="frames" id="f-promo-states"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:150px;">State</th><th>Что рендерится</th></tr></thead>
+      <tbody>
+        <tr><td><b>Новый / пусто</b></td><td class="val">Поля пустые (placeholders); превью = <code>.prev-empty</code> «Предпросмотр появится здесь»; «Удалить» скрыта.</td></tr>
+        <tr><td><b>Заполнен · превью-готово</b></td><td class="val">Все поля заполнены; <code>.sc-prev-cta</code> + <code>.mockpost</code> + <code>.mockreply</code> собраны; «Обновить» в шапке превью.</td></tr>
+        <tr><td><b>Превью-загрузка</b></td><td class="val"><code>.prev-loading</code> — shimmer-плейсхолдеры на месте CTA и поста.</td></tr>
+        <tr><td><b>Раз в N дней</b></td><td class="val">Второй сегмент активен; <code>.sc-everyn</code> с полем N («Каждые 3 дня — первым постом дня»).</td></tr>
+        <tr><td><b>Сохранение</b></td><td class="val">Обе save-кнопки со <code>.spinner</code>, <code>aria-disabled</code>.</td></tr>
+        <tr><td><b>Ошибка валидации</b></td><td class="val"><code>.sc-field--err</code> на «что просим» + danger-hint; <code>.sc-error</code> баннер «Не удалось сохранить».</td></tr>
+        <tr><td><b>Удаление-confirm</b></td><td class="val"><code>.sc-delete-confirm</code> inline: «Удалить этот сценарий? Действие необратимо.» + Отмена / Удалить (danger).</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- ===================== 6 ===================== -->
+  <section id="s6">
+    <h2><span class="h2n">6</span>Экран 4 — Редактор «Свой» <span class="tagline">advanced</span></h2>
+    <p class="section-note">Проще, чем «Акция»: один список из четырёх полей, прямо по схеме — <b>КОГДА</b> (триггер) · <b>ЕСЛИ</b> (условие, опц.) · <b>СГЕНЕРИРОВАТЬ</b> (действие) · <b>С ИНСТРУКЦИЕЙ</b> (поверх голоса). Справа — тот же липкий предпросмотр (для действия «Пост» — один мок-пост без механики откликов).</p>
+    <div class="frames" id="f-custom"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:200px;">Поле</th><th>Контрол</th><th>Описание</th></tr></thead>
+      <tbody>
+        <tr><td>Название</td><td class="val">input</td><td>Имя сценария (для списка).</td></tr>
+        <tr><td><b>КОГДА</b> · Триггер</td><td class="val">select</td><td>Ежедневно · Раз в N дней · По времени · На новый комментарий · На упоминание.</td></tr>
+        <tr><td><b>ЕСЛИ</b> · Условие</td><td class="val">select · опц.</td><td>Без условия · только будни · только подписчики · есть дата в тексте · тон позитивный.</td></tr>
+        <tr><td><b>СГЕНЕРИРОВАТЬ</b> · Действие</td><td class="val">select</td><td>Пост · Ответ в комментариях · Тред.</td></tr>
+        <tr><td><b>С ИНСТРУКЦИЕЙ</b></td><td class="val">textarea</td><td>Специфика поверх голоса — «одна карта дня, 2–3 предложения, совет на день».</td></tr>
+        <tr><td>Действия</td><td class="val">кнопки</td><td>Сохранить · Сохранить и включить · Удалить.</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note"><b>«Свой» — это «Акция» без обёртки.</b> Те же четыре части модели, но автор задаёт их напрямую через селекты, а не через дружелюбные поля «что просим / что даём». Предпросмотр зависит от выбранного <b>действия</b>: «Пост» → мок-пост; «Ответ в комментариях» → механика коммент→ответ как в «Акции».</div>
+  </section>
+
+  <!-- ===================== 7 ===================== -->
+  <section id="s7">
+    <h2><span class="h2n">7</span>Раскладка · Десктоп + ховеры</h2>
+    <p class="section-note">Это десктоп-спека. Полная телефонная раскладка — в <a class="link" href="Scenarios-MOBILE-SPEC.html">Scenarios-MOBILE-SPEC.html</a>. На десктопе ширина <code>--content-wide</code> 960; редактор — две колонки (форма + <b>липкий</b> предпросмотр). Брейкпоинты вниз: <b>880px</b> (<code>.sc-editor</code> → 1 колонка, превью под формой) · <b>640px</b> (tpl-grid 1 кол., card-foot стопкой, segment/action-bar full-width).</p>
+    <h4>Ховер- и фокус-состояния (только десктоп)</h4>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:210px;">Элемент</th><th>Ховер / фокус</th></tr></thead>
+      <tbody>
+        <tr><td><code>.sc-card</code></td><td>Hover → border темнее (<code>color-mix ink 14%</code>) + <code>shadow-md</code>; курсор по «Открыть» / тумблеру.</td></tr>
+        <tr><td><code>.tpl-card</code> (доступная)</td><td>Hover → border accent-40% + <code>shadow-md</code>; «скоро»-карточки hover-инертны (<code>--soon</code>).</td></tr>
+        <tr><td><code>.btn</code> · <code>.field</code></td><td>Кнопки — hover-тон из DS; поля — focus accent-ring (<code>0 0 0 3px accent 22%</code>).</td></tr>
+        <tr><td><code>.act-link</code> / «Открыть»</td><td>Hover меняет цвет ссылки (accent → mix с text). Tap-таргеты на десктопе ≥32px (на телефоне ≥44).</td></tr>
+        <tr><td>Удаление</td><td>Десктоп — <b>inline-confirm</b> в action-bar; телефон — bottom-sheet (см. мобильную спеку).</td></tr>
+      </tbody>
+    </table></div>
+    <h4>Десктоп ↔ телефон одним взглядом</h4>
+    <div class="two">
+      <div class="pane web"><h4>Десктоп ( &gt; 880 )</h4>
+        <ul>
+          <li>Фикс. сайдбар; колонка 960; статус-pill в топбаре.</li>
+          <li>Список: карточки full-width; футер в ряд (runs слева, «Открыть» справа).</li>
+          <li>Выбор шаблона: сетка 2×2.</li>
+          <li>Редактор: 2 колонки — форма + <b>липкий</b> предпросмотр (380px).</li>
+          <li>Удаление — inline-confirm в action-bar.</li>
+        </ul>
+      </div>
+      <div class="pane mob"><h4>Телефон ( ≤ 600 )</h4>
+        <ul>
+          <li>Нет сайдбара/таб-бара; гамбургер → drawer; свободный нижний край.</li>
+          <li>Список: карточки full-width; футер стопкой; «Открыть» full-width; tap-target ≥44px.</li>
+          <li>Выбор шаблона: карточки в 1 колонку.</li>
+          <li>Редактор: форма, затем превью (не липкое); сегмент и кнопки full-width; inputs 16px.</li>
+          <li>«Новый сценарий» — основная кнопка в шапке; на узком уходит под заголовок.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="note">Полный телефонный проход — отдельная спецификация <a class="link" href="Scenarios-MOBILE-SPEC.html">Scenarios-MOBILE-SPEC.html</a> (фреймы телефона 390px, bottom-sheet для confirm, 360px-проверка).</div>
+  </section>
+
+  <!-- ===================== 8 ===================== -->
+  <section id="s8">
+    <h2><span class="h2n">8</span>Точные значения · backend-контракт</h2>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:230px;">Эндпоинт / поле</th><th>Описание</th></tr></thead>
+      <tbody>
+        <tr><td><code>GET …/scenarios</code></td><td>Список: <code>id</code>, <code>name</code>, <code>template</code> (promo/custom/rubric/seasonal), <code>enabled</code>, <code>trigger_summary</code>, <code>next_run_at</code> (nullable когда off), <code>last_run_at</code> (nullable).</td></tr>
+        <tr><td><code>POST/PATCH/DELETE …/scenarios/:id</code></td><td>Создание/правка/удаление. <code>PATCH …/enabled</code> — тумблер из списка.</td></tr>
+        <tr><td>Модель сценария</td><td><code>trigger</code> (daily/every_n_days+<code>n</code>/at_time+<code>hour</code>/on_comment/on_mention) · <code>condition</code> (nullable) · <code>action</code> (post/reply/thread) · <code>instruction</code> (text).</td></tr>
+        <tr><td>«Акция» (promo) поля</td><td><code>ask</code> (что просим) · <code>reward</code> (что даём) · <code>require_follow</code> (bool) · <code>require_like</code> (bool) · <code>reply_instruction</code> (text) · schedule (daily / every_n_days+<code>n</code>).</td></tr>
+        <tr><td><code>POST …/scenarios/preview</code></td><td>Возвращает собранный <code>cta</code> + мок <code>post</code> (+ мок <code>reply</code> для action=reply). Дебаунс на изменение полей; пока считает — превью-скелетон.</td></tr>
+      </tbody>
+    </table></div>
+    <h4>Local ↔ UTC · значения</h4>
+    <ul>
+      <li><b>Все часы — UTC server-side</b>, показываются/выбираются в локальной TZ зрителя; даты «след./последний запуск» — через локализованный форматтер (<code>fmtDateTime</code>, §3.10 shell).</li>
+      <li><b>OFF по умолчанию</b> для каждого сценария. <code>next_run_at = null</code> когда выключен → «— на паузе».</li>
+      <li>«Сохранить» оставляет OFF; «Сохранить и включить» ставит <code>enabled=true</code>. Тумблер в списке — мгновенный, с toast.</li>
+      <li>Исполнение идёт под общей Autopilot-политикой (лимиты, проверки качества, лог, undo).</li>
+    </ul>
+  </section>
+
+  <!-- ===================== 9 ===================== -->
+  <section id="s9">
+    <h2><span class="h2n">9</span>Локализация и 360px</h2>
+    <p class="section-note">Вся end-user копи расширяется в 8 локалях: <b>en · ru · uk · de · es · fr · it · pt</b>. RU/DE длиннее на ~30–40%. Часы/даты — через локализованный форматтер в TZ зрителя.</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:200px;">Строка</th><th>ru (исходник кейса)</th><th>en</th><th>de (длиннее)</th></tr></thead>
+      <tbody>
+        <tr><td>Заголовок</td><td>Сценарии</td><td>Scenarios</td><td>Szenarien</td></tr>
+        <tr><td>Новый</td><td>Новый сценарий</td><td>New scenario</td><td>Neues Szenario</td></tr>
+        <tr><td>Шаблон «Акция»</td><td>Акция</td><td>Promo</td><td>Aktion</td></tr>
+        <tr><td>Что просим</td><td>Что просим написать в комментах</td><td>What to ask for in comments</td><td>Worum in Kommentaren bitten</td></tr>
+        <tr><td>Что даём</td><td>Что даём взамен</td><td>What you give back</td><td>Was Sie zurückgeben</td></tr>
+        <tr><td>Расписание</td><td>Ежедневно (первым постом дня)</td><td>Daily (as the first post)</td><td>Täglich (als erster Beitrag)</td></tr>
+        <tr><td>Сохранить и включить</td><td>Сохранить и включить</td><td>Save and turn on</td><td>Speichern und einschalten</td></tr>
+        <tr><td>След. запуск</td><td>след. запуск · Завтра, 9:00</td><td>next run · Tomorrow, 9:00</td><td>nächster Lauf · Morgen, 9:00</td></tr>
+        <tr><td>Пусто</td><td>Пока нет сценариев</td><td>No scenarios yet</td><td>Noch keine Szenarien</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note"><b>360px.</b> Гаттеры 14px; <code>.sc-editor</code> и <code>.tpl-grid</code> уже в 1 колонку; футер карточки и сегмент расписания стопкой; «Открыть»/save-кнопки full-width; длинные RU/DE-лейблы оборачиваются (никогда не клипаются), select/textarea держат 16px/≥44px. Превью под формой во всю ширину.</div>
+  </section>
+
+  <!-- ===================== 10 ===================== -->
+  <section id="s10">
+    <h2><span class="h2n">10</span>Чек-лист реализации</h2>
+    <ul class="check">
+      <li>Полный app-shell; активный пункт = <b>Scenarios</b> в группе <b>Voice &amp; automation</b>, <b>перед Autopilot</b>, tester-gated; топбар «Scenarios» + статус-pill (success «N активны» + точка / нейтральный «Все выключены»); ширина <code>--content-wide</code> 960.</li>
+      <li><b>Иконография:</b> сценарий — <b>петля-повтор</b>; Акция — подарок; Свой — слайдеры; Рубрика — колонки; Сезонное — ветка; авто-ответ — чат-бабл; <b>молний нет</b>.</li>
+      <li><b>Список:</b> карточка = иконка-шаблон · название · <b>бейдж шаблона</b> · тумблер вкл/выкл · описание триггера · «след. запуск» · «последний запуск» · «Открыть»; off → приглушён + «— на паузе».</li>
+      <li><b>Состояния списка:</b> список · пусто (объяснение модели + чипы-шаблоны + «Создать») · загрузка (скелетоны по раскладке) · ошибка (баннер + «Повторить»).</li>
+      <li><b>Выбор шаблона:</b> Акция + Свой доступны; Рубрика + Сезонное «скоро» (приглушены, не кликабельны); каждая карточка — иконка, название, пояснение, CTA.</li>
+      <li><b>Редактор «Акция»:</b> поля Название · Что просим · Что даём · тумблеры подписка/лайк · расписание (Ежедневно / Раз в N дней + N) · «Как отвечать» (многострочно); <b>липкий живой предпросмотр</b> (CTA + мок-пост + мок-отклик); кнопки Сохранить / Сохранить и включить / Удалить.</li>
+      <li><b>Состояния «Акции»:</b> новый/пусто (превью пустой, без «Удалить») · заполнен · превью-загрузка (скелетон) · превью-готово · Раз в N дней · сохранение (спиннеры) · ошибка валидации (поле + баннер) · удаление-confirm (inline).</li>
+      <li><b>Редактор «Свой»:</b> КОГДА (триггер) · ЕСЛИ (условие, опц.) · СГЕНЕРИРОВАТЬ (действие) · С ИНСТРУКЦИЕЙ; проще «Акции»; превью зависит от действия.</li>
+      <li><b>OFF по умолчанию</b> для всех; «Сохранить» оставляет off, «Сохранить и включить» включает; тумблер в списке мгновенный (toast); next_run = null когда off.</li>
+      <li>Local↔UTC + локализованные даты; превью через дебаунс-эндпоинт; исполнение под Autopilot-политикой.</li>
+      <li>Корректно в светлой и тёмной теме; только семантические токены; копи выживает в 8 локалях; проверено на 360px; редактор collapse на ≤880 (превью под формой).</li>
+    </ul>
+    <div class="note" style="margin-top:18px;">Конец спецификации. Источник: <code>scenarios-app.jsx</code>, <code>scenarios-parts.jsx</code>, <code>scenarios-data.jsx</code>, <code>scenarios.css</code> + общий shell. Парный телефонный документ — <a class="link" href="Scenarios-MOBILE-SPEC.html">Scenarios-MOBILE-SPEC.html</a>.</div>
+  </section>
+</main>
+</div>
+
+<script src="scenarios-spec.js"></script>
+</body>
+</html>

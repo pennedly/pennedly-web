@@ -32,6 +32,7 @@ import {
   IcStudio,
   IcStudy,
   IcPencil,
+  IcRepeat,
   IcVoice,
   IcX,
   type IconProps,
@@ -76,6 +77,7 @@ const GROUPS: { title: MessageKey; items: NavItem[] }[] = [
     items: [
       { href: "/app/role-book", label: "dashboard.nav.voice", icon: IcVoice },
       { href: "/app/style-rules", label: "dashboard.nav.style_rules", icon: IcPencil },
+      { href: "/app/scenarios", label: "dashboard.nav.scenarios", icon: IcRepeat, tester: true },
       { href: "/app/autopilot", label: "dashboard.nav.autopilot", icon: IcBolt, tester: true },
     ],
   },

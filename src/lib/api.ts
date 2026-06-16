@@ -66,6 +66,12 @@ import type {
   Translation,
   UserRule,
   UserRulesResponse,
+  Scenario,
+  ScenariosResponse,
+  ScenarioCreate,
+  ScenarioUpdate,
+  ScenarioPreview,
+  ScenarioPromoFields,
 } from "./types";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
@@ -858,6 +864,59 @@ export async function deleteAutopostRule(
   ruleId: number,
 ): Promise<{ id: number; status: string }> {
   return fetchApi(`/api/autopost-rules/${ruleId}`, { method: "DELETE" });
+}
+
+// ── Scenarios (recurring/conditional content; «Акция» template) ────────────
+export async function fetchScenarios(accountId: number): Promise<ScenariosResponse> {
+  return fetchApi<ScenariosResponse>(`/api/accounts/${accountId}/scenarios`);
+}
+
+export async function getScenario(scenarioId: number): Promise<Scenario> {
+  return fetchApi<Scenario>(`/api/scenarios/${scenarioId}`);
+}
+
+export async function createScenario(
+  accountId: number,
+  body: ScenarioCreate,
+): Promise<Scenario> {
+  return fetchApi<Scenario>(`/api/accounts/${accountId}/scenarios`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function updateScenario(
+  scenarioId: number,
+  patch: ScenarioUpdate,
+): Promise<Scenario> {
+  return fetchApi<Scenario>(`/api/scenarios/${scenarioId}`, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+}
+
+export async function setScenarioEnabled(
+  scenarioId: number,
+  enabled: boolean,
+): Promise<Scenario> {
+  return fetchApi<Scenario>(`/api/scenarios/${scenarioId}/enabled`, {
+    method: "PATCH",
+    body: JSON.stringify({ enabled }),
+  });
+}
+
+export async function deleteScenario(scenarioId: number): Promise<{ ok: boolean }> {
+  return fetchApi(`/api/scenarios/${scenarioId}`, { method: "DELETE" });
+}
+
+export async function previewScenario(
+  accountId: number,
+  promo: ScenarioPromoFields,
+): Promise<ScenarioPreview> {
+  return fetchApi<ScenarioPreview>(
+    `/api/accounts/${accountId}/scenarios/preview`,
+    { method: "POST", body: JSON.stringify({ promo }) },
+  );
 }
 
 export async function refineDraft(
