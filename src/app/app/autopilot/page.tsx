@@ -704,6 +704,36 @@ export default function AutopilotPage() {
                     </div>
                   )}
                   <PolicyRow
+                    title={t("autopilot.policy_post_age_t")}
+                    desc={t("autopilot.policy_post_age_d")}
+                  >
+                    <Switch
+                      checked={config.reply_post_max_age_days !== null}
+                      onCheckedChange={(v) => onReply({ reply_post_max_age_days: v ? 7 : null })}
+                      aria-label={t("autopilot.policy_post_age_t")}
+                    />
+                  </PolicyRow>
+                  {config.reply_post_max_age_days !== null && (
+                    <div className="flex flex-wrap items-center gap-2 border-t border-border py-3.5">
+                      <span className="text-caption text-text-muted">{t("autopilot.post_age_label")}</span>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min={1}
+                        max={365}
+                        value={config.reply_post_max_age_days}
+                        onChange={(e) =>
+                          onReply({
+                            reply_post_max_age_days: Math.min(365, Math.max(1, Math.floor(Number(e.target.value) || 1))),
+                          })
+                        }
+                        aria-label={t("autopilot.post_age_label")}
+                        className={NUMFIELD}
+                      />
+                      <span className="text-caption text-text-muted">{t("autopilot.post_age_days")}</span>
+                    </div>
+                  )}
+                  <PolicyRow
                     title={t("autopilot.policy_quiet_t")}
                     desc={t("autopilot.policy_quiet_d")}
                   >

@@ -44,6 +44,7 @@ export const DEMO_CONFIG: AutopilotConfig = {
   reply_quiet_start_hour: 21, // 21:00 UTC → a populated quiet window in the demo
   reply_quiet_end_hour: 6,
   reply_skip_low_value: true,
+  reply_post_max_age_days: 2, // demo: "don't reply to posts older than 2 days" on
 };
 
 export const DEMO_ACTIVITY: AutopostActivity = {

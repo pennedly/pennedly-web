@@ -547,6 +547,9 @@ export type AutopilotConfig = {
   reply_quiet_start_hour: number | null;
   reply_quiet_end_hour: number | null;
   reply_skip_low_value: boolean; // skip pure-reaction junk + concluded threads
+  // Optional: only auto-reply to comments on posts younger than N days (null =
+  // no limit). Stops the bot chasing comments on stale posts.
+  reply_post_max_age_days: number | null;
 };
 
 // ── Autopost objects (autopilot redesign) ────────────────────────────
