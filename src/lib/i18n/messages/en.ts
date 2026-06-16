@@ -929,6 +929,7 @@ export const en = {
   "autopilot.audience_all_except_trolls": "everyone except trolls",
   "autopilot.audience_questions": "questions only",
   "autopilot.replies_per_day": "Replies per day",
+  "autopilot.replies_warn": "Threads allows about 250 posts and replies per day per account. High values can hit that limit (extra replies won't send) and raise the risk of the account being flagged. Safe range: 150–250.",
   "autopilot.uses_voice": "Autopilot follows your Voice and Style rules.",
   "autopilot.safety":
     "Only drafts that pass quality checks are published; daily limits apply; everything is logged and can be undone.",

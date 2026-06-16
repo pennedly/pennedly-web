@@ -688,6 +688,7 @@ export const es: Partial<Record<MessageKey, string>> = {
   "autopilot.audience_all_except_trolls": "todos menos los trolls",
   "autopilot.audience_questions": "solo preguntas",
   "autopilot.replies_per_day": "Respuestas al día",
+  "autopilot.replies_warn": "Threads permite unas 250 publicaciones y respuestas al día por cuenta. Los valores altos pueden alcanzar ese límite (las respuestas de más no se enviarán) y aumentan el riesgo de que se bloquee la cuenta. Rango seguro: 150–250.",
   "autopilot.uses_voice": "El piloto automático sigue tus reglas de Voz y Estilo.",
   "autopilot.safety":
     "Solo se publican los borradores que pasan los controles de calidad; se aplican límites diarios; todo queda registrado y puede deshacerse.",

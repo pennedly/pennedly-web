@@ -37,6 +37,7 @@ import { Toast, ToastHost } from "@/components/ui/toast";
 import { Mono } from "@/components/ui/mono";
 import { cn } from "@/lib/cn";
 import {
+  IcAlert,
   IcBubble,
   IcCheck,
   IcClock,
@@ -79,6 +80,12 @@ const IS_DEV = process.env.NODE_ENV === "development";
 const AP_STATES = ["On", "Off", "Edit", "Empty", "PolicyOff", "Replies", "Loading"];
 const SELECT =
   "h-9 w-full rounded-md border border-border bg-surface px-2.5 text-small text-text transition-colors focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent max-md:min-h-[44px] max-md:text-[16px]";
+// Daily reply cap is a free numeric field (1–500). Above this we show a banner
+// about Threads' ~250/day publish limit + spam-flag risk (it's advisory, not a
+// hard block — power users can still set higher).
+const NUMFIELD =
+  "h-9 w-[120px] rounded-md border border-border bg-surface px-2.5 text-center text-small text-text tabular-nums transition-colors focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent max-md:min-h-[44px] max-md:text-[16px]";
+const REPLIES_WARN_AT = 200;
 
 function fmtDate(iso: string | null, locale: string): string {
   if (!iso) return "";
@@ -674,22 +681,27 @@ export default function AutopilotPage() {
                     title={t("autopilot.policy_cap_t")}
                     desc={t("autopilot.policy_cap_d")}
                   >
-                    <select
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min={1}
+                      max={500}
                       value={config.replies_per_day}
-                      onChange={(e) => onReply({ replies_per_day: Number(e.target.value) })}
-                      className={cn(SELECT, "min-w-[168px]")}
-                    >
-                      {/* Q66: reply cap 10 / 25 / 50 (no "no cap"). Keep any
-                          legacy stored value visible so the select never blanks. */}
-                      {Array.from(new Set([10, 25, 50, config.replies_per_day]))
-                        .sort((a, b) => a - b)
-                        .map((n) => (
-                          <option key={n} value={n}>
-                            {n}
-                          </option>
-                        ))}
-                    </select>
+                      onChange={(e) =>
+                        onReply({
+                          replies_per_day: Math.min(500, Math.max(1, Math.floor(Number(e.target.value) || 1))),
+                        })
+                      }
+                      aria-label={t("autopilot.policy_cap_t")}
+                      className={NUMFIELD}
+                    />
                   </PolicyRow>
+                  {config.replies_per_day > REPLIES_WARN_AT && (
+                    <div className="mt-2 flex items-start gap-2 rounded-md border border-warning/45 bg-warning/12 px-3 py-2.5 text-caption leading-relaxed text-text">
+                      <IcAlert size={15} className="mt-px shrink-0 text-warning" />
+                      <span>{t("autopilot.replies_warn")}</span>
+                    </div>
+                  )}
                   <PolicyRow
                     title={t("autopilot.policy_quiet_t")}
                     desc={t("autopilot.policy_quiet_d")}

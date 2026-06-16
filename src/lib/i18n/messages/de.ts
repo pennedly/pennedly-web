@@ -693,6 +693,7 @@ export const de: Partial<Record<MessageKey, string>> = {
   "autopilot.audience_all_except_trolls": "alle außer Trollen",
   "autopilot.audience_questions": "nur Fragen",
   "autopilot.replies_per_day": "Antworten pro Tag",
+  "autopilot.replies_warn": "Threads erlaubt etwa 250 Beiträge und Antworten pro Tag und Konto. Hohe Werte können dieses Limit erreichen (zusätzliche Antworten werden nicht gesendet) und erhöhen das Risiko, dass das Konto markiert wird. Sicherer Bereich: 150–250.",
   "autopilot.uses_voice": "Autopilot folgt deinen Stimm- und Stilregeln.",
   "autopilot.safety":
     "Nur Entwürfe, die die Qualitätsprüfungen bestehen, werden veröffentlicht; Tageslimits gelten; alles wird protokolliert und kann rückgängig gemacht werden.",

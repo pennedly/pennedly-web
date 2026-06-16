@@ -689,6 +689,7 @@ export const fr: Partial<Record<MessageKey, string>> = {
   "autopilot.audience_all_except_trolls": "tout le monde sauf les trolls",
   "autopilot.audience_questions": "questions seulement",
   "autopilot.replies_per_day": "Réponses par jour",
+  "autopilot.replies_warn": "Threads autorise environ 250 publications et réponses par jour et par compte. Des valeurs élevées peuvent atteindre cette limite (les réponses en trop ne seront pas envoyées) et augmentent le risque de blocage du compte. Plage sûre : 150–250.",
   "autopilot.uses_voice": "Le pilote automatique suit tes règles de Voix et de Style.",
   "autopilot.safety":
     "Seuls les brouillons qui passent les contrôles de qualité sont publiés ; des limites quotidiennes s'appliquent ; tout est journalisé et annulable.",
