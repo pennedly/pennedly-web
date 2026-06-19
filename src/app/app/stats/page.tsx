@@ -26,12 +26,13 @@ import {
   RangeSeg,
   SkeletonDash,
   STAT_CARDS,
-  StatsEmpty,
+  StatsNudge,
   SummaryCard,
   type TimeSlotRow,
   type TopPostRow,
   TopPostsPanel,
 } from "@/components/studio/StatsParts";
+import { ImportBanner, useActiveSyncStatus } from "@/components/studio/ImportBanner";
 import { STATS_DEMO, STATS_TWEAK_DEFAULTS, type Gran, type StatBucket, type StatPeriodKey } from "@/components/studio/stats-demo";
 import type { FollowerHistory, StatsResponse } from "@/lib/types";
 
@@ -101,6 +102,10 @@ export default function StatsPage() {
   const allow = demoParam && (IS_DEV || isTester);
   const demoOn = allow;
   const accountId = useSelectedAccountId();
+
+  // Backfill state for the active account (drives the import banner + the
+  // first-run nudge wording). Disabled in demo — that path is prop-driven.
+  const sync = useActiveSyncStatus(!demoOn);
 
   const [period, setPeriod] = useState<StatPeriodKey>("7d");
   const [stats, setStats] = useState<StatsResponse | null>(null);
@@ -249,8 +254,19 @@ export default function StatsPage() {
     };
   }, [demoOn, period, stats, gran, locale]);
 
-  const phase: "loading" | "ready" | "empty" =
-    demoOn ? (feedState === "Loading" ? "loading" : feedState === "Empty" ? "empty" : loading ? "loading" : "ready") : loading ? "loading" : !model || model.current.posts === 0 ? "empty" : "ready";
+  // No more all-or-nothing "come back in two weeks" wall (First-Run-SPEC §3):
+  // once a model exists we always render the four real summary cards (even at
+  // zero) + a warm nudge. The only non-ready phase is `loading` (skeleton). The
+  // demo "Empty" tweak now previews the progressive zero / first-run state.
+  const phase: "loading" | "ready" =
+    demoOn ? (feedState === "Loading" ? "loading" : loading ? "loading" : "ready") : loading ? "loading" : !model ? "loading" : "ready";
+
+  // First-run = a freshly-connected account with no posts in the window yet, OR
+  // the demo "Empty" state. Drives the warm nudge (vs the normal full page).
+  const isFirstRun = demoOn ? feedState === "Empty" : !!model && model.current.posts === 0;
+  // While the active account's history is still importing, the nudge says so;
+  // otherwise it's the "you're all set up" first-step prompt.
+  const importing = !demoOn && sync.status === "importing";
 
   function onPeriod(p: StatPeriodKey) {
     setPeriod(p);
@@ -271,6 +287,12 @@ export default function StatsPage() {
   const cardSub = (metric: string): string => {
     if (!model) return "";
     const { posts, views, likes, comments } = model.current;
+    // First-run with zero posts: the cards are still real (all 0), so we say so
+    // plainly ("no posts yet" / "since you connected") instead of a fake avg or
+    // the deleted wall — First-Run-SPEC §3.3.
+    if (isFirstRun && posts === 0) {
+      return metric === "posts" ? t("backfill.card_since_connect") : t("backfill.card_no_posts");
+    }
     if (metric === "posts") return `${t("stats.in_word")} ${periodLabel}`;
     if (metric === "views") return `${fmt(posts ? Math.round(views / posts) : 0)} ${t("stats.sub_per_post")}`;
     if (metric === "likes") return `${posts ? Math.round(likes / posts) : 0} ${t("stats.sub_per_post")}`;
@@ -294,6 +316,16 @@ export default function StatsPage() {
   const granWord = t(GRAN_KEY[gran]);
   const chartCap = `${t("stats.cap_per")} ${granWord} · ${periodLabel}`;
   const tierCap = `${model?.current.posts ?? 0} ${t("stats.posts_word")} ${t("stats.spread_cap")} · ${periodLabel}`;
+
+  // ── honest empty-states (First-Run-SPEC §4) ──
+  // Viral tiers: "Calculating…" until a baseline exists — first-run, or a real
+  // account whose posts haven't formed a tier spread yet.
+  const tiersTotal = model ? model.tiers.viral + model.tiers.good + model.tiers.average + model.tiers.weak : 0;
+  const tiersCalculating = !demoOn && (isFirstRun || tiersTotal === 0);
+  // Follower count locked: the endpoint answered but has no count for us (below
+  // the ~100-follower threshold Threads gates analytics behind). `followers ===
+  // null` is a fetch failure, not a lock, so it falls through to "collecting".
+  const followerLocked = !demoOn && followers !== null && followers.latest === null && followers.points.length === 0;
 
   return (
     <div className="min-h-screen bg-bg text-text">
@@ -321,21 +353,44 @@ export default function StatsPage() {
         }
       />
       <main className="mx-auto flex max-w-[960px] flex-col gap-4 px-3.5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4 md:gap-5 md:px-6 md:pb-24 md:pt-7">
+        {/* Import banner — top of the content column while the active account is
+            still backfilling its history. Removed (renders null) once resolved. */}
+        {!demoOn && <ImportBanner status={sync.status} summary={sync.summary} />}
         <div className="flex flex-wrap items-end justify-between gap-4 max-md:gap-3">
           <div className="flex flex-col gap-1">
             <h1 className="text-h1 font-semibold tracking-[-0.015em]">{t("stats.title")}</h1>
             <p className="text-body text-text-muted">{t("stats.subtitle")}</p>
           </div>
-          {/* Always show the period selector — even on an empty period — so a
-              no-data period (e.g. "Today" before posting) never traps the user;
-              StatsEmpty renders only in the content area below. */}
+          {/* Always show the period selector so a no-data period (e.g. "Today"
+              before posting) never traps the user. */}
           <RangeSeg active={period} onChange={onPeriod} />
         </div>
 
         {phase === "loading" ? (
           <SkeletonDash />
-        ) : phase === "empty" ? (
-          <StatsEmpty />
+        ) : model && isFirstRun ? (
+          // ── Progressive first-run (First-Run-SPEC §3): the four REAL summary
+          // cards (even at zero) + a warm nudge + the honest follower / viral
+          // states. No "come back in two weeks" wall, no heavy trend/top/best
+          // panels until there's data to trend.
+          <>
+            <div className="grid gap-3.5 max-md:grid-cols-3 md:grid-cols-4">
+              {STAT_CARDS.map((c) => (
+                <SummaryCard key={c.metric} Icon={c.Icon} labelKey={c.labelKey} value={cardValue(c.metric)} sub={cardSub(c.metric)} pct={cardPct(c.metric)} hero={c.metric === "views"} />
+              ))}
+            </div>
+            <StatsNudge importing={importing} onOpenStudio={importing ? undefined : () => router.push("/app")} />
+            <div className="flex flex-col gap-1.5">
+              <FollowerChart
+                cap={t("stats.followers_title")}
+                points={followers?.points ?? []}
+                locked={followerLocked}
+                currentCount={followers?.latest ?? null}
+              />
+              <p className="px-1 text-caption leading-relaxed text-text-subtle">{t("stats.since_connect_note")}</p>
+            </div>
+            <DistributionBars cap={tierCap} tiers={model.tiers} calculating={tiersCalculating} />
+          </>
         ) : model ? (
           <>
             {/* Desktop: flat 4-up card grid (unchanged). Mobile: a 3-col grid
@@ -349,14 +404,19 @@ export default function StatsPage() {
             </div>
             <ColumnChart cap={chartCap} headline={fmt(avgViewsPerPost)} headlinePct={model.deltas.views_pct} series={model.series} />
             <div className="flex flex-col gap-1.5">
-              <FollowerChart cap={t("stats.followers_title")} points={demoOn ? DEMO_FOLLOWER_POINTS : (followers?.points ?? [])} />
+              <FollowerChart
+                cap={t("stats.followers_title")}
+                points={demoOn ? DEMO_FOLLOWER_POINTS : (followers?.points ?? [])}
+                locked={followerLocked}
+                currentCount={followers?.latest ?? null}
+              />
               <p className="px-1 text-caption leading-relaxed text-text-subtle">{t("stats.since_connect_note")}</p>
             </div>
             {model.top.length > 0 && <TopPostsPanel cap={`${t("stats.top_cap")} · ${periodLabel}`} rows={model.top} />}
             {period !== "today" && period !== "yesterday" && model.heatmap.length > 0 && (
               <HeatmapPanel cap={`${t("stats.heat_sub")} · ${periodLabel}`} cells={model.heatmap} />
             )}
-            <DistributionBars cap={tierCap} tiers={model.tiers} />
+            <DistributionBars cap={tierCap} tiers={model.tiers} calculating={tiersCalculating} />
           </>
         ) : null}
       </main>

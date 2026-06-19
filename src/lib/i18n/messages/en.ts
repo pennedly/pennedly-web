@@ -1239,6 +1239,39 @@ export const en = {
   "stats.empty_meta1": "week so far",
   "stats.empty_meta2": "posts published",
 
+  // ── Backfill / first-run (a freshly-connected account) ─────────
+  // Import banner (Dashboard · Stats · Replies, while sync_status==='importing').
+  // Tone is warm + non-apologetic: the platform is working, history is loading.
+  "backfill.banner_title": "Importing your history",
+  "backfill.banner_sub_early": "Pulling your posts, metrics and comments from Threads…",
+  // {posts} and {comments} are live counts substituted at render (tabular).
+  "backfill.banner_sub_live": "{posts} posts · {comments} comments so far",
+  "backfill.banner_eta": "About a minute left",
+  "backfill.partial_title": "Imported most of your history",
+  "backfill.partial_sub": "{posts} posts · {comments} comments are in. A few older posts are still finishing up.",
+  // Words used to build the live count line (pluralization-light, count-prefixed).
+  "backfill.word_posts": "posts",
+  "backfill.word_comments": "comments",
+  // Stats first-run nudge — the calm replacement for the "two weeks" wall.
+  "backfill.nudge_importing_title": "Your history is importing",
+  "backfill.nudge_importing_sub": "These numbers are real and growing as we pull the rest of your posts and comments from Threads. Nothing is missing.",
+  "backfill.nudge_ready_title": "You're all set up",
+  "backfill.nudge_ready_sub": "Keep publishing from the Studio and the trend line, best times and viral spread fill in here as you go — no waiting period.",
+  "backfill.nudge_cta": "Open the Studio",
+  // First-run summary-card sub-lines (always-real cards, even at zero).
+  "backfill.card_since_connect": "since you connected",
+  "backfill.card_no_posts": "no posts yet",
+  // Honest empty-states — follower growth (<2 days of data).
+  "backfill.followers_collect_title": "Growth starts tracking today",
+  "backfill.followers_collect_sub": "Threads only gives your current follower count, not its history — so we start plotting your growth from today. Check back tomorrow for the first move.",
+  // Honest empty-states — follower count locked (below ~100 followers).
+  "backfill.followers_locked_title": "Follower insights unlock at ~100 followers",
+  // {count} is the live current follower count.
+  "backfill.followers_locked_sub": "Threads only shares follower analytics once an account passes about 100 followers. You're at {count} — almost there, and everything else on this page works in the meantime.",
+  "backfill.followers_locked_sub_nocount": "Threads only shares follower analytics once an account passes about 100 followers — and everything else on this page works in the meantime.",
+  // Viral tiers still computing (no baseline yet).
+  "backfill.calculating": "Calculating",
+
   // ── Translate widget (button/cached/fresh already defined above) ──
   "translate.translating": "translating…",
   "translate.translated": "translated",

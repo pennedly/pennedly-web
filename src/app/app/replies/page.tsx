@@ -35,6 +35,7 @@ import { Toast, ToastHost } from "@/components/ui/toast";
 import { Spinner } from "@/components/ui/feedback";
 import { TweaksPanel, TweakSection, TweakToggle, TweakRadio, useTweaks } from "@/components/tweaks/TweaksPanel";
 import { ErrorBanner } from "@/components/studio/StudioParts";
+import { ImportBanner, useActiveSyncStatus } from "@/components/studio/ImportBanner";
 import {
   CommentCard,
   PostContext,
@@ -142,6 +143,10 @@ export default function RepliesPage() {
   const [tw, setTw] = useTweaks(REPLY_TWEAK_DEFAULTS);
   const [demoComments, setDemoComments] = useState<ReplyComment[]>(DEMO_COMMENTS);
   const demoOn = allow;
+
+  // Backfill banner — top of the content column while the active account is
+  // still importing its history (disabled in demo).
+  const sync = useActiveSyncStatus(!demoOn);
 
   function toast(title: string, tone: ToastT["tone"] = "success", opts?: { description?: string; onUndo?: () => void; undoLabel?: string; duration?: number }) {
     const id = Date.now() + Math.random();
@@ -530,6 +535,7 @@ export default function RepliesPage() {
     <div className="min-h-screen bg-bg text-text">
       <AppTopbar maxW="960px" title={t("replies.title")} pill={pill} />
       <main className="mx-auto flex max-w-[960px] flex-col gap-4 px-3.5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4 md:gap-5 md:px-6 md:pb-24 md:pt-7">
+        {!demoOn && <ImportBanner status={sync.status} summary={sync.summary} />}
         <div className="flex flex-col gap-1">
           <h1 className="text-h1 font-semibold tracking-[-0.015em]">{t("replies.heading")}</h1>
           <p className="text-body text-text-muted">{t("replies.subtitle")}</p>

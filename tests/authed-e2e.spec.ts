@@ -40,6 +40,12 @@ const ACCOUNT = {
   profile_picture_url: "https://example.test/mara.png",
   connected_at: new Date().toISOString(),
   disconnected_at: null,
+  // First-connect backfill fields (GET /api/me/accounts). A settled account →
+  // 'complete' so the import banner stays hidden and the normal flow renders.
+  sync_status: "complete",
+  sync_summary: { posts: 20, history_posts: 20, followers_snapshot: 1, new_comments: 0, new_mentions: 0, errors: [] },
+  sync_started_at: new Date(Date.now() - 9e5).toISOString(),
+  sync_completed_at: new Date(Date.now() - 6e5).toISOString(),
 };
 
 const ONBOARDING = {

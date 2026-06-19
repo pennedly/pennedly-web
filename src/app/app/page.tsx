@@ -51,6 +51,7 @@ import {
   type CardHandlers,
   type Density,
 } from "@/components/studio/StudioParts";
+import { ImportBanner, useActiveSyncStatus } from "@/components/studio/ImportBanner";
 import {
   DEMO_CARDS,
   STUDIO_TWEAK_DEFAULTS,
@@ -551,6 +552,10 @@ export default function Studio() {
     }, 1600);
   }
 
+  // Backfill banner — top of the content column while the active account is
+  // still importing its history (disabled in demo; the page drives it via props).
+  const sync = useActiveSyncStatus(!demoOn);
+
   // ════════════════════ derived ════════════════════
   const handlers = demoOn ? demoHandlers : realHandlers;
   const density: Density = demoOn && tw.density === "Compact" ? "compact" : "comfortable";
@@ -601,6 +606,7 @@ export default function Studio() {
     <div className="min-h-screen bg-bg text-text" data-density={density}>
       <AppTopbar maxW="960px" title={t("nav.studio")} pill={voicePill} />
       <main className="mx-auto flex max-w-[960px] flex-col gap-4 px-3.5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4 md:gap-5 md:px-6 md:pb-24 md:pt-7">
+        {!demoOn && <ImportBanner status={sync.status} summary={sync.summary} />}
         {firstRun ? (
           <FirstRun onSetup={() => router.push("/app/onboarding")} />
         ) : (

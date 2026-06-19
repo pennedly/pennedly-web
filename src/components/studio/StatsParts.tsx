@@ -10,7 +10,8 @@ import { type ReactNode } from "react";
 
 import { cn } from "@/lib/cn";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
-import { IcArrowDown, IcArrowUp, IcBubble, IcChart, IcClock, IcEye, IcHeart, IcNib } from "@/components/icons";
+import { IcArrowDown, IcArrowRight, IcArrowUp, IcBubble, IcChart, IcClock, IcEye, IcHeart, IcLock, IcNib, IcSparkle } from "@/components/icons";
+import { Button } from "@/components/ui/button";
 import { fmt } from "@/components/studio/FeedParts";
 import type { Gran, StatBucket, StatPeriodKey } from "@/components/studio/stats-demo";
 
@@ -204,16 +205,40 @@ export function ColumnChart({ cap, headline, headlinePct, series }: { cap: strin
 }
 
 // ─────────────────────────── FollowerChart ──────────────────────────────────
-export function FollowerChart({ cap, points }: { cap: string; points: { day: string; count: number }[] }) {
+// Three honest states (First-Run-SPEC §4), all on the same calm dashed chrome
+// rather than a faked line:
+//   tracking   (≥2 daily points) → the min–max growth line
+//   collecting (<2 points)       → "Growth starts tracking today" — Threads only
+//                                   gives today's count, so there's no history
+//                                   to plot yet; header still shows the real count
+//   locked     (count unavailable, ~<100 followers) → "Follower insights unlock
+//                                   at ~100 followers" + lock glyph; header "—"
+// `locked` is decided by the page (the count is genuinely unavailable from the
+// API); `currentCount` feeds the "You're at N" reassurance when known.
+export function FollowerChart({
+  cap,
+  points,
+  locked = false,
+  currentCount = null,
+}: {
+  cap: string;
+  points: { day: string; count: number }[];
+  locked?: boolean;
+  currentCount?: number | null;
+}) {
   const { t, locale } = useTranslation();
-  const enough = points.length >= 2;
-  const latest = points.length ? points[points.length - 1].count : null;
+  const enough = !locked && points.length >= 2;
+  const latest = locked ? null : points.length ? points[points.length - 1].count : currentCount;
   const gained = enough ? points[points.length - 1].count - points[0].count : null;
   return (
     <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
       <div className="flex items-baseline justify-between gap-3">
         <span className="text-caption font-semibold uppercase tracking-[0.06em] text-text-subtle">{cap}</span>
-        {latest !== null && (
+        {/* Header count is real when known; the locked state shows "—" because
+            the follower count is genuinely unavailable below the threshold. */}
+        {locked ? (
+          <b className="text-h2 font-semibold leading-none text-text-subtle">—</b>
+        ) : latest !== null ? (
           <span className="flex items-baseline gap-2">
             <b className="text-h2 font-semibold leading-none tabular-nums text-text">{latest.toLocaleString(locale)}</b>
             {gained !== null && gained !== 0 && (
@@ -223,18 +248,38 @@ export function FollowerChart({ cap, points }: { cap: string; points: { day: str
               </span>
             )}
           </span>
-        )}
+        ) : null}
       </div>
       {enough ? (
         <FollowerLine series={points.map((p) => p.count)} />
       ) : (
-        <div className="mt-4 flex flex-col items-center gap-1.5 rounded-md border border-dashed border-border bg-surface-2 px-4 py-9 text-center">
-          <IcChart size={20} className="text-text-subtle" />
-          <span className="text-small font-medium text-text">{t("stats.followers_collecting")}</span>
-          <span className="max-w-[42ch] text-caption text-text-subtle">{t("stats.followers_collecting_sub")}</span>
-        </div>
+        <FollowerCollect
+          locked={locked}
+          title={locked ? t("backfill.followers_locked_title") : t("backfill.followers_collect_title")}
+          sub={
+            locked
+              ? currentCount !== null
+                ? t("backfill.followers_locked_sub").replace("{count}", currentCount.toLocaleString(locale))
+                : t("backfill.followers_locked_sub_nocount")
+              : t("backfill.followers_collect_sub")
+          }
+        />
       )}
     </section>
+  );
+}
+
+// The calm dashed "collecting / locked" tile (.fchart-collect). A lock glyph
+// distinguishes the locked variant; both read as calm, not as an error.
+function FollowerCollect({ locked, title, sub }: { locked: boolean; title: string; sub: string }) {
+  return (
+    <div className="mt-4 flex flex-col items-center gap-[9px] rounded-md border border-dashed border-border bg-surface-2/[0.45] px-5 py-[26px] text-center">
+      <span className="grid h-[42px] w-[42px] place-items-center rounded-md border border-border bg-surface-2 text-text-subtle">
+        {locked ? <IcLock size={20} /> : <IcChart size={20} />}
+      </span>
+      <span className="text-small font-medium text-text">{title}</span>
+      <span className="max-w-[44ch] text-caption leading-[1.5] text-text-subtle [text-wrap:pretty]">{sub}</span>
+    </div>
   );
 }
 
@@ -269,15 +314,40 @@ const TIER_META: { key: "viral" | "good" | "average" | "weak"; nameKey: MessageK
   { key: "weak", nameKey: "stats.tier_flop", subKey: "stats.tier_flop_sub", color: "color-mix(in srgb, var(--color-text) 15%, var(--color-surface))" },
 ];
 
-export function DistributionBars({ cap, tiers }: { cap: string; tiers: { viral: number; good: number; average: number; weak: number } }) {
+// `calculating` (First-Run-SPEC §4.3): on a fresh account there aren't enough
+// posts to form a baseline, so the tier scale (dot + name + sub) stays legible
+// but the count/percent and the proportion bar are replaced by a calm shimmer
+// and the header carries a "Calculating…" pill, rather than a misleading
+// all-zeros chart. Resolves to the real counts once a baseline exists.
+export function DistributionBars({
+  cap,
+  tiers,
+  calculating = false,
+}: {
+  cap: string;
+  tiers: { viral: number; good: number; average: number; weak: number };
+  calculating?: boolean;
+}) {
   const { t } = useTranslation();
   const total = tiers.viral + tiers.good + tiers.average + tiers.weak;
   const maxCount = Math.max(1, tiers.viral, tiers.good, tiers.average, tiers.weak);
   return (
     <section className="rounded-lg border border-border bg-surface px-5 pb-4 pt-[18px] shadow-sm">
-      <div className="mb-[18px]">
-        <div className="text-h3 font-semibold tracking-[-0.006em]">{t("stats.spread_title")}</div>
-        <div className="mt-[3px] text-caption text-text-subtle">{cap}</div>
+      <div className="mb-[18px] flex items-start justify-between gap-3">
+        <div>
+          <div className="text-h3 font-semibold tracking-[-0.006em]">{t("stats.spread_title")}</div>
+          <div className="mt-[3px] text-caption text-text-subtle">{cap}</div>
+        </div>
+        {calculating && (
+          <span className="inline-flex shrink-0 items-center gap-[7px] whitespace-nowrap text-caption font-semibold text-text-subtle">
+            {t("backfill.calculating")}
+            <span className="inline-flex gap-[3px]" aria-hidden>
+              <i className="h-1 w-1 rounded-full bg-current [animation:dot-pulse_1.2s_cubic-bezier(0.2,0.7,0.3,1)_infinite]" />
+              <i className="h-1 w-1 rounded-full bg-current [animation:dot-pulse_1.2s_cubic-bezier(0.2,0.7,0.3,1)_infinite] [animation-delay:0.18s]" />
+              <i className="h-1 w-1 rounded-full bg-current [animation:dot-pulse_1.2s_cubic-bezier(0.2,0.7,0.3,1)_infinite] [animation-delay:0.36s]" />
+            </span>
+          </span>
+        )}
       </div>
       <div className="flex flex-col gap-3.5">
         {TIER_META.map((tm) => {
@@ -291,19 +361,58 @@ export function DistributionBars({ cap, tiers }: { cap: string; tiers: { viral: 
                   {t(tm.nameKey)}
                   <span className="truncate text-caption text-text-subtle">· {t(tm.subKey)}</span>
                 </span>
-                <span className="shrink-0 text-small font-semibold tabular-nums">
-                  {n} {t("stats.posts_word")}
-                  <span className="ml-1.5 font-normal text-text-subtle">{pct}%</span>
-                </span>
+                {calculating ? (
+                  <span className="skel h-[13px] w-[46px] shrink-0 rounded" aria-hidden />
+                ) : (
+                  <span className="shrink-0 text-small font-semibold tabular-nums">
+                    {n} {t("stats.posts_word")}
+                    <span className="ml-1.5 font-normal text-text-subtle">{pct}%</span>
+                  </span>
+                )}
               </div>
-              <div className="h-2 overflow-hidden rounded-full border border-border bg-surface-2">
-                <div className="h-full rounded-full transition-[width]" style={{ width: `${(n / maxCount) * 100}%`, backgroundColor: tm.color }} />
+              <div className={cn("h-2 overflow-hidden rounded-full border bg-surface-2", calculating ? "border-dashed border-border" : "border-border")}>
+                {calculating ? (
+                  <span className="skel block h-full w-full rounded-full" aria-hidden />
+                ) : (
+                  <div className="h-full rounded-full transition-[width]" style={{ width: `${(n / maxCount) * 100}%`, backgroundColor: tm.color }} />
+                )}
               </div>
             </div>
           );
         })}
       </div>
     </section>
+  );
+}
+
+// ─────────────────────────────── StatsNudge ─────────────────────────────────
+// The calm replacement for the old "come back in two weeks" wall
+// (stats-firstrun.css .stats-nudge). On a freshly-connected account it sits
+// below the four real summary cards. Two messages:
+//   importing → "Your history is importing" — the numbers are real and growing
+//   ready     → "You're all set up" + a first-step prompt + "Open the Studio"
+// Never an error tint; the frame is always "the platform is working".
+export function StatsNudge({ importing, onOpenStudio }: { importing: boolean; onOpenStudio?: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex items-start gap-3.5 rounded-lg border border-border bg-surface-2 px-[18px] py-4">
+      <span className="grid h-[38px] w-[38px] shrink-0 place-items-center rounded-md border border-border bg-surface text-accent">
+        {importing ? <IcChart size={18} /> : <IcSparkle size={18} />}
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="text-small font-semibold text-text">{t(importing ? "backfill.nudge_importing_title" : "backfill.nudge_ready_title")}</div>
+        <div className="mt-[3px] max-w-[64ch] text-caption leading-[1.5] text-text-muted [text-wrap:pretty]">
+          {t(importing ? "backfill.nudge_importing_sub" : "backfill.nudge_ready_sub")}
+        </div>
+        {!importing && onOpenStudio && (
+          <div className="mt-[11px]">
+            <Button size="sm" variant="secondary" icon={<IcArrowRight size={14} />} onClick={onOpenStudio}>
+              {t("backfill.nudge_cta")}
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 

@@ -30,6 +30,28 @@ export type Me = {
   avatar_url: string | null;
 };
 
+// First-connect backfill status. On connect the backend pulls the account's
+// posts, per-post metrics and comments from Threads in the background (seconds
+// to a few minutes); these fields let the UI show an honest "importing your
+// history" story instead of an empty/broken-looking screen.
+//   'importing' — backfill running (show the banner + live counts)
+//   'partial'   — most history landed, a tail still trickling in (quiet note)
+//   'complete'  — done (banner hidden)
+//   'failed'    — backfill errored (still non-blocking; banner hidden)
+//   null        — no backfill applies (legacy / already-synced account)
+export type SyncStatus = "importing" | "complete" | "partial" | "failed" | null;
+
+// Live counts streamed by the backfill job. Any field may be absent early in
+// the import; `errors` lists non-fatal problems (kept for diagnostics).
+export type SyncSummary = {
+  posts?: number;
+  history_posts?: number;
+  followers_snapshot?: number;
+  new_comments?: number;
+  new_mentions?: number;
+  errors?: string[];
+};
+
 export type ConnectedAccount = {
   id: number;
   tenant_id: number;
@@ -39,6 +61,11 @@ export type ConnectedAccount = {
   profile_picture_url: string | null;
   connected_at: string;
   disconnected_at: string | null;
+  // First-connect backfill (see SyncStatus / SyncSummary above). ISO strings or null.
+  sync_status: SyncStatus;
+  sync_summary: SyncSummary | null;
+  sync_started_at: string | null;
+  sync_completed_at: string | null;
 };
 
 export type AccountsList = {

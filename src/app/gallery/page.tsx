@@ -3,7 +3,10 @@ import Link from "next/link";
 // Index of dev-only state galleries. Add a link here when you add a new
 // `/gallery/<screen>` page. Each renders the real components in every state for
 // self-verification against the design `*-SPEC.html` mockups.
-const GALLERIES = [{ href: "/gallery/media", label: "Media (feed images · reply image)" }];
+const GALLERIES = [
+  { href: "/gallery/media", label: "Media (feed images · reply image)" },
+  { href: "/gallery/firstrun", label: "First-run & import (banner · Stats nudge · honest empty-states)" },
+];
 
 export default function GalleryIndex() {
   return (

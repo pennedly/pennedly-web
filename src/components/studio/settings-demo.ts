@@ -18,8 +18,11 @@ export const DEMO_ME: Me = {
   avatar_url: null,
 };
 
+// All three are settled, fully-imported accounts (sync_status 'complete') — the
+// import banner never shows for them in the Settings/switcher review.
+const SYNCED = { sync_status: "complete" as const, sync_summary: null, sync_started_at: null, sync_completed_at: null };
 export const DEMO_ACCOUNTS: ConnectedAccount[] = [
-  { id: 1, tenant_id: 1, threads_user_id: "t1", username: "mara.lin", display_name: "Mara Lin", profile_picture_url: null, connected_at: "2026-01-04T00:00:00Z", disconnected_at: null },
-  { id: 2, tenant_id: 1, threads_user_id: "t2", username: "field.notes", display_name: "Field Notes", profile_picture_url: null, connected_at: "2026-02-10T00:00:00Z", disconnected_at: null },
-  { id: 3, tenant_id: 1, threads_user_id: "t3", username: "studio.mara", display_name: "Studio Mara", profile_picture_url: null, connected_at: "2026-03-12T00:00:00Z", disconnected_at: null },
+  { id: 1, tenant_id: 1, threads_user_id: "t1", username: "mara.lin", display_name: "Mara Lin", profile_picture_url: null, connected_at: "2026-01-04T00:00:00Z", disconnected_at: null, ...SYNCED },
+  { id: 2, tenant_id: 1, threads_user_id: "t2", username: "field.notes", display_name: "Field Notes", profile_picture_url: null, connected_at: "2026-02-10T00:00:00Z", disconnected_at: null, ...SYNCED },
+  { id: 3, tenant_id: 1, threads_user_id: "t3", username: "studio.mara", display_name: "Studio Mara", profile_picture_url: null, connected_at: "2026-03-12T00:00:00Z", disconnected_at: null, ...SYNCED },
 ];
