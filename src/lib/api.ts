@@ -52,6 +52,7 @@ import type {
   LintResult,
   Me,
   MentionsList,
+  OverviewResponse,
   PatternStudyResult,
   LatestSelfStudy,
   SelfStudyResult,
@@ -276,6 +277,13 @@ export async function fetchMe(): Promise<Me> {
 
 export async function fetchMyAccounts(): Promise<AccountsList> {
   return fetchApi<AccountsList>("/api/me/accounts");
+}
+
+// Portfolio rollup for the Overview / "All accounts" screen: per-account
+// headline numbers + sync state + pre-computed totals across the user's synced
+// accounts. Owner-only, all of the user's accounts in one request.
+export async function fetchOverview(): Promise<OverviewResponse> {
+  return fetchApi<OverviewResponse>("/api/me/overview");
 }
 
 // Disconnect a connected Threads account: drops the stored token + marks it

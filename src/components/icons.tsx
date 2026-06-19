@@ -83,6 +83,7 @@ export const IcExternal = (p: IconProps) => <Svg {...p}><path d="M14 5h5v5M19 5l
 export const IcUndo = (p: IconProps) => <Svg {...p}><path d="M9 14 4 9l5-5" /><path d="M4 9h11a5 5 0 0 1 0 10h-4" /></Svg>;
 export const IcReply = (p: IconProps) => <Svg {...p}><path d="M9 7 4 12l5 5M4 12h9a6 6 0 0 1 6 6v1" /></Svg>;
 export const IcChevDown = (p: IconProps) => <Svg {...p}><path d="M5 9l7 7 7-7" /></Svg>;
+export const IcChevRight = (p: IconProps) => <Svg {...p}><path d="M9 6l6 6-6 6" /></Svg>;
 export const IcMore = (p: IconProps) => <Svg {...p}><circle cx="6" cy="12" r="1.3" fill="currentColor" stroke="none" /><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none" /><circle cx="18" cy="12" r="1.3" fill="currentColor" stroke="none" /></Svg>;
 export const IcSun = (p: IconProps) => <Svg {...p}><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M2 12h2M20 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4" /></Svg>;
 export const IcMoon = (p: IconProps) => <Svg {...p}><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z" /></Svg>;
@@ -93,6 +94,8 @@ export const IcRepost = (p: IconProps) => <Svg {...p}><path d="M5 8h10l-2.5-2.5M
 export const IcEye = (p: IconProps) => <Svg {...p}><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" /><circle cx="12" cy="12" r="2.6" /></Svg>;
 export const IcFeed = (p: IconProps) => <Svg {...p}><path d="M3 14l4-5 4 4 3-6 3 5h4" /></Svg>;
 export const IcChart = (p: IconProps) => <Svg {...p}><path d="M4 19V5M4 19h16" /><path d="M8 16l3.5-4 3 2.5L19 8" /></Svg>;
+// Overview / "All accounts" rollup — a 2×2 tile grid (the portfolio of accounts).
+export const IcOverview = (p: IconProps) => <Svg {...p}><rect x="4" y="4" width="7" height="7" rx="1.5" /><rect x="13" y="4" width="7" height="7" rx="1.5" /><rect x="4" y="13" width="7" height="7" rx="1.5" /><rect x="13" y="13" width="7" height="7" rx="1.5" /></Svg>;
 export const IcTrash = (p: IconProps) => <Svg {...p}><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13" /></Svg>;
 export const IcImage = (p: IconProps) => <Svg {...p}><rect x="3.5" y="5" width="17" height="14" rx="2.5" /><circle cx="9" cy="10" r="1.5" /><path d="M5 17.5l4.5-4.5 3 2.8 3.2-2.8L19 16.5" /></Svg>;
 export const IcThread = (p: IconProps) => <Svg {...p}><circle cx="12" cy="5" r="2.3" /><circle cx="12" cy="12" r="2.3" /><circle cx="12" cy="19" r="2.3" /><path d="M12 7.4v2.4" /><path d="M12 14v2.4" /></Svg>;

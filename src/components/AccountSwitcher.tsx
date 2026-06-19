@@ -18,7 +18,7 @@ import { useTranslation } from "@/lib/i18n";
 import { useConnectedAccounts } from "@/components/useConnectedAccounts";
 import { ConnectThreadsButton } from "@/components/ConnectThreadsButton";
 import { Avatar, nameOf } from "@/components/ui/avatar";
-import { IcCheck, IcChevDown, IcLogout, IcSettings } from "@/components/icons";
+import { IcCheck, IcChevDown, IcChevRight, IcLogout, IcOverview, IcSettings } from "@/components/icons";
 import type { Me } from "@/lib/types";
 
 export function AccountSwitcher({ me, onLogout }: { me?: Me | null; onLogout?: () => void }) {
@@ -53,6 +53,29 @@ export function AccountSwitcher({ me, onLogout }: { me?: Me | null; onLogout?: (
         <>
           <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} aria-hidden />
           <div className="absolute bottom-full left-0 right-0 z-40 mb-2 rounded-lg border border-border bg-surface p-1.5 shadow-lg">
+            {/* "All accounts" → the multi-account Overview rollup. Pinned on top
+                of the switcher (the screen's only entry point); shows the
+                connected count. Only meaningful with ≥1 account (always true
+                here — the 0-account case returns the connect CTA above). */}
+            <Link
+              href="/app/overview"
+              onClick={() => setOpen(false)}
+              className="mb-1.5 flex items-center gap-2.5 rounded-md border border-accent/20 bg-accent/[0.08] p-2 transition-colors hover:bg-accent/[0.12]"
+            >
+              <span className="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-md border border-accent/25 bg-accent/[0.14] text-accent">
+                <IcOverview size={17} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-small font-semibold leading-tight text-text">
+                  {t("overview.switcher.all_accounts")}
+                </span>
+                <span className="block truncate text-caption text-text-subtle">
+                  {t("overview.switcher.connected").replace("{n}", String(accounts.length))}
+                </span>
+              </span>
+              <IcChevRight size={15} className="shrink-0 text-text-subtle" />
+            </Link>
+
             {/* Switch account */}
             <div className="px-2.5 pb-1 pt-1.5 text-caption font-semibold uppercase tracking-wide text-text-subtle">
               {t("nav.switch_account")}

@@ -6,6 +6,7 @@ import Link from "next/link";
 const GALLERIES = [
   { href: "/gallery/media", label: "Media (feed images · reply image)" },
   { href: "/gallery/firstrun", label: "First-run & import (banner · Stats nudge · honest empty-states)" },
+  { href: "/gallery/overview", label: "Overview (portfolio totals · account cards · sync states · empty/error)" },
 ];
 
 export default function GalleryIndex() {

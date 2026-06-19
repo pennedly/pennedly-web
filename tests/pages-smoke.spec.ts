@@ -27,6 +27,7 @@ const APP_PAGES = [
   "/app/settings",
   "/app/role-book",
   "/app/audits",
+  "/app/overview",
 ];
 
 for (const path of APP_PAGES) {

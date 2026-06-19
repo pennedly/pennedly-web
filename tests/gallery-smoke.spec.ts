@@ -25,6 +25,7 @@ const RENDER_PAGES = [
   "/data-deletion",
   "/gallery",
   "/gallery/media",
+  "/gallery/overview",
 ];
 
 for (const path of RENDER_PAGES) {

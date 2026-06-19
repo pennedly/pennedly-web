@@ -1288,6 +1288,51 @@ export const en = {
   "dashboard.draft.more_actions": "More actions",
   "dashboard.draft.toast_deleted": "draft deleted",
 
+  // ── Overview (/app/overview — multi-account portfolio rollup) ──
+  // The "All accounts" rollup: a combined top strip of portfolio totals over a
+  // grid of per-account cards. {n} is substituted at render (account count /
+  // importing count) — tabular. Copy from Overview-SPEC.html.
+  "overview.title": "Overview",
+  "overview.subtitle": "All your accounts at a glance — totals across the portfolio, then each account on its own card.",
+  "overview.pill.accounts": "{n} accounts",
+  "overview.pill.updated": "updated daily",
+  // account switcher "All accounts" pin (entry point)
+  "overview.switcher.all_accounts": "All accounts",
+  "overview.switcher.connected": "{n} connected · Overview",
+  // combined top strip
+  "overview.strip.across": "Across {n} accounts",
+  "overview.strip.importing": "+{n} still importing",
+  "overview.total.followers": "Followers",
+  "overview.total.followers_sub": "across the portfolio",
+  "overview.total.views": "7-day views",
+  "overview.total.views_sub": "last 7 days",
+  "overview.total.posts": "Posts this week",
+  "overview.total.posts_sub": "last 7 days",
+  "overview.total.replies": "Replies to answer",
+  "overview.total.replies_sub": "waiting across accounts",
+  // per-account card metrics
+  "overview.metric.followers": "Followers",
+  "overview.metric.views": "7-day views",
+  "overview.metric.posts": "Posts",
+  "overview.metric.posts_unit": "this week",
+  "overview.metric.replies": "Replies",
+  "overview.account_fallback": "Account",
+  // card sync status + quick-links
+  "overview.sync.updated_prefix": "Updated",
+  "overview.sync.never": "Not synced yet",
+  "overview.sync.failed": "Sync failed",
+  "overview.quick.stats": "Stats",
+  "overview.quick.replies": "Replies",
+  "overview.action.retry": "Retry",
+  // single-account nudge
+  "overview.nudge.title": "Running more than one account?",
+  "overview.nudge.sub": "Connect another to see them side by side here.",
+  // empty / error edges (the account list, not a single account's sync)
+  "overview.empty.title": "No accounts connected yet",
+  "overview.empty.sub": "Connect a Threads account to start drafting — your portfolio shows up here.",
+  "overview.error.title": "Couldn't load your accounts",
+  "overview.error.sub": "Something went wrong reaching Threads. Try again in a moment.",
+
   // ── Sidebar bottom + Settings ─────────────────────────────────
   "nav.settings": "Settings",
   "nav.switch_account": "Switch account",

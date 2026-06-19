@@ -570,6 +570,52 @@ export type FeedResponse = {
 export type FollowerPoint = { day: string; count: number };
 export type FollowerHistory = { points: FollowerPoint[]; latest: number | null };
 
+// ── Overview (multi-account portfolio rollup) ────────────────────────
+// Mirrors api/me.py OverviewResponse. One request → per-account headline
+// numbers + sync state (the cards) + pre-computed totals across SYNCED accounts
+// (the top strip). `sync_status` here is collapsed to the card's three states:
+//   'synced'    — show metrics + "Updated N ago"
+//   'importing' — Phase-0 backfill running; show the ImportBanner (no metrics)
+//   'error'     — backfill failed; show a card-local Retry (out of the totals)
+export type OverviewSyncStatus = "synced" | "importing" | "error";
+
+export type OverviewAccount = {
+  id: number;
+  tenant_id: number;
+  name: string | null;
+  handle: string | null;
+  avatar: string | null;
+  // null until the metrics worker snapshots a count / a 2nd follower snapshot
+  // exists to diff against.
+  followers: number | null;
+  followers_delta: number | null;
+  views_7d: number;
+  posts_week: number;
+  replies_to_answer: number;
+  sync_status: OverviewSyncStatus;
+  // ISO of the last metrics pull, or null — drives "Updated N ago".
+  synced_at: string | null;
+  // Import progress, for an importing card's ImportBanner (same shape as
+  // ConnectedAccount.sync_summary).
+  sync_summary: SyncSummary | null;
+  sync_started_at: string | null;
+};
+
+export type OverviewTotals = {
+  followers: number;
+  followers_delta: number;
+  views_7d: number;
+  posts_week: number;
+  replies_to_answer: number;
+  accounts_count: number;
+  importing_count: number;
+};
+
+export type OverviewResponse = {
+  totals: OverviewTotals;
+  accounts: OverviewAccount[];
+};
+
 // Public Voice Test (landing demo): paste posts → sample replies in your voice.
 export type VoiceSample = { comment: string; reply: string };
 export type VoiceTestResponse = { samples: VoiceSample[] };
