@@ -203,6 +203,10 @@ export default function Studio() {
     }
     if (accountId === null) return; // still resolving — keep the skeleton up
     setDraftsLoading(true);
+    // Clear the voice-state pill while switching accounts so it shows a neutral
+    // placeholder (voiceReady === null renders no pill) instead of the previous
+    // account's "Voice active"/"not set" until this account's status resolves.
+    setVoiceReady(null);
     (async () => {
       try {
         const ob = await fetchOnboardingStatus(accountId);

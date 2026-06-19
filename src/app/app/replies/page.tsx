@@ -419,16 +419,23 @@ export default function RepliesPage() {
 
   function realSkip(c: ReplyComment) {
     captureEvent("ui.reply_skip_clicked", { comment_id: c.id });
-    // optimistic: drop from view AND tick the rail's "to answer" badge down
-    // (skip moves the comment out of unanswered). The success path doesn't
-    // reload, so without this the rail chip would stay stale until the next
-    // action; undo restores accurate counts via reload().
+    // optimistic: drop from view, tick the rail's "to answer" badge down AND
+    // decrement the account-wide "new" count (skip moves the comment out of
+    // unanswered). The success path doesn't reload, so without this both the
+    // rail chip and the top "N need a reply" pill (driven by counts.new) would
+    // stay stale until the next action; undo/failure restore accurate counts
+    // via reload(). Only a still-"new" comment frees a slot in counts.new.
+    const source = commentsRef.current.find((x) => x.id === c.id);
+    const wasNew = source ? specStatus(source) === "new" : c.status === "new";
     setComments((p) => p.map((x) => (x.id === c.id ? { ...x, status: "skipped", draft_is_skip: true } : x)));
     setRailPosts((prev) =>
       prev.map((p) =>
         String(p.post_id) === c.postId ? { ...p, unanswered: Math.max(0, p.unanswered - 1) } : p,
       ),
     );
+    if (wasNew) {
+      setCounts((prev) => ({ ...prev, new: Math.max(0, (prev.new ?? 0) - 1) }));
+    }
     skipComment(c.id).catch(() => reload());
     toast(t("replies.toast_dismissed"), "success", {
       duration: UNDO_MS,
