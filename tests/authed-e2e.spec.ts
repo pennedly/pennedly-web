@@ -85,6 +85,10 @@ test.beforeEach(async ({ page, context }) => {
   await context.route(/\/api\/me\/accounts$/, ok({ accounts: [ACCOUNT] }));
   await context.route(/\/api\/accounts\/\d+\/onboarding$/, ok(ONBOARDING));
   await context.route(/\/api\/accounts\/\d+\/drafts(\?|$)/, ok({ drafts: [READY, PENDING], count: 2 }));
+  // Replies screen: the post rail (one row per post-with-comments) + a post's
+  // comment thread. Account-wide status_counts on both.
+  await context.route(/\/api\/accounts\/\d+\/comment-posts(\?|$)/, ok({ posts: [], count: 0, status_counts: {} }));
+  await context.route(/\/api\/accounts\/\d+\/comments(\?|$)/, ok({ comments: [], count: 0, status_counts: {} }));
   await context.route(/\/api\/accounts\/\d+\/role-book$/, ok({
     role_book_id: 1, name: "Voice", sections: null,
     prompt_text: "voice", created_by: "user", parent_id: null,

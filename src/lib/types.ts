@@ -411,6 +411,25 @@ export type CommentsList = {
   status_counts: Record<string, number>;
 };
 
+// One row per post that HAS comments — drives the Replies post rail. Paginated
+// by POST (newest post first), so the rail and the per-post comment-count
+// badges stay correct regardless of how many comments each post has.
+export type CommentPost = {
+  post_id: number;
+  post_text: string | null;
+  post_published_at: string | null;
+  post_threads_url: string | null;
+  total: number; // all comments under this post
+  unanswered: number; // comments not yet replied/skipped
+};
+
+export type CommentPostsList = {
+  posts: CommentPost[];
+  count: number;
+  // Account-wide totals per comment status (same shape as CommentsList).
+  status_counts: Record<string, number>;
+};
+
 export type GeneratedReply = {
   draft_id: number;
   text: string;

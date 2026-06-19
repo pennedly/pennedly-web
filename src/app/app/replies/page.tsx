@@ -14,6 +14,7 @@ import {
   ApiError,
   approveDraft,
   clearTokens,
+  fetchCommentPosts,
   fetchComments,
   fetchMe,
   fetchMyAccounts,
@@ -54,7 +55,7 @@ import {
   type ReplyPost,
   type ReplyStatus,
 } from "@/components/studio/replies-demo";
-import type { CommentSummary } from "@/lib/types";
+import type { CommentPost, CommentSummary } from "@/lib/types";
 
 const IS_DEV = process.env.NODE_ENV === "development";
 const UNDO_MS = 5000;
@@ -89,10 +90,14 @@ function relativeTime(iso: string | null, locale: string): string {
 
 const FILTER_KEYS: ReplyFilter[] = ["all", "needs", "drafts", "replied", "skipped"];
 
-// How many comments we pull per page. The Replies screen loads more as the
-// post rail scrolls toward its right end (infinite scroll), so the post list
-// grows toward all of the account's posts instead of just the newest few.
-const PAGE_SIZE = 50;
+// How many POSTS the rail pulls per page. The rail loads more as it scrolls
+// toward its right end (infinite scroll), so the post list grows toward all of
+// the account's posts-with-comments instead of just the newest few. Paginating
+// by post (not by a flat comment list) keeps the rail + its per-post badges
+// correct no matter how many comments each post has.
+const RAIL_PAGE = 30;
+// One post's thread is small; 100 comments is more than enough per post.
+const POST_COMMENTS_LIMIT = 100;
 
 export default function RepliesPage() {
   const router = useRouter();
@@ -103,6 +108,9 @@ export default function RepliesPage() {
   const { checking } = useTesterGuard(allow);
   const accountId = useSelectedAccountId();
 
+  // The rail (one chip per post-with-comments, paginated by post). `comments`
+  // now holds ONLY the selected post's thread.
+  const [railPosts, setRailPosts] = useState<CommentPost[]>([]);
   const [comments, setComments] = useState<CommentSummary[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [edits, setEdits] = useState<Record<number, string>>({});
@@ -116,11 +124,16 @@ export default function RepliesPage() {
   const [toasts, setToasts] = useState<ToastT[]>([]);
   const [youInitials, setYouInitials] = useState("Y");
   const [youAvatar, setYouAvatar] = useState<string | null>(null);
+  // hasMore / loadingMore drive RAIL pagination (the rail loads more posts as
+  // it scrolls right).
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
-  // Latest-comments ref so loadMore() reads the current offset without being
+  // Latest-railPosts ref so loadMore() reads the current offset without being
   // re-created on every change; a synchronous in-flight guard dedupes the
   // rapid scroll events that fire as the rail nears its right end.
+  const railPostsRef = useRef<CommentPost[]>([]);
+  railPostsRef.current = railPosts;
+  // Latest selected post's comments (for the optimistic-skip refresh path).
   const commentsRef = useRef<CommentSummary[]>([]);
   commentsRef.current = comments;
   const loadingMoreRef = useRef(false);
@@ -157,7 +170,7 @@ export default function RepliesPage() {
     }).catch(() => {});
   }, [accountId]);
 
-  // real comments load
+  // real load — the post rail (one row per post-with-comments, by post).
   useEffect(() => {
     if (demoParam) return;
     if (accountId === null) return;
@@ -165,10 +178,10 @@ export default function RepliesPage() {
     loadingMoreRef.current = false;
     (async () => {
       try {
-        const list = await fetchComments(accountId, { limit: PAGE_SIZE });
-        setComments(list.comments);
+        const list = await fetchCommentPosts(accountId, { limit: RAIL_PAGE });
+        setRailPosts(list.posts);
         setCounts(list.status_counts ?? {});
-        setHasMore(list.comments.length >= PAGE_SIZE);
+        setHasMore(list.posts.length >= RAIL_PAGE);
       } catch (e) {
         if (e instanceof ApiError && e.status === 401) {
           clearTokens();
@@ -182,6 +195,26 @@ export default function RepliesPage() {
     })();
   }, [accountId, router, demoParam]);
 
+  // real load — the selected post's thread. Refetches whenever the rail
+  // selection changes; `comments` then holds only that post's comments.
+  useEffect(() => {
+    if (demoParam) return;
+    if (accountId === null || selectedPost === null) return;
+    const postId = Number(selectedPost);
+    let alive = true;
+    (async () => {
+      try {
+        const list = await fetchComments(accountId, { postId, limit: POST_COMMENTS_LIMIT });
+        if (alive) setComments(list.comments);
+      } catch {
+        /* keep current on transient failure */
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [accountId, selectedPost, demoParam]);
+
   // demo dark
   useEffect(() => {
     if (!demoOn) return;
@@ -190,35 +223,47 @@ export default function RepliesPage() {
 
   async function reload() {
     if (accountId === null) return;
-    try {
-      // Re-fetch the window the user has already scrolled open (capped at the
-      // API max of 100) so an action's refresh doesn't collapse the list back
-      // to the first page.
-      const limit = Math.min(100, Math.max(PAGE_SIZE, commentsRef.current.length));
-      const list = await fetchComments(accountId, { limit });
-      setComments(list.comments);
-      setCounts(list.status_counts ?? {});
-      setHasMore(list.comments.length >= limit);
-    } catch {
-      /* keep current on transient failure */
-    }
+    // Re-fetch the rail page(s) the user has already scrolled open so an
+    // action's refresh updates the badges + status_counts WITHOUT collapsing
+    // the rail back to the first page, plus the selected post's thread.
+    const railLimit = Math.max(RAIL_PAGE, railPostsRef.current.length);
+    const pid = selectedPost !== null ? Number(selectedPost) : null;
+    await Promise.all([
+      fetchCommentPosts(accountId, { limit: railLimit })
+        .then((list) => {
+          setRailPosts(list.posts);
+          setCounts(list.status_counts ?? {});
+          setHasMore(list.posts.length >= railLimit);
+        })
+        .catch(() => {
+          /* keep current on transient failure */
+        }),
+      pid === null
+        ? Promise.resolve()
+        : fetchComments(accountId, { postId: pid, limit: POST_COMMENTS_LIMIT })
+            .then((list) => setComments(list.comments))
+            .catch(() => {
+              /* keep current on transient failure */
+            }),
+    ]);
   }
 
-  // Infinite scroll: append the next page as the post rail nears its right end.
+  // Infinite scroll: append the next page of POSTS as the rail nears its right
+  // end, de-duped by post_id.
   const loadMore = useCallback(async () => {
     if (loadingMoreRef.current || accountId === null) return;
     loadingMoreRef.current = true;
     setLoadingMore(true);
     try {
-      const list = await fetchComments(accountId, {
-        limit: PAGE_SIZE,
-        offset: commentsRef.current.length,
+      const list = await fetchCommentPosts(accountId, {
+        limit: RAIL_PAGE,
+        offset: railPostsRef.current.length,
       });
-      setComments((prev) => {
-        const seen = new Set(prev.map((c) => c.id));
-        return [...prev, ...list.comments.filter((c) => !seen.has(c.id))];
+      setRailPosts((prev) => {
+        const seen = new Set(prev.map((p) => p.post_id));
+        return [...prev, ...list.posts.filter((p) => !seen.has(p.post_id))];
       });
-      setHasMore(list.comments.length >= PAGE_SIZE);
+      setHasMore(list.posts.length >= RAIL_PAGE);
       if (list.status_counts) setCounts(list.status_counts);
     } catch {
       /* keep current on transient failure */
@@ -235,13 +280,18 @@ export default function RepliesPage() {
       for (const c of demoComments) (map[c.postId] ??= []).push(c);
       return { posts: DEMO_POSTS, byPost: map };
     }
-    const pmap = new Map<string, ReplyPost>();
+    // Real mode: the rail comes from railPosts (paginated by post, newest
+    // first — already ordered by the backend); byPost holds ONLY the selected
+    // post's loaded thread (the same CommentSummary→ReplyComment mapping).
+    const ordered: ReplyPost[] = railPosts.map((p) => ({
+      id: String(p.post_id),
+      text: p.post_text ?? "",
+      time: relativeTime(p.post_published_at, locale),
+      threadsUrl: p.post_threads_url ?? "#",
+    }));
     const map: Record<string, ReplyComment[]> = {};
     for (const c of comments) {
       const pid = String(c.post_id);
-      if (!pmap.has(pid)) {
-        pmap.set(pid, { id: pid, text: c.post_text ?? "", time: relativeTime(c.post_published_at, locale), threadsUrl: c.post_threads_url ?? "#" });
-      }
       const name = c.author_username ?? "Someone";
       (map[pid] ??= []).push({
         id: c.id,
@@ -260,13 +310,8 @@ export default function RepliesPage() {
         media: c.draft_media ?? [],
       });
     }
-    const ordered = [...pmap.values()].sort((a, b) => {
-      const ca = comments.find((x) => String(x.post_id) === a.id)?.post_published_at;
-      const cb = comments.find((x) => String(x.post_id) === b.id)?.post_published_at;
-      return (cb ? Date.parse(cb) : 0) - (ca ? Date.parse(ca) : 0);
-    });
     return { posts: ordered, byPost: map };
-  }, [demoOn, demoComments, comments, edits, locale]);
+  }, [demoOn, demoComments, railPosts, comments, edits, locale]);
 
   // keep a valid selected post
   useEffect(() => {
@@ -280,10 +325,19 @@ export default function RepliesPage() {
   const activePost = posts.find((p) => p.id === selectedPost) ?? posts[0] ?? null;
   const postComments = activePost ? byPost[activePost.id] ?? [] : [];
 
+  // Real mode: per-post badges come straight from railPosts (one row per post,
+  // accurate regardless of how many comments are loaded). Demo mode: derive
+  // from the in-memory byPost map.
   const countsByPost: Record<string, { total: number; unanswered: number }> = {};
-  for (const p of posts) {
-    const cs = byPost[p.id] ?? [];
-    countsByPost[p.id] = { total: cs.length, unanswered: cs.filter((c) => c.status !== "replied" && c.status !== "skipped").length };
+  if (demoOn) {
+    for (const p of posts) {
+      const cs = byPost[p.id] ?? [];
+      countsByPost[p.id] = { total: cs.length, unanswered: cs.filter((c) => c.status !== "replied" && c.status !== "skipped").length };
+    }
+  } else {
+    for (const p of railPosts) {
+      countsByPost[String(p.post_id)] = { total: p.total, unanswered: p.unanswered };
+    }
   }
 
   const filterCounts = Object.fromEntries(FILTER_KEYS.map((f) => [f, postComments.filter((c) => inFilter(c.status, f)).length])) as Record<ReplyFilter, number>;
@@ -360,8 +414,16 @@ export default function RepliesPage() {
 
   function realSkip(c: ReplyComment) {
     captureEvent("ui.reply_skip_clicked", { comment_id: c.id });
-    // optimistic: drop from view; skipComment fires immediately, undo restores.
+    // optimistic: drop from view AND tick the rail's "to answer" badge down
+    // (skip moves the comment out of unanswered). The success path doesn't
+    // reload, so without this the rail chip would stay stale until the next
+    // action; undo restores accurate counts via reload().
     setComments((p) => p.map((x) => (x.id === c.id ? { ...x, status: "skipped", draft_is_skip: true } : x)));
+    setRailPosts((prev) =>
+      prev.map((p) =>
+        String(p.post_id) === c.postId ? { ...p, unanswered: Math.max(0, p.unanswered - 1) } : p,
+      ),
+    );
     skipComment(c.id).catch(() => reload());
     toast(t("replies.toast_dismissed"), "success", {
       duration: UNDO_MS,

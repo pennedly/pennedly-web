@@ -22,6 +22,7 @@ import type {
   AuditDetail,
   AuditsList,
   BatchGenerateResult,
+  CommentPostsList,
   CommentsList,
   DecisionInput,
   DecisionsResponse,
@@ -595,15 +596,34 @@ export async function fetchCalendar(
 
 export async function fetchComments(
   accountId: number,
-  params?: { limit?: number; offset?: number; status?: string },
+  params?: { limit?: number; offset?: number; status?: string; postId?: number },
 ): Promise<CommentsList> {
   const qs = new URLSearchParams();
   if (params?.limit) qs.set("limit", String(params.limit));
   if (params?.offset) qs.set("offset", String(params.offset));
   if (params?.status) qs.set("status", params.status);
+  // Scope to a single post's thread (the Replies screen loads one post at a
+  // time); status_counts stays account-wide regardless.
+  if (params?.postId != null) qs.set("post_id", String(params.postId));
   const suffix = qs.toString() ? `?${qs.toString()}` : "";
   return fetchApi<CommentsList>(
     `/api/accounts/${accountId}/comments${suffix}`,
+  );
+}
+
+// One row per post that HAS comments (newest post first), paginated by POST.
+// Drives the Replies post rail + its per-post comment-count badges, so the rail
+// no longer derives from a flat, globally-paginated comment list.
+export async function fetchCommentPosts(
+  accountId: number,
+  params?: { limit?: number; offset?: number },
+): Promise<CommentPostsList> {
+  const qs = new URLSearchParams();
+  if (params?.limit) qs.set("limit", String(params.limit));
+  if (params?.offset) qs.set("offset", String(params.offset));
+  const suffix = qs.toString() ? `?${qs.toString()}` : "";
+  return fetchApi<CommentPostsList>(
+    `/api/accounts/${accountId}/comment-posts${suffix}`,
   );
 }
 
