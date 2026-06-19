@@ -36,7 +36,7 @@ function Svg({
 }
 
 /* nav / brand */
-export const IcStudio = (p: IconProps) => <Svg {...p}><path d="M4 19.5 19 4.5M14 5h5v5" /></Svg>;
+export const IcStudio = (p: IconProps) => <Svg {...p}><path d="M11.4 4H6.5A1.5 1.5 0 0 0 5 5.5v12A1.5 1.5 0 0 0 6.5 19h12a1.5 1.5 0 0 0 1.5-1.5v-4.9" /><path d="M17.9 3.6a1.7 1.7 0 0 1 2.5 2.5l-7.4 7.4-3.2.7.7-3.2Z" /></Svg>;
 export const IcReplies = (p: IconProps) => <Svg {...p}><path d="M21 11.5a8 8 0 0 1-11.4 7.2L4 20l1.3-4.6A8 8 0 1 1 21 11.5Z" /></Svg>;
 export const IcVoice = (p: IconProps) => <Svg {...p}><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></Svg>;
 // Redrawn (design rework §7): a clean optically-balanced cog — single polygon
@@ -58,7 +58,7 @@ export const IcShield = (p: IconProps) => <Svg {...p}><path d="M12 3.5 19 6v5.5c
 export const IcAlert = (p: IconProps) => <Svg {...p}><path d="M12 4.5 21 19.5H3L12 4.5Z" /><path d="M12 10.5v4M12 17.4v.1" /></Svg>;
 export const IcTags = (p: IconProps) => <Svg {...p}><path d="M4 10.5V5.5A1.5 1.5 0 0 1 5.5 4h5l8 8a1.5 1.5 0 0 1 0 2.1l-4.4 4.4a1.5 1.5 0 0 1-2.1 0l-8-8Z" /><circle cx="8" cy="8" r="1.2" fill="currentColor" stroke="none" /></Svg>;
 export const IcList = (p: IconProps) => <Svg {...p}><path d="M5 7.5l1.5 1.5L9 6M5 16.5l1.5 1.5L9 14M12.5 8h6.5M12.5 16h6.5" /></Svg>;
-export const IcQuote = (p: IconProps) => <Svg {...p}><path d="M9.5 7C7 7.6 5.5 9.7 5.5 12.4V17h4.7v-4.7H8.3c0-1.7 .7-2.9 2.2-3.5L9.5 7ZM18.5 7c-2.5 .6-4 2.7-4 5.4V17h4.7v-4.7h-2.4c0-1.7 .7-2.9 2.2-3.5L18.5 7Z" fill="currentColor" stroke="none" /></Svg>;
+export const IcQuote = (p: IconProps) => <Svg {...p}><path d="M9.5 7C7 7.8 5.5 10 5.5 12.7V17h4.5v-4.3H8.2C8.2 10.5 9.2 9.3 11 8.7Zm9 0c-2.5.8-4 3-4 5.7V17h4.5v-4.3h-1.8c0-2.2 1-3.4 2.8-4Z" /></Svg>;
 
 /* style rules — ported from stylerules-icons.jsx */
 export const IcSliders = (p: IconProps) => <Svg {...p}><path d="M4 7h9M17 7h3M4 17h3M11 17h9" /><circle cx="15" cy="7" r="2" /><circle cx="9" cy="17" r="2" /></Svg>;
@@ -67,7 +67,7 @@ export const IcPenLine = (p: IconProps) => <Svg {...p}><path d="M4 20h16" /><pat
 
 /* settings — ported from settings-icons.jsx */
 export const IcUnlink = (p: IconProps) => <Svg {...p}><path d="M9 15l-2 2a3.5 3.5 0 0 1-5-5l2-2M15 9l2-2a3.5 3.5 0 0 1 5 5l-2 2M8 4v2M4 8H2M20 16h2M16 20v-2" /></Svg>;
-export const IcLogout = (p: IconProps) => <Svg {...p}><path d="M15 5H6a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h9" /><path d="M11 12h9M17 8l4 4-4 4" /></Svg>;
+export const IcLogout = (p: IconProps) => <Svg {...p}><path d="M14 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-2" /><path d="M10 12h10M17 9l3 3-3 3" /></Svg>;
 export const IcFlask = (p: IconProps) => <Svg {...p}><path d="M9 3h6M10 3v6L5.5 17a2 2 0 0 0 1.8 3h9.4a2 2 0 0 0 1.8-3L14 9V3" /><path d="M8.2 14h7.6" /></Svg>;
 
 /* onboarding — ported from onboarding-icons.jsx */
@@ -76,11 +76,11 @@ export const IcArrowRight = (p: IconProps) => <Svg {...p}><path d="M5 12h14M13 6
 export const IcMail = (p: IconProps) => <Svg {...p}><rect x="3" y="5.5" width="18" height="13" rx="2.5" /><path d="M4 7l8 6 8-6" /></Svg>;
 export const IcUsers = (p: IconProps) => <Svg {...p}><circle cx="9" cy="8" r="3.2" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0" /><path d="M16 5.2a3.2 3.2 0 0 1 0 5.6M17.5 19a5.5 5.5 0 0 0-3-4.9" /></Svg>;
 export const IcCompass = (p: IconProps) => <Svg {...p}><circle cx="12" cy="12" r="8.5" /><path d="M15.2 8.8 13.4 13.4 8.8 15.2 10.6 10.6Z" /></Svg>;
-export const IcLink = (p: IconProps) => <Svg {...p}><path d="M9.5 14.5 14.5 9.5" /><path d="M11 7.5 12.4 6a3.6 3.6 0 0 1 5.1 5.1L16 12.6" /><path d="M13 16.5 11.6 18a3.6 3.6 0 0 1-5.1-5.1L8 11.4" /></Svg>;
+export const IcLink = (p: IconProps) => <Svg {...p}><path d="M10 14a3.5 3.5 0 0 0 5 0l3-3a3.5 3.5 0 0 0-5-5l-1.5 1.5" /><path d="M14 10a3.5 3.5 0 0 0-5 0l-3 3a3.5 3.5 0 0 0 5 5l1.5-1.5" /></Svg>;
 export const IcTweak = (p: IconProps) => <Svg {...p}><path d="M4 5v5h5" /><path d="M4 10a8 8 0 1 1 1 7" /></Svg>;
 export const IcSend = (p: IconProps) => <Svg {...p}><path d="M5 12h13M12 5l7 7-7 7" /></Svg>;
 export const IcExternal = (p: IconProps) => <Svg {...p}><path d="M14 5h5v5M19 5l-8 8M11 6H6.5A1.5 1.5 0 0 0 5 7.5v10A1.5 1.5 0 0 0 6.5 19h10A1.5 1.5 0 0 0 18 17.5V13" /></Svg>;
-export const IcUndo = (p: IconProps) => <Svg {...p}><path d="M4 7v5h5" /><path d="M4 12a8 8 0 1 0 2.3-5.6" /></Svg>;
+export const IcUndo = (p: IconProps) => <Svg {...p}><path d="M9 14 4 9l5-5" /><path d="M4 9h11a5 5 0 0 1 0 10h-4" /></Svg>;
 export const IcReply = (p: IconProps) => <Svg {...p}><path d="M9 7 4 12l5 5M4 12h9a6 6 0 0 1 6 6v1" /></Svg>;
 export const IcChevDown = (p: IconProps) => <Svg {...p}><path d="M5 9l7 7 7-7" /></Svg>;
 export const IcMore = (p: IconProps) => <Svg {...p}><circle cx="6" cy="12" r="1.3" fill="currentColor" stroke="none" /><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none" /><circle cx="18" cy="12" r="1.3" fill="currentColor" stroke="none" /></Svg>;
@@ -114,7 +114,7 @@ export const IcAt = (p: IconProps) => <Svg {...p}><circle cx="12" cy="12" r="3.6
 export const IcStar = (p: IconProps) => <Svg {...p}><path d="M12 4.2l2.4 4.86 5.36.78-3.88 3.78.92 5.34L12 16.18 7.2 18.74l.92-5.34L4.24 9.62l5.36-.78Z" /></Svg>;
 export const IcArchive = (p: IconProps) => <Svg {...p}><path d="M4 8.5h16V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V8.5Z" /><path d="M3 4.5h18v4H3zM9.5 12.5h5" /></Svg>;
 /* scenarios — repeat-loop (the scenario glyph; never a bolt) + gift (Акция) */
-export const IcRepeat = (p: IconProps) => <Svg {...p}><path d="M17 2l3 3-3 3" /><path d="M20 5H9a5 5 0 0 0-5 5v1" /><path d="M7 22l-3-3 3-3" /><path d="M4 19h11a5 5 0 0 0 5-5v-1" /></Svg>;
+export const IcRepeat = (p: IconProps) => <Svg {...p}><path d="M17 2.5 20.5 6 17 9.5" /><path d="M3.5 11V9a3 3 0 0 1 3-3h14" /><path d="M7 21.5 3.5 18 7 14.5" /><path d="M20.5 13v2a3 3 0 0 1-3 3h-14" /></Svg>;
 export const IcGift = (p: IconProps) => <Svg {...p}><rect x="4" y="10" width="16" height="10" rx="1.5" /><path d="M3 7h18v3H3zM12 7v13" /><path d="M12 7C12 5 10.7 3.5 9 3.5 7.9 3.5 7 4.4 7 5.5S7.9 7 9 7h3ZM12 7c0-2 1.3-3.5 3-3.5 1.1 0 2 .9 2 2S16.1 7 15 7h-3Z" /></Svg>;
 
 /* "Drafting Line" brand mark — filled glyph in a rounded paper tile.
