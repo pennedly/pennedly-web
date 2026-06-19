@@ -11,9 +11,9 @@
 // the Studio composer with a prefilled brief.
 //
 // The live reply is prose grounded by a real "Grounded in: …" source line
-// (mapped from the backend `grounded_in`). Inline data chips + structured
-// suggestion cards from the SPEC need structured LLM output — deferred (see the
-// TODO below); the /gallery/advisor page shows the full rich design with mocks.
+// (mapped from the backend `grounded_in`) PLUS the backend's structured data
+// chips + suggestion cards (the model returns them as JSON; see
+// `api/advisor.py`). /gallery/advisor shows the same rich design on mock data.
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -138,10 +138,17 @@ export default function AdvisorPage() {
         // The model replies in prose; split blank-line-separated paragraphs.
         paragraphs: res.reply.split(/\n{2,}/).map((s) => s.trim()).filter(Boolean),
         sources: res.grounded_in.map((id) => advisorSourceLabel(id, t)),
+        // Structured extras from the backend: data chips echoing the cited
+        // numbers + suggestion cards (each wired to the Studio handoff).
+        chips: res.chips.map((c) => ({ tone: c.tone, icon: c.icon ?? undefined, label: c.label })),
+        suggestions: res.suggestions.map((s) => ({
+          icon: s.icon,
+          title: s.title,
+          why: s.why,
+          brief: s.brief,
+          onOpenStudio: () => openInStudio(s.brief),
+        })),
       };
-      // TODO(advisor): when the backend returns structured output, populate
-      // `chips` (inline data chips) + `suggestions` (with an "Open in Studio"
-      // brief) here so the live reply matches the gallery's rich design.
       setTurns((prev) => {
         const next = [...prev];
         next[next.length - 1] = { user: q, reply: content, status: "done" };

@@ -304,12 +304,32 @@ export type AdvisorMessage = {
   content: string;
 };
 
+// A data badge under the reply (the backend's structured output). `icon` may be
+// null. Mirrors the AdvisorChip component shape (minus its callbacks).
+export type AdvisorChipData = {
+  tone: "up" | "down" | "accent" | "neutral";
+  icon?: "eye" | "reply" | "clock" | "chart" | "up" | "down" | null;
+  label: string;
+};
+
+// An actionable suggestion card. `brief` seeds the Studio composer via the
+// "Open in Studio" handoff.
+export type AdvisorSuggestionData = {
+  icon: "nib" | "clock";
+  title: string;
+  why: string;
+  brief: string;
+};
+
 export type AdvisorResponse = {
   reply: string;
   model: string;
   // Which real account signals the reply was grounded in — drives the
   // "Grounded in: …" line in the UI.
   grounded_in: string[];
+  // Structured extras rendered under the prose. Either may be empty.
+  chips: AdvisorChipData[];
+  suggestions: AdvisorSuggestionData[];
   prompt_tokens: number;
   completion_tokens: number;
 };
