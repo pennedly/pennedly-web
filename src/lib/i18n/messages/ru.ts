@@ -1242,10 +1242,10 @@ export const ru: Partial<Record<MessageKey, string>> = {
   // ── Загрузка истории / первый запуск (только что подключённый аккаунт) ──
   "backfill.banner_title": "Импортируем твою историю",
   "backfill.banner_sub_early": "Подтягиваем твои посты, метрики и комментарии из Threads…",
-  "backfill.banner_sub_live": "{posts} постов · {comments} комментариев пока",
+  "backfill.banner_sub_live": "{posts} · {comments} пока",
   "backfill.banner_eta": "Осталось около минуты",
   "backfill.partial_title": "Импортировали большую часть истории",
-  "backfill.partial_sub": "{posts} постов · {comments} комментариев уже здесь. Несколько старых постов ещё догружаются.",
+  "backfill.partial_sub": "{posts} · {comments} уже здесь. Несколько старых постов ещё догружаются.",
   "backfill.word_posts": "постов",
   "backfill.word_comments": "комментариев",
   "backfill.nudge_importing_title": "Твоя история импортируется",

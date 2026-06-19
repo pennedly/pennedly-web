@@ -24,6 +24,7 @@ import { fetchMyAccounts, getTokens } from "@/lib/api";
 import { useSelectedAccountId } from "@/lib/account";
 import { cn } from "@/lib/cn";
 import { useTranslation } from "@/lib/i18n";
+import { pluralUnit } from "@/lib/i18n/plurals";
 import { IcCheck } from "@/components/icons";
 import type { SyncStatus, SyncSummary } from "@/lib/types";
 
@@ -89,8 +90,12 @@ export function ImportBanner({ status, summary }: { status: SyncStatus; summary:
   // "pulling your posts…" early line. Numbers are locale-formatted + tabular.
   const haveCounts = posts !== null || comments !== null;
   const fmtN = (n: number) => n.toLocaleString(locale);
+  // Inflect the unit noun for the count + locale ("42 поста", not "42 постов")
+  // via the shared pluralUnit helper, so each count phrase agrees grammatically.
+  const postsPhrase = `${fmtN(posts ?? 0)} ${pluralUnit(locale, "posts", posts ?? 0)}`;
+  const commentsPhrase = `${fmtN(comments ?? 0)} ${pluralUnit(locale, "comments", comments ?? 0)}`;
   const liveSub = (key: "backfill.banner_sub_live" | "backfill.partial_sub") =>
-    t(key).replace("{posts}", fmtN(posts ?? 0)).replace("{comments}", fmtN(comments ?? 0));
+    t(key).replace("{posts}", postsPhrase).replace("{comments}", commentsPhrase);
 
   const partial = status === "partial";
 

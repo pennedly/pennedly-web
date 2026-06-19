@@ -1513,10 +1513,10 @@ export const uk: Partial<Record<MessageKey, string>> = {
   // ── Backfill / first-run (EN fallback — translate when localizing) ──
   "backfill.banner_title": "Importing your history",
   "backfill.banner_sub_early": "Pulling your posts, metrics and comments from Threads…",
-  "backfill.banner_sub_live": "{posts} posts · {comments} comments so far",
+  "backfill.banner_sub_live": "{posts} · {comments} so far",
   "backfill.banner_eta": "About a minute left",
   "backfill.partial_title": "Imported most of your history",
-  "backfill.partial_sub": "{posts} posts · {comments} comments are in. A few older posts are still finishing up.",
+  "backfill.partial_sub": "{posts} · {comments} are in. A few older posts are still finishing up.",
   "backfill.word_posts": "posts",
   "backfill.word_comments": "comments",
   "backfill.nudge_importing_title": "Your history is importing",
