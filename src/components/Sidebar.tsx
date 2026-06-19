@@ -21,6 +21,7 @@ import { getLocale, useTranslation, type MessageKey } from "@/lib/i18n";
 import { AccountSwitcher } from "@/components/AccountSwitcher";
 import {
   BrandMark,
+  IcAdvisor,
   IcAt,
   IcAudit,
   IcCalendar,
@@ -65,6 +66,7 @@ const GROUPS: { title: MessageKey; items: NavItem[] }[] = [
   {
     title: "nav.group.insight",
     items: [
+      { href: "/app/advisor", label: "dashboard.nav.advisor", icon: IcAdvisor, tester: true },
       { href: "/app/stats", label: "dashboard.nav.stats", icon: IcChart },
       { href: "/app/audits", label: "dashboard.nav.audits", icon: IcAudit, badgeKey: "audits" },
       // `exact` so Pattern study doesn't also light up on the /explore child.

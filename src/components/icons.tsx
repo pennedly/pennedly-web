@@ -38,6 +38,9 @@ function Svg({
 /* nav / brand */
 export const IcStudio = (p: IconProps) => <Svg {...p}><path d="M11.4 4H6.5A1.5 1.5 0 0 0 5 5.5v12A1.5 1.5 0 0 0 6.5 19h12a1.5 1.5 0 0 0 1.5-1.5v-4.9" /><path d="M17.9 3.6a1.7 1.7 0 0 1 2.5 2.5l-7.4 7.4-3.2.7.7-3.2Z" /></Svg>;
 export const IcReplies = (p: IconProps) => <Svg {...p}><path d="M21 11.5a8 8 0 0 1-11.4 7.2L4 20l1.3-4.6A8 8 0 1 1 21 11.5Z" /></Svg>;
+// Advisor — a speech bubble with a rising trend line (per the design SPEC):
+// "growth advice in a chat". Used for the nav item + the assistant mark.
+export const IcAdvisor = (p: IconProps) => <Svg {...p}><path d="M4 16V7a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3H9l-4 4v-4Z" /><path d="M8 13l2.6-2.6 1.8 1.8L16 9" /><path d="M13.4 9H16v2.6" /></Svg>;
 export const IcVoice = (p: IconProps) => <Svg {...p}><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></Svg>;
 // Redrawn (design rework §7): a clean optically-balanced cog — single polygon
 // outline + center hole — crisp at 16–18px, replacing the busy 12-tooth gear.

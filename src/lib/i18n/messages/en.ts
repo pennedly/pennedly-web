@@ -1532,6 +1532,38 @@ export const en = {
   "scenarios.toast_on": "Scenario turned on",
   "scenarios.toast_off": "Scenario turned off",
   "scenarios.toast_deleted": "Scenario deleted",
+
+  // ── Advisor (AI growth-advisor chat · tester-gated) ───────────
+  "dashboard.nav.advisor": "advisor",
+  "advisor.title": "Advisor",
+  "advisor.pill": "Grounded in your data",
+  "advisor.hero_title": "Ask your growth advisor",
+  "advisor.hero_sub": "Pennedly reads your stats, your voice and your recent posts to give advice that’s specific to your account — not generic tips.",
+  "advisor.try_asking": "Try asking",
+  "advisor.starter_post": "What should I post today?",
+  "advisor.starter_drop": "Why did engagement drop?",
+  "advisor.starter_time": "Best time to post this week?",
+  "advisor.composer_placeholder": "Ask about your growth…",
+  "advisor.composer_hint": "Pennedly reads your stats, voice and recent posts to answer.",
+  "advisor.send": "Send",
+  "advisor.assistant_name": "Pennedly Advisor",
+  "advisor.thinking_stats": "Reading your stats…",
+  "advisor.thinking_times": "Checking your best times…",
+  "advisor.thinking_writing": "Writing it up…",
+  "advisor.grounded_in": "Grounded in",
+  "advisor.error_title": "Couldn’t reach the advisor",
+  "advisor.error_sub": "The request timed out. Your data is fine — this is just the connection.",
+  "advisor.retry": "Retry",
+  "advisor.open_in_studio": "Open in Studio",
+  "advisor.show_data": "Show me the data",
+  "advisor.from_advisor": "From your Advisor",
+  // Source labels — the backend returns canonical source ids; the UI maps them
+  // to these localized labels for the "Grounded in: …" line.
+  "advisor.source.stats": "Stats · 7 days",
+  "advisor.source.heatmap": "best-time heatmap",
+  "advisor.source.posts": "recent posts",
+  "advisor.source.replies": "replies",
+  "advisor.source.voice": "Voice (role-book)",
 } as const;
 
 export type MessageKey = keyof typeof en;

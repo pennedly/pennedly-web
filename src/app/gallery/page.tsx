@@ -7,6 +7,7 @@ const GALLERIES = [
   { href: "/gallery/media", label: "Media (feed images · reply image)" },
   { href: "/gallery/firstrun", label: "First-run & import (banner · Stats nudge · honest empty-states)" },
   { href: "/gallery/overview", label: "Overview (portfolio totals · account cards · sync states · empty/error)" },
+  { href: "/gallery/advisor", label: "Advisor (chat · first-run · data chips · suggestions · thinking/error)" },
 ];
 
 export default function GalleryIndex() {

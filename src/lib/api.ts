@@ -13,6 +13,8 @@
 
 import type {
   AccountsList,
+  AdvisorMessage,
+  AdvisorResponse,
   ApprovalResult,
   AutopilotConfig,
   AutopostActivity,
@@ -427,6 +429,24 @@ export async function generateIdeas(
   return fetchApi<IdeasResult>("/api/generation/ideas", {
     method: "POST",
     body: JSON.stringify({ account_id: accountId, count }),
+  });
+}
+
+// Growth Advisor chat (tester-gated). Sends the whole conversation (prior
+// messages + the new user message as the last item) and returns the advisor's
+// next reply, grounded in this account's own data. Non-streaming.
+export async function chatAdvisor(
+  accountId: number,
+  messages: AdvisorMessage[],
+): Promise<AdvisorResponse> {
+  return fetchApi<AdvisorResponse>(`/api/accounts/${accountId}/advisor`, {
+    method: "POST",
+    body: JSON.stringify({
+      messages,
+      // Minutes to ADD to UTC for the viewer's local time, so "best times"
+      // land in the author's own clock (matches the /stats convention).
+      tz_offset: -new Date().getTimezoneOffset(),
+    }),
   });
 }
 

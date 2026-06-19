@@ -195,6 +195,23 @@ export default function Studio() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Advisor handoff: "Open in Studio" routes here with ?brief=… — seed the
+  // composer with that brief (the author edits + hits Generate, the usual
+  // Studio flow). A quiet toast names the origin. Consumed once, then stripped.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const brief = params.get("brief");
+    if (!brief) return;
+    setComposerText(brief.slice(0, 500));
+    toast(t("advisor.from_advisor"));
+    const url = new URL(window.location.href);
+    url.searchParams.delete("brief");
+    url.searchParams.delete("from");
+    window.history.replaceState({}, "", url.pathname + url.search + url.hash);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // ── load drafts on account change ──
   useEffect(() => {
     if (demoParam) {

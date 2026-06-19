@@ -297,6 +297,23 @@ export type IdeasResult = {
   latency_ms: number;
 };
 
+// Growth Advisor chat (tester-gated). One turn in the conversation; role is
+// "user" (the author) or "assistant" (a prior advisor reply).
+export type AdvisorMessage = {
+  role: "user" | "assistant";
+  content: string;
+};
+
+export type AdvisorResponse = {
+  reply: string;
+  model: string;
+  // Which real account signals the reply was grounded in — drives the
+  // "Grounded in: …" line in the UI.
+  grounded_in: string[];
+  prompt_tokens: number;
+  completion_tokens: number;
+};
+
 export type BatchGenerateError = {
   error_kind: "quota" | "generation" | "unknown";
   detail: string;
