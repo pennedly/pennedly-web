@@ -130,7 +130,9 @@ function Total({
 
 export function PortfolioTotals({ totals }: { totals: OverviewTotals }) {
   const { t, locale } = useTranslation();
-  const acrossN = t("overview.strip.across").replace("{n}", String(totals.accounts_count));
+  const acrossN = t(
+    totals.accounts_count === 1 ? "overview.strip.across_one" : "overview.strip.across",
+  ).replace("{n}", String(totals.accounts_count));
   return (
     <div className="flex flex-col gap-[14px]">
       <div className="flex items-baseline justify-between gap-3">

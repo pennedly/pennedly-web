@@ -1286,6 +1286,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "overview.switcher.all_accounts": "Все аккаунты",
   "overview.switcher.connected": "Подключено: {n} · Обзор",
   "overview.strip.across": "По {n} аккаунтам",
+  "overview.strip.across_one": "По {n} аккаунту",
   "overview.strip.importing": "+{n} ещё импортируется",
   "overview.total.followers": "Подписчики",
   "overview.total.followers_sub": "по всему портфелю",

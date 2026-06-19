@@ -1033,6 +1033,7 @@ export const es: Partial<Record<MessageKey, string>> = {
   "overview.switcher.all_accounts": "All accounts",
   "overview.switcher.connected": "{n} connected · Overview",
   "overview.strip.across": "Across {n} accounts",
+  "overview.strip.across_one": "Across {n} account",
   "overview.strip.importing": "+{n} still importing",
   "overview.total.followers": "Followers",
   "overview.total.followers_sub": "across the portfolio",
