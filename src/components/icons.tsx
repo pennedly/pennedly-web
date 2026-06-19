@@ -52,7 +52,7 @@ export const IcPencil = (p: IconProps) => <Svg {...p}><path d="M4 20h4L18.5 9.5a
 /* voice — ported from voice-icons.jsx */
 export const IcRefresh = (p: IconProps) => <Svg {...p}><path d="M20 7a8 8 0 0 0-14.3-2M4 5v4h4" /><path d="M4 17a8 8 0 0 0 14.3 2M20 19v-4h-4" /></Svg>;
 /* single clockwise circular arrow — the "retry / reload" glyph. */
-export const IcReload = (p: IconProps) => <Svg {...p}><path d="M21 12a9 9 0 1 1-2.64-6.36" /><path d="M21 3v5h-5" /></Svg>;
+export const IcReload = (p: IconProps) => <Svg {...p}><path d="M19.4 9A7.5 7.5 0 1 0 20 12.6" /><path d="M20 4.5V9h-4.5" /></Svg>;
 export const IcScan = (p: IconProps) => <Svg {...p}><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2" /><path d="M7.5 12h9" /></Svg>;
 export const IcShield = (p: IconProps) => <Svg {...p}><path d="M12 3.5 19 6v5.5c0 4.3-2.9 7.4-7 9-4.1-1.6-7-4.7-7-9V6l7-2.5Z" /><path d="M8.8 11.8 11 14l4.2-4.4" /></Svg>;
 export const IcAlert = (p: IconProps) => <Svg {...p}><path d="M12 4.5 21 19.5H3L12 4.5Z" /><path d="M12 10.5v4M12 17.4v.1" /></Svg>;
@@ -74,7 +74,7 @@ export const IcFlask = (p: IconProps) => <Svg {...p}><path d="M9 3h6M10 3v6L5.5 
 export const IcLock = (p: IconProps) => <Svg {...p}><rect x="4.5" y="10.5" width="15" height="9.5" rx="2.5" /><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" /><circle cx="12" cy="15" r="1.1" fill="currentColor" stroke="none" /></Svg>;
 export const IcArrowRight = (p: IconProps) => <Svg {...p}><path d="M5 12h14M13 6l6 6-6 6" /></Svg>;
 export const IcMail = (p: IconProps) => <Svg {...p}><rect x="3" y="5.5" width="18" height="13" rx="2.5" /><path d="M4 7l8 6 8-6" /></Svg>;
-export const IcUsers = (p: IconProps) => <Svg {...p}><circle cx="9" cy="8" r="3.2" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0" /><path d="M16 5.2a3.2 3.2 0 0 1 0 5.6M17.5 19a5.5 5.5 0 0 0-3-4.9" /></Svg>;
+export const IcUsers = (p: IconProps) => <Svg {...p}><circle cx="9" cy="9" r="3.2" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0" /><path d="M16 6.3a3 3 0 0 1 0 5.4M17.5 19a5.5 5.5 0 0 0-3-4.9" /></Svg>;
 export const IcCompass = (p: IconProps) => <Svg {...p}><circle cx="12" cy="12" r="8.5" /><path d="M15.2 8.8 13.4 13.4 8.8 15.2 10.6 10.6Z" /></Svg>;
 export const IcLink = (p: IconProps) => <Svg {...p}><path d="M10 14a3.5 3.5 0 0 0 5 0l3-3a3.5 3.5 0 0 0-5-5l-1.5 1.5" /><path d="M14 10a3.5 3.5 0 0 0-5 0l-3 3a3.5 3.5 0 0 0 5 5l1.5-1.5" /></Svg>;
 export const IcTweak = (p: IconProps) => <Svg {...p}><path d="M4 5v5h5" /><path d="M4 10a8 8 0 1 1 1 7" /></Svg>;
@@ -94,11 +94,11 @@ export const IcEye = (p: IconProps) => <Svg {...p}><path d="M2.5 12S6 5.5 12 5.5
 export const IcFeed = (p: IconProps) => <Svg {...p}><path d="M3 14l4-5 4 4 3-6 3 5h4" /></Svg>;
 export const IcChart = (p: IconProps) => <Svg {...p}><path d="M4 19V5M4 19h16" /><path d="M8 16l3.5-4 3 2.5L19 8" /></Svg>;
 export const IcTrash = (p: IconProps) => <Svg {...p}><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13" /></Svg>;
-export const IcImage = (p: IconProps) => <Svg {...p}><rect x="3" y="3" width="18" height="18" rx="2.5" /><circle cx="8.5" cy="9" r="1.5" /><path d="M21 15l-5-5L6 21" /></Svg>;
-export const IcThread = (p: IconProps) => <Svg {...p}><path d="M5 6h14M5 12h9M5 18h5" /></Svg>;
+export const IcImage = (p: IconProps) => <Svg {...p}><rect x="3.5" y="5" width="17" height="14" rx="2.5" /><circle cx="9" cy="10" r="1.5" /><path d="M5 17.5l4.5-4.5 3 2.8 3.2-2.8L19 16.5" /></Svg>;
+export const IcThread = (p: IconProps) => <Svg {...p}><circle cx="12" cy="5" r="2.3" /><circle cx="12" cy="12" r="2.3" /><circle cx="12" cy="19" r="2.3" /><path d="M12 7.4v2.4" /><path d="M12 14v2.4" /></Svg>;
 export const IcExpand = (p: IconProps) => <Svg {...p}><path d="M9 4.5H4.5V9M15 4.5h4.5V9M9 19.5H4.5V15M15 19.5h4.5V15" /></Svg>;
 export const IcVideo = (p: IconProps) => <Svg {...p}><rect x="3" y="6" width="13" height="12" rx="2.5" /><path d="M16 9.6 L20.5 7 L20.5 17 L16 14.4 Z" /></Svg>;
-export const IcPlay = (p: IconProps) => <Svg {...p} filled><path d="M8 5 L19 12 L8 19 Z" /></Svg>;
+export const IcPlay = (p: IconProps) => <Svg {...p} filled><path d="M8 5.4 L18.6 12 L8 18.6 Z" /></Svg>;
 export const IcArrowUp = (p: IconProps) => <Svg {...p}><path d="M12 19V6M6 11l6-6 6 6" /></Svg>;
 export const IcArrowDown = (p: IconProps) => <Svg {...p}><path d="M12 5v13M6 13l6 6 6-6" /></Svg>;
 export const IcArrowLeft = (p: IconProps) => <Svg {...p}><path d="M19 12H5M11 6l-6 6 6 6" /></Svg>;
@@ -115,7 +115,7 @@ export const IcStar = (p: IconProps) => <Svg {...p}><path d="M12 4.2l2.4 4.86 5.
 export const IcArchive = (p: IconProps) => <Svg {...p}><path d="M4 8.5h16V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V8.5Z" /><path d="M3 4.5h18v4H3zM9.5 12.5h5" /></Svg>;
 /* scenarios — repeat-loop (the scenario glyph; never a bolt) + gift (Акция) */
 export const IcRepeat = (p: IconProps) => <Svg {...p}><path d="M17 2.5 20.5 6 17 9.5" /><path d="M3.5 11V9a3 3 0 0 1 3-3h14" /><path d="M7 21.5 3.5 18 7 14.5" /><path d="M20.5 13v2a3 3 0 0 1-3 3h-14" /></Svg>;
-export const IcGift = (p: IconProps) => <Svg {...p}><rect x="4" y="10" width="16" height="10" rx="1.5" /><path d="M3 7h18v3H3zM12 7v13" /><path d="M12 7C12 5 10.7 3.5 9 3.5 7.9 3.5 7 4.4 7 5.5S7.9 7 9 7h3ZM12 7c0-2 1.3-3.5 3-3.5 1.1 0 2 .9 2 2S16.1 7 15 7h-3Z" /></Svg>;
+export const IcGift = (p: IconProps) => <Svg {...p}><path d="M20 11v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-8" /><path d="M3 7.5h18V11H3z" /><path d="M12 7.5V20" /><path d="M12 7.5S10.5 3.5 8 4a2 2 0 0 0 0 3.5ZM12 7.5S13.5 3.5 16 4a2 2 0 0 1 0 3.5Z" /></Svg>;
 
 /* "Drafting Line" brand mark — filled glyph in a rounded paper tile.
    Uses semantic CSS vars so the tile/pen flip with the theme automatically. */
