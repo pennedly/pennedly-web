@@ -98,6 +98,8 @@ test.beforeEach(async ({ page, context }) => {
   // Stats screen: the followers line + the engagement panel both fetch on load.
   await context.route(/\/api\/accounts\/\d+\/followers(\?|$)/, ok({ points: [], latest: null }));
   await context.route(/\/api\/accounts\/\d+\/engagement(\?|$)/, ok({ points: [], likes: null, replies: null, reposts: null, quotes: null }));
+  // Scenarios screen fetches its list on load (empty list is a valid state).
+  await context.route(/\/api\/accounts\/\d+\/scenarios(\?|$)/, ok({ scenarios: [] }));
   await context.route(/\/api\/accounts\/\d+\/role-book$/, ok({
     role_book_id: 1, name: "Voice", sections: null,
     prompt_text: "voice", created_by: "user", parent_id: null,

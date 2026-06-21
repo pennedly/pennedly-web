@@ -77,7 +77,7 @@ import type {
   ScenarioCreate,
   ScenarioUpdate,
   ScenarioPreview,
-  ScenarioPromoFields,
+  ScenarioPreviewRequest,
 } from "./types";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
@@ -989,11 +989,13 @@ export async function deleteScenario(scenarioId: number): Promise<{ ok: boolean 
 
 export async function previewScenario(
   accountId: number,
-  promo: ScenarioPromoFields,
+  // Promo helper: `{ promo }`. Free scenario: `{ instruction }`. The server
+  // exercises exactly one fork (promo wins if both are sent).
+  body: ScenarioPreviewRequest,
 ): Promise<ScenarioPreview> {
   return fetchApi<ScenarioPreview>(
     `/api/accounts/${accountId}/scenarios/preview`,
-    { method: "POST", body: JSON.stringify({ promo }) },
+    { method: "POST", body: JSON.stringify(body) },
   );
 }
 

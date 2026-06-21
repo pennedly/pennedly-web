@@ -9,6 +9,7 @@ const GALLERIES = [
   { href: "/gallery/overview", label: "Overview (portfolio totals · account cards · sync states · empty/error)" },
   { href: "/gallery/advisor", label: "Advisor (chat · first-run · data chips · suggestions · thinking/error)" },
   { href: "/gallery/engagement", label: "Engagement (Stats panel · 5 metrics · ranges · loading/thin/error)" },
+  { href: "/gallery/scenarios", label: "Scenarios (list · empty/loading/error · unified form promo-on/off · power-user · edit)" },
 ];
 
 export default function GalleryIndex() {

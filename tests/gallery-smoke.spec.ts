@@ -28,6 +28,7 @@ const RENDER_PAGES = [
   "/gallery/overview",
   "/gallery/advisor",
   "/gallery/engagement",
+  "/gallery/scenarios",
 ];
 
 for (const path of RENDER_PAGES) {

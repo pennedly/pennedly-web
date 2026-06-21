@@ -771,9 +771,13 @@ export type AutopostActivity = {
   replies: AutopostActivityReply[];
 };
 
-// ── Scenarios — recurring/conditional content; «Акция» (promo) is the first
-// template. Mirrors api/scenarios.py ScenarioOut + PromoFields. ──────────────
-export type ScenarioTemplate = "promo" | "custom" | "rubric" | "seasonal";
+// ── Scenarios — recurring/conditional content. Redesign: there are NO rigid
+// scenario "types" anymore. A scenario is built EITHER from the promo helper
+// («Акция») OR from raw fields (a "free" scenario). `template` survives only as
+// a NULLABLE soft PROVENANCE tag — 'promo' (built via the helper) or null
+// (free) — used for the list badge + to know whether to reopen the promo
+// helper. Mirrors api/scenarios.py ScenarioOut + PromoFields. ────────────────
+export type ScenarioProvenance = "promo" | null;
 
 export type ScenarioPromoFields = {
   ask: string;
@@ -788,11 +792,14 @@ export type ScenarioPromoFields = {
 export type Scenario = {
   id: number;
   name: string;
-  template: ScenarioTemplate;
+  /** Soft provenance tag, NOT a type: 'promo' (promo-seeded) | null (free). */
+  template: ScenarioProvenance;
   enabled: boolean;
   trigger_cfg: Record<string, unknown>;
   condition_cfg: Record<string, unknown> | null;
   action_cfg: Record<string, unknown>;
+  /** Promo fields, present iff the scenario was built via the promo helper —
+   *  reload them into the helper when editing. null → open the free form. */
   structured: ScenarioPromoFields | null;
   instruction: string;
   reply_instruction: string;
@@ -802,15 +809,16 @@ export type Scenario = {
 
 export type ScenariosResponse = { scenarios: Scenario[] };
 
+// Create/update send EITHER `promo` (the helper) OR the raw free fields
+// (`trigger` + `instruction` + optional `reply_instruction`). They NEVER send a
+// `template` — it is resolved server-side as the provenance tag.
 export type ScenarioCreate = {
   name: string;
-  template: ScenarioTemplate;
   enabled?: boolean;
   promo?: ScenarioPromoFields;
   trigger?: Record<string, unknown>;
-  condition?: Record<string, unknown> | null;
-  action?: Record<string, unknown>;
   instruction?: string;
+  reply_instruction?: string;
 };
 
 export type ScenarioUpdate = {
@@ -818,8 +826,13 @@ export type ScenarioUpdate = {
   enabled?: boolean;
   promo?: ScenarioPromoFields;
   trigger?: Record<string, unknown>;
-  condition?: Record<string, unknown> | null;
-  action?: Record<string, unknown>;
+  instruction?: string;
+  reply_instruction?: string;
+};
+
+// Preview EITHER a promo scenario (`promo`) OR a free one (`instruction`).
+export type ScenarioPreviewRequest = {
+  promo?: ScenarioPromoFields;
   instruction?: string;
 };
 
@@ -827,6 +840,8 @@ export type ScenarioPreview = {
   cta: string;
   instruction: string;
   reply_instruction: string;
+  /** A short mock post, returned for the free-scenario preview. */
+  sample_post: string;
 };
 
 // The account's own manual generation rules (layered over the role_book +
