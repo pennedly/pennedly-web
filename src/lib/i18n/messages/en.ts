@@ -1239,6 +1239,35 @@ export const en = {
   "stats.empty_meta1": "week so far",
   "stats.empty_meta2": "posts published",
 
+  // ── Engagement panel (/app/stats) ─────────────────────────────
+  // A per-day time series of the selected metric + the account-wide lifetime
+  // totals. The metric tabs and range control localize; {window} / {days} are
+  // substituted at render (tabular).
+  "stats.eng_title": "Engagement",
+  "stats.eng_per_day": "per day",
+  "stats.eng_range_label": "Time window",
+  "stats.eng_views": "Views",
+  "stats.eng_likes": "Likes",
+  "stats.eng_replies": "Replies",
+  "stats.eng_reposts": "Reposts",
+  "stats.eng_quotes": "Quotes",
+  "stats.eng_range_30": "30d",
+  "stats.eng_range_90": "90d",
+  "stats.eng_range_1y": "1y",
+  "stats.eng_window_30": "last 30 days",
+  "stats.eng_window_90": "last 90 days",
+  "stats.eng_window_1y": "last 12 months",
+  "stats.eng_vs_prev": "vs previous {window}",
+  "stats.eng_in_window": "in the {window}",
+  "stats.eng_no_prior": "no prior window",
+  "stats.eng_lifetime": "Lifetime totals",
+  "stats.eng_thin_note": "{days} of history so far — building daily.",
+  "stats.eng_days_one": "day",
+  "stats.eng_days_other": "days",
+  "stats.eng_err_title": "Couldn't load engagement",
+  "stats.eng_err_sub": "We couldn't reach the engagement data just now.",
+  "stats.eng_retry": "Retry",
+
   // ── Backfill / first-run (a freshly-connected account) ─────────
   // Import banner (Dashboard · Stats · Replies, while sync_status==='importing').
   // Tone is warm + non-apologetic: the platform is working, history is loading.

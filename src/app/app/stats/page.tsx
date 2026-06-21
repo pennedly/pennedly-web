@@ -9,7 +9,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { ApiError, clearTokens, fetchFollowers, fetchMe, fetchStats, getTokens, refreshStats } from "@/lib/api";
+import { ApiError, clearTokens, fetchEngagement, fetchFollowers, fetchMe, fetchStats, getTokens, refreshStats } from "@/lib/api";
 import { useSelectedAccountId } from "@/lib/account";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
@@ -33,8 +33,10 @@ import {
   TopPostsPanel,
 } from "@/components/studio/StatsParts";
 import { ImportBanner, useActiveSyncStatus } from "@/components/studio/ImportBanner";
+import { EngagementPanel, type EngagementState } from "@/components/studio/EngagementPanel";
+import { ENGAGEMENT_DEMO, engagementThinHistory } from "@/components/studio/engagement-demo";
 import { STATS_DEMO, STATS_TWEAK_DEFAULTS, type Gran, type StatBucket, type StatPeriodKey } from "@/components/studio/stats-demo";
-import type { FollowerHistory, StatsResponse } from "@/lib/types";
+import type { EngagementHistory, FollowerHistory, StatsResponse } from "@/lib/types";
 
 const IS_DEV = process.env.NODE_ENV === "development";
 
@@ -110,6 +112,11 @@ export default function StatsPage() {
   const [period, setPeriod] = useState<StatPeriodKey>("7d");
   const [stats, setStats] = useState<StatsResponse | null>(null);
   const [followers, setFollowers] = useState<FollowerHistory | null>(null);
+  // Engagement panel: its own fetch (days=365 ONCE — the panel derives 30/90/1y
+  // client-side) with its own loading/error lifecycle, independent of the
+  // period selector and fail-soft so it never blocks the dashboard.
+  const [engagement, setEngagement] = useState<EngagementHistory | null>(null);
+  const [engStatus, setEngStatus] = useState<"loading" | "ready" | "error">("loading");
   const [loading, setLoading] = useState(true);
   const [bootError, setBootError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -157,6 +164,25 @@ export default function StatsPage() {
       .catch(() => setFollowers(null));
   }, [accountId, demoParam]);
 
+  // Engagement series — fetched once per account at the full window (days=365);
+  // the panel slices 30/90/1y locally. Tracks its own error state so the panel
+  // can show its Retry tile without affecting the rest of the dashboard.
+  const loadEngagement = useCallback(async () => {
+    if (accountId === null) return;
+    setEngStatus("loading");
+    try {
+      setEngagement(await fetchEngagement(accountId));
+      setEngStatus("ready");
+    } catch {
+      setEngStatus("error");
+    }
+  }, [accountId]);
+
+  useEffect(() => {
+    if (demoParam || accountId === null) return;
+    void loadEngagement();
+  }, [accountId, demoParam, loadEngagement]);
+
   // demo: dark + sync period from tweak + brief loading on period change
   useEffect(() => {
     if (!demoOn) return;
@@ -176,12 +202,17 @@ export default function StatsPage() {
   // follower count) — the Refresh button + an auto-pull when the screen opens.
   const reload = useCallback(async () => {
     if (accountId === null) return;
-    const [s, f] = await Promise.allSettled([
+    const [s, f, e] = await Promise.allSettled([
       fetchStats(accountId, { period }),
       fetchFollowers(accountId),
+      fetchEngagement(accountId),
     ]);
     if (s.status === "fulfilled") setStats(s.value);
     if (f.status === "fulfilled") setFollowers(f.value);
+    if (e.status === "fulfilled") {
+      setEngagement(e.value);
+      setEngStatus("ready");
+    }
   }, [accountId, period]);
 
   const doRefresh = useCallback(
@@ -327,6 +358,26 @@ export default function StatsPage() {
   // null` is a fetch failure, not a lock, so it falls through to "collecting".
   const followerLocked = !demoOn && followers !== null && followers.latest === null && followers.points.length === 0;
 
+  // ── Engagement panel state ──
+  // Demo: driven by the Tweaks "Engagement" radio. Live: loading → error → (thin
+  // when the series is still building, ≤8 real days) → populated. "Thin" mirrors
+  // the follower "collecting" idea: a fresh account whose daily series hasn't
+  // accrued enough points for an honest line yet.
+  const engReal = engagement?.points.filter((p) => p.views > 0 || p.likes > 0 || p.replies > 0 || p.reposts > 0 || p.quotes > 0).length ?? 0;
+  let engState: EngagementState;
+  let engData: EngagementHistory | null;
+  if (demoOn) {
+    const e = tw.engagement as "Loading" | "Populated" | "Thin" | "Error";
+    engState = e === "Populated" ? "ready" : (e.toLowerCase() as EngagementState);
+    engData = e === "Thin" ? engagementThinHistory(5) : ENGAGEMENT_DEMO;
+  } else {
+    engState = engStatus === "loading" ? "loading" : engStatus === "error" ? "error" : engReal > 0 && engReal <= 8 ? "thin" : "ready";
+    engData = engagement;
+  }
+  const engagementPanel = (
+    <EngagementPanel data={engData} state={engState} onRetry={demoOn ? undefined : loadEngagement} />
+  );
+
   return (
     <div className="min-h-screen bg-bg text-text">
       <AppTopbar
@@ -389,6 +440,7 @@ export default function StatsPage() {
               />
               <p className="px-1 text-caption leading-relaxed text-text-subtle">{t("stats.since_connect_note")}</p>
             </div>
+            {engagementPanel}
             <DistributionBars cap={tierCap} tiers={model.tiers} calculating={tiersCalculating} />
           </>
         ) : model ? (
@@ -412,6 +464,7 @@ export default function StatsPage() {
               />
               <p className="px-1 text-caption leading-relaxed text-text-subtle">{t("stats.since_connect_note")}</p>
             </div>
+            {engagementPanel}
             {model.top.length > 0 && <TopPostsPanel cap={`${t("stats.top_cap")} · ${periodLabel}`} rows={model.top} />}
             {period !== "today" && period !== "yesterday" && model.heatmap.length > 0 && (
               <HeatmapPanel cap={`${t("stats.heat_sub")} · ${periodLabel}`} cells={model.heatmap} />
@@ -428,6 +481,7 @@ export default function StatsPage() {
           <TweakSection label="Data" />
           <TweakRadio label="Period" value={tw.period} options={["today", "yesterday", "7d", "30d", "90d", "all"]} onChange={(v) => setTw("period", v)} />
           <TweakRadio label="State" value={tw.state} options={["Live", "Loading", "Empty"]} onChange={(v) => setTw("state", v)} />
+          <TweakRadio label="Engagement" value={tw.engagement} options={["Loading", "Populated", "Thin", "Error"]} onChange={(v) => setTw("engagement", v)} />
         </TweaksPanel>
       )}
     </div>

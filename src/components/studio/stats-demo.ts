@@ -66,6 +66,7 @@ export const STATS_TWEAK_DEFAULTS = {
   dark: false,
   state: "Live", // Live | Loading | Empty
   period: "7d", // today | yesterday | 7d | 30d | 90d | all
+  engagement: "Populated", // Loading | Populated | Thin | Error — the Engagement panel state
 };
 
 export const STATS_DEMO: Record<StatPeriodKey, StatPeriodData> = {

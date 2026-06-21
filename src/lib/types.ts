@@ -607,6 +607,31 @@ export type FeedResponse = {
 export type FollowerPoint = { day: string; count: number };
 export type FollowerHistory = { points: FollowerPoint[]; latest: number | null };
 
+// Account-level engagement series for the Stats "Engagement" panel. Mirrors
+// api/stats.py EngagementHistory. `points[]` is gap-filled / continuous (one per
+// day, empty days zeroed). `views` is a real day-series; the lifetime totals
+// (likes/replies/reposts/quotes) are account-wide figures carried ONCE on the
+// envelope (the latest snapshot), null when the account has no data yet — they
+// are NOT per-day deltas, so the per-day likes/replies/reposts/quotes inside
+// points[] are recent-only (older days truly 0).
+export type EngagementPoint = {
+  day: string; // ISO date (YYYY-MM-DD)
+  views: number;
+  likes: number;
+  replies: number;
+  reposts: number;
+  quotes: number;
+};
+export type EngagementMetric = "views" | "likes" | "replies" | "reposts" | "quotes";
+export type EngagementHistory = {
+  points: EngagementPoint[];
+  // Account-wide lifetime totals (latest snapshot); null when no data yet.
+  likes: number | null;
+  replies: number | null;
+  reposts: number | null;
+  quotes: number | null;
+};
+
 // ── Overview (multi-account portfolio rollup) ────────────────────────
 // Mirrors api/me.py OverviewResponse. One request → per-account headline
 // numbers + sync state (the cards) + pre-computed totals across SYNCED accounts

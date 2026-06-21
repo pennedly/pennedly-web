@@ -95,6 +95,9 @@ test.beforeEach(async ({ page, context }) => {
   // comment thread. Account-wide status_counts on both.
   await context.route(/\/api\/accounts\/\d+\/comment-posts(\?|$)/, ok({ posts: [], count: 0, status_counts: {} }));
   await context.route(/\/api\/accounts\/\d+\/comments(\?|$)/, ok({ comments: [], count: 0, status_counts: {} }));
+  // Stats screen: the followers line + the engagement panel both fetch on load.
+  await context.route(/\/api\/accounts\/\d+\/followers(\?|$)/, ok({ points: [], latest: null }));
+  await context.route(/\/api\/accounts\/\d+\/engagement(\?|$)/, ok({ points: [], likes: null, replies: null, reposts: null, quotes: null }));
   await context.route(/\/api\/accounts\/\d+\/role-book$/, ok({
     role_book_id: 1, name: "Voice", sections: null,
     prompt_text: "voice", created_by: "user", parent_id: null,

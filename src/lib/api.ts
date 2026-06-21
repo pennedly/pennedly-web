@@ -32,6 +32,7 @@ import type {
   DeletePostResult,
   DraftsList,
   DraftVideo,
+  EngagementHistory,
   MediaItem,
   MediaUploadResponse,
   FeedResponse,
@@ -828,6 +829,19 @@ export async function fetchFollowers(
 ): Promise<FollowerHistory> {
   return fetchApi<FollowerHistory>(
     `/api/accounts/${accountId}/followers?days=${days}`,
+  );
+}
+
+// Account-level engagement series for the /app/stats Engagement panel. We pull
+// the full window (days=365, the contract max) ONCE and derive the 30d/90d/1y
+// views client-side, so switching range/metric never refetches. `days` is
+// clamped server-side to [1, 365].
+export async function fetchEngagement(
+  accountId: number,
+  days = 365,
+): Promise<EngagementHistory> {
+  return fetchApi<EngagementHistory>(
+    `/api/accounts/${accountId}/engagement?days=${days}`,
   );
 }
 
