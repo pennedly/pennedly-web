@@ -300,6 +300,15 @@ export async function disconnectAccount(
   return fetchApi(`/api/accounts/${accountId}/disconnect`, { method: "POST" });
 }
 
+// Permanently delete the signed-in user's account and ALL their data (GDPR
+// right-to-erasure). Irreversible — the caller must drop tokens + redirect.
+export async function deleteAccount(): Promise<{
+  status: string;
+  deleted_tenant_ids: number[];
+}> {
+  return fetchApi("/api/me", { method: "DELETE" });
+}
+
 // Kick off the Threads OAuth connect. Returns the Meta authorize URL the
 // caller should navigate the browser to. `returnTo` is where Meta's
 // callback will 302 us back (must be an allowlisted web origin).

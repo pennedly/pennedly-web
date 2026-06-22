@@ -13,7 +13,13 @@
     "consent.text",
     "consent.learn",
     "consent.decline",
-    "consent.accept"
+    "consent.accept",
+    "settings.danger_title",
+    "settings.delete_account",
+    "settings.delete_account_sub",
+    "settings.delete_confirm",
+    "settings.deleting",
+    "settings.delete_failed"
   ],
   "es": [
     "a11y.close",
@@ -28,7 +34,13 @@
     "consent.text",
     "consent.learn",
     "consent.decline",
-    "consent.accept"
+    "consent.accept",
+    "settings.danger_title",
+    "settings.delete_account",
+    "settings.delete_account_sub",
+    "settings.delete_confirm",
+    "settings.deleting",
+    "settings.delete_failed"
   ],
   "fr": [
     "a11y.close",
@@ -43,7 +55,13 @@
     "consent.text",
     "consent.learn",
     "consent.decline",
-    "consent.accept"
+    "consent.accept",
+    "settings.danger_title",
+    "settings.delete_account",
+    "settings.delete_account_sub",
+    "settings.delete_confirm",
+    "settings.deleting",
+    "settings.delete_failed"
   ],
   "it": [
     "a11y.close",
@@ -58,7 +76,13 @@
     "consent.text",
     "consent.learn",
     "consent.decline",
-    "consent.accept"
+    "consent.accept",
+    "settings.danger_title",
+    "settings.delete_account",
+    "settings.delete_account_sub",
+    "settings.delete_confirm",
+    "settings.deleting",
+    "settings.delete_failed"
   ],
   "pt": [
     "a11y.close",
@@ -73,7 +97,13 @@
     "consent.text",
     "consent.learn",
     "consent.decline",
-    "consent.accept"
+    "consent.accept",
+    "settings.danger_title",
+    "settings.delete_account",
+    "settings.delete_account_sub",
+    "settings.delete_confirm",
+    "settings.deleting",
+    "settings.delete_failed"
   ],
   "ru": [],
   "uk": [
@@ -89,6 +119,12 @@
     "consent.text",
     "consent.learn",
     "consent.decline",
-    "consent.accept"
+    "consent.accept",
+    "settings.danger_title",
+    "settings.delete_account",
+    "settings.delete_account_sub",
+    "settings.delete_confirm",
+    "settings.deleting",
+    "settings.delete_failed"
   ]
 }

@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import {
   ApiError,
   clearTokens,
+  deleteAccount,
   disconnectAccount,
   fetchMe,
   fetchMyAccounts,
@@ -32,7 +33,7 @@ import {
   useTranslation,
   type LocaleCode,
 } from "@/lib/i18n";
-import { captureEvent } from "@/lib/analytics";
+import { captureEvent, resetIdentity } from "@/lib/analytics";
 import { AppTopbar } from "@/components/AppTopbar";
 import { Avatar, AccountFace } from "@/components/ui/avatar";
 import { Button, buttonClasses } from "@/components/ui/button";
@@ -64,6 +65,8 @@ export default function SettingsPage() {
   const [confirmId, setConfirmId] = useState<number | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [demoParam] = useState(() =>
     typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("demo") === "1" : false,
   );
@@ -76,6 +79,20 @@ export default function SettingsPage() {
     const id = Date.now() + Math.random();
     setToasts((s) => [...s, { id, message, tone }]);
     setTimeout(() => setToasts((s) => s.filter((x) => x.id !== id)), 3500);
+  }
+
+  async function onDeleteAccount() {
+    setDeleting(true);
+    captureEvent("ui.account_deleted");
+    try {
+      await deleteAccount();
+      resetIdentity();
+      clearTokens();
+      router.push("/app/login");
+    } catch {
+      setDeleting(false);
+      toast(t("settings.delete_failed"), "error");
+    }
   }
 
   useEffect(() => {
@@ -367,6 +384,32 @@ export default function SettingsPage() {
                   </Link>
                 </div>
               )}
+            </section>
+
+            <section className="mt-8">
+              <h2 className="mb-3 text-caption font-semibold uppercase tracking-[0.06em] text-danger">
+                {t("settings.danger_title")}
+              </h2>
+              <div className="flex flex-col gap-3 rounded-lg border border-danger/40 bg-surface p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <div className="text-small font-medium text-text">{t("settings.delete_account")}</div>
+                  <div className="mt-0.5 text-caption text-text-subtle">{t("settings.delete_account_sub")}</div>
+                </div>
+                {deleteConfirm ? (
+                  <div className="flex shrink-0 gap-2 max-md:w-full">
+                    <Button variant="secondary" size="sm" onClick={() => setDeleteConfirm(false)} disabled={deleting} className="max-md:flex-1">
+                      {t("common.cancel")}
+                    </Button>
+                    <Button variant="danger" size="sm" onClick={onDeleteAccount} disabled={deleting} className="max-md:flex-1">
+                      {deleting ? t("settings.deleting") : t("settings.delete_confirm")}
+                    </Button>
+                  </div>
+                ) : (
+                  <Button variant="danger" size="sm" onClick={() => setDeleteConfirm(true)} className="shrink-0 max-md:w-full">
+                    {t("settings.delete_account")}
+                  </Button>
+                )}
+              </div>
             </section>
           </>
         )}
