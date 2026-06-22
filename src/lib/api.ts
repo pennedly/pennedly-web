@@ -309,6 +309,12 @@ export async function deleteAccount(): Promise<{
   return fetchApi("/api/me", { method: "DELETE" });
 }
 
+// GDPR data export (Art. 20): the full account dump as a JSON object. The
+// caller turns it into a downloadable file.
+export async function exportAccountData(): Promise<unknown> {
+  return fetchApi("/api/me/export");
+}
+
 // Kick off the Threads OAuth connect. Returns the Meta authorize URL the
 // caller should navigate the browser to. `returnTo` is where Meta's
 // callback will 302 us back (must be an allowlisted web origin).

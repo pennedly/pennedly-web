@@ -19,7 +19,12 @@
     "settings.delete_account_sub",
     "settings.delete_confirm",
     "settings.deleting",
-    "settings.delete_failed"
+    "settings.delete_failed",
+    "settings.data_title",
+    "settings.export_data",
+    "settings.export_data_sub",
+    "settings.exporting",
+    "settings.export_failed"
   ],
   "es": [
     "a11y.close",
@@ -40,7 +45,12 @@
     "settings.delete_account_sub",
     "settings.delete_confirm",
     "settings.deleting",
-    "settings.delete_failed"
+    "settings.delete_failed",
+    "settings.data_title",
+    "settings.export_data",
+    "settings.export_data_sub",
+    "settings.exporting",
+    "settings.export_failed"
   ],
   "fr": [
     "a11y.close",
@@ -61,7 +71,12 @@
     "settings.delete_account_sub",
     "settings.delete_confirm",
     "settings.deleting",
-    "settings.delete_failed"
+    "settings.delete_failed",
+    "settings.data_title",
+    "settings.export_data",
+    "settings.export_data_sub",
+    "settings.exporting",
+    "settings.export_failed"
   ],
   "it": [
     "a11y.close",
@@ -82,7 +97,12 @@
     "settings.delete_account_sub",
     "settings.delete_confirm",
     "settings.deleting",
-    "settings.delete_failed"
+    "settings.delete_failed",
+    "settings.data_title",
+    "settings.export_data",
+    "settings.export_data_sub",
+    "settings.exporting",
+    "settings.export_failed"
   ],
   "pt": [
     "a11y.close",
@@ -103,7 +123,12 @@
     "settings.delete_account_sub",
     "settings.delete_confirm",
     "settings.deleting",
-    "settings.delete_failed"
+    "settings.delete_failed",
+    "settings.data_title",
+    "settings.export_data",
+    "settings.export_data_sub",
+    "settings.exporting",
+    "settings.export_failed"
   ],
   "ru": [],
   "uk": [
@@ -125,6 +150,11 @@
     "settings.delete_account_sub",
     "settings.delete_confirm",
     "settings.deleting",
-    "settings.delete_failed"
+    "settings.delete_failed",
+    "settings.data_title",
+    "settings.export_data",
+    "settings.export_data_sub",
+    "settings.exporting",
+    "settings.export_failed"
   ]
 }

@@ -16,6 +16,7 @@ import {
   clearTokens,
   deleteAccount,
   disconnectAccount,
+  exportAccountData,
   fetchMe,
   fetchMyAccounts,
   getTokens,
@@ -67,6 +68,7 @@ export default function SettingsPage() {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [demoParam] = useState(() =>
     typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("demo") === "1" : false,
   );
@@ -79,6 +81,29 @@ export default function SettingsPage() {
     const id = Date.now() + Math.random();
     setToasts((s) => [...s, { id, message, tone }]);
     setTimeout(() => setToasts((s) => s.filter((x) => x.id !== id)), 3500);
+  }
+
+  async function onExportData() {
+    setExporting(true);
+    captureEvent("ui.account_exported");
+    try {
+      const data = await exportAccountData();
+      const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `pennedly-export-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast(t("settings.export_failed"), "error");
+    } finally {
+      setExporting(false);
+    }
   }
 
   async function onDeleteAccount() {
@@ -384,6 +409,21 @@ export default function SettingsPage() {
                   </Link>
                 </div>
               )}
+            </section>
+
+            <section className="mt-8">
+              <h2 className="mb-3 text-caption font-semibold uppercase tracking-[0.06em] text-text-subtle">
+                {t("settings.data_title")}
+              </h2>
+              <div className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <div className="text-small font-medium text-text">{t("settings.export_data")}</div>
+                  <div className="mt-0.5 text-caption text-text-subtle">{t("settings.export_data_sub")}</div>
+                </div>
+                <Button variant="secondary" size="sm" onClick={onExportData} disabled={exporting} className="shrink-0 max-md:w-full">
+                  {exporting ? t("settings.exporting") : t("settings.export_data")}
+                </Button>
+              </div>
             </section>
 
             <section className="mt-8">
