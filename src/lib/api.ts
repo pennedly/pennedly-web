@@ -78,6 +78,8 @@ import type {
   ScenarioUpdate,
   ScenarioPreview,
   ScenarioPreviewRequest,
+  ScenarioRunNow,
+  PresetsResponse,
 } from "./types";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
@@ -944,7 +946,13 @@ export async function deleteAutopostRule(
   return fetchApi(`/api/autopost-rules/${ruleId}`, { method: "DELETE" });
 }
 
-// ── Scenarios (recurring/conditional content; «Акция» template) ────────────
+// ── Scenarios (recurring/conditional content — the «рутинный автопилот») ─────
+// The preset catalog the discovery gallery + the editor pre-fill read. Baked
+// instructions arrive already localized to the owner's locale (EN fallback).
+export async function fetchScenarioPresets(): Promise<PresetsResponse> {
+  return fetchApi<PresetsResponse>(`/api/scenarios/presets`);
+}
+
 export async function fetchScenarios(accountId: number): Promise<ScenariosResponse> {
   return fetchApi<ScenariosResponse>(`/api/accounts/${accountId}/scenarios`);
 }
@@ -997,6 +1005,15 @@ export async function previewScenario(
     `/api/accounts/${accountId}/scenarios/preview`,
     { method: "POST", body: JSON.stringify(body) },
   );
+}
+
+// «Прогнать сейчас» — generates a DRAFT only (never publishes). For a post
+// scenario → a post draft; for a reply_policy scenario → a sample reply drafted
+// against a recent eligible comment. Tester-gated server-side.
+export async function runScenarioNow(scenarioId: number): Promise<ScenarioRunNow> {
+  return fetchApi<ScenarioRunNow>(`/api/scenarios/${scenarioId}/run-now`, {
+    method: "POST",
+  });
 }
 
 export async function refineDraft(

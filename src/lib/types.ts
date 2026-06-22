@@ -704,6 +704,13 @@ export type AutopilotConfig = {
   // Optional: only auto-reply to comments on posts younger than N days (null =
   // no limit). Stops the bot chasing comments on stale posts.
   reply_post_max_age_days: number | null;
+  // Per-day cap on how many POST-scenarios may fire on this account (the
+  // Scenarios control-center stepper). The worker reads it from
+  // `account_autopilot.max_post_scenarios_per_day` (default 1); the GET/PUT
+  // autopilot endpoint does not yet surface it, so it may be absent on read —
+  // the Scenarios screen treats `undefined` as the default 1. Optional here so
+  // existing callers (the Autopilot screen) need no change.
+  max_post_scenarios_per_day?: number;
 };
 
 // ── Autopost objects (autopilot redesign) ────────────────────────────
@@ -789,6 +796,16 @@ export type ScenarioPromoFields = {
   n_days: number;
 };
 
+// One durable skip-audit row — why a DUE fire was declined (the «почему не
+// сработало» line on a control-center card). reason ∈ cap | condition | gated |
+// quota. Mirrors api/scenarios.py ScenarioSkipOut.
+export type ScenarioSkip = {
+  local_date: string;
+  reason: string;
+  detail: string | null;
+  created_at: string;
+};
+
 export type Scenario = {
   id: number;
   name: string;
@@ -805,13 +822,23 @@ export type Scenario = {
   reply_instruction: string;
   next_run_at: string | null;
   last_run_at: string | null;
+  /** The most recent skip-audit rows (newest first) — the control-center's
+   *  «почему не сработало». Empty for a scenario that never declined a fire. */
+  recent_skips: ScenarioSkip[];
 };
 
 export type ScenariosResponse = { scenarios: Scenario[] };
 
-// Create/update send EITHER `promo` (the helper) OR the raw free fields
-// (`trigger` + `instruction` + optional `reply_instruction`). They NEVER send a
-// `template` — it is resolved server-side as the provenance tag.
+// Create/update send ONE of: `promo` (the «Акция» helper) · `reply_policy`
+// («Дежурство» — a standalone reply policy) · the raw free fields (`trigger` +
+// `instruction` + optional `reply_instruction` + optional `condition`). They
+// NEVER send `template` — it is resolved server-side as the provenance tag.
+export type ScenarioReplyPolicy = {
+  audience: string; // all_except_trolls | questions | fans
+  max_per_day: number;
+  skip_low_value: boolean;
+};
+
 export type ScenarioCreate = {
   name: string;
   enabled?: boolean;
@@ -819,6 +846,8 @@ export type ScenarioCreate = {
   trigger?: Record<string, unknown>;
   instruction?: string;
   reply_instruction?: string;
+  reply_policy?: ScenarioReplyPolicy;
+  condition?: Record<string, unknown> | null;
 };
 
 export type ScenarioUpdate = {
@@ -828,6 +857,8 @@ export type ScenarioUpdate = {
   trigger?: Record<string, unknown>;
   instruction?: string;
   reply_instruction?: string;
+  reply_policy?: ScenarioReplyPolicy;
+  condition?: Record<string, unknown> | null;
 };
 
 // Preview EITHER a promo scenario (`promo`) OR a free one (`instruction`).
@@ -842,6 +873,69 @@ export type ScenarioPreview = {
   reply_instruction: string;
   /** A short mock post, returned for the free-scenario preview. */
   sample_post: string;
+};
+
+// «Прогнать сейчас» — the pending draft run-now created (draft only, never
+// published). `kind` distinguishes a post draft from a sample reply (drafted
+// against a recent eligible comment, whose text rides in `replied_to`).
+// Mirrors api/scenarios.py RunNowResponse.
+export type ScenarioRunNow = {
+  draft_id: number;
+  text: string;
+  kind: "post" | "reply";
+  replied_to: string | null;
+};
+
+// ── Scenario PRESET catalog (the discovery gallery + the form pre-fill) ──────
+// Mirrors api/scenarios.py PresetsResponse / PresetOut / PresetFieldOut. The
+// baked `instruction` + `reply_instruction` arrive ALREADY localized to the
+// account owner's locale (EN fallback) — do NOT re-localize in i18n.
+export type PresetFieldKind =
+  | "text"
+  | "textarea"
+  | "date"
+  | "weekday"
+  | "cadence"
+  | "options"
+  | "number";
+
+export type PresetField = {
+  key: string;
+  name_key: string; // i18n label key, e.g. "scenarios.field.topic"
+  kind: PresetFieldKind;
+  required: boolean;
+  default: unknown;
+  /** Where the edited value lands when compiling the scenario: "instruction",
+   *  "condition_cfg.<key>", "trigger_cfg.<key>", or "action_cfg.<key>". */
+  maps_to: string;
+  min_count: number | null;
+  max_count: number | null;
+};
+
+// gallery group: core (Каждый день) | periodic | reactive | campaign. The
+// backend ships "daily" | "periodic" | "reactive" for catalog presets; «Акция»
+// is a synthetic FE-only "campaign" preset (the promo helper).
+export type PresetGroup = "daily" | "periodic" | "reactive" | "campaign";
+
+export type ScenarioPreset = {
+  id: string;
+  name_key: string;
+  icon: string; // icon key (IcChat / IcBookmark / IcShield / …)
+  group: string;
+  instruction: string;
+  reply_instruction: string;
+  trigger_cfg: Record<string, unknown>;
+  condition_cfg: Record<string, unknown> | null;
+  action_cfg: Record<string, unknown>;
+  fields: PresetField[];
+  /** Reply-card defaults the FE pre-fills for a reply-bearing post preset
+   *  ({} ⇒ replies off by default). */
+  reply_defaults: { audience?: string; max_per_day?: number; skip_low_value?: boolean };
+};
+
+export type PresetsResponse = {
+  locale: string;
+  presets: ScenarioPreset[];
 };
 
 // The account's own manual generation rules (layered over the role_book +

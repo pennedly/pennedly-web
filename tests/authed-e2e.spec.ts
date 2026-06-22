@@ -98,8 +98,19 @@ test.beforeEach(async ({ page, context }) => {
   // Stats screen: the followers line + the engagement panel both fetch on load.
   await context.route(/\/api\/accounts\/\d+\/followers(\?|$)/, ok({ points: [], latest: null }));
   await context.route(/\/api\/accounts\/\d+\/engagement(\?|$)/, ok({ points: [], likes: null, replies: null, reposts: null, quotes: null }));
-  // Scenarios screen fetches its list on load (empty list is a valid state).
+  // Scenarios screen fetches its list + preset catalog + autopilot config on
+  // load (the «рутинный автопилот» control-center). Empty list = a valid state
+  // (renders the discovery gallery). The literal `/scenarios/presets` path must
+  // be routed BEFORE the broader `/scenarios` matcher (Playwright is last-wins,
+  // so the specific one is registered after to take precedence).
   await context.route(/\/api\/accounts\/\d+\/scenarios(\?|$)/, ok({ scenarios: [] }));
+  await context.route(/\/api\/scenarios\/presets(\?|$)/, ok({ locale: "en", presets: [] }));
+  await context.route(/\/api\/accounts\/\d+\/autopilot(\?|$)/, ok({
+    enabled: false, post_enabled: false, posts_per_day: 1, quiet_start_hour: null, quiet_end_hour: null,
+    reply_enabled: false, reply_mode: "off", reply_audience: "all_except_trolls", replies_per_day: 5,
+    reply_frequency: "hourly", reply_quiet_start_hour: null, reply_quiet_end_hour: null,
+    reply_skip_low_value: true, reply_post_max_age_days: null, max_post_scenarios_per_day: 1,
+  }));
   await context.route(/\/api\/accounts\/\d+\/role-book$/, ok({
     role_book_id: 1, name: "Voice", sections: null,
     prompt_text: "voice", created_by: "user", parent_id: null,

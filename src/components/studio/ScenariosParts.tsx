@@ -1,41 +1,59 @@
 "use client";
 
-// Scenarios — presentational pieces for /app/scenarios. Rebuilt 1:1 to the new
-// Scenarios-{WEB,Mobile}-SPEC (_cd-new). The OLD 4-template picker + the
-// separate «Свой» editor are GONE: there is now ONE scenario and ONE form.
+// Scenarios — presentational pieces for /app/scenarios. Rebuilt 1:1 to the
+// «рутинный автопилот» Scenarios-{WEB,Mobile}-SPEC (_cd-new).
 //
-//   a scenario = КОГДА (schedule) → ИНСТРУКЦИЯ → [КАК ОТВЕЧАТЬ]
+//   a scenario = ONE form, pre-filled by a PRESET. КОГДА (schedule, 5 modes) →
+//   что вы задаёте (1–2 fields) → что зашьётся (read-only) → [как отвечать] →
+//   preview + «Прогнать сейчас» (draft only).
 //
-// Templates became PRESETS (a thin chip row) that pre-fill that one form. The
-// rich «Акция» editor is PRESERVED as the "Промо-помощник ВКЛ" disclosure of
-// the form. The raw model lives under a "Показать как сценарий" disclosure.
-// Icons: scenario = repeat-loop (one for all), promo helper = gift, auto-reply
-// = chat bubble. No bolt. No «Свой» card.
+// Discovery is a preset GALLERY (4 groups, sorted by impact, no «soon», no
+// «Свой» card). The list is a CONTROL-CENTER: per-day cap, week strip Mon–Sun,
+// stacking warnings (named victims), «почему не сработало», cross-account
+// «Применить к…». The rich «Акция» editor is PRESERVED as the campaign preset's
+// form. Raw model lives under «Показать как сценарий». Icons: scenario = repeat;
+// promo = gift; replies = bubble; reactive = bolt-event.
 
-import { type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/cn";
 import { useTranslation } from "@/lib/i18n";
 import {
+  IcBolt,
   IcBubble,
   IcCalendar,
+  IcChart,
   IcCheck,
   IcChevRight,
   IcClock,
+  IcExternal,
   IcEye,
   IcGift,
   IcHeart,
   IcList,
+  IcLock,
+  IcPlay,
   IcReload,
   IcRepeat,
+  IcReplies,
+  IcShield,
   IcSparkle,
+  IcStar,
   IcTrash,
   IcUsers,
 } from "@/components/icons";
 import type { MessageKey } from "@/lib/i18n/messages/en";
-import type { Scenario, ScenarioPromoFields, ScenarioPreview } from "@/lib/types";
+import type {
+  ConnectedAccount,
+  PresetField,
+  Scenario,
+  ScenarioPreset,
+  ScenarioPromoFields,
+  ScenarioPreview as ScenarioPreviewT,
+  ScenarioRunNow,
+} from "@/lib/types";
 
 type IconCmp = (p: { size?: number; className?: string }) => React.ReactNode;
 type T = (k: MessageKey) => string;
@@ -50,12 +68,89 @@ const TEXTAREA =
 
 export { SELECT, INPUT, TEXTAREA };
 
-// ── presets (the entry chip row). Only «Акция» (promo) is live. ──
-export type Preset = "promo" | "rubric" | "seasonal";
-export const PRESETS: { key: Preset; icon: IconCmp; label: MessageKey; ready: boolean }[] = [
-  { key: "promo", icon: IcGift, label: "scenarios.tpl.promo", ready: true },
-  { key: "rubric", icon: IcList, label: "scenarios.tpl.rubric", ready: false },
-  { key: "seasonal", icon: IcCalendar, label: "scenarios.tpl.seasonal", ready: false },
+// ── icon resolution for preset cards / list ──
+const ICONS: Record<string, IconCmp> = {
+  IcBubble,
+  IcReplies,
+  IcShield,
+  IcCalendar,
+  IcChart,
+  IcList,
+  IcBolt,
+  IcUsers,
+  IcGift,
+};
+function presetIcon(key: string): IconCmp {
+  return ICONS[key] ?? IcRepeat;
+}
+
+// ── group metadata: order, label, impact (0–3 pips, sort high→low) ──
+export type Group = "daily" | "periodic" | "reactive" | "campaign";
+const GROUP_ORDER: Group[] = ["daily", "periodic", "reactive", "campaign"];
+const GROUP_LABEL: Record<Group, MessageKey> = {
+  daily: "scenarios.group.daily",
+  periodic: "scenarios.group.periodic",
+  reactive: "scenarios.group.reactive",
+  campaign: "scenarios.group.campaign",
+};
+const GROUP_NOTE: Record<Group, MessageKey> = {
+  daily: "scenarios.group.daily_note",
+  periodic: "scenarios.group.periodic_note",
+  reactive: "scenarios.group.reactive_note",
+  campaign: "scenarios.group.campaign_note",
+};
+// Per-preset impact (3-pip meter) — drives the high→low sort inside a group.
+const IMPACT: Record<string, number> = {
+  daily_question: 3,
+  reply_duty: 3,
+  rubric: 2,
+  safety_net: 2,
+  poll: 2,
+  seasonal: 1,
+  milestone_thanks: 1,
+  amplify_viral: 2,
+  promo: 3,
+};
+// Presets that PRODUCE replies → the form shows the «Как отвечать» block.
+const REPLY_PRESETS = new Set(["daily_question", "reply_duty", "poll", "promo"]);
+export function presetProducesReplies(id: string): boolean {
+  return REPLY_PRESETS.has(id);
+}
+
+// The starter-set presets the «Запусти базовый набор» button pre-binds.
+export const STARTER_SET = ["daily_question", "rubric", "reply_duty"];
+
+// ── KOGDA (schedule) modes ──
+export type WhenMode = "daily" | "every_n_days" | "weekly" | "date_range" | "event";
+
+// Derive the active КОГДА mode from a preset's / scenario's trigger_cfg +
+// condition_cfg. A date-window guard (active_from/active_to) reads as date_range.
+export function whenModeFromCfg(
+  trigger: Record<string, unknown> | null | undefined,
+  condition: Record<string, unknown> | null | undefined,
+): WhenMode {
+  const kind = (trigger?.kind as string) || "";
+  if (kind === "every_n_days") return "every_n_days";
+  if (kind === "weekly") return "weekly";
+  if (kind === "on_metric_threshold" || kind === "on_follower_milestone" || kind === "on_new_comment") return "event";
+  if (condition && ("active_from" in condition || "active_to" in condition)) return "date_range";
+  return "daily";
+}
+
+// Which event a reactive preset listens to (read-only КОГДА row copy + threshold
+// field presence).
+export function eventKindOf(trigger: Record<string, unknown> | null | undefined): string {
+  return (trigger?.kind as string) || "";
+}
+
+const WEEKDAYS: MessageKey[] = [
+  "scenarios.wd.mon",
+  "scenarios.wd.tue",
+  "scenarios.wd.wed",
+  "scenarios.wd.thu",
+  "scenarios.wd.fri",
+  "scenarios.wd.sat",
+  "scenarios.wd.sun",
 ];
 
 function fmtRun(iso: string | null, locale: string): string {
@@ -64,36 +159,306 @@ function fmtRun(iso: string | null, locale: string): string {
   return new Date(iso).toLocaleString(loc, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
-// A short, human schedule summary for the provenance badge / card desc of a
-// FREE scenario (a promo scenario shows the «Акция» badge instead).
-export function scheduleSummary(s: Scenario, t: T): string {
-  const kind = (s.trigger_cfg?.kind as string) || "";
-  if (kind === "every_n_days") {
-    const n = (s.trigger_cfg?.n as number) ?? "N";
-    return `${t("scenarios.sched.every_n")} (${n})`;
-  }
-  return t("scenarios.sched.daily");
+// ════════════════════════════════════════════════════════════════════════════
+//  DISCOVERY — the preset gallery (§3)
+// ════════════════════════════════════════════════════════════════════════════
+
+// 3-pip impact meter. Hidden for «Акция» (campaign carries risk/nudge instead).
+function ImpactMeter({ value }: { value: number }) {
+  const { t } = useTranslation();
+  return (
+    <span className="inline-flex items-center gap-1" title={t("scenarios.impact")} aria-label={t("scenarios.impact")}>
+      {[0, 1, 2].map((i) => (
+        <span key={i} className={cn("h-1.5 w-1.5 rounded-full", i < value ? "bg-accent" : "bg-border")} />
+      ))}
+    </span>
+  );
 }
 
-// ───────────────────────────── list card ────────────────────────────────────
-// One icon for every scenario (repeat-loop). The badge is PROVENANCE, not a
-// type: promo-seeded → soft «Акция» (accent + gift); else → schedule summary
-// (neutral, mono "when: …").
+// A human-readable "when" hint for a preset card footer.
+function presetWhenHint(p: ScenarioPreset, t: T): string {
+  const mode = whenModeFromCfg(p.trigger_cfg, p.condition_cfg);
+  switch (mode) {
+    case "weekly":
+      return t("scenarios.when_hint.weekly");
+    case "every_n_days":
+      return t("scenarios.when_hint.every_n");
+    case "date_range":
+      return t("scenarios.when_hint.dates");
+    case "event":
+      return eventKindOf(p.trigger_cfg) === "on_new_comment"
+        ? t("scenarios.when_hint.all_day")
+        : t("scenarios.when_hint.event");
+    default:
+      return t("scenarios.when_hint.morning");
+  }
+}
+
+export function PresetCard({ preset, onPick }: { preset: ScenarioPreset; onPick: (p: ScenarioPreset) => void }) {
+  const { t } = useTranslation();
+  const Icon = presetIcon(preset.icon);
+  const isFace = preset.id === "daily_question";
+  const isCampaign = preset.group === "campaign";
+  const isCore = preset.group === "daily";
+  return (
+    <button
+      type="button"
+      onClick={() => onPick(preset)}
+      className={cn(
+        "group flex h-full flex-col rounded-lg border bg-surface p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-text/20 hover:shadow-md md:p-[18px]",
+        isCore ? "border-accent/25 bg-accent/[0.04]" : isCampaign ? "border-warning/30 bg-warning/[0.04]" : "border-border",
+      )}
+    >
+      <div className="flex items-start gap-2.5">
+        <span
+          className={cn(
+            "grid h-9 w-9 shrink-0 place-items-center rounded-md border",
+            isCampaign
+              ? "border-warning/30 bg-warning/10 text-warning"
+              : isCore
+                ? "border-accent/30 bg-accent/10 text-accent"
+                : "border-border bg-surface-2 text-text-muted",
+          )}
+        >
+          <Icon size={18} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h4 className="flex flex-wrap items-center gap-1.5 text-body font-semibold tracking-tight">
+            {t(preset.name_key as MessageKey)}
+            {isFace && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-caption font-medium text-accent">
+                <IcStar size={11} /> {t("scenarios.face")}
+              </span>
+            )}
+          </h4>
+        </div>
+      </div>
+      <p className="mt-2 flex-1 text-small leading-relaxed text-text-muted">{t(`${preset.name_key}_desc` as MessageKey)}</p>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border pt-2.5">
+        <span className="inline-flex items-center gap-1.5 text-caption text-text-subtle">
+          {preset.group === "reactive" ? <IcBolt size={12} /> : <IcClock size={12} />}
+          {presetWhenHint(preset, t)}
+        </span>
+        {isCampaign ? (
+          <span className="inline-flex items-center gap-1.5">
+            <span className="rounded-full border border-warning/30 bg-warning/10 px-2 py-0.5 text-caption font-medium text-warning">
+              {t("scenarios.risk")}
+            </span>
+          </span>
+        ) : (
+          <ImpactMeter value={IMPACT[preset.id] ?? 1} />
+        )}
+      </div>
+      {isCampaign && <p className="mt-1.5 text-caption text-text-subtle">{t("scenarios.nudge")}</p>}
+    </button>
+  );
+}
+
+// The full discovery gallery: starter-set lede, groups (sorted by impact),
+// campaign in a dashed container, quiet «from scratch» at the bottom.
+export function DiscoveryGallery({
+  presets,
+  onPick,
+  onStarter,
+  onScratch,
+}: {
+  presets: ScenarioPreset[];
+  onPick: (p: ScenarioPreset) => void;
+  onStarter: () => void;
+  onScratch: () => void;
+}) {
+  const { t } = useTranslation();
+  const byGroup = useMemo(() => {
+    const m = new Map<Group, ScenarioPreset[]>();
+    for (const g of GROUP_ORDER) m.set(g, []);
+    for (const p of presets) {
+      const g = (GROUP_ORDER.includes(p.group as Group) ? p.group : "periodic") as Group;
+      m.get(g)!.push(p);
+    }
+    for (const g of GROUP_ORDER) m.get(g)!.sort((a, b) => (IMPACT[b.id] ?? 1) - (IMPACT[a.id] ?? 1));
+    return m;
+  }, [presets]);
+
+  return (
+    <div className="flex flex-col gap-6">
+      {/* lede: microcopy + starter-set */}
+      <div className="flex flex-col gap-3 rounded-lg border border-success/25 bg-success/[0.05] p-4 sm:flex-row sm:items-center sm:justify-between md:p-5">
+        <div className="min-w-0">
+          <p className="text-body font-semibold tracking-tight text-text">{t("scenarios.disco_lede")}</p>
+          <p className="mt-1 text-small leading-relaxed text-text-muted">{t("scenarios.disco_lede_sub")}</p>
+        </div>
+        <Button variant="primary" onClick={onStarter} icon={<IcSparkle size={15} />} className="shrink-0 max-sm:w-full">
+          {t("scenarios.starter_set")}
+        </Button>
+      </div>
+
+      {GROUP_ORDER.map((g) => {
+        const items = byGroup.get(g)!;
+        if (items.length === 0) return null;
+        const campaign = g === "campaign";
+        return (
+          <section key={g} className={cn("flex flex-col gap-3", campaign && "rounded-lg border border-dashed border-warning/40 bg-warning/[0.03] p-4 md:p-5")}>
+            <div className="flex flex-col gap-0.5">
+              <h3 className="flex items-center gap-2 text-h3 font-semibold tracking-tight">
+                {t(GROUP_LABEL[g])}
+                {campaign && <IcLock size={14} className="text-warning" />}
+              </h3>
+              <p className="text-small text-text-subtle">{t(GROUP_NOTE[g])}</p>
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+              {items.map((p) => (
+                <PresetCard key={p.id} preset={p} onPick={onPick} />
+              ))}
+            </div>
+          </section>
+        );
+      })}
+
+      <button
+        type="button"
+        onClick={onScratch}
+        className="mx-auto mt-1 text-small text-text-subtle underline decoration-border underline-offset-2 transition-colors hover:text-text"
+      >
+        {t("scenarios.from_scratch")}
+      </button>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  CONTROL CENTER — the list (§4)
+// ════════════════════════════════════════════════════════════════════════════
+
+// Header: «Неделя · локальное время» + the per-day post-scenario cap stepper.
+export function ControlCenterHeader({
+  cap,
+  onCap,
+}: {
+  cap: number;
+  onCap: (n: number) => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface-2/60 px-3.5 py-3">
+      <span className="inline-flex items-center gap-1.5 text-caption font-semibold uppercase tracking-wide text-text-subtle">
+        <IcClock size={13} /> {t("scenarios.cc_week")}
+      </span>
+      <div className="flex items-center gap-2.5">
+        <span className="text-small text-text-muted">{t("scenarios.cap_label")}</span>
+        <div className="inline-flex items-center gap-1 rounded-md border border-border bg-surface p-0.5">
+          <button
+            type="button"
+            aria-label={t("scenarios.cap_dec")}
+            onClick={() => onCap(Math.max(1, cap - 1))}
+            disabled={cap <= 1}
+            className="grid h-7 w-7 place-items-center rounded text-text-muted transition-colors hover:bg-surface-2 hover:text-text disabled:opacity-40 max-md:min-h-[40px] max-md:min-w-[40px]"
+          >
+            −
+          </button>
+          <span className="w-6 text-center text-body font-semibold tabular-nums">{cap}</span>
+          <button
+            type="button"
+            aria-label={t("scenarios.cap_inc")}
+            onClick={() => onCap(Math.min(10, cap + 1))}
+            disabled={cap >= 10}
+            className="grid h-7 w-7 place-items-center rounded text-text-muted transition-colors hover:bg-surface-2 hover:text-text disabled:opacity-40 max-md:min-h-[40px] max-md:min-w-[40px]"
+          >
+            +
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// The week strip Mon–Sun: a "fire" cell on the days the scenario fires. Reactive
+// scenarios show an event row instead.
+function CadenceStrip({ s }: { s: Scenario }) {
+  const { t } = useTranslation();
+  const mode = whenModeFromCfg(s.trigger_cfg, s.condition_cfg);
+  const evt = mode === "event";
+  if (evt) {
+    const kind = eventKindOf(s.trigger_cfg);
+    const label =
+      kind === "on_metric_threshold"
+        ? t("scenarios.event_views")
+        : kind === "on_follower_milestone"
+          ? t("scenarios.event_followers")
+          : t("scenarios.event_comment");
+    return (
+      <div className="flex items-center gap-2 rounded-md border border-success/25 bg-success/[0.05] px-2.5 py-1.5 text-caption text-text-muted">
+        <IcBolt size={13} className="shrink-0 text-success" />
+        <span>{label}</span>
+      </div>
+    );
+  }
+  // which days fire (0=Mon..6=Sun)
+  let fire = (i: number) => true; // daily
+  if (mode === "weekly") {
+    const wd = Number(s.trigger_cfg?.weekday ?? 0);
+    fire = (i) => i === wd;
+  } else if (mode === "every_n_days") {
+    const n = Number(s.trigger_cfg?.n ?? 1);
+    fire = (i) => n <= 1 || i % n === 0;
+  }
+  // reply scenarios fire across the week as a success-tint
+  const isReply = (s.action_cfg?.kind as string) === "reply_policy";
+  return (
+    <div className="flex items-center gap-1.5">
+      {WEEKDAYS.map((wd, i) => {
+        const on = fire(i);
+        return (
+          <span
+            key={i}
+            className={cn(
+              "grid h-7 flex-1 place-items-center rounded text-[10px] font-medium tabular-nums transition-colors",
+              on
+                ? isReply
+                  ? "bg-success/15 text-success"
+                  : "bg-accent/15 text-accent"
+                : "bg-surface-2 text-text-subtle",
+            )}
+            title={t(wd)}
+          >
+            {t(wd)}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+const SKIP_REASON: Record<string, MessageKey> = {
+  cap: "scenarios.skip.cap",
+  condition: "scenarios.skip.condition",
+  gated: "scenarios.skip.gated",
+  quota: "scenarios.skip.quota",
+};
+
+// One control-center card: glyph + name + provenance + toggle, the cadence
+// strip, runs (next/last) + run-count, a skip-note, and «Применить к…» + Open.
 export function ScenarioCard({
   s,
+  accounts,
   onToggle,
   onOpen,
+  onApply,
 }: {
   s: Scenario;
+  accounts?: ConnectedAccount[];
   onToggle: (s: Scenario, on: boolean) => void;
   onOpen: (s: Scenario) => void;
+  onApply?: (s: Scenario, accountIds: number[]) => void;
 }) {
   const { t, locale } = useTranslation();
   const isPromo = s.template === "promo";
-  const desc =
-    isPromo && s.structured
-      ? `${s.structured.ask} → ${s.structured.reward}`
-      : s.instruction || scheduleSummary(s, t);
+  const isReply = (s.action_cfg?.kind as string) === "reply_policy";
+  const Icon = isPromo ? IcGift : isReply ? IcReplies : IcRepeat;
+  const skip = s.recent_skips?.[0];
+  // run-count = number of skip rows is wrong; the SPEC shows "fired N times".
+  // We don't have a fire count field, so derive a friendly count from last_run
+  // presence is impossible — show the value only when the backend supplies it
+  // via a future field; for now we omit it when unknown (kept honest).
   return (
     <div
       className={cn(
@@ -108,14 +473,14 @@ export function ScenarioCard({
             s.enabled ? "border-success/30 bg-success/12 text-success" : "border-border bg-surface-2 text-text-muted",
           )}
         >
-          <IcRepeat size={20} />
+          <Icon size={20} />
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 pr-1">
             <h3 className="text-body font-semibold tracking-tight">{s.name}</h3>
             {isPromo ? (
-              <span className="inline-flex items-center gap-1 rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-caption font-medium text-accent">
-                <IcGift size={12} /> {t("scenarios.tpl.promo")}
+              <span className="inline-flex items-center gap-1 rounded-full border border-warning/30 bg-warning/10 px-2 py-0.5 text-caption font-medium text-warning">
+                <IcGift size={12} /> {t("scenarios.preset.promo")}
               </span>
             ) : (
               <span className="rounded-full border border-border bg-surface-2 px-2 py-0.5 font-mono text-caption font-medium text-text-muted">
@@ -123,7 +488,6 @@ export function ScenarioCard({
               </span>
             )}
           </div>
-          <p className="mt-1 line-clamp-1 text-small text-text-muted">{desc}</p>
         </div>
         <label className="flex shrink-0 items-center gap-2 text-caption font-semibold text-text-subtle">
           <span className={cn("max-sm:sr-only", s.enabled && "text-success")}>
@@ -132,6 +496,22 @@ export function ScenarioCard({
           <Switch checked={s.enabled} onCheckedChange={(v) => onToggle(s, v)} aria-label={s.name} />
         </label>
       </div>
+
+      {/* cadence strip */}
+      <div className="mt-3">
+        <CadenceStrip s={s} />
+      </div>
+
+      {/* skip-note */}
+      {!s.enabled || skip ? (
+        skip ? (
+          <div className="mt-3 rounded-md border border-dashed border-warning/40 bg-warning/[0.04] px-3 py-2 text-caption text-text-muted">
+            <span className="font-medium text-text">{t("scenarios.skip_title")}</span>{" "}
+            {t(SKIP_REASON[skip.reason] ?? "scenarios.skip.condition")}
+          </div>
+        ) : null
+      ) : null}
+
       <div className="mt-3.5 flex flex-col gap-2 border-t border-border pt-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-caption tabular-nums text-text-subtle">
           <span>
@@ -147,12 +527,140 @@ export function ScenarioCard({
             </span>
           </span>
         </div>
-        <Button size="sm" variant="secondary" onClick={() => onOpen(s)} className="shrink-0 max-sm:w-full">
-          {t("scenarios.open")}
-        </Button>
+        <div className="flex shrink-0 items-center gap-2 max-sm:w-full">
+          {onApply && accounts && accounts.length > 1 && (
+            <ApplyToPopover s={s} accounts={accounts} onApply={onApply} />
+          )}
+          <Button size="sm" variant="secondary" onClick={() => onOpen(s)} className="shrink-0 max-sm:flex-1">
+            {t("scenarios.open")}
+          </Button>
+        </div>
       </div>
     </div>
   );
+}
+
+// Cross-account «Применить к…» — a popover (desktop) / sheet (phone) listing the
+// OTHER accounts, each toggleable, + «Применить к N». Client-side clone.
+export function ApplyToPopover({
+  s,
+  accounts,
+  onApply,
+}: {
+  s: Scenario;
+  accounts: ConnectedAccount[];
+  onApply: (s: Scenario, accountIds: number[]) => void;
+}) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const [sel, setSel] = useState<Set<number>>(new Set());
+  const others = accounts; // page already filters out the current account
+  function toggle(id: number) {
+    setSel((p) => {
+      const n = new Set(p);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+  }
+  function apply() {
+    onApply(s, [...sel]);
+    setOpen(false);
+    setSel(new Set());
+  }
+  return (
+    <div className="relative">
+      <Button size="sm" variant="ghost" onClick={() => setOpen((o) => !o)} icon={<IcExternal size={14} />}>
+        {t("scenarios.apply_to")}
+      </Button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-30 max-md:bg-ink-950/40" onMouseDown={() => setOpen(false)} aria-hidden />
+          <div
+            className="absolute right-0 z-40 mt-2 w-72 rounded-lg border border-border bg-surface p-3 shadow-lg max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:mt-0 max-md:w-auto max-md:rounded-b-none max-md:pb-[calc(env(safe-area-inset-bottom)+16px)]"
+            role="dialog"
+          >
+            <p className="mb-2 text-caption font-semibold uppercase tracking-wide text-text-subtle">{t("scenarios.apply_title")}</p>
+            <div className="flex max-h-64 flex-col gap-1 overflow-y-auto">
+              {others.map((a) => (
+                <label key={a.id} className="flex items-center justify-between gap-3 rounded-md px-1.5 py-2 hover:bg-surface-2">
+                  <span className="min-w-0 truncate text-small text-text">{a.display_name || a.username || `#${a.id}`}</span>
+                  <Switch checked={sel.has(a.id)} onCheckedChange={() => toggle(a.id)} aria-label={a.username || String(a.id)} />
+                </label>
+              ))}
+              {others.length === 0 && <p className="px-1.5 py-2 text-caption text-text-subtle">{t("scenarios.apply_none")}</p>}
+            </div>
+            <Button variant="primary" className="mt-3 w-full" disabled={sel.size === 0} onClick={apply}>
+              {t("scenarios.apply_n").replace("{n}", String(sel.size))}
+            </Button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// Stacking-warning banner — names the specific scenarios stacking on the same
+// slot (morning), advising raise-the-cap / spread-out. The «Акция every day»
+// variant nudges ≤2×/week.
+export function StackingWarnings({
+  morningCount,
+  morningNames,
+  promoDaily,
+  cap,
+}: {
+  morningCount: number;
+  morningNames: string[];
+  promoDaily: boolean;
+  cap: number;
+}) {
+  const { t } = useTranslation();
+  const items: ReactNode[] = [];
+  if (morningCount > cap) {
+    items.push(
+      <p key="morning">
+        {t("scenarios.warn_morning")
+          .replace("{n}", String(morningCount))
+          .replace("{names}", morningNames.join(", "))}
+      </p>,
+    );
+  }
+  if (promoDaily) items.push(<p key="promo">{t("scenarios.warn_promo")}</p>);
+  if (items.length === 0) return null;
+  return (
+    <div className="flex items-start gap-3 rounded-lg border border-warning/30 bg-warning/[0.07] p-3.5">
+      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-warning/12 text-warning">
+        <IcBolt size={16} />
+      </span>
+      <div className="min-w-0 space-y-1 text-small leading-relaxed text-text-muted">{items}</div>
+    </div>
+  );
+}
+
+// «Автопостинг выключен» — danger inline when a post-scenario is on but the
+// account's autopilot post_enabled is off (scenarios prep drafts, don't publish).
+export function AutopostOffBanner({ onEnable }: { onEnable: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex flex-col gap-2.5 rounded-lg border border-danger/30 bg-danger/[0.07] p-3.5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-start gap-3">
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-danger/12 text-danger">
+          <IcAlertGlyph />
+        </span>
+        <div className="min-w-0">
+          <p className="text-small font-semibold text-text">{t("scenarios.autopost_off")}</p>
+          <p className="mt-0.5 text-caption leading-relaxed text-text-muted">{t("scenarios.autopost_off_sub")}</p>
+        </div>
+      </div>
+      <Button size="sm" variant="secondary" onClick={onEnable} className="shrink-0 max-sm:w-full">
+        {t("scenarios.autopost_on")}
+      </Button>
+    </div>
+  );
+}
+
+function IcAlertGlyph() {
+  return <IcTrash size={16} className="rotate-45" />;
 }
 
 export function ScenarioSkeleton() {
@@ -166,35 +674,16 @@ export function ScenarioSkeleton() {
         </div>
         <span className="h-6 w-11 shrink-0 animate-pulse rounded-full bg-surface-2" />
       </div>
+      <div className="mt-3 flex gap-1.5">
+        {Array.from({ length: 7 }).map((_, i) => (
+          <span key={i} className="h-7 flex-1 animate-pulse rounded bg-surface-2" />
+        ))}
+      </div>
       <div className="mt-4 flex items-center gap-4 border-t border-border pt-3">
         <span className="h-3 w-24 animate-pulse rounded bg-surface-2" />
         <span className="h-3 w-28 animate-pulse rounded bg-surface-2" />
         <span className="ml-auto h-8 w-20 animate-pulse rounded-sm bg-surface-2" />
       </div>
-    </div>
-  );
-}
-
-// Empty: model explainer + the SAME preset chips (Акция live · Рубрика/Сезонное
-// soon) + «Create» + «or from scratch». No «Свой».
-export function ScenariosEmpty({ onCreate, onPreset }: { onCreate: () => void; onPreset: (p: Preset) => void }) {
-  const { t } = useTranslation();
-  return (
-    <div className="flex flex-col items-center rounded-lg border border-dashed border-border px-6 py-12 text-center">
-      <span className="mb-4 grid h-12 w-12 place-items-center rounded-md border border-border bg-surface-2 text-text-subtle">
-        <IcRepeat size={24} />
-      </span>
-      <p className="text-h3 font-semibold">{t("scenarios.empty_title")}</p>
-      <p className="mt-1.5 max-w-[46ch] text-small leading-relaxed text-text-muted">{t("scenarios.empty_sub")}</p>
-      <div className="mt-4 flex flex-wrap justify-center gap-2">
-        {PRESETS.map((p) => (
-          <PresetChip key={p.key} preset={p} onPick={() => p.ready && onPreset(p.key)} />
-        ))}
-      </div>
-      <Button variant="primary" className="mt-5" onClick={onCreate}>
-        {t("scenarios.create")}
-      </Button>
-      <p className="mt-2 text-caption text-text-subtle">{t("scenarios.preset_or_scratch")}</p>
     </div>
   );
 }
@@ -217,49 +706,29 @@ export function ScenariosError({ onRetry }: { onRetry: () => void }) {
   );
 }
 
-// ─────────────────────────── entry: preset chips ────────────────────────────
-function PresetChip({ preset, onPick }: { preset: (typeof PRESETS)[number]; onPick: () => void }) {
-  const { t } = useTranslation();
-  const Icon = preset.icon;
-  return (
-    <button
-      type="button"
-      disabled={!preset.ready}
-      onClick={onPick}
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-small font-medium transition-colors max-md:min-h-[40px]",
-        preset.ready
-          ? "border-accent/30 bg-accent/[0.06] text-accent hover:border-accent/50 hover:shadow-sm"
-          : "cursor-default border-border bg-surface-2 text-text-subtle opacity-70",
-      )}
-    >
-      <Icon size={14} /> {t(preset.label)}
-      {!preset.ready && (
-        <span className="rounded-full border border-border px-1.5 font-mono text-[10px] uppercase tracking-wide text-text-subtle">
-          {t("scenarios.soon")}
-        </span>
-      )}
-    </button>
-  );
+// A short, human schedule summary for a free scenario's provenance badge.
+export function scheduleSummary(s: Scenario, t: T): string {
+  const mode = whenModeFromCfg(s.trigger_cfg, s.condition_cfg);
+  switch (mode) {
+    case "every_n_days": {
+      const n = (s.trigger_cfg?.n as number) ?? "N";
+      return `${t("scenarios.sched.every_n")} (${n})`;
+    }
+    case "weekly":
+      return t("scenarios.sched.weekly");
+    case "date_range":
+      return t("scenarios.sched.date_range");
+    case "event":
+      return t("scenarios.sched.event");
+    default:
+      return t("scenarios.sched.daily");
+  }
 }
 
-// The thin preset bar above the form (new scenario only): «Start from a preset».
-export function PresetBar({ onPick }: { onPick: (p: Preset) => void }) {
-  const { t } = useTranslation();
-  return (
-    <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-surface-2/60 px-3.5 py-3">
-      <span className="text-caption font-semibold uppercase tracking-wide text-text-subtle">{t("scenarios.preset_title")}</span>
-      <div className="flex flex-wrap items-center gap-2">
-        {PRESETS.map((p) => (
-          <PresetChip key={p.key} preset={p} onPick={() => p.ready && onPick(p.key)} />
-        ))}
-      </div>
-      <span className="text-caption text-text-subtle max-sm:w-full">{t("scenarios.preset_scratch")}</span>
-    </div>
-  );
-}
+// ════════════════════════════════════════════════════════════════════════════
+//  THE UNIFIED FORM — building blocks (§5–§9)
+// ════════════════════════════════════════════════════════════════════════════
 
-// ─────────────────────────────── form bits ──────────────────────────────────
 export function FormCard({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <section className={cn("rounded-lg border border-border bg-surface p-5 shadow-sm md:p-[22px]", className)}>{children}</section>
@@ -299,57 +768,100 @@ export function Field({
   );
 }
 
-// «КОГДА» segment: Daily · Every N days · Over a date range (soon). Only the
-// first two are buildable; date_range is shown disabled per the SPEC.
-export function ScheduleSegment({
+// «КОГДА» — 5 modes. The active one is set by the preset; reactive's «По
+// событию» is read-only (the segment shows it locked).
+export function WhenSegment({
   value,
   nDays,
-  onChange,
+  weekday,
+  dateFrom,
+  dateTo,
+  threshold,
+  locked,
+  eventKind,
+  onMode,
   onNDays,
+  onWeekday,
+  onDate,
+  onThreshold,
 }: {
-  value: ScenarioPromoFields["schedule"];
+  value: WhenMode;
   nDays: number;
-  onChange: (v: ScenarioPromoFields["schedule"]) => void;
+  weekday: number;
+  dateFrom: string;
+  dateTo: string;
+  threshold: string;
+  locked?: boolean; // reactive: «По событию» is fixed by the preset
+  eventKind?: string;
+  onMode: (m: WhenMode) => void;
   onNDays: (n: number) => void;
+  onWeekday: (d: number) => void;
+  onDate: (which: "from" | "to", v: string) => void;
+  onThreshold: (v: string) => void;
 }) {
   const { t } = useTranslation();
-  const opts: { key: ScenarioPromoFields["schedule"] | "date_range"; label: MessageKey; soon?: boolean }[] = [
-    { key: "daily", label: "scenarios.sched.daily" },
-    { key: "every_n_days", label: "scenarios.sched.every_n" },
-    { key: "date_range", label: "scenarios.sched.date_range", soon: true },
+  const MODES: { key: WhenMode; label: MessageKey }[] = [
+    { key: "daily", label: "scenarios.when.daily" },
+    { key: "every_n_days", label: "scenarios.when.every_n" },
+    { key: "weekly", label: "scenarios.when.weekly" },
+    { key: "date_range", label: "scenarios.when.dates" },
+    { key: "event", label: "scenarios.when.event" },
   ];
+  // When the preset is reactive, show ONLY the locked event row (no segment).
+  if (locked && value === "event") {
+    const row =
+      eventKind === "on_metric_threshold"
+        ? t("scenarios.event_views")
+        : eventKind === "on_follower_milestone"
+          ? t("scenarios.event_followers")
+          : t("scenarios.event_comment");
+    return (
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center gap-2.5 rounded-md border border-border bg-surface-2 px-3 py-2.5 text-small text-text-muted">
+          <IcLock size={14} className="shrink-0 text-text-subtle" />
+          <span className="min-w-0">{row}</span>
+          <span className="ml-auto shrink-0 rounded-full border border-border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-text-subtle">
+            {t("scenarios.preset_locked")}
+          </span>
+        </div>
+        {eventKind === "on_metric_threshold" && (
+          <Field label={t("scenarios.field.threshold_views")} hint={t("scenarios.threshold_auto")}>
+            <input
+              type="number"
+              inputMode="numeric"
+              className={INPUT}
+              value={threshold}
+              onChange={(e) => onThreshold(e.target.value)}
+              placeholder={t("scenarios.threshold_ph")}
+            />
+          </Field>
+        )}
+      </div>
+    );
+  }
   return (
     <div className="flex flex-col gap-3">
-      <div className="grid grid-cols-3 gap-1 rounded-lg border border-border bg-surface-2 p-1 text-small">
-        {opts.map((o) => {
-          const active = !o.soon && o.key === value;
+      <div className="grid grid-cols-2 gap-1 rounded-lg border border-border bg-surface-2 p-1 text-small sm:grid-cols-3 md:grid-cols-5">
+        {MODES.map((o) => {
+          const active = o.key === value;
           return (
             <button
               key={o.key}
               type="button"
-              disabled={o.soon}
-              onClick={() => !o.soon && onChange(o.key as ScenarioPromoFields["schedule"])}
+              onClick={() => onMode(o.key)}
               aria-pressed={active}
               className={cn(
-                "flex items-center justify-center gap-1.5 whitespace-normal rounded-md px-2.5 py-2 text-center font-medium transition-colors max-md:min-h-[44px]",
-                active
-                  ? "bg-surface text-text shadow-sm"
-                  : o.soon
-                    ? "cursor-default text-text-subtle opacity-70"
-                    : "text-text-muted hover:text-text",
+                "flex items-center justify-center gap-1.5 whitespace-normal rounded-md px-2 py-2 text-center font-medium transition-colors max-md:min-h-[44px]",
+                active ? "bg-surface text-text shadow-sm" : "text-text-muted hover:text-text",
               )}
             >
               {t(o.label)}
-              {o.soon && (
-                <span className="rounded-full border border-border px-1.5 font-mono text-[10px] uppercase tracking-wide">
-                  {t("scenarios.soon")}
-                </span>
-              )}
             </button>
           );
         })}
       </div>
-      {value === "every_n_days" ? (
+
+      {value === "every_n_days" && (
         <div className="flex flex-wrap items-center gap-2.5 text-small text-text-muted">
           <span>{t("scenarios.f.n_days")}</span>
           <input
@@ -364,7 +876,39 @@ export function ScheduleSegment({
           />
           <span className="text-text-subtle">{t("scenarios.sched.every_n_unit").replace("{n}", String(nDays))}</span>
         </div>
-      ) : (
+      )}
+
+      {value === "weekly" && (
+        <div className="flex flex-wrap gap-1.5">
+          {WEEKDAYS.map((wd, i) => (
+            <button
+              key={i}
+              type="button"
+              aria-pressed={weekday === i}
+              onClick={() => onWeekday(i)}
+              className={cn(
+                "grid h-10 min-w-[44px] flex-1 place-items-center rounded-md border text-small font-medium transition-colors max-md:min-h-[44px]",
+                weekday === i ? "border-accent bg-accent/10 text-accent" : "border-border bg-surface text-text-muted hover:text-text",
+              )}
+            >
+              {t(wd)}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {value === "date_range" && (
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
+          <Field label={t("scenarios.date_from")}>
+            <input type="date" className={INPUT} value={dateFrom} onChange={(e) => onDate("from", e.target.value)} />
+          </Field>
+          <Field label={t("scenarios.date_to")}>
+            <input type="date" className={INPUT} value={dateTo} onChange={(e) => onDate("to", e.target.value)} />
+          </Field>
+        </div>
+      )}
+
+      {value === "daily" && (
         <p className="inline-flex items-center gap-1.5 text-small text-text-subtle">
           <IcClock size={14} /> {t("scenarios.sched.daily_note")}
         </p>
@@ -373,111 +917,131 @@ export function ScheduleSegment({
   );
 }
 
-// Promo-helper disclosure. Head = gift + «Промо-помощник» + switch; ON → the
-// preserved «Акция» fields (ask / reward / require-follow / require-like) + an
-// accent border. This IS the re-hosted rich «Акция» editor.
-export function PromoHelper({
-  on,
-  promo,
-  askErr,
-  onToggle,
+// Renders a single preset field by kind (text/textarea/options) into the form.
+// Returns the value via `onChange`. cadence/weekday/date are handled by the
+// КОГДА segment, so they are skipped here.
+export function PresetFieldInput({
+  field,
+  value,
+  error,
   onChange,
 }: {
-  on: boolean;
-  promo: ScenarioPromoFields;
-  askErr?: boolean;
-  onToggle: (on: boolean) => void;
-  onChange: (p: ScenarioPromoFields) => void;
+  field: PresetField;
+  value: string;
+  error?: boolean;
+  onChange: (v: string) => void;
 }) {
   const { t } = useTranslation();
-  const set = <K extends keyof ScenarioPromoFields>(k: K, v: ScenarioPromoFields[K]) => onChange({ ...promo, [k]: v });
+  const label = t(field.name_key as MessageKey);
+  const hint = t(`${field.name_key}_hint` as MessageKey);
+  const ph = t(`${field.name_key}_ph` as MessageKey);
+  if (field.kind === "textarea") {
+    return (
+      <Field label={label} hint={hint} error={error ? t("scenarios.err_required") : undefined}>
+        <textarea rows={3} className={cn(TEXTAREA, error && "border-danger focus:border-danger focus:ring-danger/25")} value={value} onChange={(e) => onChange(e.target.value)} placeholder={ph} />
+      </Field>
+    );
+  }
+  if (field.kind === "options") {
+    // 2–4 short options, one per line.
+    return (
+      <Field label={label} hint={hint} error={error ? t("scenarios.options_err") : undefined}>
+        <textarea rows={4} className={cn(TEXTAREA, error && "border-danger focus:border-danger focus:ring-danger/25")} value={value} onChange={(e) => onChange(e.target.value)} placeholder={ph} />
+      </Field>
+    );
+  }
   return (
-    <div className={cn("rounded-md border bg-surface transition-colors", on ? "border-accent/40" : "border-border")}>
-      <div className="flex items-center justify-between gap-3 p-3.5">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <span
-            className={cn(
-              "grid h-8 w-8 shrink-0 place-items-center rounded-md border",
-              on ? "border-accent/30 bg-accent/10 text-accent" : "border-border bg-surface-2 text-text-muted",
-            )}
-          >
-            <IcGift size={16} />
-          </span>
-          <div className="min-w-0">
-            <p className="text-small font-semibold">{t("scenarios.helper_title")}</p>
-            {on && <p className="truncate text-caption text-text-subtle">{t("scenarios.helper_sub")}</p>}
-          </div>
+    <Field label={label} hint={hint} error={error ? t("scenarios.err_required") : undefined}>
+      <input className={cn(INPUT, error && "border-danger focus:border-danger focus:ring-danger/25")} value={value} onChange={(e) => onChange(e.target.value)} placeholder={ph} />
+    </Field>
+  );
+}
+
+// «Как отвечать» — only for reply-producing presets. The audience 3-way segment
+// + a baked rule (read-only) + an editable reply instruction on top.
+export function ReplyBlock({
+  audience,
+  onAudience,
+  replyInstruction,
+  onReplyInstruction,
+}: {
+  audience: string;
+  onAudience: (a: string) => void;
+  replyInstruction: string;
+  onReplyInstruction: (v: string) => void;
+}) {
+  const { t } = useTranslation();
+  const AUD: { key: string; label: MessageKey }[] = [
+    { key: "fans", label: "scenarios.aud.fans" },
+    { key: "all_except_trolls", label: "scenarios.aud.all" },
+    { key: "questions", label: "scenarios.aud.questions" },
+  ];
+  return (
+    <div className="flex flex-col gap-4">
+      <Field label={t("scenarios.f.audience")} hint={t("scenarios.f.audience_hint")}>
+        <div className="grid grid-cols-1 gap-1 rounded-lg border border-border bg-surface-2 p-1 text-small sm:grid-cols-3">
+          {AUD.map((o) => {
+            const active = o.key === audience;
+            return (
+              <button
+                key={o.key}
+                type="button"
+                aria-pressed={active}
+                onClick={() => onAudience(o.key)}
+                className={cn(
+                  "flex items-center justify-center whitespace-normal rounded-md px-2.5 py-2 text-center font-medium transition-colors max-md:min-h-[44px]",
+                  active ? "bg-surface text-text shadow-sm" : "text-text-muted hover:text-text",
+                )}
+              >
+                {t(o.label)}
+              </button>
+            );
+          })}
         </div>
-        <Switch checked={on} onCheckedChange={onToggle} aria-label={t("scenarios.helper_title")} />
-      </div>
-      {on && (
-        <div className="flex flex-col gap-4 border-t border-border p-3.5">
-          <Field
-            label={t("scenarios.f.ask")}
-            hint={t("scenarios.f.ask_hint")}
-            error={askErr ? t("scenarios.f.ask_err") : undefined}
-          >
-            <input
-              className={cn(INPUT, askErr && "border-danger focus:border-danger focus:ring-danger/25")}
-              value={promo.ask}
-              onChange={(e) => set("ask", e.target.value)}
-              placeholder={t("scenarios.f.ask_ph")}
-            />
-          </Field>
-          <Field label={t("scenarios.f.reward")} hint={t("scenarios.f.reward_hint")}>
-            <input className={INPUT} value={promo.reward} onChange={(e) => set("reward", e.target.value)} placeholder={t("scenarios.f.reward_ph")} />
-          </Field>
-          <div className="flex flex-col gap-1 border-t border-border pt-1.5">
-            <ToggleRow
-              icon={IcUsers}
-              title={t("scenarios.f.require_follow")}
-              sub={t("scenarios.f.require_follow_sub")}
-              checked={promo.require_follow}
-              onChange={(v) => set("require_follow", v)}
-            />
-            <ToggleRow
-              icon={IcHeart}
-              title={t("scenarios.f.require_like")}
-              sub={t("scenarios.f.require_like_sub")}
-              checked={promo.require_like}
-              onChange={(v) => set("require_like", v)}
-            />
-          </div>
-        </div>
-      )}
+      </Field>
+      <Field label={t("scenarios.sec.reply")} hint={t("scenarios.f.reply_hint")}>
+        <textarea rows={3} className={TEXTAREA} value={replyInstruction} onChange={(e) => onReplyInstruction(e.target.value)} placeholder={t("scenarios.f.reply_ph")} />
+      </Field>
     </div>
   );
 }
 
-function ToggleRow({
-  icon: Icon,
-  title,
-  sub,
-  checked,
-  onChange,
+// «Что зашьётся» — read-only proven rules the preset layers over the voice.
+// Collapsed by default; a head row (lock + title + chevron) → rules + foot.
+export function BakedRules({
+  open,
+  onToggle,
+  rules,
 }: {
-  icon: IconCmp;
-  title: string;
-  sub: string;
-  checked: boolean;
-  onChange: (v: boolean) => void;
+  open: boolean;
+  onToggle: () => void;
+  rules: string[];
 }) {
+  const { t } = useTranslation();
+  if (rules.length === 0) return null;
   return (
-    <label className="flex items-center justify-between gap-4 border-t border-border py-3 first:border-t-0">
-      <span className="min-w-0">
-        <span className="flex items-center gap-1.5 text-small font-semibold">
-          <Icon size={14} /> {title}
-        </span>
-        <span className="mt-0.5 block text-caption leading-relaxed text-text-subtle">{sub}</span>
-      </span>
-      <Switch checked={checked} onCheckedChange={onChange} aria-label={title} />
-    </label>
+    <FormCard className="p-0 md:p-0">
+      <button type="button" onClick={onToggle} aria-expanded={open} className="flex w-full items-center gap-2.5 px-5 py-4 text-left md:px-[22px]">
+        <IcLock size={15} className="shrink-0 text-text-subtle" />
+        <span className="text-small font-semibold">{t("scenarios.baked_title")}</span>
+        <IcChevRight size={16} className={cn("ml-auto shrink-0 text-text-subtle transition-transform", open && "rotate-90")} />
+      </button>
+      {open && (
+        <div className="flex flex-col gap-2 border-t border-border p-5 md:p-[22px]">
+          {rules.map((r, i) => (
+            <p key={i} className="flex items-start gap-2 text-small text-text-muted">
+              <IcCheck size={15} className="mt-0.5 shrink-0 text-success" /> {r}
+            </p>
+          ))}
+          <p className="mt-1 text-caption text-text-subtle">{t("scenarios.baked_foot")}</p>
+        </div>
+      )}
+    </FormCard>
   );
 }
 
-// Power-user disclosure — «Показать как сценарий». Collapsed = a row-button with
-// a chevron; expanded = the raw КОГДА/ЕСЛИ/СГЕНЕРИРОВАТЬ/С ИНСТРУКЦИЕЙ fields.
-// This is the old «Свой», expressed as raw fields, NOT a type.
+// Power-user disclosure — «Показать как сценарий» (raw model fields). The old
+// «Свой» as a disclosure inside the form, not a type.
 export function PowerUserDisclosure({
   open,
   onToggle,
@@ -492,12 +1056,7 @@ export function PowerUserDisclosure({
   const { t } = useTranslation();
   return (
     <FormCard className="p-0 md:p-0">
-      <button
-        type="button"
-        onClick={onToggle}
-        aria-expanded={open}
-        className="flex w-full items-center gap-2.5 px-5 py-4 text-left md:px-[22px]"
-      >
+      <button type="button" onClick={onToggle} aria-expanded={open} className="flex w-full items-center gap-2.5 px-5 py-4 text-left md:px-[22px]">
         <IcChevRight size={16} className={cn("shrink-0 text-text-subtle transition-transform", open && "rotate-90")} />
         <span className="text-small font-semibold">{t("scenarios.disclose_show")}</span>
         <span className="rounded-full border border-border bg-surface-2 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-text-subtle">
@@ -532,13 +1091,7 @@ export function PowerUserDisclosure({
             </select>
           </RawField>
           <RawField labelKey="scenarios.raw.with" subKey="scenarios.raw.with_sub" modelKey="с инструкцией">
-            <textarea
-              rows={3}
-              className={TEXTAREA}
-              value={instruction}
-              onChange={(e) => onInstruction(e.target.value)}
-              placeholder={t("scenarios.f.instruction_ph")}
-            />
+            <textarea rows={3} className={TEXTAREA} value={instruction} onChange={(e) => onInstruction(e.target.value)} placeholder={t("scenarios.f.instruction_ph")} />
           </RawField>
         </div>
       )}
@@ -563,9 +1116,7 @@ function RawField({
   return (
     <label className="flex flex-col gap-1.5">
       <span className="flex flex-wrap items-center gap-2 text-small font-semibold">
-        <span className="rounded-sm border border-accent/30 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-accent">
-          {modelKey}
-        </span>
+        <span className="rounded-sm border border-accent/30 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-accent">{modelKey}</span>
         {t(labelKey)}
         {optional && <span className="font-normal text-text-subtle">· {t("scenarios.raw.if_optional")}</span>}
       </span>
@@ -575,19 +1126,95 @@ function RawField({
   );
 }
 
-// ─────────────────────────────── preview ────────────────────────────────────
-export type PreviewState = "promo" | "free" | "loading" | "empty";
+// Promo-helper disclosure (the PRESERVED «Акция» rich editor). Head = gift +
+// «Промо-помощник» + switch; ON → ask / reward / require-follow / require-like.
+export function PromoHelper({
+  on,
+  promo,
+  askErr,
+  onToggle,
+  onChange,
+}: {
+  on: boolean;
+  promo: ScenarioPromoFields;
+  askErr?: boolean;
+  onToggle: (on: boolean) => void;
+  onChange: (p: ScenarioPromoFields) => void;
+}) {
+  const { t } = useTranslation();
+  const set = <K extends keyof ScenarioPromoFields>(k: K, v: ScenarioPromoFields[K]) => onChange({ ...promo, [k]: v });
+  return (
+    <div className={cn("rounded-md border bg-surface transition-colors", on ? "border-warning/40" : "border-border")}>
+      <div className="flex items-center justify-between gap-3 p-3.5">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-md border", on ? "border-warning/30 bg-warning/10 text-warning" : "border-border bg-surface-2 text-text-muted")}>
+            <IcGift size={16} />
+          </span>
+          <div className="min-w-0">
+            <p className="text-small font-semibold">{t("scenarios.helper_title")}</p>
+            {on && <p className="truncate text-caption text-text-subtle">{t("scenarios.helper_sub")}</p>}
+          </div>
+        </div>
+        <Switch checked={on} onCheckedChange={onToggle} aria-label={t("scenarios.helper_title")} />
+      </div>
+      {on && (
+        <div className="flex flex-col gap-4 border-t border-border p-3.5">
+          <Field label={t("scenarios.f.ask")} hint={t("scenarios.f.ask_hint")} error={askErr ? t("scenarios.f.ask_err") : undefined}>
+            <input className={cn(INPUT, askErr && "border-danger focus:border-danger focus:ring-danger/25")} value={promo.ask} onChange={(e) => set("ask", e.target.value)} placeholder={t("scenarios.f.ask_ph")} />
+          </Field>
+          <Field label={t("scenarios.f.reward")} hint={t("scenarios.f.reward_hint")}>
+            <input className={INPUT} value={promo.reward} onChange={(e) => set("reward", e.target.value)} placeholder={t("scenarios.f.reward_ph")} />
+          </Field>
+          <div className="flex flex-col gap-1 border-t border-border pt-1.5">
+            <ToggleRow icon={IcUsers} title={t("scenarios.f.require_follow")} sub={t("scenarios.f.require_follow_sub")} checked={promo.require_follow} onChange={(v) => set("require_follow", v)} />
+            <ToggleRow icon={IcHeart} title={t("scenarios.f.require_like")} sub={t("scenarios.f.require_like_sub")} checked={promo.require_like} onChange={(v) => set("require_like", v)} />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ToggleRow({ icon: Icon, title, sub, checked, onChange }: { icon: IconCmp; title: string; sub: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <label className="flex items-center justify-between gap-4 border-t border-border py-3 first:border-t-0">
+      <span className="min-w-0">
+        <span className="flex items-center gap-1.5 text-small font-semibold">
+          <Icon size={14} /> {title}
+        </span>
+        <span className="mt-0.5 block text-caption leading-relaxed text-text-subtle">{sub}</span>
+      </span>
+      <Switch checked={checked} onCheckedChange={onChange} aria-label={title} />
+    </label>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  PREVIEW + RUN-NOW (§10)
+// ════════════════════════════════════════════════════════════════════════════
+
+export type PreviewState = "promo" | "free" | "reply" | "loading" | "empty";
 
 export function ScenarioPreview({
   state,
   preview,
   promo,
-  onRefresh,
+  primedCount,
+  whenFires,
+  canRunNow,
+  running,
+  runResult,
+  onRunNow,
 }: {
   state: PreviewState;
-  preview: ScenarioPreview | null;
+  preview: ScenarioPreviewT | null;
   promo: ScenarioPromoFields;
-  onRefresh?: () => void;
+  primedCount?: number;
+  whenFires?: string;
+  canRunNow?: boolean;
+  running?: boolean;
+  runResult?: ScenarioRunNow | null;
+  onRunNow?: () => void;
 }) {
   const { t } = useTranslation();
   return (
@@ -596,11 +1223,6 @@ export function ScenarioPreview({
         <span className="inline-flex items-center gap-1.5 text-caption font-semibold uppercase tracking-wide text-text-subtle">
           <IcSparkle size={13} /> {t("scenarios.preview")}
         </span>
-        {(state === "promo" || state === "free") && onRefresh && (
-          <Button size="sm" variant="ghost" icon={<IcReload size={14} />} onClick={onRefresh}>
-            {t("scenarios.preview_refresh")}
-          </Button>
-        )}
       </div>
       <div className="overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
         {state === "loading" ? (
@@ -609,10 +1231,58 @@ export function ScenarioPreview({
           <PreviewEmpty />
         ) : state === "promo" ? (
           <PromoPreview cta={preview?.cta ?? ""} replyInstruction={promo.reply_instruction} />
+        ) : state === "reply" ? (
+          <ReplyPreview replyOn={(preview?.reply_instruction ?? "").length > 0} />
         ) : (
           <FreePreview instruction={preview?.instruction ?? ""} samplePost={preview?.sample_post ?? ""} />
         )}
       </div>
+
+      {/* primed-on honesty line */}
+      {state !== "empty" && state !== "loading" && (
+        <p className="inline-flex items-start gap-1.5 px-1 text-caption leading-relaxed text-text-subtle">
+          <IcSparkle size={12} className="mt-0.5 shrink-0" />
+          {t("scenarios.primed_on").replace("{n}", String(primedCount ?? 6))}
+        </p>
+      )}
+
+      {/* when-fires */}
+      {whenFires && state !== "empty" && (
+        <p className="inline-flex items-center gap-1.5 px-1 text-caption text-text-subtle">
+          <IcClock size={12} className="shrink-0" /> {t("scenarios.when_fires").replace("{when}", whenFires)}
+        </p>
+      )}
+
+      {/* run-now bar */}
+      {onRunNow && (
+        <div className="flex flex-col gap-1.5 rounded-lg border border-border bg-surface-2/60 p-3">
+          <Button variant="secondary" onClick={onRunNow} loading={running} disabled={!canRunNow} icon={<IcPlay size={14} />} className="w-full">
+            {t("scenarios.run_now")}
+          </Button>
+          <p className="text-caption leading-relaxed text-text-subtle">{t("scenarios.run_now_note")}</p>
+        </div>
+      )}
+
+      {/* run result — draft created banner + the draft */}
+      {runResult && (
+        <div className="overflow-hidden rounded-lg border border-success/30 bg-success/[0.06]">
+          <div className="flex items-start gap-2 border-b border-success/20 px-3.5 py-2.5">
+            <IcCheck size={15} className="mt-0.5 shrink-0 text-success" />
+            <p className="text-caption leading-relaxed text-text-muted">
+              <span className="font-semibold text-text">{t("scenarios.draft_created")}</span> {t("scenarios.draft_created_sub")}
+            </p>
+          </div>
+          {runResult.kind === "reply" && runResult.replied_to && (
+            <div className="border-b border-success/20 bg-surface px-3.5 py-2.5">
+              <p className="mb-1 font-mono text-[10px] uppercase tracking-wide text-text-subtle">{t("scenarios.replied_to")}</p>
+              <p className="text-small leading-relaxed text-text-muted">{runResult.replied_to}</p>
+            </div>
+          )}
+          <div className="bg-surface px-3.5 py-2.5">
+            <p className="text-small leading-relaxed text-text">{runResult.text}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -629,8 +1299,8 @@ function PromoPreview({ cta, replyInstruction }: { cta: string; replyInstruction
   const { t } = useTranslation();
   return (
     <>
-      <div className="border-b border-border bg-accent/[0.06] px-[17px] py-[15px]">
-        <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wide text-accent">{t("scenarios.preview_cta")}</p>
+      <div className="border-b border-border bg-warning/[0.06] px-[17px] py-[15px]">
+        <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wide text-warning">{t("scenarios.preview_cta")}</p>
         <p className="text-small leading-relaxed text-text">{cta}</p>
       </div>
       <div className="px-[17px] py-[15px]">
@@ -709,6 +1379,39 @@ function FreePreview({ instruction, samplePost }: { instruction: string; sampleP
   );
 }
 
+// Reply-duty preview — a sample comment → a substantive auto-reply (not a post).
+function ReplyPreview({ replyOn }: { replyOn: boolean }) {
+  const { t } = useTranslation();
+  return (
+    <div className="px-[17px] py-[15px]">
+      <p className="mb-2.5 font-mono text-[10px] uppercase tracking-wide text-text-subtle">{t("scenarios.preview_sample_reply")}</p>
+      <div className="flex gap-2.5">
+        <MockAvatar initials="М" />
+        <div className="min-w-0">
+          <p className="text-caption font-semibold text-text-muted">Марина</p>
+          <p className="mt-0.5 text-small text-text-muted">А Близнецам сегодня стоит начинать новое?</p>
+        </div>
+      </div>
+      <div className="relative mt-2.5 flex gap-2.5 pl-3 before:absolute before:bottom-1.5 before:left-[3px] before:top-0.5 before:w-0.5 before:rounded before:bg-border">
+        <MockAvatar initials="С" />
+        <div className="min-w-0">
+          <p className="mb-0.5 flex items-center gap-1.5 text-caption font-semibold">
+            Соня
+            <span className="inline-flex items-center gap-1 font-medium text-accent">
+              <IcBubble size={11} /> {t("scenarios.preview_reply")}
+            </span>
+          </p>
+          <p className="text-small leading-relaxed text-text">
+            {replyOn
+              ? "Марина, для Близнецов день как раз про лёгкий старт — начните с маленького шага, а большое решение оставьте на завтра 🌙"
+              : "Марина, день хороший для начинаний — но прислушайтесь к себе ✨"}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PreviewLoading() {
   return (
     <div className="flex flex-col gap-2.5 p-[17px]">
@@ -733,9 +1436,7 @@ function PreviewEmpty() {
   );
 }
 
-// ───────────────────────────── delete confirm ───────────────────────────────
-// Desktop: inline confirm in the action bar (rendered by the page). Phone: a
-// bottom-sheet modal (this component) — danger primary on top.
+// ── delete confirm (phone bottom-sheet; desktop uses an inline confirm) ──
 export function DeleteConfirm({
   open,
   deleting,
