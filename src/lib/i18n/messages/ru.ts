@@ -1131,6 +1131,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "onboarding.analyze_cta": "Разобрать мои посты",
   "onboarding.analyze_count": "постов готово к разбору",
   "onboarding.analyze_none": "Постов пока нет. Начни с нуля.",
+  "onboarding.analyze_slow": "Это дольше обычного — вернуться",
+  "onboarding.analyze_timeout": "Настройка голоса слишком долгая. Попробуй ещё раз.",
   "onboarding.analyze_locked": "Нужно {need} постов для разбора. У тебя {have}.",
   "onboarding.analyzing": "Разбираю твои посты…",
   "onboarding.scratch_title": "Расскажи Pennedly, как ты пишешь.",

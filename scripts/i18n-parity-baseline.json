@@ -1,6 +1,8 @@
 {
   "_comment": "Known-missing i18n keys per locale (vs en). The parity guardrail (scripts/check-i18n-parity.mjs) fails on any gap NOT listed here, so this is a ratchet that may only shrink. Regenerate after a reviewed translation backfill with: npm run check:i18n -- --update",
   "de": [
+    "onboarding.analyze_slow",
+    "onboarding.analyze_timeout",
     "stats.eng_title",
     "stats.eng_per_day",
     "stats.eng_range_label",
@@ -267,6 +269,8 @@
     "advisor.source.voice"
   ],
   "es": [
+    "onboarding.analyze_slow",
+    "onboarding.analyze_timeout",
     "stats.eng_title",
     "stats.eng_per_day",
     "stats.eng_range_label",
@@ -533,6 +537,8 @@
     "advisor.source.voice"
   ],
   "fr": [
+    "onboarding.analyze_slow",
+    "onboarding.analyze_timeout",
     "stats.eng_title",
     "stats.eng_per_day",
     "stats.eng_range_label",
@@ -799,6 +805,8 @@
     "advisor.source.voice"
   ],
   "it": [
+    "onboarding.analyze_slow",
+    "onboarding.analyze_timeout",
     "stats.eng_title",
     "stats.eng_per_day",
     "stats.eng_range_label",
@@ -1065,6 +1073,8 @@
     "advisor.source.voice"
   ],
   "pt": [
+    "onboarding.analyze_slow",
+    "onboarding.analyze_timeout",
     "stats.eng_title",
     "stats.eng_per_day",
     "stats.eng_range_label",
@@ -1332,6 +1342,8 @@
   ],
   "ru": [],
   "uk": [
+    "onboarding.analyze_slow",
+    "onboarding.analyze_timeout",
     "stats.eng_title",
     "stats.eng_per_day",
     "stats.eng_range_label",

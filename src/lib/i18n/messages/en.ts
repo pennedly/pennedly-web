@@ -1131,6 +1131,8 @@ export const en = {
   "onboarding.analyze_cta": "Analyze my posts",
   "onboarding.analyze_count": "posts ready to analyze",
   "onboarding.analyze_none": "No posts yet. Build from scratch instead.",
+  "onboarding.analyze_slow": "This is taking longer than usual — go back",
+  "onboarding.analyze_timeout": "Voice setup is taking too long. Please try again.",
   "onboarding.analyze_locked": "Need {need} posts to analyze. You have {have}.",
   "onboarding.analyzing": "Analyzing your posts…",
   "onboarding.scratch_title": "Tell Pennedly how you write.",

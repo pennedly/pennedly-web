@@ -87,6 +87,13 @@ const ANALYZE_STEPS: MessageKey[] = [
   "onboarding.analyze_step2",
   "onboarding.analyze_step3",
 ];
+// Voice extraction is a server-side LLM call with no progress signal. Bound it
+// so a slow/hung analyze can never trap the very first user on the analyze
+// stage (where Back/Skip are intentionally hidden): reveal an escape link after
+// ANALYZE_SLOW_MS, and hard-fail back to the choice after ANALYZE_TIMEOUT_MS.
+const ANALYZE_SLOW_MS = 12_000;
+const ANALYZE_TIMEOUT_MS = 60_000;
+class AnalyzeTimeout extends Error {}
 
 // .ob radial-paper background (onboarding.css .ob).
 const OB_BG =
@@ -516,7 +523,17 @@ function ChooseStep({
 }
 
 // ───────────────────────────────── Analyze ──────────────────────────────────
-function AnalyzeStep({ account, stepIndex }: { account: ConnectedAccount | null; stepIndex: number }) {
+function AnalyzeStep({
+  account,
+  stepIndex,
+  slow,
+  onCancel,
+}: {
+  account: ConnectedAccount | null;
+  stepIndex: number;
+  slow?: boolean;
+  onCancel?: () => void;
+}) {
   const { t } = useTranslation();
   return (
     <div style={RISE}>
@@ -560,6 +577,15 @@ function AnalyzeStep({ account, stepIndex }: { account: ConnectedAccount | null;
             );
           })}
         </div>
+        {slow && onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="mt-5 text-small text-text-muted underline underline-offset-2 transition-colors hover:text-text"
+          >
+            {t("onboarding.analyze_slow")}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -1086,6 +1112,7 @@ export default function OnboardingPage() {
   const [previewResult, setPreviewResult] = useState<OnboardingPreview | null>(null);
   const [mode, setMode] = useState<Mode>(null);
   const [anIndex, setAnIndex] = useState(0);
+  const [analyzeSlow, setAnalyzeSlow] = useState(false);
 
   const [desc, setDesc] = useState("");
   const [write, setWrite] = useState<string[]>([]);
@@ -1217,25 +1244,49 @@ export default function OnboardingPage() {
     }
     setStage("analyze");
     setAnIndex(0);
+    setAnalyzeSlow(false);
     timers.current.forEach(clearTimeout);
     timers.current = [];
     const n = ANALYZE_STEPS.length;
     for (let i = 1; i < n; i++) timers.current.push(setTimeout(() => setAnIndex(i), i * 1100));
     const minDelay = new Promise<void>((r) => timers.current.push(setTimeout(r, n * 1100)));
+    // Reveal an escape link if it drags, and hard-stop an infinite hang so the
+    // analyze stage (Back/Skip hidden) can never trap the user.
+    timers.current.push(setTimeout(() => setAnalyzeSlow(true), ANALYZE_SLOW_MS));
+    const call = onboardingAnalyze(accountId);
+    call.catch(() => {}); // swallow a late rejection if the timeout already fired
+    const timeout = new Promise<never>((_, reject) => {
+      timers.current.push(setTimeout(() => reject(new AnalyzeTimeout()), ANALYZE_TIMEOUT_MS));
+    });
     try {
-      await Promise.all([onboardingAnalyze(accountId), minDelay]);
+      await Promise.all([Promise.race([call, timeout]), minDelay]);
       setAnIndex(n);
       setMode("analyze");
       setStage("done");
     } catch (e) {
-      if (e instanceof ApiError && e.status === 422) {
+      if (e instanceof AnalyzeTimeout) {
+        setError(t("onboarding.analyze_timeout"));
+        setStage("choose");
+      } else if (e instanceof ApiError && e.status === 422) {
         setError(t("onboarding.analyze_none"));
         setStage("scratch");
       } else {
         setError(errMsg(e));
         setStage("choose");
       }
+    } finally {
+      setAnalyzeSlow(false);
     }
+  }
+
+  // Free the UI if the user bails during a slow analyze (the server call keeps
+  // running; if it succeeds the voice is created and shows on next load).
+  function cancelAnalyze() {
+    timers.current.forEach(clearTimeout);
+    timers.current = [];
+    setAnalyzeSlow(false);
+    setError(null);
+    setStage("choose");
   }
 
   async function onCreate() {
@@ -1312,7 +1363,7 @@ export default function OnboardingPage() {
               postCount={postCount}
             />
           ) : stage === "analyze" ? (
-            <AnalyzeStep account={acct} stepIndex={anIndex} />
+            <AnalyzeStep account={acct} stepIndex={anIndex} slow={analyzeSlow} onCancel={cancelAnalyze} />
           ) : stage === "scratch" ? (
             <ScratchStep
               desc={desc}
