@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { headers } from "next/headers";
 import "./globals.css";
 
 import { CookieConsent } from "@/components/CookieConsent";
@@ -38,11 +39,16 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // The per-request CSP nonce minted in proxy.ts. Next applies it to its own
+  // scripts automatically; we hand it to our inline theme <script> below so it
+  // survives the strict script-src. (Reading headers() opts the app into
+  // dynamic rendering — expected with a nonce-based CSP.)
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html
       lang="en"
@@ -56,6 +62,12 @@ export default function RootLayout({
         {/* No-FOUC theme: set `.dark` before paint, from a saved choice or
             the OS preference. Runs synchronously during HTML parse. */}
         <script
+          nonce={nonce}
+          // React blanks the nonce attribute on the client for security, so the
+          // SSR'd nonce vs the empty client value is a benign, expected
+          // mismatch on this element — suppress it (the script already ran
+          // during HTML parse, allowed by its matching CSP nonce).
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.documentElement.classList.add('dark');}}catch(e){}})();`,
           }}

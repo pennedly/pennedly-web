@@ -1,10 +1,9 @@
 import type { NextConfig } from "next";
 
-// Baseline HTTP security headers (audit). The strict script-src/connect-src CSP
-// needs a per-request nonce via middleware — deferred so it can't break Next's
-// inline runtime; the directives below are safe today and add the highest-value
-// boundaries (clickjacking, MIME-sniffing, referer leak, <base>/object/plugin
-// injection).
+// Baseline HTTP security headers (audit). The Content-Security-Policy is now
+// minted per request in `src/proxy.ts` (strict, nonce-based script-src) — it
+// lives there, not here, so there is exactly one CSP source of truth. These
+// remaining headers are static and apply to every route.
 const securityHeaders = [
   {
     key: "Strict-Transport-Security",
@@ -13,10 +12,6 @@ const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  {
-    key: "Content-Security-Policy",
-    value: "frame-ancestors 'none'; object-src 'none'; base-uri 'self'",
-  },
 ];
 
 const nextConfig: NextConfig = {
