@@ -124,12 +124,13 @@ function errMsg(e: unknown): string {
 
 // ────────────────────────────── Theme toggle ────────────────────────────────
 function ThemeToggle() {
+  const { t } = useTranslation();
   const [dark, setDark] = useState(false);
   useEffect(() => setDark(document.documentElement.classList.contains("dark")), []);
   return (
     <button
       type="button"
-      aria-label="Toggle theme"
+      aria-label={t("a11y.toggle_theme")}
       className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-border bg-surface text-text-muted transition-colors duration-[120ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] hover:bg-surface-2 hover:text-text"
       onClick={() => {
         const next = !document.documentElement.classList.contains("dark");
@@ -152,7 +153,7 @@ function Stepper({ current }: { current: number }) {
   const { t } = useTranslation();
   const steps: MessageKey[] = ["onboarding.step_connect", "onboarding.step_voice", "onboarding.step_done"];
   return (
-    <div className="mb-[26px] flex items-center gap-2" aria-label="Onboarding progress">
+    <div className="mb-[26px] flex items-center gap-2" aria-label={t("a11y.onboarding_progress")}>
       {steps.map((s, i) => {
         const state = i === current ? "current" : i < current ? "done" : "todo";
         return (
@@ -426,7 +427,7 @@ function ChooseStep({
       <StepTitle>{t("onboarding.choose_title")}</StepTitle>
       <StepSub>{t("onboarding.choose_sub")}</StepSub>
 
-      <div role="radiogroup" aria-label="Voice setup method" className="mt-6 flex flex-col gap-3">
+      <div role="radiogroup" aria-label={t("a11y.voice_setup_method")} className="mt-6 flex flex-col gap-3">
         {modes.map((m) => {
           const disabled = m.id === "analyze" && !enoughPosts;
           const active = selected === m.id && !disabled;

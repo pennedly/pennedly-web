@@ -14,6 +14,7 @@ import {
   LOCALES,
   setLocale,
   useLocale,
+  useTranslation,
   type LocaleCode,
 } from "@/lib/i18n";
 import { getTokens, setMyLocale } from "@/lib/api";
@@ -21,6 +22,7 @@ import { captureEvent } from "@/lib/analytics";
 import { IcCheck, IcChevDown, IcGlobe } from "@/components/icons";
 
 export function LanguageSwitcher() {
+  const { t } = useTranslation();
   const current = useLocale();
   const [open, setOpen] = useState(false);
 
@@ -31,8 +33,8 @@ export function LanguageSwitcher() {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        aria-label="change language"
-        title="change language"
+        aria-label={t("a11y.change_language")}
+        title={t("a11y.change_language")}
         className="inline-flex h-[38px] items-center gap-1.5 rounded-md border border-border bg-surface px-2.5 text-small text-text-muted transition-colors duration-[120ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] hover:bg-surface-2 hover:text-text"
       >
         <IcGlobe size={15} />

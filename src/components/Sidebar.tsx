@@ -246,7 +246,7 @@ export function Sidebar() {
             <button
               type="button"
               onClick={() => setMobileNavOpen(false)}
-              aria-label="Close"
+              aria-label={t("a11y.close")}
               className="absolute right-2 top-2 grid h-9 w-9 place-items-center rounded-md text-text-muted transition-colors hover:bg-surface-2 hover:text-text"
             >
               <IcX size={18} />

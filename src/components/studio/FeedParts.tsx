@@ -809,7 +809,7 @@ export function ConfirmDelete({
       className="fixed inset-0 z-40 grid place-items-center bg-ink-950/55 p-6 backdrop-blur-sm max-md:place-items-end max-md:p-0"
       role="dialog"
       aria-modal="true"
-      aria-label="Delete post"
+      aria-label={t("feed.delete_post")}
       onMouseDown={(e) => {
         if (e.target === e.currentTarget && !deleting) onClose();
       }}

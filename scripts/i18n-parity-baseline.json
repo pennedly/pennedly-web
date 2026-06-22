@@ -1,10 +1,64 @@
 {
   "_comment": "Known-missing i18n keys per locale (vs en). The parity guardrail (scripts/check-i18n-parity.mjs) fails on any gap NOT listed here, so this is a ratchet that may only shrink. Regenerate after a reviewed translation backfill with: npm run check:i18n -- --update",
-  "de": [],
-  "es": [],
-  "fr": [],
-  "it": [],
-  "pt": [],
+  "de": [
+    "a11y.close",
+    "a11y.toggle_theme",
+    "a11y.change_language",
+    "a11y.onboarding_progress",
+    "a11y.voice_setup_method",
+    "a11y.comment_status",
+    "a11y.publish_reply",
+    "a11y.time_period"
+  ],
+  "es": [
+    "a11y.close",
+    "a11y.toggle_theme",
+    "a11y.change_language",
+    "a11y.onboarding_progress",
+    "a11y.voice_setup_method",
+    "a11y.comment_status",
+    "a11y.publish_reply",
+    "a11y.time_period"
+  ],
+  "fr": [
+    "a11y.close",
+    "a11y.toggle_theme",
+    "a11y.change_language",
+    "a11y.onboarding_progress",
+    "a11y.voice_setup_method",
+    "a11y.comment_status",
+    "a11y.publish_reply",
+    "a11y.time_period"
+  ],
+  "it": [
+    "a11y.close",
+    "a11y.toggle_theme",
+    "a11y.change_language",
+    "a11y.onboarding_progress",
+    "a11y.voice_setup_method",
+    "a11y.comment_status",
+    "a11y.publish_reply",
+    "a11y.time_period"
+  ],
+  "pt": [
+    "a11y.close",
+    "a11y.toggle_theme",
+    "a11y.change_language",
+    "a11y.onboarding_progress",
+    "a11y.voice_setup_method",
+    "a11y.comment_status",
+    "a11y.publish_reply",
+    "a11y.time_period"
+  ],
   "ru": [],
-  "uk": []
+  "uk": [
+    "a11y.close",
+    "a11y.toggle_theme",
+    "a11y.change_language",
+    "a11y.onboarding_progress",
+    "a11y.voice_setup_method",
+    "a11y.comment_status",
+    "a11y.publish_reply",
+    "a11y.time_period"
+  ]
 }

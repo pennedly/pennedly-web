@@ -87,7 +87,7 @@ export function TranslateButton({ text, source = "unknown", className = "" }: Pr
           aria-haspopup="menu"
           aria-expanded={menuOpen}
           className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors"
-          aria-label="Translate"
+          aria-label={t("common.translate_content")}
         >
           <IcGlobe size={13} />
           <span>

@@ -36,7 +36,7 @@ export function RangeSeg({ active, onChange }: { active: StatPeriodKey; onChange
   return (
     <div
       role="tablist"
-      aria-label="Time period"
+      aria-label={t("a11y.time_period")}
       className="inline-flex max-w-full gap-[3px] rounded-md border border-border bg-surface-2 p-[3px] [scrollbar-width:none] max-md:flex max-md:w-full max-md:flex-nowrap max-md:overflow-x-auto max-md:[mask-image:linear-gradient(90deg,#000_calc(100%-20px),transparent)] md:overflow-x-auto"
     >
       {PERIODS.map((p) => {

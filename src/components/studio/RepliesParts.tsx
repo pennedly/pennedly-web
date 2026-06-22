@@ -294,7 +294,7 @@ export function StatusFilter({
   return (
     // Not sticky on mobile (deliberate — only the switcher sticks). Labels are
     // kept on mobile; the row scrolls horizontally instead of hiding them.
-    <div role="tablist" aria-label="Comment status" className="flex gap-1 rounded-md border border-border bg-surface-2 p-1 [scrollbar-width:none] max-md:overflow-x-auto">
+    <div role="tablist" aria-label={t("a11y.comment_status")} className="flex gap-1 rounded-md border border-border bg-surface-2 p-1 [scrollbar-width:none] max-md:overflow-x-auto">
       {REPLY_FILTERS.map((f) => {
         const on = active === f.key;
         return (
@@ -815,7 +815,7 @@ export function PublishReplyDialog({
       className="fixed inset-0 z-40 grid place-items-center bg-ink-950/55 p-6 backdrop-blur-sm max-md:place-items-end max-md:p-0"
       role="dialog"
       aria-modal="true"
-      aria-label="Publish reply"
+      aria-label={t("a11y.publish_reply")}
       onMouseDown={(e) => {
         if (e.target === e.currentTarget && !publishing) onClose();
       }}
