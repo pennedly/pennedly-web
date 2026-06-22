@@ -604,9 +604,13 @@ export async function setDraftVideo(
 
 // Absolute URL for a stored media path so the <img> resolves against the
 // backend host (the web app and the media live on different origins).
-// Already-absolute URLs (http/blob/data) pass through unchanged.
 export function mediaUrl(url: string): string {
-  return /^[a-z]+:/i.test(url) ? url : `${BASE_URL}${url}`;
+  // No scheme → a stored media path; resolve it against the backend host.
+  if (!/^[a-z][a-z0-9+.-]*:/i.test(url)) return `${BASE_URL}${url}`;
+  // Has a scheme: only let safe ones reach an <img src>. An upstream value
+  // (e.g. a page's og:image) could be javascript:/data:text — never pass those
+  // through. http(s) for remote, blob: for local previews, data:image/* inline.
+  return /^(https?:|blob:|data:image\/)/i.test(url) ? url : "";
 }
 
 // Fetch an OpenGraph preview card for a URL found in a post body. Resolves to

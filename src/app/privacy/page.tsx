@@ -71,7 +71,7 @@ const DOC: LegalDoc = {
       blocks: [
         {
           t: "p",
-          text: "We use trusted processors strictly to run the Service: Meta / Threads (the platform you connect), Google (sign-in), an LLM provider via OpenRouter (draft generation), Resend (email), Railway and Vercel (hosting), and PostHog and Sentry (analytics and error monitoring). Each processes data only on our instructions. Some providers operate outside the EEA; transfers rely on appropriate safeguards (e.g. Standard Contractual Clauses).",
+          text: "We use trusted processors strictly to run the Service: Meta / Threads (the platform you connect), Google (sign-in), an LLM provider via OpenRouter (draft generation), Resend (email), Railway (hosting) and Cloudflare (DNS, content delivery, and email routing), and PostHog and Sentry (analytics and error monitoring). Each processes data only on our instructions. Some providers operate outside the EEA; transfers rely on appropriate safeguards (e.g. Standard Contractual Clauses).",
         },
       ],
     },
