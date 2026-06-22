@@ -17,7 +17,7 @@ type PluralForms = {
   other: string; // always defined — the fallback for any category
 };
 
-type Unit = "posts" | "replies" | "comments";
+type Unit = "posts" | "replies" | "comments" | "days";
 
 // `other` mirrors the plain plural already in the message catalogs; `one`
 // (and `few`/`many` for ru/uk) are the additions that make counts grammatical.
@@ -51,6 +51,16 @@ const UNITS: Record<Unit, Record<LocaleCode, PluralForms>> = {
     fr: { one: "commentaire", other: "commentaires" },
     it: { one: "commento", other: "commenti" },
     pt: { one: "comentário", other: "comentários" },
+  },
+  days: {
+    en: { one: "day", other: "days" },
+    ru: { one: "день", few: "дня", many: "дней", other: "дней" },
+    uk: { one: "день", few: "дні", many: "днів", other: "днів" },
+    de: { one: "Tag", other: "Tage" },
+    es: { one: "día", other: "días" },
+    fr: { one: "jour", other: "jours" },
+    it: { one: "giorno", other: "giorni" },
+    pt: { one: "dia", other: "dias" },
   },
 };
 

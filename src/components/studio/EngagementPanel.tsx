@@ -20,7 +20,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 
 import { cn } from "@/lib/cn";
-import { useTranslation, type MessageKey } from "@/lib/i18n";
+import { pluralUnit, useTranslation, type LocaleCode, type MessageKey } from "@/lib/i18n";
 import { IcAlert, IcChart, IcEye, IcHeart, IcQuote, IcRefresh, IcReply, IcRepeat } from "@/components/icons";
 import { fmt } from "@/components/studio/FeedParts";
 import type { EngagementHistory, EngagementMetric, EngagementPoint } from "@/lib/types";
@@ -376,7 +376,7 @@ function ThinData({ data, metric, locale }: { data: EngagementHistory | null; me
   const yAt = (v: number) => PADT + (1 - v / max) * (100 - PADT - PADB);
   const line = points.map((p, i) => `${i === 0 ? "M" : "L"}${xAt(i).toFixed(2)} ${yAt(metricValue(p, metric)).toFixed(2)}`).join(" ");
 
-  const daysWord = realDays === 1 ? t("stats.eng_days_one") : t("stats.eng_days_other");
+  const daysWord = pluralUnit(locale as LocaleCode, "days", realDays);
   const note = t("stats.eng_thin_note").replace("{days}", `${realDays} ${daysWord}`);
 
   return (

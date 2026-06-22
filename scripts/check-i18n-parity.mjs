@@ -91,6 +91,7 @@ function extractKeys(filePath) {
   const order = [];
   const seen = new Set();
   const duplicates = [];
+  const values = {};
   for (const prop of objLit.properties) {
     if (!ts.isPropertyAssignment(prop)) continue; // skip spreads/methods (none expected)
     const name = prop.name;
@@ -106,8 +107,21 @@ function extractKeys(filePath) {
       seen.add(key);
       order.push(key);
     }
+    const v = prop.initializer;
+    if (ts.isStringLiteral(v) || ts.isNoSubstitutionTemplateLiteral(v)) values[key] = v.text;
   }
-  return { keys: order, set: seen, duplicates };
+  return { keys: order, set: seen, duplicates, values };
+}
+
+// Interpolation tokens that MUST survive translation unchanged: {name}, {n},
+// {handle}, {count}, … plus %s / %d. A dropped or renamed token silently voids
+// a dynamic value (the bug that shipped "Welcome" for "Welcome {name}").
+const PLACEHOLDER_RE = /\{[^}]+\}|%[sd]/g;
+function placeholders(str) {
+  return str ? [...str.matchAll(PLACEHOLDER_RE)].map((m) => m[0]).sort() : [];
+}
+function sameSet(a, b) {
+  return a.length === b.length && a.every((x, i) => x === b[i]);
 }
 
 function localeFiles() {
@@ -193,9 +207,18 @@ function main() {
     // Baseline entries that are now translated, or no longer exist in en:
     const staleBaseline = [...base].filter((k) => got.set.has(k) || !ref.set.has(k));
 
+    // Placeholder integrity: for every key present in BOTH locales, the
+    // {…}/%s token set must match en exactly (a dropped/renamed token voids a
+    // dynamic value). Independent of the baseline — there is no excuse for it.
+    const phMismatch = [];
+    for (const k of refKeys) {
+      if (!got.set.has(k) || got.values[k] == null || ref.values[k] == null) continue;
+      if (!sameSet(placeholders(ref.values[k]), placeholders(got.values[k]))) phMismatch.push(k);
+    }
+
     const translated = refKeys.length - missing.length;
     const localeProblem =
-      got.duplicates.length || extra.length || newlyMissing.length || staleBaseline.length;
+      got.duplicates.length || extra.length || newlyMissing.length || staleBaseline.length || phMismatch.length;
 
     const status = localeProblem ? `${RED}✗${RESET}` : `${GREEN}✓${RESET}`;
     const gapNote = missing.length
@@ -224,6 +247,14 @@ function main() {
       console.log(`      ${YELLOW}${staleBaseline.length} baseline entr(ies) now translated or gone from en — prune the baseline:${RESET}`);
       for (const k of staleBaseline.slice(0, 40)) console.log(`        - ${k}`);
       if (staleBaseline.length > 40) console.log(`        … and ${staleBaseline.length - 40} more`);
+    }
+    if (phMismatch.length) {
+      failed = true;
+      console.log(`      ${RED}${phMismatch.length} key(s) with placeholders that DON'T match ${REFERENCE} (dropped/renamed {…}/%s):${RESET}`);
+      for (const k of phMismatch.slice(0, 40)) {
+        console.log(`        - ${k}  ${DIM}${REFERENCE}[${placeholders(ref.values[k]).join(",")}] vs ${loc}[${placeholders(got.values[k]).join(",")}]${RESET}`);
+      }
+      if (phMismatch.length > 40) console.log(`        … and ${phMismatch.length - 40} more`);
     }
   }
 
