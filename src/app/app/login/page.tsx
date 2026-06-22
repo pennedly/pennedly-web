@@ -571,6 +571,16 @@ function LoginPageInner() {
   }
   useEffect(() => () => void (cdRef.current && clearInterval(cdRef.current)), []);
 
+  // SECURITY: the magic-link token / OAuth handoff ride the URL. Strip them
+  // from the address bar on mount (the values are already captured in the
+  // consts above) so they never reach analytics ($current_url) or the Referer.
+  useEffect(() => {
+    if (incomingToken || incomingHandoff) {
+      window.history.replaceState(null, "", "/app/login");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Magic-link consume on mount when ?token=… is present.
   useEffect(() => {
     if (!incomingToken) return;
@@ -581,7 +591,7 @@ function LoginPageInner() {
         setTokens(pair);
         try {
           const me = await fetchMe();
-          identify(me.user_id, me.email, me.tenant.id);
+          identify(me.user_id, me.tenant.id);
           captureEvent("ui.login_succeeded", { method: "magic_link" });
         } catch {
           /* best-effort */
@@ -610,7 +620,7 @@ function LoginPageInner() {
         setTokens(pair);
         try {
           const me = await fetchMe();
-          identify(me.user_id, me.email, me.tenant.id);
+          identify(me.user_id, me.tenant.id);
           captureEvent("ui.login_succeeded", { method: "google" });
         } catch {
           /* best-effort */
@@ -667,7 +677,7 @@ function LoginPageInner() {
       setTokens(pair);
       try {
         const me = await fetchMe();
-        identify(me.user_id, me.email, me.tenant.id);
+        identify(me.user_id, me.tenant.id);
         captureEvent("ui.login_succeeded", { method: "email_code" });
       } catch {
         /* best-effort */
@@ -708,7 +718,7 @@ function LoginPageInner() {
       setTokens(pair);
       try {
         const me = await fetchMe();
-        identify(me.user_id, me.email, me.tenant.id);
+        identify(me.user_id, me.tenant.id);
       } catch {
         /* best-effort */
       }

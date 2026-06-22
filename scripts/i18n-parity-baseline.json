@@ -8,7 +8,12 @@
     "a11y.voice_setup_method",
     "a11y.comment_status",
     "a11y.publish_reply",
-    "a11y.time_period"
+    "a11y.time_period",
+    "consent.title",
+    "consent.text",
+    "consent.learn",
+    "consent.decline",
+    "consent.accept"
   ],
   "es": [
     "a11y.close",
@@ -18,7 +23,12 @@
     "a11y.voice_setup_method",
     "a11y.comment_status",
     "a11y.publish_reply",
-    "a11y.time_period"
+    "a11y.time_period",
+    "consent.title",
+    "consent.text",
+    "consent.learn",
+    "consent.decline",
+    "consent.accept"
   ],
   "fr": [
     "a11y.close",
@@ -28,7 +38,12 @@
     "a11y.voice_setup_method",
     "a11y.comment_status",
     "a11y.publish_reply",
-    "a11y.time_period"
+    "a11y.time_period",
+    "consent.title",
+    "consent.text",
+    "consent.learn",
+    "consent.decline",
+    "consent.accept"
   ],
   "it": [
     "a11y.close",
@@ -38,7 +53,12 @@
     "a11y.voice_setup_method",
     "a11y.comment_status",
     "a11y.publish_reply",
-    "a11y.time_period"
+    "a11y.time_period",
+    "consent.title",
+    "consent.text",
+    "consent.learn",
+    "consent.decline",
+    "consent.accept"
   ],
   "pt": [
     "a11y.close",
@@ -48,7 +68,12 @@
     "a11y.voice_setup_method",
     "a11y.comment_status",
     "a11y.publish_reply",
-    "a11y.time_period"
+    "a11y.time_period",
+    "consent.title",
+    "consent.text",
+    "consent.learn",
+    "consent.decline",
+    "consent.accept"
   ],
   "ru": [],
   "uk": [
@@ -59,6 +84,11 @@
     "a11y.voice_setup_method",
     "a11y.comment_status",
     "a11y.publish_reply",
-    "a11y.time_period"
+    "a11y.time_period",
+    "consent.title",
+    "consent.text",
+    "consent.learn",
+    "consent.decline",
+    "consent.accept"
   ]
 }

@@ -143,7 +143,7 @@ export default function Studio() {
       try {
         const profile = await fetchMe();
         setMe(profile);
-        identify(profile.user_id, profile.email, profile.tenant.id);
+        identify(profile.user_id, profile.tenant.id);
       } catch (e) {
         if (e instanceof ApiError && e.status === 401) {
           clearTokens();

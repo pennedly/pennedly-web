@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
+import { CookieConsent } from "@/components/CookieConsent";
 import { AnalyticsProvider } from "./providers";
 
 const geistSans = Geist({
@@ -60,6 +61,7 @@ export default function RootLayout({
           }}
         />
         <AnalyticsProvider>{children}</AnalyticsProvider>
+        <CookieConsent />
       </body>
     </html>
   );
