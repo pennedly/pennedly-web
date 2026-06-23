@@ -431,7 +431,7 @@ export const pt: Partial<Record<MessageKey, string>> = {
   "explore.notice_body":
     "O Pennedly nunca abre links nem lê contas alheias. Copie as palavras das publicações que você admira e cole abaixo — uma publicação por bloco, uma linha em branco entre cada uma.",
   "explore.placeholder":
-    "Cole aqui algumas publicações que você admira.\n\nDeixe uma linha em branco entre cada uma para o Pennedly distingui-las.",
+    "Cole aqui algumas publicações que você admira.\nDeixe uma linha em branco entre cada uma para o Pennedly distingui-las.",
   "explore.count_empty": "Ainda sem publicações",
   "explore.count_one": "1 publicação pronta",
   "explore.count_other": "{n} publicações prontas",

@@ -430,7 +430,7 @@ export const it: Partial<Record<MessageKey, string>> = {
   "explore.notice_body":
     "Pennedly non apre mai i link e non legge gli account altrui. Copia le parole dei post che ammiri e incollale qui sotto — un post per blocco, una riga vuota tra l'uno e l'altro.",
   "explore.placeholder":
-    "Incolla qui qualche post che ammiri.\n\nLascia una riga vuota tra l'uno e l'altro, così Pennedly può distinguerli.",
+    "Incolla qui qualche post che ammiri.\nLascia una riga vuota tra l'uno e l'altro, così Pennedly può distinguerli.",
   "explore.count_empty": "Ancora nessun post",
   "explore.count_one": "1 post pronto",
   "explore.count_other": "{n} post pronti",

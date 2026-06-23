@@ -294,7 +294,7 @@ export function Starters({
         "mx-auto mb-3 max-w-[640px] gap-2",
         scroll
           ? "flex overflow-x-auto pb-0.5 [mask-image:linear-gradient(90deg,#000_86%,transparent)] [-webkit-overflow-scrolling:touch]"
-          : "flex flex-wrap",
+          : "flex flex-wrap justify-center",
       )}
     >
       {starters.map((s, i) => {

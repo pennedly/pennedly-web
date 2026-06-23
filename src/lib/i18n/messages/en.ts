@@ -678,7 +678,7 @@ export const en = {
   "explore.notice_body":
     "Pennedly never opens links or reads other people's accounts. Copy the words of the posts you admire and drop them in below, one post per block, a blank line between each.",
   "explore.placeholder":
-    "Paste a few posts you admire here.\n\nLeave a blank line between each one, so Pennedly can tell them apart.",
+    "Paste a few posts you admire here.\nLeave a blank line between each one, so Pennedly can tell them apart.",
   "explore.count_empty": "No posts yet",
   "explore.count_one": "1 post ready",
   "explore.count_other": "{n} posts ready",

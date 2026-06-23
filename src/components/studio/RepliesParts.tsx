@@ -220,7 +220,7 @@ export function PostMaster({
                 )}
               >
                 <span className={cn("line-clamp-2 text-small leading-[1.45] text-text", on && "font-semibold")}>{p.text}</span>
-                <span className="flex flex-wrap items-center gap-[7px] text-caption text-text-subtle">
+                <span className="mt-auto flex flex-wrap items-center gap-[7px] text-caption text-text-subtle">
                   <span>{p.time}</span>
                   <span className="opacity-50">·</span>
                   <span>
