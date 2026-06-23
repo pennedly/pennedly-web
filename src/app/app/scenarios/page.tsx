@@ -846,6 +846,18 @@ function EditorView({
       <div className="grid grid-cols-1 gap-5 md:grid-cols-[minmax(0,1fr)_380px] md:items-start">
         {/* form column */}
         <div className="space-y-4 md:space-y-5">
+          {/* orienting «this scenario will…» — plain-language statement of what
+              this routine does, so the user is never configuring blind */}
+          {form.preset && (
+            <div className="rounded-lg border border-accent/25 bg-accent/[0.05] p-4 md:p-[18px]">
+              <p className="text-caption font-semibold uppercase tracking-[0.04em] text-accent">
+                {t("scenarios.will_label")}
+              </p>
+              <p className="mt-1.5 text-body leading-relaxed text-text">
+                {t(`scenarios.p.${form.preset.id}.will` as MessageKey)}
+              </p>
+            </div>
+          )}
           {/* name */}
           <FormCard>
             <Field label={t("scenarios.f.name")} error={nameErr ? t("scenarios.err_required") : undefined}>

@@ -1536,7 +1536,7 @@ export const en = {
   // ── Scenarios ──────────────────────────────────────────────────────────
   "dashboard.nav.scenarios": "scenarios",
   "scenarios.title": "Scenarios",
-  "scenarios.subtitle": "Routine autopilot in your voice — pick a routine, edit one or two fields, see what gets baked in, preview, turn on.",
+  "scenarios.subtitle": "Routine autopilot in your voice — pick a routine, edit one or two fields, see what Pennedly adds, preview, turn on.",
   "scenarios.active": "{n} active",
   "scenarios.all_off": "All off",
   "scenarios.new": "New scenario",
@@ -1811,8 +1811,9 @@ export const en = {
   "scenarios.aud.fans": "Fans only",
   "scenarios.aud.all": "Everyone but trolls",
   "scenarios.aud.questions": "Questions only",
-  // baked rules ("what gets baked in")
-  "scenarios.baked_title": "What gets baked in",
+  // what Pennedly adds (read-only proven rules)
+  "scenarios.will_label": "What this scenario does",
+  "scenarios.baked_title": "What Pennedly adds",
   "scenarios.baked_foot": "Read-only · your voice still goes on top.",
   "scenarios.baked.dq_1": "Exactly one open question, easy to answer from a phone.",
   "scenarios.baked.dq_2": "Personal and concrete, not abstract.",
@@ -1836,7 +1837,7 @@ export const en = {
   "scenarios.baked.pr_2": "Warm tone — never belittles those who didn't qualify.",
   "scenarios.baked.pr_3": "Posts the campaign gently, not every day.",
   // preview · primed-on + when-fires + run-now
-  "scenarios.primed_on": "Primed on your voice + {n} posts — Pennedly doesn't make things up for you.",
+  "scenarios.primed_on": "In your voice + your {n} posts — Pennedly doesn't make things up for you.",
   "scenarios.when_fires": "Fires: {when}",
   "scenarios.fires.morning": "tomorrow at 9:00, as the first post",
   "scenarios.fires.weekly": "next chosen weekday, in the morning",

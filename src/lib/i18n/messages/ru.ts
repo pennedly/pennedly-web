@@ -1511,7 +1511,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   // ── Сценарии ───────────────────────────────────────────────────────────
   "dashboard.nav.scenarios": "сценарии",
   "scenarios.title": "Сценарии",
-  "scenarios.subtitle": "Рутинный автопилот в твоём голосе — выбери рутину, поправь одно-два поля, посмотри, что зашьётся, проверь пример и включи.",
+  "scenarios.subtitle": "Рутинный автопилот в твоём голосе — выбери рутину, поправь одно-два поля, посмотри, что добавит Pennedly, проверь пример и включи.",
   "scenarios.active": "{n} активны",
   "scenarios.all_off": "Все выключены",
   "scenarios.new": "Новый сценарий",
@@ -1786,8 +1786,9 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "scenarios.aud.fans": "Только фанатам",
   "scenarios.aud.all": "Все, кроме троллей",
   "scenarios.aud.questions": "Только вопросы",
-  // «что зашьётся»
-  "scenarios.baked_title": "Что зашьётся",
+  // «что добавит Pennedly» (read-only proven rules)
+  "scenarios.will_label": "Этот сценарий будет",
+  "scenarios.baked_title": "Что Pennedly добавит",
   "scenarios.baked_foot": "Только для чтения · поверх — твой голос.",
   "scenarios.baked.dq_1": "Ровно один открытый вопрос, на который легко ответить с телефона.",
   "scenarios.baked.dq_2": "Личный и конкретный, а не абстрактный.",
@@ -1811,7 +1812,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "scenarios.baked.pr_2": "Тёплый тон — не обесценивает тех, кто не выполнил условия.",
   "scenarios.baked.pr_3": "Подаёт акцию мягко, не каждый день.",
   // предпросмотр · грунтован-на + когда-сработает + прогнать-сейчас
-  "scenarios.primed_on": "Грунтован на твоём голосе + {n} постах — Pennedly не выдумывает за тебя.",
+  "scenarios.primed_on": "В твоём голосе + на {n} твоих постах — Pennedly не выдумывает за тебя.",
   "scenarios.when_fires": "Сработает: {when}",
   "scenarios.fires.morning": "завтра в 9:00, первым постом",
   "scenarios.fires.weekly": "в ближайший выбранный день недели, утром",
