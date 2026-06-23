@@ -1121,7 +1121,7 @@ export function StudioComposer({
             />
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2.5 border-t border-border pt-3">
-            <div className="flex flex-nowrap gap-1.5 overflow-x-auto [scrollbar-width:none] [mask-image:linear-gradient(90deg,#000_calc(100%-20px),transparent)] max-md:w-full md:min-w-0 md:flex-1">
+            <div className="flex flex-nowrap gap-1.5 py-1 -my-1 overflow-x-auto [scrollbar-width:none] [mask-image:linear-gradient(90deg,#000_calc(100%-20px),transparent)] max-md:w-full md:min-w-0 md:flex-1">
               <button
                 type="button"
                 onClick={loadIdeas}
