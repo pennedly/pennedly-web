@@ -486,15 +486,20 @@ export function ScenarioCard({
   const isReply = (s.action_cfg?.kind as string) === "reply_policy";
   const Icon = isPromo ? IcGift : isReply ? IcReplies : IcRepeat;
   const skip = s.recent_skips?.[0];
-  // run-count = number of skip rows is wrong; the SPEC shows "fired N times".
-  // We don't have a fire count field, so derive a friendly count from last_run
-  // presence is impossible — show the value only when the backend supplies it
-  // via a future field; for now we omit it when unknown (kept honest).
+  // Plain-language "what this does" line. The cadence strip below carries the
+  // WHEN, so the line carries the WHAT — a faithful generic sentence derived
+  // from the scenario's shape (the scenario row doesn't store its origin preset,
+  // so we can't look up the preset's own sentence).
+  const cardline = isPromo
+    ? t("scenarios.cardline.promo")
+    : isReply
+      ? t("scenarios.cardline.reply")
+      : t("scenarios.cardline.post");
   return (
     <div
       className={cn(
         "rounded-lg border border-border bg-surface p-4 shadow-sm transition-colors hover:border-text/15 hover:shadow-md md:p-[18px]",
-        !s.enabled && "opacity-[0.78]",
+        !s.enabled && "opacity-[0.82]",
       )}
     >
       <div className="flex items-start gap-3">
@@ -507,44 +512,59 @@ export function ScenarioCard({
           <Icon size={20} />
         </span>
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 pr-1">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
             <h3 className="text-body font-semibold tracking-tight">{s.name}</h3>
-            {isPromo ? (
-              <span className="inline-flex items-center gap-1 rounded-full border border-warning/30 bg-warning/10 px-2 py-0.5 text-caption font-medium text-warning">
-                <IcGift size={12} /> {t("scenarios.preset.promo")}
-              </span>
-            ) : (
-              <span className="rounded-full border border-border bg-surface-2 px-2 py-0.5 font-mono text-caption font-medium text-text-muted">
-                {t("scenarios.prov_when").replace("{summary}", scheduleSummary(s, t))}
+            {isReply && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-accent/20 bg-accent/[0.06] px-2 py-0.5 text-caption font-medium text-text-muted">
+                <IcReplies size={11} className="text-accent" /> {t("scenarios.replies_people")}
               </span>
             )}
           </div>
+          <p className="mt-1 text-small leading-[1.5] text-text-muted [text-wrap:pretty]">{cardline}</p>
         </div>
-        <label className="flex shrink-0 items-center gap-2 text-caption font-semibold text-text-subtle">
-          <span className={cn("max-sm:sr-only", s.enabled && "text-success")}>
-            {s.enabled ? t("scenarios.on") : t("scenarios.off")}
+        {/* Big, unambiguous status — the «сохранил ≠ работает» fix */}
+        <div className="flex shrink-0 flex-col items-end gap-2">
+          <span
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-caption font-semibold",
+              s.enabled ? "border-success/30 bg-success/12 text-success" : "border-border bg-surface-2 text-text-subtle",
+            )}
+          >
+            <span className={cn("h-2 w-2 rounded-full", s.enabled ? "bg-success ring-2 ring-success/25" : "bg-text-subtle")} />
+            {s.enabled ? t("scenarios.status_on") : t("scenarios.status_off")}
           </span>
           <Switch checked={s.enabled} onCheckedChange={(v) => onToggle(s, v)} aria-label={s.name} />
-        </label>
+        </div>
       </div>
 
-      {/* cadence strip */}
-      <div className="mt-3">
-        <CadenceStrip s={s} />
-      </div>
-
-      {/* skip-note, else an explicit "off ≠ running" line so a saved-but-off
-          scenario never reads as live */}
+      {/* skip-note, else the «сохранил ≠ работает» block — an OFF scenario says so
+          plainly and offers to turn it on right there. */}
       {skip ? (
         <div className="mt-3 rounded-md border border-dashed border-warning/40 bg-warning/[0.04] px-3 py-2 text-caption text-text-muted">
           <span className="font-medium text-text">{t("scenarios.skip_title")}</span>{" "}
           {t(SKIP_REASON[skip.reason] ?? "scenarios.skip.condition")}
         </div>
       ) : !s.enabled ? (
-        <div className="mt-3 rounded-md border border-dashed border-border bg-surface-2/60 px-3 py-2 text-caption text-text-muted">
-          {t("scenarios.off_hint")}
+        <div className="mt-3 flex flex-wrap items-center gap-3 rounded-md border border-warning/30 bg-warning/[0.06] px-3 py-2.5">
+          <span className="min-w-0 flex-1 text-small leading-[1.45] text-text">
+            <b className="font-semibold">{t("scenarios.created_off_title")}</b> {t("scenarios.created_off_body")}
+          </span>
+          <Button
+            size="sm"
+            variant="primary"
+            icon={<IcCheck size={14} />}
+            onClick={() => onToggle(s, true)}
+            className="shrink-0 max-sm:w-full"
+          >
+            {t("scenarios.turn_on")}
+          </Button>
         </div>
       ) : null}
+
+      {/* cadence strip — the WHEN */}
+      <div className="mt-3">
+        <CadenceStrip s={s} />
+      </div>
 
       <div className="mt-3.5 flex flex-col gap-2 border-t border-border pt-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-caption tabular-nums text-text-subtle">
