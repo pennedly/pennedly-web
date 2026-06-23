@@ -1308,6 +1308,7 @@ export const en = {
   // {posts} and {comments} are live counts substituted at render (tabular).
   "backfill.banner_sub_live": "{posts} · {comments} so far",
   "backfill.banner_eta": "About a minute left",
+  "backfill.dismiss": "Dismiss",
   "backfill.partial_title": "Imported most of your history",
   "backfill.partial_sub": "{posts} · {comments} are in. A few older posts are still finishing up.",
   // Words used to build the live count line (pluralization-light, count-prefixed).

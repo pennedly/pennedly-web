@@ -220,22 +220,22 @@ export function PostMaster({
                 )}
               >
                 <span className={cn("line-clamp-2 text-small leading-[1.45] text-text", on && "font-semibold")}>{p.text}</span>
-                <span className="mt-auto flex flex-wrap items-center gap-[7px] text-caption text-text-subtle">
+                <span className="flex flex-wrap items-center gap-[7px] text-caption text-text-subtle">
                   <span>{p.time}</span>
                   <span className="opacity-50">·</span>
                   <span>
                     {c.total} {t("replies.comments_word")}
                   </span>
-                  {c.unanswered > 0 ? (
-                    <span className="ml-auto rounded-full border border-accent/30 bg-accent/12 px-2 py-px text-caption font-semibold text-accent">
-                      {c.unanswered} {t("replies.to_answer")}
-                    </span>
-                  ) : (
-                    <span className="ml-auto rounded-full border border-success/30 bg-success/12 px-2 py-px text-caption font-semibold text-success">
-                      {t("replies.all_answered")}
-                    </span>
-                  )}
                 </span>
+                {c.unanswered > 0 ? (
+                  <span className="mt-auto self-start rounded-full border border-accent/30 bg-accent/12 px-2 py-px text-caption font-semibold text-accent">
+                    {c.unanswered} {t("replies.to_answer")}
+                  </span>
+                ) : (
+                  <span className="mt-auto self-start rounded-full border border-success/30 bg-success/12 px-2 py-px text-caption font-semibold text-success">
+                    {t("replies.all_answered")}
+                  </span>
+                )}
               </button>
             );
           })}

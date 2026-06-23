@@ -195,6 +195,15 @@ export default function AdvisorPage() {
   }
   const shown = demoTurns ?? turns;
   const isFirstRun = shown.length === 0;
+  const composerEl = (
+    <Composer
+      value={input}
+      onChange={setInput}
+      onSend={() => ask(input)}
+      disabled={accountId === null && !allow}
+      busy={busy}
+    />
+  );
 
   return (
     <div className="min-h-screen bg-bg text-text">
@@ -220,6 +229,9 @@ export default function AdvisorPage() {
                 {t("advisor.try_asking")}
               </p>
               <Starters starters={starters} onPick={(label) => setInput(label)} />
+              {/* First run: the composer flows right under the suggestion pills
+                  (with a gap), not docked to the bottom of the viewport. */}
+              <div className="mt-5">{composerEl}</div>
             </div>
           ) : (
             <div className="mx-auto flex max-w-[640px] flex-col gap-6">
@@ -235,15 +247,10 @@ export default function AdvisorPage() {
           )}
         </div>
 
-        <div className="shrink-0 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3">
-          <Composer
-            value={input}
-            onChange={setInput}
-            onSend={() => ask(input)}
-            disabled={accountId === null && !allow}
-            busy={busy}
-          />
-        </div>
+        {/* Once the conversation starts the composer docks at the bottom. */}
+        {!isFirstRun && (
+          <div className="shrink-0 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3">{composerEl}</div>
+        )}
       </div>
 
       {allow && (

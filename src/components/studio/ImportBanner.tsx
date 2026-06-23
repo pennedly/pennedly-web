@@ -25,7 +25,7 @@ import { useSelectedAccountId } from "@/lib/account";
 import { cn } from "@/lib/cn";
 import { useTranslation } from "@/lib/i18n";
 import { pluralUnit } from "@/lib/i18n/plurals";
-import { IcCheck } from "@/components/icons";
+import { IcCheck, IcX } from "@/components/icons";
 import type { SyncStatus, SyncSummary } from "@/lib/types";
 
 // Live backfill state for the currently-selected account, read from
@@ -79,9 +79,40 @@ function num(v: number | undefined): number | null {
   return typeof v === "number" && Number.isFinite(v) && v >= 0 ? v : null;
 }
 
+const dismissKey = (accountId: number) => `pennedly:importDismissed:${accountId}`;
+
 export function ImportBanner({ status, summary }: { status: SyncStatus; summary: SyncSummary | null }) {
   const { t, locale } = useTranslation();
+  const accountId = useSelectedAccountId();
+  // The terminal `partial` banner is a one-time reassurance, not a live
+  // process — make it dismissible so it doesn't haunt the screen on every
+  // reload. Dismissal is remembered per account; a fresh import (status flips
+  // back to `importing`) re-arms it.
+  const [dismissed, setDismissed] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || accountId === null) {
+      setDismissed(false);
+      return;
+    }
+    if (status === "importing") {
+      window.localStorage.removeItem(dismissKey(accountId));
+      setDismissed(false);
+    } else if (status === "partial") {
+      setDismissed(window.localStorage.getItem(dismissKey(accountId)) === "1");
+    } else {
+      setDismissed(false);
+    }
+  }, [status, accountId]);
+
   if (status !== "importing" && status !== "partial") return null;
+  if (dismissed) return null;
+
+  const onDismiss = () => {
+    if (accountId !== null && typeof window !== "undefined") {
+      window.localStorage.setItem(dismissKey(accountId), "1");
+    }
+    setDismissed(true);
+  };
 
   const posts = num(summary?.posts) ?? num(summary?.history_posts);
   const comments = num(summary?.new_comments);
@@ -151,8 +182,18 @@ export function ImportBanner({ status, summary }: { status: SyncStatus; summary:
         )}
       </div>
 
-      {/* trailing hint — an ETA while syncing, nothing once partial */}
-      {!partial && (
+      {/* trailing — an ETA while syncing, a dismiss control once partial (the
+          terminal "imported most of your history" note shouldn't be permanent). */}
+      {partial ? (
+        <button
+          type="button"
+          onClick={onDismiss}
+          aria-label={t("backfill.dismiss")}
+          className="grid h-7 w-7 shrink-0 place-items-center self-center rounded-md text-text-subtle transition-colors hover:bg-surface-2 hover:text-text"
+        >
+          <IcX size={15} />
+        </button>
+      ) : (
         <span className="shrink-0 self-center whitespace-nowrap text-caption text-text-subtle max-[560px]:order-3 max-[560px]:ml-[50px] max-[560px]:basis-full">
           {t("backfill.banner_eta")}
         </span>

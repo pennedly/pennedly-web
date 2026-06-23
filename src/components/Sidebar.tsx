@@ -103,11 +103,14 @@ export function Sidebar() {
   // Nav count badges (§4): items waiting on the user for the active account —
   // pending drafts (Studio), comments needing a reply (Replies), un-reviewed
   // audits (Audits). Best-effort; a failed or zero count just hides the badge.
+  // Kept fresh — refetch on account switch, on route change, on tab refocus,
+  // and on a slow interval — so a cleared item (e.g. a published draft) doesn't
+  // leave its badge stuck forever (it previously loaded once per account).
   const [counts, setCounts] = useState<Record<string, number>>({});
   useEffect(() => {
     if (!accountId || !getTokens()) return;
     let cancelled = false;
-    (async () => {
+    const refresh = async () => {
       const [d, c, a] = await Promise.allSettled([
         listDrafts(accountId, { status: "pending", limit: 1 }),
         fetchComments(accountId, { limit: 1 }),
@@ -119,11 +122,21 @@ export function Sidebar() {
         replies: c.status === "fulfilled" ? (c.value.status_counts?.new ?? 0) : 0,
         audits: a.status === "fulfilled" ? (a.value.count ?? 0) : 0,
       });
-    })();
+    };
+    void refresh();
+    const onFocus = () => {
+      if (document.visibilityState !== "hidden") void refresh();
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
+    const timer = setInterval(() => void refresh(), 60_000);
     return () => {
       cancelled = true;
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
+      clearInterval(timer);
     };
-  }, [accountId]);
+  }, [accountId, pathname]);
 
   useEffect(() => {
     if (!getTokens()) return;
