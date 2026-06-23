@@ -261,11 +261,16 @@ export function DiscoveryGallery({
   onPick,
   onStarter,
   onScratch,
+  // The bulk "starter set" (creates 3 scenarios at once) is a first-run
+  // convenience — only offered on the empty screen. Hidden when adding a
+  // scenario to an existing set, so it can't re-seed duplicates.
+  showStarter = true,
 }: {
   presets: ScenarioPreset[];
   onPick: (p: ScenarioPreset) => void;
   onStarter: () => void;
   onScratch: () => void;
+  showStarter?: boolean;
 }) {
   const { t } = useTranslation();
   const byGroup = useMemo(() => {
@@ -281,16 +286,18 @@ export function DiscoveryGallery({
 
   return (
     <div className="flex flex-col gap-6">
-      {/* lede: microcopy + starter-set */}
-      <div className="flex flex-col gap-3 rounded-lg border border-success/25 bg-success/[0.05] p-4 sm:flex-row sm:items-center sm:justify-between md:p-5">
-        <div className="min-w-0">
-          <p className="text-body font-semibold tracking-tight text-text">{t("scenarios.disco_lede")}</p>
-          <p className="mt-1 text-small leading-relaxed text-text-muted">{t("scenarios.disco_lede_sub")}</p>
+      {/* lede: microcopy + starter-set — first-run only */}
+      {showStarter && (
+        <div className="flex flex-col gap-3 rounded-lg border border-success/25 bg-success/[0.05] p-4 sm:flex-row sm:items-center sm:justify-between md:p-5">
+          <div className="min-w-0">
+            <p className="text-body font-semibold tracking-tight text-text">{t("scenarios.disco_lede")}</p>
+            <p className="mt-1 text-small leading-relaxed text-text-muted">{t("scenarios.disco_lede_sub")}</p>
+          </div>
+          <Button variant="primary" onClick={onStarter} icon={<IcSparkle size={15} />} className="shrink-0 max-sm:w-full">
+            {t("scenarios.starter_set")}
+          </Button>
         </div>
-        <Button variant="primary" onClick={onStarter} icon={<IcSparkle size={15} />} className="shrink-0 max-sm:w-full">
-          {t("scenarios.starter_set")}
-        </Button>
-      </div>
+      )}
 
       {GROUP_ORDER.map((g) => {
         const items = byGroup.get(g)!;
