@@ -15,6 +15,7 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
+import { AppFooter } from "@/components/AppFooter";
 import { Sidebar } from "@/components/Sidebar";
 import { Spinner } from "@/components/ui/feedback";
 import { fetchMe, getTokens } from "@/lib/api";
@@ -81,7 +82,12 @@ export default function AppLayout({
     return (
       <div className="md:pl-62">
         <Sidebar />
-        {children}
+        {/* sticky-footer column: content grows, footer pins to the bottom on
+            short pages and flows after content on long ones (Footer-SPEC). */}
+        <div className="flex min-h-screen flex-col">
+          <div className="flex-1">{children}</div>
+          <AppFooter />
+        </div>
       </div>
     );
   }
@@ -99,7 +105,10 @@ export default function AppLayout({
   return (
     <div className="md:pl-62">
       <Sidebar />
-      {children}
+      <div className="flex min-h-screen flex-col">
+        <div className="flex-1">{children}</div>
+        <AppFooter />
+      </div>
     </div>
   );
 }

@@ -6,6 +6,12 @@ import type { MessageKey } from "./en";
 export const uk: Partial<Record<MessageKey, string>> = {
   // ── Shared ─────────────────────────────────────────────────────
   "app.brand": "Pennedly",
+  // ── Footer (global /app footer) ─────────────────────────────────
+  "footer.privacy": "Конфіденційність",
+  "footer.terms": "Умови",
+  "footer.data_deletion": "Видалення даних",
+  "footer.copyright": "© Pennedly, {year}",
+  "footer.support": "Підтримка",
   "app.tagline": "Допомагає писати у твоєму голосі на Threads.",
   "common.loading": "завантаження…",
   "common.saving": "зберігаю…",

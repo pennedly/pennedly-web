@@ -7,6 +7,12 @@ import type { MessageKey } from "./en";
 export const ru: Partial<Record<MessageKey, string>> = {
   // ── Shared ─────────────────────────────────────────────────────
   "app.brand": "Pennedly",
+  // ── Footer (global /app footer) ─────────────────────────────────
+  "footer.privacy": "Конфиденциальность",
+  "footer.terms": "Условия",
+  "footer.data_deletion": "Удаление данных",
+  "footer.copyright": "© Pennedly, {year}",
+  "footer.support": "Поддержка",
   "app.tagline": "Помогает писать в твоём голосе на Threads.",
   "common.loading": "загружаю…",
   "common.saving": "сохраняю…",

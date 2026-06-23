@@ -9,6 +9,12 @@
 export const en = {
   // ── Shared ─────────────────────────────────────────────────────
   "app.brand": "Pennedly",
+  // ── Footer (global /app footer) ─────────────────────────────────
+  "footer.privacy": "Privacy",
+  "footer.terms": "Terms",
+  "footer.data_deletion": "Data deletion",
+  "footer.copyright": "© Pennedly {year}",
+  "footer.support": "Support",
   "app.tagline": "Drafting partner for your Threads voice.",
   "common.loading": "loading…",
   "common.saving": "saving…",
