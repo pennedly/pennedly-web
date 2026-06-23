@@ -531,14 +531,17 @@ export function ScenarioCard({
         <CadenceStrip s={s} />
       </div>
 
-      {/* skip-note */}
-      {!s.enabled || skip ? (
-        skip ? (
-          <div className="mt-3 rounded-md border border-dashed border-warning/40 bg-warning/[0.04] px-3 py-2 text-caption text-text-muted">
-            <span className="font-medium text-text">{t("scenarios.skip_title")}</span>{" "}
-            {t(SKIP_REASON[skip.reason] ?? "scenarios.skip.condition")}
-          </div>
-        ) : null
+      {/* skip-note, else an explicit "off ≠ running" line so a saved-but-off
+          scenario never reads as live */}
+      {skip ? (
+        <div className="mt-3 rounded-md border border-dashed border-warning/40 bg-warning/[0.04] px-3 py-2 text-caption text-text-muted">
+          <span className="font-medium text-text">{t("scenarios.skip_title")}</span>{" "}
+          {t(SKIP_REASON[skip.reason] ?? "scenarios.skip.condition")}
+        </div>
+      ) : !s.enabled ? (
+        <div className="mt-3 rounded-md border border-dashed border-border bg-surface-2/60 px-3 py-2 text-caption text-text-muted">
+          {t("scenarios.off_hint")}
+        </div>
       ) : null}
 
       <div className="mt-3.5 flex flex-col gap-2 border-t border-border pt-3 sm:flex-row sm:items-center sm:justify-between">
