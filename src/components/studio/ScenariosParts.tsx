@@ -40,7 +40,6 @@ import {
   IcReplies,
   IcShield,
   IcSparkle,
-  IcStar,
   IcTrash,
   IcUsers,
 } from "@/components/icons";
@@ -120,6 +119,42 @@ export function presetProducesReplies(id: string): boolean {
 // The starter-set presets the «Запусти базовый набор» button pre-binds.
 export const STARTER_SET = ["daily_question", "rubric", "reply_duty"];
 
+// ── GOAL gallery (CD redesign) ──────────────────────────────────────────────
+// The discovery gallery groups presets by the creator's GOAL ("keep a rhythm",
+// "grow engagement", "for the moment", "campaigns"), not by the backend's
+// mechanical group. Each card shows a benefit headline + a plain "this will…"
+// sentence; reply-producing scenarios carry an honest "replies to people" plaque.
+export type Goal = "rhythm" | "engage" | "timely" | "campaign";
+export const GOAL_ORDER: Goal[] = ["rhythm", "engage", "timely", "campaign"];
+const GOAL_OF: Record<string, Goal> = {
+  daily_question: "rhythm",
+  rubric: "rhythm",
+  safety_net: "rhythm",
+  reply_duty: "engage",
+  amplify_viral: "engage",
+  milestone_thanks: "engage",
+  poll: "timely",
+  seasonal: "timely",
+  promo: "campaign",
+};
+export function goalOf(presetId: string): Goal {
+  return GOAL_OF[presetId] ?? "timely";
+}
+const GOAL_LABEL: Record<Goal, MessageKey> = {
+  rhythm: "scenarios.goal.rhythm",
+  engage: "scenarios.goal.engage",
+  timely: "scenarios.goal.timely",
+  campaign: "scenarios.goal.campaign",
+};
+const GOAL_NOTE: Record<Goal, MessageKey> = {
+  rhythm: "scenarios.goal.rhythm_note",
+  engage: "scenarios.goal.engage_note",
+  timely: "scenarios.goal.timely_note",
+  campaign: "scenarios.goal.campaign_note",
+};
+// Presets that prominently reply to real people → show the honest plaque.
+const PLAQUE_PRESETS = new Set(["reply_duty", "promo"]);
+
 // ── KOGDA (schedule) modes ──
 export type WhenMode = "daily" | "every_n_days" | "weekly" | "date_range" | "event";
 
@@ -197,59 +232,49 @@ function presetWhenHint(p: ScenarioPreset, t: T): string {
 export function PresetCard({ preset, onPick }: { preset: ScenarioPreset; onPick: (p: ScenarioPreset) => void }) {
   const { t } = useTranslation();
   const Icon = presetIcon(preset.icon);
-  const isFace = preset.id === "daily_question";
-  const isCampaign = preset.group === "campaign";
-  const isCore = preset.group === "daily";
+  const isCampaign = goalOf(preset.id) === "campaign";
+  const replies = PLAQUE_PRESETS.has(preset.id);
   return (
     <button
       type="button"
       onClick={() => onPick(preset)}
       className={cn(
-        "group flex h-full flex-col rounded-lg border bg-surface p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-text/20 hover:shadow-md md:p-[18px]",
-        isCore ? "border-accent/25 bg-accent/[0.04]" : isCampaign ? "border-warning/30 bg-warning/[0.04]" : "border-border",
+        "group flex h-full flex-col gap-2.5 rounded-lg border bg-surface p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-text/20 hover:shadow-md md:p-[18px]",
+        isCampaign ? "border-warning/30 bg-warning/[0.04]" : "border-border",
       )}
     >
       <div className="flex items-start gap-2.5">
         <span
           className={cn(
             "grid h-9 w-9 shrink-0 place-items-center rounded-md border",
-            isCampaign
-              ? "border-warning/30 bg-warning/10 text-warning"
-              : isCore
-                ? "border-accent/30 bg-accent/10 text-accent"
-                : "border-border bg-surface-2 text-text-muted",
+            isCampaign ? "border-warning/30 bg-warning/10 text-warning" : "border-accent/30 bg-accent/10 text-accent",
           )}
         >
           <Icon size={18} />
         </span>
-        <div className="min-w-0 flex-1">
-          <h4 className="flex flex-wrap items-center gap-1.5 text-body font-semibold tracking-tight">
-            {t(preset.name_key as MessageKey)}
-            {isFace && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-caption font-medium text-accent">
-                <IcStar size={11} /> {t("scenarios.face")}
-              </span>
-            )}
-          </h4>
-        </div>
-      </div>
-      <p className="mt-2 flex-1 text-small leading-relaxed text-text-muted">{t(`${preset.name_key}_desc` as MessageKey)}</p>
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border pt-2.5">
-        <span className="inline-flex items-center gap-1.5 text-caption text-text-subtle">
-          {preset.group === "reactive" ? <IcBolt size={12} /> : <IcClock size={12} />}
-          {presetWhenHint(preset, t)}
+        {/* benefit headline — the outcome, not the mechanism */}
+        <span className="min-w-0 flex-1 text-small font-semibold leading-tight tracking-tight text-text">
+          {t(`scenarios.p.${preset.id}.benefit` as MessageKey)}
         </span>
-        {isCampaign ? (
-          <span className="inline-flex items-center gap-1.5">
+      </div>
+      {/* plain "this scenario will…" sentence */}
+      <p className="min-h-[3em] flex-1 text-caption leading-normal text-text-muted">
+        {t(`scenarios.p.${preset.id}.will` as MessageKey)}
+      </p>
+      {(replies || isCampaign) && (
+        <div className="flex flex-wrap items-center gap-2">
+          {replies && (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/25 bg-accent/[0.08] px-2 py-0.5 text-caption font-medium text-text-muted">
+              <IcReplies size={12} className="text-accent" /> {t("scenarios.replies_people")}
+            </span>
+          )}
+          {isCampaign && (
             <span className="rounded-full border border-warning/30 bg-warning/10 px-2 py-0.5 text-caption font-medium text-warning">
               {t("scenarios.risk")}
             </span>
-          </span>
-        ) : (
-          <ImpactMeter value={IMPACT[preset.id] ?? 1} />
-        )}
-      </div>
-      {isCampaign && <p className="mt-1.5 text-caption text-text-subtle">{t("scenarios.nudge")}</p>}
+          )}
+        </div>
+      )}
     </button>
   );
 }
@@ -273,14 +298,11 @@ export function DiscoveryGallery({
   showStarter?: boolean;
 }) {
   const { t } = useTranslation();
-  const byGroup = useMemo(() => {
-    const m = new Map<Group, ScenarioPreset[]>();
-    for (const g of GROUP_ORDER) m.set(g, []);
-    for (const p of presets) {
-      const g = (GROUP_ORDER.includes(p.group as Group) ? p.group : "periodic") as Group;
-      m.get(g)!.push(p);
-    }
-    for (const g of GROUP_ORDER) m.get(g)!.sort((a, b) => (IMPACT[b.id] ?? 1) - (IMPACT[a.id] ?? 1));
+  const byGoal = useMemo(() => {
+    const m = new Map<Goal, ScenarioPreset[]>();
+    for (const g of GOAL_ORDER) m.set(g, []);
+    for (const p of presets) m.get(goalOf(p.id))!.push(p);
+    for (const g of GOAL_ORDER) m.get(g)!.sort((a, b) => (IMPACT[b.id] ?? 1) - (IMPACT[a.id] ?? 1));
     return m;
   }, [presets]);
 
@@ -299,18 +321,18 @@ export function DiscoveryGallery({
         </div>
       )}
 
-      {GROUP_ORDER.map((g) => {
-        const items = byGroup.get(g)!;
+      {GOAL_ORDER.map((g) => {
+        const items = byGoal.get(g)!;
         if (items.length === 0) return null;
         const campaign = g === "campaign";
         return (
           <section key={g} className={cn("flex flex-col gap-3", campaign && "rounded-lg border border-dashed border-warning/40 bg-warning/[0.03] p-4 md:p-5")}>
             <div className="flex flex-col gap-0.5">
               <h3 className="flex items-center gap-2 text-h3 font-semibold tracking-tight">
-                {t(GROUP_LABEL[g])}
+                {t(GOAL_LABEL[g])}
                 {campaign && <IcLock size={14} className="text-warning" />}
               </h3>
-              <p className="text-small text-text-subtle">{t(GROUP_NOTE[g])}</p>
+              <p className="text-small text-text-subtle">{t(GOAL_NOTE[g])}</p>
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
               {items.map((p) => (
