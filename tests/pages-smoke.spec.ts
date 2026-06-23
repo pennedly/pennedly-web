@@ -22,7 +22,6 @@ const APP_PAGES = [
   "/app/replies",
   "/app/autopilot",
   "/app/scenarios",
-  "/app/patterns",
   "/app/onboarding",
   "/app/settings",
   "/app/role-book",

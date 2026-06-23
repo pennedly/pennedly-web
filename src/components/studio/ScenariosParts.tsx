@@ -472,12 +472,14 @@ export function ScenarioCard({
   onToggle,
   onOpen,
   onApply,
+  onDelete,
 }: {
   s: Scenario;
   accounts?: ConnectedAccount[];
   onToggle: (s: Scenario, on: boolean) => void;
   onOpen: (s: Scenario) => void;
   onApply?: (s: Scenario, accountIds: number[]) => void;
+  onDelete?: (s: Scenario) => void;
 }) {
   const { t, locale } = useTranslation();
   const isPromo = s.template === "promo";
@@ -566,6 +568,16 @@ export function ScenarioCard({
           <Button size="sm" variant="secondary" onClick={() => onOpen(s)} className="shrink-0 max-sm:flex-1">
             {t("scenarios.open")}
           </Button>
+          {onDelete && (
+            <button
+              type="button"
+              onClick={() => onDelete(s)}
+              aria-label={t("scenarios.delete")}
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-border text-text-subtle transition-colors hover:border-danger/40 hover:bg-danger/10 hover:text-danger"
+            >
+              <IcTrash size={15} />
+            </button>
+          )}
         </div>
       </div>
     </div>

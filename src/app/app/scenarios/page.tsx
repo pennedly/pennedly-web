@@ -166,6 +166,9 @@ export default function ScenariosPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [confirmInline, setConfirmInline] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  // Delete straight from a control-center card (independent of the editor flow).
+  const [delTarget, setDelTarget] = useState<Scenario | null>(null);
+  const [delBusy, setDelBusy] = useState(false);
   const [toasts, setToasts] = useState<ToastT[]>([]);
 
   const [tw, setTw] = useTweaks(SCENARIOS_TWEAK_DEFAULTS);
@@ -549,6 +552,29 @@ export default function ScenariosPage() {
     }
   }
 
+  // Delete a scenario straight from its control-center card (no editor round-trip).
+  async function deleteFromCard() {
+    const target = delTarget;
+    if (!target) return;
+    if (demoOn) {
+      setScenarios((xs) => xs.filter((x) => x.id !== target.id));
+      setDelTarget(null);
+      toast(t("scenarios.toast_deleted"));
+      return;
+    }
+    setDelBusy(true);
+    try {
+      await deleteScenario(target.id);
+      setScenarios((xs) => xs.filter((x) => x.id !== target.id));
+      setDelTarget(null);
+      toast(t("scenarios.toast_deleted"));
+    } catch (e) {
+      toast(String(e), "error");
+    } finally {
+      setDelBusy(false);
+    }
+  }
+
   async function doDelete() {
     if (!editing) {
       setDeleteOpen(false);
@@ -678,13 +704,24 @@ export default function ScenariosPage() {
             <StackingWarnings morningCount={morning.length} morningNames={morning} promoDaily={promoDaily} cap={cap} />
             {anyPostScenarioOn && !postAutopilotOn && <AutopostOffBanner onEnable={enablePostAutopilot} />}
             {scenarios.map((s) => (
-              <ScenarioCard key={s.id} s={s} accounts={otherAccounts} onToggle={toggle} onOpen={openEditor} onApply={applyToAccounts} />
+              <ScenarioCard key={s.id} s={s} accounts={otherAccounts} onToggle={toggle} onOpen={openEditor} onApply={applyToAccounts} onDelete={(sc) => setDelTarget(sc)} />
             ))}
+            {/* Obvious entry into the discovery gallery (the "new flow") even when
+                scenarios already exist — the top-bar "+ Новый" reads as "add another",
+                this reads as "browse the catalog". */}
+            <button
+              type="button"
+              onClick={openDiscovery}
+              className="flex items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-surface-2/40 px-4 py-3.5 text-small font-medium text-text-muted transition-colors hover:border-accent/40 hover:bg-accent/[0.05] hover:text-text"
+            >
+              <IcPlus size={15} /> {t("scenarios.browse_catalog")}
+            </button>
           </div>
         )}
       </main>
 
       <DeleteConfirm open={deleteOpen} deleting={deleting} onClose={() => setDeleteOpen(false)} onConfirm={doDelete} />
+      <DeleteConfirm open={!!delTarget} deleting={delBusy} onClose={() => setDelTarget(null)} onConfirm={deleteFromCard} />
 
       <ToastHost>
         {toasts.map((to) => (

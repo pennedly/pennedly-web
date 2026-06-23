@@ -1086,40 +1086,6 @@ test("Audits — demo", async ({ page }) => {
   await shoot(page, "audits-demo-detail");
 });
 
-test("Patterns", async ({ page }) => {
-  await page.setViewportSize({ width: 1280, height: 1100 });
-  await setup(page);
-  await page.goto("/app/patterns");
-  await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
-  await page.waitForTimeout(900);
-  await shoot(page, "patterns-idle");
-  // Run a study → the deterministic results view.
-  await page.getByRole("button", { name: /run a study/i }).click();
-  await page.waitForTimeout(3400);
-  await shoot(page, "patterns"); // results after run
-});
-
-test("Patterns — demo states", async ({ page }) => {
-  // Tester ?demo=1: 2-tweak panel (dark/state) over the four phases on mock data.
-  await page.setViewportSize({ width: 1280, height: 1200 });
-  await setup(page);
-  await page.goto("/app/patterns?demo=1");
-  await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
-  await page.waitForTimeout(800);
-  await shoot(page, "patterns-demo-results"); // default Results: pattern cards
-  await page.getByRole("button", { name: "Open tweaks" }).click();
-  await page.waitForTimeout(150);
-  await page.locator("select.twk-field").first().selectOption("Empty");
-  await page.waitForTimeout(250);
-  await shoot(page, "patterns-demo-empty");
-  await page.locator("select.twk-field").first().selectOption("Idle");
-  await page.waitForTimeout(250);
-  await shoot(page, "patterns-demo-idle");
-  await page.locator("select.twk-field").first().selectOption("Running");
-  await page.waitForTimeout(400);
-  await shoot(page, "patterns-demo-running");
-});
-
 test("Explore patterns", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 1300 });
   await setup(page);

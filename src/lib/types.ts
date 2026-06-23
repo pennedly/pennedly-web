@@ -473,6 +473,9 @@ export type CommentsList = {
   // Account-wide totals per comment status (new / drafted / replied /
   // skipped), for the reply-queue filter tabs.
   status_counts: Record<string, number>;
+  // Comments genuinely waiting on the user (bounded + autopilot-aware) — the
+  // nav badge + "needs reply" pill, NOT the raw lifetime `new` total.
+  needs_attention: number;
 };
 
 // One row per post that HAS comments — drives the Replies post rail. Paginated
@@ -492,6 +495,8 @@ export type CommentPostsList = {
   count: number;
   // Account-wide totals per comment status (same shape as CommentsList).
   status_counts: Record<string, number>;
+  // Comments genuinely waiting on the user (bounded + autopilot-aware).
+  needs_attention: number;
 };
 
 export type GeneratedReply = {

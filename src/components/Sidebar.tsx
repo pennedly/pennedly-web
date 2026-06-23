@@ -31,7 +31,6 @@ import {
   IcFeed,
   IcReplies,
   IcStudio,
-  IcStudy,
   IcPencil,
   IcRepeat,
   IcVoice,
@@ -69,8 +68,6 @@ const GROUPS: { title: MessageKey; items: NavItem[] }[] = [
       { href: "/app/advisor", label: "dashboard.nav.advisor", icon: IcAdvisor, tester: true },
       { href: "/app/stats", label: "dashboard.nav.stats", icon: IcChart },
       { href: "/app/audits", label: "dashboard.nav.audits", icon: IcAudit, badgeKey: "audits" },
-      // `exact` so Pattern study doesn't also light up on the /explore child.
-      { href: "/app/patterns", label: "dashboard.nav.patterns", icon: IcStudy, exact: true },
       { href: "/app/patterns/explore", label: "dashboard.nav.explore", icon: IcCompass },
     ],
   },
@@ -119,7 +116,7 @@ export function Sidebar() {
       if (cancelled) return;
       setCounts({
         studio: d.status === "fulfilled" ? (d.value.count ?? 0) : 0,
-        replies: c.status === "fulfilled" ? (c.value.status_counts?.new ?? 0) : 0,
+        replies: c.status === "fulfilled" ? (c.value.needs_attention ?? 0) : 0,
         audits: a.status === "fulfilled" ? (a.value.count ?? 0) : 0,
       });
     };

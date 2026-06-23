@@ -52,7 +52,7 @@ export function AccountSwitcher({ me, onLogout }: { me?: Me | null; onLogout?: (
       {open && (
         <>
           <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} aria-hidden />
-          <div className="absolute bottom-full left-0 right-0 z-40 mb-2 rounded-lg border border-border bg-surface p-1.5 shadow-lg">
+          <div className="absolute bottom-full left-0 right-0 z-40 mb-2 rounded-lg border border-border bg-surface p-1.5 shadow-lg md:right-auto md:w-[340px]">
             {/* "All accounts" → the multi-account Overview rollup. Pinned on top
                 of the switcher (the screen's only entry point); shows the
                 connected count. Only meaningful with ≥1 account (always true

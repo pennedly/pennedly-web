@@ -1516,6 +1516,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "scenarios.active": "{n} активны",
   "scenarios.all_off": "Все выключены",
   "scenarios.new": "Новый сценарий",
+  "scenarios.browse_catalog": "Открыть каталог сценариев",
   "scenarios.back": "Назад",
   "scenarios.open": "Открыть",
   "scenarios.on": "Вкл",

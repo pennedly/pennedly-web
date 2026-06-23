@@ -114,6 +114,9 @@ export default function RepliesPage() {
   const [railPosts, setRailPosts] = useState<CommentPost[]>([]);
   const [comments, setComments] = useState<CommentSummary[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
+  // Comments genuinely waiting on the user (server-computed, autopilot-aware) —
+  // drives the "N need a reply" pill, matching the nav badge.
+  const [needsAttention, setNeedsAttention] = useState(0);
   const [edits, setEdits] = useState<Record<number, string>>({});
   const [loaded, setLoaded] = useState(false);
   const [bootError, setBootError] = useState<string | null>(null);
@@ -186,6 +189,7 @@ export default function RepliesPage() {
         const list = await fetchCommentPosts(accountId, { limit: RAIL_PAGE });
         setRailPosts(list.posts);
         setCounts(list.status_counts ?? {});
+        setNeedsAttention(list.needs_attention ?? 0);
         setHasMore(list.posts.length >= RAIL_PAGE);
       } catch (e) {
         if (e instanceof ApiError && e.status === 401) {
@@ -238,6 +242,7 @@ export default function RepliesPage() {
         .then((list) => {
           setRailPosts(list.posts);
           setCounts(list.status_counts ?? {});
+          setNeedsAttention(list.needs_attention ?? 0);
           setHasMore(list.posts.length >= railLimit);
         })
         .catch(() => {
@@ -270,6 +275,7 @@ export default function RepliesPage() {
       });
       setHasMore(list.posts.length >= RAIL_PAGE);
       if (list.status_counts) setCounts(list.status_counts);
+      setNeedsAttention(list.needs_attention ?? 0);
     } catch {
       /* keep current on transient failure */
     } finally {
@@ -348,7 +354,7 @@ export default function RepliesPage() {
   const filterCounts = Object.fromEntries(FILTER_KEYS.map((f) => [f, postComments.filter((c) => inFilter(c.status, f)).length])) as Record<ReplyFilter, number>;
   const visible = postComments.filter((c) => inFilter(c.status, filter));
 
-  const needsCount = demoOn ? demoComments.filter((c) => c.status === "new").length : counts["new"] ?? 0;
+  const needsCount = demoOn ? demoComments.filter((c) => c.status === "new").length : needsAttention;
   const feedState = demoOn ? (tw.state as "Live" | "Loading" | "Empty" | "Error") : "Live";
   const phase: "loading" | "ready" | "empty" | "error" =
     demoOn
@@ -435,6 +441,7 @@ export default function RepliesPage() {
     );
     if (wasNew) {
       setCounts((prev) => ({ ...prev, new: Math.max(0, (prev.new ?? 0) - 1) }));
+      setNeedsAttention((n) => Math.max(0, n - 1));
     }
     skipComment(c.id).catch(() => reload());
     toast(t("replies.toast_dismissed"), "success", {

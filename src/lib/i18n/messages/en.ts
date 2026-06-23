@@ -1541,6 +1541,7 @@ export const en = {
   "scenarios.active": "{n} active",
   "scenarios.all_off": "All off",
   "scenarios.new": "New scenario",
+  "scenarios.browse_catalog": "Browse the catalog",
   "scenarios.back": "Back",
   "scenarios.open": "Open",
   "scenarios.on": "On",
