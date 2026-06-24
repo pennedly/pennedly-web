@@ -214,8 +214,8 @@ export default function ScenariosGallery() {
         </header>
 
         <h2 className="mb-3 text-h3 font-semibold">Discovery — preset gallery</h2>
-        <Section title="grouped by nature · starter-set · campaign gated · from-scratch">
-          <DiscoveryGallery presets={catalog} onPick={() => {}} onStarter={() => {}} onScratch={() => {}} />
+        <Section title="grouped by nature · campaign gated · from-scratch">
+          <DiscoveryGallery presets={catalog} onPick={() => {}} onScratch={() => {}} />
         </Section>
 
         <h2 className="mb-3 mt-8 text-h3 font-semibold">Control center — the list</h2>

@@ -15,7 +15,7 @@
 // · { trigger, instruction, reply_instruction?, condition? }. NEVER sends
 // `template`. Tester-gated, OFF by default.
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -324,10 +324,6 @@ export default function ScenariosPage() {
         ? "free"
         : "empty";
 
-  // Guards the starter-set creation against a double-click firing it twice
-  // (which would create 6 scenarios instead of 3) before the view switches.
-  const starterBusy = useRef(false);
-
   // ── editor open / close ──
   function openDiscovery() {
     setView("discovery");
@@ -359,38 +355,6 @@ export default function ScenariosPage() {
     setSaveErr(false);
     setConfirmInline(false);
     setView("editor");
-  }
-  function startStarterSet() {
-    // pre-bind the starter set: open the gallery? No — the SPEC says it
-    // pre-binds 3 scenarios OFF. We create them via the create endpoint, all off.
-    void createStarterSet();
-  }
-  async function createStarterSet() {
-    const ids = ["daily_question", "rubric", "reply_duty"];
-    const chosen = ids.map((id) => catalog.find((p) => p.id === id)).filter(Boolean) as ScenarioPreset[];
-    if (demoOn) {
-      toast(t("scenarios.starter_done"));
-      setView("list");
-      return;
-    }
-    if (accountId === null) return;
-    if (starterBusy.current) return; // ignore a double-click while creating
-    starterBusy.current = true;
-    try {
-      const created: Scenario[] = [];
-      for (const p of chosen) {
-        const body = compileBody({ ...freshForm(p, t) });
-        const saved = await createScenario(accountId, { ...body, enabled: false });
-        created.push(saved);
-      }
-      setScenarios((xs) => [...xs, ...created]);
-      toast(t("scenarios.starter_done"));
-      setView("list");
-    } catch (e) {
-      toast(String(e), "error");
-    } finally {
-      starterBusy.current = false;
-    }
   }
 
   function openEditor(s: Scenario) {
@@ -710,7 +674,7 @@ export default function ScenariosPage() {
         ) : view === "discovery" ? (
           // Adding to an existing set → presets / from-scratch only (no bulk
           // starter set, so it can't re-seed duplicate scenarios).
-          <DiscoveryGallery presets={catalog} onPick={openPreset} onStarter={startStarterSet} onScratch={openScratch} showStarter={false} />
+          <DiscoveryGallery presets={catalog} onPick={openPreset} onScratch={openScratch} />
         ) : !loaded ? (
           <div className="space-y-3">
             <ScenarioSkeleton />
@@ -718,7 +682,7 @@ export default function ScenariosPage() {
             <ScenarioSkeleton />
           </div>
         ) : scenarios.length === 0 ? (
-          <DiscoveryGallery presets={catalog} onPick={openPreset} onStarter={startStarterSet} onScratch={openScratch} />
+          <DiscoveryGallery presets={catalog} onPick={openPreset} onScratch={openScratch} />
         ) : (
           <div className="flex flex-col gap-3">
             <ControlCenterHeader cap={cap} onCap={onCap} />
