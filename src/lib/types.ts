@@ -831,7 +831,17 @@ export type Scenario = {
   /** The most recent skip-audit rows (newest first) — the control-center's
    *  «почему не сработало». Empty for a scenario that never declined a fire. */
   recent_skips: ScenarioSkip[];
+  /** Pennedly-3: who confirms before it publishes — 'ask' (Pennedly drafts, you
+   *  approve in Activity) or 'auto' (publishes itself). Optional until the backend
+   *  ships the field; absent → treat as 'auto' (current behaviour). */
+  publish_mode?: PublishMode;
+  /** Pennedly-3: origin preset id, if known — lets the living sentence read in the
+   *  preset's exact words. Optional; absent → derive the sentence from the shape. */
+  preset_id?: string | null;
 };
+
+/** Who confirms before a scenario publishes. */
+export type PublishMode = "ask" | "auto";
 
 export type ScenariosResponse = { scenarios: Scenario[] };
 

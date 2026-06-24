@@ -54,6 +54,8 @@ import type {
   ScenarioPreview as ScenarioPreviewT,
   ScenarioRunNow,
 } from "@/lib/types";
+import { CardLine } from "./scenarios-living";
+import { deriveSentence, publishModeOf } from "./scenarios-presentation";
 
 type IconCmp = (p: { size?: number; className?: string }) => React.ReactNode;
 type T = (k: MessageKey) => string;
@@ -450,6 +452,7 @@ const SKIP_REASON: Record<string, MessageKey> = {
 export function ScenarioCard({
   s,
   accounts,
+  handle = "@you",
   onToggle,
   onOpen,
   onApply,
@@ -457,6 +460,7 @@ export function ScenarioCard({
 }: {
   s: Scenario;
   accounts?: ConnectedAccount[];
+  handle?: string;
   onToggle: (s: Scenario, on: boolean) => void;
   onOpen: (s: Scenario) => void;
   onApply?: (s: Scenario, accountIds: number[]) => void;
@@ -467,15 +471,12 @@ export function ScenarioCard({
   const isReply = (s.action_cfg?.kind as string) === "reply_policy";
   const Icon = isPromo ? IcGift : isReply ? IcReplies : IcRepeat;
   const skip = s.recent_skips?.[0];
-  // Plain-language "what this does" line. The cadence strip below carries the
-  // WHEN, so the line carries the WHAT — a faithful generic sentence derived
-  // from the scenario's shape (the scenario row doesn't store its origin preset,
-  // so we can't look up the preset's own sentence).
-  const cardline = isPromo
-    ? t("scenarios.cardline.promo")
-    : isReply
-      ? t("scenarios.cardline.reply")
-      : t("scenarios.cardline.post");
+  // living sentence (caption) + who-confirms line (the «спрашивает / публикует
+  // автоматически» promise, shown plainly on the card).
+  const sentence = deriveSentence(t, s, handle);
+  const mode = publishModeOf(s);
+  const modeKey = (`scenarios.card.${mode}_${sentence.kind}` as MessageKey);
+  const ModeIcon = mode === "auto" ? IcBolt : IcEye;
   return (
     <div
       className={cn(
@@ -501,7 +502,7 @@ export function ScenarioCard({
               </span>
             )}
           </div>
-          <p className="mt-1 text-small leading-[1.5] text-text-muted [text-wrap:pretty]">{cardline}</p>
+          <CardLine template={sentence.template} slots={sentence.slots} className="mt-1" />
         </div>
         {/* Big, unambiguous status — the «сохранил ≠ работает» fix */}
         <div className="flex shrink-0 flex-col items-end gap-2">
@@ -546,6 +547,11 @@ export function ScenarioCard({
       <div className="mt-3">
         <CadenceStrip s={s} />
       </div>
+
+      {/* who confirms before it goes out — «спрашивает / публикует автоматически» */}
+      <p className={cn("mt-2.5 inline-flex items-center gap-1.5 text-caption", mode === "auto" ? "text-warning" : "text-text-subtle")}>
+        <ModeIcon size={13} /> {t(modeKey)}
+      </p>
 
       <div className="mt-3.5 flex flex-col gap-2 border-t border-border pt-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-caption tabular-nums text-text-subtle">

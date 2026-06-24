@@ -82,10 +82,11 @@ import {
 import {
   BLANK_PROMO,
   DEMO_CATALOG,
-  DEMO_SCENARIOS,
   PROMO_PRESET,
   SCENARIOS_TWEAK_DEFAULTS,
 } from "@/components/studio/scenarios-demo";
+import { DEMO_CC, DEMO_CREATOR } from "@/components/studio/scenarios-presentation";
+import { FirstRun } from "@/components/studio/scenarios-screens";
 import type {
   ConnectedAccount,
   Scenario,
@@ -238,7 +239,7 @@ export default function ScenariosPage() {
     const st = tw.state;
     setBootError(st === "Error" ? "TypeError: Load failed" : null);
     setLoaded(st !== "Loading");
-    setScenarios(st === "Empty" ? [] : DEMO_SCENARIOS);
+    setScenarios(st === "Empty" ? [] : DEMO_CC);
     setPresets(DEMO_CATALOG.filter((p) => p.id !== "promo"));
     setAccounts([]);
   }, [demoOn, tw.dark, tw.state]);
@@ -603,6 +604,8 @@ export default function ScenariosPage() {
   }
 
   const otherAccounts = accounts.filter((a) => a.id !== accountId);
+  const currentAccount = accounts.find((a) => a.id === accountId);
+  const handle = demoOn ? DEMO_CREATOR.handle : currentAccount?.username ? `@${currentAccount.username}` : "@you";
   const whenFires = humanWhenFires(form, t);
 
   return (
@@ -682,14 +685,21 @@ export default function ScenariosPage() {
             <ScenarioSkeleton />
           </div>
         ) : scenarios.length === 0 ? (
-          <DiscoveryGallery presets={catalog} onPick={openPreset} onScratch={openScratch} />
+          <FirstRun
+            handle={handle}
+            onTry={(id) => {
+              const p = catalog.find((x) => x.id === id);
+              if (p) openPreset(p);
+            }}
+            onScratch={openScratch}
+          />
         ) : (
           <div className="flex flex-col gap-3">
             <ControlCenterHeader cap={cap} onCap={onCap} />
             <StackingWarnings morningCount={morning.length} morningNames={morning} promoDaily={promoDaily} cap={cap} />
             {anyPostScenarioOn && !postAutopilotOn && <AutopostOffBanner onEnable={enablePostAutopilot} />}
             {scenarios.map((s) => (
-              <ScenarioCard key={s.id} s={s} accounts={otherAccounts} onToggle={toggle} onOpen={openEditor} onApply={applyToAccounts} onDelete={(sc) => setDelTarget(sc)} />
+              <ScenarioCard key={s.id} s={s} accounts={otherAccounts} handle={handle} onToggle={toggle} onOpen={openEditor} onApply={applyToAccounts} onDelete={(sc) => setDelTarget(sc)} />
             ))}
             {/* Obvious entry into the discovery gallery (the "new flow") even when
                 scenarios already exist — the top-bar "+ Новый" reads as "add another",
