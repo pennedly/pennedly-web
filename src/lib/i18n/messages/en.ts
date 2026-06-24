@@ -1945,6 +1945,12 @@ export const en = {
   "scenarios.fr.try_head": "HERE'S WHAT IT LOOKS LIKE — TRY ONE:",
   "scenarios.fr.try": "Try it",
   "scenarios.fr.scratch": "Or build a scenario from scratch",
+  // gallery (pick a routine by goal) + back-to-list
+  "scenarios.back_to_list": "My scenarios",
+  "scenarios.gallery_title": "Choose a scenario",
+  "scenarios.gallery_sub": "Ready-made routines for your goal. Any one can be tuned and previewed before it runs — all are created off.",
+  "scenarios.scratch_title": "From scratch",
+  "scenarios.scratch_sub": "build your own scenario",
   // first-run example names
   "scenarios.fr.ex_morning": "Morning question",
   "scenarios.fr.ex_replies": "Reply to comments",

@@ -12,6 +12,7 @@ import { cn } from "@/lib/cn";
 import { useTranslation } from "@/lib/i18n";
 import type { MessageKey } from "@/lib/i18n/messages/en";
 import {
+  IcArrowLeft,
   IcBolt,
   IcBubble,
   IcCalendar,
@@ -24,7 +25,9 @@ import {
   IcSparkle,
   IcUsers,
 } from "@/components/icons";
+import type { ScenarioPreset } from "@/lib/types";
 import { Sentence } from "./scenarios-living";
+import { DiscoveryGallery } from "./ScenariosParts";
 import { PRESENTATION, FIRSTRUN_EXAMPLES } from "./scenarios-presentation";
 
 type IconCmp = (p: { size?: number; className?: string }) => ReactNode;
@@ -87,6 +90,49 @@ export function FirstRun({
       >
         <IcPencil size={14} /> {t("scenarios.fr.scratch")}
       </button>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  GALLERY — pick a routine by goal (§5). Reached from «+ Новый» / first-run.
+// ════════════════════════════════════════════════════════════════════════════
+export function GalleryScreen({
+  presets,
+  onPick,
+  onScratch,
+  onBack,
+}: {
+  presets: ScenarioPreset[];
+  onPick: (p: ScenarioPreset) => void;
+  onScratch: () => void;
+  onBack: () => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div className="space-y-5">
+      <button onClick={onBack} className="inline-flex items-center gap-1.5 text-small text-text-muted transition-colors hover:text-text">
+        <IcArrowLeft size={16} /> {t("scenarios.back_to_list")}
+      </button>
+      <div className="flex flex-col gap-1">
+        <h1 className="text-h1 font-semibold tracking-tight">{t("scenarios.gallery_title")}</h1>
+        <p className="max-w-[60ch] text-small text-text-muted">{t("scenarios.gallery_sub")}</p>
+      </div>
+      {/* «С нуля» — собрать свой сценарий (отдельный, очевидный путь) */}
+      <button
+        type="button"
+        onClick={onScratch}
+        className="flex w-full items-center gap-3 rounded-lg border border-dashed border-border bg-surface-2/40 p-4 text-left transition-colors hover:border-accent/40 hover:bg-accent/[0.04]"
+      >
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-border bg-surface text-text-muted">
+          <IcPencil size={18} />
+        </span>
+        <span className="min-w-0">
+          <span className="block text-small font-semibold text-text">{t("scenarios.scratch_title")}</span>
+          <span className="block text-caption text-text-subtle">{t("scenarios.scratch_sub")}</span>
+        </span>
+      </button>
+      <DiscoveryGallery presets={presets} onPick={onPick} />
     </div>
   );
 }

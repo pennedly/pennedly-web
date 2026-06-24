@@ -51,7 +51,6 @@ import {
   ControlCenterHeader,
   DeleteConfirm,
   EnableConfirm,
-  DiscoveryGallery,
   Field,
   FormCard,
   INPUT,
@@ -86,7 +85,7 @@ import {
   SCENARIOS_TWEAK_DEFAULTS,
 } from "@/components/studio/scenarios-demo";
 import { DEMO_CC, DEMO_CREATOR } from "@/components/studio/scenarios-presentation";
-import { FirstRun } from "@/components/studio/scenarios-screens";
+import { FirstRun, GalleryScreen } from "@/components/studio/scenarios-screens";
 import type {
   ConnectedAccount,
   Scenario,
@@ -675,9 +674,7 @@ export default function ScenariosPage() {
             deleting={deleting}
           />
         ) : view === "discovery" ? (
-          // Adding to an existing set → presets / from-scratch only (no bulk
-          // starter set, so it can't re-seed duplicate scenarios).
-          <DiscoveryGallery presets={catalog} onPick={openPreset} onScratch={openScratch} />
+          <GalleryScreen presets={catalog} onPick={openPreset} onScratch={openScratch} onBack={backToList} />
         ) : !loaded ? (
           <div className="space-y-3">
             <ScenarioSkeleton />

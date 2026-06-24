@@ -1920,6 +1920,12 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "scenarios.fr.try_head": "ВОТ КАК ЭТО ВЫГЛЯДИТ — ПОПРОБУЙ ОДИН:",
   "scenarios.fr.try": "Попробовать",
   "scenarios.fr.scratch": "Или собрать сценарий с нуля",
+  // gallery (pick a routine by goal) + back-to-list
+  "scenarios.back_to_list": "Мои сценарии",
+  "scenarios.gallery_title": "Выбери сценарий",
+  "scenarios.gallery_sub": "Готовые рутины под твою цель. Любой можно настроить и посмотреть до запуска — все создаются выключенными.",
+  "scenarios.scratch_title": "С нуля",
+  "scenarios.scratch_sub": "собрать свой сценарий",
   // first-run example names
   "scenarios.fr.ex_morning": "Утренний вопрос",
   "scenarios.fr.ex_replies": "Отвечать на комментарии",

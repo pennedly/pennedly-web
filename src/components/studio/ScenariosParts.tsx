@@ -287,11 +287,9 @@ export function PresetCard({ preset, onPick }: { preset: ScenarioPreset; onPick:
 export function DiscoveryGallery({
   presets,
   onPick,
-  onScratch,
 }: {
   presets: ScenarioPreset[];
   onPick: (p: ScenarioPreset) => void;
-  onScratch: () => void;
 }) {
   const { t } = useTranslation();
   const byGoal = useMemo(() => {
@@ -325,14 +323,6 @@ export function DiscoveryGallery({
           </section>
         );
       })}
-
-      <button
-        type="button"
-        onClick={onScratch}
-        className="mx-auto mt-1 text-small text-text-subtle underline decoration-border underline-offset-2 transition-colors hover:text-text"
-      >
-        {t("scenarios.from_scratch")}
-      </button>
     </div>
   );
 }
