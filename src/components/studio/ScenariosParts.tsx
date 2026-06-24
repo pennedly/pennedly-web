@@ -1369,15 +1369,15 @@ function PromoPreview({ cta, replyInstruction }: { cta: string; replyInstruction
       </div>
       <div className="px-[17px] py-[15px]">
         <div className="mb-2.5 flex items-center gap-2.5">
-          <MockAvatar initials="С" />
+          <MockAvatar initials="А" />
           <div className="leading-tight">
-            <p className="text-small font-semibold">Соня</p>
-            <p className="text-caption text-text-subtle">@sonya.tarot</p>
+            <p className="text-small font-semibold">Алекс</p>
+            <p className="text-caption text-text-subtle">@alex.makes</p>
           </div>
           <span className="ml-auto text-caption text-text-subtle">9:00</span>
         </div>
         <p className="text-small leading-relaxed text-text">
-          Сегодня звёзды на вашей стороне ✨ Хотите узнать, что именно? Напишите в комментариях свою дату рождения — пришлю короткий мини-разбор лично вам.
+          Сегодня разбираю ваши затыки ✍️ Напишите в комментариях, над чем вы сейчас застряли — пришлю короткий конкретный совет лично вам. Подпишитесь, чтобы не пропустить свой ответ.
         </p>
         <div className="mt-3 flex gap-4 text-caption text-text-subtle">
           <span className="inline-flex items-center gap-1"><IcEye size={13} /> 1,2K</span>
@@ -1388,25 +1388,25 @@ function PromoPreview({ cta, replyInstruction }: { cta: string; replyInstruction
       <div className="border-t border-border bg-surface-2 px-[17px] py-3.5">
         <p className="mb-2.5 font-mono text-[10px] uppercase tracking-wide text-text-subtle">{t("scenarios.preview_sample_reply")}</p>
         <div className="flex gap-2.5">
-          <MockAvatar initials="А" />
+          <MockAvatar initials="Д" />
           <div className="min-w-0">
-            <p className="text-caption font-semibold text-text-muted">Аня</p>
-            <p className="mt-0.5 text-small text-text-muted">14.03.1996 🙏</p>
+            <p className="text-caption font-semibold text-text-muted">Дима</p>
+            <p className="mt-0.5 text-small text-text-muted">Застрял на лендинге, не могу выбрать заголовок 🙏</p>
           </div>
         </div>
         <div className="relative mt-2.5 flex gap-2.5 pl-3 before:absolute before:bottom-1.5 before:left-[3px] before:top-0.5 before:w-0.5 before:rounded before:bg-border">
-          <MockAvatar initials="С" />
+          <MockAvatar initials="А" />
           <div className="min-w-0">
             <p className="mb-0.5 flex items-center gap-1.5 text-caption font-semibold">
-              Соня
+              Алекс
               <span className="inline-flex items-center gap-1 font-medium text-accent">
                 <IcBubble size={11} /> {t("scenarios.preview_reply")}
               </span>
             </p>
             <p className="text-small leading-relaxed text-text">
               {replyInstruction
-                ? "Аня, ваш день рождения говорит о тяге к свободе и глубоким разговорам. Сегодня хороший день начать то, что давно откладывали."
-                : "Аня, спасибо! Загляну к вам с коротким разбором совсем скоро 🌙"}
+                ? "Дима, попробуйте написать заголовок как ответ на вопрос «что я получу за 10 секунд?» — и выберите самый конкретный из трёх вариантов. Скиньте варианты, помогу выбрать."
+                : "Дима, спасибо, что написали! Гляну ваш случай и пришлю короткий конкретный совет совсем скоро 🙌"}
             </p>
           </div>
         </div>
@@ -1425,10 +1425,10 @@ function FreePreview({ instruction, samplePost }: { instruction: string; sampleP
       </div>
       <div className="px-[17px] py-[15px]">
         <div className="mb-2.5 flex items-center gap-2.5">
-          <MockAvatar initials="С" />
+          <MockAvatar initials="А" />
           <div className="leading-tight">
-            <p className="text-small font-semibold">Соня</p>
-            <p className="text-caption text-text-subtle">@sonya.tarot</p>
+            <p className="text-small font-semibold">Алекс</p>
+            <p className="text-caption text-text-subtle">@alex.makes</p>
           </div>
           <span className="ml-auto text-caption text-text-subtle">12:00</span>
         </div>
@@ -1453,22 +1453,22 @@ function ReplyPreview({ replyOn }: { replyOn: boolean }) {
         <MockAvatar initials="М" />
         <div className="min-w-0">
           <p className="text-caption font-semibold text-text-muted">Марина</p>
-          <p className="mt-0.5 text-small text-text-muted">А Близнецам сегодня стоит начинать новое?</p>
+          <p className="mt-0.5 text-small text-text-muted">А если совсем нет сил начать?</p>
         </div>
       </div>
       <div className="relative mt-2.5 flex gap-2.5 pl-3 before:absolute before:bottom-1.5 before:left-[3px] before:top-0.5 before:w-0.5 before:rounded before:bg-border">
-        <MockAvatar initials="С" />
+        <MockAvatar initials="А" />
         <div className="min-w-0">
           <p className="mb-0.5 flex items-center gap-1.5 text-caption font-semibold">
-            Соня
+            Алекс
             <span className="inline-flex items-center gap-1 font-medium text-accent">
               <IcBubble size={11} /> {t("scenarios.preview_reply")}
             </span>
           </p>
           <p className="text-small leading-relaxed text-text">
             {replyOn
-              ? "Марина, для Близнецов день как раз про лёгкий старт — начните с маленького шага, а большое решение оставьте на завтра 🌙"
-              : "Марина, день хороший для начинаний — но прислушайтесь к себе ✨"}
+              ? "Марина, когда сил нет, цель не «сделать», а «начать на 5 минут» — почти всегда этого хватает, чтобы втянуться. С чего бы вы начали эти пять минут?"
+              : "Марина, отлично, что спросили! Загляну к вам с конкретным ответом совсем скоро 🙌"}
           </p>
         </div>
       </div>

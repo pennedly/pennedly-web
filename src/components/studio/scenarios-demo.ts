@@ -3,7 +3,7 @@
 // «рутинный автопилот» redesign (Scenarios-{WEB,Mobile}-SPEC): the discovery
 // gallery (real presets, grouped by nature), the control-center (cadence strip,
 // stacking warnings, skips, cross-account apply), the unified form per preset,
-// and the run-now preview. Placeholders are the Соня (tarot) case; the feature
+// and the run-now preview. Sample content uses a neutral creator (Алекс); the feature
 // is topic-agnostic. All scenarios OFF by default in the real flow.
 
 import type { Scenario, ScenarioPreset, ScenarioPromoFields } from "@/lib/types";
