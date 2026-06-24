@@ -857,10 +857,20 @@ export type ScenarioActivityItem = {
   likes: number;
   comments_count: number;
 };
+// A draft an Ask-me scenario (publish_mode='ask') prepared and is holding for the
+// user's approval — the Activity screen's «Ждут твоего подтверждения».
+export type ScenarioPendingDraft = {
+  id: number;
+  kind: "post" | "reply";
+  text: string;
+  context: string;
+  created_at: string | null;
+};
 export type ScenarioActivity = {
   scenario_name: string;
   kind: "post" | "reply";
   items: ScenarioActivityItem[];
+  pending: ScenarioPendingDraft[];
 };
 
 // Create/update send ONE of: `promo` (the «Акция» helper) · `reply_policy`
@@ -876,6 +886,7 @@ export type ScenarioReplyPolicy = {
 export type ScenarioCreate = {
   name: string;
   enabled?: boolean;
+  publish_mode?: PublishMode;
   promo?: ScenarioPromoFields;
   trigger?: Record<string, unknown>;
   instruction?: string;
@@ -887,6 +898,7 @@ export type ScenarioCreate = {
 export type ScenarioUpdate = {
   name?: string;
   enabled?: boolean;
+  publish_mode?: PublishMode;
   promo?: ScenarioPromoFields;
   trigger?: Record<string, unknown>;
   instruction?: string;

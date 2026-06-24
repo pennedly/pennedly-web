@@ -1019,6 +1019,14 @@ export async function fetchScenarioActivity(scenarioId: number): Promise<Scenari
   return fetchApi<ScenarioActivity>(`/api/scenarios/${scenarioId}/activity`);
 }
 
+// Approve («Спроси меня» drafts) → publishes the pending draft; skip → discards it.
+export async function confirmScenarioDraft(scenarioId: number, draftId: number): Promise<{ ok: boolean }> {
+  return fetchApi(`/api/scenarios/${scenarioId}/drafts/${draftId}/confirm`, { method: "POST" });
+}
+export async function skipScenarioDraft(scenarioId: number, draftId: number): Promise<{ ok: boolean }> {
+  return fetchApi(`/api/scenarios/${scenarioId}/drafts/${draftId}/skip`, { method: "POST" });
+}
+
 export async function previewScenario(
   accountId: number,
   // Promo helper: `{ promo }`. Free scenario: `{ instruction }`. The server

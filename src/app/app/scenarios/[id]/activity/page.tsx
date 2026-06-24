@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
-import { ApiError, clearTokens, fetchScenarioActivity, getTokens } from "@/lib/api";
+import { ApiError, clearTokens, confirmScenarioDraft, fetchScenarioActivity, getTokens, skipScenarioDraft } from "@/lib/api";
 import { useTranslation } from "@/lib/i18n";
 import { AppTopbar } from "@/components/AppTopbar";
 import { Spinner } from "@/components/ui/feedback";
@@ -85,16 +85,28 @@ export default function ScenarioActivityPage() {
   }
 
   // ── real journal ──
-  const done: ActivityDoneView[] =
-    data && data.kind === "post"
-      ? data.items.map((it) => ({
-          id: it.post_id,
-          kind: "post" as const,
-          text: it.text ?? "",
-          sub: [fmtWhen(it.published_at, locale), it.views ? `${fmtN(it.views, locale)} ${t("scenarios.act.views")}` : ""].filter(Boolean).join(" · "),
-          url: it.threads_url ?? "#",
-        }))
-      : [];
+  const done: ActivityDoneView[] = (data?.items ?? []).map((it) => ({
+    id: it.post_id,
+    kind: "post" as const,
+    text: it.text ?? "",
+    sub: [fmtWhen(it.published_at, locale), it.views ? `${fmtN(it.views, locale)} ${t("scenarios.act.views")}` : ""].filter(Boolean).join(" · "),
+    url: it.threads_url ?? "#",
+  }));
+  const drafts: ActivityDraftView[] = (data?.pending ?? []).map((p) => ({
+    id: p.id,
+    kind: p.kind,
+    when: fmtWhen(p.created_at, locale),
+    ctx: p.context,
+    body: p.text,
+  }));
+  const hasContent = drafts.length > 0 || done.length > 0;
+  async function refetch() {
+    try {
+      setData(await fetchScenarioActivity(scenarioId));
+    } catch {
+      /* keep the current view on a refetch hiccup */
+    }
+  }
 
   return (
     <ActivityShell title={data?.scenario_name ?? t("scenarios.activity.title")} sub={t("scenarios.act.subtitle")}>
@@ -106,6 +118,20 @@ export default function ScenarioActivityPage() {
         <div className="rounded-lg border border-border border-l-[3px] border-l-danger bg-surface px-4 py-3.5 text-small text-text-muted shadow-sm">
           {t("scenarios.activity.error")}
         </div>
+      ) : hasContent ? (
+        <ActivityJournal
+          drafts={drafts}
+          done={done}
+          onPublish={async (id) => {
+            await confirmScenarioDraft(scenarioId, id);
+            await refetch();
+          }}
+          onSkip={async (id) => {
+            await skipScenarioDraft(scenarioId, id);
+            await refetch();
+          }}
+          onEdit={() => router.push("/app/studio")}
+        />
       ) : data?.kind === "reply" ? (
         <div className="flex flex-wrap items-center gap-3 rounded-lg border border-accent/25 bg-accent/[0.05] px-4 py-4">
           <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-accent/25 bg-accent/10 text-accent">
@@ -116,13 +142,11 @@ export default function ScenarioActivityPage() {
             {t("scenarios.activity.go_replies")}
           </Button>
         </div>
-      ) : done.length === 0 ? (
+      ) : (
         <div className="rounded-lg border border-dashed border-border bg-surface/50 px-6 py-14 text-center">
           <p className="text-body font-medium text-text">{t("scenarios.activity.empty_title")}</p>
           <p className="mt-1 text-small text-text-muted">{t("scenarios.activity.empty_sub")}</p>
         </div>
-      ) : (
-        <ActivityJournal drafts={[]} done={done} />
       )}
     </ActivityShell>
   );

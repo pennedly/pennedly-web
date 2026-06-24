@@ -427,12 +427,31 @@ export default function ScenariosPage() {
     const s = pendingEnable;
     if (!s) return;
     setEnableBusy(true);
+    // optimistic: flip on + record the chosen mode
+    setScenarios((xs) => xs.map((x) => (x.id === s.id ? { ...x, enabled: true, publish_mode: mode } : x)));
     if (opts.enableAutopost) setPostAutopilotOn(true);
-    await doToggle(s, true);
-    // reflect the chosen mode on the card immediately (demo + optimistic)
-    setScenarios((xs) => xs.map((x) => (x.id === s.id ? { ...x, publish_mode: mode } : x)));
-    setEnableBusy(false);
-    setPendingEnable(null);
+    if (demoOn) {
+      toast(t("scenarios.toast_on"));
+      setEnableBusy(false);
+      setPendingEnable(null);
+      return;
+    }
+    try {
+      // post + «Автоматически» with account autopublish off → turn it on inline
+      if (opts.enableAutopost && accountId !== null) {
+        const ap = await fetchAutopilot(accountId);
+        await updateAutopilot(accountId, { ...ap, post_enabled: true });
+      }
+      const saved = await updateScenario(s.id, { publish_mode: mode, enabled: true });
+      setScenarios((xs) => xs.map((x) => (x.id === saved.id ? saved : x)));
+      toast(t("scenarios.toast_on"));
+    } catch (e) {
+      setScenarios((xs) => xs.map((x) => (x.id === s.id ? { ...x, enabled: false } : x)));
+      toast(String(e), "error");
+    } finally {
+      setEnableBusy(false);
+      setPendingEnable(null);
+    }
   }
 
   // Cross-account «Применить к…» — client-side clone: compile the scenario's
@@ -524,11 +543,13 @@ export default function ScenariosPage() {
     try {
       const body = compileBody(form);
       let saved: Scenario;
+      // «Сохранить и включить» defaults to ask (drafts → you approve); going
+      // fully automatic is a conscious opt-in via the enable-moment modal only.
       if (editing) {
-        saved = await updateScenario(editing.id, { ...body, ...(enable ? { enabled: true } : {}) });
+        saved = await updateScenario(editing.id, { ...body, ...(enable ? { enabled: true, publish_mode: "ask" } : {}) });
         setScenarios((xs) => xs.map((x) => (x.id === saved.id ? saved : x)));
       } else {
-        saved = await createScenario(accountId, { ...body, enabled: enable });
+        saved = await createScenario(accountId, { ...body, enabled: enable, ...(enable ? { publish_mode: "ask" } : {}) });
         setScenarios((xs) => [...xs, saved]);
       }
       toast(enable ? t("scenarios.toast_on") : t("scenarios.toast_saved"));
