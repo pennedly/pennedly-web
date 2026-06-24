@@ -1506,6 +1506,69 @@ function PreviewEmpty() {
 }
 
 // ── delete confirm (phone bottom-sheet; desktop uses an inline confirm) ──
+// Confirm dialog shown when TURNING A SCENARIO ON — the «сохранил ≠ работает»
+// + auto-reply-surprise fix. Says plainly what enabling will do (publish posts
+// vs reply to real people), flags the account autopost gate when it's off, and
+// only then flips it on. Turning OFF is harmless and skips this.
+export function EnableConfirm({
+  scenario,
+  postAutopilotOn,
+  busy,
+  onConfirm,
+  onCancel,
+}: {
+  scenario: Scenario | null;
+  postAutopilotOn: boolean;
+  busy: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const { t } = useTranslation();
+  if (!scenario) return null;
+  const isReply = (scenario.action_cfg?.kind as string) === "reply_policy";
+  const autopostWarn = !isReply && !postAutopilotOn;
+  return (
+    <div
+      className="fixed inset-0 z-40 grid place-items-center bg-ink-950/55 p-6 backdrop-blur-sm max-md:items-end max-md:p-0"
+      role="dialog"
+      aria-modal="true"
+      onMouseDown={(e) => e.target === e.currentTarget && onCancel()}
+    >
+      <div className="w-full max-w-[440px] rounded-2xl border border-border bg-surface p-6 shadow-lg max-md:max-w-none max-md:rounded-b-none max-md:rounded-t-2xl max-md:pb-[calc(env(safe-area-inset-bottom)+20px)]">
+        <div className="flex items-start gap-3">
+          <span className="grid h-[38px] w-[38px] shrink-0 place-items-center rounded-md border border-accent/28 bg-accent/12 text-accent">
+            {isReply ? <IcReplies size={18} /> : <IcRepeat size={18} />}
+          </span>
+          <div className="min-w-0">
+            <h2 className="text-h3 font-semibold [text-wrap:balance]">{t("scenarios.enable_title").replace("{name}", scenario.name)}</h2>
+            <p className="mt-1 text-small leading-[1.5] text-text-muted [text-wrap:pretty]">
+              {isReply ? t("scenarios.enable_reply_body") : t("scenarios.enable_post_body")}
+            </p>
+          </div>
+        </div>
+        {isReply && (
+          <div className="mt-3 flex items-center gap-2 rounded-md border border-warning/30 bg-warning/[0.06] px-3 py-2 text-caption text-text">
+            <IcReplies size={14} className="shrink-0 text-warning" /> {t("scenarios.enable_reply_warn")}
+          </div>
+        )}
+        {autopostWarn && (
+          <div className="mt-3 rounded-md border border-warning/30 bg-warning/[0.06] px-3 py-2 text-caption leading-[1.45] text-text">
+            {t("scenarios.enable_autopost_warn")}
+          </div>
+        )}
+        <div className="mt-[22px] flex justify-end gap-2.5 max-md:flex-col-reverse">
+          <button onClick={onCancel} disabled={busy} className={cn(buttonClasses({ variant: "ghost" }), "max-md:min-h-[44px] max-md:w-full")}>
+            {t("common.cancel")}
+          </button>
+          <Button variant="primary" loading={busy} onClick={onConfirm} icon={<IcCheck size={15} />} className="max-md:min-h-[44px] max-md:w-full">
+            {t("scenarios.turn_on")}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function DeleteConfirm({
   open,
   deleting,

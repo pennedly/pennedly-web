@@ -50,6 +50,7 @@ import {
   CardTitle,
   ControlCenterHeader,
   DeleteConfirm,
+  EnableConfirm,
   DiscoveryGallery,
   Field,
   FormCard,
@@ -169,6 +170,9 @@ export default function ScenariosPage() {
   // Delete straight from a control-center card (independent of the editor flow).
   const [delTarget, setDelTarget] = useState<Scenario | null>(null);
   const [delBusy, setDelBusy] = useState(false);
+  // Enabling a scenario goes through a confirm («это будет само постить/отвечать»).
+  const [pendingEnable, setPendingEnable] = useState<Scenario | null>(null);
+  const [enableBusy, setEnableBusy] = useState(false);
   const [toasts, setToasts] = useState<ToastT[]>([]);
 
   const [tw, setTw] = useTweaks(SCENARIOS_TWEAK_DEFAULTS);
@@ -434,7 +438,7 @@ export default function ScenariosPage() {
     setEditing(null);
   }
 
-  async function toggle(s: Scenario, on: boolean) {
+  async function doToggle(s: Scenario, on: boolean) {
     setScenarios((xs) => xs.map((x) => (x.id === s.id ? { ...x, enabled: on } : x)));
     if (demoOn) return;
     try {
@@ -444,6 +448,23 @@ export default function ScenariosPage() {
       setScenarios((xs) => xs.map((x) => (x.id === s.id ? { ...x, enabled: !on } : x)));
       toast(String(e), "error");
     }
+  }
+  // Turning ON gets a confirm (the «это будет само постить/отвечать» moment);
+  // turning OFF is harmless → immediate.
+  function toggle(s: Scenario, on: boolean) {
+    if (on && !s.enabled) {
+      setPendingEnable(s);
+      return;
+    }
+    void doToggle(s, on);
+  }
+  async function confirmEnable() {
+    const s = pendingEnable;
+    if (!s) return;
+    setEnableBusy(true);
+    await doToggle(s, true);
+    setEnableBusy(false);
+    setPendingEnable(null);
   }
 
   // Cross-account «Применить к…» — client-side clone: compile the scenario's
@@ -487,7 +508,7 @@ export default function ScenariosPage() {
       return;
     }
     if (demoOn) {
-      setRunResult({ draft_id: 0, text: previewState === "free" ? preview?.sample_post ?? "" : "Готовый черновик акционного поста — найдёте его в Студии.", kind: isReplyPolicy ? "reply" : "post", replied_to: isReplyPolicy ? "А Близнецам сегодня стоит начинать новое?" : null });
+      setRunResult({ draft_id: 0, text: previewState === "free" ? preview?.sample_post ?? "" : "Готовый черновик акционного поста — найдёте его в Студии.", kind: isReplyPolicy ? "reply" : "post", replied_to: isReplyPolicy ? "А если совсем нет сил начать?" : null });
       return;
     }
     setRunning(true);
@@ -722,6 +743,7 @@ export default function ScenariosPage() {
 
       <DeleteConfirm open={deleteOpen} deleting={deleting} onClose={() => setDeleteOpen(false)} onConfirm={doDelete} />
       <DeleteConfirm open={!!delTarget} deleting={delBusy} onClose={() => setDelTarget(null)} onConfirm={deleteFromCard} />
+      <EnableConfirm scenario={pendingEnable} postAutopilotOn={postAutopilotOn} busy={enableBusy} onConfirm={confirmEnable} onCancel={() => setPendingEnable(null)} />
 
       <ToastHost>
         {toasts.map((to) => (
