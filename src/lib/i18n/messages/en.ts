@@ -1551,6 +1551,7 @@ export const en = {
   "scenarios.paused": "— off",
   "scenarios.off_hint": "Created but off — it won't post or reply until you turn it on.",
   "scenarios.status_on": "Active",
+  "scenarios.fired": "Ran {n}×",
   "scenarios.status_off": "Off",
   "scenarios.created_off_title": "Created, but off.",
   "scenarios.created_off_body": "It's doing nothing yet — turn it on when you're ready.",

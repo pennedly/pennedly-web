@@ -1526,6 +1526,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "scenarios.paused": "— выключен",
   "scenarios.off_hint": "Создан, но выключен — не публикует и не отвечает, пока ты не включишь его.",
   "scenarios.status_on": "Активен",
+  "scenarios.fired": "Сработал {n}×",
   "scenarios.status_off": "Выключен",
   "scenarios.created_off_title": "Создан, но выключен.",
   "scenarios.created_off_body": "Пока он ничего не делает — включи, когда будешь готов.",

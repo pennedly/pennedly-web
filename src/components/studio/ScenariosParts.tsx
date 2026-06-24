@@ -580,6 +580,11 @@ export function ScenarioCard({
               {s.last_run_at ? fmtRun(s.last_run_at, locale) : t("scenarios.never_ran")}
             </span>
           </span>
+          {s.fire_count > 0 && (
+            <span className="inline-flex items-center gap-1 text-text-muted">
+              <IcRepeat size={12} /> {t("scenarios.fired").replace("{n}", String(s.fire_count))}
+            </span>
+          )}
         </div>
         <div className="flex shrink-0 items-center gap-2 max-sm:w-full">
           {onApply && accounts && accounts.length > 1 && (

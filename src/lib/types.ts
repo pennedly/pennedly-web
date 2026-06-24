@@ -827,6 +827,7 @@ export type Scenario = {
   reply_instruction: string;
   next_run_at: string | null;
   last_run_at: string | null;
+  fire_count: number;
   /** The most recent skip-audit rows (newest first) — the control-center's
    *  «почему не сработало». Empty for a scenario that never declined a fire. */
   recent_skips: ScenarioSkip[];

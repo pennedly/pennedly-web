@@ -219,6 +219,7 @@ export const DEMO_SCENARIOS: Scenario[] = [
     reply_instruction: "Отвечай тепло и по существу…",
     next_run_at: "2026-06-23T06:00:00Z",
     last_run_at: "2026-06-22T06:02:00Z",
+    fire_count: 38,
     recent_skips: [],
   },
   {
@@ -234,6 +235,7 @@ export const DEMO_SCENARIOS: Scenario[] = [
     reply_instruction: "",
     next_run_at: "2026-06-29T06:00:00Z",
     last_run_at: "2026-06-22T06:00:00Z",
+    fire_count: 9,
     recent_skips: [],
   },
   {
@@ -249,6 +251,7 @@ export const DEMO_SCENARIOS: Scenario[] = [
     reply_instruction: "Ты на дежурстве в комментариях…",
     next_run_at: null,
     last_run_at: "2026-06-22T13:40:00Z",
+    fire_count: 142,
     recent_skips: [],
   },
   {
@@ -264,6 +267,7 @@ export const DEMO_SCENARIOS: Scenario[] = [
     reply_instruction: DEMO_PROMO.reply_instruction,
     next_run_at: "2026-06-24T06:00:00Z",
     last_run_at: "2026-06-21T06:02:00Z",
+    fire_count: 5,
     recent_skips: [],
   },
   {
@@ -279,6 +283,7 @@ export const DEMO_SCENARIOS: Scenario[] = [
     reply_instruction: "",
     next_run_at: null,
     last_run_at: "2026-06-20T06:00:00Z",
+    fire_count: 3,
     recent_skips: [
       { local_date: "2026-06-21", reason: "condition", detail: "active_from 2026-07-01", created_at: "2026-06-21T06:00:00Z" },
     ],
