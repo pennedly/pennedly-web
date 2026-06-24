@@ -919,7 +919,9 @@ export function WhenSegment({
   }
   return (
     <div className="flex flex-col gap-3">
-      <div className="grid grid-cols-2 gap-1 rounded-lg border border-border bg-surface-2 p-1 text-small sm:grid-cols-3 md:grid-cols-5">
+      {/* Single even row — fills the width when the labels fit (flex-1), scrolls
+          horizontally rather than wrapping to ragged 2-line buttons when they don't. */}
+      <div className="flex gap-1 overflow-x-auto rounded-lg border border-border bg-surface-2 p-1 text-small [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {MODES.map((o) => {
           const active = o.key === value;
           return (
@@ -929,7 +931,7 @@ export function WhenSegment({
               onClick={() => onMode(o.key)}
               aria-pressed={active}
               className={cn(
-                "flex items-center justify-center gap-1.5 whitespace-normal rounded-md px-2 py-2 text-center font-medium transition-colors max-md:min-h-[44px]",
+                "flex flex-1 items-center justify-center whitespace-nowrap rounded-md px-3 py-2 font-medium leading-none transition-colors max-md:min-h-[44px]",
                 active ? "bg-surface text-text shadow-sm" : "text-text-muted hover:text-text",
               )}
             >
@@ -1135,11 +1137,11 @@ export function PowerUserDisclosure({
   return (
     <FormCard className="p-0 md:p-0">
       <button type="button" onClick={onToggle} aria-expanded={open} className="flex w-full items-center gap-2.5 px-5 py-4 text-left md:px-[22px]">
-        <IcChevRight size={16} className={cn("shrink-0 text-text-subtle transition-transform", open && "rotate-90")} />
         <span className="text-small font-semibold">{t("scenarios.disclose_show")}</span>
         <span className="rounded-full border border-border bg-surface-2 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-text-subtle">
           {t("scenarios.disclose_for_pros")}
         </span>
+        <IcChevRight size={16} className={cn("ml-auto shrink-0 text-text-subtle transition-transform", open && "rotate-90")} />
       </button>
       {open && (
         <div className="flex flex-col gap-4 border-t border-border p-5 md:p-[22px]">

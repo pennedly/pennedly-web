@@ -1628,7 +1628,7 @@ export const en = {
   "scenarios.f.reply_ph": "If they sent a date → give a mini-reading in the comments; a detailed question → send to the bot.",
   "scenarios.f.reply_hint": "Pennedly already knows your voice — here, only this campaign's specifics.",
   // ── power-user disclosure: «Show as a scenario» ──
-  "scenarios.disclose_show": "Show as a scenario",
+  "scenarios.disclose_show": "Show as a rule",
   "scenarios.disclose_for_pros": "for power users",
   "scenarios.raw.when": "Trigger",
   "scenarios.raw.when_sub": "What starts the scenario.",

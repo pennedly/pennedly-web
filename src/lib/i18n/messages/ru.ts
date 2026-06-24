@@ -1603,7 +1603,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "scenarios.f.reply_ph": "Прислал дату → дай мини-разбор в комментах; развёрнутый вопрос → переведи в бота.",
   "scenarios.f.reply_hint": "Pennedly уже знает твой голос — здесь только специфика этой акции.",
   // ── power-user disclosure: «Показать как сценарий» ──
-  "scenarios.disclose_show": "Показать как сценарий",
+  "scenarios.disclose_show": "Показать как правило",
   "scenarios.disclose_for_pros": "для продвинутых",
   "scenarios.raw.when": "Триггер",
   "scenarios.raw.when_sub": "Что запускает сценарий.",
