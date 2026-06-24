@@ -5,9 +5,10 @@
 // gallery / editor / enable / activity pieces will join it as they're built.
 // Source spec: Scenarios-SPEC.html §4.
 
-import { type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/cn";
 import { useTranslation } from "@/lib/i18n";
 import type { MessageKey } from "@/lib/i18n/messages/en";
@@ -17,6 +18,7 @@ import {
   IcBubble,
   IcCalendar,
   IcChart,
+  IcChevRight,
   IcGift,
   IcList,
   IcPencil,
@@ -173,5 +175,86 @@ function ExampleCard({
         </Button>
       </div>
     </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  «ЕЩЁ НАСТРОЙКИ» — where ТОЛЬКО ЕСЛИ lives (§6.2): filters, quiet hours.
+//  Collapsed by default, off the happy path. Presentational for now (wired to
+//  the backend in the real-data pass); local state drives the toggles.
+// ════════════════════════════════════════════════════════════════════════════
+export function MoreSettings({ isReply }: { isReply: boolean }) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const [weekdaysOnly, setWeekdaysOnly] = useState(false);
+  const [noRepeat, setNoRepeat] = useState(false);
+  const [skipSpam, setSkipSpam] = useState(true);
+  const [meaningfulOnly, setMeaningfulOnly] = useState(false);
+  const [quietNight, setQuietNight] = useState(false);
+  return (
+    <div className="rounded-lg border border-border bg-surface shadow-sm">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="flex w-full items-center gap-2.5 px-5 py-4 text-left md:px-[22px]"
+      >
+        <span className="text-small font-semibold">{t("scenarios.more.title")}</span>
+        <span className="text-caption text-text-subtle">{t("scenarios.more.hint")}</span>
+        <IcChevRight size={16} className={cn("ml-auto shrink-0 text-text-subtle transition-transform", open && "rotate-90")} />
+      </button>
+      {open && (
+        <div className="flex flex-col gap-5 border-t border-border px-5 py-4 md:px-[22px]">
+          {isReply ? (
+            <SettingsGroup label={t("scenarios.more.who_how")}>
+              <SettingToggle title={t("scenarios.more.skip_spam")} sub={t("scenarios.more.skip_spam_sub")} v={skipSpam} on={setSkipSpam} />
+              <SettingToggle title={t("scenarios.more.meaningful")} sub={t("scenarios.more.meaningful_sub")} v={meaningfulOnly} on={setMeaningfulOnly} />
+              <div className="flex items-center justify-between gap-4 border-t border-border py-3">
+                <span className="min-w-0">
+                  <span className="block text-small font-medium text-text">{t("scenarios.more.cap")}</span>
+                  <span className="mt-0.5 block text-caption text-text-subtle">{t("scenarios.more.cap_sub")}</span>
+                </span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  defaultValue={30}
+                  aria-label={t("scenarios.more.cap")}
+                  className="h-10 w-[76px] shrink-0 rounded-md border border-border bg-surface text-center text-body tabular-nums text-text focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25 max-md:min-h-[44px] max-md:text-[16px]"
+                />
+              </div>
+            </SettingsGroup>
+          ) : (
+            <SettingsGroup label={t("scenarios.skel.onlyif")}>
+              <SettingToggle title={t("scenarios.more.weekdays")} sub={t("scenarios.more.weekdays_sub")} v={weekdaysOnly} on={setWeekdaysOnly} />
+              <SettingToggle title={t("scenarios.more.no_repeat")} sub={t("scenarios.more.no_repeat_sub")} v={noRepeat} on={setNoRepeat} />
+            </SettingsGroup>
+          )}
+          <SettingsGroup label={t("scenarios.more.quiet_hours")}>
+            <SettingToggle title={t("scenarios.more.quiet_night")} sub={t("scenarios.more.quiet_night_sub")} v={quietNight} on={setQuietNight} />
+          </SettingsGroup>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SettingsGroup({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex flex-col">
+      <span className="mb-1 text-caption font-semibold uppercase tracking-[0.04em] text-text-subtle">{label}</span>
+      {children}
+    </div>
+  );
+}
+
+function SettingToggle({ title, sub, v, on }: { title: string; sub: string; v: boolean; on: (v: boolean) => void }) {
+  return (
+    <label className="flex items-center justify-between gap-4 border-t border-border py-3">
+      <span className="min-w-0">
+        <span className="block text-small font-medium text-text">{title}</span>
+        <span className="mt-0.5 block text-caption leading-relaxed text-text-subtle">{sub}</span>
+      </span>
+      <Switch checked={v} onCheckedChange={on} aria-label={title} />
+    </label>
   );
 }

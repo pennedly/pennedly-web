@@ -84,8 +84,9 @@ import {
   PROMO_PRESET,
   SCENARIOS_TWEAK_DEFAULTS,
 } from "@/components/studio/scenarios-demo";
-import { DEMO_CC, DEMO_CREATOR } from "@/components/studio/scenarios-presentation";
-import { FirstRun, GalleryScreen } from "@/components/studio/scenarios-screens";
+import { DEMO_CC, DEMO_CREATOR, presetSentence, presetSkel } from "@/components/studio/scenarios-presentation";
+import { LivingSentence, Skeleton3 } from "@/components/studio/scenarios-living";
+import { FirstRun, GalleryScreen, MoreSettings } from "@/components/studio/scenarios-screens";
 import type {
   ConnectedAccount,
   Scenario,
@@ -639,6 +640,7 @@ export default function ScenariosPage() {
           <EditorView
             t={t}
             form={form}
+            handle={handle}
             update={update}
             setField={setField}
             isExisting={!!editing}
@@ -795,6 +797,7 @@ function humanWhenFires(form: FormState, t: (k: MessageKey) => string): string {
 function EditorView({
   t,
   form,
+  handle,
   update,
   setField,
   isExisting,
@@ -831,6 +834,7 @@ function EditorView({
 }: {
   t: (k: MessageKey) => string;
   form: FormState;
+  handle: string;
   update: (patch: Partial<FormState>) => void;
   setField: (key: string, v: string) => void;
   isExisting: boolean;
@@ -867,6 +871,21 @@ function EditorView({
 }) {
   const promoMode = form.helperOn || form.preset?.id === "promo";
   const eventKind = form.preset ? eventKindOf(form.preset.trigger_cfg) : "";
+  // living sentence (A) + skeleton (B), recomposed from the form's preset + fields
+  const pid = form.preset?.id ?? null;
+  const sentenceOverrides: Record<string, string> = {};
+  if (pid === "rubric" && form.fields.rubric_name?.trim()) sentenceOverrides.name = form.fields.rubric_name.trim();
+  if (promoMode && form.promo.ask?.trim()) sentenceOverrides.ask = form.promo.ask.trim();
+  if (pid === "reply_duty")
+    sentenceOverrides.audience =
+      form.audience === "fans"
+        ? t("scenarios.aud_phrase.fans")
+        : form.audience === "questions"
+          ? t("scenarios.aud_phrase.questions")
+          : t("scenarios.aud_phrase.all");
+  const sentenceId = promoMode ? "promo" : pid;
+  const sentence = presetSentence(t, sentenceId, handle, sentenceOverrides);
+  const skel = presetSkel(t, sentenceId);
   return (
     <div className="space-y-4">
       <button onClick={onBack} className="inline-flex items-center gap-1.5 text-small text-text-muted hover:text-text">
@@ -876,18 +895,9 @@ function EditorView({
       <div className="grid grid-cols-1 gap-5 md:grid-cols-[minmax(0,1fr)_380px] md:items-start">
         {/* form column */}
         <div className="space-y-4 md:space-y-5">
-          {/* orienting «this scenario will…» — plain-language statement of what
-              this routine does, so the user is never configuring blind */}
-          {form.preset && (
-            <div className="rounded-lg border border-accent/25 bg-accent/[0.05] p-4 md:p-[18px]">
-              <p className="text-caption font-semibold uppercase tracking-[0.04em] text-accent">
-                {t("scenarios.will_label")}
-              </p>
-              <p className="mt-1.5 text-body leading-relaxed text-text">
-                {t(`scenarios.p.${form.preset.id}.will` as MessageKey)}
-              </p>
-            </div>
-          )}
+          {/* living sentence (A) + skeleton (B) — «ЧТО БУДЕТ ПРОИСХОДИТЬ» */}
+          <LivingSentence template={sentence.template} slots={sentence.slots} mode="ask" kind={sentence.kind} />
+          <Skeleton3 when={skel.when} onlyif={skel.onlyif} whatdo={skel.whatdo} />
           {/* name */}
           <FormCard>
             <Field label={t("scenarios.f.name")} error={nameErr ? t("scenarios.err_required") : undefined}>
@@ -979,7 +989,10 @@ function EditorView({
             </FormCard>
           )}
 
-          {/* power-user disclosure */}
+          {/* «Ещё настройки» — ТОЛЬКО ЕСЛИ: фильтры, тихие часы, кап */}
+          <MoreSettings isReply={isReplyPolicy || promoMode} />
+
+          {/* power-user disclosure — «Показать как правило» */}
           <PowerUserDisclosure open={powerOpen} onToggle={onPowerToggle} instruction={form.instruction} onInstruction={(v) => update({ instruction: v })} />
         </div>
 

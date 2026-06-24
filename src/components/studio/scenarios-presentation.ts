@@ -154,6 +154,28 @@ export function publishModeOf(s: Scenario): PublishMode {
   return s.publish_mode ?? "auto";
 }
 
+// ── editor: build the live sentence + skeleton from the form's preset + fields ──
+export function presetSentence(
+  t: T,
+  presetId: string | null,
+  handle: string,
+  overrides?: Record<string, string>,
+): DerivedSentence {
+  const p = presetId ? PRESENTATION[presetId] : null;
+  if (!p) return { template: t("scenarios.sentence.generic_post"), slots: { who: who(handle) }, kind: "post" };
+  return { template: t(p.sentenceKey), slots: p.slots(t, handle, overrides), kind: p.kind };
+}
+
+export function presetSkel(t: T, presetId: string | null): { when: string; onlyif: string | null; whatdo: string } {
+  const p = presetId ? PRESENTATION[presetId] : null;
+  if (!p) return { when: t("scenarios.skel.generic_when"), onlyif: null, whatdo: t("scenarios.skel.generic_whatdo") };
+  return {
+    when: t(p.skel.whenKey),
+    onlyif: p.skel.onlyifKey ? t(p.skel.onlyifKey) : null,
+    whatdo: t(p.skel.whatdoKey),
+  };
+}
+
 // ════════════════════════════════════════════════════════════════════════════
 //  DEMO DATA (neutral creator Алекс · @alex.makes) — ?demo=1 + /gallery
 // ════════════════════════════════════════════════════════════════════════════
