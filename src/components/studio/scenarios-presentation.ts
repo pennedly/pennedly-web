@@ -235,6 +235,22 @@ export const DEMO_ACTIVITY_DRAFTS: ActivityDraft[] = [
   { id: 2, kind: "reply", whenKey: "scenarios.act.min_ago_12", ctx: "Отвечать на комментарии · ответ Марине под постом «Маленькая победа»", body: "Марина, когда сил нет, цель не «сделать», а «начать на 5 минут» — почти всегда этого хватает, чтобы втянуться. С чего бы вы начали эти пять минут?" },
 ];
 
+// Clean per-preset sample posts for the editor preview in demo/offline mode (real
+// mode gets a generated sample from the backend). Keeps the preview reading as a
+// real post «в твоём голосе» — never echoes the raw instruction template.
+export const SCEN_SAMPLE: Record<string, MessageKey> = {
+  daily_question: "scenarios.sample.daily_question",
+  rubric: "scenarios.sample.rubric",
+  safety_net: "scenarios.sample.safety_net",
+  amplify_viral: "scenarios.sample.amplify_viral",
+  milestone_thanks: "scenarios.sample.milestone_thanks",
+  poll: "scenarios.sample.poll",
+  seasonal: "scenarios.sample.seasonal",
+};
+export function demoSampleKey(presetId: string | null | undefined): MessageKey {
+  return (presetId && SCEN_SAMPLE[presetId]) || "scenarios.sample.generic";
+}
+
 export const DEMO_ACTIVITY_DONE: ActivityDone[] = [
   { id: 1, kind: "post", text: "Опубликовал твой утренний вопрос", sub: "Сегодня в 9:02 · 1,2K просмотров", url: "#" },
   { id: 2, kind: "reply", text: "Ответил Диме под постом «Разбор ваших затыков»", sub: "Сегодня в 8:41", url: "#" },

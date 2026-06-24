@@ -1290,7 +1290,7 @@ export function ScenarioPreview({
         ) : state === "reply" ? (
           <ReplyPreview replyOn={(preview?.reply_instruction ?? "").length > 0} />
         ) : (
-          <FreePreview instruction={preview?.instruction ?? ""} samplePost={preview?.sample_post ?? ""} />
+          <FreePreview samplePost={preview?.sample_post ?? ""} />
         )}
       </div>
 
@@ -1407,14 +1407,9 @@ function PromoPreview({ cta, replyInstruction }: { cta: string; replyInstruction
   );
 }
 
-function FreePreview({ instruction, samplePost }: { instruction: string; samplePost: string }) {
-  const { t } = useTranslation();
+function FreePreview({ samplePost }: { samplePost: string }) {
   return (
     <>
-      <div className="border-b border-border bg-surface-2 px-[17px] py-[15px]">
-        <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wide text-text-subtle">{t("scenarios.preview_instruction")}</p>
-        <p className="text-small leading-relaxed text-text-muted">{instruction}</p>
-      </div>
       <div className="px-[17px] py-[15px]">
         <div className="mb-2.5 flex items-center gap-2.5">
           <MockAvatar initials="А" />

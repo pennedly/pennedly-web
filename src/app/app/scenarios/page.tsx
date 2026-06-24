@@ -84,7 +84,7 @@ import {
   PROMO_PRESET,
   SCENARIOS_TWEAK_DEFAULTS,
 } from "@/components/studio/scenarios-demo";
-import { DEMO_CC, DEMO_CREATOR, presetSentence, presetSkel } from "@/components/studio/scenarios-presentation";
+import { DEMO_CC, DEMO_CREATOR, demoSampleKey, presetSentence, presetSkel } from "@/components/studio/scenarios-presentation";
 import { LivingSentence, Skeleton3, type PublishMode } from "@/components/studio/scenarios-living";
 import { FirstRun, GalleryScreen, MoreSettings } from "@/components/studio/scenarios-screens";
 import type {
@@ -282,7 +282,7 @@ export default function ScenariosPage() {
       return;
     }
     if (demoOn || accountId === null) {
-      setPreview({ cta: "", instruction: instr, reply_instruction: "", sample_post: demoSamplePost(instr) });
+      setPreview({ cta: "", instruction: "", reply_instruction: "", sample_post: t(demoSampleKey(form.preset?.id)) });
       return;
     }
     const id = setTimeout(() => {
@@ -758,11 +758,6 @@ export default function ScenariosPage() {
       )}
     </div>
   );
-}
-
-// A tiny client-side sample post for the demo/offline free preview.
-function demoSamplePost(instruction: string): string {
-  return `Пример поста по инструкции: ${instruction.trim()}`;
 }
 
 // Best-effort: match a saved scenario back to a catalog preset (by reply-policy

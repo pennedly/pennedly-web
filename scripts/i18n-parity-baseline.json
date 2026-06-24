@@ -188,7 +188,15 @@
     "scenarios.act.skip",
     "scenarios.act.views",
     "scenarios.act.ready_900",
-    "scenarios.act.min_ago_12"
+    "scenarios.act.min_ago_12",
+    "scenarios.sample.daily_question",
+    "scenarios.sample.rubric",
+    "scenarios.sample.safety_net",
+    "scenarios.sample.amplify_viral",
+    "scenarios.sample.milestone_thanks",
+    "scenarios.sample.poll",
+    "scenarios.sample.seasonal",
+    "scenarios.sample.generic"
   ],
   "es": [
     "a11y.close",
@@ -378,7 +386,15 @@
     "scenarios.act.skip",
     "scenarios.act.views",
     "scenarios.act.ready_900",
-    "scenarios.act.min_ago_12"
+    "scenarios.act.min_ago_12",
+    "scenarios.sample.daily_question",
+    "scenarios.sample.rubric",
+    "scenarios.sample.safety_net",
+    "scenarios.sample.amplify_viral",
+    "scenarios.sample.milestone_thanks",
+    "scenarios.sample.poll",
+    "scenarios.sample.seasonal",
+    "scenarios.sample.generic"
   ],
   "fr": [
     "a11y.close",
@@ -568,7 +584,15 @@
     "scenarios.act.skip",
     "scenarios.act.views",
     "scenarios.act.ready_900",
-    "scenarios.act.min_ago_12"
+    "scenarios.act.min_ago_12",
+    "scenarios.sample.daily_question",
+    "scenarios.sample.rubric",
+    "scenarios.sample.safety_net",
+    "scenarios.sample.amplify_viral",
+    "scenarios.sample.milestone_thanks",
+    "scenarios.sample.poll",
+    "scenarios.sample.seasonal",
+    "scenarios.sample.generic"
   ],
   "it": [
     "a11y.close",
@@ -758,7 +782,15 @@
     "scenarios.act.skip",
     "scenarios.act.views",
     "scenarios.act.ready_900",
-    "scenarios.act.min_ago_12"
+    "scenarios.act.min_ago_12",
+    "scenarios.sample.daily_question",
+    "scenarios.sample.rubric",
+    "scenarios.sample.safety_net",
+    "scenarios.sample.amplify_viral",
+    "scenarios.sample.milestone_thanks",
+    "scenarios.sample.poll",
+    "scenarios.sample.seasonal",
+    "scenarios.sample.generic"
   ],
   "pt": [
     "a11y.close",
@@ -948,7 +980,15 @@
     "scenarios.act.skip",
     "scenarios.act.views",
     "scenarios.act.ready_900",
-    "scenarios.act.min_ago_12"
+    "scenarios.act.min_ago_12",
+    "scenarios.sample.daily_question",
+    "scenarios.sample.rubric",
+    "scenarios.sample.safety_net",
+    "scenarios.sample.amplify_viral",
+    "scenarios.sample.milestone_thanks",
+    "scenarios.sample.poll",
+    "scenarios.sample.seasonal",
+    "scenarios.sample.generic"
   ],
   "ru": [],
   "uk": [
@@ -1139,6 +1179,14 @@
     "scenarios.act.skip",
     "scenarios.act.views",
     "scenarios.act.ready_900",
-    "scenarios.act.min_ago_12"
+    "scenarios.act.min_ago_12",
+    "scenarios.sample.daily_question",
+    "scenarios.sample.rubric",
+    "scenarios.sample.safety_net",
+    "scenarios.sample.amplify_viral",
+    "scenarios.sample.milestone_thanks",
+    "scenarios.sample.poll",
+    "scenarios.sample.seasonal",
+    "scenarios.sample.generic"
   ]
 }

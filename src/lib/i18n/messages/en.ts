@@ -1999,6 +1999,15 @@ export const en = {
   // activity demo timestamps
   "scenarios.act.ready_900": "ready for 9:00",
   "scenarios.act.min_ago_12": "12 minutes ago",
+  // editor preview — clean demo sample posts (real mode uses a generated sample)
+  "scenarios.sample.daily_question": "Today's question: what will you finish today — even if it comes out imperfect? Answer in one word 👇",
+  "scenarios.sample.rubric": "Small win of the week 🟢 This week I finally closed a task that had been hanging since March. The lesson: don't «find time», just take 20 minutes and start. What will you close?",
+  "scenarios.sample.safety_net": "A short evening post so the day doesn't slip by — what one thing worked better than you expected today?",
+  "scenarios.sample.amplify_viral": "I see yesterday's post resonated with many 🙌 So let me continue: it's not about discipline, it's about removing the friction before you start. What's stopping you?",
+  "scenarios.sample.milestone_thanks": "There are more of us now — thank you for being here 🙏 It really keeps me going. How did you find this?",
+  "scenarios.sample.poll": "What should I do a deep-dive on? Drop a number: 1 — finishing what you start, 2 — procrastination, 3 — focus, 4 — guilt-free rest.",
+  "scenarios.sample.seasonal": "A new month is a good moment to draw a line. What are you taking with you, and what are you leaving behind?",
+  "scenarios.sample.generic": "A short post in your voice on the chosen topic.",
 
   // ── Advisor (AI growth-advisor chat · tester-gated) ───────────
   "dashboard.nav.advisor": "advisor",
