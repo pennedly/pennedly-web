@@ -1852,6 +1852,59 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "scenarios.draft_created_sub": "Ничего не опубликовано. Найдёшь его в Студии.",
   "scenarios.replied_to": "в ответ на",
 
+  // ── Редактор сценария — гибрид C×B: дорожка шагов + крупное превью ──
+  "scenarios.ed.rename": "Переименовать",
+  "scenarios.ed.name_hint": "Заголовок выше — название сценария, можно переименовать.",
+  "scenarios.ed.kind_reply": "Сценарий-ответ",
+  "scenarios.ed.kind_post": "Сценарий-пост",
+  // шаги
+  "scenarios.ed.s1_title": "Когда сработает",
+  "scenarios.ed.s2_title": "Что ты задаёшь",
+  "scenarios.ed.s3_title": "Что Pennedly добавит сам",
+  "scenarios.ed.s4_title": "Ещё настройки",
+  "scenarios.ed.s5_title": "Для продвинутых",
+  "scenarios.ed.s6_title": "Готово",
+  "scenarios.ed.optional": "· не обязательно",
+  // шаг 1 — read-only «когда» для ответа
+  "scenarios.ed.when_reply": "Pennedly <b>проверяет новые комментарии каждые 15 минут</b> и готовит ответ. Это не мгновенный ответ — небольшая задержка нормальна, расписание выбирать не нужно.",
+  // шаг 2 — кому и как отвечать
+  "scenarios.ed.audience_label": "Кому отвечаем",
+  "scenarios.ed.reply_instr_label": "Как отвечать",
+  "scenarios.ed.reply_instr_opt": "· короткая инструкция",
+  "scenarios.ed.reply_instr_hint": "Твоя добавка поверх голоса из Voice. Базовые правила — в следующем шаге.",
+  "scenarios.ed.topic_label": "Тема дня",
+  "scenarios.ed.topic_opt": "· необязательно",
+  "scenarios.ed.topic_ph": "оставь пустым — Pennedly подберёт сам",
+  "scenarios.ed.topic_hint": "Одно слово или короткая фраза задаёт настроение вопроса.",
+  // шаг 3 — read-only правила
+  "scenarios.ed.rules_intro": "Эти правила Pennedly соблюдает всегда — их <b>видно, но менять нельзя</b>, чтобы превью оставалось честным.",
+  "scenarios.ed.rules_foot": "Только для чтения · поверх — твой голос из Voice",
+  // резюме свёрнутых шагов
+  "scenarios.ed.sum1_reply": "Каждые 15 минут проверяет новые комментарии",
+  "scenarios.ed.sum2_reply": "Отвечать {audience} · по имени, с вопросом",
+  "scenarios.ed.sum2_post": "Тема дня — {topic}",
+  "scenarios.ed.sum2_post_auto": "подберёт сам",
+  "scenarios.ed.sum4_reply": "Спам-фильтр, кап ответов, тихие часы, аккаунт",
+  "scenarios.ed.sum4_post": "Будни, тихие часы, аккаунт",
+  "scenarios.ed.sum5": "Сырая модель: когда · только если · что сделать",
+  // шаг 6 — подпись про окно включения
+  "scenarios.ed.enable_note": "При включении выберешь, как публиковать: <b>спрашивать тебя</b> перед каждой публикацией (по умолчанию) или <b>автоматически</b>. Здесь это решать не нужно.",
+  // правое крупное превью
+  "scenarios.ed.stage_cap": "Превью · так это увидят люди",
+  "scenarios.ed.stage_bar_post": "Пост в ленте · Threads",
+  "scenarios.ed.stage_bar_reply": "Ответ под твоим постом · Threads",
+  "scenarios.ed.stage_live": "Живо",
+  "scenarios.ed.stage_voice_post": "В твоём голосе · на основе {n} недавних постов",
+  "scenarios.ed.stage_voice_reply": "В твоём голосе · на основе твоих постов и ветки комментариев",
+  "scenarios.ed.stage_fires_reply": "в течение 15 минут после нового комментария",
+  "scenarios.ed.run_note": "Создаст черновик прямо сейчас — никогда не публикует.",
+  "scenarios.ed.stage_disc": "Превью и «Прогнать» — всегда только черновик. Опрос Pennedly публикует обычным текстовым постом.",
+  "scenarios.ed.reply_tag": "ответ Pennedly",
+  "scenarios.ed.parent_post": "Маленькая победа недели 🟢 Закрыл задачу, которая висела с марта. Не «найти время», а занять 20 минут и начать.",
+  "scenarios.ed.comment_who": "Марина",
+  "scenarios.ed.comment_text": "А если совсем нет сил начать?",
+  "scenarios.ed.bot_reply": "Марина, когда сил нет, цель не «сделать», а «начать на 5 минут» — почти всегда этого хватает, чтобы втянуться. С чего бы вы начали эти пять минут?",
+
   // ── Pennedly-3 redesign: living sentence (A) + skeleton (B) + promise (C) ──
   "scenarios.sentence.eyebrow": "ЧТО БУДЕТ ПРОИСХОДИТЬ",
   "scenarios.promise.ask_post": "Ты увидишь пост перед публикацией.",

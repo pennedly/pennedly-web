@@ -1103,13 +1103,49 @@ export function PowerUserDisclosure({
   onToggle,
   instruction,
   onInstruction,
+  embedded,
 }: {
   open: boolean;
   onToggle: () => void;
   instruction: string;
   onInstruction: (v: string) => void;
+  /** Inside a step body — render just the raw fields (no FormCard / head). */
+  embedded?: boolean;
 }) {
   const { t } = useTranslation();
+  const fields = (
+    <div className={cn("flex flex-col gap-4", !embedded && "border-t border-border p-5 md:p-[22px]")}>
+      <RawField labelKey="scenarios.raw.when" subKey="scenarios.raw.when_sub" modelKey="когда">
+        <select className={SELECT} aria-label={t("scenarios.raw.when")}>
+          <option>{t("scenarios.raw.trig_daily")}</option>
+          <option>{t("scenarios.raw.trig_every_n")}</option>
+          <option>{t("scenarios.raw.trig_time")}</option>
+          <option>{t("scenarios.raw.trig_comment")}</option>
+          <option>{t("scenarios.raw.trig_mention")}</option>
+        </select>
+      </RawField>
+      <RawField labelKey="scenarios.raw.if" subKey="scenarios.raw.if_sub" modelKey="если" optional>
+        <select className={SELECT} aria-label={t("scenarios.raw.if")}>
+          <option>{t("scenarios.raw.cond_none")}</option>
+          <option>{t("scenarios.raw.cond_weekdays")}</option>
+          <option>{t("scenarios.raw.cond_followers")}</option>
+          <option>{t("scenarios.raw.cond_date")}</option>
+          <option>{t("scenarios.raw.cond_positive")}</option>
+        </select>
+      </RawField>
+      <RawField labelKey="scenarios.raw.generate" subKey="scenarios.raw.generate_sub" modelKey="сгенерировать">
+        <select className={SELECT} aria-label={t("scenarios.raw.generate")}>
+          <option>{t("scenarios.raw.act_post")}</option>
+          <option>{t("scenarios.raw.act_reply")}</option>
+          <option>{t("scenarios.raw.act_thread")}</option>
+        </select>
+      </RawField>
+      <RawField labelKey="scenarios.raw.with" subKey="scenarios.raw.with_sub" modelKey="с инструкцией">
+        <textarea rows={3} className={TEXTAREA} value={instruction} onChange={(e) => onInstruction(e.target.value)} placeholder={t("scenarios.f.instruction_ph")} />
+      </RawField>
+    </div>
+  );
+  if (embedded) return fields;
   return (
     <FormCard className="p-0 md:p-0">
       <button type="button" onClick={onToggle} aria-expanded={open} className="flex w-full items-center gap-2.5 px-5 py-4 text-left md:px-[22px]">
@@ -1119,38 +1155,7 @@ export function PowerUserDisclosure({
         </span>
         <IcChevRight size={16} className={cn("ml-auto shrink-0 text-text-subtle transition-transform", open && "rotate-90")} />
       </button>
-      {open && (
-        <div className="flex flex-col gap-4 border-t border-border p-5 md:p-[22px]">
-          <RawField labelKey="scenarios.raw.when" subKey="scenarios.raw.when_sub" modelKey="когда">
-            <select className={SELECT} aria-label={t("scenarios.raw.when")}>
-              <option>{t("scenarios.raw.trig_daily")}</option>
-              <option>{t("scenarios.raw.trig_every_n")}</option>
-              <option>{t("scenarios.raw.trig_time")}</option>
-              <option>{t("scenarios.raw.trig_comment")}</option>
-              <option>{t("scenarios.raw.trig_mention")}</option>
-            </select>
-          </RawField>
-          <RawField labelKey="scenarios.raw.if" subKey="scenarios.raw.if_sub" modelKey="если" optional>
-            <select className={SELECT} aria-label={t("scenarios.raw.if")}>
-              <option>{t("scenarios.raw.cond_none")}</option>
-              <option>{t("scenarios.raw.cond_weekdays")}</option>
-              <option>{t("scenarios.raw.cond_followers")}</option>
-              <option>{t("scenarios.raw.cond_date")}</option>
-              <option>{t("scenarios.raw.cond_positive")}</option>
-            </select>
-          </RawField>
-          <RawField labelKey="scenarios.raw.generate" subKey="scenarios.raw.generate_sub" modelKey="сгенерировать">
-            <select className={SELECT} aria-label={t("scenarios.raw.generate")}>
-              <option>{t("scenarios.raw.act_post")}</option>
-              <option>{t("scenarios.raw.act_reply")}</option>
-              <option>{t("scenarios.raw.act_thread")}</option>
-            </select>
-          </RawField>
-          <RawField labelKey="scenarios.raw.with" subKey="scenarios.raw.with_sub" modelKey="с инструкцией">
-            <textarea rows={3} className={TEXTAREA} value={instruction} onChange={(e) => onInstruction(e.target.value)} placeholder={t("scenarios.f.instruction_ph")} />
-          </RawField>
-        </div>
-      )}
+      {open && fields}
     </FormCard>
   );
 }

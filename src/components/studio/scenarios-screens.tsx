@@ -185,7 +185,7 @@ function ExampleCard({
 //  Collapsed by default, off the happy path. Presentational for now (wired to
 //  the backend in the real-data pass); local state drives the toggles.
 // ════════════════════════════════════════════════════════════════════════════
-export function MoreSettings({ isReply }: { isReply: boolean }) {
+export function MoreSettings({ isReply, embedded }: { isReply: boolean; embedded?: boolean }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [weekdaysOnly, setWeekdaysOnly] = useState(false);
@@ -193,21 +193,11 @@ export function MoreSettings({ isReply }: { isReply: boolean }) {
   const [skipSpam, setSkipSpam] = useState(true);
   const [meaningfulOnly, setMeaningfulOnly] = useState(false);
   const [quietNight, setQuietNight] = useState(false);
-  return (
-    <div className="rounded-lg border border-border bg-surface shadow-sm">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-        className="flex w-full items-center gap-2.5 px-5 py-4 text-left md:px-[22px]"
-      >
-        <span className="text-small font-semibold">{t("scenarios.more.title")}</span>
-        <span className="text-caption text-text-subtle">{t("scenarios.more.hint")}</span>
-        <IcChevRight size={16} className={cn("ml-auto shrink-0 text-text-subtle transition-transform", open && "rotate-90")} />
-      </button>
-      {open && (
-        <div className="flex flex-col gap-5 border-t border-border px-5 py-4 md:px-[22px]">
-          {isReply ? (
+  // Embedded (inside a step body) → render the settings content directly: the
+  // step head owns the open/close, so there's no own card/border/toggle here.
+  const body = (
+    <div className={cn("flex flex-col gap-5", !embedded && "border-t border-border px-5 py-4 md:px-[22px]")}>
+      {isReply ? (
             <SettingsGroup label={t("scenarios.more.who_how")}>
               <SettingToggle title={t("scenarios.more.skip_spam")} sub={t("scenarios.more.skip_spam_sub")} v={skipSpam} on={setSkipSpam} />
               <SettingToggle title={t("scenarios.more.meaningful")} sub={t("scenarios.more.meaningful_sub")} v={meaningfulOnly} on={setMeaningfulOnly} />
@@ -231,11 +221,25 @@ export function MoreSettings({ isReply }: { isReply: boolean }) {
               <SettingToggle title={t("scenarios.more.no_repeat")} sub={t("scenarios.more.no_repeat_sub")} v={noRepeat} on={setNoRepeat} />
             </SettingsGroup>
           )}
-          <SettingsGroup label={t("scenarios.more.quiet_hours")}>
-            <SettingToggle title={t("scenarios.more.quiet_night")} sub={t("scenarios.more.quiet_night_sub")} v={quietNight} on={setQuietNight} />
-          </SettingsGroup>
-        </div>
-      )}
+      <SettingsGroup label={t("scenarios.more.quiet_hours")}>
+        <SettingToggle title={t("scenarios.more.quiet_night")} sub={t("scenarios.more.quiet_night_sub")} v={quietNight} on={setQuietNight} />
+      </SettingsGroup>
+    </div>
+  );
+  if (embedded) return body;
+  return (
+    <div className="rounded-lg border border-border bg-surface shadow-sm">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="flex w-full items-center gap-2.5 px-5 py-4 text-left md:px-[22px]"
+      >
+        <span className="text-small font-semibold">{t("scenarios.more.title")}</span>
+        <span className="text-caption text-text-subtle">{t("scenarios.more.hint")}</span>
+        <IcChevRight size={16} className={cn("ml-auto shrink-0 text-text-subtle transition-transform", open && "rotate-90")} />
+      </button>
+      {open && body}
     </div>
   );
 }

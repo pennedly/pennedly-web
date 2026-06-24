@@ -1877,6 +1877,59 @@ export const en = {
   "scenarios.draft_created_sub": "Nothing was published. You'll find it in Studio.",
   "scenarios.replied_to": "replying to",
 
+  // ── Scenario editor — hybrid C×B step track + large preview ──
+  "scenarios.ed.rename": "Rename",
+  "scenarios.ed.name_hint": "The heading above is the scenario's name — you can rename it.",
+  "scenarios.ed.kind_reply": "Reply scenario",
+  "scenarios.ed.kind_post": "Post scenario",
+  // steps
+  "scenarios.ed.s1_title": "When it fires",
+  "scenarios.ed.s2_title": "What you set",
+  "scenarios.ed.s3_title": "What Pennedly adds itself",
+  "scenarios.ed.s4_title": "More settings",
+  "scenarios.ed.s5_title": "For power users",
+  "scenarios.ed.s6_title": "Done",
+  "scenarios.ed.optional": "· optional",
+  // step 1 — reply read-only «when»
+  "scenarios.ed.when_reply": "Pennedly <b>checks new comments every 15 minutes</b> and prepares a reply. This isn't instant — a small delay is normal, and there's no schedule to pick.",
+  // step 2 — reply audience + instruction
+  "scenarios.ed.audience_label": "Who we reply to",
+  "scenarios.ed.reply_instr_label": "How to reply",
+  "scenarios.ed.reply_instr_opt": "· short instruction",
+  "scenarios.ed.reply_instr_hint": "Your addition on top of the voice from Voice. The base rules are in the next step.",
+  "scenarios.ed.topic_label": "Topic of the day",
+  "scenarios.ed.topic_opt": "· optional",
+  "scenarios.ed.topic_ph": "leave empty — Pennedly will pick one",
+  "scenarios.ed.topic_hint": "One word or a short phrase sets the mood of the question.",
+  // step 3 — read-only baked rules
+  "scenarios.ed.rules_intro": "Pennedly always follows these rules — they're <b>visible but not editable</b>, so the preview stays honest.",
+  "scenarios.ed.rules_foot": "Read-only · on top is your voice from Voice",
+  // summaries (collapsed step one-liners)
+  "scenarios.ed.sum1_reply": "Checks new comments every 15 minutes",
+  "scenarios.ed.sum2_reply": "Reply to {audience} · by name, with a question",
+  "scenarios.ed.sum2_post": "Topic of the day — {topic}",
+  "scenarios.ed.sum2_post_auto": "picks one itself",
+  "scenarios.ed.sum4_reply": "Spam filter, reply cap, quiet hours, account",
+  "scenarios.ed.sum4_post": "Weekdays, quiet hours, account",
+  "scenarios.ed.sum5": "Raw model: when · only if · what to do",
+  // step 6 — enable note
+  "scenarios.ed.enable_note": "When you enable it you'll choose how to publish: <b>ask you</b> before each publish (default) or <b>automatically</b>. No need to decide that here.",
+  // right stage (large preview)
+  "scenarios.ed.stage_cap": "Preview · this is what people see",
+  "scenarios.ed.stage_bar_post": "Post in the feed · Threads",
+  "scenarios.ed.stage_bar_reply": "Reply under your post · Threads",
+  "scenarios.ed.stage_live": "Live",
+  "scenarios.ed.stage_voice_post": "In your voice · based on {n} recent posts",
+  "scenarios.ed.stage_voice_reply": "In your voice · based on your posts and the comment thread",
+  "scenarios.ed.stage_fires_reply": "within 15 minutes of a new comment",
+  "scenarios.ed.run_note": "Creates a draft right now — never publishes.",
+  "scenarios.ed.stage_disc": "Preview and \"Run\" are always just a draft. Pennedly publishes a poll as a plain text post.",
+  "scenarios.ed.reply_tag": "Pennedly reply",
+  "scenarios.ed.parent_post": "Small win of the week 🟢 Closed a task that had been hanging since March. Not \"find the time\" — just take 20 minutes and start.",
+  "scenarios.ed.comment_who": "Marina",
+  "scenarios.ed.comment_text": "And what if you have no strength to start at all?",
+  "scenarios.ed.bot_reply": "Marina, when you have no energy, the goal isn't \"do it\" but \"start for 5 minutes\" — that's almost always enough to get going. What would you start those five minutes with?",
+
   // ── Pennedly-3 redesign: living sentence (A) + skeleton (B) + promise (C) ──
   "scenarios.sentence.eyebrow": "WHAT WILL HAPPEN",
   "scenarios.promise.ask_post": "You'll see the post before it publishes.",

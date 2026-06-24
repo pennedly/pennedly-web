@@ -42,6 +42,7 @@ import {
   visibleFields,
 } from "@/components/studio/scenarios-form";
 import { BLANK_PROMO, DEMO_CATALOG, DEMO_PRESETS, DEMO_PROMO, DEMO_SCENARIOS, PROMO_PRESET } from "@/components/studio/scenarios-demo";
+import { StepEditor } from "@/components/studio/scenarios-editor";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { cn } from "@/lib/cn";
 import type { ScenarioPreset, ScenarioPreview as ScenarioPreviewT } from "@/lib/types";
@@ -184,6 +185,95 @@ function FormDemo({ presetId }: { presetId: string }) {
   );
 }
 
+// Hosts the REAL StepEditor (hybrid C×B step track + large preview) wired to
+// local state, for spec-fidelity review against Scenario-Editor-SPEC.html.
+function StepEditorDemo({ presetId }: { presetId: string }) {
+  const { t } = useTranslation();
+  const preset: ScenarioPreset | null = useMemo(() => DEMO_CATALOG.find((p) => p.id === presetId) ?? null, [presetId]);
+  const isPromo = presetId === "promo";
+  const when0: WhenMode = preset ? whenModeFromCfg(preset.trigger_cfg, preset.condition_cfg) : "daily";
+  const [form, setForm] = useState<FormState>(() => {
+    const fields: Record<string, string> = {};
+    for (const f of preset?.fields ?? []) {
+      if (f.kind === "text" || f.kind === "textarea" || f.kind === "options") fields[f.key] = typeof f.default === "string" ? f.default : "";
+    }
+    if (presetId === "talk" || presetId === "daily_question") fields.topic = "довести дело до конца";
+    return {
+      name: preset ? t(preset.name_key as MessageKey) : "Новый сценарий",
+      preset,
+      helperOn: isPromo,
+      promo: isPromo ? DEMO_PROMO : { ...BLANK_PROMO },
+      instruction: preset && !isPromo ? preset.instruction : "",
+      replyInstruction: preset?.reply_instruction || "по имени, одно наблюдение и мягкий вопрос — без шаблонов",
+      audience: (preset?.reply_defaults?.audience as string) || "all_except_trolls",
+      when: when0,
+      nDays: 3,
+      weekday: 0,
+      dateFrom: "",
+      dateTo: "",
+      threshold: "",
+      fields,
+    };
+  });
+  const [powerOpen, setPowerOpen] = useState(false);
+  const up = (patch: Partial<FormState>) => setForm((f) => ({ ...f, ...patch }));
+  const setField = (k: string, v: string) => setForm((f) => ({ ...f, fields: { ...f.fields, [k]: v } }));
+
+  const isReplyPolicy = !!preset && (preset.action_cfg?.kind as string) === "reply_policy";
+  const isReactive = form.when === "event" && !!preset && eventKindOf(preset.trigger_cfg) !== "";
+  const promoMode = form.helperOn || isPromo;
+  const vFields = visibleFields(preset);
+  const bakedRules = (BAKED_RULE_KEYS[presetId] ?? []).map((k) => t(k as MessageKey));
+  const previewState: PreviewState = isReplyPolicy ? "reply" : promoMode ? "promo" : "free";
+  const preview: ScenarioPreviewT = {
+    cta: "",
+    instruction: interpolate(form.instruction, form.fields),
+    reply_instruction: form.replyInstruction,
+    sample_post: "Вопрос на сегодня: что вы сегодня доведёте до конца — даже если получится неидеально? Напишите одним словом 👇",
+  };
+
+  return (
+    <StepEditor
+      t={t}
+      form={form}
+      handle="@alex.makes"
+      update={up}
+      setField={setField}
+      isExisting
+      nameErr={false}
+      fieldErrs={{}}
+      askErr={false}
+      vFields={vFields}
+      producesReplies={promoMode || isReplyPolicy}
+      isReplyPolicy={isReplyPolicy}
+      isReactive={isReactive}
+      bakedRules={bakedRules}
+      bakedOpen={false}
+      onBakedToggle={() => {}}
+      powerOpen={powerOpen}
+      onPowerToggle={() => setPowerOpen((o) => !o)}
+      previewState={previewState}
+      preview={preview}
+      whenFires={t("scenarios.fires.morning")}
+      running={false}
+      runResult={null}
+      onRunNow={() => {}}
+      canRunNow
+      saving={false}
+      saveErr={false}
+      confirmInline={false}
+      onBack={() => {}}
+      onSave={() => {}}
+      onSaveOn={() => {}}
+      onDeleteDesktop={() => {}}
+      onDeleteMobile={() => {}}
+      onCancelInline={() => {}}
+      onConfirmInline={() => {}}
+      deleting={false}
+    />
+  );
+}
+
 export default function ScenariosGallery() {
   const { t } = useTranslation();
   const [dark, setDark] = useState(false);
@@ -248,7 +338,15 @@ export default function ScenariosGallery() {
           <ScenariosError onRetry={() => {}} />
         </Section>
 
-        <h2 className="mb-3 mt-8 text-h3 font-semibold">Unified form — per preset</h2>
+        <h2 className="mb-3 mt-8 text-h3 font-semibold">Scenario editor — hybrid C×B (step track + large preview)</h2>
+        <Section title="reply scenario · «Дежурство» — step 2 active, step 3 trust step open, stage = reply thread">
+          <StepEditorDemo presetId="reply_duty" />
+        </Section>
+        <Section title="post scenario · «Утренний вопрос» — schedule step, «Тема дня», stage = enlarged post">
+          <StepEditorDemo presetId="daily_question" />
+        </Section>
+
+        <h2 className="mb-3 mt-8 text-h3 font-semibold">Unified form — per preset (legacy single-column form)</h2>
         <Section title="cadence preset · «Рубрика» (Weekly + weekday + name + format) · baked rules open">
           <FormDemo presetId="rubric" />
         </Section>

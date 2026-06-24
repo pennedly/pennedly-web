@@ -38,39 +38,27 @@ import {
 import { useSelectedAccountId } from "@/lib/account";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { useTesterGuard } from "@/lib/tester";
-import { cn } from "@/lib/cn";
 import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
 import { Button } from "@/components/ui/button";
 import { Toast, ToastHost } from "@/components/ui/toast";
-import { IcArrowLeft, IcCheck, IcPlus, IcTrash } from "@/components/icons";
+import { IcPlus } from "@/components/icons";
 import { TweaksPanel, TweakSection, TweakToggle, TweakRadio, useTweaks } from "@/components/tweaks/TweaksPanel";
 import {
   AutopostOffBanner,
-  BakedRules,
-  CardTitle,
   ControlCenterHeader,
   DeleteConfirm,
   EnableConfirm,
-  Field,
-  FormCard,
-  INPUT,
-  PowerUserDisclosure,
-  PresetFieldInput,
-  PromoHelper,
-  ReplyBlock,
   ScenarioCard,
-  ScenarioPreview,
   type PreviewState,
   ScenarioSkeleton,
   ScenariosError,
   StackingWarnings,
-  TEXTAREA,
-  WhenSegment,
   type WhenMode,
   presetProducesReplies,
   whenModeFromCfg,
   eventKindOf,
 } from "@/components/studio/ScenariosParts";
+import { StepEditor } from "@/components/studio/scenarios-editor";
 import {
   BAKED_RULE_KEYS,
   compileBody,
@@ -84,15 +72,14 @@ import {
   PROMO_PRESET,
   SCENARIOS_TWEAK_DEFAULTS,
 } from "@/components/studio/scenarios-demo";
-import { DEMO_CC, DEMO_CREATOR, demoSampleKey, presetSentence, presetSkel } from "@/components/studio/scenarios-presentation";
-import { LivingSentence, Skeleton3, type PublishMode } from "@/components/studio/scenarios-living";
-import { FirstRun, GalleryScreen, MoreSettings } from "@/components/studio/scenarios-screens";
+import { DEMO_CC, DEMO_CREATOR, demoSampleKey } from "@/components/studio/scenarios-presentation";
+import { type PublishMode } from "@/components/studio/scenarios-living";
+import { FirstRun, GalleryScreen } from "@/components/studio/scenarios-screens";
 import type {
   ConnectedAccount,
   Scenario,
   ScenarioPreset,
   ScenarioPreview as ScenarioPreviewT,
-  ScenarioPromoFields,
   ScenarioRunNow,
 } from "@/lib/types";
 
@@ -661,7 +648,7 @@ export default function ScenariosPage() {
         )}
 
         {view === "editor" ? (
-          <EditorView
+          <StepEditor
             t={t}
             form={form}
             handle={handle}
@@ -810,271 +797,4 @@ function humanWhenFires(form: FormState, t: (k: MessageKey) => string): string {
     default:
       return t("scenarios.fires.morning");
   }
-}
-
-// ── the ONE unified form (fields + sticky preview + run-now) ──
-function EditorView({
-  t,
-  form,
-  handle,
-  update,
-  setField,
-  isExisting,
-  nameErr,
-  fieldErrs,
-  askErr,
-  vFields,
-  producesReplies,
-  isReplyPolicy,
-  isReactive,
-  bakedRules,
-  bakedOpen,
-  onBakedToggle,
-  powerOpen,
-  onPowerToggle,
-  previewState,
-  preview,
-  whenFires,
-  running,
-  runResult,
-  onRunNow,
-  canRunNow,
-  saving,
-  saveErr,
-  confirmInline,
-  onBack,
-  onSave,
-  onSaveOn,
-  onDeleteDesktop,
-  onDeleteMobile,
-  onCancelInline,
-  onConfirmInline,
-  deleting,
-}: {
-  t: (k: MessageKey) => string;
-  form: FormState;
-  handle: string;
-  update: (patch: Partial<FormState>) => void;
-  setField: (key: string, v: string) => void;
-  isExisting: boolean;
-  nameErr: boolean;
-  fieldErrs: Record<string, boolean>;
-  askErr: boolean;
-  vFields: ReturnType<typeof visibleFields>;
-  producesReplies: boolean;
-  isReplyPolicy: boolean;
-  isReactive: boolean;
-  bakedRules: string[];
-  bakedOpen: boolean;
-  onBakedToggle: () => void;
-  powerOpen: boolean;
-  onPowerToggle: () => void;
-  previewState: PreviewState;
-  preview: ScenarioPreviewT | null;
-  whenFires: string;
-  running: boolean;
-  runResult: ScenarioRunNow | null;
-  onRunNow: () => void;
-  canRunNow: boolean;
-  saving: boolean;
-  saveErr: boolean;
-  confirmInline: boolean;
-  onBack: () => void;
-  onSave: () => void;
-  onSaveOn: () => void;
-  onDeleteDesktop: () => void;
-  onDeleteMobile: () => void;
-  onCancelInline: () => void;
-  onConfirmInline: () => void;
-  deleting: boolean;
-}) {
-  const promoMode = form.helperOn || form.preset?.id === "promo";
-  const eventKind = form.preset ? eventKindOf(form.preset.trigger_cfg) : "";
-  // living sentence (A) + skeleton (B), recomposed from the form's preset + fields
-  const pid = form.preset?.id ?? null;
-  const sentenceOverrides: Record<string, string> = {};
-  if (pid === "rubric" && form.fields.rubric_name?.trim()) sentenceOverrides.name = form.fields.rubric_name.trim();
-  if (promoMode && form.promo.ask?.trim()) sentenceOverrides.ask = form.promo.ask.trim();
-  if (pid === "reply_duty")
-    sentenceOverrides.audience =
-      form.audience === "fans"
-        ? t("scenarios.aud_phrase.fans")
-        : form.audience === "questions"
-          ? t("scenarios.aud_phrase.questions")
-          : t("scenarios.aud_phrase.all");
-  const sentenceId = promoMode ? "promo" : pid;
-  const sentence = presetSentence(t, sentenceId, handle, sentenceOverrides);
-  const skel = presetSkel(t, sentenceId);
-  return (
-    <div className="space-y-4">
-      <button onClick={onBack} className="inline-flex items-center gap-1.5 text-small text-text-muted hover:text-text">
-        <IcArrowLeft size={16} /> {t("scenarios.back")}
-      </button>
-
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-[minmax(0,1fr)_380px] md:items-start">
-        {/* form column */}
-        <div className="space-y-4 md:space-y-5">
-          {/* living sentence (A) + skeleton (B) — «ЧТО БУДЕТ ПРОИСХОДИТЬ» */}
-          <LivingSentence template={sentence.template} slots={sentence.slots} mode="ask" kind={sentence.kind} />
-          <Skeleton3 when={skel.when} onlyif={skel.onlyif} whatdo={skel.whatdo} />
-          {/* name */}
-          <FormCard>
-            <Field label={t("scenarios.f.name")} error={nameErr ? t("scenarios.err_required") : undefined}>
-              <input
-                className={cn(INPUT, nameErr && "border-danger focus:border-danger focus:ring-danger/25")}
-                value={form.name}
-                onChange={(e) => update({ name: e.target.value })}
-                placeholder={t("scenarios.f.name_ph")}
-              />
-            </Field>
-          </FormCard>
-
-          {/* КОГДА — schedule (hidden for a pure reply-policy duty) */}
-          {!isReplyPolicy && (
-            <FormCard>
-              <CardTitle title={t("scenarios.sec.schedule")} sub={t("scenarios.sec.schedule_sub")} />
-              <WhenSegment
-                value={form.when}
-                nDays={form.nDays}
-                weekday={form.weekday}
-                dateFrom={form.dateFrom}
-                dateTo={form.dateTo}
-                threshold={form.threshold}
-                locked={isReactive}
-                eventKind={eventKind}
-                onMode={(m) => update({ when: m })}
-                onNDays={(n) => update({ nDays: n })}
-                onWeekday={(d) => update({ weekday: d })}
-                onDate={(which, v) => update(which === "from" ? { dateFrom: v } : { dateTo: v })}
-                onThreshold={(v) => update({ threshold: v })}
-              />
-            </FormCard>
-          )}
-
-          {/* ЧТО ВЫ ЗАДАЁТЕ — preset fields OR promo helper OR free instruction */}
-          {promoMode ? (
-            <FormCard>
-              <CardTitle title={t("scenarios.sec.generate")} sub={t("scenarios.sec.generate_sub")} />
-              <PromoHelper on={form.helperOn} promo={form.promo} askErr={askErr} onToggle={(on) => update({ helperOn: on })} onChange={(p) => update({ promo: p })} />
-            </FormCard>
-          ) : form.preset && (vFields.length > 0 || isReplyPolicy) ? (
-            <FormCard>
-              <CardTitle title={t("scenarios.sec.you_set")} sub={t("scenarios.sec.you_set_sub")} />
-              <div className="space-y-4">
-                {vFields.map((f) => (
-                  <PresetFieldInput key={f.key} field={f} value={form.fields[f.key] ?? ""} error={fieldErrs[f.key]} onChange={(v) => setField(f.key, v)} />
-                ))}
-                {isReplyPolicy && (
-                  <ReplyBlock audience={form.audience} onAudience={(a) => update({ audience: a })} replyInstruction={form.replyInstruction} onReplyInstruction={(v) => update({ replyInstruction: v })} />
-                )}
-              </div>
-            </FormCard>
-          ) : !form.preset ? (
-            // from scratch → a free instruction textarea (the heart)
-            <FormCard>
-              <CardTitle title={t("scenarios.sec.generate")} sub={t("scenarios.sec.generate_sub")} />
-              <Field label={t("scenarios.f.instruction")} hint={t("scenarios.f.instruction_hint")}>
-                <textarea rows={5} className={cn(TEXTAREA, "min-h-[132px]")} value={form.instruction} onChange={(e) => update({ instruction: e.target.value })} placeholder={t("scenarios.f.instruction_ph")} />
-              </Field>
-            </FormCard>
-          ) : null}
-
-          {/* ЧТО ЗАШЬЁТСЯ — read-only baked rules */}
-          {bakedRules.length > 0 && <BakedRules open={bakedOpen} onToggle={onBakedToggle} rules={bakedRules} />}
-
-          {/* КАК ОТВЕЧАТЬ — for reply-producing post presets (NOT reply-policy, which has its own block above; NOT promo, which has the field below) */}
-          {producesReplies && !isReplyPolicy && !promoMode && (
-            <FormCard>
-              <CardTitle title={t("scenarios.sec.reply")} sub={t("scenarios.sec.reply_sub")} />
-              <Field label={t("scenarios.sec.reply")} hint={t("scenarios.f.reply_hint")}>
-                <textarea rows={3} className={TEXTAREA} value={form.replyInstruction} onChange={(e) => update({ replyInstruction: e.target.value })} placeholder={t("scenarios.f.reply_ph")} />
-              </Field>
-            </FormCard>
-          )}
-
-          {/* promo reply field (the «Акция» reply instruction) */}
-          {promoMode && (
-            <FormCard>
-              <div className="mb-4">
-                <h2 className="flex flex-wrap items-center gap-2 text-h3 font-semibold tracking-tight">
-                  {t("scenarios.sec.reply")}
-                  <span className="rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-caption font-medium text-accent">{t("scenarios.helper_filled")}</span>
-                </h2>
-                <p className="mt-1 text-small leading-relaxed text-text-subtle">{t("scenarios.sec.reply_sub")}</p>
-              </div>
-              <Field label={t("scenarios.sec.reply")} hint={t("scenarios.f.reply_hint")}>
-                <textarea rows={3} className={TEXTAREA} value={form.replyInstruction} onChange={(e) => update({ replyInstruction: e.target.value })} placeholder={t("scenarios.f.reply_ph")} />
-              </Field>
-            </FormCard>
-          )}
-
-          {/* «Ещё настройки» — ТОЛЬКО ЕСЛИ: фильтры, тихие часы, кап */}
-          <MoreSettings isReply={isReplyPolicy || promoMode} />
-
-          {/* power-user disclosure — «Показать как правило» */}
-          <PowerUserDisclosure open={powerOpen} onToggle={onPowerToggle} instruction={form.instruction} onInstruction={(v) => update({ instruction: v })} />
-        </div>
-
-        {/* sticky live preview + run-now */}
-        <aside className="md:sticky md:top-4 md:self-start">
-          <ScenarioPreview
-            state={previewState}
-            preview={preview}
-            promo={form.promo}
-            whenFires={whenFires}
-            canRunNow={canRunNow}
-            running={running}
-            runResult={runResult}
-            onRunNow={onRunNow}
-          />
-        </aside>
-      </div>
-
-      {/* save error banner */}
-      {saveErr && (
-        <div className="flex items-start gap-3 rounded-lg border border-danger/30 bg-danger/[0.07] p-4">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-danger/12 text-danger">
-            <IcTrash size={18} className="rotate-45" />
-          </span>
-          <div className="min-w-0">
-            <p className="text-small font-semibold text-text">{t("scenarios.save_error")}</p>
-            <p className="mt-0.5 text-caption leading-relaxed text-text-muted">{t("scenarios.save_error_sub")}</p>
-          </div>
-        </div>
-      )}
-
-      {/* action bar */}
-      <FormCard>
-        <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center">
-          <Button variant="secondary" onClick={onSave} loading={saving} className="max-sm:w-full">
-            {t("scenarios.save")}
-          </Button>
-          <Button variant="primary" onClick={onSaveOn} loading={saving} icon={<IcCheck size={15} />} className="max-sm:w-full">
-            {t("scenarios.save_on")}
-          </Button>
-          {isExisting && (
-            <>
-              <button onClick={onDeleteDesktop} className="inline-flex items-center gap-1.5 text-small font-medium text-text-muted hover:text-danger max-sm:hidden sm:ml-auto">
-                <IcTrash size={15} /> {t("scenarios.delete")}
-              </button>
-              <button onClick={onDeleteMobile} className="inline-flex items-center justify-center gap-1.5 py-2 text-small font-medium text-danger sm:hidden">
-                <IcTrash size={15} /> {t("scenarios.delete")}
-              </button>
-            </>
-          )}
-        </div>
-        {confirmInline && (
-          <div className="mt-3.5 flex flex-wrap items-center gap-2.5 border-t border-border pt-3.5 max-sm:hidden">
-            <span className="flex-1 text-small font-medium text-text">{t("scenarios.delete_confirm_inline")}</span>
-            <Button size="sm" variant="ghost" onClick={onCancelInline} disabled={deleting}>
-              {t("common.cancel")}
-            </Button>
-            <Button size="sm" variant="danger" loading={deleting} onClick={onConfirmInline}>
-              {t("scenarios.delete")}
-            </Button>
-          </div>
-        )}
-      </FormCard>
-    </div>
-  );
 }
