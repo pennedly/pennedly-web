@@ -73,6 +73,7 @@ import type {
   UserRule,
   UserRulesResponse,
   Scenario,
+  ScenarioActivity,
   ScenariosResponse,
   ScenarioCreate,
   ScenarioUpdate,
@@ -1012,6 +1013,10 @@ export async function setScenarioEnabled(
 
 export async function deleteScenario(scenarioId: number): Promise<{ ok: boolean }> {
   return fetchApi(`/api/scenarios/${scenarioId}`, { method: "DELETE" });
+}
+
+export async function fetchScenarioActivity(scenarioId: number): Promise<ScenarioActivity> {
+  return fetchApi<ScenarioActivity>(`/api/scenarios/${scenarioId}/activity`);
 }
 
 export async function previewScenario(

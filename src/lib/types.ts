@@ -835,6 +835,24 @@ export type Scenario = {
 
 export type ScenariosResponse = { scenarios: Scenario[] };
 
+// What a scenario actually DID — its published posts (kind 'post') for the
+// Activity screen. A reply scenario (kind 'reply') answers in comment threads,
+// so `items` is empty and the UI points at the Replies screen.
+export type ScenarioActivityItem = {
+  post_id: number;
+  text: string | null;
+  published_at: string | null;
+  threads_url: string | null;
+  views: number;
+  likes: number;
+  comments_count: number;
+};
+export type ScenarioActivity = {
+  scenario_name: string;
+  kind: "post" | "reply";
+  items: ScenarioActivityItem[];
+};
+
 // Create/update send ONE of: `promo` (the «Акция» helper) · `reply_policy`
 // («Дежурство» — a standalone reply policy) · the raw free fields (`trigger` +
 // `instruction` + optional `reply_instruction` + optional `condition`). They

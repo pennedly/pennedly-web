@@ -15,6 +15,7 @@
 // promo = gift; replies = bubble; reactive = bolt-event.
 
 import { useMemo, useState, type ReactNode } from "react";
+import Link from "next/link";
 
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -589,6 +590,14 @@ export function ScenarioCard({
         <div className="flex shrink-0 items-center gap-2 max-sm:w-full">
           {onApply && accounts && accounts.length > 1 && (
             <ApplyToPopover s={s} accounts={accounts} onApply={onApply} />
+          )}
+          {s.fire_count > 0 && (
+            <Link
+              href={`/app/scenarios/${s.id}/activity`}
+              className="inline-flex h-9 shrink-0 items-center rounded-md border border-border px-3 text-small font-medium text-text-muted transition-colors hover:bg-surface-2 hover:text-text"
+            >
+              {t("scenarios.activity.title")}
+            </Link>
           )}
           <Button size="sm" variant="secondary" onClick={() => onOpen(s)} className="shrink-0 max-sm:flex-1">
             {t("scenarios.open")}
