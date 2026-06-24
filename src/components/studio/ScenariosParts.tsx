@@ -54,7 +54,7 @@ import type {
   ScenarioPreview as ScenarioPreviewT,
   ScenarioRunNow,
 } from "@/lib/types";
-import { CardLine } from "./scenarios-living";
+import { CardLine, Sentence, type PublishMode } from "./scenarios-living";
 import { deriveSentence, publishModeOf } from "./scenarios-presentation";
 
 type IconCmp = (p: { size?: number; className?: string }) => React.ReactNode;
@@ -1497,23 +1497,35 @@ function PreviewEmpty() {
 // + auto-reply-surprise fix. Says plainly what enabling will do (publish posts
 // vs reply to real people), flags the account autopost gate when it's off, and
 // only then flips it on. Turning OFF is harmless and skips this.
+// The «момент включения» (§8) — not a silent toggle. A mode pick («Спроси меня»
+// default / «Публиковать автоматически»), with an inline autopost gate for post
+// scenarios when account autopublish is off, and a consent checkbox for reply
+// scenarios going fully automatic.
 export function EnableConfirm({
   scenario,
   postAutopilotOn,
+  handle = "@you",
   busy,
   onConfirm,
   onCancel,
 }: {
   scenario: Scenario | null;
   postAutopilotOn: boolean;
+  handle?: string;
   busy: boolean;
-  onConfirm: () => void;
+  onConfirm: (mode: PublishMode, opts: { enableAutopost: boolean }) => void;
   onCancel: () => void;
 }) {
   const { t } = useTranslation();
+  const [mode, setMode] = useState<PublishMode>("ask");
+  const [consent, setConsent] = useState(false);
+  const [enableAutopost, setEnableAutopost] = useState(false);
   if (!scenario) return null;
-  const isReply = (scenario.action_cfg?.kind as string) === "reply_policy";
-  const autopostWarn = !isReply && !postAutopilotOn;
+  const sentence = deriveSentence(t, scenario, handle);
+  const isReply = sentence.kind === "reply";
+  const showGate = !isReply && mode === "auto" && !postAutopilotOn;
+  const needConsent = isReply && mode === "auto";
+  const blocked = (needConsent && !consent) || (showGate && !enableAutopost);
   return (
     <div
       className="fixed inset-0 z-40 grid place-items-center bg-ink-950/55 p-6 backdrop-blur-sm max-md:items-end max-md:p-0"
@@ -1521,38 +1533,129 @@ export function EnableConfirm({
       aria-modal="true"
       onMouseDown={(e) => e.target === e.currentTarget && onCancel()}
     >
-      <div className="w-full max-w-[440px] rounded-2xl border border-border bg-surface p-6 shadow-lg max-md:max-w-none max-md:rounded-b-none max-md:rounded-t-2xl max-md:pb-[calc(env(safe-area-inset-bottom)+20px)]">
+      <div className="w-full max-w-[480px] rounded-2xl border border-border bg-surface p-6 shadow-lg max-md:max-w-none max-md:rounded-b-none max-md:rounded-t-2xl max-md:pb-[calc(env(safe-area-inset-bottom)+20px)]">
         <div className="flex items-start gap-3">
-          <span className="grid h-[38px] w-[38px] shrink-0 place-items-center rounded-md border border-accent/28 bg-accent/12 text-accent">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-success/28 bg-success/12 text-success">
             {isReply ? <IcReplies size={18} /> : <IcRepeat size={18} />}
           </span>
           <div className="min-w-0">
             <h2 className="text-h3 font-semibold [text-wrap:balance]">{t("scenarios.enable_title").replace("{name}", scenario.name)}</h2>
-            <p className="mt-1 text-small leading-[1.5] text-text-muted [text-wrap:pretty]">
-              {isReply ? t("scenarios.enable_reply_body") : t("scenarios.enable_post_body")}
-            </p>
+            <Sentence template={sentence.template} slots={sentence.slots} variant="card" className="mt-1" />
           </div>
         </div>
-        {isReply && (
-          <div className="mt-3 flex items-center gap-2 rounded-md border border-warning/30 bg-warning/[0.06] px-3 py-2 text-caption text-text">
-            <IcReplies size={14} className="shrink-0 text-warning" /> {t("scenarios.enable_reply_warn")}
+
+        {/* mode pick */}
+        <div className="mt-[18px] flex flex-col gap-2.5">
+          <ModeOption
+            active={mode === "ask"}
+            tone="ask"
+            title={t("scenarios.enable.ask_title")}
+            badge={t("scenarios.enable.default_badge")}
+            sub={isReply ? t("scenarios.enable.ask_reply_sub") : t("scenarios.enable.ask_post_sub")}
+            onPick={() => setMode("ask")}
+          />
+          <ModeOption
+            active={mode === "auto"}
+            tone="auto"
+            title={t("scenarios.enable.auto_title")}
+            sub={isReply ? t("scenarios.enable.auto_reply_sub") : t("scenarios.enable.auto_post_sub")}
+            onPick={() => setMode("auto")}
+          />
+        </div>
+
+        {/* inline autopost gate — post + auto + account autopublish off */}
+        {showGate && (
+          <div className="mt-3.5 rounded-md border border-warning/28 bg-warning/[0.08] p-3.5">
+            <div className="flex items-start gap-2.5">
+              <IcBolt size={16} className="mt-0.5 shrink-0 text-warning" />
+              <div className="min-w-0">
+                <p className="text-small font-semibold text-text">{t("scenarios.enable.gate_title")}</p>
+                <p className="mt-0.5 text-caption leading-relaxed text-text-muted">{t("scenarios.enable.gate_body").replace("{handle}", handle)}</p>
+              </div>
+            </div>
+            <label className="mt-2.5 flex items-center justify-between gap-3 text-small font-medium text-text">
+              <span>{t("scenarios.enable.gate_toggle").replace("{handle}", handle)}</span>
+              <Switch checked={enableAutopost} onCheckedChange={setEnableAutopost} aria-label={t("scenarios.enable.gate_toggle").replace("{handle}", handle)} />
+            </label>
           </div>
         )}
-        {autopostWarn && (
-          <div className="mt-3 rounded-md border border-warning/30 bg-warning/[0.06] px-3 py-2 text-caption leading-[1.45] text-text">
-            {t("scenarios.enable_autopost_warn")}
-          </div>
+
+        {/* reactive consent — reply + auto */}
+        {needConsent && (
+          <label className="mt-3.5 flex items-start gap-2.5 rounded-md border border-accent/24 bg-accent/[0.07] p-3.5">
+            <input
+              type="checkbox"
+              checked={consent}
+              onChange={(e) => setConsent(e.target.checked)}
+              className="mt-0.5 h-[18px] w-[18px] shrink-0 rounded border-border accent-accent"
+            />
+            <span className="text-small leading-relaxed text-text">{t("scenarios.enable.reply_consent")}</span>
+          </label>
         )}
+
         <div className="mt-[22px] flex justify-end gap-2.5 max-md:flex-col-reverse">
           <button onClick={onCancel} disabled={busy} className={cn(buttonClasses({ variant: "ghost" }), "max-md:min-h-[44px] max-md:w-full")}>
             {t("common.cancel")}
           </button>
-          <Button variant="primary" loading={busy} onClick={onConfirm} icon={<IcCheck size={15} />} className="max-md:min-h-[44px] max-md:w-full">
+          <Button
+            variant="primary"
+            loading={busy}
+            disabled={blocked}
+            onClick={() => onConfirm(mode, { enableAutopost })}
+            icon={<IcCheck size={15} />}
+            className="max-md:min-h-[44px] max-md:w-full"
+          >
             {t("scenarios.turn_on")}
           </Button>
         </div>
       </div>
     </div>
+  );
+}
+
+function ModeOption({
+  active,
+  tone,
+  title,
+  badge,
+  sub,
+  onPick,
+}: {
+  active: boolean;
+  tone: "ask" | "auto";
+  title: string;
+  badge?: string;
+  sub: string;
+  onPick: () => void;
+}) {
+  const auto = tone === "auto";
+  return (
+    <button
+      type="button"
+      onClick={onPick}
+      aria-pressed={active}
+      className={cn(
+        "flex items-start gap-3 rounded-lg border bg-surface p-3.5 text-left transition-colors",
+        active
+          ? auto
+            ? "border-warning bg-warning/[0.06] ring-1 ring-warning"
+            : "border-accent bg-accent/[0.06] ring-1 ring-accent"
+          : "border-border hover:border-text/20",
+      )}
+    >
+      <span className={cn("mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border-2", active ? (auto ? "border-warning" : "border-accent") : "border-border")}>
+        {active && <span className={cn("h-2.5 w-2.5 rounded-full", auto ? "bg-warning" : "bg-accent")} />}
+      </span>
+      <span className="min-w-0">
+        <span className="flex flex-wrap items-center gap-2 text-small font-semibold text-text">
+          {title}
+          {badge && (
+            <span className="rounded-full border border-success/30 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.04em] text-success">{badge}</span>
+          )}
+        </span>
+        <span className="mt-0.5 block text-caption leading-relaxed text-text-muted">{sub}</span>
+      </span>
+    </button>
   );
 }
 

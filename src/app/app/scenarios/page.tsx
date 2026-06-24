@@ -85,7 +85,7 @@ import {
   SCENARIOS_TWEAK_DEFAULTS,
 } from "@/components/studio/scenarios-demo";
 import { DEMO_CC, DEMO_CREATOR, presetSentence, presetSkel } from "@/components/studio/scenarios-presentation";
-import { LivingSentence, Skeleton3 } from "@/components/studio/scenarios-living";
+import { LivingSentence, Skeleton3, type PublishMode } from "@/components/studio/scenarios-living";
 import { FirstRun, GalleryScreen, MoreSettings } from "@/components/studio/scenarios-screens";
 import type {
   ConnectedAccount,
@@ -423,11 +423,14 @@ export default function ScenariosPage() {
     }
     void doToggle(s, on);
   }
-  async function confirmEnable() {
+  async function confirmEnable(mode: PublishMode, opts: { enableAutopost: boolean }) {
     const s = pendingEnable;
     if (!s) return;
     setEnableBusy(true);
+    if (opts.enableAutopost) setPostAutopilotOn(true);
     await doToggle(s, true);
+    // reflect the chosen mode on the card immediately (demo + optimistic)
+    setScenarios((xs) => xs.map((x) => (x.id === s.id ? { ...x, publish_mode: mode } : x)));
     setEnableBusy(false);
     setPendingEnable(null);
   }
@@ -716,7 +719,7 @@ export default function ScenariosPage() {
 
       <DeleteConfirm open={deleteOpen} deleting={deleting} onClose={() => setDeleteOpen(false)} onConfirm={doDelete} />
       <DeleteConfirm open={!!delTarget} deleting={delBusy} onClose={() => setDelTarget(null)} onConfirm={deleteFromCard} />
-      <EnableConfirm scenario={pendingEnable} postAutopilotOn={postAutopilotOn} busy={enableBusy} onConfirm={confirmEnable} onCancel={() => setPendingEnable(null)} />
+      <EnableConfirm scenario={pendingEnable} postAutopilotOn={postAutopilotOn} handle={handle} busy={enableBusy} onConfirm={confirmEnable} onCancel={() => setPendingEnable(null)} />
 
       <ToastHost>
         {toasts.map((to) => (

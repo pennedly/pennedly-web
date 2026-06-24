@@ -19,10 +19,12 @@ import {
   IcCalendar,
   IcChart,
   IcChevRight,
+  IcExternal,
   IcGift,
   IcList,
   IcPencil,
   IcReplies,
+  IcSend,
   IcShield,
   IcSparkle,
   IcUsers,
@@ -256,5 +258,92 @@ function SettingToggle({ title, sub, v, on }: { title: string; sub: string; v: b
       </span>
       <Switch checked={v} onCheckedChange={on} aria-label={title} />
     </label>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  ACTIVITY — a human journal (§10): drafts awaiting confirmation («Спроси меня»)
+//  + what's already been done. Past tense, Threads links, no ids.
+// ════════════════════════════════════════════════════════════════════════════
+export type ActivityDraftView = { id: number; kind: "post" | "reply"; when: string; ctx: string; body: string };
+export type ActivityDoneView = { id: number; kind: "post" | "reply"; text: string; sub: string; url: string };
+
+export function ActivityJournal({
+  drafts,
+  done,
+  onPublish,
+  onEdit,
+  onSkip,
+}: {
+  drafts: ActivityDraftView[];
+  done: ActivityDoneView[];
+  onPublish?: (id: number) => void;
+  onEdit?: (id: number) => void;
+  onSkip?: (id: number) => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex flex-col gap-6">
+      {drafts.length > 0 && (
+        <section className="flex flex-col gap-2.5">
+          <h2 className="text-caption font-semibold uppercase tracking-[0.04em] text-text-subtle">
+            {t("scenarios.act.waiting_head")} · {drafts.length}
+          </h2>
+          {drafts.map((d) => (
+            <div key={d.id} className="rounded-lg border border-accent/26 bg-surface p-4 shadow-sm md:p-[18px]">
+              <div className="flex items-center gap-2">
+                <span className="text-caption font-semibold text-accent">{t("scenarios.act.waiting_tag")}</span>
+                <span className="ml-auto text-caption text-text-subtle">{d.when}</span>
+              </div>
+              <p className="mt-1 text-caption leading-relaxed text-text-subtle [text-wrap:pretty]">{d.ctx}</p>
+              <p className="mt-2.5 rounded-md border border-border bg-surface-2 px-3 py-2.5 text-small leading-[1.55] text-text [text-wrap:pretty]">{d.body}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button size="sm" variant="primary" icon={<IcSend size={14} />} onClick={() => onPublish?.(d.id)}>
+                  {d.kind === "reply" ? t("scenarios.act.send_reply") : t("scenarios.act.publish")}
+                </Button>
+                <Button size="sm" variant="secondary" icon={<IcPencil size={14} />} onClick={() => onEdit?.(d.id)}>
+                  {t("scenarios.act.edit")}
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => onSkip?.(d.id)}>
+                  {t("scenarios.act.skip")}
+                </Button>
+              </div>
+            </div>
+          ))}
+        </section>
+      )}
+
+      {done.length > 0 && (
+        <section className="flex flex-col gap-1">
+          <h2 className="text-caption font-semibold uppercase tracking-[0.04em] text-text-subtle">{t("scenarios.act.done_head")}</h2>
+          <div className="flex flex-col">
+            {done.map((it) => {
+              const reply = it.kind === "reply";
+              const live = it.url && it.url !== "#";
+              return (
+                <div key={it.id} className="flex items-start gap-3 border-t border-border py-3 first:border-t-0">
+                  <span className={cn("grid h-[30px] w-[30px] shrink-0 place-items-center rounded-full", reply ? "bg-accent/12 text-accent" : "bg-success/12 text-success")}>
+                    {reply ? <IcReplies size={15} /> : <IcBubble size={15} />}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-small leading-[1.45] text-text [text-wrap:pretty]">{it.text}</p>
+                    <p className="mt-0.5 text-caption tabular-nums text-text-subtle">{it.sub}</p>
+                  </div>
+                  {live ? (
+                    <a href={it.url} target="_blank" rel="noopener noreferrer" className="inline-flex shrink-0 items-center gap-1 text-small font-medium text-accent hover:underline">
+                      {t("scenarios.activity.open_threads")} <IcExternal size={12} />
+                    </a>
+                  ) : (
+                    <span className="inline-flex shrink-0 items-center gap-1 text-small text-text-subtle">
+                      {t("scenarios.activity.open_threads")} <IcExternal size={12} />
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+    </div>
   );
 }
