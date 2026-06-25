@@ -93,6 +93,7 @@ export const IcMoon = (p: IconProps) => <Svg {...p}><path d="M21 12.8A9 9 0 1 1 
 export const IcSparkle = (p: IconProps) => <Svg {...p}><path d="M12 4l1.6 4.8L18.5 10l-4.9 1.2L12 16l-1.6-4.8L5.5 10l4.9-1.2L12 4Z" /></Svg>;
 export const IcHeart = (p: IconProps) => <Svg {...p}><path d="M12 19.5C5 15 3.5 11 3.5 8.5A4 4 0 0 1 12 6.5 4 4 0 0 1 20.5 8.5C20.5 11 19 15 12 19.5Z" /></Svg>;
 export const IcBubble = (p: IconProps) => <Svg {...p}><path d="M5 5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H9l-4 3.5V6a1 1 0 0 1 1-1Z" /></Svg>;
+export const IcBubbleQuestion = (p: IconProps) => <Svg {...p}><path d="M5 5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H9l-4 3.5V6a1 1 0 0 1 1-1Z" /><path d="M10.4 9.3a1.6 1.6 0 1 1 2.2 1.5c-.7.4-1.1.8-1.1 1.6" /><path d="M11.5 14.4h.01" /></Svg>;
 export const IcRepost = (p: IconProps) => <Svg {...p}><path d="M5 8h10l-2.5-2.5M19 16H9l2.5 2.5" /></Svg>;
 export const IcEye = (p: IconProps) => <Svg {...p}><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" /><circle cx="12" cy="12" r="2.6" /></Svg>;
 export const IcFeed = (p: IconProps) => <Svg {...p}><path d="M3 14l4-5 4 4 3-6 3 5h4" /></Svg>;

@@ -1626,7 +1626,7 @@ export const en = {
   "scenarios.sched.every_n_unit": "Every {n} days — as the first post of the day",
   "scenarios.f.n_days": "N (days)",
   "scenarios.f.reply_ph": "If they sent a date → give a mini-reading in the comments; a detailed question → send to the bot.",
-  "scenarios.f.reply_hint": "Pennedly already knows your voice — here, only this campaign's specifics.",
+  "scenarios.f.reply_hint": "Pennedly already knows your voice — here, only how to reply in this scenario.",
   // ── power-user disclosure: «Show as a scenario» ──
   "scenarios.disclose_show": "Show as a rule",
   "scenarios.disclose_for_pros": "for power users",

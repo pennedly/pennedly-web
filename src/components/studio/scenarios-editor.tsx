@@ -26,7 +26,7 @@ import {
   IcAlert,
   IcArrowLeft,
   IcBubble,
-  IcChart,
+  IcBubbleQuestion,
   IcCheck,
   IcChevRight,
   IcClock,
@@ -608,7 +608,7 @@ export function StepEditor({
         {/* kind plaque + hint */}
         <div className="-mt-0.5 flex flex-wrap items-center gap-2.5">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/22 bg-accent/[0.08] py-1 pl-2.5 pr-[11px] text-caption font-semibold text-text-muted">
-            {reply ? <IcBubble size={13} className="text-accent" /> : <IcChart size={13} className="text-accent" />}
+            {reply ? <IcBubble size={13} className="text-accent" /> : <IcBubbleQuestion size={13} className="text-accent" />}
             {reply ? t("scenarios.ed.kind_reply") : t("scenarios.ed.kind_post")}
           </span>
           <span className="text-caption text-text-subtle">{t("scenarios.ed.name_hint").replace(/<\/?b>/g, "")}</span>

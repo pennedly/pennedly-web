@@ -1601,7 +1601,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "scenarios.sched.every_n_unit": "Каждые {n} дня — первым постом дня",
   "scenarios.f.n_days": "N (дней)",
   "scenarios.f.reply_ph": "Прислал дату → дай мини-разбор в комментах; развёрнутый вопрос → переведи в бота.",
-  "scenarios.f.reply_hint": "Pennedly уже знает твой голос — здесь только специфика этой акции.",
+  "scenarios.f.reply_hint": "Pennedly уже знает твой голос — здесь только как отвечать в этом сценарии.",
   // ── power-user disclosure: «Показать как сценарий» ──
   "scenarios.disclose_show": "Показать как правило",
   "scenarios.disclose_for_pros": "для продвинутых",
