@@ -23,6 +23,57 @@ const VOICE_HREF = "/app/role-book";
 
 export type ReplyFreq = "instant" | "hourly" | "few" | "daily";
 
+// ── reply-frequency map: HouseRules' 4-way ReplyFreq ↔ the backend's
+// `reply_frequency` enum ({asap, half_hourly, hourly, few_daily, daily}). The FE
+// has no «half-hourly» option, so a stored `half_hourly` reads back as the
+// nearest FE value («hourly»); everything else is 1:1. ──
+export type BackendReplyFreq = "asap" | "half_hourly" | "hourly" | "few_daily" | "daily";
+
+export function freqToBackend(f: ReplyFreq): BackendReplyFreq {
+  switch (f) {
+    case "instant":
+      return "asap";
+    case "few":
+      return "few_daily";
+    case "daily":
+      return "daily";
+    case "hourly":
+    default:
+      return "hourly";
+  }
+}
+
+export function freqFromBackend(v: string | null | undefined): ReplyFreq {
+  switch (v) {
+    case "asap":
+      return "instant";
+    case "few_daily":
+      return "few";
+    case "daily":
+      return "daily";
+    case "half_hourly": // no FE «half-hourly» → nearest option
+    case "hourly":
+    default:
+      return "hourly";
+  }
+}
+
+// Quiet hours: the backend stores whole UTC hours (0–23, both null = off); the
+// HouseRules selects work in "HH:00" strings. With no per-account tz on the
+// accounts API yet, we round-trip the stored hours AS UTC ("UTC" tz label) so
+// the value the user sees is exactly the value stored — no misleading offset.
+export const QUIET_TZ_LABEL = "UTC";
+
+export function hourToHHMM(h: number | null | undefined): string | null {
+  if (typeof h !== "number" || !Number.isInteger(h) || h < 0 || h > 23) return null;
+  return `${String(h).padStart(2, "0")}:00`;
+}
+
+export function hhmmToHour(v: string): number | null {
+  const h = Number(v.split(":")[0]);
+  return Number.isInteger(h) && h >= 0 && h <= 23 ? h : null;
+}
+
 export type HouseRulesValues = {
   /** master on/off — the single real gate (default ON for existing accounts) */
   masterOn: boolean;
@@ -59,6 +110,14 @@ const FREQ_SUMMARY_KEY: Record<ReplyFreq, "ap.summary.freq_instant" | "ap.summar
 const FROM_HOURS = ["22:00", "23:00", "00:00"];
 const TO_HOURS = ["06:00", "07:00", "08:00"];
 const CEILINGS = [10, 25, 50];
+
+// The design select offers a fixed set, but the real stored value can be
+// anything in the backend's range (e.g. a power account at 200/day, or a quiet
+// hour outside the three presets). Surface the current value as an extra option
+// so the control NEVER renders blank / silently snaps the real value to a preset.
+function withCurrent<T extends string | number>(options: readonly T[], current: T): T[] {
+  return options.includes(current) ? [...options] : [current, ...options];
+}
 
 // Shared select recipe (mirrors ScenariosParts' field style, ~36px tall).
 const SELECT =
@@ -252,7 +311,7 @@ export function HouseRules({
                     disabled={!quietOn}
                     aria-label={t("ap.quiet.from")}
                   >
-                    {FROM_HOURS.map((h) => (
+                    {withCurrent(FROM_HOURS, quietFrom).map((h) => (
                       <option key={h} value={h}>
                         {h}
                       </option>
@@ -266,7 +325,7 @@ export function HouseRules({
                     disabled={!quietOn}
                     aria-label={t("ap.quiet.to")}
                   >
-                    {TO_HOURS.map((h) => (
+                    {withCurrent(TO_HOURS, quietTo).map((h) => (
                       <option key={h} value={h}>
                         {h}
                       </option>
@@ -286,7 +345,7 @@ export function HouseRules({
                   onChange={(e) => onCeiling(Number(e.target.value))}
                   aria-label={t("ap.ceiling.title")}
                 >
-                  {CEILINGS.map((c) => (
+                  {withCurrent(CEILINGS, ceiling).map((c) => (
                     <option key={c} value={c}>
                       {t("ap.ceiling.per_day").replace("{n}", String(c))}
                     </option>

@@ -838,6 +838,13 @@ export type Scenario = {
   /** Pennedly-3: origin preset id, if known — lets the living sentence read in the
    *  preset's exact words. Optional; absent → derive the sentence from the shape. */
   preset_id?: string | null;
+  /** Schedule «Время» (account-local hour 0–23) for a cadence POST scenario,
+   *  lifted from `trigger_cfg.hour` for the editor. null/absent → no explicit
+   *  hour (the worker fires on its first due tick). */
+  hour?: number | null;
+  /** Schedule «Разброс минут» (0–120), lifted from `trigger_cfg.jitter_minutes`.
+   *  null/absent → no jitter. */
+  jitter_minutes?: number | null;
 };
 
 /** Who confirms before a scenario publishes. */

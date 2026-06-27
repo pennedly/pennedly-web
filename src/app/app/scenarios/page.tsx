@@ -58,7 +58,15 @@ import {
   whenModeFromCfg,
   eventKindOf,
 } from "@/components/studio/ScenariosParts";
-import { HouseRules, type ReplyFreq } from "@/components/studio/HouseRules";
+import {
+  HouseRules,
+  type ReplyFreq,
+  freqFromBackend,
+  freqToBackend,
+  hhmmToHour,
+  hourToHHMM,
+  QUIET_TZ_LABEL,
+} from "@/components/studio/HouseRules";
 import { StepEditor } from "@/components/studio/scenarios-editor";
 import {
   BAKED_RULE_KEYS,
@@ -77,6 +85,7 @@ import { DEMO_CC, DEMO_CREATOR, demoSampleKey } from "@/components/studio/scenar
 import { type PublishMode } from "@/components/studio/scenarios-living";
 import { FirstRun, GalleryScreen } from "@/components/studio/scenarios-screens";
 import type {
+  AutopilotConfig,
   ConnectedAccount,
   Scenario,
   ScenarioPreset,
@@ -137,8 +146,11 @@ export default function ScenariosPage() {
   const [postAutopilotOn, setPostAutopilotOn] = useState(true); // account autopilot post_enabled
   const [cap, setCap] = useState(1); // max_post_scenarios_per_day
 
-  // ── «Правила дома» (global house rules) — FE-only on demo values for now. The
-  // master is the single real gate; default ON for existing accounts (§8). ──
+  // ── «Правила дома» (global house rules). On the real path these mirror the
+  // account's `account_autopilot` config; on demo they're FE-only sample values.
+  // The master is the single real gate; default ON for existing accounts (§8).
+  // `apConfig` is the last-loaded full config — the base every PUT spreads over
+  // so a single-knob save never clobbers the other autopilot fields. ──
   const [hrOpen, setHrOpen] = useState(false);
   const [masterOn, setMasterOn] = useState(true);
   const [replyFreq, setReplyFreq] = useState<ReplyFreq>("hourly");
@@ -146,6 +158,7 @@ export default function ScenariosPage() {
   const [quietFrom, setQuietFrom] = useState("23:00");
   const [quietTo, setQuietTo] = useState("08:00");
   const [replyCeiling, setReplyCeiling] = useState(25);
+  const [apConfig, setApConfig] = useState<AutopilotConfig | null>(null);
 
   const [loaded, setLoaded] = useState(false);
   const [bootError, setBootError] = useState<string | null>(null);
@@ -198,6 +211,48 @@ export default function ScenariosPage() {
     fetchMe().then((m) => setIsTester(m.is_tester === true)).catch(() => {});
   }, [demoParam]);
 
+  // Map a loaded backend autopilot config → the «Правила дома» control state.
+  // The master switch is the account's single `enabled` gate; the reply rhythm,
+  // ceiling and quiet window come from the reply_* fields. Quiet is "on" only
+  // when BOTH reply-quiet hours are set (the backend's "no window" = both null).
+  function applyAutopilot(ap: AutopilotConfig) {
+    setApConfig(ap);
+    setMasterOn(ap.enabled);
+    setPostAutopilotOn(ap.post_enabled);
+    if (typeof ap.max_post_scenarios_per_day === "number") setCap(ap.max_post_scenarios_per_day);
+    setReplyFreq(freqFromBackend(ap.reply_frequency));
+    setReplyCeiling(ap.replies_per_day);
+    const from = hourToHHMM(ap.reply_quiet_start_hour);
+    const to = hourToHHMM(ap.reply_quiet_end_hour);
+    const on = from !== null && to !== null;
+    setQuietOn(on);
+    // Keep the last-shown window when the user toggles quiet off (so flipping it
+    // back doesn't lose their hours); only overwrite from the config when set.
+    if (from !== null) setQuietFrom(from);
+    if (to !== null) setQuietTo(to);
+  }
+
+  // Persist a single «Правила дома» change: spread the patch over the last-loaded
+  // config and PUT it (optimistic — the caller already updated local state; we
+  // roll the whole config back on error). No-op on demo / before an account /
+  // before the first load. Always keeps the legacy `reply_enabled` mirror and the
+  // `reply_mode` consistent with what we send.
+  async function saveAutopilot(patch: Partial<AutopilotConfig>, rollback: () => void) {
+    if (demoOn || accountId === null) return;
+    const base = apConfig;
+    if (!base) return; // not loaded yet — nothing safe to merge onto
+    const next: AutopilotConfig = { ...base, ...patch };
+    setApConfig(next);
+    try {
+      const saved = await updateAutopilot(accountId, next);
+      setApConfig(saved);
+    } catch (e) {
+      setApConfig(base);
+      rollback();
+      toast(String(e), "error");
+    }
+  }
+
   function load(id: number) {
     setLoaded(false);
     Promise.all([
@@ -210,10 +265,7 @@ export default function ScenariosPage() {
         setScenarios(sc.scenarios);
         setPresets(pr.presets);
         setAccounts(acc.accounts);
-        if (ap) {
-          setPostAutopilotOn(ap.post_enabled);
-          if (typeof ap.max_post_scenarios_per_day === "number") setCap(ap.max_post_scenarios_per_day);
-        }
+        if (ap) applyAutopilot(ap);
       })
       .catch((e) => {
         if (e instanceof ApiError && e.status === 401) {
@@ -389,9 +441,10 @@ export default function ScenariosPage() {
       dateFrom: (s.condition_cfg?.active_from as string) || "",
       dateTo: (s.condition_cfg?.active_to as string) || "",
       threshold: s.trigger_cfg?.threshold_views != null ? String(s.trigger_cfg.threshold_views) : "",
-      // FE-state only for now (backend doesn't persist these yet) → defaults.
-      hour: "9:00",
-      jitter: 15,
+      // Schedule «Время»/«Разброс» — restored from the saved scenario (the backend
+      // surfaces them top-level, sourced from trigger_cfg). Defaults when absent.
+      hour: typeof scenarioHour(s) === "number" ? `${scenarioHour(s)}:00` : "9:00",
+      jitter: scenarioJitter(s) ?? 15,
       fields: {},
     };
     if (usePromo && s.structured) {
@@ -482,18 +535,51 @@ export default function ScenariosPage() {
     }
   }
 
-  async function onCap(n: number) {
+  // ── «Правила дома» handlers — each flips local state optimistically, then
+  // persists the one field via saveAutopilot (which rolls the whole config +
+  // this control back on error). master→enabled, cap→max_post_scenarios_per_day,
+  // freq→reply_frequency, ceiling→replies_per_day, quiet→reply_quiet_*_hour. ──
+  function onMaster(on: boolean) {
+    const prev = masterOn;
+    setMasterOn(on);
+    void saveAutopilot({ enabled: on }, () => setMasterOn(prev));
+  }
+  function onCap(n: number) {
+    const prev = cap;
     setCap(n);
-    if (demoOn || accountId === null) return;
-    // Best-effort: the GET/PUT autopilot endpoint may not yet surface the field
-    // (the worker reads the column directly). We send it so it persists once the
-    // backend wires it; absent that, the control still drives the session.
-    try {
-      const ap = await fetchAutopilot(accountId);
-      await updateAutopilot(accountId, { ...ap, max_post_scenarios_per_day: n });
-    } catch {
-      /* fail-soft — keep the local cap */
-    }
+    void saveAutopilot({ max_post_scenarios_per_day: n }, () => setCap(prev));
+  }
+  function onFreq(f: ReplyFreq) {
+    const prev = replyFreq;
+    setReplyFreq(f);
+    void saveAutopilot({ reply_frequency: freqToBackend(f) }, () => setReplyFreq(prev));
+  }
+  function onCeiling(n: number) {
+    const prev = replyCeiling;
+    setReplyCeiling(n);
+    void saveAutopilot({ replies_per_day: n }, () => setReplyCeiling(prev));
+  }
+  // Quiet hours: a window is "on" when both hours are set; "off" = both null (the
+  // backend's no-window). Toggling on commits the currently-shown From/To.
+  function onQuiet(on: boolean) {
+    const prev = quietOn;
+    setQuietOn(on);
+    const patch = on
+      ? { reply_quiet_start_hour: hhmmToHour(quietFrom), reply_quiet_end_hour: hhmmToHour(quietTo) }
+      : { reply_quiet_start_hour: null, reply_quiet_end_hour: null };
+    void saveAutopilot(patch, () => setQuietOn(prev));
+  }
+  function onQuietFrom(v: string) {
+    const prev = quietFrom;
+    setQuietFrom(v);
+    if (!quietOn) return; // off → don't persist a window
+    void saveAutopilot({ reply_quiet_start_hour: hhmmToHour(v) }, () => setQuietFrom(prev));
+  }
+  function onQuietTo(v: string) {
+    const prev = quietTo;
+    setQuietTo(v);
+    if (!quietOn) return;
+    void saveAutopilot({ reply_quiet_end_hour: hhmmToHour(v) }, () => setQuietTo(prev));
   }
 
   function enablePostAutopilot() {
@@ -684,16 +770,16 @@ export default function ScenariosPage() {
             quietFrom={quietFrom}
             quietTo={quietTo}
             ceiling={replyCeiling}
-            tz="UTC+1"
+            tz={demoOn ? "UTC+1" : QUIET_TZ_LABEL}
             open={hrOpen}
             onToggle={() => setHrOpen((o) => !o)}
-            onMaster={setMasterOn}
+            onMaster={onMaster}
             onCap={onCap}
-            onFreq={setReplyFreq}
-            onQuiet={setQuietOn}
-            onQuietFrom={setQuietFrom}
-            onQuietTo={setQuietTo}
-            onCeiling={setReplyCeiling}
+            onFreq={onFreq}
+            onQuiet={onQuiet}
+            onQuietFrom={onQuietFrom}
+            onQuietTo={onQuietTo}
+            onCeiling={onCeiling}
           />
         )}
 
@@ -856,6 +942,19 @@ function scenarioToCreateBody(s: Scenario): Parameters<typeof createScenario>[1]
     reply_instruction: s.reply_instruction,
     condition: s.condition_cfg,
   };
+}
+
+// Read a saved scenario's schedule hour (0–23): prefer the backend's lifted
+// top-level `hour`, fall back to `trigger_cfg.hour`, else null.
+function scenarioHour(s: Scenario): number | null {
+  if (typeof s.hour === "number") return s.hour;
+  const h = s.trigger_cfg?.hour;
+  return typeof h === "number" && Number.isInteger(h) && h >= 0 && h <= 23 ? h : null;
+}
+function scenarioJitter(s: Scenario): number | null {
+  if (typeof s.jitter_minutes === "number") return s.jitter_minutes;
+  const j = s.trigger_cfg?.jitter_minutes;
+  return typeof j === "number" && Number.isInteger(j) && j >= 0 && j <= 120 ? j : null;
 }
 
 // «Сработает: завтра в 9:00 первым постом» — a human "when it fires" line.

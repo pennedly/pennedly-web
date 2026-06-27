@@ -36,7 +36,8 @@ export type FormState = {
   dateTo: string;
   threshold: string; // amplify_viral views threshold (blank = auto)
   // POST routines only — local time-of-day + publish jitter for the cadence
-  // modes (FE-state only for now; not yet sent to the backend, see compileBody).
+  // modes. Sent to the backend as trigger_cfg.hour / trigger_cfg.jitter_minutes
+  // (see buildTrigger / compileBody); ignored for event/reply/promo shapes.
   hour: string; // hour-of-day, e.g. "9:00"
   jitter: number; // ± minutes of random spread (0 = exact)
   // per-field text values, keyed by field.key (text/textarea/options)
@@ -53,15 +54,36 @@ export function interpolate(template: string, values: Record<string, string>): s
   });
 }
 
+// The cadence POST trigger kinds that carry an explicit schedule «Время» (hour)
+// + «Разброс минут» (jitter). MUST match the backend's TRIGGER_SCHEDULE_KINDS
+// (api/scenarios.py): a present hour/jitter on any OTHER kind is dropped server-
+// side, so we only attach them here for these.
+const SCHEDULE_KINDS = new Set(["daily_first_post", "every_n_days", "weekly"]);
+
+// Parse the editor's "H:MM" hour string into a whole hour 0–23, or null if it
+// isn't a valid in-range hour (the backend validates 0–23 → 422 otherwise).
+function parseHour(v: string): number | null {
+  const h = Number(v.split(":")[0]);
+  return Number.isInteger(h) && h >= 0 && h <= 23 ? h : null;
+}
+
 // Build the trigger_cfg from the КОГДА choice + the preset's base trigger (so a
-// reactive preset keeps its event kind / targets).
+// reactive preset keeps its event kind / targets). For a cadence POST kind we
+// also fold in the schedule hour + jitter (the backend stores them in
+// trigger_cfg and gates the next-run on them); they're omitted for event kinds.
 function buildTrigger(s: FormState): Record<string, unknown> {
   const base = s.preset?.trigger_cfg ?? {};
+  const withSchedule = (trigger: Record<string, unknown>): Record<string, unknown> => {
+    if (!SCHEDULE_KINDS.has(trigger.kind as string)) return trigger;
+    const hour = parseHour(s.hour);
+    const jitter = Number.isInteger(s.jitter) ? Math.min(120, Math.max(0, s.jitter)) : 0;
+    return { ...trigger, ...(hour !== null ? { hour } : {}), jitter_minutes: jitter };
+  };
   switch (s.when) {
     case "every_n_days":
-      return { kind: "every_n_days", n: s.nDays };
+      return withSchedule({ kind: "every_n_days", n: s.nDays });
     case "weekly":
-      return { kind: "weekly", weekday: s.weekday };
+      return withSchedule({ kind: "weekly", weekday: s.weekday });
     case "event":
       // reactive — keep the preset's event trigger, apply the optional threshold
       if ((base.kind as string) === "on_metric_threshold") {
@@ -72,7 +94,7 @@ function buildTrigger(s: FormState): Record<string, unknown> {
     case "date_range":
     case "daily":
     default:
-      return { kind: "daily_first_post" };
+      return withSchedule({ kind: "daily_first_post" });
   }
 }
 
@@ -100,8 +122,8 @@ function buildCondition(s: FormState): Record<string, unknown> | null {
 // Compile the full create body. Three forks: promo / reply_policy / free.
 export function compileBody(s: FormState): ScenarioCreate {
   const name = s.name.trim();
-  // TODO: wire hour+jitter into trigger_cfg once backend accepts them
-  // (kept FE-state only for now — sending them today would 422).
+  // hour + jitter are folded into the cadence trigger by buildTrigger (the
+  // backend now persists trigger_cfg.hour / trigger_cfg.jitter_minutes).
 
   // 1) campaign / «Акция» → the promo helper owns the shape.
   if (s.helperOn || s.preset?.id === "promo") {
