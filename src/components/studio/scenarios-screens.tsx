@@ -64,16 +64,16 @@ export function FirstRun({
   const { t } = useTranslation();
   return (
     <div className="flex flex-col gap-5 md:gap-[22px]">
-      <p className="max-w-[60ch] text-body text-text-muted">{t("scenarios.fr.lede")}</p>
+      <p className="max-w-[60ch] text-body text-text-muted">{t("ap.fr.lede")}</p>
 
-      {/* «Что такое сценарий?» explainer */}
+      {/* «Что такое рутина?» explainer */}
       <div className="flex items-start gap-4 rounded-lg border border-border bg-surface p-5 shadow-sm md:px-[22px]">
         <span className="grid h-11 w-11 shrink-0 place-items-center rounded-md border border-accent/30 bg-accent/10 text-accent">
           <IcSparkle size={20} />
         </span>
         <div className="min-w-0">
-          <h2 className="text-h3 font-semibold tracking-tight">{t("scenarios.fr.what_is_title")}</h2>
-          <p className="mt-1.5 max-w-[62ch] text-body leading-relaxed text-text-muted">{t("scenarios.fr.what_is_body")}</p>
+          <h2 className="text-h3 font-semibold tracking-tight">{t("ap.fr.what_is_title")}</h2>
+          <p className="mt-1.5 max-w-[62ch] text-body leading-relaxed text-text-muted">{t("ap.fr.what_is_body")}</p>
         </div>
       </div>
 
@@ -92,7 +92,7 @@ export function FirstRun({
         onClick={onScratch}
         className="mx-auto inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-small text-text-subtle transition-colors hover:bg-surface-2 hover:text-text"
       >
-        <IcPencil size={14} /> {t("scenarios.fr.scratch")}
+        <IcPencil size={14} /> {t("ap.fr.scratch")}
       </button>
     </div>
   );

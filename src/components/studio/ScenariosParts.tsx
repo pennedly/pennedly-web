@@ -40,6 +40,7 @@ import {
   IcRepeat,
   IcReplies,
   IcShield,
+  IcSliders,
   IcSparkle,
   IcTrash,
   IcUsers,
@@ -447,6 +448,7 @@ export function ScenarioCard({
   onOpen,
   onApply,
   onDelete,
+  inheritFromHouseRules = false,
 }: {
   s: Scenario;
   accounts?: ConnectedAccount[];
@@ -455,6 +457,9 @@ export function ScenarioCard({
   onOpen: (s: Scenario) => void;
   onApply?: (s: Scenario, accountIds: number[]) => void;
   onDelete?: (s: Scenario) => void;
+  /** Unified Autopilot: this routine's reply cadence/quiet/ceiling come from the
+   *  global «Правила дома» → show an «из Правил дома» inherit chip in the footer. */
+  inheritFromHouseRules?: boolean;
 }) {
   const { t, locale } = useTranslation();
   const isPromo = s.template === "promo";
@@ -560,6 +565,11 @@ export function ScenarioCard({
           {s.fire_count > 0 && (
             <span className="inline-flex items-center gap-1 text-text-muted">
               <IcRepeat size={12} /> {t("scenarios.fired").replace("{n}", String(s.fire_count))}
+            </span>
+          )}
+          {inheritFromHouseRules && (
+            <span className="inline-flex items-center gap-[5px] rounded-full border border-border bg-surface-2 px-2 py-0.5 font-mono text-[10px] tracking-[0.02em] text-text-subtle">
+              <IcSliders size={10} /> {t("ap.inherit")}
             </span>
           )}
         </div>

@@ -2062,6 +2062,62 @@ export const en = {
   "scenarios.sample.seasonal": "A new month is a good moment to draw a line. What are you taking with you, and what are you leaving behind?",
   "scenarios.sample.generic": "A short post in your voice on the chosen topic.",
 
+  // ── Autopilot hub («Правила дома» + routines) ─────────────────
+  // Page title (the merged Autopilot + Scenarios mode is now «Autopilot»).
+  "ap.title": "Autopilot",
+  // master switch (the single real on/off)
+  "ap.master.title": "Autopilot",
+  "ap.master.on": "On · posts and replies by your rules",
+  "ap.master.off": "Off · nothing is published or replied",
+  // collapsed summary row (built from live values; <b> = the values)
+  "ap.summary": "No more than {posts} · replies {freq} · quiet {quiet}",
+  "ap.summary.posts_one": "{n} post a day",
+  "ap.summary.posts_many": "{n} posts a day",
+  "ap.summary.freq_instant": "as they come",
+  "ap.summary.freq_hourly": "hourly",
+  "ap.summary.freq_few": "a few times a day",
+  "ap.summary.freq_daily": "once a day",
+  "ap.settings": "Settings",
+  // group kickers
+  "ap.group.posting": "POSTING",
+  "ap.group.replies": "REPLIES",
+  // posting — the per-day cap
+  "ap.cap.title": "No more posts per day",
+  "ap.cap.desc": "A shared ceiling for every posting routine on this account. Default is 1.",
+  "ap.cap.dec": "Fewer",
+  "ap.cap.inc": "More",
+  // replies — how often
+  "ap.freq.title": "How often to reply",
+  "ap.freq.desc": "Replies are gathered into this rhythm. «As they come» polls about every 15 min, not instantly.",
+  "ap.freq.instant": "As they come (~15 min)",
+  "ap.freq.hourly": "Hourly",
+  "ap.freq.few": "A few times a day",
+  "ap.freq.daily": "Once a day",
+  // replies — quiet hours
+  "ap.quiet.title": "Quiet hours",
+  "ap.quiet.desc": "Replies pause overnight. Times are in your timezone.",
+  "ap.quiet.from": "From",
+  "ap.quiet.to": "to",
+  "ap.quiet.utc": "{tz} · {range} UTC",
+  // replies — daily ceiling
+  "ap.ceiling.title": "Reply ceiling per day",
+  "ap.ceiling.desc": "A safety fuse: how many replies autopilot will send in a day.",
+  "ap.ceiling.per_day": "{n} / day",
+  // voice link box
+  "ap.voice.text": "Every routine writes in your <a>Voice</a> — autopilot doesn't make things up for you.",
+  "ap.voice.cta": "Set up voice →",
+  // inherit chip (a value that comes from House Rules)
+  "ap.inherit": "from House Rules",
+  // routine list header
+  "ap.routines.title": "Routines",
+  "ap.routines.count_one": "{total} routine · {active} active",
+  "ap.routines.count_many": "{total} routines · {active} active",
+  // first-run reframe (scenario → routine)
+  "ap.fr.lede": "Pennedly can run part of your account for you — by rules you set. House Rules above apply to every routine at once.",
+  "ap.fr.what_is_title": "What is a routine?",
+  "ap.fr.what_is_body": "A routine is one rule: “when this happens — do that,” in your voice. For example, post a question every morning, or reply to people who comment. You can preview every routine before it runs, and by default it asks you before publishing.",
+  "ap.fr.scratch": "Or build a routine from scratch",
+
   // ── Advisor (AI growth-advisor chat · tester-gated) ───────────
   "dashboard.nav.advisor": "advisor",
   "advisor.title": "Advisor",

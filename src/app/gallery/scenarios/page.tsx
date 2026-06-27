@@ -42,6 +42,7 @@ import {
   visibleFields,
 } from "@/components/studio/scenarios-form";
 import { BLANK_PROMO, DEMO_CATALOG, DEMO_PRESETS, DEMO_PROMO, DEMO_SCENARIOS, PROMO_PRESET } from "@/components/studio/scenarios-demo";
+import { HouseRules, type ReplyFreq } from "@/components/studio/HouseRules";
 import { StepEditor } from "@/components/studio/scenarios-editor";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { cn } from "@/lib/cn";
@@ -274,6 +275,40 @@ function StepEditorDemo({ presetId }: { presetId: string }) {
   );
 }
 
+// «Правила дома» wired to local state — renders the real HouseRules in a given
+// open/master configuration for spec-fidelity review (Autopilot-Unified-SPEC §4).
+function HouseRulesDemo({ open: open0, master }: { open?: boolean; master?: boolean }) {
+  const [open, setOpen] = useState(open0 ?? false);
+  const [masterOn, setMasterOn] = useState(master ?? true);
+  const [cap, setCap] = useState(1);
+  const [freq, setFreq] = useState<ReplyFreq>("hourly");
+  const [quietOn, setQuietOn] = useState(true);
+  const [quietFrom, setQuietFrom] = useState("23:00");
+  const [quietTo, setQuietTo] = useState("08:00");
+  const [ceiling, setCeiling] = useState(25);
+  return (
+    <HouseRules
+      masterOn={masterOn}
+      cap={cap}
+      freq={freq}
+      quietOn={quietOn}
+      quietFrom={quietFrom}
+      quietTo={quietTo}
+      ceiling={ceiling}
+      tz="UTC+1"
+      open={open}
+      onToggle={() => setOpen((o) => !o)}
+      onMaster={setMasterOn}
+      onCap={setCap}
+      onFreq={setFreq}
+      onQuiet={setQuietOn}
+      onQuietFrom={setQuietFrom}
+      onQuietTo={setQuietTo}
+      onCeiling={setCeiling}
+    />
+  );
+}
+
 export default function ScenariosGallery() {
   const { t } = useTranslation();
   const [dark, setDark] = useState(false);
@@ -303,7 +338,18 @@ export default function ScenariosGallery() {
           </button>
         </header>
 
-        <h2 className="mb-3 text-h3 font-semibold">Discovery — preset gallery</h2>
+        <h2 className="mb-3 text-h3 font-semibold">Autopilot — «Правила дома» (house rules header)</h2>
+        <Section title="collapsed · master ON · summary line built from live values">
+          <HouseRulesDemo open={false} master />
+        </Section>
+        <Section title="expanded · settings (cap stepper · reply freq · quiet hours · ceiling · voice link)">
+          <HouseRulesDemo open master />
+        </Section>
+        <Section title="master OFF · body dims (pointer-events-none); the master switch stays live">
+          <HouseRulesDemo open master={false} />
+        </Section>
+
+        <h2 className="mb-3 mt-8 text-h3 font-semibold">Discovery — preset gallery</h2>
         <Section title="grouped by goal · campaign gated">
           <DiscoveryGallery presets={catalog} onPick={() => {}} />
         </Section>

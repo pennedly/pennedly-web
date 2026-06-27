@@ -36,6 +36,7 @@ import {
   updateScenario,
 } from "@/lib/api";
 import { useSelectedAccountId } from "@/lib/account";
+import { cn } from "@/lib/cn";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { useTesterGuard } from "@/lib/tester";
 import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
@@ -45,7 +46,6 @@ import { IcPlus } from "@/components/icons";
 import { TweaksPanel, TweakSection, TweakToggle, TweakRadio, useTweaks } from "@/components/tweaks/TweaksPanel";
 import {
   AutopostOffBanner,
-  ControlCenterHeader,
   DeleteConfirm,
   EnableConfirm,
   ScenarioCard,
@@ -58,6 +58,7 @@ import {
   whenModeFromCfg,
   eventKindOf,
 } from "@/components/studio/ScenariosParts";
+import { HouseRules, type ReplyFreq } from "@/components/studio/HouseRules";
 import { StepEditor } from "@/components/studio/scenarios-editor";
 import {
   BAKED_RULE_KEYS,
@@ -133,6 +134,17 @@ export default function ScenariosPage() {
   const [accounts, setAccounts] = useState<ConnectedAccount[]>([]);
   const [postAutopilotOn, setPostAutopilotOn] = useState(true); // account autopilot post_enabled
   const [cap, setCap] = useState(1); // max_post_scenarios_per_day
+
+  // ── «Правила дома» (global house rules) — FE-only on demo values for now. The
+  // master is the single real gate; default ON for existing accounts (§8). ──
+  const [hrOpen, setHrOpen] = useState(false);
+  const [masterOn, setMasterOn] = useState(true);
+  const [replyFreq, setReplyFreq] = useState<ReplyFreq>("hourly");
+  const [quietOn, setQuietOn] = useState(true);
+  const [quietFrom, setQuietFrom] = useState("23:00");
+  const [quietTo, setQuietTo] = useState("08:00");
+  const [replyCeiling, setReplyCeiling] = useState(25);
+
   const [loaded, setLoaded] = useState(false);
   const [bootError, setBootError] = useState<string | null>(null);
 
@@ -229,7 +241,15 @@ export default function ScenariosPage() {
     setScenarios(st === "Empty" ? [] : DEMO_CC);
     setPresets(DEMO_CATALOG.filter((p) => p.id !== "promo"));
     setAccounts([]);
-  }, [demoOn, tw.dark, tw.state]);
+    // «Правила дома» demo values (master driven by a Tweaks toggle).
+    setMasterOn(!!tw.master);
+    setCap(1);
+    setReplyFreq("hourly");
+    setQuietOn(true);
+    setQuietFrom("23:00");
+    setQuietTo("08:00");
+    setReplyCeiling(25);
+  }, [demoOn, tw.dark, tw.state, tw.master]);
 
   // ── derived: does this preset produce replies / is reactive ──
   const presetId = form.preset?.id ?? "";
@@ -606,7 +626,7 @@ export default function ScenariosPage() {
   if (bootError && view === "list") {
     return (
       <div className="min-h-screen bg-bg text-text">
-        <AppTopbar maxW="960px" title={t("scenarios.title")} />
+        <AppTopbar maxW="960px" title={t("ap.title")} />
         <main className="mx-auto max-w-[960px] px-3.5 pt-4 md:px-6 md:pt-7">
           <ScenariosError onRetry={() => (accountId !== null ? load(accountId) : undefined)} />
         </main>
@@ -623,7 +643,7 @@ export default function ScenariosPage() {
     <div className="min-h-screen bg-bg text-text">
       <AppTopbar
         maxW="960px"
-        title={t("scenarios.title")}
+        title={t("ap.title")}
         pill={
           activeCount > 0 ? (
             <TopbarPill tone="success">{t("scenarios.active").replace("{n}", String(activeCount))}</TopbarPill>
@@ -642,9 +662,34 @@ export default function ScenariosPage() {
       <main className="mx-auto max-w-[960px] space-y-4 px-3.5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4 md:space-y-5 md:px-6 md:pb-24 md:pt-7">
         {view === "list" && (
           <div className="flex flex-col gap-1">
-            <h1 className="text-h1 font-semibold tracking-tight">{t("scenarios.title")}</h1>
+            <h1 className="text-h1 font-semibold tracking-tight">{t("ap.title")}</h1>
             <p className="max-w-[60ch] text-small text-text-muted">{t("scenarios.subtitle")}</p>
           </div>
+        )}
+
+        {/* «Правила дома» — the global house-rules header, ON TOP of the routine
+            area in BOTH the list and the first-run (empty) view. The master is the
+            single real gate; the body + routine list dim when it's off (§4). */}
+        {view === "list" && (loaded || demoOn) && !bootError && (
+          <HouseRules
+            masterOn={masterOn}
+            cap={cap}
+            freq={replyFreq}
+            quietOn={quietOn}
+            quietFrom={quietFrom}
+            quietTo={quietTo}
+            ceiling={replyCeiling}
+            tz="UTC+1"
+            open={hrOpen}
+            onToggle={() => setHrOpen((o) => !o)}
+            onMaster={setMasterOn}
+            onCap={onCap}
+            onFreq={setReplyFreq}
+            onQuiet={setQuietOn}
+            onQuietFrom={setQuietFrom}
+            onQuietTo={setQuietTo}
+            onCeiling={setReplyCeiling}
+          />
         )}
 
         {view === "editor" ? (
@@ -695,21 +740,44 @@ export default function ScenariosPage() {
             <ScenarioSkeleton />
           </div>
         ) : scenarios.length === 0 ? (
-          <FirstRun
-            handle={handle}
-            onTry={(id) => {
-              const p = catalog.find((x) => x.id === id);
-              if (p) openPreset(p);
-            }}
-            onScratch={openScratch}
-          />
+          // First-run, dimmed too when the master is off (the rules + examples are
+          // visible but nothing runs until you turn the master on).
+          <div className={masterOn ? undefined : "pointer-events-none opacity-50 transition-opacity"}>
+            <FirstRun
+              handle={handle}
+              onTry={(id) => {
+                const p = catalog.find((x) => x.id === id);
+                if (p) openPreset(p);
+              }}
+              onScratch={openScratch}
+            />
+          </div>
         ) : (
-          <div className="flex flex-col gap-3">
-            <ControlCenterHeader cap={cap} onCap={onCap} />
+          // The routines list. Dims (with the HR body) when the master is off — the
+          // master switch stays the only live control (§4 «honestly dead»).
+          <div className={cn("flex flex-col gap-3", !masterOn && "pointer-events-none opacity-50 transition-opacity")}>
+            <div className="flex flex-wrap items-baseline justify-between gap-x-3.5 gap-y-0.5">
+              <span className="text-h3 font-semibold tracking-tight">{t("ap.routines.title")}</span>
+              <span className="text-small text-text-subtle">
+                {(scenarios.length === 1 ? t("ap.routines.count_one") : t("ap.routines.count_many"))
+                  .replace("{total}", String(scenarios.length))
+                  .replace("{active}", String(activeCount))}
+              </span>
+            </div>
             <StackingWarnings morningCount={morning.length} morningNames={morning} promoDaily={promoDaily} cap={cap} />
             {anyPostScenarioOn && !postAutopilotOn && <AutopostOffBanner onEnable={enablePostAutopilot} />}
             {scenarios.map((s) => (
-              <ScenarioCard key={s.id} s={s} accounts={otherAccounts} handle={handle} onToggle={toggle} onOpen={openEditor} onApply={applyToAccounts} onDelete={(sc) => setDelTarget(sc)} />
+              <ScenarioCard
+                key={s.id}
+                s={s}
+                accounts={otherAccounts}
+                handle={handle}
+                onToggle={toggle}
+                onOpen={openEditor}
+                onApply={applyToAccounts}
+                onDelete={(sc) => setDelTarget(sc)}
+                inheritFromHouseRules={(s.action_cfg?.kind as string) === "reply_policy"}
+              />
             ))}
             {/* Obvious entry into the discovery gallery (the "new flow") even when
                 scenarios already exist — the top-bar "+ Новый" reads as "add another",
@@ -736,9 +804,11 @@ export default function ScenariosPage() {
       </ToastHost>
 
       {allow && (
-        <TweaksPanel title="Scenarios">
+        <TweaksPanel title="Autopilot">
           <TweakSection label="Appearance" />
           <TweakToggle label="Dark mode" value={tw.dark} onChange={(v) => setTw("dark", v)} />
+          <TweakSection label="House Rules" />
+          <TweakToggle label="Master on" value={tw.master} onChange={(v) => setTw("master", v)} />
           <TweakSection label="State" />
           <TweakRadio label="State" value={tw.state} options={["List", "Empty", "Loading", "Error"]} onChange={(v) => setTw("state", v)} />
         </TweaksPanel>
