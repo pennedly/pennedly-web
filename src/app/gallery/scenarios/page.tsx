@@ -299,7 +299,9 @@ function HouseRulesDemo({ open: open0, master }: { open?: boolean; master?: bool
       quietFrom={quietFrom}
       quietTo={quietTo}
       ceiling={ceiling}
-      tz="UTC+1"
+      // Sample IANA tz so the gallery hint reads as a real offset (HouseRules
+      // derives the "UTC+N" label from the name).
+      tz="Europe/Warsaw"
       open={open}
       onToggle={() => setOpen((o) => !o)}
       onMaster={setMasterOn}

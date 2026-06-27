@@ -716,6 +716,11 @@ export type AutopilotConfig = {
   // the Scenarios screen treats `undefined` as the default 1. Optional here so
   // existing callers (the Autopilot screen) need no change.
   max_post_scenarios_per_day?: number;
+  // Read-only mirror of the account's IANA timezone (`threads_accounts.timezone`,
+  // e.g. "Europe/Warsaw"; default "UTC"). GET-only — the quiet-hours control
+  // labels itself with this real tz instead of a hardcoded "UTC". PUT ignores it.
+  // Optional for back-compat with any caller that predates the field.
+  timezone?: string;
 };
 
 // ── Autopost objects (autopilot redesign) ────────────────────────────

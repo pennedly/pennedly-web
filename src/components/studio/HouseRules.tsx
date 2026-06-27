@@ -16,6 +16,7 @@ import Link from "next/link";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/cn";
 import { useTranslation } from "@/lib/i18n";
+import { tzLocalHourToUtc, tzUtcOffsetLabel } from "@/lib/timezone";
 import { IcChevRight, IcClock, IcReplies, IcSliders, IcVoice } from "@/components/icons";
 
 // The voice route is the role-book (labeled «Голос» in the sidebar nav).
@@ -58,10 +59,13 @@ export function freqFromBackend(v: string | null | undefined): ReplyFreq {
   }
 }
 
-// Quiet hours: the backend stores whole UTC hours (0–23, both null = off); the
-// HouseRules selects work in "HH:00" strings. With no per-account tz on the
-// accounts API yet, we round-trip the stored hours AS UTC ("UTC" tz label) so
-// the value the user sees is exactly the value stored — no misleading offset.
+// Quiet hours: the backend stores whole hours (0–23, both null = off) in the
+// ACCOUNT's local timezone; the HouseRules selects work in "HH:00" strings. The
+// account tz now rides on the autopilot config (`timezone`, an IANA name), so we
+// label the window with the real account offset and show its UTC equivalent.
+// `QUIET_TZ_LABEL` is the fallback tz NAME used when the config carries none
+// (older payloads) — plain "UTC", which renders as a "UTC" label with a trivial
+// (identity) UTC-equivalent line.
 export const QUIET_TZ_LABEL = "UTC";
 
 export function hourToHHMM(h: number | null | undefined): string | null {
@@ -89,7 +93,12 @@ export type HouseRulesValues = {
   quietTo: string;
   /** daily reply ceiling (10 / 25 / 50, default 25) */
   ceiling: number;
-  /** the account timezone label for the quiet-hours hint, e.g. "UTC+1" */
+  /**
+   * The account's IANA timezone NAME for the quiet-hours hint, e.g.
+   * "Europe/Warsaw" (or plain "UTC"). HouseRules derives the "UTC+N" offset
+   * label + the UTC-equivalent window from it. The demo path passes a sample
+   * IANA name so the hint still reads as a real offset.
+   */
   tz: string;
 };
 
@@ -332,7 +341,9 @@ export function HouseRules({
                     ))}
                   </select>
                   <span className="text-caption tabular-nums text-text-subtle">
-                    {t("ap.quiet.utc").replace("{tz}", tz).replace("{range}", quietWindowUtc(quietFrom, quietTo, tz))}
+                    {t("ap.quiet.utc")
+                      .replace("{tz}", tzUtcOffsetLabel(tz))
+                      .replace("{range}", quietWindowUtc(quietFrom, quietTo, tz))}
                   </span>
                 </div>
               </div>
@@ -389,14 +400,16 @@ function PolicyRow({ title, desc, children }: { title: string; desc: string; chi
   );
 }
 
-// Convert a local quiet window (e.g. 23:00–08:00 at UTC+1) to a UTC range string
-// «22:00–07:00» for the hint. Best-effort, hour-granularity, demo-only.
+// Convert a local quiet window (e.g. 23:00–08:00 in the account's tz) to a UTC
+// range string «22:00–07:00» for the hint. The hours stored/selected are the
+// account-LOCAL whole hours; `tzLocalHourToUtc` maps each to its UTC hour using
+// the account tz's current offset (a "UTC"/unknown tz is the identity, so the
+// equivalent line reads the same as the window). Hour-granularity — minutes are
+// carried through unchanged (the selects only offer ":00").
 function quietWindowUtc(from: string, to: string, tz: string): string {
-  const m = /UTC([+-]\d+)/.exec(tz);
-  const offset = m ? Number(m[1]) : 0;
   const shift = (hhmm: string) => {
     const [h, mm] = hhmm.split(":").map(Number);
-    const u = ((h - offset) % 24 + 24) % 24;
+    const u = tzLocalHourToUtc(h, tz);
     return `${String(u).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
   };
   return `${shift(from)}–${shift(to)}`;

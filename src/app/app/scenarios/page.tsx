@@ -770,7 +770,10 @@ export default function ScenariosPage() {
             quietFrom={quietFrom}
             quietTo={quietTo}
             ceiling={replyCeiling}
-            tz={demoOn ? "UTC+1" : QUIET_TZ_LABEL}
+            // Real account tz (IANA name from the config); demo shows a sample
+            // zone so the hint still reads as a real offset. HouseRules derives
+            // the "UTC+N" label + UTC-equivalent window from it.
+            tz={demoOn ? "Europe/Warsaw" : (apConfig?.timezone ?? QUIET_TZ_LABEL)}
             open={hrOpen}
             onToggle={() => setHrOpen((o) => !o)}
             onMaster={onMaster}
