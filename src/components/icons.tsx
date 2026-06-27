@@ -124,6 +124,15 @@ export const IcArchive = (p: IconProps) => <Svg {...p}><path d="M4 8.5h16V19a1 1
 export const IcRepeat = (p: IconProps) => <Svg {...p}><path d="M17 2.5 20.5 6 17 9.5" /><path d="M3.5 11V9a3 3 0 0 1 3-3h14" /><path d="M7 21.5 3.5 18 7 14.5" /><path d="M20.5 13v2a3 3 0 0 1-3 3h-14" /></Svg>;
 export const IcGift = (p: IconProps) => <Svg {...p}><path d="M20 11v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-8" /><path d="M3 7.5h18V11H3z" /><path d="M12 7.5V20" /><path d="M12 7.5S10.5 3.5 8 4a2 2 0 0 0 0 3.5ZM12 7.5S13.5 3.5 16 4a2 2 0 0 1 0 3.5Z" /></Svg>;
 
+/* reply-audience preset glyphs (the «кому отвечать» gallery) */
+export const IcHelp = (p: IconProps) => <Svg {...p}><circle cx="12" cy="12" r="8.5" /><path d="M9.6 9.4a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1.1.9-1.1 1.7" /><path d="M12 16.5h.01" /></Svg>;
+export const IcBriefcase = (p: IconProps) => <Svg {...p}><rect x="3.5" y="7.5" width="17" height="12" rx="1.6" /><path d="M8.5 7.5V6A1.5 1.5 0 0 1 10 4.5h4A1.5 1.5 0 0 1 15.5 6v1.5M3.5 12h17" /></Svg>;
+export const IcTag = (p: IconProps) => <Svg {...p}><path d="M4 12.5 11.5 5l7.5.7.7 7.5-7.5 7.5-8-8Z" /><circle cx="14.5" cy="9.5" r="1.3" /></Svg>;
+export const IcChat = (p: IconProps) => <Svg {...p}><path d="M21 11.5a8 8 0 0 1-11.4 7.2L4 20l1.3-4.6A8 8 0 1 1 21 11.5Z" /><path d="M8.5 11h7M8.5 14h4" /></Svg>;
+export const IcScale = (p: IconProps) => <Svg {...p}><path d="M12 4v16M6 20h12M7 8h10" /><path d="M7 8 4 13.5a3 3 0 0 0 6 0ZM17 8l-3 5.5a3 3 0 0 0 6 0Z" /></Svg>;
+/* swap / override arrows — «перебивает дефолт» / «заменена сценарием» */
+export const IcSwap = (p: IconProps) => <Svg {...p}><path d="M7 4 3 8l4 4" /><path d="M3 8h13a4 4 0 0 1 4 4" /><path d="M17 20l4-4-4-4" /><path d="M21 16H8a4 4 0 0 1-4-4" /></Svg>;
+
 /* "Drafting Line" brand mark — filled glyph in a rounded paper tile.
    Uses semantic CSS vars so the tile/pen flip with the theme automatically. */
 export function BrandMark({

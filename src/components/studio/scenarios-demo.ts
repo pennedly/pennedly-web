@@ -12,6 +12,7 @@ export const SCENARIOS_TWEAK_DEFAULTS = {
   dark: false,
   state: "List", // List | Empty | Loading | Error
   master: true, // «Правила дома» master switch (on → live; off → dimmed)
+  replyState: "on", // built-in reply routine: on | off | paused (replaced by a scenario)
 };
 
 export const BLANK_PROMO: ScenarioPromoFields = {

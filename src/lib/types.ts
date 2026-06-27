@@ -698,7 +698,13 @@ export type AutopilotConfig = {
   quiet_end_hour: number | null;
   reply_enabled: boolean; // legacy mirror of (reply_mode !== "off"), kept for back-compat
   reply_mode: "off" | "all" | "selected"; // off | every post | only flagged posts
-  reply_audience: string; // "fans" | "all_except_trolls" | "questions"
+  reply_audience: string; // "fans" | "all_except_trolls" | "questions" | "custom"
+  // When reply_audience === "custom", the user's free-text description of WHO to
+  // answer (a TEXT preset sends "custom" + its ready prompt; «Свой вариант» sends
+  // "custom" + the user's words). Empty for the three built-in filters. Optional
+  // until the backend ships the field — the FE wires it optimistically and the
+  // demo path drives it from local state.
+  audience_prompt?: string;
   replies_per_day: number;
   reply_frequency: string; // "asap" | "hourly" | "few_daily" | "daily"
   // Optional auto-reply quiet window, stored as whole UTC hours (the UI

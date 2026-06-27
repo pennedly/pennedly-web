@@ -44,6 +44,11 @@ import {
 import { BLANK_PROMO, DEMO_CATALOG, DEMO_PRESETS, DEMO_PROMO, DEMO_SCENARIOS, PROMO_PRESET } from "@/components/studio/scenarios-demo";
 import { HouseRules, type ReplyFreq } from "@/components/studio/HouseRules";
 import { StepEditor } from "@/components/studio/scenarios-editor";
+import { ReplyRoutineCard } from "@/components/studio/ReplyRoutineCard";
+import { ReplyAudienceGallery } from "@/components/studio/ReplyAudienceGallery";
+import { AUDIENCE_PRESETS, type AudiencePreset } from "@/components/studio/reply-audience";
+import { Badge, InheritChip, StatusBadge } from "@/components/studio/Badges";
+import { IcReplies, IcRepeat, IcSliders, IcSwap } from "@/components/icons";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { cn } from "@/lib/cn";
 import type { ScenarioPreset, ScenarioPreview as ScenarioPreviewT } from "@/lib/types";
@@ -315,6 +320,54 @@ function HouseRulesDemo({ open: open0, master }: { open?: boolean; master?: bool
   );
 }
 
+// The built-in reply routine card wired to local state, for spec-fidelity review
+// against Autopilot-Reply-Card-SPEC (ON / OFF / coexistence-paused).
+function ReplyCardDemo({ state }: { state: "on" | "off" | "paused" }) {
+  const [on, setOn] = useState(state !== "off");
+  return (
+    <ReplyRoutineCard
+      on={on}
+      paused={state === "paused"}
+      scenarioName="Тёплый приём новичкам"
+      onOpenScenario={() => {}}
+      audienceId="pricing"
+      audienceDescription="тем, кто спрашивает про цену, продукт, как купить или записаться"
+      onToggle={setOn}
+      onConfigure={() => {}}
+      activityHref="#"
+      lastReplyLabel={state === "on" ? "12 мин назад" : undefined}
+    />
+  );
+}
+
+// The «кому отвечать» preset gallery wired to local state — pick any preset and
+// the description panel switches mode (built-in / text-preset / custom).
+function ReplyGalleryDemo({ initialId }: { initialId: string }) {
+  const seed = AUDIENCE_PRESETS.find((p) => p.id === initialId) ?? AUDIENCE_PRESETS[1];
+  const [selectedId, setSelectedId] = useState(seed.id);
+  const [description, setDescription] = useState(seed.kind === "text" ? seed.prompt : "");
+  const [howTo, setHowTo] = useState("коротко и тепло, без воды; на грубость не реагирую");
+  const [on, setOn] = useState(true);
+  function onSelect(p: AudiencePreset) {
+    setSelectedId(p.id);
+    if (p.kind === "text") setDescription(p.prompt);
+    else setDescription(""); // built-in or custom → cleared/empty
+  }
+  return (
+    <ReplyAudienceGallery
+      on={on}
+      onToggle={setOn}
+      selectedId={selectedId}
+      onSelect={onSelect}
+      description={description}
+      onDescription={setDescription}
+      howTo={howTo}
+      onHowTo={setHowTo}
+      onBack={() => {}}
+    />
+  );
+}
+
 export default function ScenariosGallery() {
   const { t } = useTranslation();
   const [dark, setDark] = useState(false);
@@ -388,6 +441,58 @@ export default function ScenariosGallery() {
         </Section>
         <Section title="error · inline banner + Retry">
           <ScenariosError onRetry={() => {}} />
+        </Section>
+
+        <h2 className="mb-3 mt-8 text-h3 font-semibold">Badge system (unified — Badge-System-SPEC)</h2>
+        <Section title="status (.st — the only family with a dot) · on / off / paused">
+          <div className="flex flex-wrap items-center gap-3">
+            <StatusBadge tone="on">Активна</StatusBadge>
+            <StatusBadge tone="off">Выключена</StatusBadge>
+            <StatusBadge tone="paused">На паузе</StatusBadge>
+          </div>
+        </Section>
+        <Section title="properties (.bdg) · neutral / link / note — normal-case sans, icon = text, fixed height">
+          <div className="flex flex-wrap items-center gap-3">
+            <Badge tone="neutral" icon={<IcReplies />}>отвечает людям</Badge>
+            <Badge tone="neutral" icon={<IcSliders />}>встроенная</Badge>
+            <Badge tone="link" icon={<IcSwap />}>перебивает дефолт</Badge>
+            <Badge tone="note" icon={<IcRepeat />}>нужен доступ</Badge>
+          </div>
+        </Section>
+        <Section title="inheritance (.inh) · ghost dashed, lives next to a value">
+          <InheritChip icon={<IcSliders />}>из Правил дома</InheritChip>
+        </Section>
+
+        <h2 className="mb-3 mt-8 text-h3 font-semibold">Reply routine card — «Отвечать на комментарии» (built-in)</h2>
+        <Section title="ON · «отвечает людям» + «встроенная» badges · «отвечает сама» + «из Правил дома» · «Настроить» → gallery">
+          <ReplyCardDemo state="on" />
+        </Section>
+        <Section title="OFF · «Ответы выключены — включи, когда будешь готов» + «Включить» · no plaque/chips">
+          <ReplyCardDemo state="off" />
+        </Section>
+        <Section title="coexistence · «На паузе» «Заменена сценарием …» (a custom reply scenario overrides)">
+          <div className="flex flex-col gap-3">
+            <ReplyCardDemo state="paused" />
+            <ScenarioCard
+              s={DEMO_SCENARIOS.find((s) => (s.action_cfg?.kind as string) === "reply_policy")!}
+              handle="@alex.makes"
+              onToggle={() => {}}
+              onOpen={() => {}}
+              inheritFromHouseRules
+              overridesDefault
+            />
+          </div>
+        </Section>
+
+        <h2 className="mb-3 mt-8 text-h3 font-semibold">«Кому отвечать» preset gallery (960 · opened from «Настроить»)</h2>
+        <Section title="text preset «про цены» selected · prefilled editable description («готовое · можно править»)">
+          <ReplyGalleryDemo initialId="pricing" />
+        </Section>
+        <Section title="«Свой вариант» selected · empty description («своими словами»)">
+          <ReplyGalleryDemo initialId="custom" />
+        </Section>
+        <Section title="built-in filter «Только вопросы» selected · NO textarea, read-only note («встроенный фильтр»)">
+          <ReplyGalleryDemo initialId="questions" />
         </Section>
 
         <h2 className="mb-3 mt-8 text-h3 font-semibold">Scenario editor — hybrid C×B (step track + large preview)</h2>

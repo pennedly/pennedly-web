@@ -42,7 +42,7 @@ import { useTesterGuard } from "@/lib/tester";
 import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
 import { Button } from "@/components/ui/button";
 import { Toast, ToastHost } from "@/components/ui/toast";
-import { IcPlus } from "@/components/icons";
+import { IcPlus, IcReplies, IcSliders } from "@/components/icons";
 import { TweaksPanel, TweakSection, TweakToggle, TweakRadio, useTweaks } from "@/components/tweaks/TweaksPanel";
 import {
   AutopostOffBanner,
@@ -84,6 +84,15 @@ import {
 import { DEMO_CC, DEMO_CREATOR, demoSampleKey } from "@/components/studio/scenarios-presentation";
 import { type PublishMode } from "@/components/studio/scenarios-living";
 import { FirstRun, GalleryScreen } from "@/components/studio/scenarios-screens";
+import { ReplyRoutineCard } from "@/components/studio/ReplyRoutineCard";
+import { ReplyAudienceGallery } from "@/components/studio/ReplyAudienceGallery";
+import {
+  AUDIENCE_PRESETS,
+  type AudiencePreset,
+  audiencePayload,
+  presetIdFor,
+  type ReplyAudience,
+} from "@/components/studio/reply-audience";
 import type {
   AutopilotConfig,
   ConnectedAccount,
@@ -96,7 +105,7 @@ import type {
 const IS_DEV = process.env.NODE_ENV === "development";
 
 type ToastT = { id: number; message: string; tone: "success" | "error" };
-type View = "list" | "discovery" | "editor";
+type View = "list" | "discovery" | "editor" | "reply-gallery";
 
 // A fresh form state for a chosen preset (or null = from scratch / promo).
 function freshForm(preset: ScenarioPreset | null, t: (k: MessageKey) => string): FormState {
@@ -159,6 +168,19 @@ export default function ScenariosPage() {
   const [quietTo, setQuietTo] = useState("08:00");
   const [replyCeiling, setReplyCeiling] = useState(25);
   const [apConfig, setApConfig] = useState<AutopilotConfig | null>(null);
+
+  // ── built-in «Отвечать на комментарии» routine. The card's toggle = the
+  // account reply mode (off ↔ all); «кому отвечать» = reply_audience (+ a free
+  // `audience_prompt` when audience='custom'). These mirror account_autopilot;
+  // on demo they're FE-only sample values driven from local state. ──
+  const [replyOn, setReplyOn] = useState(true);
+  const [replyAudience, setReplyAudience] = useState<ReplyAudience>("all_except_trolls");
+  const [audiencePrompt, setAudiencePrompt] = useState("");
+  const [replyHowTo, setReplyHowTo] = useState("");
+  // The gallery edits a DRAFT preset/description, committed on «Назад»/toggle so a
+  // built-in pick and a text edit both round-trip through one save.
+  const [replyDraftId, setReplyDraftId] = useState<string>("all_except_trolls");
+  const [replyDraftDesc, setReplyDraftDesc] = useState("");
 
   const [loaded, setLoaded] = useState(false);
   const [bootError, setBootError] = useState<string | null>(null);
@@ -230,6 +252,14 @@ export default function ScenariosPage() {
     // back doesn't lose their hours); only overwrite from the config when set.
     if (from !== null) setQuietFrom(from);
     if (to !== null) setQuietTo(to);
+    // Built-in reply routine: the card is ON when the account replies at all
+    // (reply_mode ≠ off); «кому» = reply_audience (+ a free audience_prompt for
+    // 'custom'). audience_prompt may be absent until the backend ships it.
+    setReplyOn(ap.reply_mode !== "off");
+    const aud = (ap.reply_audience as ReplyAudience) || "all_except_trolls";
+    const prompt = ap.audience_prompt ?? "";
+    setReplyAudience(aud);
+    setAudiencePrompt(prompt);
   }
 
   // Persist a single «Правила дома» change: spread the patch over the last-loaded
@@ -303,7 +333,14 @@ export default function ScenariosPage() {
     setQuietFrom("23:00");
     setQuietTo("08:00");
     setReplyCeiling(25);
-  }, [demoOn, tw.dark, tw.state, tw.master]);
+    // Built-in reply routine demo: a text preset («про цены») is selected so the
+    // living sentence + gallery prefilled-description states both read on demo.
+    const replyMode = tw.replyState ?? "on";
+    setReplyOn(replyMode !== "off");
+    setReplyAudience("custom");
+    setAudiencePrompt(AUDIENCE_PRESETS.find((p) => p.id === "pricing")!.prompt);
+    setReplyHowTo("коротко и тепло, без воды; на грубость не реагирую");
+  }, [demoOn, tw.dark, tw.state, tw.master, tw.replyState]);
 
   // ── derived: does this preset produce replies / is reactive ──
   const presetId = form.preset?.id ?? "";
@@ -354,6 +391,17 @@ export default function ScenariosPage() {
   }, [view, isReplyPolicy, form.helperOn, form.preset, form.promo, form.instruction, form.fields, form.replyInstruction, demoOn, accountId]);
 
   const activeCount = useMemo(() => scenarios.filter((s) => s.enabled).length, [scenarios]);
+
+  // Coexistence: an ENABLED custom reply_policy scenario overrides the account's
+  // built-in reply sweep. While one exists the built-in card pauses («Заменена
+  // сценарием …») and that scenario carries the «перебивает дефолт» badge. On
+  // demo the «paused» reply-state forces this so the state is reviewable.
+  const activeReplyScenario = useMemo(
+    () => scenarios.find((s) => s.enabled && (s.action_cfg?.kind as string) === "reply_policy") ?? null,
+    [scenarios],
+  );
+  const replyPaused = demoOn ? tw.replyState === "paused" : activeReplyScenario !== null;
+  const overridingScenarioId = replyPaused ? activeReplyScenario?.id ?? null : null;
 
   // ── control-center: stacking warnings ──
   const morning = useMemo(() => {
@@ -586,6 +634,57 @@ export default function ScenariosPage() {
     router.push("/app/autopilot");
   }
 
+  // ── built-in reply routine handlers ──────────────────────────────────────
+  // Card toggle = account reply mode (off ↔ all). Optimistic + persisted via
+  // saveAutopilot; we keep the legacy reply_enabled mirror consistent.
+  function onReplyToggle(on: boolean) {
+    const prev = replyOn;
+    setReplyOn(on);
+    void saveAutopilot(
+      { reply_mode: on ? "all" : "off", reply_enabled: on },
+      () => setReplyOn(prev),
+    );
+  }
+
+  // «Настроить» → open the «кому отвечать» preset gallery, seeding its draft from
+  // the live audience/description so the right card + description panel show.
+  function openReplyGallery() {
+    setReplyDraftId(presetIdFor(replyAudience, audiencePrompt));
+    setReplyDraftDesc(audiencePrompt);
+    setView("reply-gallery");
+  }
+
+  // Picking a preset in the gallery: a built-in sets reply_audience to the enum +
+  // clears the description; a text preset prefills the editable description with
+  // its ready prompt; «Свой вариант» empties it. (audience_prompt is only sent
+  // when audience='custom'.)
+  function selectReplyPreset(p: AudiencePreset) {
+    setReplyDraftId(p.id);
+    if (p.kind === "builtin") setReplyDraftDesc("");
+    else if (p.kind === "text") setReplyDraftDesc(p.prompt);
+    else setReplyDraftDesc(""); // custom → empty
+  }
+
+  // Commit the gallery draft → live state + persist. Built-in → {reply_audience}
+  // only; text/custom → {reply_audience:'custom', audience_prompt:<desc>}.
+  function commitReplyDraft() {
+    const preset = AUDIENCE_PRESETS.find((p) => p.id === replyDraftId) ?? AUDIENCE_PRESETS[1];
+    const { reply_audience, audience_prompt } = audiencePayload(preset, replyDraftDesc);
+    const prevAud = replyAudience;
+    const prevPrompt = audiencePrompt;
+    setReplyAudience(reply_audience);
+    setAudiencePrompt(audience_prompt);
+    void saveAutopilot({ reply_audience, audience_prompt }, () => {
+      setReplyAudience(prevAud);
+      setAudiencePrompt(prevPrompt);
+    });
+  }
+
+  function backFromReplyGallery() {
+    commitReplyDraft();
+    setView("list");
+  }
+
   async function onRunNow() {
     if (!editing) {
       // run-now needs a saved scenario; for a new one we can't (no id yet).
@@ -730,6 +829,28 @@ export default function ScenariosPage() {
   const handle = demoOn ? DEMO_CREATOR.handle : currentAccount?.username ? `@${currentAccount.username}` : "@you";
   const whenFires = humanWhenFires(form, t);
 
+  // The «Встроенная» group: a small section label + the always-present built-in
+  // «Отвечать на комментарии» card, pinned FIRST in the routine area (shown in
+  // both the first-run/empty state and the populated list).
+  const builtInGroup = (
+    <div className="flex flex-col gap-3">
+      <GroupLabel icon={<IcSliders size={12} />}>{t("ap.reply.group.builtin")}</GroupLabel>
+      <ReplyRoutineCard
+        on={replyOn}
+        paused={replyPaused}
+        scenarioName={demoOn ? "Тёплый приём новичкам" : activeReplyScenario?.name}
+        onOpenScenario={() => {
+          if (activeReplyScenario) openEditor(activeReplyScenario);
+        }}
+        audienceId={presetIdFor(replyAudience, audiencePrompt)}
+        audienceDescription={audiencePrompt}
+        onToggle={onReplyToggle}
+        onConfigure={openReplyGallery}
+        lastReplyLabel={replyOn && !replyPaused ? (demoOn ? "12 мин назад" : undefined) : undefined}
+      />
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-bg text-text">
       <AppTopbar
@@ -825,6 +946,20 @@ export default function ScenariosPage() {
             onConfirmInline={doDelete}
             deleting={deleting}
           />
+        ) : view === "reply-gallery" ? (
+          <ReplyAudienceGallery
+            on={replyPaused ? false : replyOn}
+            onToggle={(on) => {
+              onReplyToggle(on);
+            }}
+            selectedId={replyDraftId}
+            onSelect={selectReplyPreset}
+            description={replyDraftDesc}
+            onDescription={setReplyDraftDesc}
+            howTo={replyHowTo}
+            onHowTo={setReplyHowTo}
+            onBack={backFromReplyGallery}
+          />
         ) : view === "discovery" ? (
           <GalleryScreen presets={catalog} onPick={openPreset} onScratch={openScratch} onBack={backToList} />
         ) : !loaded ? (
@@ -835,8 +970,10 @@ export default function ScenariosPage() {
           </div>
         ) : scenarios.length === 0 ? (
           // First-run, dimmed too when the master is off (the rules + examples are
-          // visible but nothing runs until you turn the master on).
-          <div className={masterOn ? undefined : "pointer-events-none opacity-50 transition-opacity"}>
+          // visible but nothing runs until you turn the master on). The built-in
+          // reply routine is ALWAYS present, so it shows above the teach-by-example.
+          <div className={cn("flex flex-col gap-5 md:gap-[22px]", !masterOn && "pointer-events-none opacity-50 transition-opacity")}>
+            {builtInGroup}
             <FirstRun
               handle={handle}
               onTry={(id) => {
@@ -849,7 +986,7 @@ export default function ScenariosPage() {
         ) : (
           // The routines list. Dims (with the HR body) when the master is off — the
           // master switch stays the only live control (§4 «honestly dead»).
-          <div className={cn("flex flex-col gap-3", !masterOn && "pointer-events-none opacity-50 transition-opacity")}>
+          <div className={cn("flex flex-col gap-5", !masterOn && "pointer-events-none opacity-50 transition-opacity")}>
             <div className="flex flex-wrap items-baseline justify-between gap-x-3.5 gap-y-0.5">
               <span className="text-h3 font-semibold tracking-tight">{t("ap.routines.title")}</span>
               <span className="text-small text-text-subtle">
@@ -858,31 +995,40 @@ export default function ScenariosPage() {
                   .replace("{active}", String(activeCount))}
               </span>
             </div>
-            <StackingWarnings morningCount={morning.length} morningNames={morning} promoDaily={promoDaily} cap={cap} />
-            {anyPostScenarioOn && !postAutopilotOn && <AutopostOffBanner onEnable={enablePostAutopilot} />}
-            {scenarios.map((s) => (
-              <ScenarioCard
-                key={s.id}
-                s={s}
-                accounts={otherAccounts}
-                handle={handle}
-                onToggle={toggle}
-                onOpen={openEditor}
-                onApply={applyToAccounts}
-                onDelete={(sc) => setDelTarget(sc)}
-                inheritFromHouseRules={(s.action_cfg?.kind as string) === "reply_policy"}
-              />
-            ))}
-            {/* Obvious entry into the discovery gallery (the "new flow") even when
-                scenarios already exist — the top-bar "+ Новый" reads as "add another",
-                this reads as "browse the catalog". */}
-            <button
-              type="button"
-              onClick={openDiscovery}
-              className="flex items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-surface-2/40 px-4 py-3.5 text-small font-medium text-text-muted transition-colors hover:border-accent/40 hover:bg-accent/[0.05] hover:text-text"
-            >
-              <IcPlus size={15} /> {t("scenarios.browse_catalog")}
-            </button>
+
+            {/* «Встроенная» — the always-present built-in reply routine, pinned first */}
+            {builtInGroup}
+
+            {/* «Твои рутины» — the user's scenarios */}
+            <div className="flex flex-col gap-3">
+              <GroupLabel icon={<IcSliders size={12} />}>{t("ap.reply.group.yours")}</GroupLabel>
+              <StackingWarnings morningCount={morning.length} morningNames={morning} promoDaily={promoDaily} cap={cap} />
+              {anyPostScenarioOn && !postAutopilotOn && <AutopostOffBanner onEnable={enablePostAutopilot} />}
+              {scenarios.map((s) => (
+                <ScenarioCard
+                  key={s.id}
+                  s={s}
+                  accounts={otherAccounts}
+                  handle={handle}
+                  onToggle={toggle}
+                  onOpen={openEditor}
+                  onApply={applyToAccounts}
+                  onDelete={(sc) => setDelTarget(sc)}
+                  inheritFromHouseRules={(s.action_cfg?.kind as string) === "reply_policy"}
+                  overridesDefault={s.id === overridingScenarioId}
+                />
+              ))}
+              {/* Obvious entry into the discovery gallery (the "new flow") even when
+                  scenarios already exist — the top-bar "+ Новый" reads as "add another",
+                  this reads as "browse the catalog". */}
+              <button
+                type="button"
+                onClick={openDiscovery}
+                className="flex items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-surface-2/40 px-4 py-3.5 text-small font-medium text-text-muted transition-colors hover:border-accent/40 hover:bg-accent/[0.05] hover:text-text"
+              >
+                <IcPlus size={15} /> {t("scenarios.browse_catalog")}
+              </button>
+            </div>
           </div>
         )}
       </main>
@@ -903,10 +1049,25 @@ export default function ScenariosPage() {
           <TweakToggle label="Dark mode" value={tw.dark} onChange={(v) => setTw("dark", v)} />
           <TweakSection label="House Rules" />
           <TweakToggle label="Master on" value={tw.master} onChange={(v) => setTw("master", v)} />
+          <TweakSection label="Reply routine" />
+          <TweakRadio label="Reply state" value={tw.replyState} options={["on", "off", "paused"]} onChange={(v) => setTw("replyState", v)} />
           <TweakSection label="State" />
           <TweakRadio label="State" value={tw.state} options={["List", "Empty", "Loading", "Error"]} onChange={(v) => setTw("state", v)} />
         </TweaksPanel>
       )}
+    </div>
+  );
+}
+
+// A routine-group label («Встроенная» / «Твои рутины») — an uppercase caption
+// followed by a hairline rule (the SPEC's .rl-group-k), separating the built-in
+// reply routine from the user's scenarios.
+function GroupLabel({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-2.5 px-0.5 text-caption font-semibold uppercase tracking-[0.05em] text-text-subtle">
+      <span className="shrink-0">{icon}</span>
+      {children}
+      <span className="h-px flex-1 bg-border" />
     </div>
   );
 }

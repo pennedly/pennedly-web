@@ -43,6 +43,7 @@ import {
   IcShield,
   IcSliders,
   IcSparkle,
+  IcSwap,
   IcTrash,
   IcUsers,
 } from "@/components/icons";
@@ -58,6 +59,7 @@ import type {
 } from "@/lib/types";
 import { CardLine, Sentence, type PublishMode } from "./scenarios-living";
 import { deriveSentence, publishModeOf } from "./scenarios-presentation";
+import { Badge, InheritChip, StatusBadge } from "./Badges";
 
 type IconCmp = (p: { size?: number; className?: string }) => React.ReactNode;
 type T = (k: MessageKey) => string;
@@ -450,6 +452,7 @@ export function ScenarioCard({
   onApply,
   onDelete,
   inheritFromHouseRules = false,
+  overridesDefault = false,
 }: {
   s: Scenario;
   accounts?: ConnectedAccount[];
@@ -461,6 +464,9 @@ export function ScenarioCard({
   /** Unified Autopilot: this routine's reply cadence/quiet/ceiling come from the
    *  global «Правила дома» → show an «из Правил дома» inherit chip in the footer. */
   inheritFromHouseRules?: boolean;
+  /** Coexistence: this is an ACTIVE custom reply scenario that overrides the
+   *  account's built-in reply sweep → show a «перебивает дефолт» link badge. */
+  overridesDefault?: boolean;
 }) {
   const { t, locale } = useTranslation();
   const isPromo = s.template === "promo";
@@ -490,27 +496,25 @@ export function ScenarioCard({
           <Icon size={20} />
         </span>
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-            <h3 className="text-body font-semibold tracking-tight">{s.name}</h3>
-            {isReply && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-accent/20 bg-accent/[0.06] px-2 py-0.5 text-caption font-medium text-text-muted">
-                <IcReplies size={11} className="text-accent" /> {t("scenarios.replies_people")}
-              </span>
-            )}
-          </div>
+          {/* Name alone on the title line — badges live in a calm tag row below
+              the subtitle (unified badge system: never crowd the title/toggle). */}
+          <h3 className="text-body font-semibold tracking-tight">{s.name}</h3>
           <CardLine template={sentence.template} slots={sentence.slots} className="mt-1" />
+          {/* property/relation badges: «отвечает людям» (neutral) for a reply
+              scenario; «перебивает дефолт» (link) when it overrides the default sweep */}
+          {isReply && (
+            <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+              <Badge tone="neutral" icon={<IcReplies />}>{t("scenarios.replies_people")}</Badge>
+              {overridesDefault && <Badge tone="link" icon={<IcSwap />}>{t("scenarios.overrides_default")}</Badge>}
+            </div>
+          )}
         </div>
-        {/* Big, unambiguous status — the «сохранил ≠ работает» fix */}
+        {/* Big, unambiguous status — the «сохранил ≠ работает» fix (now via the
+            unified StatusBadge: the only family carrying a dot). */}
         <div className="flex shrink-0 flex-col items-end gap-2">
-          <span
-            className={cn(
-              "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-caption font-semibold",
-              s.enabled ? "border-success/30 bg-success/12 text-success" : "border-border bg-surface-2 text-text-subtle",
-            )}
-          >
-            <span className={cn("h-2 w-2 rounded-full", s.enabled ? "bg-success ring-2 ring-success/25" : "bg-text-subtle")} />
+          <StatusBadge tone={s.enabled ? "on" : "off"}>
             {s.enabled ? t("scenarios.status_on") : t("scenarios.status_off")}
-          </span>
+          </StatusBadge>
           <Switch checked={s.enabled} onCheckedChange={(v) => onToggle(s, v)} aria-label={s.name} />
         </div>
       </div>
@@ -569,9 +573,7 @@ export function ScenarioCard({
             </span>
           )}
           {inheritFromHouseRules && (
-            <span className="inline-flex items-center gap-[5px] rounded-full border border-border bg-surface-2 px-2 py-0.5 font-mono text-[10px] tracking-[0.02em] text-text-subtle">
-              <IcSliders size={10} /> {t("ap.inherit")}
-            </span>
+            <InheritChip icon={<IcSliders />}>{t("ap.inherit")}</InheritChip>
           )}
         </div>
         <div className="flex shrink-0 items-center gap-2 max-sm:w-full">
