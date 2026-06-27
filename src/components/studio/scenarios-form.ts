@@ -35,6 +35,10 @@ export type FormState = {
   dateFrom: string;
   dateTo: string;
   threshold: string; // amplify_viral views threshold (blank = auto)
+  // POST routines only — local time-of-day + publish jitter for the cadence
+  // modes (FE-state only for now; not yet sent to the backend, see compileBody).
+  hour: string; // hour-of-day, e.g. "9:00"
+  jitter: number; // ± minutes of random spread (0 = exact)
   // per-field text values, keyed by field.key (text/textarea/options)
   fields: Record<string, string>;
 };
@@ -96,6 +100,8 @@ function buildCondition(s: FormState): Record<string, unknown> | null {
 // Compile the full create body. Three forks: promo / reply_policy / free.
 export function compileBody(s: FormState): ScenarioCreate {
   const name = s.name.trim();
+  // TODO: wire hour+jitter into trigger_cfg once backend accepts them
+  // (kept FE-state only for now — sending them today would 422).
 
   // 1) campaign / «Акция» → the promo helper owns the shape.
   if (s.helperOn || s.preset?.id === "promo") {

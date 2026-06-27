@@ -1890,6 +1890,14 @@ export const en = {
   "scenarios.ed.s5_title": "For power users",
   "scenarios.ed.s6_title": "Done",
   "scenarios.ed.optional": "· optional",
+  // step 1 — post time + jitter (POST routines, cadence modes only)
+  "scenarios.ed.time_label": "Time",
+  "scenarios.ed.jitter_label": "Spread (minutes)",
+  "scenarios.ed.jitter_exact": "Exact (no spread)",
+  "scenarios.ed.jitter_min": "± {n} min",
+  "scenarios.ed.sends_utc": "sends {time} UTC",
+  "scenarios.ed.jitter_hint": "posts within ±{n} min",
+  "scenarios.ed.jitter_hint_exact": "posts exactly on time",
   // step 1 — reply read-only «when»
   "scenarios.ed.when_reply": "Pennedly <b>checks new comments every 15 minutes</b> and prepares a reply. This isn't instant — a small delay is normal, and there's no schedule to pick.",
   // step 2 — reply audience + instruction

@@ -16,20 +16,26 @@ import { test, expect } from "@playwright/test";
 // A deeper, authenticated end-to-end pass against a seeded tenant is a
 // separate (non-autonomous) task — see ROADMAP Phase 6 / BACKLOG.
 
-const APP_PAGES = [
-  "/app/feed",
-  "/app/stats",
-  "/app/replies",
-  "/app/autopilot",
-  "/app/scenarios",
-  "/app/onboarding",
-  "/app/settings",
-  "/app/role-book",
-  "/app/audits",
-  "/app/overview",
+// `/app/autopilot` was retired (merged into /app/scenarios): the route now
+// client-redirects to the hub. Logged-out (no backend) it sits behind the
+// layout's account gate and stays put; an authed bookmark visit lands on
+// /app/scenarios. Both are accepted below — so this smoke stays hermetic while
+// documenting the redirect target. (The redirect itself fires for real users;
+// the hub keeps a dedicated render-smoke entry above its own line.)
+const APP_PAGES: { path: string; lands?: RegExp }[] = [
+  { path: "/app/feed" },
+  { path: "/app/stats" },
+  { path: "/app/replies" },
+  { path: "/app/scenarios" },
+  { path: "/app/autopilot", lands: /^(\/app\/autopilot|\/app\/scenarios|\/app\/login)$/ },
+  { path: "/app/onboarding" },
+  { path: "/app/settings" },
+  { path: "/app/role-book" },
+  { path: "/app/audits" },
+  { path: "/app/overview" },
 ];
 
-for (const path of APP_PAGES) {
+for (const { path, lands } of APP_PAGES) {
   test(`renders without crashing: ${path}`, async ({ page }) => {
     const errors: string[] = [];
     page.on("pageerror", (e) => errors.push(String(e)));
@@ -45,7 +51,7 @@ for (const path of APP_PAGES) {
     // Auth gate sends us to login, or the page renders in place — both OK.
     await expect
       .poll(() => new URL(page.url()).pathname, { timeout: 10_000 })
-      .toMatch(new RegExp(`^(${path}|/app/login)$`));
+      .toMatch(lands ?? new RegExp(`^(${path}|/app/login)$`));
 
     // No uncaught client-side exception during load/redirect.
     expect(errors, `client errors on ${path}: ${errors.join("; ")}`).toHaveLength(0);

@@ -21,6 +21,7 @@ import { Button, buttonClasses } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/cn";
 import { useTranslation } from "@/lib/i18n";
+import { localHourToUtc, localUtcOffsetLabel } from "@/lib/timezone";
 import {
   IcBolt,
   IcBubble,
@@ -979,6 +980,63 @@ export function WhenSegment({
           <IcClock size={14} /> {t("scenarios.sched.daily_note")}
         </p>
       )}
+    </div>
+  );
+}
+
+// «Время» + «Разброс минут» — POST routines only, shown under the schedule for
+// the cadence modes (daily / every-N / weekly / date-range). Two selects in a
+// 2-col grid that stacks on narrow screens. The hour caption shows the local
+// offset + the equivalent UTC send time; the jitter caption explains the spread.
+// FE-state only for now (compileBody does not send these yet).
+const HOUR_OPTIONS = ["7:00", "8:00", "9:00", "12:00", "19:00"];
+const JITTER_OPTIONS = [0, 5, 15, 30];
+
+export function WhenTimeJitter({
+  hour,
+  jitter,
+  onHour,
+  onJitter,
+}: {
+  hour: string;
+  jitter: number;
+  onHour: (h: string) => void;
+  onJitter: (j: number) => void;
+}) {
+  const { t } = useTranslation();
+  // Local hour → UTC send time (truthful, via the same helper Autopilot uses).
+  const localHour = parseInt(hour, 10) || 0;
+  const utcTime = `${String(localHourToUtc(localHour)).padStart(2, "0")}:00`;
+  return (
+    <div className="mt-0.5 grid grid-cols-2 gap-3 max-[640px]:grid-cols-1">
+      <label className="flex min-w-0 flex-col gap-1.5">
+        <span className="text-caption font-medium text-text-muted">{t("scenarios.ed.time_label")}</span>
+        <select className={SELECT} value={hour} onChange={(e) => onHour(e.target.value)} aria-label={t("scenarios.ed.time_label")}>
+          {Array.from(new Set([...HOUR_OPTIONS, hour])).map((h) => (
+            <option key={h} value={h}>
+              {h}
+            </option>
+          ))}
+        </select>
+        <span className="text-caption text-text-subtle tabular-nums">
+          {localUtcOffsetLabel()} · {t("scenarios.ed.sends_utc").replace("{time}", utcTime)}
+        </span>
+      </label>
+      <label className="flex min-w-0 flex-col gap-1.5">
+        <span className="text-caption font-medium text-text-muted">{t("scenarios.ed.jitter_label")}</span>
+        <select className={SELECT} value={jitter} onChange={(e) => onJitter(Number(e.target.value))} aria-label={t("scenarios.ed.jitter_label")}>
+          {Array.from(new Set([...JITTER_OPTIONS, jitter]))
+            .sort((a, b) => a - b)
+            .map((m) => (
+              <option key={m} value={m}>
+                {m === 0 ? t("scenarios.ed.jitter_exact") : t("scenarios.ed.jitter_min").replace("{n}", String(m))}
+              </option>
+            ))}
+        </select>
+        <span className="text-caption text-text-subtle tabular-nums">
+          {jitter === 0 ? t("scenarios.ed.jitter_hint_exact") : t("scenarios.ed.jitter_hint").replace("{n}", String(jitter))}
+        </span>
+      </label>
     </div>
   );
 }

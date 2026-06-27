@@ -113,6 +113,8 @@ function freshForm(preset: ScenarioPreset | null, t: (k: MessageKey) => string):
     dateFrom: (preset?.condition_cfg?.active_from as string) || "",
     dateTo: (preset?.condition_cfg?.active_to as string) || "",
     threshold: "",
+    hour: "9:00",
+    jitter: 15,
     fields,
   };
 }
@@ -387,6 +389,9 @@ export default function ScenariosPage() {
       dateFrom: (s.condition_cfg?.active_from as string) || "",
       dateTo: (s.condition_cfg?.active_to as string) || "",
       threshold: s.trigger_cfg?.threshold_views != null ? String(s.trigger_cfg.threshold_views) : "",
+      // FE-state only for now (backend doesn't persist these yet) → defaults.
+      hour: "9:00",
+      jitter: 15,
       fields: {},
     };
     if (usePromo && s.structured) {

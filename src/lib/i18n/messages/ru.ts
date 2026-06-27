@@ -1865,6 +1865,14 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "scenarios.ed.s5_title": "Для продвинутых",
   "scenarios.ed.s6_title": "Готово",
   "scenarios.ed.optional": "· не обязательно",
+  // шаг 1 — время поста + разброс (только для постовых рутин, режимы по расписанию)
+  "scenarios.ed.time_label": "Время",
+  "scenarios.ed.jitter_label": "Разброс минут",
+  "scenarios.ed.jitter_exact": "Точно (без разброса)",
+  "scenarios.ed.jitter_min": "± {n} мин",
+  "scenarios.ed.sends_utc": "отправит {time} UTC",
+  "scenarios.ed.jitter_hint": "опубликует в пределах ±{n} мин",
+  "scenarios.ed.jitter_hint_exact": "точно по времени",
   // шаг 1 — read-only «когда» для ответа
   "scenarios.ed.when_reply": "Pennedly <b>проверяет новые комментарии каждые 15 минут</b> и готовит ответ. Это не мгновенный ответ — небольшая задержка нормальна, расписание выбирать не нужно.",
   // шаг 2 — кому и как отвечать

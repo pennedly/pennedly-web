@@ -47,6 +47,7 @@ import {
   ReplyBlock,
   TEXTAREA,
   WhenSegment,
+  WhenTimeJitter,
   eventKindOf,
   type PreviewState,
   type WhenMode,
@@ -638,21 +639,32 @@ export function StepEditor({
             {reply ? (
               <WhenReplyCard />
             ) : (
-              <WhenSegment
-                value={form.when}
-                nDays={form.nDays}
-                weekday={form.weekday}
-                dateFrom={form.dateFrom}
-                dateTo={form.dateTo}
-                threshold={form.threshold}
-                locked={isReactive}
-                eventKind={eventKind}
-                onMode={(m: WhenMode) => update({ when: m })}
-                onNDays={(n) => update({ nDays: n })}
-                onWeekday={(d) => update({ weekday: d })}
-                onDate={(which, v) => update(which === "from" ? { dateFrom: v } : { dateTo: v })}
-                onThreshold={(v) => update({ threshold: v })}
-              />
+              <>
+                <WhenSegment
+                  value={form.when}
+                  nDays={form.nDays}
+                  weekday={form.weekday}
+                  dateFrom={form.dateFrom}
+                  dateTo={form.dateTo}
+                  threshold={form.threshold}
+                  locked={isReactive}
+                  eventKind={eventKind}
+                  onMode={(m: WhenMode) => update({ when: m })}
+                  onNDays={(n) => update({ nDays: n })}
+                  onWeekday={(d) => update({ weekday: d })}
+                  onDate={(which, v) => update(which === "from" ? { dateFrom: v } : { dateTo: v })}
+                  onThreshold={(v) => update({ threshold: v })}
+                />
+                {/* Время + Разброс — POST routines, cadence modes only (not «по событию»). */}
+                {form.when !== "event" && (
+                  <WhenTimeJitter
+                    hour={form.hour}
+                    jitter={form.jitter}
+                    onHour={(h) => update({ hour: h })}
+                    onJitter={(j) => update({ jitter: j })}
+                  />
+                )}
+              </>
             )}
           </Step>
 

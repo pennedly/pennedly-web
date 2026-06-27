@@ -92,6 +92,8 @@ function FormDemo({ presetId }: { presetId: string }) {
       dateFrom: "",
       dateTo: "",
       threshold: "",
+      hour: "9:00",
+      jitter: 15,
       fields,
     };
   });
@@ -213,6 +215,8 @@ function StepEditorDemo({ presetId }: { presetId: string }) {
       dateFrom: "",
       dateTo: "",
       threshold: "",
+      hour: "9:00",
+      jitter: 15,
       fields,
     };
   });
