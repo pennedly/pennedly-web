@@ -2098,7 +2098,10 @@ export const ru: Partial<Record<MessageKey, string>> = {
   // фраза — формулировки КОГДА
   "scenarios.rc.sent.daily": "Каждый день в {time}",
   "scenarios.rc.sent.every_n": "Каждые {n} дня в {time}",
-  "scenarios.rc.sent.weekly": "Каждый {day} в {time}",
+  "scenarios.rc.sent.weekly": "По {days} в {time}",
+  "scenarios.rc.sent.weekdays_workdays": "будням",
+  "scenarios.rc.sent.weekdays_weekend": "выходным",
+  "scenarios.rc.sent.weekdays_all": "всем дням",
   "scenarios.rc.sent.monthly": "{days} числа в {time}",
   "scenarios.rc.sent.monthly_last": "последний день",
   "scenarios.rc.sent.yearly": "Каждый год, {date}",
@@ -2133,7 +2136,11 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "scenarios.rc.daily_why": "Самый простой ритм — пост выходит <b>каждый день</b>.",
   "scenarios.rc.interval": "Интервал",
   "scenarios.rc.interval_unit": "дня",
+  // «Начиная с» — необязательная дата старта интервала (everyN)
+  "scenarios.rc.start_from": "Начиная с",
   "scenarios.rc.which_day": "В какой день",
+  // weekly multi-select (wkPills) — несколько дней недели
+  "scenarios.rc.which_days": "В какие дни",
   // «Раз в месяц» — сетка чисел месяца (domGrid)
   "scenarios.rc.dom_label": "Числа месяца",
   "scenarios.rc.dom_multi": "можно несколько",

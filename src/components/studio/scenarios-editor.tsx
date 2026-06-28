@@ -76,7 +76,7 @@ function whenPhrase(t: T, form: FormState): string {
     case "every_n_days":
       return t("scenarios.rc.sent.every_n").replace("{n}", String(form.nDays)).replace("{time}", form.hour);
     case "weekly":
-      return t("scenarios.rc.sent.weekly").replace("{day}", t(WD_FULL[form.weekday] ?? WD_FULL[0])).replace("{time}", form.hour);
+      return t("scenarios.rc.sent.weekly").replace("{days}", weekdaysPhrase(t, form)).replace("{time}", form.hour);
     case "monthly":
       return t("scenarios.rc.sent.monthly").replace("{days}", monthlyDaysPhrase(t, form)).replace("{time}", form.hour);
     case "yearly":
@@ -116,6 +116,29 @@ const WD_FULL: MessageKey[] = [
   "scenarios.rc.wdfull.sat",
   "scenarios.rc.wdfull.sun",
 ];
+// Short Пн…Вс labels for the multi-weekday summary phrase.
+const WD_SHORT: MessageKey[] = [
+  "scenarios.wd.mon",
+  "scenarios.wd.tue",
+  "scenarios.wd.wed",
+  "scenarios.wd.thu",
+  "scenarios.wd.fri",
+  "scenarios.wd.sat",
+  "scenarios.wd.sun",
+];
+// «по будням» / «по выходным» / «Пн, Ср и Пт» — the selected weekdays as a short
+// human phrase for the sentence + run rows. Mon–Fri and Sat–Sun get the natural
+// «будням»/«выходным» wording; any other set lists the short day labels.
+function weekdaysPhrase(t: T, form: FormState): string {
+  const days = [...new Set(form.weekdays)].filter((d) => d >= 0 && d <= 6).sort((a, b) => a - b);
+  if (days.length === 0) return t(WD_FULL[0]);
+  if (days.length === 5 && days.every((d, i) => d === i)) return t("scenarios.rc.sent.weekdays_workdays");
+  if (days.length === 2 && days[0] === 5 && days[1] === 6) return t("scenarios.rc.sent.weekdays_weekend");
+  if (days.length === 7) return t("scenarios.rc.sent.weekdays_all");
+  const labels = days.map((d) => t(WD_SHORT[d] ?? WD_SHORT[0]));
+  if (labels.length === 1) return labels[0];
+  return `${labels.slice(0, -1).join(", ")} ${t("common.and")} ${labels[labels.length - 1]}`;
+}
 
 // ════════════════════════════════════════════════════════════════════════════
 //  RIGHT STAGE — framed live preview (post mock / reply thread)
@@ -251,11 +274,13 @@ function computeRuns(t: T, form: FormState): string[] {
     ];
   }
   if (form.when === "weekly") {
-    const day = t(WD_FULL[form.weekday] ?? WD_FULL[0]);
+    // Multi-weekday — the next runs land on the chosen days; the summary phrase
+    // («по будням» / «Пн, Ср и Пт») reads the same on each approximate row.
+    const days = weekdaysPhrase(t, form);
     return [
-      t("scenarios.rc.runs_next_day").replace("{day}", day).replace("{time}", hh),
-      t("scenarios.rc.runs_next_day").replace("{day}", day).replace("{time}", hh),
-      t("scenarios.rc.runs_next_day").replace("{day}", day).replace("{time}", hh),
+      t("scenarios.rc.runs_next_day").replace("{day}", days).replace("{time}", hh),
+      t("scenarios.rc.runs_next_day").replace("{day}", days).replace("{time}", hh),
+      t("scenarios.rc.runs_next_day").replace("{day}", days).replace("{time}", hh),
     ];
   }
   if (form.when === "monthly") {

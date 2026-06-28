@@ -72,7 +72,13 @@ export type FormState = {
   // КОГДА
   when: WhenMode;
   nDays: number;
-  weekday: number;
+  // every_n_days «Начиная с» — optional ISO "YYYY-MM-DD" start anchor (may be
+  // empty → the backend starts the interval from "now").
+  startDate: string;
+  // weekly — the selected weekdays (0=Mon..6=Sun, multi-select). The design
+  // default is Mon–Fri ([0,1,2,3,4]); an existing single-weekday scenario seeds
+  // this from its `weekday` (see openEditor).
+  weekdays: number[];
   // «Раз в месяц» — selected days-of-month (1–31), the «Последний день месяца»
   // toggle, and what to do when a 29–31 day is missing from a short month.
   monthlyDays: number[];
@@ -144,10 +150,17 @@ function buildTrigger(s: FormState): Record<string, unknown> {
     return { ...trigger, ...(hour !== null ? { hour } : {}), jitter_minutes: jitter };
   };
   switch (s.when) {
-    case "every_n_days":
-      return withSchedule({ kind: "every_n_days", n: s.nDays });
-    case "weekly":
-      return withSchedule({ kind: "weekly", weekday: s.weekday });
+    case "every_n_days": {
+      // «Начиная с» — sent only when a non-empty ISO date is set (omit otherwise).
+      const start = s.startDate.trim();
+      return withSchedule({ kind: "every_n_days", n: s.nDays, ...(start ? { start_date: start } : {}) });
+    }
+    case "weekly": {
+      // Multi-weekday — emit the deduped, sorted `weekdays` array (0=Mon..6=Sun).
+      // An empty selection falls back to Mon ([0]) so the trigger is never dayless.
+      const weekdays = Array.from(new Set(s.weekdays.filter((d) => Number.isInteger(d) && d >= 0 && d <= 6))).sort((a, b) => a - b);
+      return withSchedule({ kind: "weekly", weekdays: weekdays.length > 0 ? weekdays : [0] });
+    }
     case "monthly": {
       // «Раз в месяц» — selected days-of-month (deduped, sorted, 1–31) + the
       // «Последний день месяца» flag + the missing-day fallback. `on_missing` is

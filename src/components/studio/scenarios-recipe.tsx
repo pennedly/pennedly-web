@@ -7,10 +7,10 @@
 // shell + preview live in scenarios-editor.tsx; this file holds the slot, drawer,
 // the КОГДА / ЕСЛИ / ЧТО / КАК / КОМУ / ТОН drawer bodies, and the big-text modal.
 //
-// Wave-1 cut (decision б): not-ready features are HIDDEN, not stubbed — monthly/
-// yearly cadence, the «когда упомянут» event, multi-slot times, weekly multi-day,
-// per-day times, everyN start-date, period sub-rhythm, and the 3 «по будням /
-// подписчики / дата в тексте» conditions are simply omitted. Layer 3 is the one
+// Wave progress: monthly/yearly cadence (Wave 3) and weekly multi-day + everyN
+// «Начиная с» start-date (Wave 2) are now LIVE. Still cut: the «когда упомянут»
+// event, multi-slot times, per-day times, period sub-rhythm, and the 3 «по будням
+// / подписчики / дата в тексте» conditions are simply omitted. Layer 3 is the one
 // honest «скоро» stub by design.
 
 import { type ReactNode } from "react";
@@ -472,6 +472,18 @@ export function WhenPostBody({
               suffix={<span className="text-text-subtle">{t("scenarios.rc.interval_unit")}</span>}
             />
           </label>
+          {/* «Начиная с · необязательно» — an optional ISO start date (design's
+              everyN body; .field max-width 200px). Empty → the interval starts now. */}
+          <label className="flex flex-col gap-1.5">
+            <FieldLabel opt={t("scenarios.rc.optional")}>{t("scenarios.rc.start_from")}</FieldLabel>
+            <input
+              type="date"
+              aria-label={t("scenarios.rc.start_from")}
+              className="h-10 max-w-[200px] rounded-md border border-border bg-surface px-3 text-small text-text focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25"
+              value={form.startDate}
+              onChange={(e) => update({ startDate: e.target.value })}
+            />
+          </label>
           <TimeSection hour={form.hour} jitter={form.jitter} onHour={(h) => update({ hour: h })} onJitter={(j) => update({ jitter: j })} />
         </>
       )}
@@ -479,22 +491,31 @@ export function WhenPostBody({
       {mode === "weekly" && (
         <>
           <label className="flex flex-col gap-1.5">
-            <FieldLabel>{t("scenarios.rc.which_day")}</FieldLabel>
+            <FieldLabel>{t("scenarios.rc.which_days")}</FieldLabel>
+            {/* `wkPills` — the 7 Пн…Вс day pills, multi-select (design default
+                Mon–Fri). Toggling adds/removes the day; selection may be any set. */}
             <span className="flex flex-wrap gap-1.5">
-              {RC_WEEKDAYS.map((wd, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  aria-pressed={form.weekday === i}
-                  onClick={() => update({ weekday: i })}
-                  className={cn(
-                    "grid h-[34px] min-w-[38px] place-items-center rounded-sm border px-2.5 text-small font-medium transition-colors",
-                    form.weekday === i ? "border-primary bg-primary font-semibold text-primary-foreground" : "border-border bg-surface text-text-muted hover:border-text/16",
-                  )}
-                >
-                  {t(wd)}
-                </button>
-              ))}
+              {RC_WEEKDAYS.map((wd, i) => {
+                const on = form.weekdays.includes(i);
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() =>
+                      update({
+                        weekdays: on ? form.weekdays.filter((x) => x !== i) : [...form.weekdays, i].sort((a, b) => a - b),
+                      })
+                    }
+                    className={cn(
+                      "grid h-[34px] min-w-[38px] place-items-center rounded-sm border px-2.5 text-small font-medium transition-colors",
+                      on ? "border-primary bg-primary font-semibold text-primary-foreground" : "border-border bg-surface text-text-muted hover:border-text/16",
+                    )}
+                  >
+                    {t(wd)}
+                  </button>
+                );
+              })}
             </span>
           </label>
           <TimeSection hour={form.hour} jitter={form.jitter} onHour={(h) => update({ hour: h })} onJitter={(j) => update({ jitter: j })} />

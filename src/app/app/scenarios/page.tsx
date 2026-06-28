@@ -172,7 +172,12 @@ function freshForm(preset: ScenarioPreset | null, t: (k: MessageKey) => string):
     audiencePrompt: "",
     when,
     nDays: (preset?.trigger_cfg?.n as number) ?? 3,
-    weekday: (preset?.trigger_cfg?.weekday as number) ?? 0,
+    // every_n_days «Начиная с» — seed from the preset's cfg (rarely present),
+    // else empty (interval starts now).
+    startDate: (preset?.trigger_cfg?.start_date as string) || "",
+    // weekly — multi-weekday. A preset may ship `weekdays`; fall back to a single
+    // `weekday` (back-compat), else the design default Mon–Fri.
+    weekdays: weekdaysFromCfg(preset?.trigger_cfg) ?? [0, 1, 2, 3, 4],
     // «Раз в месяц» / «Раз в год» — fresh defaults from the design. (A preset that
     // ships a monthly/yearly trigger seeds these from its cfg; openEditor does the
     // round-trip for saved scenarios.) Months are 0-indexed in the form.
@@ -661,7 +666,12 @@ export default function ScenariosPage() {
       audiencePrompt: "",
       when,
       nDays: (s.trigger_cfg?.n as number) ?? 3,
-      weekday: (s.trigger_cfg?.weekday as number) ?? 0,
+      // every_n_days «Начиная с» — restore the saved ISO start date (absent → "").
+      startDate: (s.trigger_cfg?.start_date as string) || "",
+      // weekly — reconstruct the multi-weekday selection: prefer a saved `weekdays`
+      // array, else seed from a legacy single `weekday` (back-compat read), else
+      // the design default Mon–Fri.
+      weekdays: weekdaysFromCfg(s.trigger_cfg) ?? [0, 1, 2, 3, 4],
       // «Раз в месяц» / «Раз в год» — reconstructed from trigger_cfg so editing +
       // re-saving reproduces the same shape (absent → the design defaults).
       monthlyDays: monthlyDaysFromCfg(s.trigger_cfg) ?? [1, 15, 31],
@@ -1385,6 +1395,24 @@ function scenarioJitter(s: Scenario): number | null {
   if (typeof s.jitter_minutes === "number") return s.jitter_minutes;
   const j = s.trigger_cfg?.jitter_minutes;
   return typeof j === "number" && Number.isInteger(j) && j >= 0 && j <= 120 ? j : null;
+}
+
+// «По дням недели» — pull the selected weekdays (0=Mon..6=Sun) from a `weekly`
+// trigger_cfg. Wave 2 writes a `weekdays` array; a Wave-1 scenario saved a single
+// `weekday`, so we seed `[weekday]` from it (back-compat read). Returns null when
+// the cfg carries neither (→ caller uses the design default Mon–Fri).
+function weekdaysFromCfg(cfg: Record<string, unknown> | null | undefined): number[] | null {
+  if (!cfg) return null;
+  if (Array.isArray(cfg.weekdays)) {
+    const days = (cfg.weekdays as unknown[]).filter((d): d is number => Number.isInteger(d) && (d as number) >= 0 && (d as number) <= 6);
+    const uniq = [...new Set(days)].sort((a, b) => a - b);
+    return uniq.length > 0 ? uniq : null;
+  }
+  // back-compat: a single saved `weekday` → seed the multi-select with just it.
+  if (Number.isInteger(cfg.weekday) && (cfg.weekday as number) >= 0 && (cfg.weekday as number) <= 6) {
+    return [cfg.weekday as number];
+  }
+  return null;
 }
 
 // «Раз в месяц» — pull the day list from a `monthly` trigger_cfg (1–31), or null

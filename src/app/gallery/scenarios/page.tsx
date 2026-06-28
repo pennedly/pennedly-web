@@ -96,7 +96,8 @@ function FormDemo({ presetId }: { presetId: string }) {
       audiencePrompt: "",
       when: presetId === "rubric" ? "weekly" : when0,
       nDays: 3,
-      weekday: 0,
+      startDate: "",
+      weekdays: [0, 1, 2, 3, 4],
       monthlyDays: [1, 15, 31],
       monthlyLastDay: false,
       monthlyOnMissing: "last",
@@ -163,7 +164,8 @@ function FormDemo({ presetId }: { presetId: string }) {
             <WhenSegment
               value={form.when}
               nDays={form.nDays}
-              weekday={form.weekday}
+              // legacy single-weekday segment — bridge to the multi-weekday state.
+              weekday={form.weekdays[0] ?? 0}
               dateFrom={form.dateFrom}
               dateTo={form.dateTo}
               threshold={form.threshold}
@@ -171,7 +173,7 @@ function FormDemo({ presetId }: { presetId: string }) {
               eventKind={eventKind}
               onMode={(m) => up({ when: m })}
               onNDays={(n) => up({ nDays: n })}
-              onWeekday={(d) => up({ weekday: d })}
+              onWeekday={(d) => up({ weekdays: [d] })}
               onDate={(which, v) => up(which === "from" ? { dateFrom: v } : { dateTo: v })}
               onThreshold={(v) => up({ threshold: v })}
             />
@@ -256,7 +258,8 @@ function StepEditorDemo({
       audiencePrompt: "тем, кто пишет по делу, без флуда",
       when: when0,
       nDays: 3,
-      weekday: 0,
+      startDate: "",
+      weekdays: [0, 1, 2, 3, 4],
       monthlyDays: [1, 15, 31],
       monthlyLastDay: false,
       monthlyOnMissing: "last",
@@ -646,11 +649,17 @@ export default function ScenariosGallery() {
         <Section title="POST · slot «Когда» open · mode = Каждый день (hour picker + jitter)">
           <StepEditorDemo presetId="daily_question" demoOpenSlot="when" override={{ when: "daily" }} />
         </Section>
-        <Section title="POST · slot «Когда» open · mode = Раз в N дней (interval stepper)">
+        <Section title="POST · slot «Когда» open · mode = Раз в N дней (interval stepper · «Начиная с» empty)">
           <StepEditorDemo presetId="daily_question" demoOpenSlot="when" override={{ when: "every_n_days" }} />
         </Section>
-        <Section title="POST · slot «Когда» open · mode = По дням недели (single weekday)">
-          <StepEditorDemo presetId="daily_question" demoOpenSlot="when" override={{ when: "weekly", weekday: 1 }} />
+        <Section title="POST · slot «Когда» open · mode = Раз в N дней · «Начиная с» set (start-date input filled)">
+          <StepEditorDemo presetId="daily_question" demoOpenSlot="when" override={{ when: "every_n_days", nDays: 5, startDate: "2026-07-01" }} />
+        </Section>
+        <Section title="POST · slot «Когда» open · mode = По дням недели (multi-select, default Mon–Fri)">
+          <StepEditorDemo presetId="daily_question" demoOpenSlot="when" override={{ when: "weekly" }} />
+        </Section>
+        <Section title="POST · slot «Когда» open · mode = По дням недели · custom multi-day pick (Пн, Ср, Пт)">
+          <StepEditorDemo presetId="daily_question" demoOpenSlot="when" override={{ when: "weekly", weekdays: [0, 2, 4] }} />
         </Section>
         <Section title="POST · slot «Когда» open · mode = Раз в месяц (day-of-month grid, default 1/15/31 → fallback select)">
           <StepEditorDemo presetId="daily_question" demoOpenSlot="when" override={{ when: "monthly", monthlyDays: [1, 15, 31], hour: "10:00" }} />

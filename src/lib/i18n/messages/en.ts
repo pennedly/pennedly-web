@@ -2123,7 +2123,10 @@ export const en = {
   // sentence — КОГДА phrasing
   "scenarios.rc.sent.daily": "Every day at {time}",
   "scenarios.rc.sent.every_n": "Every {n} days at {time}",
-  "scenarios.rc.sent.weekly": "Every {day} at {time}",
+  "scenarios.rc.sent.weekly": "On {days} at {time}",
+  "scenarios.rc.sent.weekdays_workdays": "weekdays",
+  "scenarios.rc.sent.weekdays_weekend": "weekends",
+  "scenarios.rc.sent.weekdays_all": "every day",
   "scenarios.rc.sent.monthly": "on the {days} of the month at {time}",
   "scenarios.rc.sent.monthly_last": "last day",
   "scenarios.rc.sent.yearly": "every year, {date}",
@@ -2158,7 +2161,11 @@ export const en = {
   "scenarios.rc.daily_why": "The simplest rhythm — a post goes out <b>every day</b>.",
   "scenarios.rc.interval": "Interval",
   "scenarios.rc.interval_unit": "days",
+  // «Начиная с» — optional start date for the every-N interval
+  "scenarios.rc.start_from": "Starting from",
   "scenarios.rc.which_day": "Which day",
+  // weekly multi-select (wkPills) — several weekdays
+  "scenarios.rc.which_days": "Which days",
   // «Раз в месяц» — day-of-month grid (domGrid)
   "scenarios.rc.dom_label": "Days of the month",
   "scenarios.rc.dom_multi": "you can pick several",
