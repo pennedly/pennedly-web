@@ -10,6 +10,7 @@
 //   "action_cfg.<key>"     → set the resolved action_cfg slot (reply audience)
 // This module turns the edited field values + the КОГДА choice into that shape.
 
+import type { MessageKey } from "@/lib/i18n";
 import type {
   PresetField,
   PublishMode,
@@ -27,6 +28,35 @@ export type CooldownUnit = "hours" | "days";
 // threshold or follower milestone — NOT mentions, which need a new engine).
 export type RecipeEvent = "on_metric_threshold" | "on_follower_milestone";
 
+// ── Wave 3 «Раз в месяц» / «Раз в год» ──
+// A single (day, month) anchor for the yearly cadence (month is 0-indexed, so
+// it aligns with `MONTHS` / `daysInMonth`; the trigger_cfg shape sends 1-based).
+export type MonthDate = { day: number; month: number };
+// What to do when a chosen day-of-month (29–31) is absent from a short month.
+export type MonthlyMissing = "last" | "skip";
+
+// Months in the genitive case (the design's RU copy «1 января», «29 февраля»).
+export const MONTHS: MessageKey[] = [
+  "scenarios.rc.month.jan",
+  "scenarios.rc.month.feb",
+  "scenarios.rc.month.mar",
+  "scenarios.rc.month.apr",
+  "scenarios.rc.month.may",
+  "scenarios.rc.month.jun",
+  "scenarios.rc.month.jul",
+  "scenarios.rc.month.aug",
+  "scenarios.rc.month.sep",
+  "scenarios.rc.month.oct",
+  "scenarios.rc.month.nov",
+  "scenarios.rc.month.dec",
+];
+// Real day count per month (index 0 = January). February shows 29 so Feb-29 is
+// pickable (leap-only — the note warns, the engine doesn't block it).
+const DAYS_IN_MONTH = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+export function daysInMonth(mi: number): number {
+  return DAYS_IN_MONTH[mi] ?? 31;
+}
+
 // The editable form state (everything the editor owns).
 export type FormState = {
   name: string;
@@ -43,6 +73,13 @@ export type FormState = {
   when: WhenMode;
   nDays: number;
   weekday: number;
+  // «Раз в месяц» — selected days-of-month (1–31), the «Последний день месяца»
+  // toggle, and what to do when a 29–31 day is missing from a short month.
+  monthlyDays: number[];
+  monthlyLastDay: boolean;
+  monthlyOnMissing: MonthlyMissing;
+  // «Раз в год» — a list of (day, month) anniversaries (months 0-indexed here).
+  yearlyDates: MonthDate[];
   dateFrom: string;
   dateTo: string;
   threshold: string; // amplify_viral views threshold (blank = auto)
@@ -84,8 +121,8 @@ export function interpolate(template: string, values: Record<string, string>): s
 // The cadence POST trigger kinds that carry an explicit schedule «Время» (hour)
 // + «Разброс минут» (jitter). MUST match the backend's TRIGGER_SCHEDULE_KINDS
 // (api/scenarios.py): a present hour/jitter on any OTHER kind is dropped server-
-// side, so we only attach them here for these.
-const SCHEDULE_KINDS = new Set(["daily_first_post", "every_n_days", "weekly"]);
+// side, so we only attach them here for these. Wave 3 adds monthly / yearly.
+const SCHEDULE_KINDS = new Set(["daily_first_post", "every_n_days", "weekly", "monthly", "yearly"]);
 
 // Parse the editor's "H:MM" hour string into a whole hour 0–23, or null if it
 // isn't a valid in-range hour (the backend validates 0–23 → 422 otherwise).
@@ -111,6 +148,27 @@ function buildTrigger(s: FormState): Record<string, unknown> {
       return withSchedule({ kind: "every_n_days", n: s.nDays });
     case "weekly":
       return withSchedule({ kind: "weekly", weekday: s.weekday });
+    case "monthly": {
+      // «Раз в месяц» — selected days-of-month (deduped, sorted, 1–31) + the
+      // «Последний день месяца» flag + the missing-day fallback. `on_missing` is
+      // always sent (the W3 shape mandates it); the UI only surfaces the select
+      // when a day > 28 is chosen, defaulting to "last".
+      const days = Array.from(new Set(s.monthlyDays.filter((d) => Number.isInteger(d) && d >= 1 && d <= 31))).sort((a, b) => a - b);
+      return withSchedule({
+        kind: "monthly",
+        days,
+        last_day: !!s.monthlyLastDay,
+        on_missing: s.monthlyOnMissing === "skip" ? "skip" : "last",
+      });
+    }
+    case "yearly": {
+      // «Раз в год» — (day, month) anchors. Months are 1-based in the cfg shape
+      // (0-indexed in the form); each day is clamped to its month's real length.
+      const dates = s.yearlyDates
+        .filter((d) => Number.isInteger(d.month) && d.month >= 0 && d.month <= 11 && Number.isInteger(d.day) && d.day >= 1)
+        .map((d) => ({ day: Math.min(d.day, daysInMonth(d.month)), month: d.month + 1 }));
+      return withSchedule({ kind: "yearly", dates });
+    }
     case "event": {
       // reactive — the recipe chooses the event kind (views / followers). Keep
       // the preset's base targets (the milestone ladder) when present.

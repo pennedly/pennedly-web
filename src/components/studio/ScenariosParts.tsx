@@ -168,7 +168,8 @@ const GOAL_NOTE: Record<Goal, MessageKey> = {
 const PLAQUE_PRESETS = new Set(["reply_duty", "promo"]);
 
 // ── KOGDA (schedule) modes ──
-export type WhenMode = "daily" | "every_n_days" | "weekly" | "date_range" | "event";
+// Wave 3 (decision б reversed): `monthly` / `yearly` un-hidden.
+export type WhenMode = "daily" | "every_n_days" | "weekly" | "monthly" | "yearly" | "date_range" | "event";
 
 // Derive the active КОГДА mode from a preset's / scenario's trigger_cfg +
 // condition_cfg. A date-window guard (active_from/active_to) reads as date_range.
@@ -179,6 +180,8 @@ export function whenModeFromCfg(
   const kind = (trigger?.kind as string) || "";
   if (kind === "every_n_days") return "every_n_days";
   if (kind === "weekly") return "weekly";
+  if (kind === "monthly") return "monthly";
+  if (kind === "yearly") return "yearly";
   if (kind === "on_metric_threshold" || kind === "on_follower_milestone" || kind === "on_new_comment") return "event";
   if (condition && ("active_from" in condition || "active_to" in condition)) return "date_range";
   return "daily";

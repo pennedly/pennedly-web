@@ -97,6 +97,13 @@ function FormDemo({ presetId }: { presetId: string }) {
       when: presetId === "rubric" ? "weekly" : when0,
       nDays: 3,
       weekday: 0,
+      monthlyDays: [1, 15, 31],
+      monthlyLastDay: false,
+      monthlyOnMissing: "last",
+      yearlyDates: [
+        { day: 1, month: 0 },
+        { day: 29, month: 1 },
+      ],
       dateFrom: "",
       dateTo: "",
       threshold: "",
@@ -250,6 +257,13 @@ function StepEditorDemo({
       when: when0,
       nDays: 3,
       weekday: 0,
+      monthlyDays: [1, 15, 31],
+      monthlyLastDay: false,
+      monthlyOnMissing: "last",
+      yearlyDates: [
+        { day: 1, month: 0 },
+        { day: 29, month: 1 },
+      ],
       dateFrom: "2026-06-28",
       dateTo: "2026-07-05",
       threshold: "5000",
@@ -637,6 +651,15 @@ export default function ScenariosGallery() {
         </Section>
         <Section title="POST · slot «Когда» open · mode = По дням недели (single weekday)">
           <StepEditorDemo presetId="daily_question" demoOpenSlot="when" override={{ when: "weekly", weekday: 1 }} />
+        </Section>
+        <Section title="POST · slot «Когда» open · mode = Раз в месяц (day-of-month grid, default 1/15/31 → fallback select)">
+          <StepEditorDemo presetId="daily_question" demoOpenSlot="when" override={{ when: "monthly", monthlyDays: [1, 15, 31], hour: "10:00" }} />
+        </Section>
+        <Section title="POST · slot «Когда» open · mode = Раз в месяц · only days ≤ 28 selected (NO fallback) + «Последний день месяца» on">
+          <StepEditorDemo presetId="daily_question" demoOpenSlot="when" override={{ when: "monthly", monthlyDays: [1, 15], monthlyLastDay: true }} />
+        </Section>
+        <Section title="POST · slot «Когда» open · mode = Раз в год (day × month rows + «Добавить дату» + leap note)">
+          <StepEditorDemo presetId="daily_question" demoOpenSlot="when" override={{ when: "yearly", yearlyDates: [{ day: 1, month: 0 }, { day: 29, month: 1 }] }} />
         </Section>
         <Section title="POST · slot «Когда» open · mode = Период дат (date range, «каждый день» in window)">
           <StepEditorDemo presetId="daily_question" demoOpenSlot="when" override={{ when: "date_range" }} />

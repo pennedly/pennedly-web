@@ -75,6 +75,7 @@ import {
   compileBody,
   type FormState,
   interpolate,
+  type MonthDate,
   visibleFields,
 } from "@/components/studio/scenarios-form";
 import {
@@ -172,6 +173,16 @@ function freshForm(preset: ScenarioPreset | null, t: (k: MessageKey) => string):
     when,
     nDays: (preset?.trigger_cfg?.n as number) ?? 3,
     weekday: (preset?.trigger_cfg?.weekday as number) ?? 0,
+    // «Раз в месяц» / «Раз в год» — fresh defaults from the design. (A preset that
+    // ships a monthly/yearly trigger seeds these from its cfg; openEditor does the
+    // round-trip for saved scenarios.) Months are 0-indexed in the form.
+    monthlyDays: monthlyDaysFromCfg(preset?.trigger_cfg) ?? [1, 15, 31],
+    monthlyLastDay: (preset?.trigger_cfg?.last_day as boolean) === true,
+    monthlyOnMissing: (preset?.trigger_cfg?.on_missing as string) === "skip" ? "skip" : "last",
+    yearlyDates: yearlyDatesFromCfg(preset?.trigger_cfg) ?? [
+      { day: 1, month: 0 },
+      { day: 29, month: 1 },
+    ],
     dateFrom: (preset?.condition_cfg?.active_from as string) || "",
     dateTo: (preset?.condition_cfg?.active_to as string) || "",
     threshold: "",
@@ -651,6 +662,15 @@ export default function ScenariosPage() {
       when,
       nDays: (s.trigger_cfg?.n as number) ?? 3,
       weekday: (s.trigger_cfg?.weekday as number) ?? 0,
+      // «Раз в месяц» / «Раз в год» — reconstructed from trigger_cfg so editing +
+      // re-saving reproduces the same shape (absent → the design defaults).
+      monthlyDays: monthlyDaysFromCfg(s.trigger_cfg) ?? [1, 15, 31],
+      monthlyLastDay: (s.trigger_cfg?.last_day as boolean) === true,
+      monthlyOnMissing: (s.trigger_cfg?.on_missing as string) === "skip" ? "skip" : "last",
+      yearlyDates: yearlyDatesFromCfg(s.trigger_cfg) ?? [
+        { day: 1, month: 0 },
+        { day: 29, month: 1 },
+      ],
       dateFrom: (s.condition_cfg?.active_from as string) || "",
       dateTo: (s.condition_cfg?.active_to as string) || "",
       threshold: s.trigger_cfg?.threshold_views != null ? String(s.trigger_cfg.threshold_views) : "",
@@ -1365,6 +1385,29 @@ function scenarioJitter(s: Scenario): number | null {
   if (typeof s.jitter_minutes === "number") return s.jitter_minutes;
   const j = s.trigger_cfg?.jitter_minutes;
   return typeof j === "number" && Number.isInteger(j) && j >= 0 && j <= 120 ? j : null;
+}
+
+// «Раз в месяц» — pull the day list from a `monthly` trigger_cfg (1–31), or null
+// when the cfg isn't a monthly trigger (→ caller uses the design default).
+function monthlyDaysFromCfg(cfg: Record<string, unknown> | null | undefined): number[] | null {
+  if (!cfg || cfg.kind !== "monthly" || !Array.isArray(cfg.days)) return null;
+  return (cfg.days as unknown[]).filter((d): d is number => Number.isInteger(d) && (d as number) >= 1 && (d as number) <= 31);
+}
+// «Раз в год» — pull the (day, month) anchors from a `yearly` trigger_cfg. The
+// cfg stores months 1-based; the form is 0-based, so we shift back here.
+function yearlyDatesFromCfg(cfg: Record<string, unknown> | null | undefined): MonthDate[] | null {
+  if (!cfg || cfg.kind !== "yearly" || !Array.isArray(cfg.dates)) return null;
+  const out: MonthDate[] = [];
+  for (const raw of cfg.dates as unknown[]) {
+    if (!raw || typeof raw !== "object") continue;
+    const r = raw as { day?: unknown; month?: unknown };
+    const day = Number(r.day);
+    const month = Number(r.month);
+    if (Number.isInteger(day) && day >= 1 && Number.isInteger(month) && month >= 1 && month <= 12) {
+      out.push({ day, month: month - 1 });
+    }
+  }
+  return out.length > 0 ? out : null;
 }
 
 // «Сработает: завтра в 9:00 первым постом» — a human "when it fires" line.

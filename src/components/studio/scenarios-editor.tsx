@@ -57,7 +57,7 @@ import {
   WhenReplyBody,
   WhoBody,
 } from "./scenarios-recipe";
-import { type FormState, interpolate, type visibleFields } from "./scenarios-form";
+import { type FormState, interpolate, MONTHS, type visibleFields } from "./scenarios-form";
 import type { ScenarioPreview as ScenarioPreviewT, ScenarioRunNow } from "@/lib/types";
 
 type T = (k: MessageKey) => string;
@@ -77,6 +77,10 @@ function whenPhrase(t: T, form: FormState): string {
       return t("scenarios.rc.sent.every_n").replace("{n}", String(form.nDays)).replace("{time}", form.hour);
     case "weekly":
       return t("scenarios.rc.sent.weekly").replace("{day}", t(WD_FULL[form.weekday] ?? WD_FULL[0])).replace("{time}", form.hour);
+    case "monthly":
+      return t("scenarios.rc.sent.monthly").replace("{days}", monthlyDaysPhrase(t, form)).replace("{time}", form.hour);
+    case "yearly":
+      return t("scenarios.rc.sent.yearly").replace("{date}", yearlyFirstDatePhrase(t, form));
     case "date_range":
       return t("scenarios.rc.sent.period").replace("{time}", form.hour);
     case "event":
@@ -85,6 +89,23 @@ function whenPhrase(t: T, form: FormState): string {
     default:
       return t("scenarios.rc.sent.daily").replace("{time}", form.hour);
   }
+}
+
+// «1, 15 и 31» — the selected days-of-month, plus «последний» when «Последний
+// день месяца» is on. Empty selection falls back to «последний» / a dash.
+function monthlyDaysPhrase(t: T, form: FormState): string {
+  const parts = [...form.monthlyDays].sort((a, b) => a - b).map(String);
+  if (form.monthlyLastDay) parts.push(t("scenarios.rc.sent.monthly_last"));
+  if (parts.length === 0) return "—";
+  if (parts.length === 1) return parts[0];
+  return `${parts.slice(0, -1).join(", ")} ${t("common.and")} ${parts[parts.length - 1]}`;
+}
+// «1 января» — the first yearly anchor in «day месяц» genitive form (the design's
+// summary uses the first date; the drawer lists them all).
+function yearlyFirstDatePhrase(t: T, form: FormState): string {
+  const first = form.yearlyDates[0];
+  if (!first) return "—";
+  return `${first.day} ${t(MONTHS[first.month] ?? MONTHS[0])}`;
 }
 const WD_FULL: MessageKey[] = [
   "scenarios.rc.wdfull.mon",
@@ -236,6 +257,18 @@ function computeRuns(t: T, form: FormState): string[] {
       t("scenarios.rc.runs_next_day").replace("{day}", day).replace("{time}", hh),
       t("scenarios.rc.runs_next_day").replace("{day}", day).replace("{time}", hh),
     ];
+  }
+  if (form.when === "monthly") {
+    // Honest-but-approximate: the chosen days, each month, around the hour.
+    const days = monthlyDaysPhrase(t, form);
+    return [
+      t("scenarios.rc.runs_monthly").replace("{days}", days).replace("{time}", hh),
+      t("scenarios.rc.runs_monthly_next").replace("{days}", days).replace("{time}", hh),
+    ];
+  }
+  if (form.when === "yearly") {
+    // Single anchored row per the design's «каждый год» feel.
+    return [t("scenarios.rc.runs_yearly").replace("{date}", yearlyFirstDatePhrase(t, form)).replace("{time}", hh)];
   }
   // daily / date_range → three consecutive days
   return [

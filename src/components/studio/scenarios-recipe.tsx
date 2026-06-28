@@ -39,11 +39,15 @@ import {
   IcX,
 } from "@/components/icons";
 import { Button } from "@/components/ui/button";
-import type {
-  CooldownUnit,
-  FormState,
-  RecipeEvent,
-  RecipeLength,
+import {
+  daysInMonth,
+  MONTHS,
+  type CooldownUnit,
+  type FormState,
+  type MonthDate,
+  type MonthlyMissing,
+  type RecipeEvent,
+  type RecipeLength,
 } from "./scenarios-form";
 
 type T = (k: MessageKey) => string;
@@ -166,11 +170,14 @@ function Stepper({ value, onMinus, onPlus, suffix }: { value: ReactNode; onMinus
 // ════════════════════════════════════════════════════════════════════════════
 //  КОГДА (POST) — cadence segment (5 modes) + hour picker + jitter slider
 // ════════════════════════════════════════════════════════════════════════════
-// Wave-1 cadence modes (decision б — monthly / yearly omitted, no «скоро» stub).
+// Cadence modes. Wave 3 (decision б reversed) un-hides «Раз в месяц» / «Раз в
+// год», restoring the design's full 7-mode segment.
 const CADENCE_MODES: { key: FormState["when"]; label: MessageKey }[] = [
   { key: "daily", label: "scenarios.rc.cad.daily" },
   { key: "every_n_days", label: "scenarios.rc.cad.every_n" },
   { key: "weekly", label: "scenarios.rc.cad.weekly" },
+  { key: "monthly", label: "scenarios.rc.cad.monthly" },
+  { key: "yearly", label: "scenarios.rc.cad.yearly" },
   { key: "date_range", label: "scenarios.rc.cad.period" },
   { key: "event", label: "scenarios.rc.cad.event" },
 ];
@@ -263,6 +270,170 @@ function TimeSection({ hour, jitter, onHour, onJitter }: { hour: string; jitter:
   );
 }
 
+// Shared «.field» styling for the day/month selects (recipe-editor.css `.field`).
+const FIELD_SELECT =
+  "h-10 cursor-pointer rounded-md border border-border bg-surface px-3 text-small text-text focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25";
+
+// ── «Раз в месяц» — the 31-cell day-of-month grid (`domGrid`) ──
+// Toggling a cell adds/removes that day; days 29–31 are `.dom-rare` (muted, since
+// they're absent from short months). The «Последний день месяца» button sits
+// below the grid. When ANY chosen day is > 28, the missing-day fallback select
+// appears («Опубликовать в последний день месяца» / «Пропустить этот месяц»).
+function DomGrid({
+  days,
+  lastDay,
+  onMissing,
+  onToggleDay,
+  onToggleLast,
+  onMissingChange,
+}: {
+  days: number[];
+  lastDay: boolean;
+  onMissing: MonthlyMissing;
+  onToggleDay: (d: number) => void;
+  onToggleLast: () => void;
+  onMissingChange: (v: MonthlyMissing) => void;
+}) {
+  const { t } = useTranslation();
+  const hasRare = days.some((d) => d > 28);
+  return (
+    <>
+      <div className="grid grid-cols-7 gap-[5px]">
+        {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => {
+          const on = days.includes(d);
+          const rare = d > 28;
+          return (
+            <button
+              key={d}
+              type="button"
+              aria-pressed={on}
+              onClick={() => onToggleDay(d)}
+              className={cn(
+                "grid h-8 place-items-center rounded-sm border text-small font-medium tabular-nums transition-colors",
+                on
+                  ? "border-primary bg-primary font-semibold text-primary-foreground"
+                  : rare
+                    ? "border-border bg-surface text-text-subtle hover:border-text/16"
+                    : "border-border bg-surface text-text-muted hover:border-text/16",
+              )}
+            >
+              {d}
+            </button>
+          );
+        })}
+      </div>
+      <button
+        type="button"
+        aria-pressed={lastDay}
+        onClick={onToggleLast}
+        className={cn(
+          "grid h-[34px] w-full place-items-center rounded-sm border text-small font-medium transition-colors",
+          lastDay ? "border-primary bg-primary font-semibold text-primary-foreground" : "border-border bg-surface text-text-muted hover:border-text/16",
+        )}
+      >
+        {t("scenarios.rc.dom_last")}
+      </button>
+      <p className="flex items-start gap-[7px] text-caption leading-[1.45] text-text-subtle [&_b]:font-semibold [&_b]:text-text-muted">
+        <IcInfo size={12} className="mt-px shrink-0 opacity-80" />
+        <span dangerouslySetInnerHTML={{ __html: t("scenarios.rc.dom_note") }} />
+      </p>
+      {hasRare && (
+        <div className="flex flex-col gap-2 rounded-md border border-warning/26 bg-warning/[0.07] px-[13px] py-[11px]">
+          <span className="flex items-center gap-[7px] text-caption font-semibold text-warning">
+            <IcInfo size={13} className="shrink-0" /> {t("scenarios.rc.dom_fallback_label")}
+          </span>
+          <select
+            aria-label={t("scenarios.rc.dom_fallback_label")}
+            className={cn(FIELD_SELECT, "max-w-[320px]")}
+            value={onMissing}
+            onChange={(e) => onMissingChange(e.target.value as MonthlyMissing)}
+          >
+            <option value="last">{t("scenarios.rc.dom_missing_last")}</option>
+            <option value="skip">{t("scenarios.rc.dom_missing_skip")}</option>
+          </select>
+        </div>
+      )}
+    </>
+  );
+}
+
+// ── «Раз в год» — a list of (day × month) anchors (`yearDates`) ──
+// Each row is a day-select (only the chosen month's real days) × a month-select;
+// changing the month re-clamps the day. «Добавить дату» appends a new row; the
+// remove × hides on the last remaining row so the list can't go empty.
+function YearDates({
+  dates,
+  onAdd,
+  onRemove,
+  onChange,
+}: {
+  dates: MonthDate[];
+  onAdd: () => void;
+  onRemove: (i: number) => void;
+  onChange: (i: number, next: MonthDate) => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex flex-col gap-2">
+      {dates.map((d, i) => {
+        const dim = daysInMonth(d.month);
+        return (
+          <div key={i} className="flex items-center gap-2">
+            <select
+              aria-label={t("scenarios.rc.yd_day")}
+              className={cn(FIELD_SELECT, "max-w-[132px] tabular-nums")}
+              value={d.day}
+              onChange={(e) => onChange(i, { ...d, day: Number(e.target.value) })}
+            >
+              {Array.from({ length: dim }, (_, n) => n + 1).map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+            <select
+              aria-label={t("scenarios.rc.yd_month")}
+              className={cn(FIELD_SELECT, "max-w-[132px]")}
+              value={d.month}
+              onChange={(e) => {
+                const month = Number(e.target.value);
+                onChange(i, { day: Math.min(d.day, daysInMonth(month)), month });
+              }}
+            >
+              {MONTHS.map((mk, mi) => (
+                <option key={mi} value={mi}>
+                  {t(mk)}
+                </option>
+              ))}
+            </select>
+            {dates.length > 1 && (
+              <button
+                type="button"
+                onClick={() => onRemove(i)}
+                aria-label={t("a11y.remove")}
+                className="grid h-7 w-7 shrink-0 place-items-center rounded-sm text-text-subtle transition-colors hover:bg-surface-2 hover:text-danger"
+              >
+                <IcX size={14} />
+              </button>
+            )}
+          </div>
+        );
+      })}
+      <button
+        type="button"
+        onClick={onAdd}
+        className="inline-flex items-center gap-[5px] self-start rounded-full border border-dashed border-accent/36 bg-accent/[0.09] px-3 py-1.5 text-small font-semibold text-accent transition-colors hover:bg-accent/15"
+      >
+        <IcPlus size={13} /> {t("scenarios.rc.yd_add")}
+      </button>
+      <p className="mt-px flex items-start gap-[7px] text-caption leading-[1.45] text-text-subtle [&_b]:font-semibold [&_b]:text-text-muted">
+        <IcInfo size={12} className="mt-px shrink-0 opacity-80" />
+        <span dangerouslySetInnerHTML={{ __html: t("scenarios.rc.yd_note") }} />
+      </p>
+    </div>
+  );
+}
+
 export function WhenPostBody({
   form,
   update,
@@ -325,6 +496,44 @@ export function WhenPostBody({
                 </button>
               ))}
             </span>
+          </label>
+          <TimeSection hour={form.hour} jitter={form.jitter} onHour={(h) => update({ hour: h })} onJitter={(j) => update({ jitter: j })} />
+        </>
+      )}
+
+      {mode === "monthly" && (
+        <>
+          <label className="flex flex-col gap-2">
+            <FieldLabel opt={t("scenarios.rc.dom_multi")}>{t("scenarios.rc.dom_label")}</FieldLabel>
+            <DomGrid
+              days={form.monthlyDays}
+              lastDay={form.monthlyLastDay}
+              onMissing={form.monthlyOnMissing}
+              onToggleDay={(d) =>
+                update({
+                  monthlyDays: form.monthlyDays.includes(d)
+                    ? form.monthlyDays.filter((x) => x !== d)
+                    : [...form.monthlyDays, d].sort((a, b) => a - b),
+                })
+              }
+              onToggleLast={() => update({ monthlyLastDay: !form.monthlyLastDay })}
+              onMissingChange={(v) => update({ monthlyOnMissing: v })}
+            />
+          </label>
+          <TimeSection hour={form.hour} jitter={form.jitter} onHour={(h) => update({ hour: h })} onJitter={(j) => update({ jitter: j })} />
+        </>
+      )}
+
+      {mode === "yearly" && (
+        <>
+          <label className="flex flex-col gap-2">
+            <FieldLabel opt={t("scenarios.rc.yd_opt")}>{t("scenarios.rc.yd_label")}</FieldLabel>
+            <YearDates
+              dates={form.yearlyDates}
+              onAdd={() => update({ yearlyDates: [...form.yearlyDates, { day: 1, month: 0 }] })}
+              onRemove={(i) => update({ yearlyDates: form.yearlyDates.filter((_, n) => n !== i) })}
+              onChange={(i, next) => update({ yearlyDates: form.yearlyDates.map((d, n) => (n === i ? next : d)) })}
+            />
           </label>
           <TimeSection hour={form.hour} jitter={form.jitter} onHour={(h) => update({ hour: h })} onJitter={(j) => update({ jitter: j })} />
         </>
