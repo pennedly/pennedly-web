@@ -1,21 +1,18 @@
 "use client";
 
-// Scenario editor — CD's hybrid C×B redesign. A 2-column screen:
-//   LEFT  — a numbered 6-step track (steps expand when active / collapse to a
-//           one-line human summary when done).
-//   RIGHT — a LARGE sticky preview («экран»-frame), the hero that convinces.
+// Scenario editor — CD's «карточка-рецепт» redesign (Wave 1). A two-column
+// screen (max-w 1000px, grid minmax(0,1fr) 392px, sticky right aside, 1-col
+// ≤900px):
+//   LEFT  — the recipe: one readable SENTENCE with editable «slots». Tapping a
+//           slot opens an inline drawer in place under the prose (only one open).
+//           Below it: Layer 2 «Настроить точнее» (accordion) + Layer 3 stub.
+//   RIGHT — a framed live STAGE (post mock / reply thread), the «честная строка»
+//           invoice, «Следующие 3 запуска» (computed), «Прогнать сейчас» (draft).
 //
-// Translated 1:1 from /tmp/pennedly5/scenario-editor.{css,js,html} to Tailwind +
-// the app's semantic tokens. Reuses the existing form building blocks from
-// ScenariosParts (WhenSegment, PresetFieldInput, ReplyBlock, MoreSettings,
-// PowerUserDisclosure) and the existing run-now / preview data — only the chrome
-// and the step/stage shells are new. Same prop interface as the old EditorView.
-//
-// Toggle model (the spec JS is static — we own the live state here):
-//   • steps 1 & 2 are an accordion PAIR — exactly one active at a time;
-//   • step 3 «Что Pennedly добавит» is ALWAYS expanded (visible trust step);
-//   • steps 4 & 5 are independently collapsible (start collapsed);
-//   • step 6 «Готово» is always shown, no chevron/summary.
+// Ported 1:1 from design-export/PennedlyDesign/recipe-editor/{recipe-editor.js,
+// recipe-editor.css}. SAME prop interface as the previous StepEditor (the page
+// that hosts it is unchanged). Wave-1 cut hides the not-ready cadence/condition
+// modes (decision б) — see scenarios-recipe.tsx.
 
 import { useRef, useState, type ReactNode } from "react";
 
@@ -32,186 +29,75 @@ import {
   IcClock,
   IcEye,
   IcHeart,
+  IcInfo,
   IcLock,
   IcPencil,
   IcPlay,
+  IcRepeat,
+  IcShieldHouse,
+  IcSliders,
   IcSparkle,
   IcTrash,
 } from "@/components/icons";
 import { MoreSettings } from "./scenarios-screens";
+import { type PreviewState } from "./ScenariosParts";
 import {
-  Field,
-  PowerUserDisclosure,
-  PresetFieldInput,
-  PromoHelper,
-  ReplyBlock,
-  TEXTAREA,
-  WhenSegment,
-  WhenTimeJitter,
-  eventKindOf,
-  type PreviewState,
-  type WhenMode,
-} from "./ScenariosParts";
-import type { FormState, visibleFields } from "./scenarios-form";
-import type {
-  ScenarioPreview as ScenarioPreviewT,
-  ScenarioRunNow,
-} from "@/lib/types";
+  BigTextModal,
+  type BigTextField,
+  Drawer,
+  HowBody,
+  IfBody,
+  LockSlot,
+  type OpenSlot,
+  SLOT_ICON,
+  Slot,
+  ToneBody,
+  WhatPostBody,
+  WhenPostBody,
+  WhenReplyBody,
+  WhoBody,
+} from "./scenarios-recipe";
+import { type FormState, interpolate, type visibleFields } from "./scenarios-form";
+import type { ScenarioPreview as ScenarioPreviewT, ScenarioRunNow } from "@/lib/types";
 
 type T = (k: MessageKey) => string;
 
-// ── audience → human phrase for the step-2 reply summary ──
+// ── audience → human phrase for the reply sentence slot ──
 function audPhrase(t: T, a: string): string {
   if (a === "fans") return t("scenarios.aud_phrase.fans");
   if (a === "questions") return t("scenarios.aud_phrase.questions");
+  if (a === "custom") return t("scenarios.aud_phrase.custom");
   return t("scenarios.aud_phrase.all");
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-//  STEP — one rail (number badge + connector) + a card (head + body/summary)
-// ════════════════════════════════════════════════════════════════════════════
-function Step({
-  n,
-  title,
-  titleOpt,
-  open,
-  done,
-  optional,
-  finish,
-  last,
-  summary,
-  onToggle,
-  children,
-}: {
-  n: number;
-  title: string;
-  titleOpt?: string;
-  open: boolean;
-  done?: boolean; // collapsed → green check badge + summary
-  optional?: boolean; // dimmed number badge
-  finish?: boolean; // «Готово» — no chevron/summary, always open
-  last?: boolean; // no connector line below
-  summary?: ReactNode;
-  onToggle?: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <div className="grid grid-cols-[34px_minmax(0,1fr)] gap-[17px]">
-      {/* rail: number badge + connector line to the next step */}
-      <div className="flex flex-col items-center">
-        <span
-          className={cn(
-            "grid h-8 w-8 shrink-0 place-items-center rounded-full border font-mono text-[14px] font-semibold",
-            done
-              ? "border-success/28 bg-success/12 text-success"
-              : optional
-                ? "border-border bg-surface-2 text-text-subtle"
-                : "border-accent/28 bg-accent/12 text-accent",
-          )}
-        >
-          {done ? <IcCheck size={16} /> : n}
-        </span>
-        {!last && <span className="my-2 min-h-[14px] w-0.5 flex-1 rounded bg-border" />}
-      </div>
-
-      {/* card */}
-      <div
-        className={cn(
-          "mb-3.5 min-w-0 overflow-hidden rounded-lg border bg-surface shadow-sm",
-          open ? "border-accent/40 shadow-[0_0_0_1px_color-mix(in_srgb,var(--color-accent)_26%,transparent)]" : "border-border",
-        )}
-      >
-        {finish ? (
-          <div className="flex w-full items-center gap-3 px-[18px] py-[15px] text-left text-text">
-            <div className="min-w-0 flex-1">
-              <div className="text-[15.5px] font-semibold tracking-[-0.006em]">{title}</div>
-            </div>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={onToggle}
-            aria-expanded={open}
-            className="flex w-full items-center gap-3 px-[18px] py-[15px] text-left text-text transition-colors hover:bg-surface-2"
-          >
-            <div className="min-w-0 flex-1">
-              <div className="text-[15.5px] font-semibold tracking-[-0.006em]">
-                {title}
-                {titleOpt && <span className="text-[0.86em] font-normal text-text-subtle"> {titleOpt}</span>}
-              </div>
-              {!open && summary != null && (
-                <div className="mt-[3px] text-small leading-[1.45] text-text-muted [text-wrap:pretty]">{summary}</div>
-              )}
-            </div>
-            <IcChevRight
-              size={16}
-              className={cn("shrink-0 text-text-subtle transition-transform", open && "rotate-90")}
-            />
-          </button>
-        )}
-        {open && (
-          <div
-            className={cn(
-              "flex flex-col border-t border-border px-[18px] pb-[19px] pt-4",
-              finish ? "gap-3.5" : "gap-4",
-            )}
-          >
-            {children}
-          </div>
-        )}
-      </div>
-    </div>
-  );
+// ── КОГДА → a short human phrase for the sentence slot ──
+function whenPhrase(t: T, form: FormState): string {
+  switch (form.when) {
+    case "every_n_days":
+      return t("scenarios.rc.sent.every_n").replace("{n}", String(form.nDays)).replace("{time}", form.hour);
+    case "weekly":
+      return t("scenarios.rc.sent.weekly").replace("{day}", t(WD_FULL[form.weekday] ?? WD_FULL[0])).replace("{time}", form.hour);
+    case "date_range":
+      return t("scenarios.rc.sent.period").replace("{time}", form.hour);
+    case "event":
+      return form.eventKind === "on_follower_milestone" ? t("scenarios.rc.sent.event_followers") : t("scenarios.rc.sent.event_views");
+    case "daily":
+    default:
+      return t("scenarios.rc.sent.daily").replace("{time}", form.hour);
+  }
 }
-
-// «v» — a bolded value inside a human summary line.
-function V({ children }: { children: ReactNode }) {
-  return <span className="font-semibold text-text">{children}</span>;
-}
-
-// ════════════════════════════════════════════════════════════════════════════
-//  STEP 1 — reply read-only «when» (honest: polls every 15 min)
-// ════════════════════════════════════════════════════════════════════════════
-function WhenReplyCard() {
-  const { t } = useTranslation();
-  return (
-    <div className="flex items-start gap-3 rounded-md border border-border bg-surface-2 px-[15px] py-[13px]">
-      <span className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-md border border-success/26 bg-success/12 text-success">
-        <IcClock size={17} />
-      </span>
-      <span
-        className="text-small leading-[1.5] text-text [&_b]:font-semibold"
-        dangerouslySetInnerHTML={{ __html: t("scenarios.ed.when_reply") }}
-      />
-    </div>
-  );
-}
+const WD_FULL: MessageKey[] = [
+  "scenarios.rc.wdfull.mon",
+  "scenarios.rc.wdfull.tue",
+  "scenarios.rc.wdfull.wed",
+  "scenarios.rc.wdfull.thu",
+  "scenarios.rc.wdfull.fri",
+  "scenarios.rc.wdfull.sat",
+  "scenarios.rc.wdfull.sun",
+];
 
 // ════════════════════════════════════════════════════════════════════════════
-//  STEP 3 — read-only baked rules (the visible trust step)
-// ════════════════════════════════════════════════════════════════════════════
-function InlineRules({ rules }: { rules: string[] }) {
-  const { t } = useTranslation();
-  return (
-    <div className="flex flex-col">
-      <p className="text-small leading-relaxed text-text-muted [&_b]:font-semibold [&_b]:text-text" dangerouslySetInnerHTML={{ __html: t("scenarios.ed.rules_intro") }} />
-      <ul className="mt-3 flex flex-col gap-2">
-        {rules.map((r, i) => (
-          <li key={i} className="flex items-start gap-2 text-small text-text-muted">
-            <IcCheck size={15} className="mt-0.5 shrink-0 text-success" />
-            <span>{r}</span>
-          </li>
-        ))}
-      </ul>
-      <div className="mt-3.5 inline-flex items-center gap-1.5 border-t border-border pt-3 text-caption text-text-subtle">
-        <IcLock size={12} className="shrink-0" /> {t("scenarios.ed.rules_foot")}
-      </div>
-    </div>
-  );
-}
-
-// ════════════════════════════════════════════════════════════════════════════
-//  RIGHT STAGE — the large sticky preview (the hero)
+//  RIGHT STAGE — framed live preview (post mock / reply thread)
 // ════════════════════════════════════════════════════════════════════════════
 function StageAvatar({ initials, size = 34 }: { initials: string; size?: number }) {
   return (
@@ -224,79 +110,59 @@ function StageAvatar({ initials, size = 34 }: { initials: string; size?: number 
   );
 }
 
-// Enlarged post mock (per .stage-frame .mockpost — 19/22 padding, 15.5px text).
 function StagePost({
   initials,
   name,
   handle,
-  time,
   text,
-  stats,
 }: {
   initials: string;
   name: string;
   handle: string;
-  time: string;
   text: string;
-  stats: [string, string, string];
 }) {
   return (
-    <div className="px-[22px] py-[19px]">
+    <div className="px-5 py-[18px]">
       <div className="mb-[13px] flex items-center gap-2.5">
         <StageAvatar initials={initials} />
         <div className="leading-tight">
           <p className="text-small font-semibold text-text">{name}</p>
           <p className="text-caption text-text-subtle">{handle}</p>
         </div>
-        <span className="ml-auto text-caption text-text-subtle">{time}</span>
+        <span className="ml-auto text-caption text-text-subtle">9:00</span>
       </div>
-      <p className="text-[15.5px] leading-[1.65] text-text [text-wrap:pretty]">{text}</p>
+      <p className="text-[15px] leading-[1.65] text-text [text-wrap:pretty]">{text}</p>
       <div className="mt-[15px] flex gap-5 text-caption text-text-subtle">
-        <span className="inline-flex items-center gap-1.5"><IcEye size={14} /> {stats[0]}</span>
-        <span className="inline-flex items-center gap-1.5"><IcHeart size={14} /> {stats[1]}</span>
-        <span className="inline-flex items-center gap-1.5"><IcBubble size={14} /> {stats[2]}</span>
+        <span className="inline-flex items-center gap-1.5"><IcEye size={13} /> 1,2K</span>
+        <span className="inline-flex items-center gap-1.5"><IcHeart size={13} /> 84</span>
+        <span className="inline-flex items-center gap-1.5"><IcBubble size={13} /> 47</span>
       </div>
     </div>
   );
 }
 
-// Enlarged reply thread: parent post → comment → Pennedly reply (accent tag).
-function StageReplyThread({
-  initials,
-  name,
-  handle,
-  parent,
-  commentWho,
-  commentText,
-  botReply,
-}: {
-  initials: string;
-  name: string;
-  handle: string;
-  parent: string;
-  commentWho: string;
-  commentText: string;
-  botReply: string;
-}) {
+function StageReplyThread({ initials, name, handle }: { initials: string; name: string; handle: string }) {
   const { t } = useTranslation();
   return (
     <>
-      <div className="border-b border-border px-[22px] py-[19px]">
+      <div className="border-b border-border px-5 py-[18px]">
         <div className="mb-[13px] flex items-center gap-2.5">
           <StageAvatar initials={initials} />
           <div className="leading-tight">
             <p className="text-small font-semibold text-text">{name}</p>
             <p className="text-caption text-text-subtle">{handle}</p>
           </div>
+          <span className="ml-auto text-caption text-text-subtle">{t("scenarios.rc.stage_yesterday")}</span>
         </div>
-        <p className="text-[15.5px] leading-[1.65] text-text [text-wrap:pretty]">{parent}</p>
+        <p className="text-[15px] leading-[1.65] text-text [text-wrap:pretty]">{t("scenarios.ed.parent_post")}</p>
       </div>
-      <div className="px-[22px] py-[17px]">
+      <div className="px-5 py-4">
+        <p className="mb-2.5 font-mono text-[10px] uppercase tracking-wide text-text-subtle">{t("scenarios.rc.stage_how_reply")}</p>
         <div className="flex gap-2.5">
-          <StageAvatar initials={commentWho.slice(0, 1)} size={30} />
+          <StageAvatar initials={t("scenarios.ed.comment_who").slice(0, 1)} size={30} />
           <div className="min-w-0">
-            <p className="text-caption font-semibold text-text-muted">{commentWho}</p>
-            <p className="mt-0.5 text-small text-text-muted [text-wrap:pretty]">{commentText}</p>
+            <p className="text-caption font-semibold text-text-muted">{t("scenarios.ed.comment_who")}</p>
+            <p className="mt-0.5 text-small text-text-muted [text-wrap:pretty]">{t("scenarios.ed.comment_text")}</p>
           </div>
         </div>
         <div className="relative mt-2.5 flex gap-2.5 pl-3 before:absolute before:bottom-1.5 before:left-[3px] before:top-0.5 before:w-0.5 before:rounded before:bg-border">
@@ -308,7 +174,7 @@ function StageReplyThread({
                 <IcBubble size={11} /> {t("scenarios.ed.reply_tag")}
               </span>
             </p>
-            <p className="text-[14.5px] leading-[1.6] text-text [text-wrap:pretty]">{botReply}</p>
+            <p className="text-[14.5px] leading-[1.6] text-text [text-wrap:pretty]">{t("scenarios.ed.bot_reply")}</p>
           </div>
         </div>
       </div>
@@ -316,107 +182,131 @@ function StageReplyThread({
   );
 }
 
+// «Следующие 3 запуска» (or «Ритм проверки» for reply) — computed from the
+// КОГДА mode + hour. Honest-but-approximate (~hour), matching the design rows.
+function NextRuns({ reply, form }: { reply: boolean; form: FormState }) {
+  const { t } = useTranslation();
+  if (reply) {
+    return (
+      <div className="rounded-lg border border-border bg-surface p-4 shadow-sm">
+        <div className="mb-[11px] flex items-center gap-[7px] text-caption font-semibold uppercase tracking-[0.05em] text-text-subtle">
+          <IcRepeat size={13} /> {t("scenarios.rc.runs_rhythm")}
+        </div>
+        <RunItem when={t("scenarios.rc.runs_15min")} what={t("scenarios.rc.runs_check")} />
+        <RunItem when={t("scenarios.rc.runs_ready")} what={t("scenarios.rc.runs_draft")} />
+      </div>
+    );
+  }
+  const rows = computeRuns(t, form);
+  return (
+    <div className="rounded-lg border border-border bg-surface p-4 shadow-sm">
+      <div className="mb-[11px] flex items-center gap-[7px] text-caption font-semibold uppercase tracking-[0.05em] text-text-subtle">
+        <IcClock size={13} /> {t("scenarios.rc.runs_next3")}
+      </div>
+      {rows.map((r, i) => (
+        <RunItem key={i} when={r} what={t("scenarios.rc.runs_post")} />
+      ))}
+    </div>
+  );
+}
+function RunItem({ when, what }: { when: string; what: string }) {
+  return (
+    <div className="flex items-center gap-[11px] border-t border-border py-[9px] first:border-t-0 first:pt-0">
+      <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-accent/60" />
+      <span className="min-w-[116px] shrink-0 text-small font-semibold tabular-nums text-text">{when}</span>
+      <span className="flex-1 text-right text-caption leading-[1.4] text-text-subtle">{what}</span>
+    </div>
+  );
+}
+// The next-3 «when» labels. Event scenarios have no schedule → a single row.
+function computeRuns(t: T, form: FormState): string[] {
+  const hh = `~${form.hour}`;
+  if (form.when === "event") return [t("scenarios.rc.runs_on_event")];
+  if (form.when === "every_n_days") {
+    return [
+      t("scenarios.rc.runs_tomorrow").replace("{time}", hh),
+      t("scenarios.rc.runs_in_n_days").replace("{n}", String(form.nDays)).replace("{time}", hh),
+      t("scenarios.rc.runs_in_n_days").replace("{n}", String(form.nDays * 2)).replace("{time}", hh),
+    ];
+  }
+  if (form.when === "weekly") {
+    const day = t(WD_FULL[form.weekday] ?? WD_FULL[0]);
+    return [
+      t("scenarios.rc.runs_next_day").replace("{day}", day).replace("{time}", hh),
+      t("scenarios.rc.runs_next_day").replace("{day}", day).replace("{time}", hh),
+      t("scenarios.rc.runs_next_day").replace("{day}", day).replace("{time}", hh),
+    ];
+  }
+  // daily / date_range → three consecutive days
+  return [
+    t("scenarios.rc.runs_tomorrow").replace("{time}", hh),
+    t("scenarios.rc.runs_day2").replace("{time}", hh),
+    t("scenarios.rc.runs_day3").replace("{time}", hh),
+  ];
+}
+
 function Stage({
   reply,
+  form,
   preview,
-  whenFires,
-  canRunNow,
   running,
   runResult,
   onRunNow,
+  canRunNow,
   handle,
 }: {
   reply: boolean;
+  form: FormState;
   preview: ScenarioPreviewT | null;
-  whenFires?: string;
-  canRunNow?: boolean;
   running?: boolean;
   runResult?: ScenarioRunNow | null;
   onRunNow?: () => void;
+  canRunNow?: boolean;
   handle: string;
 }) {
   const { t } = useTranslation();
-  // neutral demo creator for the mock (matches the rest of the redesign)
   const name = "Алекс";
   const initials = "А";
-  const samplePost = preview?.sample_post?.trim()
-    ? preview.sample_post
-    : "Вопрос на сегодня: что вы сегодня доведёте до конца — даже если получится неидеально? Напишите одним словом 👇";
+  const samplePost = preview?.sample_post?.trim() ? preview.sample_post : t("scenarios.rc.stage_sample_post");
   return (
-    <aside className="flex flex-col gap-[11px] min-[900px]:sticky min-[900px]:top-[18px] min-[900px]:self-start">
-      <div className="inline-flex items-center gap-1.5 text-caption font-semibold uppercase tracking-[0.06em] text-text-subtle">
-        <IcEye size={13} /> {t("scenarios.ed.stage_cap")}
+    <aside className="flex flex-col gap-[13px] min-[900px]:sticky min-[900px]:top-[18px] min-[900px]:self-start">
+      <div className="inline-flex items-center gap-[7px] text-caption font-semibold uppercase tracking-[0.06em] text-text-subtle">
+        <IcEye size={13} /> {t("scenarios.rc.stage_cap")}
       </div>
 
-      {/* the framed «screen» */}
+      {/* the framed stage */}
       <div className="overflow-hidden rounded-[28px] border border-border bg-surface shadow-lg">
-        {/* bar */}
-        <div className="flex items-center gap-2.5 border-b border-border bg-surface-2 px-[18px] py-3">
+        <div className="flex items-center gap-2.5 border-b border-border bg-surface-2 px-[17px] py-3">
           <span className="h-[9px] w-[9px] shrink-0 rounded-full bg-accent/55" />
-          <span className="text-small font-semibold text-text-muted">
-            {reply ? t("scenarios.ed.stage_bar_reply") : t("scenarios.ed.stage_bar_post")}
-          </span>
+          <span className="text-small font-semibold text-text-muted">{reply ? t("scenarios.rc.stage_bar_reply") : t("scenarios.rc.stage_bar_post")}</span>
           <span className="ml-auto inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.04em] text-text-subtle">
             <span className="h-1.5 w-1.5 rounded-full bg-success shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-success)_20%,transparent)]" />
-            {t("scenarios.ed.stage_live")}
+            {t("scenarios.rc.stage_live")}
           </span>
         </div>
 
-        {/* mock */}
-        {reply ? (
-          <StageReplyThread
-            initials={initials}
-            name={name}
-            handle={handle}
-            parent={t("scenarios.ed.parent_post")}
-            commentWho={t("scenarios.ed.comment_who")}
-            commentText={t("scenarios.ed.comment_text")}
-            botReply={t("scenarios.ed.bot_reply")}
-          />
-        ) : (
-          <StagePost
-            initials={initials}
-            name={name}
-            handle={handle}
-            time="9:00"
-            text={samplePost}
-            stats={["1,2K", "84", "47"]}
-          />
-        )}
+        {reply ? <StageReplyThread initials={initials} name={name} handle={handle} /> : <StagePost initials={initials} name={name} handle={handle} text={samplePost} />}
 
-        {/* foot — honesty lines + run-now */}
-        <div className="flex flex-col gap-2.5 border-t border-border bg-surface px-[18px] py-[15px]">
-          <p className="flex items-start gap-2 text-caption leading-[1.5] text-text-subtle [&_b]:font-semibold [&_b]:text-text-muted">
-            <IcSparkle size={13} className="mt-0.5 shrink-0 opacity-85" />
-            <span dangerouslySetInnerHTML={{ __html: reply ? t("scenarios.ed.stage_voice_reply") : t("scenarios.ed.stage_voice_post").replace("{n}", "8") }} />
-          </p>
-          <p className="flex items-start gap-2 text-caption leading-[1.5] text-text-subtle [&_b]:font-semibold [&_b]:text-text-muted">
-            <IcClock size={13} className="mt-0.5 shrink-0 opacity-85" />
-            <span>
-              {t("scenarios.when_fires").replace(
-                "{when}",
-                reply ? t("scenarios.ed.stage_fires_reply") : whenFires ?? t("scenarios.fires.morning"),
-              )}
-            </span>
-          </p>
-          {onRunNow && (
-            <div className="mt-0.5 flex flex-wrap items-center gap-2.5 border-t border-border pt-3">
-              <Button size="sm" variant="secondary" onClick={onRunNow} loading={running} disabled={!canRunNow} icon={<IcPlay size={14} />}>
-                {t("scenarios.run_now")}
-              </Button>
-              <span className="flex-1 basis-[130px] text-caption leading-[1.4] text-text-subtle">{t("scenarios.ed.run_note")}</span>
-            </div>
-          )}
-        </div>
+        {/* honest invoice line */}
+        <p className="flex items-start gap-2 border-t border-border bg-surface-2 px-[17px] py-[11px] text-caption leading-[1.45] text-text-subtle [&_b]:font-semibold [&_b]:text-text-muted">
+          <IcSparkle size={13} className="mt-px shrink-0 opacity-85" />
+          <span dangerouslySetInnerHTML={{ __html: reply ? t("scenarios.rc.invoice_reply") : t("scenarios.rc.invoice_post") }} />
+        </p>
       </div>
 
-      {/* disclaimer under the frame */}
-      <p className="mt-0.5 flex items-start gap-2 px-1 text-caption leading-[1.5] text-text-subtle">
-        <IcAlert size={13} className="mt-0.5 shrink-0 opacity-80" />
-        <span>{t("scenarios.ed.stage_disc")}</span>
-      </p>
+      <NextRuns reply={reply} form={form} />
 
-      {/* run result — draft created banner + the draft */}
+      {/* run-now — only ever a draft */}
+      {onRunNow && (
+        <div className="flex flex-wrap items-center gap-[11px]">
+          <Button size="sm" variant="secondary" onClick={onRunNow} loading={running} disabled={!canRunNow} icon={<IcPlay size={14} />}>
+            {t("scenarios.run_now")}
+          </Button>
+          <span className="flex-1 basis-[130px] text-caption leading-[1.4] text-text-subtle">{t("scenarios.rc.runnow_note")}</span>
+        </div>
+      )}
+
+      {/* run result */}
       {runResult && (
         <div className="overflow-hidden rounded-lg border border-success/30 bg-success/[0.06]">
           <div className="flex items-start gap-2 border-b border-success/20 px-3.5 py-2.5">
@@ -441,7 +331,61 @@ function Stage({
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-//  STEP EDITOR — same prop interface as the old EditorView
+//  LAYER (accordion) — Layer 2 «Настроить точнее» + Layer 3 stub
+// ════════════════════════════════════════════════════════════════════════════
+function Layer({
+  title,
+  proLabel,
+  summary,
+  open,
+  onToggle,
+  children,
+}: {
+  title: string;
+  proLabel?: string;
+  summary?: string;
+  open: boolean;
+  onToggle: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <div className={cn("overflow-hidden rounded-lg border bg-surface shadow-sm", open ? "border-accent/30" : "border-border")}>
+      <button type="button" onClick={onToggle} aria-expanded={open} className="flex w-full items-center gap-3 px-[18px] py-[15px] text-left text-text transition-colors hover:bg-surface-2">
+        <IcChevRight size={16} className={cn("shrink-0 text-text-subtle transition-transform", open && "rotate-90")} />
+        <span className="min-w-0 flex-1">
+          <span className="flex flex-wrap items-center gap-2.5 text-[15px] font-semibold tracking-[-0.004em]">
+            {title}
+            {proLabel && <span className="rounded-full border border-border px-2 py-px font-mono text-[9.5px] uppercase tracking-[0.05em] text-text-subtle">{proLabel}</span>}
+          </span>
+          {!open && summary && <span className="mt-[3px] block text-caption leading-[1.45] text-text-subtle [text-wrap:pretty]">{summary}</span>}
+        </span>
+      </button>
+      {open && <div className="flex flex-col gap-5 border-t border-border px-[18px] pb-[19px] pt-1">{children}</div>}
+    </div>
+  );
+}
+
+function Layer3Stub() {
+  const { t } = useTranslation();
+  return (
+    <div className="flex items-start gap-3 rounded-md border border-dashed border-border bg-surface-2 px-4 py-3.5">
+      <span className="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-sm border border-border bg-surface text-text-subtle">
+        <IcShieldHouse size={16} />
+      </span>
+      <div className="min-w-0">
+        <div className="text-small font-semibold text-text">{t("scenarios.rc.l3_title")}</div>
+        <div className="mt-0.5 text-caption leading-[1.5] text-text-muted">{t("scenarios.rc.l3_desc")}</div>
+        <span className="mt-2 inline-block rounded-full border border-border px-2 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.04em] text-text-subtle">
+          <IcLock size={10} className="-mt-px mr-1 inline" />
+          {t("scenarios.rc.l3_soon")}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  STEP EDITOR — same prop interface as before (the host page is unchanged)
 // ════════════════════════════════════════════════════════════════════════════
 export function StepEditor({
   t,
@@ -452,13 +396,10 @@ export function StepEditor({
   isExisting,
   nameErr,
   fieldErrs,
-  askErr,
-  vFields,
   isReplyPolicy,
   isReactive,
   bakedRules,
   preview,
-  whenFires,
   running,
   runResult,
   onRunNow,
@@ -474,7 +415,10 @@ export function StepEditor({
   onCancelInline,
   onConfirmInline,
   deleting,
-  onPowerToggle,
+  demoOpenSlot,
+  demoModal,
+  demoLayer2,
+  demoLayer3,
 }: {
   t: T;
   form: FormState;
@@ -512,48 +456,126 @@ export function StepEditor({
   onCancelInline: () => void;
   onConfirmInline: () => void;
   deleting: boolean;
+  /** Gallery-only seeds — open a slot drawer / modal / layer on first render so
+   *  every Wave-1 state is reachable on demo data (undefined in the live page). */
+  demoOpenSlot?: OpenSlot;
+  demoModal?: BigTextField;
+  demoLayer2?: boolean;
+  demoLayer3?: boolean;
 }) {
   const promoMode = form.helperOn || form.preset?.id === "promo";
   const reply = isReplyPolicy || promoMode;
-  const eventKind = form.preset ? eventKindOf(form.preset.trigger_cfg) : "";
 
-  // ── step toggle model ──
-  // steps 1 & 2 are an accordion pair: which one is active (the other collapses).
-  const [activePair, setActivePair] = useState<1 | 2>(2);
-  const [more4Open, setMore4Open] = useState(false);
-  const [adv5Open, setAdv5Open] = useState(false);
+  // ── editor-local UI state (demo seeds let the gallery open any state) ──
+  const [openSlot, setOpenSlot] = useState<OpenSlot>(demoOpenSlot ?? null);
+  const [bigText, setBigText] = useState<BigTextField>(demoModal ?? null);
+  const [condMenuOpen, setCondMenuOpen] = useState(false);
+  const [layer2Open, setLayer2Open] = useState(demoLayer2 ?? false);
+  const [layer3Open, setLayer3Open] = useState(demoLayer3 ?? false);
 
   // ── rename: contentEditable h1 toggled by the pencil, commit on blur ──
   const [renaming, setRenaming] = useState(false);
   const titleRef = useRef<HTMLHeadingElement>(null);
 
-  // ── step summaries (human one-liners) ──
-  const topicVal = vFields[0] ? (form.fields[vFields[0].key] ?? "").trim() : "";
-  const sum1: ReactNode = reply ? (
-    t("scenarios.ed.sum1_reply")
-  ) : (
-    <span dangerouslySetInnerHTML={{ __html: whenFires }} />
-  );
-  const sum2: ReactNode = reply ? (
-    <>
-      {t("scenarios.ed.sum2_reply").split("{audience}")[0]}
-      <V>{audPhrase(t, form.audience)}</V>
-      {t("scenarios.ed.sum2_reply").split("{audience}")[1]}
-    </>
-  ) : (
-    <>
-      {t("scenarios.ed.sum2_post").split("{topic}")[0]}
-      <V>{topicVal ? `«${topicVal}»` : t("scenarios.ed.sum2_post_auto")}</V>
-      {t("scenarios.ed.sum2_post").split("{topic}")[1]}
-    </>
+  const toggleSlot = (s: Exclude<OpenSlot, null>) => {
+    setOpenSlot((cur) => (cur === s ? null : s));
+    setCondMenuOpen(false);
+  };
+
+  // The instruction value shown in the «Что писать» big-text field (the baked /
+  // free instruction with the preset fields interpolated, before recipe folding).
+  const instructionValue = interpolate(form.instruction, form.fields);
+  // A condition is "set" when any of the 3 recipe conditions is active.
+  const condSet = form.condNoPostToday || form.cooldownOn || form.maxFiresOn;
+
+  // ── sentence slots ──
+  let prose: ReactNode;
+  if (reply) {
+    prose = (
+      <>
+        {t("scenarios.rc.sent.reply_a")} <LockSlot>{t("scenarios.rc.lock_15min")}</LockSlot> {t("scenarios.rc.sent.reply_b")}{" "}
+        <Slot open={openSlot === "who"} onClick={() => toggleSlot("who")}>
+          {audPhrase(t, form.audience)}
+        </Slot>{" "}
+        {t("scenarios.rc.sent.reply_c")}{" "}
+        <Slot open={openSlot === "tone"} onClick={() => toggleSlot("tone")}>
+          {t("scenarios.rc.sent.reply_tone")}
+        </Slot>{" "}
+        {t("scenarios.rc.sent.reply_d")} <Handle>{handle}</Handle>
+        {t("scenarios.rc.sent.reply_e")}{" "}
+        <Slot open={openSlot === "how"} onClick={() => toggleSlot("how")}>
+          {form.mode === "auto" ? t("scenarios.rc.sent.how_auto_reply") : t("scenarios.rc.sent.how_ask_reply")}
+        </Slot>
+        .
+      </>
+    );
+  } else {
+    prose = (
+      <>
+        <Slot open={openSlot === "when"} onClick={() => toggleSlot("when")}>
+          {whenPhrase(t, form)}
+        </Slot>{" "}
+        {t("scenarios.rc.sent.post_a")}{" "}
+        <Slot open={openSlot === "what"} onClick={() => toggleSlot("what")}>
+          {t("scenarios.rc.sent.post_what")}
+        </Slot>{" "}
+        {t("scenarios.rc.sent.post_b")} <Handle>{handle}</Handle> {t("scenarios.rc.sent.post_c")}{" "}
+        <Slot open={openSlot === "how"} onClick={() => toggleSlot("how")}>
+          {form.mode === "auto" ? t("scenarios.rc.sent.how_auto_post") : t("scenarios.rc.sent.how_ask_post")}
+        </Slot>
+        .
+      </>
+    );
+  }
+
+  // condition line (quiet, under the sentence — POST only)
+  const condLine = !reply && (
+    <div className="px-6 pb-5 text-[15px] leading-[1.6] text-text-muted">
+      {condSet ? (
+        <>
+          <span className="inline-flex items-center gap-1.5 text-text-subtle">
+            <IcSliders size={13} className="opacity-70" /> {t("scenarios.rc.cond_lead")}
+          </span>{" "}
+          <Slot open={openSlot === "if"} onClick={() => toggleSlot("if")}>
+            {condSummary(t, form)}
+          </Slot>
+          .
+        </>
+      ) : (
+        <button
+          type="button"
+          onClick={() => toggleSlot("if")}
+          className={cn(
+            "inline-flex items-center gap-1.5 rounded-md border border-dashed px-[11px] py-[3px] align-middle text-[0.9em] font-medium transition-colors",
+            openSlot === "if" ? "border-accent text-accent" : "border-border text-text-subtle hover:border-accent/40 hover:text-accent",
+          )}
+        >
+          <IcSliders size={12} /> {t("scenarios.rc.add_cond_inline")}
+        </button>
+      )}
+    </div>
   );
 
+  // the open slot's inline drawer
+  const drawer = openSlot && (
+    <Drawer title={drawerTitle(t, openSlot)} icon={SLOT_ICON[openSlot]} onDone={() => setOpenSlot(null)}>
+      {openSlot === "when" && (reply ? <WhenReplyBody /> : <WhenPostBody form={form} update={update} />)}
+      {openSlot === "if" && <IfBody form={form} update={update} menuOpen={condMenuOpen} setMenuOpen={setCondMenuOpen} />}
+      {openSlot === "what" && <WhatPostBody form={form} update={update} instructionValue={instructionValue} onOpenInstruction={() => setBigText("instruction")} />}
+      {openSlot === "who" && <WhoBody audience={form.audience} onAudience={(a) => update({ audience: a })} audiencePrompt={form.audiencePrompt} onOpenCustom={() => setBigText("audience")} />}
+      {openSlot === "tone" && <ToneBody value={form.replyInstruction} onOpen={() => setBigText("tone")} />}
+      {openSlot === "how" && <HowBody mode={form.mode} onMode={(m) => update({ mode: m })} />}
+    </Drawer>
+  );
+
+  const l2sum = reply ? t("scenarios.rc.l2sum_reply") : t("scenarios.rc.l2sum_post");
+
   return (
-    <div className="mx-auto max-w-[1040px]">
+    <div className="relative mx-auto max-w-[1000px]">
       {/* ── topbar ── */}
       <div className="mb-[26px] flex flex-col gap-3.5">
         <button onClick={onBack} className="inline-flex items-center gap-1.5 self-start rounded-sm py-1 pl-1.5 pr-2.5 text-small font-medium text-text-muted transition-colors hover:bg-surface-2 hover:text-text">
-          <IcArrowLeft size={16} /> {t("scenarios.back")}
+          <IcArrowLeft size={16} /> {t("scenarios.back_to_list")}
         </button>
         <div className="flex flex-wrap items-center justify-between gap-3.5">
           <div className="flex min-w-0 items-center gap-2.5">
@@ -599,163 +621,115 @@ export function StepEditor({
             >
               <IcPencil size={13} />
             </button>
+            {/* kind plaque */}
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/22 bg-accent/[0.08] py-1 pl-2.5 pr-[11px] text-caption font-semibold text-text-muted">
+              {reply ? <IcBubble size={13} className="text-accent" /> : <IcBubbleQuestion size={13} className="text-accent" />}
+              {reply ? t("scenarios.rc.kind_reply") : t("scenarios.rc.kind_post")}
+            </span>
           </div>
-          {/* status pill — «Выключен» (off look) */}
-          <span className="inline-flex items-center gap-2 rounded-full border border-border bg-surface-2 px-3 py-1.5 text-small font-semibold text-text-subtle">
-            <span className="h-2 w-2 rounded-full bg-ink-400" />
-            {t("scenarios.status_off")}
-          </span>
-        </div>
-        {/* kind plaque + hint */}
-        <div className="-mt-0.5 flex flex-wrap items-center gap-2.5">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/22 bg-accent/[0.08] py-1 pl-2.5 pr-[11px] text-caption font-semibold text-text-muted">
-            {reply ? <IcBubble size={13} className="text-accent" /> : <IcBubbleQuestion size={13} className="text-accent" />}
-            {reply ? t("scenarios.ed.kind_reply") : t("scenarios.ed.kind_post")}
-          </span>
-          <span className="text-caption text-text-subtle">{t("scenarios.ed.name_hint").replace(/<\/?b>/g, "")}</span>
         </div>
       </div>
 
-      {/* ── hybrid grid ── */}
-      <div className="grid grid-cols-1 items-start gap-[26px] min-[900px]:grid-cols-[minmax(0,1fr)_416px] min-[900px]:gap-[34px]">
-        {/* LEFT — step track */}
-        <div className="flex min-w-0 flex-col">
-          {/* name error surfaces here (the title is the name field) */}
+      {/* ── two-column grid ── */}
+      <div className="grid grid-cols-1 items-start gap-[30px] min-[900px]:grid-cols-[minmax(0,1fr)_392px]">
+        {/* LEFT — the recipe */}
+        <div className="flex min-w-0 flex-col gap-4">
+          {/* status row */}
+          <div className="flex flex-wrap items-center gap-3">
+            {isExisting ? (
+              <>
+                <span className="inline-flex items-center gap-[7px] text-small text-text-muted">
+                  <IcClock size={14} className="shrink-0 text-text-subtle" />
+                  <span dangerouslySetInnerHTML={{ __html: reply ? t("scenarios.rc.status_next_reply") : t("scenarios.rc.status_next_post") }} />
+                </span>
+                <span className="ml-auto inline-flex items-center gap-2 rounded-full border border-success/30 bg-success/10 px-3 py-1.5 text-small font-semibold text-success">
+                  <span className="h-2 w-2 rounded-full bg-success" />
+                  {t("scenarios.rc.status_active")}
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="inline-flex items-center gap-[7px] text-small text-text-muted">
+                  <IcInfo size={14} className="shrink-0 text-text-subtle" />
+                  {t("scenarios.rc.status_draft")}
+                </span>
+                <span className="ml-auto inline-flex items-center gap-2 rounded-full border border-border bg-surface-2 px-3 py-1.5 text-small font-semibold text-text-subtle">
+                  <span className="h-2 w-2 rounded-full bg-ink-400" />
+                  {t("scenarios.status_off")}
+                </span>
+              </>
+            )}
+          </div>
+
           {nameErr && (
-            <p className="mb-3 inline-flex items-center gap-1.5 text-caption text-danger">
+            <p className="inline-flex items-center gap-1.5 text-caption text-danger">
               <IcAlert size={13} /> {t("scenarios.err_required")}
             </p>
           )}
 
-          {/* STEP 1 — when */}
-          <Step
-            n={1}
-            title={t("scenarios.ed.s1_title")}
-            open={activePair === 1}
-            done={activePair !== 1}
-            summary={sum1}
-            onToggle={() => setActivePair(1)}
-          >
-            {reply ? (
-              <WhenReplyCard />
-            ) : (
-              <>
-                <WhenSegment
-                  value={form.when}
-                  nDays={form.nDays}
-                  weekday={form.weekday}
-                  dateFrom={form.dateFrom}
-                  dateTo={form.dateTo}
-                  threshold={form.threshold}
-                  locked={isReactive}
-                  eventKind={eventKind}
-                  onMode={(m: WhenMode) => update({ when: m })}
-                  onNDays={(n) => update({ nDays: n })}
-                  onWeekday={(d) => update({ weekday: d })}
-                  onDate={(which, v) => update(which === "from" ? { dateFrom: v } : { dateTo: v })}
-                  onThreshold={(v) => update({ threshold: v })}
-                />
-                {/* Время + Разброс — POST routines, cadence modes only (not «по событию»). */}
-                {form.when !== "event" && (
-                  <WhenTimeJitter
-                    hour={form.hour}
-                    jitter={form.jitter}
-                    onHour={(h) => update({ hour: h })}
-                    onJitter={(j) => update({ jitter: j })}
-                  />
-                )}
-              </>
-            )}
-          </Step>
+          {/* the recipe card */}
+          <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-sm">
+            <div className="flex items-center gap-2 border-b border-border bg-surface-2 px-[22px] py-3.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-text-subtle">
+              <IcSparkle size={12} className="shrink-0 text-accent" /> {t("scenarios.rc.eyebrow")}
+              <span className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2 py-0.5 font-mono text-[10px] normal-case tracking-[0.04em] text-text-muted">
+                {reply ? <IcBubble size={11} className="text-accent" /> : <IcPencil size={11} className="text-accent" />}
+                {reply ? t("scenarios.rc.kind_reply") : t("scenarios.rc.kind_post")}
+              </span>
+            </div>
+            <p className="flex items-center gap-2 px-6 pt-[11px] text-[13px] text-text-subtle [&_b]:font-semibold [&_b]:text-text-muted">
+              <IcPencil size={13} className="shrink-0 text-accent" />
+              <span dangerouslySetInnerHTML={{ __html: t("scenarios.rc.hint") }} />
+            </p>
+            <p className="px-6 pb-3 pt-[22px] text-[21px] leading-[1.75] text-text [text-wrap:pretty]">{prose}</p>
+            {condLine}
+            {drawer}
+          </div>
 
-          {/* STEP 2 — what you set */}
-          <Step
-            n={2}
-            title={t("scenarios.ed.s2_title")}
-            open={activePair === 2}
-            done={activePair !== 2}
-            summary={sum2}
-            onToggle={() => setActivePair(2)}
-          >
-            {promoMode ? (
-              <>
-                <PromoHelper on={form.helperOn} promo={form.promo} askErr={askErr} onToggle={(on) => update({ helperOn: on })} onChange={(p) => update({ promo: p })} />
-                <Field label={t("scenarios.sec.reply")} hint={t("scenarios.f.reply_hint")}>
-                  <textarea rows={3} className={TEXTAREA} value={form.replyInstruction} onChange={(e) => update({ replyInstruction: e.target.value })} placeholder={t("scenarios.f.reply_ph")} />
-                </Field>
-              </>
-            ) : isReplyPolicy ? (
-              <ReplyBlock
-                audience={form.audience}
-                onAudience={(a) => update({ audience: a })}
-                replyInstruction={form.replyInstruction}
-                onReplyInstruction={(v) => update({ replyInstruction: v })}
-              />
-            ) : vFields.length > 0 ? (
-              <div className="flex flex-col gap-4">
-                {vFields.map((f) => (
-                  <PresetFieldInput key={f.key} field={f} value={form.fields[f.key] ?? ""} error={fieldErrs[f.key]} onChange={(v) => setField(f.key, v)} />
-                ))}
-              </div>
-            ) : (
-              // from-scratch / no preset fields → a free topic-style instruction
-              <Field label={t("scenarios.f.instruction")} hint={t("scenarios.f.instruction_hint")}>
-                <textarea
-                  rows={4}
-                  className={cn(TEXTAREA, "min-h-[110px]")}
-                  value={form.instruction}
-                  onChange={(e) => update({ instruction: e.target.value })}
-                  placeholder={t("scenarios.f.instruction_ph")}
-                />
-              </Field>
-            )}
-          </Step>
+          {/* layers */}
+          <div className="flex flex-col gap-3">
+            <Layer title={t("scenarios.rc.l2_title")} summary={l2sum} open={layer2Open} onToggle={() => setLayer2Open((o) => !o)}>
+              <LayerGroup label={t("scenarios.rc.l2_grp_conditions")}>
+                <IfBody form={form} update={update} menuOpen={false} setMenuOpen={() => {}} />
+              </LayerGroup>
+              {reply ? (
+                <LayerGroup label={t("scenarios.rc.l2_grp_tone")}>
+                  <ToneBody value={form.replyInstruction} onOpen={() => setBigText("tone")} />
+                </LayerGroup>
+              ) : (
+                <>
+                  <LayerGroup label={t("scenarios.rc.l2_grp_time")}>
+                    <WhenPostBody form={form} update={update} />
+                  </LayerGroup>
+                  <LayerGroup label={t("scenarios.rc.l2_grp_content")}>
+                    <WhatPostBody form={form} update={update} instructionValue={instructionValue} onOpenInstruction={() => setBigText("instruction")} />
+                  </LayerGroup>
+                </>
+              )}
+              {bakedRules.length > 0 && (
+                <LayerGroup label={t("scenarios.baked_title")}>
+                  <ul className="flex flex-col gap-2">
+                    {bakedRules.map((r, i) => (
+                      <li key={i} className="flex items-start gap-2 text-small text-text-muted">
+                        <IcCheck size={15} className="mt-0.5 shrink-0 text-success" />
+                        <span>{r}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </LayerGroup>
+              )}
+              {/* the "More settings" extra toggles (spam filter / quiet hours …) — read-only FE knobs */}
+              <LayerGroup label={t("scenarios.more.title")}>
+                <MoreSettings isReply={reply} embedded />
+              </LayerGroup>
+            </Layer>
 
-          {/* STEP 3 — what Pennedly adds (ALWAYS open, read-only) */}
-          <Step n={3} title={t("scenarios.ed.s3_title")} open>
-            {bakedRules.length > 0 ? (
-              <InlineRules rules={bakedRules} />
-            ) : (
-              <p className="text-small leading-relaxed text-text-muted">{t("scenarios.baked_foot")}</p>
-            )}
-          </Step>
+            <Layer title={t("scenarios.rc.l3_title_short")} proLabel={t("scenarios.rc.layer_pro")} summary={t("scenarios.rc.l3_summary")} open={layer3Open} onToggle={() => setLayer3Open((o) => !o)}>
+              <Layer3Stub />
+            </Layer>
+          </div>
 
-          {/* STEP 4 — more settings (collapsible) */}
-          <Step
-            n={4}
-            title={t("scenarios.ed.s4_title")}
-            titleOpt={t("scenarios.ed.optional")}
-            optional
-            open={more4Open}
-            done={false}
-            summary={reply ? t("scenarios.ed.sum4_reply") : t("scenarios.ed.sum4_post")}
-            onToggle={() => setMore4Open((o) => !o)}
-          >
-            <MoreSettings isReply={reply} embedded />
-          </Step>
-
-          {/* STEP 5 — power users (collapsible) */}
-          <Step
-            n={5}
-            title={t("scenarios.ed.s5_title")}
-            titleOpt={t("scenarios.ed.optional")}
-            optional
-            open={adv5Open}
-            done={false}
-            summary={t("scenarios.ed.sum5")}
-            onToggle={() => setAdv5Open((o) => !o)}
-          >
-            <PowerUserDisclosure
-              open
-              embedded
-              onToggle={onPowerToggle}
-              instruction={form.instruction}
-              onInstruction={(v) => update({ instruction: v })}
-            />
-          </Step>
-
-          {/* STEP 6 — done (always open, no chevron) */}
-          <Step n={6} title={t("scenarios.ed.s6_title")} finish open last>
+          {/* action footer */}
+          <div className="mt-1 flex flex-col gap-3.5">
             {saveErr && (
               <div className="flex items-start gap-3 rounded-lg border border-danger/30 bg-danger/[0.07] p-4">
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-danger/12 text-danger">
@@ -769,10 +743,10 @@ export function StepEditor({
             )}
             <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center">
               <Button variant="secondary" onClick={onSave} loading={saving} className="max-sm:w-full">
-                {t("scenarios.save")}
+                {t("scenarios.rc.save_off")}
               </Button>
               <Button variant="primary" onClick={onSaveOn} loading={saving} icon={<IcCheck size={15} />} className="max-sm:w-full">
-                {t("scenarios.save_on")}
+                {isExisting ? t("scenarios.save") : t("scenarios.save_on")}
               </Button>
               {isExisting && (
                 <>
@@ -796,25 +770,49 @@ export function StepEditor({
                 </Button>
               </div>
             )}
-            <p className="flex items-start gap-2 text-small leading-[1.5] text-text-subtle [&_b]:font-semibold [&_b]:text-text-muted">
-              <IcAlert size={13} className="mt-0.5 shrink-0" />
-              <span dangerouslySetInnerHTML={{ __html: t("scenarios.ed.enable_note") }} />
-            </p>
-          </Step>
+          </div>
         </div>
 
-        {/* RIGHT — large sticky preview */}
-        <Stage
-          reply={reply}
-          preview={preview}
-          whenFires={whenFires}
-          canRunNow={canRunNow}
-          running={running}
-          runResult={runResult}
-          onRunNow={onRunNow}
-          handle={handle}
-        />
+        {/* RIGHT — stage */}
+        <Stage reply={reply} form={form} preview={preview} running={running} runResult={runResult} onRunNow={onRunNow} canRunNow={canRunNow} handle={handle} />
       </div>
+
+      {/* big-text modal — mounted inside the editor (relative positioning above) */}
+      {bigText && (
+        <BigTextModal
+          field={bigText}
+          value={bigText === "instruction" ? form.instruction : bigText === "tone" ? form.replyInstruction : form.audiencePrompt}
+          onChange={(v) => update(bigText === "instruction" ? { instruction: v } : bigText === "tone" ? { replyInstruction: v } : { audiencePrompt: v })}
+          onClose={() => setBigText(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+// «Срабатывает только если …» summary phrase from the active recipe conditions.
+function condSummary(t: T, form: FormState): string {
+  const parts: string[] = [];
+  if (form.condNoPostToday) parts.push(t("scenarios.rc.condsum_no_post"));
+  if (form.cooldownOn) parts.push(t("scenarios.rc.condsum_cooldown").replace("{n}", String(form.cooldownValue)).replace("{unit}", form.cooldownUnit === "days" ? t("scenarios.rc.unit_days_word") : t("scenarios.rc.unit_hours_word")));
+  if (form.maxFiresOn) parts.push(t("scenarios.rc.condsum_max").replace("{n}", String(form.maxFires)));
+  return parts.join(t("scenarios.rc.condsum_join"));
+}
+
+function drawerTitle(t: T, slot: Exclude<OpenSlot, null>): string {
+  return t(`scenarios.rc.dt_${slot}` as MessageKey);
+}
+
+// `@handle` — violet, non-clickable (its own colour so it never reads as a slot).
+function Handle({ children }: { children: ReactNode }) {
+  return <span className="whitespace-nowrap font-semibold text-[oklch(0.52_0.14_295)] dark:text-[oklch(0.80_0.12_295)]">{children}</span>;
+}
+
+function LayerGroup({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-[11px]">
+      <span className="text-[11px] font-semibold uppercase tracking-[0.05em] text-text-subtle">{label}</span>
+      {children}
     </div>
   );
 }

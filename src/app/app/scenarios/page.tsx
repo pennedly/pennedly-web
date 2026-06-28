@@ -158,6 +158,8 @@ function freshForm(preset: ScenarioPreset | null, t: (k: MessageKey) => string):
       fields[f.key] = typeof f.default === "string" ? f.default : "";
     }
   }
+  const eventKind: FormState["eventKind"] =
+    (preset?.trigger_cfg?.kind as string) === "on_follower_milestone" ? "on_follower_milestone" : "on_metric_threshold";
   return {
     name: preset ? t(preset.name_key as MessageKey) : "",
     preset,
@@ -166,14 +168,31 @@ function freshForm(preset: ScenarioPreset | null, t: (k: MessageKey) => string):
     instruction: preset && !isPromo ? preset.instruction : "",
     replyInstruction: preset && preset.reply_instruction ? preset.reply_instruction : "",
     audience: (preset?.reply_defaults?.audience as string) || "all_except_trolls",
+    audiencePrompt: "",
     when,
     nDays: (preset?.trigger_cfg?.n as number) ?? 3,
     weekday: (preset?.trigger_cfg?.weekday as number) ?? 0,
     dateFrom: (preset?.condition_cfg?.active_from as string) || "",
     dateTo: (preset?.condition_cfg?.active_to as string) || "",
     threshold: "",
+    eventKind,
     hour: "9:00",
     jitter: 15,
+    // recipe condition builder — a fresh preset starts with the preset's own
+    // baked conditions reflected (only_if_no_post_today is the only one presets
+    // seed today; cooldown/max_fires are user-added).
+    condNoPostToday: (preset?.condition_cfg?.only_if_no_post_today as boolean) === true,
+    cooldownOn: false,
+    cooldownValue: 6,
+    cooldownUnit: "hours",
+    maxFiresOn: false,
+    maxFires: 3,
+    // recipe content shaping — defaults that fold to nothing (round-trip safe).
+    topic: "",
+    length: "any",
+    cta: "",
+    // КАК — default «Спроси меня» (ask). New scenarios stay drafts-first.
+    mode: "ask",
     fields,
   };
 }
@@ -614,24 +633,46 @@ export default function ScenariosPage() {
     const when = whenModeFromCfg(s.trigger_cfg, s.condition_cfg);
     // best-effort: match a catalog preset for the baked-rules + reply detection
     const matched = matchPreset(s, catalog);
+    const cc = s.condition_cfg ?? {};
+    const cooldownHours = typeof cc.cooldown_hours === "number" ? (cc.cooldown_hours as number) : null;
+    const cooldownDays = typeof cc.cooldown_days === "number" ? (cc.cooldown_days as number) : null;
     const f: FormState = {
       name: s.name,
       preset: matched,
       helperOn: usePromo,
       promo: usePromo && s.structured ? s.structured : { ...BLANK_PROMO },
+      // Load the saved instruction AS-IS into the editor; the recipe content
+      // shapers (topic/length/cta) start neutral so re-saving reproduces the
+      // exact same instruction string (round-trip — incl. Sonya's «Акция»).
       instruction: usePromo || replyPolicy ? "" : s.instruction,
       replyInstruction: s.reply_instruction,
       audience: (s.action_cfg?.audience as string) || "all_except_trolls",
+      audiencePrompt: "",
       when,
       nDays: (s.trigger_cfg?.n as number) ?? 3,
       weekday: (s.trigger_cfg?.weekday as number) ?? 0,
       dateFrom: (s.condition_cfg?.active_from as string) || "",
       dateTo: (s.condition_cfg?.active_to as string) || "",
       threshold: s.trigger_cfg?.threshold_views != null ? String(s.trigger_cfg.threshold_views) : "",
+      eventKind: (s.trigger_cfg?.kind as string) === "on_follower_milestone" ? "on_follower_milestone" : "on_metric_threshold",
       // Schedule «Время»/«Разброс» — restored from the saved scenario (the backend
       // surfaces them top-level, sourced from trigger_cfg). Defaults when absent.
       hour: typeof scenarioHour(s) === "number" ? `${scenarioHour(s)}:00` : "9:00",
       jitter: scenarioJitter(s) ?? 15,
+      // recipe condition builder — reconstructed from condition_cfg so editing +
+      // saving keeps the same conditions (an absent key → that row is off).
+      condNoPostToday: (cc.only_if_no_post_today as boolean) === true,
+      cooldownOn: cooldownHours !== null || cooldownDays !== null,
+      cooldownValue: cooldownDays ?? cooldownHours ?? 6,
+      cooldownUnit: cooldownDays !== null ? "days" : "hours",
+      maxFiresOn: typeof cc.max_fires === "number",
+      maxFires: typeof cc.max_fires === "number" ? (cc.max_fires as number) : 3,
+      topic: "",
+      length: "any",
+      cta: "",
+      // КАК — restore the saved publish mode (absent → treat as 'auto', the
+      // current backend default for legacy scenarios).
+      mode: s.publish_mode === "ask" ? "ask" : "auto",
       fields: {},
     };
     if (usePromo && s.structured) {

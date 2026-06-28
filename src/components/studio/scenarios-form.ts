@@ -12,11 +12,20 @@
 
 import type {
   PresetField,
+  PublishMode,
   ScenarioCreate,
   ScenarioPreset,
   ScenarioPromoFields,
 } from "@/lib/types";
 import type { WhenMode } from "./ScenariosParts";
+
+// «Recipe» content shaping — the КАК-длинно/тема/призыв choices fold into the
+// generation instruction (Wave 1: no new backend fields, decision §6.2).
+export type RecipeLength = "short" | "medium" | "any";
+export type CooldownUnit = "hours" | "days";
+// The reactive event kind the recipe «По событию» mode targets (Wave 1: views
+// threshold or follower milestone — NOT mentions, which need a new engine).
+export type RecipeEvent = "on_metric_threshold" | "on_follower_milestone";
 
 // The editable form state (everything the editor owns).
 export type FormState = {
@@ -28,6 +37,8 @@ export type FormState = {
   instruction: string;
   replyInstruction: string;
   audience: string; // reply audience (reply_policy / reply presets)
+  // a free «Свой вариант» audience description (reply_policy custom audience)
+  audiencePrompt: string;
   // КОГДА
   when: WhenMode;
   nDays: number;
@@ -35,11 +46,27 @@ export type FormState = {
   dateFrom: string;
   dateTo: string;
   threshold: string; // amplify_viral views threshold (blank = auto)
+  // The reactive event kind chosen in the recipe «По событию» mode. Defaults to
+  // the preset's event kind so an existing reactive scenario round-trips.
+  eventKind: RecipeEvent;
   // POST routines only — local time-of-day + publish jitter for the cadence
   // modes. Sent to the backend as trigger_cfg.hour / trigger_cfg.jitter_minutes
   // (see buildTrigger / compileBody); ignored for event/reply/promo shapes.
   hour: string; // hour-of-day, e.g. "9:00"
   jitter: number; // ± minutes of random spread (0 = exact)
+  // ── ЕСЛИ — the recipe condition builder (Wave 1: 3 honest conditions) ──
+  condNoPostToday: boolean; // → condition_cfg.only_if_no_post_today
+  cooldownOn: boolean;
+  cooldownValue: number; // → condition_cfg.cooldown_hours | cooldown_days
+  cooldownUnit: CooldownUnit;
+  maxFiresOn: boolean;
+  maxFires: number; // → condition_cfg.max_fires
+  // ── ЧТО — content shaping that folds into the instruction (POST) ──
+  topic: string; // «Тема дня» (optional; blank → Pennedly picks)
+  length: RecipeLength; // «Длина и формат»
+  cta: string; // «Призыв в конце» (optional)
+  // ── КАК — who confirms before it publishes (the КАК slot → publish_mode) ──
+  mode: PublishMode;
   // per-field text values, keyed by field.key (text/textarea/options)
   fields: Record<string, string>;
 };
@@ -84,13 +111,18 @@ function buildTrigger(s: FormState): Record<string, unknown> {
       return withSchedule({ kind: "every_n_days", n: s.nDays });
     case "weekly":
       return withSchedule({ kind: "weekly", weekday: s.weekday });
-    case "event":
-      // reactive — keep the preset's event trigger, apply the optional threshold
-      if ((base.kind as string) === "on_metric_threshold") {
+    case "event": {
+      // reactive — the recipe chooses the event kind (views / followers). Keep
+      // the preset's base targets (the milestone ladder) when present.
+      if (s.eventKind === "on_metric_threshold") {
         const th = Number(s.threshold);
-        return s.threshold.trim() && th > 0 ? { kind: "on_metric_threshold", threshold_views: th } : { kind: "on_metric_threshold" };
+        return s.threshold.trim() && th > 0
+          ? { kind: "on_metric_threshold", threshold_views: th }
+          : { kind: "on_metric_threshold" };
       }
-      return { ...base };
+      // follower milestone — preserve the preset's `targets` ladder if any.
+      return (base.kind as string) === "on_follower_milestone" ? { ...base } : { kind: "on_follower_milestone" };
+    }
     case "date_range":
     case "daily":
     default:
@@ -98,8 +130,8 @@ function buildTrigger(s: FormState): Record<string, unknown> {
   }
 }
 
-// Build the condition_cfg from the preset base + the КОГДА choice + any
-// condition-mapped fields (not_before / active_from / active_to).
+// Build the condition_cfg from the preset base + the КОГДА choice + the recipe
+// condition builder + any condition-mapped fields (not_before / dates).
 function buildCondition(s: FormState): Record<string, unknown> | null {
   const cond: Record<string, unknown> = { ...(s.preset?.condition_cfg ?? {}) };
   // date_range → active_from / active_to guard
@@ -108,6 +140,15 @@ function buildCondition(s: FormState): Record<string, unknown> | null {
     if (s.dateFrom) cond.active_from = s.dateFrom;
     if (s.dateTo) cond.active_to = s.dateTo;
   }
+  // recipe condition builder (only_if_no_post_today / cooldown / max_fires).
+  // Each only appears when its row is active, so a scenario without conditions
+  // compiles to the preset's base condition_cfg unchanged (round-trip safe).
+  if (s.condNoPostToday) cond.only_if_no_post_today = true;
+  if (s.cooldownOn && s.cooldownValue > 0) {
+    if (s.cooldownUnit === "days") cond.cooldown_days = s.cooldownValue;
+    else cond.cooldown_hours = s.cooldownValue;
+  }
+  if (s.maxFiresOn && s.maxFires > 0) cond.max_fires = s.maxFires;
   // condition-mapped fields (e.g. safety_net not_before)
   for (const f of s.preset?.fields ?? []) {
     if (f.maps_to.startsWith("condition_cfg.")) {
@@ -117,6 +158,23 @@ function buildCondition(s: FormState): Record<string, unknown> | null {
     }
   }
   return Object.keys(cond).length > 0 ? cond : null;
+}
+
+// Fold the recipe «Тема дня» / «Длина и формат» / «Призыв в конце» onto the base
+// instruction (Wave 1: no structured generation fields — they ride in the prompt
+// text the backend already accepts). Each clause is appended only when set, so
+// a scenario with none reproduces the bare instruction.
+function compileInstruction(s: FormState): string {
+  let base = interpolate(s.instruction, s.fields).trim();
+  const extra: string[] = [];
+  // Topic — only when the preset has NO {topic} slot already consumed it.
+  const hasTopicSlot = /\{topic\}/.test(s.instruction);
+  if (s.topic.trim() && !hasTopicSlot) extra.push(`Тема: ${s.topic.trim()}.`);
+  if (s.length === "short") extra.push("Длина: коротко.");
+  else if (s.length === "medium") extra.push("Длина: средне.");
+  if (s.cta.trim()) extra.push(`Заверши призывом: ${s.cta.trim()}.`);
+  if (extra.length === 0) return base;
+  return base ? `${base} ${extra.join(" ")}` : extra.join(" ");
 }
 
 // Compile the full create body. Three forks: promo / reply_policy / free.
@@ -149,13 +207,13 @@ export function compileBody(s: FormState): ScenarioCreate {
 
   // 3) free / cadence preset → raw trigger + instruction (+ optional condition +
   // optional reply_instruction for reply-producing presets).
-  const instruction = interpolate(s.instruction, s.fields).trim();
   return {
     name,
     trigger: buildTrigger(s),
-    instruction,
+    instruction: compileInstruction(s),
     reply_instruction: s.replyInstruction.trim(),
     condition: buildCondition(s),
+    publish_mode: s.mode,
   };
 }
 

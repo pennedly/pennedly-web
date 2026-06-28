@@ -242,6 +242,22 @@
    a 36% chunk slides across before the backfill reports a known post total.
    Globally disabled under the reduced-motion rule above. */
 @keyframes ib-sweep { 0% { transform: translateX(-115%); } 100% { transform: translateX(320%); } }
+/* Recipe scenario editor — inline-drawer entrance + big-text modal entrance
+   (recipe-editor.css rcd-in / bt-in). Opacity+transform; reduced-motion safe. */
+@keyframes rcd-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@keyframes bt-in { from { opacity: 0; transform: translateY(-8px) scale(0.99); } to { opacity: 1; transform: none; } }
+/* Recipe jitter slider thumb (recipe-editor.css .rc-range). The track gradient
+   is set inline per-value; this styles the draggable thumb cross-browser. */
+.rc-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 17px; height: 17px; border-radius: 9999px;
+  background: var(--color-surface); border: 2px solid var(--color-accent);
+  cursor: pointer; box-shadow: var(--shadow-sm);
+}
+.rc-range::-moz-range-thumb {
+  width: 17px; height: 17px; border-radius: 9999px;
+  background: var(--color-surface); border: 2px solid var(--color-accent); cursor: pointer;
+}
 .skel {
   background: linear-gradient(
     90deg,

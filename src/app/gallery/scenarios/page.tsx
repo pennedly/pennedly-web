@@ -93,14 +93,26 @@ function FormDemo({ presetId }: { presetId: string }) {
       instruction: preset && !isPromo ? preset.instruction : "",
       replyInstruction: preset?.reply_instruction || "",
       audience: (preset?.reply_defaults?.audience as string) || "all_except_trolls",
+      audiencePrompt: "",
       when: presetId === "rubric" ? "weekly" : when0,
       nDays: 3,
       weekday: 0,
       dateFrom: "",
       dateTo: "",
       threshold: "",
+      eventKind: "on_metric_threshold",
       hour: "9:00",
       jitter: 15,
+      condNoPostToday: false,
+      cooldownOn: false,
+      cooldownValue: 6,
+      cooldownUnit: "hours",
+      maxFiresOn: false,
+      maxFires: 3,
+      topic: "",
+      length: "any",
+      cta: "",
+      mode: "ask",
       fields,
     };
   });
@@ -195,9 +207,27 @@ function FormDemo({ presetId }: { presetId: string }) {
   );
 }
 
-// Hosts the REAL StepEditor (hybrid C×B step track + large preview) wired to
-// local state, for spec-fidelity review against Scenario-Editor-SPEC.html.
-function StepEditorDemo({ presetId }: { presetId: string }) {
+// Hosts the REAL StepEditor (recipe card + large preview) wired to local state,
+// for spec-fidelity review against the recipe-editor source. `demo*` seeds open a
+// slot drawer / modal / layer so every Wave-1 state is reachable without auth;
+// `override` tweaks the starting form (mode, when-mode, conditions…).
+function StepEditorDemo({
+  presetId,
+  isExisting = true,
+  override,
+  demoOpenSlot,
+  demoModal,
+  demoLayer2,
+  demoLayer3,
+}: {
+  presetId: string;
+  isExisting?: boolean;
+  override?: Partial<FormState>;
+  demoOpenSlot?: import("@/components/studio/scenarios-recipe").OpenSlot;
+  demoModal?: import("@/components/studio/scenarios-recipe").BigTextField;
+  demoLayer2?: boolean;
+  demoLayer3?: boolean;
+}) {
   const { t } = useTranslation();
   const preset: ScenarioPreset | null = useMemo(() => DEMO_CATALOG.find((p) => p.id === presetId) ?? null, [presetId]);
   const isPromo = presetId === "promo";
@@ -213,18 +243,31 @@ function StepEditorDemo({ presetId }: { presetId: string }) {
       preset,
       helperOn: isPromo,
       promo: isPromo ? DEMO_PROMO : { ...BLANK_PROMO },
-      instruction: preset && !isPromo ? preset.instruction : "",
+      instruction: preset && !isPromo ? preset.instruction : "короткий вопрос на одно слово в ответ, по теме дня, без штампов",
       replyInstruction: preset?.reply_instruction || "по имени, одно наблюдение и мягкий вопрос — без шаблонов",
       audience: (preset?.reply_defaults?.audience as string) || "all_except_trolls",
+      audiencePrompt: "тем, кто пишет по делу, без флуда",
       when: when0,
       nDays: 3,
       weekday: 0,
-      dateFrom: "",
-      dateTo: "",
-      threshold: "",
+      dateFrom: "2026-06-28",
+      dateTo: "2026-07-05",
+      threshold: "5000",
+      eventKind: "on_metric_threshold",
       hour: "9:00",
       jitter: 15,
+      condNoPostToday: false,
+      cooldownOn: false,
+      cooldownValue: 6,
+      cooldownUnit: "hours",
+      maxFiresOn: false,
+      maxFires: 3,
+      topic: "довести дело до конца",
+      length: "any",
+      cta: "",
+      mode: "ask",
       fields,
+      ...override,
     };
   });
   const [powerOpen, setPowerOpen] = useState(false);
@@ -251,7 +294,7 @@ function StepEditorDemo({ presetId }: { presetId: string }) {
       handle="@alex.makes"
       update={up}
       setField={setField}
-      isExisting
+      isExisting={isExisting}
       nameErr={false}
       fieldErrs={{}}
       askErr={false}
@@ -282,6 +325,10 @@ function StepEditorDemo({ presetId }: { presetId: string }) {
       onCancelInline={() => {}}
       onConfirmInline={() => {}}
       deleting={false}
+      demoOpenSlot={demoOpenSlot}
+      demoModal={demoModal}
+      demoLayer2={demoLayer2}
+      demoLayer3={demoLayer3}
     />
   );
 }
@@ -575,12 +622,66 @@ export default function ScenariosGallery() {
           <ReplyGalleryDemo initialId="questions" />
         </Section>
 
-        <h2 className="mb-3 mt-8 text-h3 font-semibold">Scenario editor — hybrid C×B (step track + large preview)</h2>
-        <Section title="reply scenario · «Дежурство» — step 2 active, step 3 trust step open, stage = reply thread">
+        <h2 className="mb-3 mt-8 text-h3 font-semibold">Scenario editor — «карточка-рецепт» (Wave 1)</h2>
+        <Section title="POST · default · «Утренний вопрос» (sentence + condition line + Layers + stage)">
+          <StepEditorDemo presetId="daily_question" />
+        </Section>
+        <Section title="POST · new «черновик, не сохранён» (status row + «Сохранить и включить»)">
+          <StepEditorDemo presetId="daily_question" isExisting={false} />
+        </Section>
+        <Section title="POST · slot «Когда» open · mode = Каждый день (hour picker + jitter)">
+          <StepEditorDemo presetId="daily_question" demoOpenSlot="when" override={{ when: "daily" }} />
+        </Section>
+        <Section title="POST · slot «Когда» open · mode = Раз в N дней (interval stepper)">
+          <StepEditorDemo presetId="daily_question" demoOpenSlot="when" override={{ when: "every_n_days" }} />
+        </Section>
+        <Section title="POST · slot «Когда» open · mode = По дням недели (single weekday)">
+          <StepEditorDemo presetId="daily_question" demoOpenSlot="when" override={{ when: "weekly", weekday: 1 }} />
+        </Section>
+        <Section title="POST · slot «Когда» open · mode = Период дат (date range, «каждый день» in window)">
+          <StepEditorDemo presetId="daily_question" demoOpenSlot="when" override={{ when: "date_range" }} />
+        </Section>
+        <Section title="POST · slot «Когда» open · mode = По событию (views threshold + порог)">
+          <StepEditorDemo presetId="daily_question" demoOpenSlot="when" override={{ when: "event", eventKind: "on_metric_threshold" }} />
+        </Section>
+        <Section title="POST · slot «Что писать» open (instruction → modal · тема · длина · призыв · hard caption)">
+          <StepEditorDemo presetId="daily_question" demoOpenSlot="what" />
+        </Section>
+        <Section title="POST · slot «Только если…» open · 2 active conditions + add menu">
+          <StepEditorDemo presetId="daily_question" demoOpenSlot="if" override={{ condNoPostToday: true, cooldownOn: true }} />
+        </Section>
+        <Section title="POST · slot «Как публиковать» open · mode = Спроси меня (ask)">
+          <StepEditorDemo presetId="daily_question" demoOpenSlot="how" override={{ mode: "ask" }} />
+        </Section>
+        <Section title="POST · slot «Как публиковать» open · mode = Публиковать автоматически (auto / warning)">
+          <StepEditorDemo presetId="daily_question" demoOpenSlot="how" override={{ mode: "auto" }} />
+        </Section>
+        <Section title="POST · big-text modal open (instruction)">
+          <StepEditorDemo presetId="daily_question" demoModal="instruction" />
+        </Section>
+        <Section title="POST · Layer 2 «Настроить точнее» open (conditions · time · content · baked rules)">
+          <StepEditorDemo presetId="daily_question" demoLayer2 />
+        </Section>
+        <Section title="POST · Layer 3 stub open («🔒 скоро · второй волной»)">
+          <StepEditorDemo presetId="daily_question" demoLayer3 />
+        </Section>
+        <Section title="REPLY · «Дежурство» default (locked «каждые 15 минут» + who/tone slots + reply-thread stage)">
           <StepEditorDemo presetId="reply_duty" />
         </Section>
-        <Section title="post scenario · «Утренний вопрос» — schedule step, «Тема дня», stage = enlarged post">
-          <StepEditorDemo presetId="daily_question" />
+        <Section title="REPLY · slot «Кому отвечать» open (4-tile gallery)">
+          <StepEditorDemo presetId="reply_duty" demoOpenSlot="who" />
+        </Section>
+        <Section title="REPLY · slot «Кому отвечать» open · «Свой вариант» (free text)">
+          <StepEditorDemo presetId="reply_duty" demoOpenSlot="who" override={{ audience: "custom" }} />
+        </Section>
+        <Section title="REPLY · slot «Как звучит ответ» (тон) open">
+          <StepEditorDemo presetId="reply_duty" demoOpenSlot="tone" />
+        </Section>
+        <Section title="REPLY · Layer 2 «Настроить точнее» open (conditions · tone)">
+          <StepEditorDemo presetId="reply_duty" demoLayer2 />
+        </Section>
+        <Section title="from-template · «Акция» (promo) — reply kind, sentence prefilled">
+          <StepEditorDemo presetId="promo" />
         </Section>
 
         <h2 className="mb-3 mt-8 text-h3 font-semibold">Unified form — per preset (legacy single-column form)</h2>

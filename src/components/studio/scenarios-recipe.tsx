@@ -1,0 +1,829 @@
+"use client";
+
+// «Карточка-рецепт» building blocks — the Wave-1 scenario editor primitives,
+// ported 1:1 from design-export/PennedlyDesign/recipe-editor/{recipe-editor.js,
+// recipe-editor.css}. A scenario reads as ONE sentence with editable «slots»;
+// tapping a slot opens an inline drawer in place (only one open at a time). The
+// shell + preview live in scenarios-editor.tsx; this file holds the slot, drawer,
+// the КОГДА / ЕСЛИ / ЧТО / КАК / КОМУ / ТОН drawer bodies, and the big-text modal.
+//
+// Wave-1 cut (decision б): not-ready features are HIDDEN, not stubbed — monthly/
+// yearly cadence, the «когда упомянут» event, multi-slot times, weekly multi-day,
+// per-day times, everyN start-date, period sub-rhythm, and the 3 «по будням /
+// подписчики / дата в тексте» conditions are simply omitted. Layer 3 is the one
+// honest «скоро» stub by design.
+
+import { type ReactNode } from "react";
+
+import { cn } from "@/lib/cn";
+import { useTranslation, type MessageKey } from "@/lib/i18n";
+import { localHourToUtc, localUtcOffsetLabel } from "@/lib/timezone";
+import {
+  IcBubble,
+  IcBubbleQuestion,
+  IcCheck,
+  IcClock,
+  IcExpand,
+  IcGauge,
+  IcHeart,
+  IcInfo,
+  IcLock,
+  IcPencil,
+  IcPerson,
+  IcPlus,
+  IcRepeat,
+  IcShield,
+  IcShieldHouse,
+  IcSliders,
+  IcTimer,
+  IcX,
+} from "@/components/icons";
+import { Button } from "@/components/ui/button";
+import type {
+  CooldownUnit,
+  FormState,
+  RecipeEvent,
+  RecipeLength,
+} from "./scenarios-form";
+
+type T = (k: MessageKey) => string;
+
+// Which slot's inline drawer is open (only one at a time), or null.
+export type OpenSlot = "when" | "if" | "what" | "who" | "tone" | "how" | null;
+// Which big-text modal is open (instruction / tone / custom audience), or null.
+export type BigTextField = "instruction" | "tone" | "audience" | null;
+
+// ════════════════════════════════════════════════════════════════════════════
+//  SLOT — an editable word in the recipe sentence (style v9: dark bold + grey
+//  dotted underline; hover/open → accent). `@handle` is rendered separately
+//  (violet, non-clickable) by the editor.
+// ════════════════════════════════════════════════════════════════════════════
+export function Slot({ children, open, onClick }: { children: ReactNode; open?: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "cursor-pointer rounded-none border-none bg-transparent p-0 px-px font-[inherit] font-semibold underline decoration-dotted decoration-[1.5px] underline-offset-4 transition-colors",
+        open ? "text-accent decoration-accent" : "text-text decoration-text-subtle/75 hover:text-accent hover:decoration-accent",
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+// A locked slot — value fixed by the platform (reply polls every 15 min). Dotted
+// border-bottom, muted, not clickable.
+export function LockSlot({ children }: { children: ReactNode }) {
+  return (
+    <span className="inline-flex items-center gap-[5px] border-b border-dotted border-border px-px font-semibold text-text-muted">
+      <IcLock size={11} className="shrink-0 opacity-60" />
+      {children}
+    </span>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  INLINE DRAWER — the slot's editor, opened in place under the sentence.
+// ════════════════════════════════════════════════════════════════════════════
+export function Drawer({
+  title,
+  icon,
+  onDone,
+  children,
+}: {
+  title: string;
+  icon: ReactNode;
+  onDone: () => void;
+  children: ReactNode;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div className="animate-[rcd-in_180ms_ease-out] border-t border-border bg-surface-2">
+      <div className="flex items-center gap-2.5 px-[22px] pt-3.5">
+        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-sm border border-accent/24 bg-accent/[0.11] text-accent">
+          {icon}
+        </span>
+        <span className="flex-1 text-small font-semibold">{title}</span>
+        <button
+          type="button"
+          onClick={onDone}
+          className="inline-flex items-center gap-1.5 rounded-sm bg-primary px-3.5 py-1.5 text-small font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+        >
+          <IcCheck size={14} /> {t("scenarios.rc.done")}
+        </button>
+      </div>
+      <div className="flex flex-col gap-[15px] px-[22px] pb-5 pt-3.5">{children}</div>
+    </div>
+  );
+}
+
+// ── micro-helpers shared by drawer bodies ──
+// `children` may be a trusted i18n string with <b> emphasis (rendered as HTML)
+// or arbitrary nodes.
+export function Why({ children }: { children: ReactNode }) {
+  return (
+    <p className="flex items-start gap-2 text-caption leading-[1.5] text-text-subtle [&_b]:font-semibold [&_b]:text-text-muted">
+      <IcInfo size={13} className="mt-px shrink-0 opacity-80" />
+      {typeof children === "string" ? <span dangerouslySetInnerHTML={{ __html: children }} /> : <span>{children}</span>}
+    </p>
+  );
+}
+export function Hard({ children }: { children: ReactNode }) {
+  return (
+    <p className="flex items-start gap-[7px] rounded-sm border border-border bg-surface px-[11px] py-2 text-caption leading-[1.45] text-text-subtle">
+      <IcLock size={13} className="mt-px shrink-0 opacity-85" />
+      <span>{children}</span>
+    </p>
+  );
+}
+function FieldLabel({ children, opt }: { children: ReactNode; opt?: string }) {
+  return (
+    <span className="text-small font-medium text-text">
+      {children}
+      {opt && <span className="text-text-subtle"> · {opt}</span>}
+    </span>
+  );
+}
+function Stepper({ value, onMinus, onPlus, suffix }: { value: ReactNode; onMinus: () => void; onPlus: () => void; suffix?: ReactNode }) {
+  return (
+    <span className="inline-flex items-center gap-2.5 text-small text-text">
+      <span className="inline-flex items-center overflow-hidden rounded-sm border border-border bg-surface">
+        <button type="button" onClick={onMinus} aria-label="−" className="grid h-8 w-[30px] place-items-center text-base text-text-muted transition-colors hover:bg-surface-2 hover:text-text">
+          –
+        </button>
+        <span className="grid h-8 min-w-[42px] place-items-center border-x border-border px-1 text-small font-semibold tabular-nums">{value}</span>
+        <button type="button" onClick={onPlus} aria-label="+" className="grid h-8 w-[30px] place-items-center text-base text-text-muted transition-colors hover:bg-surface-2 hover:text-text">
+          +
+        </button>
+      </span>
+      {suffix}
+    </span>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  КОГДА (POST) — cadence segment (5 modes) + hour picker + jitter slider
+// ════════════════════════════════════════════════════════════════════════════
+// Wave-1 cadence modes (decision б — monthly / yearly omitted, no «скоро» stub).
+const CADENCE_MODES: { key: FormState["when"]; label: MessageKey }[] = [
+  { key: "daily", label: "scenarios.rc.cad.daily" },
+  { key: "every_n_days", label: "scenarios.rc.cad.every_n" },
+  { key: "weekly", label: "scenarios.rc.cad.weekly" },
+  { key: "date_range", label: "scenarios.rc.cad.period" },
+  { key: "event", label: "scenarios.rc.cad.event" },
+];
+const RC_WEEKDAYS: MessageKey[] = [
+  "scenarios.wd.mon",
+  "scenarios.wd.tue",
+  "scenarios.wd.wed",
+  "scenarios.wd.thu",
+  "scenarios.wd.fri",
+  "scenarios.wd.sat",
+  "scenarios.wd.sun",
+];
+
+function Seg({ options, value, onPick }: { options: { key: string; label: string }[]; value: string; onPick: (k: string) => void }) {
+  return (
+    <div className="flex flex-wrap gap-1 rounded-lg border border-border bg-surface-2 p-1">
+      {options.map((o) => {
+        const active = o.key === value;
+        return (
+          <button
+            key={o.key}
+            type="button"
+            onClick={() => onPick(o.key)}
+            aria-pressed={active}
+            className={cn(
+              "rounded-md px-3 py-2 text-small font-medium leading-none transition-colors max-md:min-h-[40px]",
+              active ? "bg-surface text-text shadow-sm" : "text-text-muted hover:text-text",
+            )}
+          >
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// The hour chip + jitter slider (cadence modes only). Whole-hour posting →
+// the .rc-hard caption; the chip shows the local hour, the caption the UTC time.
+function TimeSection({ hour, jitter, onHour, onJitter }: { hour: string; jitter: number; onHour: (h: string) => void; onJitter: (j: number) => void }) {
+  const { t } = useTranslation();
+  const localHour = parseInt(hour, 10) || 0;
+  const utc = `${String(localHourToUtc(localHour)).padStart(2, "0")}:00`;
+  return (
+    <>
+      <label className="flex flex-col gap-1.5">
+        <FieldLabel>{t("scenarios.rc.when_time")}</FieldLabel>
+        <span className="inline-flex items-center gap-2.5">
+          <span className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1.5">
+            <IcClock size={13} className="text-text-subtle" />
+            <select
+              aria-label={t("scenarios.rc.when_time")}
+              className="cursor-pointer border-none bg-transparent text-small font-semibold tabular-nums text-text outline-none"
+              value={hour}
+              onChange={(e) => onHour(e.target.value)}
+            >
+              {Array.from({ length: 24 }, (_, i) => `${i}:00`).map((h) => (
+                <option key={h} value={h}>
+                  {h}
+                </option>
+              ))}
+            </select>
+          </span>
+          <span className="text-caption tabular-nums text-text-subtle">
+            {localUtcOffsetLabel()} · {t("scenarios.ed.sends_utc").replace("{time}", utc)}
+          </span>
+        </span>
+      </label>
+      <label className="flex max-w-[300px] flex-col gap-1.5">
+        <FieldLabel opt={t("scenarios.rc.jitter_opt")}>{t("scenarios.rc.jitter")}</FieldLabel>
+        <span className="flex items-baseline justify-between">
+          <span className="text-caption font-medium text-text-muted">{t("scenarios.rc.jitter_unit")}</span>
+          <span className="text-caption font-semibold tabular-nums text-text">{jitter}</span>
+        </span>
+        <input
+          type="range"
+          min={0}
+          max={120}
+          value={jitter}
+          aria-label={t("scenarios.rc.jitter")}
+          onChange={(e) => onJitter(Number(e.target.value))}
+          className="rc-range h-[5px] w-full cursor-pointer appearance-none rounded-full outline-none"
+          style={{
+            background: `linear-gradient(90deg, color-mix(in srgb, var(--color-accent) 55%, var(--color-surface)) 0 ${(jitter / 120) * 100}%, var(--color-border) ${(jitter / 120) * 100}% 100%)`,
+          }}
+        />
+      </label>
+      <Hard>{t("scenarios.rc.when_hard")}</Hard>
+    </>
+  );
+}
+
+export function WhenPostBody({
+  form,
+  update,
+}: {
+  form: FormState;
+  update: (patch: Partial<FormState>) => void;
+}) {
+  const { t } = useTranslation();
+  const mode = form.when;
+  return (
+    <>
+      <label className="flex flex-col gap-1.5">
+        <FieldLabel>{t("scenarios.rc.how_often")}</FieldLabel>
+        <Seg
+          options={CADENCE_MODES.map((m) => ({ key: m.key, label: t(m.label) }))}
+          value={mode}
+          onPick={(k) => update({ when: k as FormState["when"] })}
+        />
+      </label>
+
+      {mode === "daily" && (
+        <>
+          <Why>{t("scenarios.rc.daily_why")}</Why>
+          <TimeSection hour={form.hour} jitter={form.jitter} onHour={(h) => update({ hour: h })} onJitter={(j) => update({ jitter: j })} />
+        </>
+      )}
+
+      {mode === "every_n_days" && (
+        <>
+          <label className="flex flex-col gap-1.5">
+            <FieldLabel>{t("scenarios.rc.interval")}</FieldLabel>
+            <Stepper
+              value={form.nDays}
+              onMinus={() => update({ nDays: Math.max(1, form.nDays - 1) })}
+              onPlus={() => update({ nDays: Math.min(90, form.nDays + 1) })}
+              suffix={<span className="text-text-subtle">{t("scenarios.rc.interval_unit")}</span>}
+            />
+          </label>
+          <TimeSection hour={form.hour} jitter={form.jitter} onHour={(h) => update({ hour: h })} onJitter={(j) => update({ jitter: j })} />
+        </>
+      )}
+
+      {mode === "weekly" && (
+        <>
+          <label className="flex flex-col gap-1.5">
+            <FieldLabel>{t("scenarios.rc.which_day")}</FieldLabel>
+            <span className="flex flex-wrap gap-1.5">
+              {RC_WEEKDAYS.map((wd, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  aria-pressed={form.weekday === i}
+                  onClick={() => update({ weekday: i })}
+                  className={cn(
+                    "grid h-[34px] min-w-[38px] place-items-center rounded-sm border px-2.5 text-small font-medium transition-colors",
+                    form.weekday === i ? "border-primary bg-primary font-semibold text-primary-foreground" : "border-border bg-surface text-text-muted hover:border-text/16",
+                  )}
+                >
+                  {t(wd)}
+                </button>
+              ))}
+            </span>
+          </label>
+          <TimeSection hour={form.hour} jitter={form.jitter} onHour={(h) => update({ hour: h })} onJitter={(j) => update({ jitter: j })} />
+        </>
+      )}
+
+      {mode === "date_range" && (
+        <>
+          <label className="flex flex-col gap-1.5">
+            <FieldLabel>{t("scenarios.rc.period_range")}</FieldLabel>
+            <span className="inline-flex flex-wrap items-center gap-2.5">
+              <input
+                type="date"
+                aria-label={t("scenarios.date_from")}
+                className="h-10 max-w-[172px] rounded-md border border-border bg-surface px-3 text-small text-text focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25"
+                value={form.dateFrom}
+                onChange={(e) => update({ dateFrom: e.target.value })}
+              />
+              <IcChevSep />
+              <input
+                type="date"
+                aria-label={t("scenarios.date_to")}
+                className="h-10 max-w-[172px] rounded-md border border-border bg-surface px-3 text-small text-text focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25"
+                value={form.dateTo}
+                onChange={(e) => update({ dateTo: e.target.value })}
+              />
+            </span>
+          </label>
+          <TimeSection hour={form.hour} jitter={form.jitter} onHour={(h) => update({ hour: h })} onJitter={(j) => update({ jitter: j })} />
+          <Why>{t("scenarios.rc.period_why")}</Why>
+        </>
+      )}
+
+      {mode === "event" && (
+        <>
+          <label className="flex flex-col gap-1.5">
+            <FieldLabel>{t("scenarios.rc.event_trigger")}</FieldLabel>
+            <Seg
+              options={[
+                { key: "on_metric_threshold", label: t("scenarios.rc.event_views") },
+                { key: "on_follower_milestone", label: t("scenarios.rc.event_followers") },
+              ]}
+              value={form.eventKind}
+              onPick={(k) => update({ eventKind: k as RecipeEvent })}
+            />
+          </label>
+          {form.eventKind === "on_metric_threshold" && (
+            <label className="flex flex-col gap-1.5">
+              <FieldLabel>{t("scenarios.rc.threshold")}</FieldLabel>
+              <input
+                type="number"
+                inputMode="numeric"
+                placeholder={t("scenarios.threshold_ph")}
+                className="h-10 max-w-[160px] rounded-md border border-border bg-surface px-3 text-small tabular-nums text-text focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25"
+                value={form.threshold}
+                onChange={(e) => update({ threshold: e.target.value })}
+              />
+              <span className="text-caption text-text-subtle">{t("scenarios.threshold_auto")}</span>
+            </label>
+          )}
+          <p className="flex items-start gap-2.5 rounded-md border border-border bg-surface px-3 py-2.5 text-small leading-[1.5] text-text-muted [&_b]:font-semibold [&_b]:text-text">
+            <IcGauge size={16} className="mt-px shrink-0 text-accent" />
+            <span dangerouslySetInnerHTML={{ __html: t("scenarios.rc.event_note") }} />
+          </p>
+        </>
+      )}
+    </>
+  );
+}
+
+function IcChevSep() {
+  return <span className="text-text-subtle">→</span>;
+}
+
+// КОГДА (reply) — locked «каждые 15 минут» explainer + .rc-hard.
+export function WhenReplyBody() {
+  const { t } = useTranslation();
+  return (
+    <>
+      <p className="flex items-start gap-2.5 rounded-md border border-border bg-surface px-3 py-2.5 text-small leading-[1.5] text-text-muted [&_b]:font-semibold [&_b]:text-text">
+        <IcRepeat size={16} className="mt-px shrink-0 text-accent" />
+        <span dangerouslySetInnerHTML={{ __html: t("scenarios.rc.when_reply_body") }} />
+      </p>
+      <Hard>{t("scenarios.rc.when_reply_hard")}</Hard>
+    </>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  ЕСЛИ — condition builder (Wave 1: 3 honest conditions)
+// ════════════════════════════════════════════════════════════════════════════
+function CondRow({ icon, title, sub, ctl, onRemove }: { icon: ReactNode; title: string; sub?: string; ctl?: ReactNode; onRemove: () => void }) {
+  return (
+    <div className="flex items-center gap-[11px] rounded-md border border-border bg-surface px-[13px] py-[11px]">
+      <span className="grid h-[26px] w-[26px] shrink-0 place-items-center rounded-sm border border-border bg-surface-2 text-text-muted">{icon}</span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-small font-medium text-text">{title}</span>
+        {sub && <span className="mt-px block text-caption leading-[1.4] text-text-subtle">{sub}</span>}
+      </span>
+      {ctl && <span className="flex shrink-0 items-center gap-2">{ctl}</span>}
+      <button type="button" onClick={onRemove} aria-label="×" className="grid h-[26px] w-[26px] shrink-0 place-items-center rounded-sm text-text-subtle transition-colors hover:bg-surface-2 hover:text-danger">
+        <IcX size={14} />
+      </button>
+    </div>
+  );
+}
+
+export function IfBody({
+  form,
+  update,
+  menuOpen,
+  setMenuOpen,
+}: {
+  form: FormState;
+  update: (patch: Partial<FormState>) => void;
+  menuOpen: boolean;
+  setMenuOpen: (v: boolean) => void;
+}) {
+  const { t } = useTranslation();
+  const anyActive = form.condNoPostToday || form.cooldownOn || form.maxFiresOn;
+  // The «+ Добавить условие» menu — only the conditions NOT already active.
+  const menuItems: { key: "noPost" | "cooldown" | "maxFires"; icon: ReactNode; label: string; active: boolean }[] = [
+    { key: "noPost", icon: <IcCheck size={15} />, label: t("scenarios.rc.cond_no_post"), active: form.condNoPostToday },
+    { key: "cooldown", icon: <IcTimer size={15} />, label: t("scenarios.rc.cond_cooldown"), active: form.cooldownOn },
+    { key: "maxFires", icon: <IcGauge size={15} />, label: t("scenarios.rc.cond_max_fires"), active: form.maxFiresOn },
+  ];
+  const addable = menuItems.filter((m) => !m.active);
+  function enable(key: "noPost" | "cooldown" | "maxFires") {
+    if (key === "noPost") update({ condNoPostToday: true });
+    else if (key === "cooldown") update({ cooldownOn: true });
+    else update({ maxFiresOn: true });
+    setMenuOpen(false);
+  }
+  return (
+    <>
+      {anyActive && (
+        <div className="flex flex-col gap-2.5">
+          {form.condNoPostToday && (
+            <CondRow
+              icon={<IcCheck size={14} />}
+              title={t("scenarios.rc.cond_no_post")}
+              sub={t("scenarios.rc.cond_no_post_sub")}
+              onRemove={() => update({ condNoPostToday: false })}
+            />
+          )}
+          {form.cooldownOn && (
+            <CondRow
+              icon={<IcTimer size={14} />}
+              title={t("scenarios.rc.cond_cooldown")}
+              sub={t("scenarios.rc.cond_cooldown_sub")}
+              ctl={
+                <>
+                  <Stepper
+                    value={form.cooldownValue}
+                    onMinus={() => update({ cooldownValue: Math.max(1, form.cooldownValue - 1) })}
+                    onPlus={() => update({ cooldownValue: form.cooldownValue + 1 })}
+                  />
+                  <Seg
+                    options={[
+                      { key: "hours", label: t("scenarios.rc.unit_hours") },
+                      { key: "days", label: t("scenarios.rc.unit_days") },
+                    ]}
+                    value={form.cooldownUnit}
+                    onPick={(k) => update({ cooldownUnit: k as CooldownUnit })}
+                  />
+                </>
+              }
+              onRemove={() => update({ cooldownOn: false })}
+            />
+          )}
+          {form.maxFiresOn && (
+            <CondRow
+              icon={<IcGauge size={14} />}
+              title={t("scenarios.rc.cond_max_fires")}
+              sub={t("scenarios.rc.cond_max_fires_sub")}
+              ctl={
+                <Stepper
+                  value={form.maxFires}
+                  onMinus={() => update({ maxFires: Math.max(1, form.maxFires - 1) })}
+                  onPlus={() => update({ maxFires: form.maxFires + 1 })}
+                />
+              }
+              onRemove={() => update({ maxFiresOn: false })}
+            />
+          )}
+        </div>
+      )}
+
+      {addable.length > 0 &&
+        (menuOpen ? (
+          <div className="flex flex-col gap-0.5 rounded-md border border-border bg-surface p-1.5 shadow-md">
+            {addable.map((m) => (
+              <button
+                key={m.key}
+                type="button"
+                onClick={() => enable(m.key)}
+                className="flex w-full items-center gap-2.5 rounded-sm px-[11px] py-2.5 text-left text-text transition-colors hover:bg-surface-2"
+              >
+                <span className="shrink-0 text-text-subtle">{m.icon}</span>
+                <span className="flex-1 text-small font-medium">{m.label}</span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setMenuOpen(true)}
+            className="inline-flex items-center gap-[7px] self-start rounded-md border border-dashed border-accent/36 px-3.5 py-2.5 text-small font-semibold text-accent transition-colors hover:bg-accent/[0.07]"
+          >
+            <IcPlus size={14} /> {t("scenarios.rc.add_condition")}
+          </button>
+        ))}
+
+      <Why>{t("scenarios.rc.if_why")}</Why>
+    </>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  BIG-TEXT FIELD — a free-text trigger that opens the full modal
+// ════════════════════════════════════════════════════════════════════════════
+export function BigText({ value, hint, onOpen }: { value: string; hint: string; onOpen: () => void }) {
+  const { t } = useTranslation();
+  const empty = !value.trim();
+  return (
+    <div className="flex cursor-text flex-col overflow-hidden rounded-md border border-border bg-surface transition-colors hover:border-accent/32" onClick={onOpen}>
+      <div className={cn("min-h-[52px] px-[13px] py-[11px] text-small leading-[1.55] [text-wrap:pretty]", empty ? "text-text-subtle" : "text-text")}>
+        {empty ? t("scenarios.rc.bigtext_empty") : value}
+      </div>
+      <div className="flex items-center justify-between gap-2.5 border-t border-border bg-surface-2 py-2 pl-[13px] pr-[11px]">
+        <span className="min-w-0 text-caption leading-[1.4] text-text-subtle">{hint}</span>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpen();
+          }}
+          className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-sm px-[7px] py-1 text-caption font-semibold text-accent transition-colors hover:bg-accent/[0.09]"
+        >
+          <IcExpand size={13} /> {t("scenarios.rc.bigtext_open")}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// The full-size modal for instruction / tone / custom-audience editing.
+const BT_META: Record<Exclude<BigTextField, null>, { icon: ReactNode; titleKey: MessageKey; hintKey: MessageKey; phKey: MessageKey }> = {
+  instruction: { icon: <IcPencil size={16} />, titleKey: "scenarios.rc.bt.instr_title", hintKey: "scenarios.rc.bt.instr_hint", phKey: "scenarios.rc.bt.instr_ph" },
+  tone: { icon: <IcBubble size={16} />, titleKey: "scenarios.rc.bt.tone_title", hintKey: "scenarios.rc.bt.tone_hint", phKey: "scenarios.rc.bt.tone_ph" },
+  audience: { icon: <IcPerson size={16} />, titleKey: "scenarios.rc.bt.aud_title", hintKey: "scenarios.rc.bt.aud_hint", phKey: "scenarios.rc.bt.aud_ph" },
+};
+
+export function BigTextModal({
+  field,
+  value,
+  onChange,
+  onClose,
+}: {
+  field: Exclude<BigTextField, null>;
+  value: string;
+  onChange: (v: string) => void;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation();
+  const m = BT_META[field];
+  return (
+    <div className="absolute inset-0 z-10 flex items-start justify-center px-6 py-12">
+      <div className="absolute inset-0 bg-ink-950/[0.48] backdrop-blur-[1.5px]" onClick={onClose} />
+      <div role="dialog" aria-modal="true" className="relative flex w-full max-w-[580px] animate-[bt-in_180ms_ease-out] flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-lg">
+        <div className="flex items-center gap-[11px] border-b border-border px-[18px] py-[15px]">
+          <span className="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-sm border border-accent/24 bg-accent/[0.11] text-accent">{m.icon}</span>
+          <span className="min-w-0 flex-1 text-body font-semibold tracking-[-0.004em]">{t(m.titleKey)}</span>
+          <button type="button" onClick={onClose} aria-label={t("a11y.close")} className="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-sm text-text-subtle transition-colors hover:bg-surface-2 hover:text-text">
+            <IcX size={16} />
+          </button>
+        </div>
+        <div className="flex flex-col gap-[13px] p-[18px]">
+          <textarea
+            autoFocus
+            placeholder={t(m.phKey)}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className="min-h-[280px] w-full resize-y rounded-md border border-border bg-surface-2 px-[15px] py-3.5 text-[15.5px] leading-[1.6] text-text outline-none focus:border-accent focus:bg-surface focus:ring-2 focus:ring-accent/22"
+          />
+          <p className="flex items-start gap-2 text-caption leading-[1.5] text-text-subtle [&_b]:font-semibold [&_b]:text-text-muted">
+            <IcInfo size={13} className="mt-px shrink-0 opacity-80" />
+            <span dangerouslySetInnerHTML={{ __html: t(m.hintKey) }} />
+          </p>
+        </div>
+        <div className="flex items-center gap-2.5 border-t border-border bg-surface-2 px-[18px] py-3.5">
+          <span className="text-caption tabular-nums text-text-subtle">{t("scenarios.rc.bt.count").replace("{n}", String(value.length))}</span>
+          <span className="flex-1" />
+          <Button variant="secondary" size="sm" onClick={onClose}>
+            {t("common.cancel")}
+          </Button>
+          <Button variant="primary" size="sm" icon={<IcCheck size={15} />} onClick={onClose}>
+            {t("common.save")}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  ЧТО (POST) — instruction (→ modal) · topic · length · CTA
+// ════════════════════════════════════════════════════════════════════════════
+export function WhatPostBody({
+  form,
+  update,
+  instructionValue,
+  onOpenInstruction,
+}: {
+  form: FormState;
+  update: (patch: Partial<FormState>) => void;
+  instructionValue: string;
+  onOpenInstruction: () => void;
+}) {
+  const { t } = useTranslation();
+  const LENGTHS: { key: RecipeLength; label: string }[] = [
+    { key: "short", label: t("scenarios.rc.len_short") },
+    { key: "medium", label: t("scenarios.rc.len_medium") },
+    { key: "any", label: t("scenarios.rc.len_any") },
+  ];
+  return (
+    <>
+      <label className="flex flex-col gap-1.5">
+        <FieldLabel>{t("scenarios.rc.what_instr")}</FieldLabel>
+        <BigText value={instructionValue} hint={t("scenarios.rc.what_instr_hint")} onOpen={onOpenInstruction} />
+      </label>
+      <label className="flex flex-col gap-1.5">
+        <FieldLabel opt={t("scenarios.rc.optional")}>{t("scenarios.rc.topic")}</FieldLabel>
+        <input
+          className="h-10 w-full rounded-md border border-border bg-surface px-3 text-small text-text focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25"
+          value={form.topic}
+          onChange={(e) => update({ topic: e.target.value })}
+          placeholder={t("scenarios.rc.topic_ph")}
+        />
+      </label>
+      <label className="flex flex-col gap-1.5">
+        <FieldLabel>{t("scenarios.rc.length")}</FieldLabel>
+        <Seg options={LENGTHS} value={form.length} onPick={(k) => update({ length: k as RecipeLength })} />
+      </label>
+      <label className="flex flex-col gap-1.5">
+        <FieldLabel opt={t("scenarios.rc.optional")}>{t("scenarios.rc.cta")}</FieldLabel>
+        <input
+          className="h-10 w-full rounded-md border border-border bg-surface px-3 text-small text-text focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25"
+          value={form.cta}
+          onChange={(e) => update({ cta: e.target.value })}
+          placeholder={t("scenarios.rc.cta_ph")}
+        />
+      </label>
+      <Hard>{t("scenarios.rc.what_hard")}</Hard>
+    </>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  КАК — publish mode (2 radio cards) → publish_mode
+// ════════════════════════════════════════════════════════════════════════════
+export function HowBody({ mode, onMode }: { mode: "ask" | "auto"; onMode: (m: "ask" | "auto") => void }) {
+  const { t } = useTranslation();
+  return (
+    <>
+      <div className="flex flex-col gap-2.5">
+        <ModeCard
+          active={mode === "ask"}
+          tone="ask"
+          title={t("scenarios.rc.mode_ask")}
+          badge={t("scenarios.rc.mode_default")}
+          sub={t("scenarios.rc.mode_ask_sub")}
+          onPick={() => onMode("ask")}
+        />
+        <ModeCard
+          active={mode === "auto"}
+          tone="auto"
+          title={t("scenarios.rc.mode_auto")}
+          sub={t("scenarios.rc.mode_auto_sub")}
+          onPick={() => onMode("auto")}
+        />
+      </div>
+      <Why>{t("scenarios.rc.how_why")}</Why>
+    </>
+  );
+}
+
+function ModeCard({ active, tone, title, badge, sub, onPick }: { active: boolean; tone: "ask" | "auto"; title: string; badge?: string; sub: string; onPick: () => void }) {
+  const auto = tone === "auto";
+  return (
+    <button
+      type="button"
+      onClick={onPick}
+      aria-pressed={active}
+      className={cn(
+        "flex items-start gap-3 rounded-lg border bg-surface px-3.5 py-3 text-left transition-colors",
+        active ? (auto ? "border-warning bg-warning/[0.06] ring-1 ring-warning" : "border-accent bg-accent/[0.06] ring-1 ring-accent") : "border-border hover:border-text/20",
+      )}
+    >
+      <span className={cn("mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border-2", active ? (auto ? "border-warning" : "border-accent") : "border-border")}>
+        {active && <span className={cn("h-2.5 w-2.5 rounded-full", auto ? "bg-warning" : "bg-accent")} />}
+      </span>
+      <span className="min-w-0">
+        <span className="flex flex-wrap items-center gap-2 text-small font-semibold text-text">
+          {title}
+          {badge && <span className="rounded-full border border-success/30 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.04em] text-success">{badge}</span>}
+        </span>
+        <span className="mt-0.5 block text-caption leading-relaxed text-text-muted">{sub}</span>
+      </span>
+    </button>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  КОМУ (reply) — 4-tile audience gallery + «из Правил дома» badge
+// ════════════════════════════════════════════════════════════════════════════
+const AUD_TILES: { key: string; icon: ReactNode; titleKey: MessageKey; subKey: MessageKey }[] = [
+  { key: "fans", icon: <IcHeart size={14} />, titleKey: "scenarios.rc.aud_fans", subKey: "scenarios.rc.aud_fans_sub" },
+  { key: "all_except_trolls", icon: <IcShield size={14} />, titleKey: "scenarios.rc.aud_all", subKey: "scenarios.rc.aud_all_sub" },
+  { key: "questions", icon: <IcBubbleQuestion size={14} />, titleKey: "scenarios.rc.aud_questions", subKey: "scenarios.rc.aud_questions_sub" },
+  { key: "custom", icon: <IcPencil size={14} />, titleKey: "scenarios.rc.aud_custom", subKey: "scenarios.rc.aud_custom_sub" },
+];
+
+export function WhoBody({
+  audience,
+  onAudience,
+  audiencePrompt,
+  onOpenCustom,
+}: {
+  audience: string;
+  onAudience: (a: string) => void;
+  audiencePrompt: string;
+  onOpenCustom: () => void;
+}) {
+  const { t } = useTranslation();
+  const custom = audience === "custom";
+  return (
+    <>
+      <label className="flex flex-col gap-1.5">
+        <FieldLabel>{t("scenarios.rc.who_label")}</FieldLabel>
+        <div className="grid grid-cols-2 gap-2.5 max-[520px]:grid-cols-1">
+          {AUD_TILES.map((tile) => {
+            const on = tile.key === audience;
+            return (
+              <button
+                key={tile.key}
+                type="button"
+                onClick={() => onAudience(tile.key)}
+                aria-pressed={on}
+                className={cn(
+                  "flex flex-col gap-1 rounded-md border bg-surface px-[13px] py-3 text-left transition-colors",
+                  on ? "border-accent bg-accent/[0.06] shadow-[0_0_0_1px_var(--color-accent)]" : "border-border hover:border-text/16",
+                )}
+              >
+                <span className="flex items-center gap-[7px] text-small font-semibold text-text">
+                  <span className={cn("shrink-0", on ? "text-accent" : "text-text-subtle")}>{tile.icon}</span>
+                  {t(tile.titleKey)}
+                </span>
+                <span className="text-caption leading-[1.4] text-text-subtle">{t(tile.subKey)}</span>
+              </button>
+            );
+          })}
+        </div>
+      </label>
+      {custom && <BigText value={audiencePrompt} hint={t("scenarios.rc.aud_custom_hint")} onOpen={onOpenCustom} />}
+      <p className="inline-flex flex-wrap items-center gap-1.5 text-caption text-text-subtle [&_a]:font-semibold [&_a]:text-accent">
+        <span className="rounded-full border border-accent/30 px-[7px] py-px font-mono text-[9.5px] uppercase tracking-[0.03em] text-accent">
+          <IcShieldHouse size={10} className="-mt-px mr-1 inline" />
+          {t("scenarios.rc.inherit_badge")}
+        </span>
+        {t("scenarios.rc.inherit_text")}
+      </p>
+    </>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  ТОН (reply) — tone, via the big-text modal
+// ════════════════════════════════════════════════════════════════════════════
+export function ToneBody({ value, onOpen }: { value: string; onOpen: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <label className="flex flex-col gap-1.5">
+      <FieldLabel>{t("scenarios.rc.tone_label")}</FieldLabel>
+      <BigText value={value} hint={t("scenarios.rc.tone_hint")} onOpen={onOpen} />
+    </label>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  DRAWER ICON map — the head icon per slot
+// ════════════════════════════════════════════════════════════════════════════
+export const SLOT_ICON: Record<Exclude<OpenSlot, null>, ReactNode> = {
+  when: <IcClock size={15} />,
+  if: <IcSliders size={15} />,
+  what: <IcPencil size={15} />,
+  who: <IcPerson size={15} />,
+  tone: <IcBubble size={15} />,
+  how: <IcCheck size={15} />,
+};
+
+// re-export so the editor can reference the same translator type
+export type { T };

@@ -137,6 +137,19 @@ export const IcScale = (p: IconProps) => <Svg {...p}><path d="M12 4v16M6 20h12M7
 /* swap / override arrows — «перебивает дефолт» / «заменена сценарием» */
 export const IcSwap = (p: IconProps) => <Svg {...p}><path d="M7 4 3 8l4 4" /><path d="M3 8h13a4 4 0 0 1 4 4" /><path d="M17 20l4-4-4-4" /><path d="M21 16H8a4 4 0 0 1-4-4" /></Svg>;
 
+/* recipe-editor glyphs — drawer/condition/preview icons (CD recipe-editor.js) */
+export const IcInfo = (p: IconProps) => <Svg {...p}><circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 7.5v.5" /></Svg>;
+export const IcTimer = (p: IconProps) => <Svg {...p}><circle cx="12" cy="13" r="8" /><path d="M12 9v4l2.5 2M9 2h6" /></Svg>;
+export const IcGauge = (p: IconProps) => <Svg {...p}><path d="M12 13l4-3" /><path d="M4 18a9 9 0 1 1 16 0" /><circle cx="12" cy="13" r="1.4" /></Svg>;
+export const IcTrophy = (p: IconProps) => <Svg {...p}><path d="M7 4h10v4a5 5 0 0 1-10 0V4Z" /><path d="M7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3M9 20h6M12 13v4" /></Svg>;
+export const IcShieldHouse = (p: IconProps) => <Svg {...p}><path d="M4 11l8-6 8 6v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1Z" /><path d="M9.5 20v-5h5v5" /></Svg>;
+export const IcMegaphone = (p: IconProps) => <Svg {...p}><path d="M3 11v2a1 1 0 0 0 1 1h2l9 5V5L6 10H4a1 1 0 0 0-1 1Z" /><path d="M18 9a4 4 0 0 1 0 6" /></Svg>;
+export const IcType = (p: IconProps) => <Svg {...p}><path d="M5 6h14M12 6v13M9 19h6" /></Svg>;
+export const IcTarget = (p: IconProps) => <Svg {...p}><circle cx="12" cy="12" r="8.5" /><circle cx="12" cy="12" r="4.5" /><circle cx="12" cy="12" r="1" /></Svg>;
+export const IcLayers = (p: IconProps) => <Svg {...p}><path d="M12 3 3 8l9 5 9-5-9-5Z" /><path d="M3 13l9 5 9-5M3 18l9 5 9-5" /></Svg>;
+export const IcHash = (p: IconProps) => <Svg {...p}><path d="M9 4 7 20M17 4l-2 16M5 9h15M4 15h15" /></Svg>;
+export const IcPerson = (p: IconProps) => <Svg {...p}><circle cx="12" cy="8" r="3.5" /><path d="M5 20a7 7 0 0 1 14 0" /></Svg>;
+
 /* "Drafting Line" brand mark — filled glyph in a rounded paper tile.
    Uses semantic CSS vars so the tile/pen flip with the theme automatically. */
 export function BrandMark({
