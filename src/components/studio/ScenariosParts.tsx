@@ -23,8 +23,10 @@ import { cn } from "@/lib/cn";
 import { useTranslation } from "@/lib/i18n";
 import { localHourToUtc, localUtcOffsetLabel } from "@/lib/timezone";
 import {
+  IcArrowUp,
   IcBolt,
   IcBubble,
+  IcBulb,
   IcCalendar,
   IcChart,
   IcCheck,
@@ -36,6 +38,7 @@ import {
   IcHeart,
   IcList,
   IcLock,
+  IcNib,
   IcPlay,
   IcReload,
   IcRepeat,
@@ -43,9 +46,11 @@ import {
   IcShield,
   IcSliders,
   IcSparkle,
+  IcSpread,
   IcSwap,
   IcTrash,
   IcUsers,
+  IcX,
 } from "@/components/icons";
 import type { MessageKey } from "@/lib/i18n/messages/en";
 import type {
@@ -407,22 +412,23 @@ function CadenceStrip({ s }: { s: Scenario }) {
     const n = Number(s.trigger_cfg?.n ?? 1);
     fire = (i) => n <= 1 || i % n === 0;
   }
-  // reply scenarios fire across the week as a success-tint
-  const isReply = (s.action_cfg?.kind as string) === "reply_policy";
+  // Restyled day strip (Tip-Card-Plaque .sc-days): a mono «дни» label, then the
+  // 7 weekday cells. Active days are FILLED with --color-primary; inactive are
+  // surface-2 with subtle text. Reply scenarios fire every day (success cue n/a
+  // here — the built-in reply card carries its own «постоянно» wording).
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex flex-wrap items-center gap-1.5">
+      <span className="mr-1 font-mono text-[10.5px] uppercase tracking-[0.05em] text-text-subtle">{t("scenarios.tip.days_k")}</span>
       {WEEKDAYS.map((wd, i) => {
         const on = fire(i);
         return (
           <span
             key={i}
             className={cn(
-              "grid h-7 flex-1 place-items-center rounded text-[10px] font-medium tabular-nums transition-colors",
+              "grid h-[26px] min-w-[30px] place-items-center rounded-sm px-[5px] font-mono text-[10.5px] font-medium tracking-[0.01em] tabular-nums transition-colors",
               on
-                ? isReply
-                  ? "bg-success/15 text-success"
-                  : "bg-accent/15 text-accent"
-                : "bg-surface-2 text-text-subtle",
+                ? "border border-primary bg-primary font-semibold text-primary-foreground"
+                : "border border-border bg-surface-2 text-text-subtle",
             )}
             title={t(wd)}
           >
@@ -430,6 +436,213 @@ function CadenceStrip({ s }: { s: Scenario }) {
           </span>
         );
       })}
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  TIP PLAQUE — context advice attached to the routine(s) it's about (§Case A/B).
+//  Tone = «совет», low priority, warm warning tint that never screams. The exact
+//  treatment is ported 1:1 from Tip-Card-Plaque.html: per-card «подвал-полоса»
+//  (.pl-band), a per-group bracket (.pl-conflict + .pl-shared) and the dismiss /
+//  restore states. Colours use the design's literal color-mix() expressions via
+//  inline style so the warm tints match the tokens exactly in both themes.
+// ════════════════════════════════════════════════════════════════════════════
+
+// One advice action (a soft accent button next to the body text).
+export type TipAction = { key: string; label: string; icon: "spread" | "up" };
+export type TipAdvice = {
+  /** Stable id for localStorage dismissal (per-account, per-advice). */
+  id: string;
+  title: string;
+  /** Body with **bold** spans (parsed into <b>). */
+  body: string;
+  actions?: TipAction[];
+  /** Swap the «Совет» tag for «Коуч Pennedly». */
+  coach?: boolean;
+};
+
+// **bold** → <b>… ; the rest stays plain text. Mirrors the design's <b> spans.
+function renderBold(text: string): ReactNode[] {
+  const out: ReactNode[] = [];
+  const parts = text.split(/\*\*(.+?)\*\*/g);
+  parts.forEach((p, i) => {
+    if (i % 2 === 1) out.push(<b key={i} className="font-semibold text-text">{p}</b>);
+    else if (p) out.push(<span key={i}>{p}</span>);
+  });
+  return out;
+}
+
+function TipActionBtn({ action }: { action: TipAction }) {
+  const Icon = action.icon === "up" ? IcArrowUp : IcSpread;
+  return (
+    <button
+      type="button"
+      style={{
+        background: "color-mix(in srgb, var(--color-accent) 10%, var(--color-surface))",
+        color: "var(--color-accent)",
+        borderColor: "color-mix(in srgb, var(--color-accent) 26%, var(--color-border))",
+      }}
+      className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-small font-medium transition-colors hover:brightness-[0.97]"
+    >
+      <Icon size={14} /> {action.label}
+    </button>
+  );
+}
+
+// The shared inner of every plaque anchoring — bulb glyph · mark/coach + title ·
+// body · optional actions · dismiss ✕. Identical markup everywhere (design's
+// plInner). `who` spans inside the body are pre-marked by the caller via **…**?
+// No — names are bolded inline by the caller through the body string itself.
+function TipInner({ advice, onDismiss }: { advice: TipAdvice; onDismiss?: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <>
+      <span
+        className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-warning"
+        style={{ background: "color-mix(in srgb, var(--color-warning) 15%, var(--color-surface))" }}
+      >
+        <IcBulb size={16} />
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+          {advice.coach ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface py-0.5 pl-1.5 pr-2 font-mono text-[10px] font-semibold uppercase tracking-[0.08em] text-text-subtle">
+              <IcNib size={12} className="text-accent" /> {t("scenarios.tip.coach")}
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface py-0.5 pl-1.5 pr-2 font-mono text-[10px] font-semibold uppercase tracking-[0.08em] text-text-subtle">
+              <IcBulb size={12} className="text-warning" /> {t("scenarios.tip.mark")}
+            </span>
+          )}
+          <span className="text-small font-semibold text-text">{advice.title}</span>
+        </div>
+        <p className="mt-[3px] text-caption leading-[1.5] text-text-muted [text-wrap:pretty]">{renderBold(advice.body)}</p>
+      </div>
+      {advice.actions && advice.actions.length > 0 && (
+        <div className="flex shrink-0 flex-wrap items-center gap-2 self-center max-md:w-full max-md:self-stretch">
+          {advice.actions.map((a) => (
+            <TipActionBtn key={a.key} action={a} />
+          ))}
+        </div>
+      )}
+      {onDismiss && (
+        <button
+          type="button"
+          onClick={onDismiss}
+          aria-label={t("scenarios.tip.dismiss")}
+          className="grid h-[26px] w-[26px] shrink-0 self-start place-items-center rounded-sm text-text-subtle transition-colors hover:bg-warning/[0.14] hover:text-text"
+        >
+          <IcX size={15} />
+        </button>
+      )}
+    </>
+  );
+}
+
+// Case A — «подвал-полоса»: a tinted band fused to the card's bottom edge, INSIDE
+// the border, BELOW the footer. Negative side/bottom margins cancel the card
+// padding so it runs full-width and rounds with the card (design .pl-band).
+export function TipBand({ advice, onDismiss }: { advice: TipAdvice; onDismiss?: () => void }) {
+  return (
+    <div
+      className="-mx-[19px] -mb-[17px] mt-[13px] flex items-start gap-3 rounded-b-lg px-[18px] pb-[13px] pt-3 max-md:flex-wrap"
+      style={{
+        borderTop: "1px solid color-mix(in srgb, var(--color-warning) 28%, var(--color-border))",
+        background: "color-mix(in srgb, var(--color-warning) 8%, var(--color-surface))",
+      }}
+    >
+      <TipInner advice={advice} onDismiss={onDismiss} />
+    </div>
+  );
+}
+
+// A warm «aims-at» time chip beside a routine's name (conflict case only). Design
+// .sc-timechip — «{clock} метит на {time}».
+export function TimeChip({ time }: { time: string }) {
+  const { t } = useTranslation();
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border py-[3px] pl-[7px] pr-[9px] text-caption font-semibold leading-none text-warning"
+      style={{
+        background: "color-mix(in srgb, var(--color-warning) 11%, var(--color-surface))",
+        borderColor: "color-mix(in srgb, var(--color-warning) 28%, var(--color-border))",
+      }}
+    >
+      <IcClock size={11} className="shrink-0" /> {t("scenarios.tip.aims_at").replace("{time}", time)}
+    </span>
+  );
+}
+
+// Case B — the SHARED bracket: ONE advice spanning a conflicting group. Wraps the
+// conflicting cards in a warning-tinted container with a left rail; a single
+// shared plaque is fused to the group's bottom (design .pl-conflict + .pl-shared).
+export function ConflictBracket({
+  advice,
+  onDismiss,
+  children,
+}: {
+  advice: TipAdvice;
+  onDismiss?: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      className="relative flex flex-col gap-3 rounded-xl px-[13px] pb-0 pt-[13px] [&_>_div.rounded-lg]:shadow-sm"
+      style={{
+        border: "1px solid color-mix(in srgb, var(--color-warning) 24%, var(--color-border))",
+        background: "color-mix(in srgb, var(--color-warning) 4%, transparent)",
+      }}
+    >
+      <span
+        className="pointer-events-none absolute left-0 w-[3px] rounded-r-[2px]"
+        style={{ top: "13px", bottom: "74px", background: "color-mix(in srgb, var(--color-warning) 50%, transparent)" }}
+      />
+      {children}
+      <div
+        className="-mx-[13px] mt-px flex items-start gap-3 rounded-b-xl px-4 pb-[14px] pt-[13px] max-md:flex-wrap"
+        style={{
+          borderTop: "1px solid color-mix(in srgb, var(--color-warning) 28%, var(--color-border))",
+          background: "color-mix(in srgb, var(--color-warning) 9%, var(--color-surface))",
+        }}
+      >
+        <TipInner advice={advice} onDismiss={onDismiss} />
+      </div>
+    </div>
+  );
+}
+
+// The quiet «{n} совет скрыт» button in the routine-list header (design .rl-hidden).
+export function HiddenTipsPill({ count, onShow }: { count: number; onShow: () => void }) {
+  const { t } = useTranslation();
+  if (count <= 0) return null;
+  const label = (count === 1 ? t("scenarios.tip.hidden_one") : t("scenarios.tip.hidden_many")).replace("{n}", String(count));
+  return (
+    <button
+      type="button"
+      onClick={onShow}
+      className="inline-flex items-center gap-[7px] text-small text-text-subtle transition-colors hover:text-text"
+    >
+      <IcBulb size={13} className="text-warning" /> {label}
+    </button>
+  );
+}
+
+// The dismissed-state restore line (design .pl-restored) — «Совет по «{name}»
+// скрыт. Вернётся…» + a «Вернуть» accent button that clears the dismissal.
+export function TipRestoredLine({ name, onRestore }: { name: string; onRestore: () => void }) {
+  const { t } = useTranslation();
+  const txt = t("scenarios.tip.restored").replace("{name}", name);
+  return (
+    <div className="flex items-center gap-2.5 rounded-md border border-dashed border-border bg-surface-2 px-3.5 py-[9px]">
+      <span className="min-w-0 flex-1 text-caption text-text-subtle">{txt}</span>
+      <button
+        type="button"
+        onClick={onRestore}
+        className="shrink-0 rounded-sm px-2 py-1 text-small font-semibold text-accent transition-colors hover:bg-accent/[0.09]"
+      >
+        {t("scenarios.tip.restore")}
+      </button>
     </div>
   );
 }
@@ -453,6 +666,9 @@ export function ScenarioCard({
   onDelete,
   inheritFromHouseRules = false,
   overridesDefault = false,
+  band,
+  onDismissBand,
+  timechip,
 }: {
   s: Scenario;
   accounts?: ConnectedAccount[];
@@ -467,6 +683,11 @@ export function ScenarioCard({
   /** Coexistence: this is an ACTIVE custom reply scenario that overrides the
    *  account's built-in reply sweep → show a «перебивает дефолт» link badge. */
   overridesDefault?: boolean;
+  /** Case A — a context advice fused to this card's bottom edge (§Case A). */
+  band?: TipAdvice;
+  onDismissBand?: () => void;
+  /** Conflict case — a warm «метит на {time}» chip beside the name (§Case B). */
+  timechip?: string;
 }) {
   const { t, locale } = useTranslation();
   const isPromo = s.template === "promo";
@@ -496,9 +717,12 @@ export function ScenarioCard({
           <Icon size={20} />
         </span>
         <div className="min-w-0 flex-1">
-          {/* Name alone on the title line — badges live in a calm tag row below
-              the subtitle (unified badge system: never crowd the title/toggle). */}
-          <h3 className="text-body font-semibold tracking-tight">{s.name}</h3>
+          {/* Name on the title line — plus a warm «метит на {time}» chip in the
+              conflict case (§Case B). Badges live in a calm tag row below. */}
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-body font-semibold tracking-tight">{s.name}</h3>
+            {timechip && <TimeChip time={timechip} />}
+          </div>
           <CardLine template={sentence.template} slots={sentence.slots} className="mt-1" />
           {/* property/relation badges: «отвечает людям» (neutral) for a reply
               scenario; «перебивает дефолт» (link) when it overrides the default sweep */}
@@ -603,6 +827,9 @@ export function ScenarioCard({
           )}
         </div>
       </div>
+
+      {/* Case A — context advice fused to the card's bottom edge (below the footer). */}
+      {band && <TipBand advice={band} onDismiss={onDismissBand} />}
     </div>
   );
 }
@@ -665,69 +892,6 @@ export function ApplyToPopover({
       )}
     </div>
   );
-}
-
-// Stacking-warning banner — names the specific scenarios stacking on the same
-// slot (morning), advising raise-the-cap / spread-out. The «Акция every day»
-// variant nudges ≤2×/week.
-export function StackingWarnings({
-  morningCount,
-  morningNames,
-  promoDaily,
-  cap,
-}: {
-  morningCount: number;
-  morningNames: string[];
-  promoDaily: boolean;
-  cap: number;
-}) {
-  const { t } = useTranslation();
-  const items: ReactNode[] = [];
-  if (morningCount > cap) {
-    items.push(
-      <p key="morning">
-        {t("scenarios.warn_morning")
-          .replace("{n}", String(morningCount))
-          .replace("{names}", morningNames.join(", "))}
-      </p>,
-    );
-  }
-  if (promoDaily) items.push(<p key="promo">{t("scenarios.warn_promo")}</p>);
-  if (items.length === 0) return null;
-  return (
-    <div className="flex items-start gap-3 rounded-lg border border-warning/30 bg-warning/[0.07] p-3.5">
-      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-warning/12 text-warning">
-        <IcBolt size={16} />
-      </span>
-      <div className="min-w-0 space-y-1 text-small leading-relaxed text-text-muted">{items}</div>
-    </div>
-  );
-}
-
-// «Автопостинг выключен» — danger inline when a post-scenario is on but the
-// account's autopilot post_enabled is off (scenarios prep drafts, don't publish).
-export function AutopostOffBanner({ onEnable }: { onEnable: () => void }) {
-  const { t } = useTranslation();
-  return (
-    <div className="flex flex-col gap-2.5 rounded-lg border border-danger/30 bg-danger/[0.07] p-3.5 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex items-start gap-3">
-        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-danger/12 text-danger">
-          <IcAlertGlyph />
-        </span>
-        <div className="min-w-0">
-          <p className="text-small font-semibold text-text">{t("scenarios.autopost_off")}</p>
-          <p className="mt-0.5 text-caption leading-relaxed text-text-muted">{t("scenarios.autopost_off_sub")}</p>
-        </div>
-      </div>
-      <Button size="sm" variant="secondary" onClick={onEnable} className="shrink-0 max-sm:w-full">
-        {t("scenarios.autopost_on")}
-      </Button>
-    </div>
-  );
-}
-
-function IcAlertGlyph() {
-  return <IcTrash size={16} className="rotate-45" />;
 }
 
 export function ScenarioSkeleton() {

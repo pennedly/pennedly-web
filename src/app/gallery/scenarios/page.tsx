@@ -11,13 +11,14 @@
 import { useMemo, useState, type ReactNode } from "react";
 
 import {
-  AutopostOffBanner,
   BakedRules,
   CardTitle,
+  ConflictBracket,
   ControlCenterHeader,
   DiscoveryGallery,
   Field,
   FormCard,
+  HiddenTipsPill,
   INPUT,
   PowerUserDisclosure,
   PresetFieldInput,
@@ -28,7 +29,8 @@ import {
   type PreviewState,
   ScenarioSkeleton,
   ScenariosError,
-  StackingWarnings,
+  type TipAdvice,
+  TipRestoredLine,
   TEXTAREA,
   WhenSegment,
   type WhenMode,
@@ -51,7 +53,7 @@ import { Badge, InheritChip, StatusBadge } from "@/components/studio/Badges";
 import { IcReplies, IcRepeat, IcSliders, IcSwap } from "@/components/icons";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { cn } from "@/lib/cn";
-import type { ScenarioPreset, ScenarioPreview as ScenarioPreviewT } from "@/lib/types";
+import type { Scenario, ScenarioPreset, ScenarioPreview as ScenarioPreviewT } from "@/lib/types";
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -368,6 +370,34 @@ function ReplyGalleryDemo({ initialId }: { initialId: string }) {
   );
 }
 
+// ── Tip-plaque demo fixtures (Tip-Card-Plaque states) ──
+// A base post scenario; `mk` clones it with a fixed post hour so several land on
+// the same morning (drives the Case-B conflict bracket).
+function mkScenario(id: number, name: string, hour: number, extra?: Partial<Scenario>): Scenario {
+  return {
+    id, name, template: null, enabled: true, preset_id: "daily_question", publish_mode: "ask",
+    trigger_cfg: { kind: "daily_first_post", hour }, condition_cfg: { once_per_day: true }, action_cfg: { kind: "post" },
+    structured: null, instruction: "", reply_instruction: "",
+    next_run_at: "2026-06-29T05:00:00Z", last_run_at: "2026-06-28T05:02:00Z", fire_count: 12, recent_skips: [],
+    ...extra,
+  };
+}
+// Case A — a daily «Акция» (promo) the band attaches to.
+const GAL_PROMO: Scenario = {
+  id: 90, name: "Акция", template: "promo", enabled: true, preset_id: "promo", publish_mode: "ask",
+  trigger_cfg: { kind: "daily_first_post" }, condition_cfg: { once_per_day: true }, action_cfg: { kind: "post" },
+  structured: null, instruction: "", reply_instruction: "",
+  next_run_at: "2026-06-28T15:00:00Z", last_run_at: "2026-06-27T15:00:00Z", fire_count: 5, recent_skips: [],
+};
+// Case B — three post routines all aiming at 8:00.
+const GAL_CONFLICT: Scenario[] = [
+  mkScenario(91, "Утренний вопрос", 8),
+  mkScenario(92, "Цитата дня", 8),
+  mkScenario(93, "Совет дня", 8),
+];
+// A plain post routine for the refreshed day-strip state.
+const GAL_PLAIN = mkScenario(94, "Маленькая победа", 9, { trigger_cfg: { kind: "weekly", weekday: 1, hour: 9 } });
+
 export default function ScenariosGallery() {
   const { t } = useTranslation();
   const [dark, setDark] = useState(false);
@@ -376,7 +406,28 @@ export default function ScenariosGallery() {
     document.documentElement.classList.toggle("dark");
     setDark((d) => !d);
   }
-  const morningNames = DEMO_SCENARIOS.filter((s) => s.enabled && (s.action_cfg?.kind as string) !== "reply_policy").map((s) => s.name);
+
+  // ── tip-plaque advice (built from the i18n copy, like the live page) ──
+  const promoAdvice: TipAdvice = {
+    id: "gal-promo",
+    title: t("scenarios.tip.promo_title"),
+    body: t("scenarios.tip.promo_body"),
+    actions: [{ key: "spread", label: t("scenarios.tip.promo_action"), icon: "spread" }],
+  };
+  const promoCoachAdvice: TipAdvice = { ...promoAdvice, id: "gal-promo-coach", coach: true };
+  const conflictNames = GAL_CONFLICT.map((s) => `**«${s.name}»**`);
+  const conflictAdvice: TipAdvice = {
+    id: "gal-conflict",
+    title: t("scenarios.tip.conflict_title_many").replace("{n}", String(GAL_CONFLICT.length)),
+    body: t("scenarios.tip.conflict_body")
+      .replace("{names}", `${conflictNames.slice(0, -1).join(", ")} ${t("common.and")} ${conflictNames[conflictNames.length - 1]}`)
+      .replace("{time}", "8:00")
+      .replace("{cap}", "1"),
+    actions: [
+      { key: "spread", label: t("scenarios.tip.conflict_spread"), icon: "spread" },
+      { key: "raise", label: t("scenarios.tip.conflict_raise"), icon: "up" },
+    ],
+  };
 
   // a run-now result preview
   const runDemo = useMemo(
@@ -424,11 +475,40 @@ export default function ScenariosGallery() {
             </div>
           </div>
         </Section>
-        <Section title="stacking warning (names victims) + autopost-off banner">
+        <h2 className="mb-3 mt-8 text-h3 font-semibold">Tip plaque — context advice (Tip-Card-Plaque)</h2>
+        <Section title="(a) Case A · «Акция» daily — band fused to the card's bottom edge (below the footer)">
+          <ScenarioCard s={GAL_PROMO} onToggle={() => {}} onOpen={() => {}} band={promoAdvice} onDismissBand={() => {}} />
+        </Section>
+        <Section title="(b) Case B · 3 routines aim at 8:00 — one shared bracket + «метит на 8:00» chips · built-in reply card stays outside">
           <div className="flex flex-col gap-3">
-            <StackingWarnings morningCount={morningNames.length} morningNames={morningNames} promoDaily cap={1} />
-            <AutopostOffBanner onEnable={() => {}} />
+            <ConflictBracket advice={conflictAdvice} onDismiss={() => {}}>
+              {GAL_CONFLICT.map((s) => (
+                <ScenarioCard key={s.id} s={s} onToggle={() => {}} onOpen={() => {}} timechip="8:00" />
+              ))}
+            </ConflictBracket>
+            <ScenarioCard
+              s={DEMO_SCENARIOS.find((s) => (s.action_cfg?.kind as string) === "reply_policy")!}
+              onToggle={() => {}}
+              onOpen={() => {}}
+              inheritFromHouseRules
+            />
           </div>
+        </Section>
+        <Section title="(c) dismissed · header «1 совет скрыт» pill + the inline restore line in the plaque's place">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-caption font-semibold uppercase tracking-[0.05em] text-text-subtle">Твои рутины</span>
+              <HiddenTipsPill count={1} onShow={() => {}} />
+            </div>
+            <ScenarioCard s={GAL_PROMO} onToggle={() => {}} onOpen={() => {}} />
+            <TipRestoredLine name={GAL_PROMO.name} onRestore={() => {}} />
+          </div>
+        </Section>
+        <Section title="(d) coach variant · «Коуч Pennedly» tag swaps for «Совет»">
+          <ScenarioCard s={GAL_PROMO} onToggle={() => {}} onOpen={() => {}} band={promoCoachAdvice} onDismissBand={() => {}} />
+        </Section>
+        <Section title="(e) refreshed day strip on a normal card · «дни» label + filled active days, no advice">
+          <ScenarioCard s={GAL_PLAIN} onToggle={() => {}} onOpen={() => {}} />
         </Section>
         <Section title="empty · = the discovery gallery (rendered above)">
           <p className="text-small text-text-subtle">Empty state shows the discovery gallery (see the first section).</p>

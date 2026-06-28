@@ -15,7 +15,7 @@
 // · { trigger, instruction, reply_instruction?, condition? }. NEVER sends
 // `template`. Tester-gated, OFF by default.
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -42,17 +42,19 @@ import { useTesterGuard } from "@/lib/tester";
 import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
 import { Button } from "@/components/ui/button";
 import { Toast, ToastHost } from "@/components/ui/toast";
-import { IcPlus, IcReplies, IcSliders } from "@/components/icons";
+import { IcPlus, IcSliders } from "@/components/icons";
 import { TweaksPanel, TweakSection, TweakToggle, TweakRadio, useTweaks } from "@/components/tweaks/TweaksPanel";
 import {
-  AutopostOffBanner,
+  ConflictBracket,
   DeleteConfirm,
   EnableConfirm,
+  HiddenTipsPill,
   ScenarioCard,
   type PreviewState,
   ScenarioSkeleton,
   ScenariosError,
-  StackingWarnings,
+  type TipAdvice,
+  TipRestoredLine,
   type WhenMode,
   presetProducesReplies,
   whenModeFromCfg,
@@ -104,6 +106,45 @@ import type {
 
 const IS_DEV = process.env.NODE_ENV === "development";
 
+// ── Tip-plaque dismissal (FE-only, no backend) ──────────────────────────────
+// A dismissed tip really "returns in a week": we persist a per-account, per-advice
+// expiry timestamp in localStorage and treat the tip as hidden only while that
+// stamp is in the future. The key is `pl-dismiss:<accountId>:<adviceKey>`.
+const TIP_DISMISS_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+function tipDismissKey(accountId: number | string, adviceKey: string): string {
+  return `pl-dismiss:${accountId}:${adviceKey}`;
+}
+// Read the still-active dismissals for an account (expired ones are pruned).
+function readActiveDismissals(accountId: number | string): Set<string> {
+  const out = new Set<string>();
+  if (typeof window === "undefined") return out;
+  const prefix = `pl-dismiss:${accountId}:`;
+  const now = Date.now();
+  try {
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const k = window.localStorage.key(i);
+      if (!k || !k.startsWith(prefix)) continue;
+      const exp = Number(window.localStorage.getItem(k) ?? 0);
+      if (exp > now) out.add(k.slice(prefix.length));
+      else window.localStorage.removeItem(k); // prune expired
+    }
+  } catch {
+    /* localStorage unavailable (private mode / SSR) — treat as nothing hidden */
+  }
+  return out;
+}
+
+// The hour a post-scenario «metits на» (0–23), or null when it has no fixed hour
+// (asap / hourly / event scenarios are never grouped). Mirrors scenarioHour().
+function postHour(s: Scenario): number | null {
+  if (typeof s.hour === "number") return s.hour;
+  const h = s.trigger_cfg?.hour;
+  return typeof h === "number" && Number.isInteger(h) && h >= 0 && h <= 23 ? h : null;
+}
+function fmtHour(h: number): string {
+  return `${h}:00`;
+}
+
 type ToastT = { id: number; message: string; tone: "success" | "error" };
 type View = "list" | "discovery" | "editor" | "reply-gallery";
 
@@ -152,8 +193,9 @@ export default function ScenariosPage() {
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [presets, setPresets] = useState<ScenarioPreset[]>([]);
   const [accounts, setAccounts] = useState<ConnectedAccount[]>([]);
-  const [postAutopilotOn, setPostAutopilotOn] = useState(true); // account autopilot post_enabled
   const [cap, setCap] = useState(1); // max_post_scenarios_per_day
+  // Tip-plaque dismissals (advice keys currently hidden; 7-day TTL via localStorage).
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
 
   // ── «Правила дома» (global house rules). On the real path these mirror the
   // account's `account_autopilot` config; on demo they're FE-only sample values.
@@ -240,7 +282,6 @@ export default function ScenariosPage() {
   function applyAutopilot(ap: AutopilotConfig) {
     setApConfig(ap);
     setMasterOn(ap.enabled);
-    setPostAutopilotOn(ap.post_enabled);
     if (typeof ap.max_post_scenarios_per_day === "number") setCap(ap.max_post_scenarios_per_day);
     setReplyFreq(freqFromBackend(ap.reply_frequency));
     setReplyCeiling(ap.replies_per_day);
@@ -314,6 +355,39 @@ export default function ScenariosPage() {
     load(accountId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountId, demoParam]);
+
+  // The localStorage scope for tip dismissals — the real account id, or a stable
+  // «demo» bucket on the demo/gallery path.
+  const tipScope = demoOn ? "demo" : accountId;
+  // Hydrate dismissed-tip keys for the active account (prunes expired stamps).
+  useEffect(() => {
+    if (tipScope === null) return;
+    setDismissed(readActiveDismissals(tipScope));
+  }, [tipScope]);
+
+  // Hide / restore a tip — flips local state and writes/clears the 7-day stamp.
+  function dismissTip(adviceKey: string) {
+    if (tipScope === null) return;
+    setDismissed((p) => new Set(p).add(adviceKey));
+    try {
+      window.localStorage.setItem(tipDismissKey(tipScope, adviceKey), String(Date.now() + TIP_DISMISS_TTL_MS));
+    } catch {
+      /* no-op when storage is unavailable */
+    }
+  }
+  function restoreTip(adviceKey: string) {
+    if (tipScope === null) return;
+    setDismissed((p) => {
+      const n = new Set(p);
+      n.delete(adviceKey);
+      return n;
+    });
+    try {
+      window.localStorage.removeItem(tipDismissKey(tipScope, adviceKey));
+    } catch {
+      /* no-op */
+    }
+  }
 
   // demo state machine
   useEffect(() => {
@@ -403,25 +477,90 @@ export default function ScenariosPage() {
   const replyPaused = demoOn ? tw.replyState === "paused" : activeReplyScenario !== null;
   const overridingScenarioId = replyPaused ? activeReplyScenario?.id ?? null : null;
 
-  // ── control-center: stacking warnings ──
-  const morning = useMemo(() => {
-    const names = scenarios
-      .filter((s) => s.enabled && (s.action_cfg?.kind as string) !== "reply_policy")
-      .filter((s) => {
-        const m = whenModeFromCfg(s.trigger_cfg, s.condition_cfg);
-        return m === "daily" || m === "weekly" || m === "every_n_days" || m === "date_range";
-      })
-      .map((s) => s.name);
-    return names;
+  // ── control-center: context advice (Case A band + Case B conflict bracket) ──
+  // Conflict (Case B): enabled POST scenarios (not reply_policy) that share the
+  // same fixed post hour. A group of ≥2 → one shared bracket. Scenarios without a
+  // fixed hour (asap / hourly / event) are never grouped.
+  const conflictGroups = useMemo(() => {
+    const byHour = new Map<number, Scenario[]>();
+    for (const s of scenarios) {
+      if (!s.enabled) continue;
+      if ((s.action_cfg?.kind as string) === "reply_policy") continue;
+      const h = postHour(s);
+      if (h === null) continue;
+      (byHour.get(h) ?? byHour.set(h, []).get(h)!).push(s);
+    }
+    return [...byHour.entries()]
+      .filter(([, list]) => list.length >= 2)
+      .map(([hour, list]) => ({ hour, scenarios: list }));
   }, [scenarios]);
-  const promoDaily = useMemo(
-    () => scenarios.some((s) => s.enabled && s.template === "promo" && whenModeFromCfg(s.trigger_cfg, s.condition_cfg) === "daily"),
-    [scenarios],
+  const conflictIds = useMemo(() => {
+    const set = new Set<number>();
+    for (const g of conflictGroups) for (const s of g.scenarios) set.add(s.id);
+    return set;
+  }, [conflictGroups]);
+  const hourOfId = useMemo(() => {
+    const m = new Map<number, number>();
+    for (const g of conflictGroups) for (const s of g.scenarios) m.set(s.id, g.hour);
+    return m;
+  }, [conflictGroups]);
+
+  // Case A: an enabled «Акция» (promo) running daily — UNLESS it's already part of
+  // a conflict group (then the bracket owns it). The band attaches to this card.
+  const promoCard = useMemo(
+    () =>
+      scenarios.find(
+        (s) =>
+          s.enabled &&
+          s.template === "promo" &&
+          !conflictIds.has(s.id) &&
+          whenModeFromCfg(s.trigger_cfg, s.condition_cfg) === "daily",
+      ) ?? null,
+    [scenarios, conflictIds],
   );
-  const anyPostScenarioOn = useMemo(
-    () => scenarios.some((s) => s.enabled && (s.action_cfg?.kind as string) !== "reply_policy"),
-    [scenarios],
-  );
+
+  // ── advice objects (stable keys for dismissal) ──
+  const promoAdvice: TipAdvice | null = promoCard
+    ? {
+        id: "promo",
+        title: t("scenarios.tip.promo_title"),
+        body: t("scenarios.tip.promo_body"),
+        actions: [{ key: "spread", label: t("scenarios.tip.promo_action"), icon: "spread" }],
+      }
+    : null;
+  // A Case-B advice for one conflict group. Names are bolded inline (`**name**`),
+  // joined by «, » / « и » so the body reads like the design's «who» spans.
+  function conflictAdvice(group: { hour: number; scenarios: Scenario[] }): TipAdvice {
+    const n = group.scenarios.length;
+    const time = fmtHour(group.hour);
+    const quoted = group.scenarios.map((s) => `**«${s.name}»**`);
+    const names = quoted.length <= 1 ? quoted.join("") : `${quoted.slice(0, -1).join(", ")} ${t("common.and")} ${quoted[quoted.length - 1]}`;
+    const title = (n === 1 ? t("scenarios.tip.conflict_title_one") : t("scenarios.tip.conflict_title_many")).replace("{n}", String(n));
+    const body = t("scenarios.tip.conflict_body").replace("{names}", names).replace("{time}", time).replace("{cap}", String(cap));
+    return { id: `conflict:${group.hour}`, title, body };
+  }
+  const conflictActions: TipAdvice["actions"] = [
+    { key: "spread", label: t("scenarios.tip.conflict_spread"), icon: "spread" },
+    { key: "raise", label: t("scenarios.tip.conflict_raise"), icon: "up" },
+  ];
+
+  // How many tips are currently hidden (would otherwise show) — drives the header
+  // «N совет скрыт» pill. A tip "would show" if its trigger condition holds.
+  const hiddenCount = useMemo(() => {
+    let n = 0;
+    if (promoAdvice && dismissed.has(promoAdvice.id)) n++;
+    for (const g of conflictGroups) if (dismissed.has(`conflict:${g.hour}`)) n++;
+    return n;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [promoCard, conflictGroups, dismissed]);
+  // Restore ALL hidden tips (the header pill is a quiet "bring them back").
+  function restoreAllTips() {
+    if (promoAdvice && dismissed.has(promoAdvice.id)) restoreTip(promoAdvice.id);
+    for (const g of conflictGroups) {
+      const k = `conflict:${g.hour}`;
+      if (dismissed.has(k)) restoreTip(k);
+    }
+  }
 
   // ── preview state ──
   const previewState: PreviewState = isReplyPolicy
@@ -542,7 +681,10 @@ export default function ScenariosPage() {
     setEnableBusy(true);
     // optimistic: flip on + record the chosen mode
     setScenarios((xs) => xs.map((x) => (x.id === s.id ? { ...x, enabled: true, publish_mode: mode } : x)));
-    if (opts.enableAutopost) setPostAutopilotOn(true);
+    // The gate now reflects the real master («Правила дома»): a post scenario going
+    // «Автоматически» while the master is off offers to turn the MASTER on inline
+    // (post_enabled is dead post-merge — the worker gates only on `enabled`).
+    if (opts.enableAutopost) setMasterOn(true);
     if (demoOn) {
       toast(t("scenarios.toast_on"));
       setEnableBusy(false);
@@ -550,10 +692,11 @@ export default function ScenariosPage() {
       return;
     }
     try {
-      // post + «Автоматически» with account autopublish off → turn it on inline
+      // post + «Автоматически» with the master off → turn the master on inline
       if (opts.enableAutopost && accountId !== null) {
         const ap = await fetchAutopilot(accountId);
-        await updateAutopilot(accountId, { ...ap, post_enabled: true });
+        const saved = await updateAutopilot(accountId, { ...ap, enabled: true });
+        setApConfig(saved);
       }
       const saved = await updateScenario(s.id, { publish_mode: mode, enabled: true });
       setScenarios((xs) => xs.map((x) => (x.id === saved.id ? saved : x)));
@@ -630,9 +773,6 @@ export default function ScenariosPage() {
     void saveAutopilot({ reply_quiet_end_hour: hhmmToHour(v) }, () => setQuietTo(prev));
   }
 
-  function enablePostAutopilot() {
-    router.push("/app/autopilot");
-  }
 
   // ── built-in reply routine handlers ──────────────────────────────────────
   // Card toggle = account reply mode (off ↔ all). Optimistic + persisted via
@@ -851,6 +991,78 @@ export default function ScenariosPage() {
     </div>
   );
 
+  // One control-center card with the shared prop wiring; `extra` carries the
+  // per-card advice band / conflict time-chip when relevant.
+  function cardFor(s: Scenario, extra?: { band?: TipAdvice; onDismissBand?: () => void; timechip?: string }) {
+    return (
+      <ScenarioCard
+        key={s.id}
+        s={s}
+        accounts={otherAccounts}
+        handle={handle}
+        onToggle={toggle}
+        onOpen={openEditor}
+        onApply={applyToAccounts}
+        onDelete={(sc) => setDelTarget(sc)}
+        inheritFromHouseRules={(s.action_cfg?.kind as string) === "reply_policy"}
+        overridesDefault={s.id === overridingScenarioId}
+        band={extra?.band}
+        onDismissBand={extra?.onDismissBand}
+        timechip={extra?.timechip}
+      />
+    );
+  }
+
+  // Render «Твои рутины» in list order, emitting a Case-B bracket once at its
+  // group's first member (skipping the rest), the Case-A band on the «Акция»
+  // card, and an inline restore line where a dismissed tip used to be.
+  function renderRoutines(): ReactNode {
+    const out: ReactNode[] = [];
+    const consumed = new Set<number>();
+    for (const s of scenarios) {
+      if (consumed.has(s.id)) continue;
+
+      // Case B — this scenario opens a conflict group.
+      if (conflictIds.has(s.id)) {
+        const group = conflictGroups.find((g) => g.scenarios.some((x) => x.id === s.id))!;
+        for (const x of group.scenarios) consumed.add(x.id);
+        const advice = conflictAdvice(group);
+        const isHidden = dismissed.has(advice.id);
+        if (isHidden) {
+          // collapsed back to normal cards + a restore line in the plaque's place
+          for (const x of group.scenarios) out.push(cardFor(x));
+          out.push(
+            <TipRestoredLine key={`restore-${advice.id}`} name={group.scenarios[0].name} onRestore={() => restoreTip(advice.id)} />,
+          );
+        } else {
+          out.push(
+            <ConflictBracket key={`bracket-${advice.id}`} advice={{ ...advice, actions: conflictActions }} onDismiss={() => dismissTip(advice.id)}>
+              {group.scenarios.map((x) => cardFor(x, { timechip: fmtHour(hourOfId.get(x.id)!) }))}
+            </ConflictBracket>,
+          );
+        }
+        continue;
+      }
+
+      // Case A — the «Акция» card carries a fused band (or a restore line when hidden).
+      if (promoCard && s.id === promoCard.id && promoAdvice) {
+        const isHidden = dismissed.has(promoAdvice.id);
+        if (isHidden) {
+          out.push(cardFor(s));
+          out.push(
+            <TipRestoredLine key={`restore-${promoAdvice.id}`} name={s.name} onRestore={() => restoreTip(promoAdvice.id)} />,
+          );
+        } else {
+          out.push(cardFor(s, { band: promoAdvice, onDismissBand: () => dismissTip(promoAdvice.id) }));
+        }
+        continue;
+      }
+
+      out.push(cardFor(s));
+    }
+    return out;
+  }
+
   return (
     <div className="min-h-screen bg-bg text-text">
       <AppTopbar
@@ -999,25 +1211,18 @@ export default function ScenariosPage() {
             {/* «Встроенная» — the always-present built-in reply routine, pinned first */}
             {builtInGroup}
 
-            {/* «Твои рутины» — the user's scenarios */}
+            {/* «Твои рутины» — the user's scenarios. Advice rides ON the routine it's
+                about: Case A = a band fused to the «Акция» card; Case B = a shared
+                bracket around the hour-conflicting group. A hidden tip → a quiet
+                header pill + an inline restore line in its place. */}
             <div className="flex flex-col gap-3">
-              <GroupLabel icon={<IcSliders size={12} />}>{t("ap.reply.group.yours")}</GroupLabel>
-              <StackingWarnings morningCount={morning.length} morningNames={morning} promoDaily={promoDaily} cap={cap} />
-              {anyPostScenarioOn && !postAutopilotOn && <AutopostOffBanner onEnable={enablePostAutopilot} />}
-              {scenarios.map((s) => (
-                <ScenarioCard
-                  key={s.id}
-                  s={s}
-                  accounts={otherAccounts}
-                  handle={handle}
-                  onToggle={toggle}
-                  onOpen={openEditor}
-                  onApply={applyToAccounts}
-                  onDelete={(sc) => setDelTarget(sc)}
-                  inheritFromHouseRules={(s.action_cfg?.kind as string) === "reply_policy"}
-                  overridesDefault={s.id === overridingScenarioId}
-                />
-              ))}
+              <div className="flex items-center gap-3">
+                <div className="min-w-0 flex-1">
+                  <GroupLabel icon={<IcSliders size={12} />}>{t("ap.reply.group.yours")}</GroupLabel>
+                </div>
+                <HiddenTipsPill count={hiddenCount} onShow={restoreAllTips} />
+              </div>
+              {renderRoutines()}
               {/* Obvious entry into the discovery gallery (the "new flow") even when
                   scenarios already exist — the top-bar "+ Новый" reads as "add another",
                   this reads as "browse the catalog". */}
@@ -1035,7 +1240,7 @@ export default function ScenariosPage() {
 
       <DeleteConfirm open={deleteOpen} deleting={deleting} onClose={() => setDeleteOpen(false)} onConfirm={doDelete} />
       <DeleteConfirm open={!!delTarget} deleting={delBusy} onClose={() => setDelTarget(null)} onConfirm={deleteFromCard} />
-      <EnableConfirm scenario={pendingEnable} postAutopilotOn={postAutopilotOn} handle={handle} busy={enableBusy} onConfirm={confirmEnable} onCancel={() => setPendingEnable(null)} />
+      <EnableConfirm scenario={pendingEnable} postAutopilotOn={masterOn} handle={handle} busy={enableBusy} onConfirm={confirmEnable} onCancel={() => setPendingEnable(null)} />
 
       <ToastHost>
         {toasts.map((to) => (

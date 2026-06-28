@@ -112,6 +112,10 @@ export const IcArrowLeft = (p: IconProps) => <Svg {...p}><path d="M19 12H5M11 6l
 export const IcAudit = (p: IconProps) => <Svg {...p}><path d="M8 4h8a1 1 0 0 1 1 1v1h1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h1V5a1 1 0 0 1 1-1Z" /><path d="M8.5 13.5l2.2 2.2 4.3-4.6" /></Svg>;
 export const IcStudy = (p: IconProps) => <Svg {...p}><circle cx="11" cy="11" r="7" /><path d="M20.5 20.5l-4.4-4.4" /><path d="M11 8.2l.9 1.9 1.9.9-1.9.9-.9 1.9-.9-1.9-1.9-.9 1.9-.9Z" /></Svg>;
 export const IcBolt = (p: IconProps) => <Svg {...p}><path d="M13 3 5 13h6l-1 8 8-10h-6l1-8Z" /></Svg>;
+// Lightbulb — the «совет» mark (filament + base), ported from Tip-Card-Plaque.
+export const IcBulb = (p: IconProps) => <Svg {...p}><path d="M9.5 18h5M10.5 21h3" /><path d="M12 3a6 6 0 0 0-3.8 10.6c.7.6 1.1 1.1 1.2 2.1l.1.3h5l.1-.3c.1-1 .5-1.5 1.2-2.1A6 6 0 0 0 12 3Z" /></Svg>;
+// Spread / scatter — «разнести по времени» (two outward chevrons + a centre bar).
+export const IcSpread = (p: IconProps) => <Svg {...p}><path d="M5 9 2 12l3 3M19 9l3 3-3 3M9 12h6" /></Svg>;
 export const IcPlus = (p: IconProps) => <Svg {...p}><path d="M12 5v14M5 12h14" /></Svg>;
 export const IcClock = (p: IconProps) => <Svg {...p}><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></Svg>;
 export const IcCalendar = (p: IconProps) => <Svg {...p}><rect x="4" y="5.5" width="16" height="15" rx="2.5" /><path d="M4 9.5h16M8.5 3.5v4M15.5 3.5v4" /></Svg>;
