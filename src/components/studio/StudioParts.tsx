@@ -24,14 +24,20 @@ import {
   IcAlert,
   IcArrowLeft,
   IcArrowUp,
+  IcBolt,
   IcBubble,
   IcCheck,
   IcChevDown,
+  IcChevRight,
   IcClock,
   IcExternal,
+  IcEye,
   IcGlobe,
   IcHeart,
   IcImage,
+  IcInfo,
+  IcLink,
+  IcLock,
   IcMore,
   IcVideo,
   IcNib,
@@ -1392,6 +1398,120 @@ export function FirstRun({ onSetup }: { onSetup: () => void }) {
 }
 
 // ──────────────────────────── Publish dialog ────────────────────────────────
+// ── Entry B — «Бустер для этого поста» (Scenario-Growth-Comment v2, point B) ──
+// The SAME boost config block as the standalone editor (metric+threshold +
+// pre-written comment), with the target IMPLICIT (a locked «Цель: этот пост»
+// plaque). Collapsed → a switch + a one-line summary; expanded → the config.
+//
+// HONEST STUB: a boost's `target:{type:"post"}` needs a Pennedly posts.id, which
+// does NOT exist at compose/schedule time (publish returns only a Threads id; a
+// scheduled post isn't published yet). There is no backend endpoint to attach a
+// boost to a draft. So this surface shows the design 1:1 but does NOT create a
+// boost on publish — it carries an honest note pointing to Autopilot → Бустер
+// (which CAN watch this scenario's posts). Wiring it for real needs backend work
+// (a draft→boost link, or a posts.id returned from publish). See the FE report.
+const STUDIO_BOOST_METRICS: { key: "views" | "likes" | "comments"; icon: ReactNode; labelKey: MessageKey; def: number }[] = [
+  { key: "views", icon: <IcEye size={13} />, labelKey: "scenarios.bo.metric_views", def: 5000 },
+  { key: "likes", icon: <IcHeart size={13} />, labelKey: "scenarios.bo.metric_likes", def: 200 },
+  { key: "comments", icon: <IcBubble size={13} />, labelKey: "scenarios.bo.metric_comments", def: 50 },
+];
+
+function BoosterAttachSection() {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const [metric, setMetric] = useState<"views" | "likes" | "comments">("views");
+  const [threshold, setThreshold] = useState("");
+  const [comment, setComment] = useState("");
+  const def = STUDIO_BOOST_METRICS.find((m) => m.key === metric)!.def;
+  const n = threshold.trim() && Number(threshold) >= 1 ? Math.floor(Number(threshold)) : def;
+  const unit = t(metric === "views" ? "scenarios.bo.unit_views" : metric === "likes" ? "scenarios.bo.unit_likes" : "scenarios.bo.unit_comments");
+  return (
+    <div className="mt-3.5 overflow-hidden rounded-md border border-border bg-surface-2">
+      {/* header row — switch + title + one-line summary */}
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-surface"
+      >
+        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-sm border border-accent/24 bg-accent/[0.11] text-accent">
+          <IcBolt size={14} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-small font-semibold text-text">{t("scenarios.bo.studio.title")}</span>
+          <span className="mt-px block truncate text-caption text-text-subtle">
+            {open ? t("scenarios.bo.studio.sub") : t("scenarios.bo.studio.summary").replace("{n}", n.toLocaleString()).replace("{metric}", unit)}
+          </span>
+        </span>
+        <IcChevRight size={16} className={cn("shrink-0 text-text-subtle transition-transform", open && "rotate-90")} />
+      </button>
+      {open && (
+        <div className="flex flex-col gap-3 border-t border-border px-3 pb-3.5 pt-3">
+          {/* locked target plaque — «Цель: этот пост» (implicit, B) */}
+          <div className="inline-flex items-center gap-1.5 self-start rounded-full border border-accent/24 bg-accent/[0.08] px-2.5 py-1 text-caption font-semibold text-text-muted">
+            <IcLock size={11} className="text-accent" /> {t("scenarios.bo.studio.target")}
+          </div>
+          {/* metric + threshold (the SAME config as entry A) */}
+          <div className="flex flex-col gap-1.5">
+            <span className="text-caption font-medium text-text">{t("scenarios.bo.metric_label")}</span>
+            <div className="flex flex-wrap gap-1.5">
+              {STUDIO_BOOST_METRICS.map((m) => {
+                const on = m.key === metric;
+                return (
+                  <button
+                    key={m.key}
+                    type="button"
+                    onClick={() => setMetric(m.key)}
+                    aria-pressed={on}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-caption font-semibold transition-colors",
+                      on ? "border-accent bg-accent/[0.09] text-accent" : "border-border bg-surface text-text-muted hover:border-text/16",
+                    )}
+                  >
+                    {m.icon} {t(m.labelKey)}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <label className="flex flex-col gap-1.5">
+            <span className="text-caption font-medium text-text">{t("scenarios.bo.threshold_label")}</span>
+            <input
+              type="number"
+              inputMode="numeric"
+              min={1}
+              placeholder={String(def)}
+              value={threshold}
+              onChange={(e) => setThreshold(e.target.value)}
+              className="h-9 max-w-[160px] rounded-md border border-border bg-surface px-2.5 text-small tabular-nums text-text outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 max-md:h-11 max-md:text-[16px]"
+            />
+          </label>
+          {/* the pre-written comment */}
+          <label className="flex flex-col gap-1.5">
+            <span className="inline-flex items-center gap-1.5 text-caption font-medium text-text">
+              <IcLink size={12} /> {t("scenarios.bo.comment_label")}
+            </span>
+            <textarea
+              rows={3}
+              maxLength={500}
+              placeholder={t("scenarios.bo.bt.ph")}
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              className="min-h-[72px] w-full resize-y rounded-md border border-border bg-surface px-3 py-2 text-small leading-[1.55] text-text outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
+            />
+            <span className="text-caption tabular-nums text-text-subtle">{comment.length} / 500</span>
+          </label>
+          {/* honest note — this surface is a preview; the boost is set up in Autopilot */}
+          <p className="flex items-start gap-2 rounded-md border border-warning/26 bg-warning/[0.07] px-3 py-2.5 text-caption leading-[1.5] text-text-muted">
+            <IcInfo size={14} className="mt-px shrink-0 text-warning" />
+            <span>{t("scenarios.bo.studio.soon")}</span>
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function StudioPublishDialog({
   open,
   text,
@@ -1525,6 +1645,12 @@ export function StudioPublishDialog({
         <div className="mt-2.5">
           <CharMeter len={text.length} />
         </div>
+
+        {/* Entry B — «Бустер для этого поста» (boost config, target = this post,
+            implicit). Honest stub: shows the design but doesn't create a boost on
+            publish (no posts.id at publish time) — see BoosterAttachSection. */}
+        <BoosterAttachSection />
+
         <div className="mt-5 flex items-center justify-end gap-2.5 max-md:flex-col-reverse max-md:items-stretch max-md:gap-2">
           <button onClick={onClose} disabled={busy} className={buttonClasses({ variant: "ghost", className: "max-md:min-h-[44px] max-md:w-full" })}>
             {t("studio.cancel")}

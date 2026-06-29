@@ -14,6 +14,8 @@ import type { MessageKey } from "@/lib/i18n";
 import type {
   PresetField,
   PublishMode,
+  ScenarioBoost,
+  ScenarioBoostTarget,
   ScenarioCreate,
   ScenarioPreset,
   ScenarioPromoFields,
@@ -27,6 +29,55 @@ export type CooldownUnit = "hours" | "days";
 // The reactive event kind the recipe «По событию» mode targets (Wave 1: views
 // threshold or follower milestone — NOT mentions, which need a new engine).
 export type RecipeEvent = "on_metric_threshold" | "on_follower_milestone";
+
+// ── Boost («Комментарий-добавка при росте поста») — the editor-side state ──────
+// A boost is its own scenario kind (NOT a КОГДА mode): when a watched post's
+// metric crosses a threshold, Pennedly appends a pre-written comment to it. The
+// FormState carries `isBoost` (this scenario IS a boost) + the three config
+// pieces (metric / threshold / comment) + the TARGET (which posts it watches).
+// `compileBody` turns these into the backend `boost` object; only the target
+// differs across the 3 entry points (explicit picker in A, locked in B/C).
+export type BoostMetric = "comments" | "likes" | "views";
+// The target a boost watches. `all` = every recent account post; `scenario` =
+// posts a publisher scenario produced (needs a scenario id); `post` = one post
+// (needs a posts.id). Mirrors backend BOOST_TARGET_TYPES exactly. (The v2 design
+// also sketches a 4th «по условию» target — NOT backend-backed, so omitted.)
+export type BoostTargetType = "all" | "scenario" | "post";
+
+// Per-metric default threshold + quick presets (the design's metric tiles:
+// просмотры→5000, лайки→200, комментарии→50). Used to seed the threshold when the
+// metric changes and to render the quick-preset chips.
+export const BOOST_DEFAULT_THRESHOLD: Record<BoostMetric, number> = {
+  views: 5000,
+  likes: 200,
+  comments: 50,
+};
+export const BOOST_PRESETS: Record<BoostMetric, number[]> = {
+  views: [1000, 5000, 10000, 50000],
+  likes: [100, 200, 500, 1000],
+  comments: [20, 50, 100, 200],
+};
+export const BOOST_COMMENT_MAX = 500; // mirrors backend _BOOST_COMMENT_MAX_LEN
+
+// The boost FormState defaults — spread into every FormState construction site
+// (freshForm / openEditor / gallery) so a non-boost scenario carries inert boost
+// fields (isBoost=false → compileBody never emits `boost`) and the four sites
+// never drift. A boost editor/preset overrides `isBoost` (+ entry/target) on top.
+export const BOOST_FORM_DEFAULTS = {
+  isBoost: false,
+  boostMetric: "views" as BoostMetric,
+  boostThreshold: "",
+  boostComment: "",
+  boostTargetType: "all" as BoostTargetType,
+  boostScenarioId: 0,
+  boostPostId: 0,
+  boostEntry: "a" as "a" | "studio" | "scenario",
+  // entry C — attached-boost (on a post scenario) defaults; inert unless toggled.
+  attachBoostOn: false,
+  attachBoostMetric: "views" as BoostMetric,
+  attachBoostThreshold: "",
+  attachBoostComment: "",
+};
 
 // ── Wave 3 «Раз в месяц» / «Раз в год» ──
 // A single (day, month) anchor for the yearly cadence (month is 0-indexed, so
@@ -78,6 +129,54 @@ export function perDayTimesFromCfg(raw: unknown): Record<number, number[]> | nul
   return Object.keys(out).length > 0 ? out : null;
 }
 
+// A scenario is a boost when its trigger is the reactive `on_post_metric` kind
+// (the backend stores it that way; the action is `boost_comment`). Shared by the
+// page's openEditor + matchPreset so a saved boost reopens in the boost editor.
+export function isBoostScenario(
+  trigger: Record<string, unknown> | null | undefined,
+  action: Record<string, unknown> | null | undefined,
+): boolean {
+  return (trigger?.kind as string) === "on_post_metric" || (action?.kind as string) === "boost_comment";
+}
+
+// Reconstruct the boost form fields from a saved scenario's resolved trigger_cfg
+// + action_cfg (the backend's `on_post_metric` / `boost_comment` shapes). Returns
+// the metric/threshold/comment + target so editing + re-saving round-trips. A
+// missing/garbage value falls back to a sane default (the worker reads these
+// permissively too). Months/ids that don't parse → "all" / 0 (no id picked).
+export type BoostFromCfg = {
+  metric: BoostMetric;
+  threshold: string;
+  comment: string;
+  targetType: BoostTargetType;
+  scenarioId: number;
+  postId: number;
+};
+export function boostFromCfg(
+  trigger: Record<string, unknown> | null | undefined,
+  action: Record<string, unknown> | null | undefined,
+): BoostFromCfg {
+  const rawMetric = trigger?.metric;
+  const metric: BoostMetric =
+    rawMetric === "comments" || rawMetric === "likes" || rawMetric === "views" ? rawMetric : "views";
+  const th = trigger?.threshold;
+  const threshold = typeof th === "number" && Number.isFinite(th) && th >= 1 ? String(Math.floor(th)) : "";
+  const comment = typeof action?.comment_text === "string" ? (action.comment_text as string) : "";
+  const tgt = (trigger?.target ?? {}) as Record<string, unknown>;
+  const ttype = tgt.type;
+  let targetType: BoostTargetType = "all";
+  let scenarioId = 0;
+  let postId = 0;
+  if (ttype === "scenario" && Number.isInteger(tgt.scenario_id) && (tgt.scenario_id as number) > 0) {
+    targetType = "scenario";
+    scenarioId = tgt.scenario_id as number;
+  } else if (ttype === "post" && Number.isInteger(tgt.post_id) && (tgt.post_id as number) > 0) {
+    targetType = "post";
+    postId = tgt.post_id as number;
+  }
+  return { metric, threshold, comment, targetType, scenarioId, postId };
+}
+
 // The editable form state (everything the editor owns).
 export type FormState = {
   name: string;
@@ -121,6 +220,33 @@ export type FormState = {
   // The reactive event kind chosen in the recipe «По событию» mode. Defaults to
   // the preset's event kind so an existing reactive scenario round-trips.
   eventKind: RecipeEvent;
+  // ── Boost («Комментарий-добавка при росте поста») ──
+  // `isBoost` ⇒ this scenario is a reactive boost: the editor swaps in the boost
+  // sentence/slots and compileBody emits the `boost` object (NOT a free trigger).
+  // The other boost* fields are the config; `boostTarget*` is which posts it
+  // watches (locked to "post"/"scenario" in entry points B/C, a picker in A).
+  isBoost: boolean;
+  boostMetric: BoostMetric;
+  boostThreshold: string; // numeric string (blank → the metric's default)
+  boostComment: string; // the pre-written comment (≤500, non-empty to save)
+  boostTargetType: BoostTargetType;
+  // The chosen ids for the scenario/post targets (0 = none picked yet). For entry
+  // points B/C these are seeded + locked from context; in A the user picks them.
+  boostScenarioId: number;
+  boostPostId: number;
+  // The entry point — drives whether the target slot is an explicit picker ("a")
+  // or a locked plaque ("studio" = this post, "scenario" = this scenario's posts).
+  boostEntry: "a" | "studio" | "scenario";
+  // ── Entry C — an ATTACHED boost on a POST scenario ──
+  // A post-scenario (isBoost=false) may carry a «Бустер» section in its editor:
+  // when ON, saving ALSO creates a SEPARATE boost scenario watching THIS
+  // scenario's posts (target {type:"scenario", scenario_id:<this id>}). The config
+  // is the same metric/threshold/comment; the target is implicit (this scenario).
+  // These fields are inert unless `attachBoostOn` is true on a post scenario.
+  attachBoostOn: boolean;
+  attachBoostMetric: BoostMetric;
+  attachBoostThreshold: string;
+  attachBoostComment: string;
   // POST routines only — local time-of-day + publish jitter for the cadence
   // modes. Sent to the backend as trigger_cfg.hour / trigger_cfg.jitter_minutes
   // (see buildTrigger / compileBody); ignored for event/reply/promo shapes.
@@ -331,11 +457,74 @@ function compileInstruction(s: FormState): string {
   return base ? `${base} ${extra.join(" ")}` : extra.join(" ");
 }
 
-// Compile the full create body. Three forks: promo / reply_policy / free.
+// Build the backend `boost` object from the form. The metric/threshold/comment
+// are identical across all three entry points; only the TARGET differs (an
+// explicit picker in A, a locked context value in B/C). A blank threshold falls
+// back to the metric's default; a non-positive one is clamped to 1 (the backend
+// floor) so the body never 422s. `target` carries ONLY the keys its type needs
+// (mirrors the backend's _validate_boost_target normalization). The comment is
+// trimmed (the backend rejects whitespace-only); the caller gates empty before
+// save, so we keep whatever is here (trimmed) for the round-trip.
+export function buildBoost(s: FormState): ScenarioBoost {
+  const th = Number(s.boostThreshold);
+  const threshold = s.boostThreshold.trim() && Number.isFinite(th) && th >= 1
+    ? Math.min(1_000_000_000, Math.floor(th))
+    : BOOST_DEFAULT_THRESHOLD[s.boostMetric];
+  let target: ScenarioBoostTarget;
+  if (s.boostTargetType === "scenario" && s.boostScenarioId > 0) {
+    target = { type: "scenario", scenario_id: s.boostScenarioId };
+  } else if (s.boostTargetType === "post" && s.boostPostId > 0) {
+    target = { type: "post", post_id: s.boostPostId };
+  } else {
+    // "all", or a scenario/post target with no id picked yet → watch everything
+    // (the safe default; the editor still nudges the user to pick in A).
+    target = { type: "all" };
+  }
+  return {
+    metric: s.boostMetric,
+    threshold,
+    comment_text: s.boostComment.trim(),
+    target,
+  };
+}
+
+// Entry C — build the COMPANION boost create body for a post scenario's attached
+// «Бустер». It targets THIS scenario's posts ({type:"scenario", scenario_id}),
+// reusing the same metric/threshold/comment shape as the standalone boost. The
+// caller supplies the (already-saved) scenario's id + name; returns a full
+// ScenarioCreate (a separate scenario, OFF by default — the user enables it like
+// any other). Returns null when the attach section is off or the comment is empty.
+export function buildAttachedBoostBody(s: FormState, scenarioId: number, scenarioName: string): ScenarioCreate | null {
+  if (!s.attachBoostOn || !s.attachBoostComment.trim() || scenarioId <= 0) return null;
+  const th = Number(s.attachBoostThreshold);
+  const threshold = s.attachBoostThreshold.trim() && Number.isFinite(th) && th >= 1
+    ? Math.min(1_000_000_000, Math.floor(th))
+    : BOOST_DEFAULT_THRESHOLD[s.attachBoostMetric];
+  return {
+    name: `${scenarioName} — бустер`,
+    boost: {
+      metric: s.attachBoostMetric,
+      threshold,
+      comment_text: s.attachBoostComment.trim(),
+      target: { type: "scenario", scenario_id: scenarioId },
+    },
+  };
+}
+
+// Compile the full create body. Forks: boost / promo / reply_policy / free.
 export function compileBody(s: FormState): ScenarioCreate {
   const name = s.name.trim();
   // hour + jitter are folded into the cadence trigger by buildTrigger (the
   // backend now persists trigger_cfg.hour / trigger_cfg.jitter_minutes).
+
+  // 0) boost → the reactive «комментарий при росте» scenario. Its own kind (not a
+  // КОГДА mode): the backend resolves `boost` ahead of trigger/instruction, so we
+  // send ONLY name + boost (+ publish_mode is irrelevant — a boost has no draft
+  // step). Mutually exclusive with promo/reply_policy by construction (isBoost is
+  // only set for the boost editor + the boost discovery preset).
+  if (s.isBoost) {
+    return { name, boost: buildBoost(s) };
+  }
 
   // 1) campaign / «Акция» → the promo helper owns the shape.
   if (s.helperOn || s.preset?.id === "promo") {

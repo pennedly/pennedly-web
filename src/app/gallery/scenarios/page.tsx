@@ -39,6 +39,7 @@ import {
 } from "@/components/studio/ScenariosParts";
 import {
   BAKED_RULE_KEYS,
+  BOOST_FORM_DEFAULTS,
   type FormState,
   interpolate,
   visibleFields,
@@ -124,6 +125,7 @@ function FormDemo({ presetId }: { presetId: string }) {
       length: "any",
       cta: "",
       mode: "ask",
+      ...BOOST_FORM_DEFAULTS,
       fields,
     };
   });
@@ -243,6 +245,7 @@ function StepEditorDemo({
   const { t } = useTranslation();
   const preset: ScenarioPreset | null = useMemo(() => DEMO_CATALOG.find((p) => p.id === presetId) ?? null, [presetId]);
   const isPromo = presetId === "promo";
+  const isBoostPreset = presetId === "boost";
   const when0: WhenMode = preset ? whenModeFromCfg(preset.trigger_cfg, preset.condition_cfg) : "daily";
   const [form, setForm] = useState<FormState>(() => {
     const fields: Record<string, string> = {};
@@ -289,6 +292,9 @@ function StepEditorDemo({
       length: "any",
       cta: "",
       mode: "ask",
+      ...BOOST_FORM_DEFAULTS,
+      // boost preset → open the boost recipe (entry A) with the design defaults.
+      ...(isBoostPreset ? { isBoost: true, boostEntry: "a" as const, boostMetric: "views" as const, boostThreshold: "5000" } : {}),
       fields,
       ...override,
     };
@@ -327,6 +333,9 @@ function StepEditorDemo({
       isReplyPolicy={isReplyPolicy}
       isReactive={isReactive}
       isMentionReply={isMentionReply}
+      isBoost={form.isBoost}
+      boostScenarioOptions={[{ id: 1, label: "Утренний вопрос" }, { id: 2, label: "Рубрика недели" }]}
+      boostPostOptions={[{ id: 11, label: "Собрал всё, что знаю по теме…" }, { id: 12, label: "Маленькая победа дня" }]}
       bakedRules={bakedRules}
       bakedOpen={false}
       onBakedToggle={() => {}}
@@ -745,6 +754,38 @@ export default function ScenariosGallery() {
         </Section>
         <Section title="from-template · «Акция» (promo) — reply kind, sentence prefilled">
           <StepEditorDemo presetId="promo" />
+        </Section>
+
+        <h2 className="mb-3 mt-8 text-h3 font-semibold">Boost — «Комментарий-добавка при росте поста» (Scenario-Growth-Comment v2)</h2>
+        <Section title="A · standalone boost · default (target slot + metric+threshold slot + comment + boost stage)">
+          <StepEditorDemo presetId="boost" override={{ boostComment: "Полный гайд по ссылке в профиле →" }} />
+        </Section>
+        <Section title="A · target slot open · «Ко всем моим постам» (default)">
+          <StepEditorDemo presetId="boost" demoOpenSlot="target" override={{ boostTargetType: "all", boostComment: "Полный гайд по ссылке в профиле →" }} />
+        </Section>
+        <Section title="A · target slot open · «Постам сценария» + scenario picker">
+          <StepEditorDemo presetId="boost" demoOpenSlot="target" override={{ boostTargetType: "scenario", boostScenarioId: 1, boostComment: "Полный гайд по ссылке в профиле →" }} />
+        </Section>
+        <Section title="A · target slot open · «Конкретному посту» + post picker">
+          <StepEditorDemo presetId="boost" demoOpenSlot="target" override={{ boostTargetType: "post", boostPostId: 11, boostComment: "Полный гайд по ссылке в профиле →" }} />
+        </Section>
+        <Section title="A · metric+threshold slot open · Просмотры · порог 5 000 + quick presets">
+          <StepEditorDemo presetId="boost" demoOpenSlot="metric" override={{ boostMetric: "views", boostThreshold: "5000", boostComment: "Полный гайд по ссылке в профиле →" }} />
+        </Section>
+        <Section title="A · metric+threshold slot open · Комментарии · порог 50">
+          <StepEditorDemo presetId="boost" demoOpenSlot="metric" override={{ boostMetric: "comments", boostThreshold: "50", boostComment: "Полный гайд по ссылке в профиле →" }} />
+        </Section>
+        <Section title="A · comment big-text modal open">
+          <StepEditorDemo presetId="boost" demoModal="boost" override={{ boostComment: "Полный гайд по ссылке в профиле →" }} />
+        </Section>
+        <Section title="A · new boost (draft, not saved)">
+          <StepEditorDemo presetId="boost" isExisting={false} override={{ boostComment: "Полный гайд по ссылке в профиле →" }} />
+        </Section>
+        <Section title="A · Layer 2 open (target · metric+threshold · comment groups)">
+          <StepEditorDemo presetId="boost" demoLayer2 override={{ boostComment: "Полный гайд по ссылке в профиле →" }} />
+        </Section>
+        <Section title="C · post scenario «Утренний вопрос» · Layer 2 open · «Бустер» section ON (locked «посты этого сценария»)">
+          <StepEditorDemo presetId="daily_question" demoLayer2 override={{ attachBoostOn: true, attachBoostMetric: "comments", attachBoostThreshold: "50", attachBoostComment: "Полный разбор — по ссылке в профиле →" }} />
         </Section>
 
         <h2 className="mb-3 mt-8 text-h3 font-semibold">Unified form — per preset (legacy single-column form)</h2>

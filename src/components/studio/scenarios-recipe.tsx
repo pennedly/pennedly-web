@@ -19,14 +19,17 @@ import { cn } from "@/lib/cn";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { localHourToUtc, localUtcOffsetLabel } from "@/lib/timezone";
 import {
+  IcBolt,
   IcBubble,
   IcBubbleQuestion,
   IcCheck,
   IcClock,
   IcExpand,
+  IcEye,
   IcGauge,
   IcHeart,
   IcInfo,
+  IcLink,
   IcLock,
   IcPencil,
   IcPerson,
@@ -35,12 +38,17 @@ import {
   IcShield,
   IcShieldHouse,
   IcSliders,
+  IcTarget,
   IcTimer,
   IcX,
 } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
+  BOOST_DEFAULT_THRESHOLD,
+  BOOST_PRESETS,
+  type BoostMetric,
+  type BoostTargetType,
   daysInMonth,
   MONTHS,
   PER_DAY_DEFAULT,
@@ -54,10 +62,13 @@ import {
 
 type T = (k: MessageKey) => string;
 
-// Which slot's inline drawer is open (only one at a time), or null.
-export type OpenSlot = "when" | "if" | "what" | "who" | "tone" | "how" | null;
-// Which big-text modal is open (instruction / tone / custom audience), or null.
-export type BigTextField = "instruction" | "tone" | "audience" | null;
+// Which slot's inline drawer is open (only one at a time), or null. The boost
+// recipe adds two: «target» (which posts to watch) + «metric» (metric+threshold).
+export type OpenSlot = "when" | "if" | "what" | "who" | "tone" | "how" | "target" | "metric" | null;
+// Which big-text modal is open (instruction / tone / custom audience / boost
+// comment / attached-boost comment), or null. The boost's pre-written comment uses
+// the same big-text modal; `attachBoost` is entry C's companion-boost comment.
+export type BigTextField = "instruction" | "tone" | "audience" | "boost" | "attachBoost" | null;
 
 // ════════════════════════════════════════════════════════════════════════════
 //  SLOT — an editable word in the recipe sentence (style v9: dark bold + grey
@@ -1006,6 +1017,10 @@ const BT_META: Record<Exclude<BigTextField, null>, { icon: ReactNode; titleKey: 
   instruction: { icon: <IcPencil size={16} />, titleKey: "scenarios.rc.bt.instr_title", hintKey: "scenarios.rc.bt.instr_hint", phKey: "scenarios.rc.bt.instr_ph" },
   tone: { icon: <IcBubble size={16} />, titleKey: "scenarios.rc.bt.tone_title", hintKey: "scenarios.rc.bt.tone_hint", phKey: "scenarios.rc.bt.tone_ph" },
   audience: { icon: <IcPerson size={16} />, titleKey: "scenarios.rc.bt.aud_title", hintKey: "scenarios.rc.bt.aud_hint", phKey: "scenarios.rc.bt.aud_ph" },
+  // the boost's pre-written comment (link / CTA / addendum) — authored, ≤500 chars.
+  boost: { icon: <IcLink size={16} />, titleKey: "scenarios.bo.bt.title", hintKey: "scenarios.bo.bt.hint", phKey: "scenarios.bo.bt.ph" },
+  // entry C — the attached-boost companion comment (same modal copy as `boost`).
+  attachBoost: { icon: <IcLink size={16} />, titleKey: "scenarios.bo.bt.title", hintKey: "scenarios.bo.bt.hint", phKey: "scenarios.bo.bt.ph" },
 };
 
 export function BigTextModal({
@@ -1046,7 +1061,15 @@ export function BigTextModal({
           </p>
         </div>
         <div className="flex items-center gap-2.5 border-t border-border bg-surface-2 px-[18px] py-3.5">
-          <span className="text-caption tabular-nums text-text-subtle">{t("scenarios.rc.bt.count").replace("{n}", String(value.length))}</span>
+          {/* the boost comment has a hard 500-char ceiling (backend) — show «N / 500»
+              with an over-limit warning colour; other fields show the plain count. */}
+          {field === "boost" || field === "attachBoost" ? (
+            <span className={cn("text-caption tabular-nums", value.length > 500 ? "font-semibold text-danger" : "text-text-subtle")}>
+              {t("scenarios.bo.bt.count").replace("{n}", String(value.length)).replace("{max}", "500")}
+            </span>
+          ) : (
+            <span className="text-caption tabular-nums text-text-subtle">{t("scenarios.rc.bt.count").replace("{n}", String(value.length))}</span>
+          )}
           <span className="flex-1" />
           <Button variant="secondary" size="sm" onClick={onClose}>
             {t("common.cancel")}
@@ -1110,6 +1133,294 @@ export function WhatPostBody({
       </label>
       <Hard>{t("scenarios.rc.what_hard")}</Hard>
     </>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  BOOST — «Комментарий-добавка при росте поста» (reactive)
+//  Three drawer bodies (target · metric+threshold · comment via the big-text
+//  modal). The metric/threshold/comment block is IDENTICAL across all three
+//  entry points; only the target slot differs (an explicit picker in A, a locked
+//  plaque in B/C). Ported from Scenario-Growth-Comment-SPEC v2.
+// ════════════════════════════════════════════════════════════════════════════
+const BOOST_METRIC_TILES: { key: BoostMetric; icon: ReactNode; titleKey: MessageKey; subKey: MessageKey }[] = [
+  { key: "views", icon: <IcEye size={14} />, titleKey: "scenarios.bo.metric_views", subKey: "scenarios.bo.metric_views_sub" },
+  { key: "likes", icon: <IcHeart size={14} />, titleKey: "scenarios.bo.metric_likes", subKey: "scenarios.bo.metric_likes_sub" },
+  { key: "comments", icon: <IcBubble size={14} />, titleKey: "scenarios.bo.metric_comments", subKey: "scenarios.bo.metric_comments_sub" },
+];
+
+// ЦЕЛЬ — which posts the boost watches (entry A only; B/C lock it). The three
+// tiles map 1:1 to the backend BOOST_TARGET_TYPES (all / scenario / post). The
+// scenario/post tiles reveal a contextual sub-control (an id picker). When the
+// account has no publisher scenarios / recent posts to pick, the sub-control
+// shows an honest empty note and the target falls back to «all» on save.
+export function BoostTargetBody({
+  targetType,
+  onTargetType,
+  scenarioId,
+  onScenarioId,
+  postId,
+  onPostId,
+  scenarioOptions,
+  postOptions,
+}: {
+  targetType: BoostTargetType;
+  onTargetType: (t: BoostTargetType) => void;
+  scenarioId: number;
+  onScenarioId: (id: number) => void;
+  postId: number;
+  onPostId: (id: number) => void;
+  /** Publisher scenarios the boost may watch (id + label) — for the «scenario» picker. */
+  scenarioOptions: { id: number; label: string }[];
+  /** Recent posts the boost may watch (id + a short preview) — for the «post» picker. */
+  postOptions: { id: number; label: string }[];
+}) {
+  const { t } = useTranslation();
+  const TILES: { key: BoostTargetType; icon: ReactNode; titleKey: MessageKey; subKey: MessageKey }[] = [
+    { key: "all", icon: <IcShieldHouse size={14} />, titleKey: "scenarios.bo.target_all", subKey: "scenarios.bo.target_all_sub" },
+    { key: "scenario", icon: <IcRepeat size={14} />, titleKey: "scenarios.bo.target_scenario", subKey: "scenarios.bo.target_scenario_sub" },
+    { key: "post", icon: <IcPencil size={14} />, titleKey: "scenarios.bo.target_post", subKey: "scenarios.bo.target_post_sub" },
+  ];
+  return (
+    <>
+      <label className="flex flex-col gap-1.5">
+        <FieldLabel>{t("scenarios.bo.target_label")}</FieldLabel>
+        <div className="grid grid-cols-3 gap-2.5 max-[520px]:grid-cols-1">
+          {TILES.map((tile) => {
+            const on = tile.key === targetType;
+            return (
+              <button
+                key={tile.key}
+                type="button"
+                onClick={() => onTargetType(tile.key)}
+                aria-pressed={on}
+                className={cn(
+                  "flex flex-col gap-1 rounded-md border bg-surface px-[13px] py-3 text-left transition-colors",
+                  on ? "border-accent bg-accent/[0.06] shadow-[0_0_0_1px_var(--color-accent)]" : "border-border hover:border-text/16",
+                )}
+              >
+                <span className="flex items-center gap-[7px] text-small font-semibold text-text">
+                  <span className={cn("shrink-0", on ? "text-accent" : "text-text-subtle")}>{tile.icon}</span>
+                  {t(tile.titleKey)}
+                </span>
+                <span className="text-caption leading-[1.4] text-text-subtle">{t(tile.subKey)}</span>
+              </button>
+            );
+          })}
+        </div>
+      </label>
+      {/* contextual sub-control — a scenario / post picker for the matching tile */}
+      {targetType === "scenario" && (
+        <label className="flex flex-col gap-1.5">
+          <FieldLabel>{t("scenarios.bo.pick_scenario")}</FieldLabel>
+          {scenarioOptions.length === 0 ? (
+            <Why>{t("scenarios.bo.pick_scenario_empty")}</Why>
+          ) : (
+            <select
+              aria-label={t("scenarios.bo.pick_scenario")}
+              className={cn(FIELD_SELECT, "max-w-full")}
+              value={scenarioId || ""}
+              onChange={(e) => onScenarioId(Number(e.target.value) || 0)}
+            >
+              <option value="">{t("scenarios.bo.pick_placeholder")}</option>
+              {scenarioOptions.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          )}
+        </label>
+      )}
+      {targetType === "post" && (
+        <label className="flex flex-col gap-1.5">
+          <FieldLabel>{t("scenarios.bo.pick_post")}</FieldLabel>
+          {postOptions.length === 0 ? (
+            <Why>{t("scenarios.bo.pick_post_empty")}</Why>
+          ) : (
+            <select
+              aria-label={t("scenarios.bo.pick_post")}
+              className={cn(FIELD_SELECT, "max-w-full")}
+              value={postId || ""}
+              onChange={(e) => onPostId(Number(e.target.value) || 0)}
+            >
+              <option value="">{t("scenarios.bo.pick_placeholder")}</option>
+              {postOptions.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          )}
+        </label>
+      )}
+      <Why>{t("scenarios.bo.target_why")}</Why>
+    </>
+  );
+}
+
+// МЕТРИКА + ПОРОГ — one metric per boost (tiles) + an absolute threshold (number
+// input + quick-preset chips seeded per metric). Changing the metric re-seeds the
+// threshold to that metric's default when the field is empty / still the previous
+// metric's default. The honest captions (reactive · once-per-post · ~48h window)
+// live under the controls.
+export function BoostTriggerBody({
+  metric,
+  onMetric,
+  threshold,
+  onThreshold,
+}: {
+  metric: BoostMetric;
+  onMetric: (m: BoostMetric) => void;
+  threshold: string;
+  onThreshold: (v: string) => void;
+}) {
+  const { t } = useTranslation();
+  const presets = BOOST_PRESETS[metric];
+  return (
+    <>
+      <label className="flex flex-col gap-1.5">
+        <FieldLabel>{t("scenarios.bo.metric_label")}</FieldLabel>
+        <div className="grid grid-cols-3 gap-2.5 max-[520px]:grid-cols-1">
+          {BOOST_METRIC_TILES.map((tile) => {
+            const on = tile.key === metric;
+            return (
+              <button
+                key={tile.key}
+                type="button"
+                onClick={() => onMetric(tile.key)}
+                aria-pressed={on}
+                className={cn(
+                  "flex flex-col gap-1 rounded-md border bg-surface px-[13px] py-3 text-left transition-colors",
+                  on ? "border-accent bg-accent/[0.06] shadow-[0_0_0_1px_var(--color-accent)]" : "border-border hover:border-text/16",
+                )}
+              >
+                <span className="flex items-center gap-[7px] text-small font-semibold text-text">
+                  <span className={cn("shrink-0", on ? "text-accent" : "text-text-subtle")}>{tile.icon}</span>
+                  {t(tile.titleKey)}
+                </span>
+                <span className="text-caption leading-[1.4] text-text-subtle">{t(tile.subKey)}</span>
+              </button>
+            );
+          })}
+        </div>
+      </label>
+      <label className="flex flex-col gap-1.5">
+        <FieldLabel>{t("scenarios.bo.threshold_label")}</FieldLabel>
+        <input
+          type="number"
+          inputMode="numeric"
+          min={1}
+          placeholder={String(BOOST_DEFAULT_THRESHOLD[metric])}
+          className="h-10 max-w-[180px] rounded-md border border-border bg-surface px-3 text-small tabular-nums text-text focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25"
+          value={threshold}
+          onChange={(e) => onThreshold(e.target.value)}
+        />
+        {/* quick presets — tap to set the threshold to a common value */}
+        <span className="flex flex-wrap gap-1.5">
+          {presets.map((p) => {
+            const on = Number(threshold) === p;
+            return (
+              <button
+                key={p}
+                type="button"
+                onClick={() => onThreshold(String(p))}
+                aria-pressed={on}
+                className={cn(
+                  "rounded-full border px-3 py-1 text-caption font-semibold tabular-nums transition-colors",
+                  on ? "border-accent bg-accent/[0.09] text-accent" : "border-border bg-surface text-text-muted hover:border-text/16",
+                )}
+              >
+                {p.toLocaleString()}
+              </button>
+            );
+          })}
+        </span>
+        <span className="text-caption text-text-subtle">{t("scenarios.bo.threshold_hint")}</span>
+      </label>
+      <Hard>{t("scenarios.bo.trigger_hard")}</Hard>
+    </>
+  );
+}
+
+// КАК (boost) — the pre-written comment, via the big-text modal (the comment is
+// authored, never generated). Mirrors WhatPost's instruction field.
+export function BoostCommentBody({ value, onOpen }: { value: string; onOpen: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <label className="flex flex-col gap-1.5">
+      <FieldLabel>{t("scenarios.bo.comment_label")}</FieldLabel>
+      <BigText value={value} hint={t("scenarios.bo.comment_hint")} onOpen={onOpen} />
+    </label>
+  );
+}
+
+// A locked target plaque for entry points B (this post) / C (this scenario's
+// posts) — the design's «Цель: …» locked row. The config below it is identical to
+// entry A; only this plaque replaces the explicit picker.
+export function BoostTargetLock({ entry }: { entry: "studio" | "scenario" }) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex items-center gap-[9px] rounded-md border border-border bg-surface-2 px-[13px] py-2.5">
+      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-sm border border-accent/24 bg-accent/[0.11] text-accent">
+        <IcTarget size={14} />
+      </span>
+      <span className="min-w-0">
+        <span className="block text-caption font-mono uppercase tracking-[0.05em] text-text-subtle">{t("scenarios.bo.target_locked_k")}</span>
+        <span className="mt-px flex items-center gap-1.5 text-small font-semibold text-text">
+          <IcLock size={11} className="shrink-0 opacity-60" />
+          {entry === "studio" ? t("scenarios.bo.target_this_post") : t("scenarios.bo.target_this_scenario")}
+        </span>
+      </span>
+    </div>
+  );
+}
+
+// Entry C — the «Бустер» section inside a POST-scenario's editor (Layer 2). A
+// toggle reveals the SAME boost config (metric+threshold+comment) with the target
+// LOCKED to «посты этого сценария». On save it spins up a SEPARATE boost scenario
+// watching this scenario's posts (a scenario can't be both a publisher AND a boost
+// — the backend resolves one fork). For a not-yet-saved scenario it shows an
+// honest "save first" note (the companion needs this scenario's id to target).
+export function BoostAttachSection({
+  on,
+  onToggle,
+  metric,
+  onMetric,
+  threshold,
+  onThreshold,
+  comment,
+  onOpenComment,
+  isExisting,
+}: {
+  on: boolean;
+  onToggle: (v: boolean) => void;
+  metric: BoostMetric;
+  onMetric: (m: BoostMetric) => void;
+  threshold: string;
+  onThreshold: (v: string) => void;
+  comment: string;
+  onOpenComment: () => void;
+  /** A boost companion needs this scenario's id → only offered once it's saved. */
+  isExisting: boolean;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex flex-col gap-3">
+      <ToggleRow title={t("scenarios.bo.attach_title")} sub={t("scenarios.bo.attach_sub")} on={on} onToggle={onToggle} />
+      {on && (
+        <div className="flex flex-col gap-[15px] rounded-md border border-border bg-surface px-[13px] py-3.5">
+          {/* locked target — «Цель: посты этого сценария» */}
+          <div className="inline-flex items-center gap-1.5 self-start rounded-full border border-accent/24 bg-accent/[0.08] px-2.5 py-1 text-caption font-semibold text-text-muted">
+            <IcLock size={11} className="text-accent" /> {t("scenarios.bo.attach_target")}
+          </div>
+          {/* the SAME metric+threshold + comment config as entry A */}
+          <BoostTriggerBody metric={metric} onMetric={onMetric} threshold={threshold} onThreshold={onThreshold} />
+          <BoostCommentBody value={comment} onOpen={onOpenComment} />
+          {!isExisting && <Why>{t("scenarios.bo.attach_save_first")}</Why>}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -1254,6 +1565,8 @@ export const SLOT_ICON: Record<Exclude<OpenSlot, null>, ReactNode> = {
   who: <IcPerson size={15} />,
   tone: <IcBubble size={15} />,
   how: <IcCheck size={15} />,
+  target: <IcTarget size={15} />,
+  metric: <IcGauge size={15} />,
 };
 
 // re-export so the editor can reference the same translator type

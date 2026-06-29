@@ -224,10 +224,31 @@ export const PROMO_PRESET: ScenarioPreset = {
   reply_defaults: {},
 };
 
+// «Комментарий-добавка при росте поста» (boost) — a synthetic FE-only catalog
+// entry (the backend ships no preset, but DOES accept the `boost` create field).
+// Selecting it opens the boost recipe editor (target + metric+threshold + a
+// pre-written comment). Its `trigger_cfg.kind="on_post_metric"` /
+// `action_cfg.kind="boost_comment"` make matchPreset + isBoostScenario recognize
+// a saved boost. The live page appends it to the fetched catalog like the others.
+export const BOOST_PRESET: ScenarioPreset = {
+  id: "boost",
+  name_key: "scenarios.preset.boost",
+  icon: "IcBolt",
+  group: "reactive",
+  instruction: "",
+  reply_instruction: "",
+  trigger_cfg: { kind: "on_post_metric", metric: "views", threshold: 5000, target: { type: "all" } },
+  condition_cfg: null,
+  action_cfg: { kind: "boost_comment", comment_text: "" },
+  fields: [],
+  reply_defaults: {},
+};
+
 // The full demo catalog the gallery renders (real presets + the synthetic
-// «Ответ на упоминания» + «Акция»). The live screen appends MENTION_PRESET +
-// PROMO_PRESET to the fetched catalog too (neither ships from the backend).
-export const DEMO_CATALOG: ScenarioPreset[] = [...DEMO_PRESETS, MENTION_PRESET, PROMO_PRESET];
+// «Ответ на упоминания» + «Акция» + «Бустер»). The live screen appends
+// MENTION_PRESET + PROMO_PRESET + BOOST_PRESET to the fetched catalog too (none
+// ship from the backend).
+export const DEMO_CATALOG: ScenarioPreset[] = [...DEMO_PRESETS, MENTION_PRESET, PROMO_PRESET, BOOST_PRESET];
 
 // ── The control-center demo list — covers every card shape the SPEC calls out:
 // a daily question (on, fires every morning), a weekly rubric, a reply duty

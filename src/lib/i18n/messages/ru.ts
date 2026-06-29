@@ -1693,6 +1693,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "scenarios.p.seasonal.will": "Будет держать тему праздника или сезона — только внутри выбранного окна дат.",
   "scenarios.p.promo.benefit": "Розыгрыш или лид-магнит",
   "scenarios.p.promo.will": "Просит действие в комментариях и присылает выгоду в ответ каждому. Сильный инструмент — включай обдуманно.",
+  "scenarios.p.boost.benefit": "Ссылка под залетевшим постом",
+  "scenarios.p.boost.will": "Когда один из твоих постов набирает порог комментариев / лайков / просмотров — добавляет заготовленный комментарий. Один раз.",
   "scenarios.nudge": "лучше ≤2×/нед",
   "scenarios.impact": "импакт",
   // группы
@@ -1725,6 +1727,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "scenarios.preset.amplify_viral_desc": "Когда пост зашёл — фоллоуап, пока тема горячая.",
   "scenarios.preset.promo": "Акция",
   "scenarios.preset.promo_desc": "Розыгрыш: попроси коммент, дай что-то взамен. Под замком.",
+  "scenarios.preset.boost": "Бустер",
+  "scenarios.preset.boost_desc": "Когда пост залетит, добавить к нему заготовленный комментарий (ссылку / призыв) — один раз.",
   // подсказки «когда» на картах
   "scenarios.when_hint.morning": "по утрам, 9:00",
   "scenarios.when_hint.weekly": "еженедельно, в выбранный день",
@@ -2329,6 +2333,102 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "scenarios.rc.wdfull.fri": "пятница",
   "scenarios.rc.wdfull.sat": "суббота",
   "scenarios.rc.wdfull.sun": "воскресенье",
+
+  // ── Бустер — «Комментарий-добавка при росте поста» (Scenario-Growth-Comment v2)
+  // Реактивный сценарий: когда пост набирает порог метрики, Pennedly один раз
+  // добавляет к нему заранее написанный комментарий. Конфиг (метрика/порог/текст)
+  // одинаков во всех трёх точках входа; меняется только ЦЕЛЬ.
+  "scenarios.bo.kind": "Бустер",
+  "scenarios.bo.hint": "Читается как фраза — нажми на <b>подчёркнутое</b> слово, чтобы изменить.",
+  "scenarios.bo.status_next": "Реактивно — срабатывает, <b>когда пост перейдёт порог</b>",
+  // слоты фразы (A: цель — слот; B/C: локнутая плашка, поэтому фраза с «b_locked»)
+  "scenarios.bo.sent.a": "Бустер следит за",
+  "scenarios.bo.sent.b": "Когда такой пост наберёт",
+  "scenarios.bo.sent.b_locked": "Когда такой пост наберёт",
+  "scenarios.bo.sent.c": "→ Pennedly добавит к нему комментарий:",
+  "scenarios.bo.sent.comment": "текст",
+  "scenarios.bo.sent.once": "(один раз на пост)",
+  // фразы цели (слово во фразе)
+  "scenarios.bo.tphrase.all": "любым моим постом",
+  "scenarios.bo.tphrase.scenario": "постами сценария",
+  "scenarios.bo.tphrase.post": "конкретным постом",
+  // единицы метрики (слово после числа во фразе)
+  "scenarios.bo.unit_views": "просмотров",
+  "scenarios.bo.unit_likes": "лайков",
+  "scenarios.bo.unit_comments": "комментариев",
+  // заголовки выдвижных панелей
+  "scenarios.bo.dt_target": "За чем следит",
+  "scenarios.bo.dt_metric": "Метрика и порог",
+  "scenarios.bo.dt_comment": "Комментарий",
+  // панель ЦЕЛЬ (точка входа A)
+  "scenarios.bo.target_label": "За какими постами следить",
+  "scenarios.bo.target_all": "Ко всем моим постам",
+  "scenarios.bo.target_all_sub": "Каждый недавний пост (~48 ч)",
+  "scenarios.bo.target_scenario": "Постам сценария",
+  "scenarios.bo.target_scenario_sub": "Посты, которые создаёт рутина",
+  "scenarios.bo.target_post": "Конкретному посту",
+  "scenarios.bo.target_post_sub": "Один выбранный пост",
+  "scenarios.bo.target_why": "Бустер следит за твоими постами и добавляет комментарий к тому, что перешёл порог — по одному разу.",
+  "scenarios.bo.pick_scenario": "Какой сценарий",
+  "scenarios.bo.pick_scenario_empty": "Пока нет сценариев-постов, за которыми следить — создай сначала, либо следи за всеми постами.",
+  "scenarios.bo.pick_post": "Какой пост",
+  "scenarios.bo.pick_post_empty": "Нет недавних постов на выбор — следи за всеми постами.",
+  "scenarios.bo.pick_placeholder": "Выбери…",
+  // локнутая плашка цели (точки входа B / C)
+  "scenarios.bo.target_locked_k": "Цель",
+  "scenarios.bo.target_this_post": "этот пост",
+  "scenarios.bo.target_this_scenario": "посты этого сценария",
+  // панель МЕТРИКА + ПОРОГ
+  "scenarios.bo.metric_label": "Метрика",
+  "scenarios.bo.metric_views": "Просмотры",
+  "scenarios.bo.metric_views_sub": "Когда пост много смотрят",
+  "scenarios.bo.metric_likes": "Лайки",
+  "scenarios.bo.metric_likes_sub": "Когда пост много лайкают",
+  "scenarios.bo.metric_comments": "Комментарии",
+  "scenarios.bo.metric_comments_sub": "Когда пост обсуждают",
+  "scenarios.bo.threshold_label": "Порог",
+  "scenarios.bo.threshold_hint": "Абсолютное число. Бустер сработает, как только пост его перейдёт.",
+  "scenarios.bo.trigger_hard": "Одна метрика на бустер — так предсказуемее. Проверка раз в ~15 мин.",
+  // КОММЕНТАРИЙ (модалка длинного текста)
+  "scenarios.bo.comment_label": "Комментарий, который добавить",
+  "scenarios.bo.comment_hint": "Заранее написанный комментарий — ссылка, призыв или дополнение. Pennedly его не генерирует.",
+  "scenarios.bo.bt.title": "Комментарий бустера",
+  "scenarios.bo.bt.hint": "Пишешь сам, не генерится. До <b>500 символов</b> — ссылка, призыв или дополнение.",
+  "scenarios.bo.bt.ph": "напр. Полный гайд по ссылке в профиле → …",
+  "scenarios.bo.bt.count": "{n} / {max}",
+  // превью (правая колонка)
+  "scenarios.bo.stage_bar": "Пост + комментарий",
+  "scenarios.bo.stage_crossed": "залетел",
+  "scenarios.bo.stage_post": "Собрал всё, что знаю по теме, в одном месте — и сегодня это заходит 🔥",
+  "scenarios.bo.stage_how": "Что добавит Pennedly",
+  "scenarios.bo.stage_tag": "комментарий бустера",
+  "scenarios.bo.stage_comment_ph": "Полный гайд по ссылке в профиле →",
+  "scenarios.bo.invoice": "Pennedly добавит <b>один</b> комментарий к посту, который перешёл порог — один раз на пост. Текст — твой.",
+  // ритм (панель следующих запусков)
+  "scenarios.bo.runs_check": "проверяет твои посты",
+  "scenarios.bo.runs_crossed": "При переходе",
+  "scenarios.bo.runs_add": "добавит комментарий, один раз",
+  // Слой 2
+  "scenarios.bo.l2sum": "Цель · метрика и порог · текст комментария.",
+  "scenarios.bo.l2_grp_target": "За чем следит",
+  "scenarios.bo.l2_grp_trigger": "Метрика и порог",
+  "scenarios.bo.l2_grp_comment": "Комментарий",
+  // точка входа B (композер Студии) — секция «Бустер для этого поста»
+  "scenarios.bo.studio.title": "Бустер для этого поста",
+  "scenarios.bo.studio.sub": "Добавить комментарий, когда пост залетит",
+  "scenarios.bo.studio.summary": "Когда этот пост наберёт {n} {metric} → добавить комментарий",
+  "scenarios.bo.studio.off_hint": "Выключено — пост опубликуется без бустера",
+  "scenarios.bo.studio.target": "Цель: этот пост",
+  "scenarios.bo.studio.soon": "Прицеп бустера при публикации появится скоро — пока настрой его в Автопилоте → Бустер и следи за постами этого сценария.",
+  // точка входа C (редактор сценария-поста) — секция «Бустер»
+  "scenarios.bo.attach_group": "Бустер",
+  "scenarios.bo.attach_title": "Добавить бустер для постов этого сценария",
+  "scenarios.bo.attach_sub": "Когда пост этого сценария залетит, добавить к нему комментарий",
+  "scenarios.bo.attach_target": "Цель: посты этого сценария",
+  "scenarios.bo.attach_save_first": "Сначала сохрани этот сценарий — бустеру нужно знать, за какими постами следить. Он создаётся отдельной рутиной, которую ты включаешь.",
+  "scenarios.bo.attach_created": "Бустер создан — включи его в списке",
+  // валидация
+  "scenarios.bo.err_comment": "Напиши комментарий, который добавить",
 
   // ── Автопилот (хаб: «Правила дома» + рутины) ──────────────────
   "ap.title": "Автопилот",

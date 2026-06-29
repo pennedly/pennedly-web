@@ -906,6 +906,28 @@ export type ScenarioReplyPolicy = {
   skip_low_value: boolean;
 };
 
+// Boost («Комментарий-добавка при росте поста») create/update field — mirrors the
+// backend's BoostFields (api/scenarios.py). Present ⇒ the scenario is a reactive
+// boost (on_post_metric → boost_comment): when a watched post's `metric` crosses
+// `threshold`, Pennedly appends `comment_text` as a reply to that post. Mutually
+// exclusive with `promo` / `reply_policy` (the backend resolves promo > boost >
+// reply_policy > free). The server stores it as
+//   trigger_cfg = {kind:"on_post_metric", metric, threshold, target}
+//   action_cfg  = {kind:"boost_comment", comment_text}
+// `target` picks which posts the boost watches; only these three shapes are valid
+// (backend BOOST_TARGET_TYPES = {all, scenario, post}).
+export type ScenarioBoostTarget =
+  | { type: "all" }
+  | { type: "scenario"; scenario_id: number }
+  | { type: "post"; post_id: number };
+
+export type ScenarioBoost = {
+  metric: "comments" | "likes" | "views"; // backend BOOST_METRICS
+  threshold: number; // absolute positive int (1..1e9)
+  comment_text: string; // pre-written, non-empty, ≤500 chars
+  target: ScenarioBoostTarget; // default {type:"all"}
+};
+
 export type ScenarioCreate = {
   name: string;
   enabled?: boolean;
@@ -915,6 +937,7 @@ export type ScenarioCreate = {
   instruction?: string;
   reply_instruction?: string;
   reply_policy?: ScenarioReplyPolicy;
+  boost?: ScenarioBoost;
   condition?: Record<string, unknown> | null;
 };
 
@@ -927,6 +950,7 @@ export type ScenarioUpdate = {
   instruction?: string;
   reply_instruction?: string;
   reply_policy?: ScenarioReplyPolicy;
+  boost?: ScenarioBoost;
   condition?: Record<string, unknown> | null;
 };
 

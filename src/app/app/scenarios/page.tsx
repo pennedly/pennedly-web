@@ -26,6 +26,7 @@ import {
   fetchAutopilot,
   fetchMe,
   fetchMyAccounts,
+  fetchPosts,
   fetchScenarioPresets,
   fetchScenarios,
   getTokens,
@@ -72,15 +73,20 @@ import {
 import { StepEditor } from "@/components/studio/scenarios-editor";
 import {
   BAKED_RULE_KEYS,
+  BOOST_FORM_DEFAULTS,
+  boostFromCfg,
+  buildAttachedBoostBody,
   compileBody,
   type FormState,
   interpolate,
+  isBoostScenario,
   type MonthDate,
   perDayTimesFromCfg,
   visibleFields,
 } from "@/components/studio/scenarios-form";
 import {
   BLANK_PROMO,
+  BOOST_PRESET,
   DEMO_CATALOG,
   MENTION_PRESET,
   PROMO_PRESET,
@@ -101,6 +107,7 @@ import {
 import type {
   AutopilotConfig,
   ConnectedAccount,
+  PostSummary,
   Scenario,
   ScenarioPreset,
   ScenarioPreview as ScenarioPreviewT,
@@ -154,6 +161,10 @@ type View = "list" | "discovery" | "editor" | "reply-gallery";
 // A fresh form state for a chosen preset (or null = from scratch / promo).
 function freshForm(preset: ScenarioPreset | null, t: (k: MessageKey) => string): FormState {
   const isPromo = preset?.id === "promo";
+  // The boost preset opens the boost recipe (entry A). Seed metric/threshold/target
+  // from the preset's trigger_cfg so a fresh boost shows the design defaults.
+  const isBoostPreset = preset?.id === "boost" || (preset?.trigger_cfg?.kind as string) === "on_post_metric";
+  const boost = isBoostPreset ? boostFromCfg(preset?.trigger_cfg, preset?.action_cfg) : null;
   const when: WhenMode = preset ? whenModeFromCfg(preset.trigger_cfg, preset.condition_cfg) : "daily";
   const fields: Record<string, string> = {};
   for (const f of preset?.fields ?? []) {
@@ -216,6 +227,22 @@ function freshForm(preset: ScenarioPreset | null, t: (k: MessageKey) => string):
     cta: "",
     // КАК — default «Спроси меня» (ask). New scenarios stay drafts-first.
     mode: "ask",
+    // Boost defaults (inert for a non-boost preset). The boost preset flips
+    // isBoost + seeds metric/threshold/target/comment from its trigger/action cfg
+    // (entry A — the standalone editor with the explicit target picker).
+    ...BOOST_FORM_DEFAULTS,
+    ...(boost
+      ? {
+          isBoost: true,
+          boostEntry: "a" as const,
+          boostMetric: boost.metric,
+          boostThreshold: boost.threshold,
+          boostComment: boost.comment,
+          boostTargetType: boost.targetType,
+          boostScenarioId: boost.scenarioId,
+          boostPostId: boost.postId,
+        }
+      : {}),
     fields,
   };
 }
@@ -235,6 +262,9 @@ export default function ScenariosPage() {
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [presets, setPresets] = useState<ScenarioPreset[]>([]);
   const [accounts, setAccounts] = useState<ConnectedAccount[]>([]);
+  // Recent posts — for the boost editor's «Конкретному посту» target picker (id +
+  // a short preview). Loaded alongside scenarios; empty until then / on demo.
+  const [posts, setPosts] = useState<PostSummary[]>([]);
   const [cap, setCap] = useState(1); // max_post_scenarios_per_day
   // Tip-plaque dismissals (advice keys currently hidden; 7-day TTL via localStorage).
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
@@ -313,6 +343,10 @@ export default function ScenariosPage() {
   const catalog = useMemo(() => {
     const base = [...presets];
     if (!base.some((p) => p.id === MENTION_PRESET.id)) base.push(MENTION_PRESET);
+    // boost («Комментарий-добавка при росте поста») — synthetic FE-only entry (the
+    // backend ships no preset but accepts the `boost` create field). Add unless the
+    // backend ever ships one (dedupe by id).
+    if (!base.some((p) => p.id === BOOST_PRESET.id)) base.push(BOOST_PRESET);
     base.push(PROMO_PRESET);
     return base;
   }, [presets]);
@@ -380,11 +414,15 @@ export default function ScenariosPage() {
       fetchScenarioPresets().catch(() => ({ locale: "en", presets: [] })),
       fetchMyAccounts().catch(() => ({ accounts: [] as ConnectedAccount[] })),
       fetchAutopilot(id).catch(() => null),
+      // Recent posts for the boost «post» target picker — non-blocking (empty on
+      // failure; the picker then shows its honest "no posts" note).
+      fetchPosts(id, { limit: 50 }).catch(() => ({ posts: [] as PostSummary[], count: 0 })),
     ])
-      .then(([sc, pr, acc, ap]) => {
+      .then(([sc, pr, acc, ap, po]) => {
         setScenarios(sc.scenarios);
         setPresets(pr.presets);
         setAccounts(acc.accounts);
+        setPosts(po.posts);
         if (ap) applyAutopilot(ap);
       })
       .catch((e) => {
@@ -476,6 +514,30 @@ export default function ScenariosPage() {
   const bakedKeys = presetId ? BAKED_RULE_KEYS[presetId] ?? [] : [];
   const bakedRules = bakedKeys.map((k) => t(k as MessageKey));
   const vFields = visibleFields(form.preset);
+
+  // ── boost target pickers (entry A) ──────────────────────────────────────────
+  // «Постам сценария» picks among the account's POST-producing scenarios (a boost
+  // watches posts a publisher routine made — reply/boost scenarios produce none).
+  // «Конкретному посту» picks among recent posts (id + a short text preview).
+  const boostScenarioOptions = useMemo(
+    () =>
+      scenarios
+        .filter((s) => {
+          const kind = (s.action_cfg?.kind as string) || "post";
+          return kind === "post"; // promo + free cadence posts → kind "post"; reply/boost excluded
+        })
+        .map((s) => ({ id: s.id, label: s.name })),
+    [scenarios],
+  );
+  const boostPostOptions = useMemo(
+    () =>
+      posts.map((p) => {
+        const raw = (p.text ?? "").trim().replace(/\s+/g, " ");
+        const label = raw ? (raw.length > 56 ? `${raw.slice(0, 56)}…` : raw) : `#${p.id}`;
+        return { id: p.id, label };
+      }),
+    [posts],
+  );
 
   // ── live preview (debounced) ──
   useEffect(() => {
@@ -663,6 +725,10 @@ export default function ScenariosPage() {
     // reconstruct a form from the saved scenario
     const usePromo = s.template === "promo" && s.structured != null;
     const replyPolicy = (s.action_cfg?.kind as string) === "reply_policy";
+    // A boost scenario (on_post_metric → boost_comment) reopens in the boost
+    // recipe; reconstruct its metric/threshold/comment/target for round-trip.
+    const isBoost = isBoostScenario(s.trigger_cfg, s.action_cfg);
+    const boost = boostFromCfg(s.trigger_cfg, s.action_cfg);
     const when = whenModeFromCfg(s.trigger_cfg, s.condition_cfg);
     // best-effort: match a catalog preset for the baked-rules + reply detection
     const matched = matchPreset(s, catalog);
@@ -725,6 +791,23 @@ export default function ScenariosPage() {
       // КАК — restore the saved publish mode (absent → treat as 'auto', the
       // current backend default for legacy scenarios).
       mode: s.publish_mode === "ask" ? "ask" : "auto",
+      // Boost — reconstruct from trigger_cfg/action_cfg when this is a boost
+      // scenario (isBoost drives the editor into the boost recipe); inert
+      // otherwise. A saved boost edits as entry "a" (the standalone editor) so the
+      // user can change the target via the explicit picker.
+      ...BOOST_FORM_DEFAULTS,
+      ...(isBoost
+        ? {
+            isBoost: true,
+            boostEntry: "a" as const,
+            boostMetric: boost.metric,
+            boostThreshold: boost.threshold,
+            boostComment: boost.comment,
+            boostTargetType: boost.targetType,
+            boostScenarioId: boost.scenarioId,
+            boostPostId: boost.postId,
+          }
+        : {}),
       fields: {},
     };
     if (usePromo && s.structured) {
@@ -952,6 +1035,13 @@ export default function ScenariosPage() {
       setAskErr(true);
       bad = true;
     }
+    // boost — the pre-written comment is required (the backend rejects an empty /
+    // whitespace-only comment_text). The threshold falls back to the metric default
+    // (so a blank threshold is fine), and the target defaults to «all».
+    if (form.isBoost && !form.boostComment.trim()) {
+      bad = true;
+      toast(t("scenarios.bo.err_comment"), "error");
+    }
     for (const f of vFields) {
       if (f.required && !(form.fields[f.key] ?? "").trim()) {
         fe[f.key] = true;
@@ -981,6 +1071,20 @@ export default function ScenariosPage() {
       } else {
         saved = await createScenario(accountId, { ...body, enabled: enable, ...(enable ? { publish_mode: "ask" } : {}) });
         setScenarios((xs) => [...xs, saved]);
+      }
+      // Entry C — a post-scenario with the «Бустер» section ON spins up a SEPARATE
+      // boost scenario watching THIS scenario's posts (target {type:"scenario"}).
+      // Created OFF (the user enables it like any routine); a failure here is
+      // surfaced but doesn't undo the main save (the scenario itself is saved).
+      const companion = !form.isBoost ? buildAttachedBoostBody(form, saved.id, saved.name) : null;
+      if (companion) {
+        try {
+          const boostSaved = await createScenario(accountId, { ...companion, enabled: false });
+          setScenarios((xs) => (xs.some((x) => x.id === boostSaved.id) ? xs : [...xs, boostSaved]));
+          toast(t("scenarios.bo.attach_created"));
+        } catch (e) {
+          toast(String(e), "error");
+        }
       }
       toast(enable ? t("scenarios.toast_on") : t("scenarios.toast_saved"));
       backToList();
@@ -1228,6 +1332,9 @@ export default function ScenariosPage() {
             isReplyPolicy={isReplyPolicy}
             isReactive={isReactive}
             isMentionReply={isMentionReply}
+            isBoost={form.isBoost}
+            boostScenarioOptions={boostScenarioOptions}
+            boostPostOptions={boostPostOptions}
             bakedRules={bakedRules}
             bakedOpen={bakedOpen}
             onBakedToggle={() => setBakedOpen((o) => !o)}
@@ -1375,6 +1482,9 @@ function GroupLabel({ icon, children }: { icon: React.ReactNode; children: React
 // shape or trigger kind) so the editor shows the right baked rules + reply block.
 function matchPreset(s: Scenario, catalog: ScenarioPreset[]): ScenarioPreset | null {
   if (s.template === "promo") return catalog.find((p) => p.id === "promo") ?? null;
+  // boost (on_post_metric → boost_comment) — match it FIRST so it doesn't fall
+  // through to a cadence/reactive preset (its trigger kind is unique).
+  if (isBoostScenario(s.trigger_cfg, s.action_cfg)) return catalog.find((p) => p.id === "boost") ?? BOOST_PRESET;
   // on_mention is a reply_policy action too — match it on its trigger FIRST so it
   // doesn't fall into «Дежурство». Falls back to MENTION_PRESET if the live
   // catalog somehow lacks it (it's injected client-side, not from the backend).

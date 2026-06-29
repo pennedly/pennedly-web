@@ -1718,6 +1718,8 @@ export const en = {
   "scenarios.p.seasonal.will": "Keeps a holiday or seasonal theme — only inside the dates you pick.",
   "scenarios.p.promo.benefit": "A giveaway or lead magnet",
   "scenarios.p.promo.will": "Asks for an action in the comments and sends a reward back to each person. A strong tool — turn it on deliberately.",
+  "scenarios.p.boost.benefit": "A link under a post that takes off",
+  "scenarios.p.boost.will": "When one of your posts crosses a threshold of comments / likes / views, it adds your pre-written comment — once.",
   "scenarios.nudge": "best ≤2×/week",
   "scenarios.impact": "impact",
   // groups
@@ -1750,6 +1752,8 @@ export const en = {
   "scenarios.preset.amplify_viral_desc": "When a post takes off, a follow-up while the topic is hot.",
   "scenarios.preset.promo": "Campaign",
   "scenarios.preset.promo_desc": "A giveaway: ask for a comment, give something back. Gated.",
+  "scenarios.preset.boost": "Booster",
+  "scenarios.preset.boost_desc": "When a post takes off, add a pre-written comment (a link / CTA) to it — once.",
   // when-hints on cards
   "scenarios.when_hint.morning": "mornings, 9:00",
   "scenarios.when_hint.weekly": "weekly, on a chosen day",
@@ -2354,6 +2358,103 @@ export const en = {
   "scenarios.rc.wdfull.fri": "Friday",
   "scenarios.rc.wdfull.sat": "Saturday",
   "scenarios.rc.wdfull.sun": "Sunday",
+
+  // ── Boost — «Комментарий-добавка при росте поста» (Scenario-Growth-Comment v2)
+  // A reactive scenario: when a watched post crosses a metric threshold, Pennedly
+  // appends ONE pre-written comment to it. Config (metric/threshold/comment) is
+  // identical across the 3 entry points; only the TARGET differs.
+  "scenarios.bo.kind": "Booster",
+  "scenarios.bo.hint": "Read it as a sentence — tap an <b>underlined</b> word to edit it.",
+  "scenarios.bo.status_next": "Reactive — runs <b>when a watched post crosses the threshold</b>",
+  // sentence slots (A: target is a slot; B/C: it's a locked plaque, so the
+  // sentence opens with «b_locked»)
+  "scenarios.bo.sent.a": "The booster watches",
+  "scenarios.bo.sent.b": "When such a post hits",
+  "scenarios.bo.sent.b_locked": "When such a post hits",
+  "scenarios.bo.sent.c": "→ Pennedly adds a comment to it:",
+  "scenarios.bo.sent.comment": "your text",
+  "scenarios.bo.sent.once": "(once per post)",
+  // target slot phrases (the sentence word)
+  "scenarios.bo.tphrase.all": "any of my posts",
+  "scenarios.bo.tphrase.scenario": "a scenario's posts",
+  "scenarios.bo.tphrase.post": "one specific post",
+  // metric phrase units (the sentence word, after the number)
+  "scenarios.bo.unit_views": "views",
+  "scenarios.bo.unit_likes": "likes",
+  "scenarios.bo.unit_comments": "comments",
+  // drawer titles
+  "scenarios.bo.dt_target": "What it watches",
+  "scenarios.bo.dt_metric": "Metric and threshold",
+  "scenarios.bo.dt_comment": "The comment",
+  // TARGET drawer (entry A)
+  "scenarios.bo.target_label": "Which posts to watch",
+  "scenarios.bo.target_all": "All my posts",
+  "scenarios.bo.target_all_sub": "Every recent post (~48 h)",
+  "scenarios.bo.target_scenario": "A scenario's posts",
+  "scenarios.bo.target_scenario_sub": "Posts a routine produced",
+  "scenarios.bo.target_post": "One post",
+  "scenarios.bo.target_post_sub": "A single specific post",
+  "scenarios.bo.target_why": "The booster watches your own posts and adds the comment to the one that crosses the threshold — once each.",
+  "scenarios.bo.pick_scenario": "Which scenario",
+  "scenarios.bo.pick_scenario_empty": "No post routines yet to watch — create one first, or watch all posts.",
+  "scenarios.bo.pick_post": "Which post",
+  "scenarios.bo.pick_post_empty": "No recent posts to pick — watch all posts instead.",
+  "scenarios.bo.pick_placeholder": "Choose…",
+  // locked target plaque (entry B / C)
+  "scenarios.bo.target_locked_k": "Target",
+  "scenarios.bo.target_this_post": "this post",
+  "scenarios.bo.target_this_scenario": "this scenario's posts",
+  // METRIC + THRESHOLD drawer
+  "scenarios.bo.metric_label": "Metric",
+  "scenarios.bo.metric_views": "Views",
+  "scenarios.bo.metric_views_sub": "When the post is seen a lot",
+  "scenarios.bo.metric_likes": "Likes",
+  "scenarios.bo.metric_likes_sub": "When the post is liked a lot",
+  "scenarios.bo.metric_comments": "Comments",
+  "scenarios.bo.metric_comments_sub": "When the post gets discussed",
+  "scenarios.bo.threshold_label": "Threshold",
+  "scenarios.bo.threshold_hint": "An absolute number. The booster fires once the post crosses it.",
+  "scenarios.bo.trigger_hard": "One metric per booster — it's more predictable that way. Checked ~every 15 min.",
+  // COMMENT (big-text)
+  "scenarios.bo.comment_label": "The comment to add",
+  "scenarios.bo.comment_hint": "A pre-written comment — a link, a call to action, an addendum. Pennedly does not generate it.",
+  "scenarios.bo.bt.title": "The booster comment",
+  "scenarios.bo.bt.hint": "Written by you, not generated. Up to <b>500 characters</b> — a link, a call to action, or an addendum.",
+  "scenarios.bo.bt.ph": "e.g. Full guide in my profile link → …",
+  "scenarios.bo.bt.count": "{n} / {max}",
+  // stage (right column preview)
+  "scenarios.bo.stage_bar": "Post + comment",
+  "scenarios.bo.stage_crossed": "took off",
+  "scenarios.bo.stage_post": "I packed everything I know about this into one place — and it's resonating today 🔥",
+  "scenarios.bo.stage_how": "What Pennedly adds",
+  "scenarios.bo.stage_tag": "booster comment",
+  "scenarios.bo.stage_comment_ph": "Full guide in my profile link →",
+  "scenarios.bo.invoice": "Pennedly adds <b>one</b> comment to a post that crosses the threshold — once per post. The text is yours.",
+  // rhythm (next-runs panel)
+  "scenarios.bo.runs_check": "checks your posts",
+  "scenarios.bo.runs_crossed": "On crossing",
+  "scenarios.bo.runs_add": "adds the comment, once",
+  // Layer 2
+  "scenarios.bo.l2sum": "Target · metric and threshold · the comment text.",
+  "scenarios.bo.l2_grp_target": "What it watches",
+  "scenarios.bo.l2_grp_trigger": "Metric and threshold",
+  "scenarios.bo.l2_grp_comment": "The comment",
+  // entry B (Studio composer) — the «Booster for this post» section
+  "scenarios.bo.studio.title": "Booster for this post",
+  "scenarios.bo.studio.sub": "Add a comment when this post takes off",
+  "scenarios.bo.studio.summary": "When this post hits {n} {metric} → add a comment",
+  "scenarios.bo.studio.off_hint": "Off — this post publishes without a booster",
+  "scenarios.bo.studio.target": "Target: this post",
+  "scenarios.bo.studio.soon": "Attaching a booster at publish time is coming soon — for now, set it up in Autopilot → Booster and watch this scenario's posts.",
+  // entry C (post-scenario editor) — the «Booster» section
+  "scenarios.bo.attach_group": "Booster",
+  "scenarios.bo.attach_title": "Add a booster for this scenario's posts",
+  "scenarios.bo.attach_sub": "When a post from this scenario takes off, add a comment to it",
+  "scenarios.bo.attach_target": "Target: this scenario's posts",
+  "scenarios.bo.attach_save_first": "Save this scenario first — the booster needs it to know which posts to watch. It's created as a separate routine you turn on.",
+  "scenarios.bo.attach_created": "Booster created — turn it on in the list",
+  // validation
+  "scenarios.bo.err_comment": "Write the comment to add",
 
   // ── Autopilot hub («Правила дома» + routines) ─────────────────
   // Page title (the merged Autopilot + Scenarios mode is now «Autopilot»).

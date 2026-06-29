@@ -121,6 +121,7 @@ const IMPACT: Record<string, number> = {
   seasonal: 1,
   milestone_thanks: 1,
   amplify_viral: 2,
+  boost: 2,
   promo: 3,
 };
 // Presets that PRODUCE replies → the form shows the «Как отвечать» block.
@@ -147,6 +148,9 @@ const GOAL_OF: Record<string, Goal> = {
   on_mention: "engage",
   amplify_viral: "engage",
   milestone_thanks: "engage",
+  // boost («Комментарий-добавка при росте поста») — an engagement amplifier (a
+  // link/CTA under a post that takes off), grouped with the other reactive boosts.
+  boost: "engage",
   poll: "timely",
   seasonal: "timely",
   promo: "campaign",
@@ -184,7 +188,9 @@ export function whenModeFromCfg(
   if (kind === "weekly") return "weekly";
   if (kind === "monthly") return "monthly";
   if (kind === "yearly") return "yearly";
-  if (kind === "on_metric_threshold" || kind === "on_follower_milestone" || kind === "on_new_comment") return "event";
+  // boost (on_post_metric) is reactive too — read it as an event so a list view
+  // never mislabels it as a daily cadence (the boost editor owns its real UI).
+  if (kind === "on_metric_threshold" || kind === "on_follower_milestone" || kind === "on_new_comment" || kind === "on_post_metric") return "event";
   if (condition && ("active_from" in condition || "active_to" in condition)) return "date_range";
   return "daily";
 }

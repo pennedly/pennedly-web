@@ -22,6 +22,7 @@ import { useTranslation, type MessageKey } from "@/lib/i18n";
 import {
   IcAlert,
   IcArrowLeft,
+  IcBolt,
   IcBubble,
   IcBubbleQuestion,
   IcCheck,
@@ -30,6 +31,7 @@ import {
   IcEye,
   IcHeart,
   IcInfo,
+  IcLink,
   IcLock,
   IcPencil,
   IcPlay,
@@ -44,6 +46,11 @@ import { type PreviewState } from "./ScenariosParts";
 import {
   BigTextModal,
   type BigTextField,
+  BoostAttachSection,
+  BoostCommentBody,
+  BoostTargetBody,
+  BoostTargetLock,
+  BoostTriggerBody,
   Drawer,
   HowBody,
   IfBody,
@@ -58,10 +65,36 @@ import {
   WhenReplyBody,
   WhoBody,
 } from "./scenarios-recipe";
-import { type FormState, interpolate, MONTHS, type visibleFields } from "./scenarios-form";
+import { BOOST_DEFAULT_THRESHOLD, type FormState, interpolate, MONTHS, type visibleFields } from "./scenarios-form";
 import type { ScenarioPreview as ScenarioPreviewT, ScenarioRunNow } from "@/lib/types";
 
 type T = (k: MessageKey) => string;
+
+// ── boost → human phrases for the boost sentence slots ──
+// «за любым моим постом» / «за постами сценария» / «за конкретным постом» — the
+// target slot phrase (entry A only).
+function boostTargetPhrase(t: T, form: FormState): string {
+  switch (form.boostTargetType) {
+    case "scenario":
+      return t("scenarios.bo.tphrase.scenario");
+    case "post":
+      return t("scenarios.bo.tphrase.post");
+    default:
+      return t("scenarios.bo.tphrase.all");
+  }
+}
+// «5 000 просмотров» / «200 лайков» / «50 комментариев» — the metric+threshold
+// slot phrase. A blank threshold reads as the metric's default.
+function boostMetricPhrase(t: T, form: FormState): string {
+  const n = form.boostThreshold.trim() && Number(form.boostThreshold) >= 1 ? Math.floor(Number(form.boostThreshold)) : BOOST_DEFAULT_THRESHOLD[form.boostMetric];
+  const unit =
+    form.boostMetric === "views"
+      ? t("scenarios.bo.unit_views")
+      : form.boostMetric === "likes"
+        ? t("scenarios.bo.unit_likes")
+        : t("scenarios.bo.unit_comments");
+  return `${n.toLocaleString()} ${unit}`;
+}
 
 // ── audience → human phrase for the reply sentence slot ──
 function audPhrase(t: T, a: string): string {
@@ -253,12 +286,91 @@ function StageReplyThread({ initials, name, handle, mention }: { initials: strin
   );
 }
 
+// Boost stage — a post of yours that JUST crossed the threshold (the matched
+// metric is highlighted) + the pre-written boost comment added as a reply branch.
+// Mirrors the v2 design's «пост + добавленный комментарий веткой».
+function StageBoost({
+  initials,
+  name,
+  handle,
+  metric,
+  metricPhrase,
+  comment,
+}: {
+  initials: string;
+  name: string;
+  handle: string;
+  metric: FormState["boostMetric"];
+  metricPhrase: string;
+  comment: string;
+}) {
+  const { t } = useTranslation();
+  const text = comment.trim() ? comment : t("scenarios.bo.stage_comment_ph");
+  // Highlight the metric that crossed; the other two show muted sample counts.
+  const stat = (key: FormState["boostMetric"], icon: ReactNode, sample: string) => (
+    <span className={cn("inline-flex items-center gap-1.5", key === metric ? "font-semibold text-accent" : "text-text-subtle")}>
+      {icon} {key === metric ? metricPhrase.split(" ")[0] : sample}
+    </span>
+  );
+  return (
+    <>
+      <div className="border-b border-border px-5 py-[18px]">
+        <div className="mb-[13px] flex items-center gap-2.5">
+          <StageAvatar initials={initials} />
+          <div className="leading-tight">
+            <p className="text-small font-semibold text-text">{name}</p>
+            <p className="text-caption text-text-subtle">{handle}</p>
+          </div>
+          {/* «залетел» badge — the post crossed the threshold */}
+          <span className="ml-auto inline-flex items-center gap-1 rounded-full border border-accent/24 bg-accent/[0.08] px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.04em] text-accent">
+            <IcBolt size={11} /> {t("scenarios.bo.stage_crossed")}
+          </span>
+        </div>
+        <p className="text-[15px] leading-[1.65] text-text [text-wrap:pretty]">{t("scenarios.bo.stage_post")}</p>
+        <div className="mt-[15px] flex gap-5 text-caption tabular-nums">
+          {stat("views", <IcEye size={13} />, "1,2K")}
+          {stat("likes", <IcHeart size={13} />, "84")}
+          {stat("comments", <IcBubble size={13} />, "47")}
+        </div>
+      </div>
+      <div className="px-5 py-4">
+        <p className="mb-2.5 font-mono text-[10px] uppercase tracking-wide text-text-subtle">{t("scenarios.bo.stage_how")}</p>
+        <div className="relative flex gap-2.5 pl-3 before:absolute before:bottom-1.5 before:left-[3px] before:top-0.5 before:w-0.5 before:rounded before:bg-border">
+          <StageAvatar initials={initials} size={30} />
+          <div className="min-w-0">
+            <p className="mb-0.5 flex flex-wrap items-center gap-1.5 text-caption font-semibold text-text">
+              {name}
+              <span className="inline-flex items-center gap-1 font-medium text-accent">
+                <IcLink size={11} /> {t("scenarios.bo.stage_tag")}
+              </span>
+            </p>
+            <p className="text-[14.5px] leading-[1.6] text-text [text-wrap:pretty]">{text}</p>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
 // «Следующие 3 запуска» (or «Ритм проверки» for reply) — computed from the
 // КОГДА mode + hour. Honest-but-approximate (~hour), matching the design rows.
 // `mention` reply scenarios fire off each @mention (no poll cadence), so they
 // show a reactive rhythm instead of the comment-duty's «каждые 15 минут».
-function NextRuns({ reply, mention, form }: { reply: boolean; mention?: boolean; form: FormState }) {
+function NextRuns({ reply, mention, boost, form }: { reply: boolean; mention?: boolean; boost?: boolean; form: FormState }) {
   const { t } = useTranslation();
+  if (boost) {
+    // Reactive: Pennedly polls the watched posts ~every 15 min; when one crosses
+    // the threshold it adds the comment once. No schedule → a rhythm, not a list.
+    return (
+      <div className="rounded-lg border border-border bg-surface p-4 shadow-sm">
+        <div className="mb-[11px] flex items-center gap-[7px] text-caption font-semibold uppercase tracking-[0.05em] text-text-subtle">
+          <IcRepeat size={13} /> {t("scenarios.rc.runs_rhythm")}
+        </div>
+        <RunItem when={t("scenarios.rc.runs_15min")} what={t("scenarios.bo.runs_check")} />
+        <RunItem when={t("scenarios.bo.runs_crossed")} what={t("scenarios.bo.runs_add")} />
+      </div>
+    );
+  }
   if (reply) {
     return (
       <div className="rounded-lg border border-border bg-surface p-4 shadow-sm">
@@ -372,6 +484,7 @@ function computeRuns(t: T, form: FormState): string[] {
 function Stage({
   reply,
   mention,
+  boost,
   form,
   preview,
   running,
@@ -379,9 +492,11 @@ function Stage({
   onRunNow,
   canRunNow,
   handle,
+  boostMetricPhrase,
 }: {
   reply: boolean;
   mention?: boolean;
+  boost?: boolean;
   form: FormState;
   preview: ScenarioPreviewT | null;
   running?: boolean;
@@ -389,6 +504,7 @@ function Stage({
   onRunNow?: () => void;
   canRunNow?: boolean;
   handle: string;
+  boostMetricPhrase?: string;
 }) {
   const { t } = useTranslation();
   const name = "Алекс";
@@ -404,23 +520,29 @@ function Stage({
       <div className="overflow-hidden rounded-[28px] border border-border bg-surface shadow-lg">
         <div className="flex items-center gap-2.5 border-b border-border bg-surface-2 px-[17px] py-3">
           <span className="h-[9px] w-[9px] shrink-0 rounded-full bg-accent/55" />
-          <span className="text-small font-semibold text-text-muted">{mention ? t("scenarios.rc.stage_bar_mention") : reply ? t("scenarios.rc.stage_bar_reply") : t("scenarios.rc.stage_bar_post")}</span>
+          <span className="text-small font-semibold text-text-muted">{boost ? t("scenarios.bo.stage_bar") : mention ? t("scenarios.rc.stage_bar_mention") : reply ? t("scenarios.rc.stage_bar_reply") : t("scenarios.rc.stage_bar_post")}</span>
           <span className="ml-auto inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.04em] text-text-subtle">
             <span className="h-1.5 w-1.5 rounded-full bg-success shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-success)_20%,transparent)]" />
             {t("scenarios.rc.stage_live")}
           </span>
         </div>
 
-        {reply ? <StageReplyThread initials={initials} name={name} handle={handle} mention={mention} /> : <StagePost initials={initials} name={name} handle={handle} text={samplePost} />}
+        {boost ? (
+          <StageBoost initials={initials} name={name} handle={handle} metric={form.boostMetric} metricPhrase={boostMetricPhrase ?? ""} comment={form.boostComment} />
+        ) : reply ? (
+          <StageReplyThread initials={initials} name={name} handle={handle} mention={mention} />
+        ) : (
+          <StagePost initials={initials} name={name} handle={handle} text={samplePost} />
+        )}
 
         {/* honest invoice line */}
         <p className="flex items-start gap-2 border-t border-border bg-surface-2 px-[17px] py-[11px] text-caption leading-[1.45] text-text-subtle [&_b]:font-semibold [&_b]:text-text-muted">
           <IcSparkle size={13} className="mt-px shrink-0 opacity-85" />
-          <span dangerouslySetInnerHTML={{ __html: mention ? t("scenarios.rc.invoice_mention") : reply ? t("scenarios.rc.invoice_reply") : t("scenarios.rc.invoice_post") }} />
+          <span dangerouslySetInnerHTML={{ __html: boost ? t("scenarios.bo.invoice") : mention ? t("scenarios.rc.invoice_mention") : reply ? t("scenarios.rc.invoice_reply") : t("scenarios.rc.invoice_post") }} />
         </p>
       </div>
 
-      <NextRuns reply={reply} mention={mention} form={form} />
+      <NextRuns reply={reply} mention={mention} boost={boost} form={form} />
 
       {/* run-now — only ever a draft */}
       {onRunNow && (
@@ -525,6 +647,9 @@ export function StepEditor({
   isReplyPolicy,
   isReactive,
   isMentionReply,
+  isBoost,
+  boostScenarioOptions,
+  boostPostOptions,
   bakedRules,
   preview,
   running,
@@ -564,6 +689,15 @@ export function StepEditor({
    *  «когда меня упомянут» (no schedule), and the rhythm/sentence reflect that
    *  it fires off the @mention rather than a poll. Always implies isReplyPolicy. */
   isMentionReply: boolean;
+  /** boost: «Комментарий-добавка при росте поста» — a reactive scenario whose
+   *  recipe is target + metric+threshold + a pre-written comment. Mutually
+   *  exclusive with reply/post kinds. The target slot is an explicit picker for
+   *  entry A (form.boostEntry==="a") and a locked plaque for B/C. */
+  isBoost: boolean;
+  /** Publisher scenarios the boost's «scenario» target may watch (id + label). */
+  boostScenarioOptions: { id: number; label: string }[];
+  /** Recent posts the boost's «post» target may watch (id + short preview). */
+  boostPostOptions: { id: number; label: string }[];
   bakedRules: string[];
   bakedOpen: boolean;
   onBakedToggle: () => void;
@@ -595,7 +729,7 @@ export function StepEditor({
   demoLayer3?: boolean;
 }) {
   const promoMode = form.helperOn || form.preset?.id === "promo";
-  const reply = isReplyPolicy || promoMode;
+  const reply = (isReplyPolicy || promoMode) && !isBoost;
 
   // ── editor-local UI state (demo seeds let the gallery open any state) ──
   const [openSlot, setOpenSlot] = useState<OpenSlot>(demoOpenSlot ?? null);
@@ -621,7 +755,37 @@ export function StepEditor({
 
   // ── sentence slots ──
   let prose: ReactNode;
-  if (isMentionReply) {
+  if (isBoost) {
+    // Boost — «Бустер следит за [целью]. Когда такой пост наберёт [N метрику] →
+    // Pennedly добавит к нему комментарий: [текст] (один раз на пост)». The target
+    // is a slot ONLY in entry A (explicit picker); B/C lock it to a plaque shown
+    // above the recipe, so their sentence opens with «Когда такой пост…».
+    const showTargetSlot = form.boostEntry === "a";
+    prose = (
+      <>
+        {showTargetSlot ? (
+          <>
+            {t("scenarios.bo.sent.a")}{" "}
+            <Slot open={openSlot === "target"} onClick={() => toggleSlot("target")}>
+              {boostTargetPhrase(t, form)}
+            </Slot>
+            {". "}
+            {t("scenarios.bo.sent.b")}{" "}
+          </>
+        ) : (
+          <>{t("scenarios.bo.sent.b_locked")} </>
+        )}
+        <Slot open={openSlot === "metric"} onClick={() => toggleSlot("metric")}>
+          {boostMetricPhrase(t, form)}
+        </Slot>{" "}
+        {t("scenarios.bo.sent.c")}{" "}
+        <Slot open={openSlot === "what"} onClick={() => toggleSlot("what")}>
+          {t("scenarios.bo.sent.comment")}
+        </Slot>{" "}
+        <span className="text-[0.82em] text-text-subtle">{t("scenarios.bo.sent.once")}</span>
+      </>
+    );
+  } else if (isMentionReply) {
     // on_mention — a REACTIVE reply: «Когда меня упомянут → Pennedly ответит на
     // упоминание твоим голосом — звучит [тон] — и [отправит сам / покажет перед
     // отправкой]». The «когда» is a locked reactive slot (no schedule); the
@@ -681,8 +845,9 @@ export function StepEditor({
     );
   }
 
-  // condition line (quiet, under the sentence — POST only)
-  const condLine = !reply && (
+  // condition line (quiet, under the sentence — POST only; a boost has no
+  // conditions — the backend stores condition_cfg=None — so it's hidden there).
+  const condLine = !reply && !isBoost && (
     <div className="px-6 pb-5 text-[15px] leading-[1.6] text-text-muted">
       {condSet ? (
         <>
@@ -709,12 +874,52 @@ export function StepEditor({
     </div>
   );
 
+  // ── boost slot handlers (target / metric+threshold) ──
+  // Changing the metric re-seeds the threshold to that metric's default ONLY when
+  // the field is blank or still holds the previous metric's default (so a user's
+  // explicit number is never clobbered). Changing the target type clears the
+  // other type's id so a stale id never reaches the body.
+  const setBoostMetric = (m: FormState["boostMetric"]) => {
+    const prevDefault = BOOST_DEFAULT_THRESHOLD[form.boostMetric];
+    const keep = form.boostThreshold.trim() && Number(form.boostThreshold) !== prevDefault;
+    update({ boostMetric: m, boostThreshold: keep ? form.boostThreshold : String(BOOST_DEFAULT_THRESHOLD[m]) });
+  };
+  const setBoostTargetType = (tt: FormState["boostTargetType"]) => {
+    update({ boostTargetType: tt, ...(tt === "scenario" ? { boostPostId: 0 } : tt === "post" ? { boostScenarioId: 0 } : { boostScenarioId: 0, boostPostId: 0 }) });
+  };
+  // entry C — same metric-change reseed as the standalone boost, on the attached fields.
+  const setAttachBoostMetric = (m: FormState["attachBoostMetric"]) => {
+    const prevDefault = BOOST_DEFAULT_THRESHOLD[form.attachBoostMetric];
+    const keep = form.attachBoostThreshold.trim() && Number(form.attachBoostThreshold) !== prevDefault;
+    update({ attachBoostMetric: m, attachBoostThreshold: keep ? form.attachBoostThreshold : String(BOOST_DEFAULT_THRESHOLD[m]) });
+  };
+
   // the open slot's inline drawer
   const drawer = openSlot && (
-    <Drawer title={drawerTitle(t, openSlot)} icon={SLOT_ICON[openSlot]} onDone={() => setOpenSlot(null)}>
+    <Drawer title={drawerTitle(t, openSlot, isBoost)} icon={SLOT_ICON[openSlot]} onDone={() => setOpenSlot(null)}>
       {openSlot === "when" && (isMentionReply ? <WhenMentionBody /> : reply ? <WhenReplyBody /> : <WhenPostBody form={form} update={update} />)}
       {openSlot === "if" && <IfBody form={form} update={update} menuOpen={condMenuOpen} setMenuOpen={setCondMenuOpen} />}
-      {openSlot === "what" && <WhatPostBody form={form} update={update} instructionValue={instructionValue} onOpenInstruction={() => setBigText("instruction")} />}
+      {openSlot === "what" &&
+        (isBoost ? (
+          <BoostCommentBody value={form.boostComment} onOpen={() => setBigText("boost")} />
+        ) : (
+          <WhatPostBody form={form} update={update} instructionValue={instructionValue} onOpenInstruction={() => setBigText("instruction")} />
+        ))}
+      {openSlot === "target" && (
+        <BoostTargetBody
+          targetType={form.boostTargetType}
+          onTargetType={setBoostTargetType}
+          scenarioId={form.boostScenarioId}
+          onScenarioId={(id) => update({ boostScenarioId: id })}
+          postId={form.boostPostId}
+          onPostId={(id) => update({ boostPostId: id })}
+          scenarioOptions={boostScenarioOptions}
+          postOptions={boostPostOptions}
+        />
+      )}
+      {openSlot === "metric" && (
+        <BoostTriggerBody metric={form.boostMetric} onMetric={setBoostMetric} threshold={form.boostThreshold} onThreshold={(v) => update({ boostThreshold: v })} />
+      )}
       {openSlot === "who" && <WhoBody audience={form.audience} onAudience={(a) => update({ audience: a })} audiencePrompt={form.audiencePrompt} onOpenCustom={() => setBigText("audience")} />}
       {openSlot === "tone" && <ToneBody value={form.replyInstruction} onOpen={() => setBigText("tone")} />}
       {openSlot === "how" && <HowBody mode={form.mode} onMode={(m) => update({ mode: m })} />}
@@ -776,8 +981,8 @@ export function StepEditor({
             </button>
             {/* kind plaque */}
             <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/22 bg-accent/[0.08] py-1 pl-2.5 pr-[11px] text-caption font-semibold text-text-muted">
-              {reply ? <IcBubble size={13} className="text-accent" /> : <IcBubbleQuestion size={13} className="text-accent" />}
-              {reply ? t("scenarios.rc.kind_reply") : t("scenarios.rc.kind_post")}
+              {isBoost ? <IcBolt size={13} className="text-accent" /> : reply ? <IcBubble size={13} className="text-accent" /> : <IcBubbleQuestion size={13} className="text-accent" />}
+              {isBoost ? t("scenarios.bo.kind") : reply ? t("scenarios.rc.kind_reply") : t("scenarios.rc.kind_post")}
             </span>
           </div>
         </div>
@@ -793,7 +998,7 @@ export function StepEditor({
               <>
                 <span className="inline-flex items-center gap-[7px] text-small text-text-muted">
                   <IcClock size={14} className="shrink-0 text-text-subtle" />
-                  <span dangerouslySetInnerHTML={{ __html: isMentionReply ? t("scenarios.rc.status_next_mention") : reply ? t("scenarios.rc.status_next_reply") : t("scenarios.rc.status_next_post") }} />
+                  <span dangerouslySetInnerHTML={{ __html: isBoost ? t("scenarios.bo.status_next") : isMentionReply ? t("scenarios.rc.status_next_mention") : reply ? t("scenarios.rc.status_next_reply") : t("scenarios.rc.status_next_post") }} />
                 </span>
                 <span className="ml-auto inline-flex items-center gap-2 rounded-full border border-success/30 bg-success/10 px-3 py-1.5 text-small font-semibold text-success">
                   <span className="h-2 w-2 rounded-full bg-success" />
@@ -825,14 +1030,20 @@ export function StepEditor({
             <div className="flex items-center gap-2 border-b border-border bg-surface-2 px-[22px] py-3.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-text-subtle">
               <IcSparkle size={12} className="shrink-0 text-accent" /> {t("scenarios.rc.eyebrow")}
               <span className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2 py-0.5 font-mono text-[10px] normal-case tracking-[0.04em] text-text-muted">
-                {reply ? <IcBubble size={11} className="text-accent" /> : <IcPencil size={11} className="text-accent" />}
-                {reply ? t("scenarios.rc.kind_reply") : t("scenarios.rc.kind_post")}
+                {isBoost ? <IcBolt size={11} className="text-accent" /> : reply ? <IcBubble size={11} className="text-accent" /> : <IcPencil size={11} className="text-accent" />}
+                {isBoost ? t("scenarios.bo.kind") : reply ? t("scenarios.rc.kind_reply") : t("scenarios.rc.kind_post")}
               </span>
             </div>
             <p className="flex items-center gap-2 px-6 pt-[11px] text-[13px] text-text-subtle [&_b]:font-semibold [&_b]:text-text-muted">
               <IcPencil size={13} className="shrink-0 text-accent" />
-              <span dangerouslySetInnerHTML={{ __html: t("scenarios.rc.hint") }} />
+              <span dangerouslySetInnerHTML={{ __html: isBoost ? t("scenarios.bo.hint") : t("scenarios.rc.hint") }} />
             </p>
+            {/* boost entry B/C — the locked target plaque sits above the sentence */}
+            {isBoost && form.boostEntry !== "a" && (
+              <div className="px-6 pt-[14px]">
+                <BoostTargetLock entry={form.boostEntry === "studio" ? "studio" : "scenario"} />
+              </div>
+            )}
             <p className="px-6 pb-3 pt-[22px] text-[21px] leading-[1.75] text-text [text-wrap:pretty]">{prose}</p>
             {condLine}
             {drawer}
@@ -840,25 +1051,69 @@ export function StepEditor({
 
           {/* layers */}
           <div className="flex flex-col gap-3">
-            <Layer title={t("scenarios.rc.l2_title")} summary={l2sum} open={layer2Open} onToggle={() => setLayer2Open((o) => !o)}>
-              <LayerGroup label={t("scenarios.rc.l2_grp_conditions")}>
-                <IfBody form={form} update={update} menuOpen={false} setMenuOpen={() => {}} />
-              </LayerGroup>
-              {reply ? (
-                <LayerGroup label={t("scenarios.rc.l2_grp_tone")}>
-                  <ToneBody value={form.replyInstruction} onOpen={() => setBigText("tone")} />
-                </LayerGroup>
-              ) : (
+            <Layer title={t("scenarios.rc.l2_title")} summary={isBoost ? t("scenarios.bo.l2sum") : l2sum} open={layer2Open} onToggle={() => setLayer2Open((o) => !o)}>
+              {isBoost ? (
+                // Boost Layer 2 — the SAME three config groups as the slots (target,
+                // unless locked in B/C · metric+threshold · the pre-written comment).
                 <>
-                  <LayerGroup label={t("scenarios.rc.l2_grp_time")}>
-                    <WhenPostBody form={form} update={update} />
+                  {form.boostEntry === "a" && (
+                    <LayerGroup label={t("scenarios.bo.l2_grp_target")}>
+                      <BoostTargetBody
+                        targetType={form.boostTargetType}
+                        onTargetType={setBoostTargetType}
+                        scenarioId={form.boostScenarioId}
+                        onScenarioId={(id) => update({ boostScenarioId: id })}
+                        postId={form.boostPostId}
+                        onPostId={(id) => update({ boostPostId: id })}
+                        scenarioOptions={boostScenarioOptions}
+                        postOptions={boostPostOptions}
+                      />
+                    </LayerGroup>
+                  )}
+                  <LayerGroup label={t("scenarios.bo.l2_grp_trigger")}>
+                    <BoostTriggerBody metric={form.boostMetric} onMetric={setBoostMetric} threshold={form.boostThreshold} onThreshold={(v) => update({ boostThreshold: v })} />
                   </LayerGroup>
-                  <LayerGroup label={t("scenarios.rc.l2_grp_content")}>
-                    <WhatPostBody form={form} update={update} instructionValue={instructionValue} onOpenInstruction={() => setBigText("instruction")} />
+                  <LayerGroup label={t("scenarios.bo.l2_grp_comment")}>
+                    <BoostCommentBody value={form.boostComment} onOpen={() => setBigText("boost")} />
                   </LayerGroup>
                 </>
+              ) : (
+                <>
+                  <LayerGroup label={t("scenarios.rc.l2_grp_conditions")}>
+                    <IfBody form={form} update={update} menuOpen={false} setMenuOpen={() => {}} />
+                  </LayerGroup>
+                  {reply ? (
+                    <LayerGroup label={t("scenarios.rc.l2_grp_tone")}>
+                      <ToneBody value={form.replyInstruction} onOpen={() => setBigText("tone")} />
+                    </LayerGroup>
+                  ) : (
+                    <>
+                      <LayerGroup label={t("scenarios.rc.l2_grp_time")}>
+                        <WhenPostBody form={form} update={update} />
+                      </LayerGroup>
+                      <LayerGroup label={t("scenarios.rc.l2_grp_content")}>
+                        <WhatPostBody form={form} update={update} instructionValue={instructionValue} onOpenInstruction={() => setBigText("instruction")} />
+                      </LayerGroup>
+                      {/* Entry C — «Бустер» for THIS post-scenario's posts (creates a
+                          separate boost watching {type:"scenario"} on save). */}
+                      <LayerGroup label={t("scenarios.bo.attach_group")}>
+                        <BoostAttachSection
+                          on={form.attachBoostOn}
+                          onToggle={(v) => update({ attachBoostOn: v })}
+                          metric={form.attachBoostMetric}
+                          onMetric={setAttachBoostMetric}
+                          threshold={form.attachBoostThreshold}
+                          onThreshold={(v) => update({ attachBoostThreshold: v })}
+                          comment={form.attachBoostComment}
+                          onOpenComment={() => setBigText("attachBoost")}
+                          isExisting={isExisting}
+                        />
+                      </LayerGroup>
+                    </>
+                  )}
+                </>
               )}
-              {bakedRules.length > 0 && (
+              {!isBoost && bakedRules.length > 0 && (
                 <LayerGroup label={t("scenarios.baked_title")}>
                   <ul className="flex flex-col gap-2">
                     {bakedRules.map((r, i) => (
@@ -927,15 +1182,37 @@ export function StepEditor({
         </div>
 
         {/* RIGHT — stage */}
-        <Stage reply={reply} mention={isMentionReply} form={form} preview={preview} running={running} runResult={runResult} onRunNow={onRunNow} canRunNow={canRunNow} handle={handle} />
+        <Stage reply={reply} mention={isMentionReply} boost={isBoost} form={form} preview={preview} running={running} runResult={runResult} onRunNow={onRunNow} canRunNow={canRunNow} handle={handle} boostMetricPhrase={isBoost ? boostMetricPhrase(t, form) : ""} />
       </div>
 
       {/* big-text modal — mounted inside the editor (relative positioning above) */}
       {bigText && (
         <BigTextModal
           field={bigText}
-          value={bigText === "instruction" ? form.instruction : bigText === "tone" ? form.replyInstruction : form.audiencePrompt}
-          onChange={(v) => update(bigText === "instruction" ? { instruction: v } : bigText === "tone" ? { replyInstruction: v } : { audiencePrompt: v })}
+          value={
+            bigText === "instruction"
+              ? form.instruction
+              : bigText === "tone"
+                ? form.replyInstruction
+                : bigText === "boost"
+                  ? form.boostComment
+                  : bigText === "attachBoost"
+                    ? form.attachBoostComment
+                    : form.audiencePrompt
+          }
+          onChange={(v) =>
+            update(
+              bigText === "instruction"
+                ? { instruction: v }
+                : bigText === "tone"
+                  ? { replyInstruction: v }
+                  : bigText === "boost"
+                    ? { boostComment: v }
+                    : bigText === "attachBoost"
+                      ? { attachBoostComment: v }
+                      : { audiencePrompt: v },
+            )
+          }
           onClose={() => setBigText(null)}
         />
       )}
@@ -952,7 +1229,12 @@ function condSummary(t: T, form: FormState): string {
   return parts.join(t("scenarios.rc.condsum_join"));
 }
 
-function drawerTitle(t: T, slot: Exclude<OpenSlot, null>): string {
+function drawerTitle(t: T, slot: Exclude<OpenSlot, null>, isBoost?: boolean): string {
+  // The boost's «what» slot edits the pre-written comment (not a post body), and
+  // its target/metric slots have their own titles.
+  if (isBoost && slot === "what") return t("scenarios.bo.dt_comment");
+  if (slot === "target") return t("scenarios.bo.dt_target");
+  if (slot === "metric") return t("scenarios.bo.dt_metric");
   return t(`scenarios.rc.dt_${slot}` as MessageKey);
 }
 
