@@ -464,6 +464,7 @@ function ReplyGalleryDemo({ initialId }: { initialId: string }) {
       howTo={howTo}
       onHowTo={setHowTo}
       onBack={() => {}}
+      onHouseRules={() => {}}
     />
   );
 }

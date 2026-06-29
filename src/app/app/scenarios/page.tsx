@@ -178,7 +178,9 @@ function freshForm(preset: ScenarioPreset | null, t: (k: MessageKey) => string):
   const eventKind: FormState["eventKind"] =
     (preset?.trigger_cfg?.kind as string) === "on_follower_milestone" ? "on_follower_milestone" : "on_metric_threshold";
   return {
-    name: preset ? t(preset.name_key as MessageKey) : "",
+    // from a preset → its name; from scratch → a real default name (never an empty
+    // H1) the founder can rename with the pencil.
+    name: preset ? t(preset.name_key as MessageKey) : t("scenarios.new"),
     preset,
     helperOn: isPromo,
     promo: { ...BLANK_PROMO },
@@ -1027,6 +1029,15 @@ export default function ScenariosPage() {
     setView("list");
   }
 
+  // The «Правилах дома» inline link (reply-gallery foot): go back to the hub list
+  // and open the House Rules header where frequency / quiet hours / ceiling live.
+  function openHouseRules() {
+    commitReplyDraft();
+    setHrOpen(true);
+    setView("list");
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   async function onRunNow() {
     if (!editing) {
       // run-now needs a saved scenario; for a new one we can't (no id yet).
@@ -1409,6 +1420,7 @@ export default function ScenariosPage() {
             howTo={replyHowTo}
             onHowTo={setReplyHowTo}
             onBack={backFromReplyGallery}
+            onHouseRules={openHouseRules}
           />
         ) : view === "discovery" ? (
           <GalleryScreen presets={catalog} onPick={openPreset} onScratch={openScratch} onBack={backToList} />

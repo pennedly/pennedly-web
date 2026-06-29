@@ -74,6 +74,8 @@ export type ReplyAudienceGalleryProps = {
   onHowTo: (v: string) => void;
   /** «← Назад» out of the gallery, back to the routine list. */
   onBack: () => void;
+  /** Follow the «Правилах дома» inline link → open the House Rules header. */
+  onHouseRules: () => void;
 };
 
 export function ReplyAudienceGallery({
@@ -86,6 +88,7 @@ export function ReplyAudienceGallery({
   howTo,
   onHowTo,
   onBack,
+  onHouseRules,
 }: ReplyAudienceGalleryProps) {
   const { t } = useTranslation();
   const selected = AUDIENCE_PRESETS.find((p) => p.id === selectedId) ?? AUDIENCE_PRESETS[1];
@@ -149,7 +152,7 @@ export function ReplyAudienceGallery({
         {/* ── read-only foot facts: «отвечает сама» / «limits in House Rules» ── */}
         <div className="grid grid-cols-1 border-t border-border sm:grid-cols-2">
           <FootFact live icon={<IcRepeat size={16} />} title={t("ap.reply.gallery.fact_self")} body={t("ap.reply.gallery.fact_self_body")} />
-          <FootFact icon={<IcSliders size={16} />} title={t("ap.reply.gallery.fact_limits")} bodyKey="ap.reply.gallery.fact_limits_body" />
+          <FootFact icon={<IcSliders size={16} />} title={t("ap.reply.gallery.fact_limits")} bodyKey="ap.reply.gallery.fact_limits_body" onLink={onHouseRules} />
         </div>
       </div>
     </div>
@@ -263,12 +266,14 @@ function FootFact({
   title,
   body,
   bodyKey,
+  onLink,
 }: {
   live?: boolean;
   icon: React.ReactNode;
   title: string;
   body?: string;
   bodyKey?: MessageKey;
+  onLink?: () => void;
 }) {
   const { t } = useTranslation();
   return (
@@ -284,23 +289,30 @@ function FootFact({
       <div className="min-w-0">
         <div className="text-small font-semibold leading-snug text-text">{title}</div>
         <div className="mt-0.5 text-caption leading-normal text-text-subtle">
-          {bodyKey ? <LinkedCopy raw={t(bodyKey)} /> : body}
+          {bodyKey ? <LinkedCopy raw={t(bodyKey)} onLink={onLink} /> : body}
         </div>
       </div>
     </div>
   );
 }
 
-// Render a copy string with one inline <a>…</a> marker as an accent link (the
-// «Правилах дома» link). No real navigation — limits live one screen over.
-function LinkedCopy({ raw }: { raw: string }) {
+// Render a copy string with one inline <a>…</a> marker as a real link → House
+// Rules (frequency / quiet hours / ceiling live there, one screen over).
+function LinkedCopy({ raw, onLink }: { raw: string; onLink?: () => void }) {
   const open = raw.indexOf("<a>");
   const close = raw.indexOf("</a>");
   if (open === -1 || close === -1) return <>{raw}</>;
+  const label = raw.slice(open + 3, close);
   return (
     <>
       {raw.slice(0, open)}
-      <span className="font-medium text-accent underline underline-offset-2">{raw.slice(open + 3, close)}</span>
+      {onLink ? (
+        <button type="button" onClick={onLink} className="font-medium text-accent underline underline-offset-2 hover:text-accent/80">
+          {label}
+        </button>
+      ) : (
+        <span className="font-medium text-accent underline underline-offset-2">{label}</span>
+      )}
       {raw.slice(close + 4)}
     </>
   );

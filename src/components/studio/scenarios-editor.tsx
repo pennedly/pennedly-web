@@ -740,6 +740,9 @@ export function StepEditor({
   const [openSlot, setOpenSlot] = useState<OpenSlot>(demoOpenSlot ?? null);
   const [bigText, setBigText] = useState<BigTextField>(demoModal ?? null);
   const [condMenuOpen, setCondMenuOpen] = useState(false);
+  // separate «+ Добавить условие» menu state for the Layer-2 «Настроить точнее»
+  // copy of IfBody (its own surface — was wired to a dead () => {} setter).
+  const [condMenuL2, setCondMenuL2] = useState(false);
   const [layer2Open, setLayer2Open] = useState(demoLayer2 ?? false);
   const [layer3Open, setLayer3Open] = useState(demoLayer3 ?? false);
 
@@ -1085,7 +1088,7 @@ export function StepEditor({
               ) : (
                 <>
                   <LayerGroup label={t("scenarios.rc.l2_grp_conditions")}>
-                    <IfBody form={form} update={update} menuOpen={false} setMenuOpen={() => {}} />
+                    <IfBody form={form} update={update} menuOpen={condMenuL2} setMenuOpen={setCondMenuL2} />
                   </LayerGroup>
                   {reply ? (
                     <LayerGroup label={t("scenarios.rc.l2_grp_tone")}>

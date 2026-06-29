@@ -82,16 +82,28 @@ export type BigTextField = "instruction" | "tone" | "audience" | "boost" | "atta
 // ════════════════════════════════════════════════════════════════════════════
 export function Slot({ children, open, onClick }: { children: ReactNode; open?: boolean; onClick: () => void }) {
   return (
-    <button
-      type="button"
+    // A true inline <span>, NOT a <button>: a button is inline-block (an atomic
+    // box), so a slot that wraps to two lines becomes a centered block instead of
+    // flowing with the prose. A span flows inline and its dotted underline follows
+    // the text across the line break (design §1: «Слот = inline-span, переносится
+    // по словам»). role/tabIndex/keydown keep it keyboard-accessible.
+    <span
+      role="button"
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
       className={cn(
-        "cursor-pointer rounded-none border-none bg-transparent p-0 px-px font-[inherit] font-semibold underline decoration-dotted decoration-[1.5px] underline-offset-4 transition-colors",
+        "cursor-pointer px-px font-semibold underline decoration-dotted decoration-[1.5px] underline-offset-4 outline-offset-2 transition-colors",
         open ? "text-accent decoration-accent" : "text-text decoration-text-subtle/75 hover:text-accent hover:decoration-accent",
       )}
     >
       {children}
-    </button>
+    </span>
   );
 }
 
@@ -1042,30 +1054,33 @@ export function BigTextModal({
   const { t } = useTranslation();
   const m = BT_META[field];
   return (
-    <div className="absolute inset-0 z-10 flex items-start justify-center px-6 py-12">
+    // Full-VIEWPORT overlay (fixed, not absolute-within-.rce) so the scrim/blur
+    // covers the whole app, and a responsive dialog that grows with the monitor
+    // (w 92vw up to 860px, max-h 88vh) instead of a fixed 580px box.
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
       <div className="absolute inset-0 bg-ink-950/[0.48] backdrop-blur-[1.5px]" onClick={onClose} />
-      <div role="dialog" aria-modal="true" className="relative flex w-full max-w-[580px] animate-[bt-in_180ms_ease-out] flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-lg">
-        <div className="flex items-center gap-[11px] border-b border-border px-[18px] py-[15px]">
+      <div role="dialog" aria-modal="true" className="relative flex max-h-[88vh] w-[92vw] max-w-[860px] animate-[bt-in_180ms_ease-out] flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-lg">
+        <div className="flex shrink-0 items-center gap-[11px] border-b border-border px-[18px] py-[15px]">
           <span className="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-sm border border-accent/24 bg-accent/[0.11] text-accent">{m.icon}</span>
           <span className="min-w-0 flex-1 text-body font-semibold tracking-[-0.004em]">{t(m.titleKey)}</span>
           <button type="button" onClick={onClose} aria-label={t("a11y.close")} className="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-sm text-text-subtle transition-colors hover:bg-surface-2 hover:text-text">
             <IcX size={16} />
           </button>
         </div>
-        <div className="flex flex-col gap-[13px] p-[18px]">
+        <div className="flex min-h-0 flex-1 flex-col gap-[13px] overflow-y-auto p-[18px]">
           <textarea
             autoFocus
             placeholder={t(m.phKey)}
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            className="min-h-[280px] w-full resize-y rounded-md border border-border bg-surface-2 px-[15px] py-3.5 text-[15.5px] leading-[1.6] text-text outline-none focus:border-accent focus:bg-surface focus:ring-2 focus:ring-accent/22"
+            className="min-h-[clamp(300px,50vh,600px)] w-full flex-1 resize-y rounded-md border border-border bg-surface-2 px-[15px] py-3.5 text-[15.5px] leading-[1.6] text-text outline-none focus:border-accent focus:bg-surface focus:ring-2 focus:ring-accent/22"
           />
           <p className="flex items-start gap-2 text-caption leading-[1.5] text-text-subtle [&_b]:font-semibold [&_b]:text-text-muted">
             <IcInfo size={13} className="mt-px shrink-0 opacity-80" />
             <span dangerouslySetInnerHTML={{ __html: t(m.hintKey) }} />
           </p>
         </div>
-        <div className="flex items-center gap-2.5 border-t border-border bg-surface-2 px-[18px] py-3.5">
+        <div className="flex shrink-0 items-center gap-2.5 border-t border-border bg-surface-2 px-[18px] py-3.5">
           {/* the boost comment has a hard 500-char ceiling (backend) — show «N / 500»
               with an over-limit warning colour; other fields show the plain count. */}
           {field === "boost" || field === "attachBoost" ? (
