@@ -381,7 +381,7 @@ export const it: Partial<Record<MessageKey, string>> = {
   "patterns.just_now": "proprio ora",
   "patterns.empty_title": "Ancora non abbastanza post da studiare",
   "patterns.empty_body":
-    "Uno studio ha bisogno di almeno {need} post pubblicati per trovare schemi affidabili. Continua a scrivere nello Studio — ci sei quasi.",
+    "Uno studio ha bisogno di almeno {need} post pubblicati per trovare schemi affidabili. Continua a scrivere nelle Bozze — ci sei quasi.",
   "patterns.of_posts": "{have} di {need} post",
   "patterns.idle_title": "Scopri cosa funziona",
   "patterns.idle_body":
@@ -579,7 +579,7 @@ export const it: Partial<Record<MessageKey, string>> = {
     "Quando commentano i tuoi post, appaiono qui pronti per una risposta nella tua voce.",
   "replies.empty_needs_title": "Sei in pari",
   "replies.empty_needs_sub":
-    "Nessun commento aspetta una risposta. Crea qualcosa di nuovo nello Studio.",
+    "Nessun commento aspetta una risposta. Crea qualcosa di nuovo nelle Bozze.",
   "replies.empty_drafts_title": "Nessuna bozza in corso",
   "replies.empty_drafts_sub":
     "Genera una risposta su un commento e resterà qui finché non la approvi e pubblichi.",
@@ -788,7 +788,7 @@ export const it: Partial<Record<MessageKey, string>> = {
 
   // ── My Feed + Navigazione ──────────────────────────────────────
   "dashboard.nav.feed": "feed",
-  "nav.studio": "Studio",
+  "nav.studio": "Crea",
   "nav.calendar": "Calendario",
   "calendar.title": "Calendario",
   "calendar.subtitle": "Tutto ciò che è in programma",
@@ -801,7 +801,7 @@ export const it: Partial<Record<MessageKey, string>> = {
   "calendar.src_failed": "Pubblicazione fallita",
   "calendar.written_at_post_time": "Scritto al momento della pubblicazione",
   "calendar.empty_title": "Niente in programma",
-  "calendar.empty_sub": "Pianifica una bozza nello Studio — anche i post ricorrenti dell'autopilot compaiono qui.",
+  "calendar.empty_sub": "Pianifica un post — anche i post ricorrenti dell'autopilot compaiono qui.",
   "calendar.error_title": "Impossibile caricare il calendario",
   "calendar.error_sub": "Qualcosa è andato storto. Riprova.",
   "calendar.close": "Chiudi",
@@ -816,6 +816,7 @@ export const it: Partial<Record<MessageKey, string>> = {
   "nav.brand_tagline": "Compagno di scrittura",
   "nav.group.workspace": "Spazio di lavoro",
   "nav.group.insight": "Analisi",
+  "nav.group.brand": "Brand",
   "nav.group.voice_automation": "Voce e automazione",
   "feed.back": "← dashboard",
   "feed.title": "Il mio Feed",
@@ -947,7 +948,7 @@ export const it: Partial<Record<MessageKey, string>> = {
   "onboarding.voice_scratch": "Costruita dalla tua descrizione",
   "onboarding.voice_later": "Configurata più tardi",
   "onboarding.refine_voice": "Affina la tua voce",
-  "onboarding.go_studio": "Vai allo Studio",
+  "onboarding.go_studio": "Crea",
 
   // ── Stats ──────────────────────────────────────────────────────
   "dashboard.nav.stats": "statistiche",
@@ -1375,7 +1376,7 @@ export const it: Partial<Record<MessageKey, string>> = {
   "patterns.metric_likes": "mi piace",
   "patterns.metric_comments": "commenti",
   "patterns.empty_sub":
-    "Uno studio ha bisogno di almeno {need} post pubblicati per trovare schemi su cui contare. Continua a scrivere nello Studio, ci sei quasi.",
+    "Uno studio ha bisogno di almeno {need} post pubblicati per trovare schemi su cui contare. Continua a scrivere nelle Bozze, ci sei quasi.",
   "patterns.study_cap":
     "Dai tuoi ultimi {n} post · ordinati per forza della prova",
   "patterns.intro_sub":
@@ -1491,7 +1492,7 @@ export const it: Partial<Record<MessageKey, string>> = {
 
   // ── Feed (resto) ───────────────────────────────────────────────
   "feed.empty_title": "Ancora nessun post pubblicato",
-  "feed.empty_cta": "Vai allo Studio",
+  "feed.empty_cta": "Crea",
   "feed.sort_label": "Ordina i post",
   "feed.sort_recent": "Recenti",
   "feed.sort_top": "Più performanti",
@@ -1548,7 +1549,7 @@ export const it: Partial<Record<MessageKey, string>> = {
   "stats.g_day": "giorno",
   "stats.g_week": "settimana",
   "stats.empty_sub":
-    "Per mostrare tendenze significative, le statistiche hanno bisogno di almeno due settimane di attività. Continua a pubblicare nello Studio e il tuo rendimento prenderà forma qui.",
+    "Per mostrare tendenze significative, le statistiche hanno bisogno di almeno due settimane di attività. Continua a pubblicare nelle Bozze e il tuo rendimento prenderà forma qui.",
   "stats.empty_meta1": "settimana finora",
   "stats.empty_meta2": "post pubblicati",
   // ── Backfill / first-run (EN fallback — translate when localizing) ──
@@ -1563,8 +1564,8 @@ export const it: Partial<Record<MessageKey, string>> = {
   "backfill.nudge_importing_title": "Il tuo storico è in importazione",
   "backfill.nudge_importing_sub": "Questi numeri sono reali e crescono man mano che recuperiamo da Threads il resto dei tuoi post e commenti. Non manca nulla.",
   "backfill.nudge_ready_title": "You’re all set up",
-  "backfill.nudge_ready_sub": "Continua a pubblicare dallo Studio e l'andamento, gli orari migliori e la diffusione virale si riempiono qui strada facendo — nessuna attesa.",
-  "backfill.nudge_cta": "Apri lo Studio",
+  "backfill.nudge_ready_sub": "Continua a pubblicare e l'andamento, gli orari migliori e la diffusione virale si riempiono qui strada facendo — nessuna attesa.",
+  "backfill.nudge_cta": "Crea",
   "backfill.card_since_connect": "da quando ti sei collegato",
   "backfill.card_no_posts": "ancora nessun post",
   "backfill.followers_collect_title": "Il monitoraggio della crescita parte oggi",
@@ -1847,10 +1848,10 @@ export const it: Partial<Record<MessageKey, string>> = {
   "scenarios.fires.dates": "ogni giorno entro l'intervallo di date",
   "scenarios.fires.event": "quando si verifica l'evento",
   "scenarios.run_now": "Eseguilo ora",
-  "scenarios.run_now_note": "Crea una bozza — non pubblica mai. La troverai nello Studio.",
+  "scenarios.run_now_note": "Crea una bozza — non pubblica mai. La troverai nelle Bozze.",
   "scenarios.run_now_save_first": "Salva prima lo scenario, poi eseguilo.",
   "scenarios.draft_created": "Bozza creata.",
-  "scenarios.draft_created_sub": "Non è stato pubblicato nulla. La troverai nello Studio.",
+  "scenarios.draft_created_sub": "Non è stato pubblicato nulla. La troverai nelle Bozze.",
   "scenarios.replied_to": "in risposta a",
   "dashboard.nav.advisor": "advisor",
   "advisor.title": "Advisor",
@@ -1872,7 +1873,7 @@ export const it: Partial<Record<MessageKey, string>> = {
   "advisor.error_title": "Impossibile raggiungere l'advisor",
   "advisor.error_sub": "La richiesta è scaduta. I tuoi dati sono al sicuro — è solo la connessione.",
   "advisor.retry": "Riprova",
-  "advisor.open_in_studio": "Apri nello Studio",
+  "advisor.open_in_studio": "Crea",
   "advisor.show_data": "Mostrami i dati",
   "advisor.from_advisor": "Dal tuo Advisor",
   "advisor.source.stats": "Statistiche · 7 giorni",

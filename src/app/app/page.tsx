@@ -237,7 +237,7 @@ export default function Studio() {
           return;
         }
         setNeedsVoiceSetup(false);
-        const list = await listDrafts(accountId, { limit: 50 });
+        const list = await listDrafts(accountId, { contentType: "threads_post", limit: 50 });
         setDrafts(list.drafts);
       } catch (e) {
         if (e instanceof ApiError && e.status === 401) {
@@ -289,7 +289,7 @@ export default function Studio() {
     try {
       if (batchCount === 1) await generatePost(accountId, undefined, composerText);
       else await generatePostBatch(accountId, batchCount, undefined, composerText);
-      const list = await listDrafts(accountId, { limit: 50 });
+      const list = await listDrafts(accountId, { contentType: "threads_post", limit: 50 });
       setDrafts(list.drafts);
       setComposerText("");
     } catch (e) {
@@ -319,7 +319,7 @@ export default function Studio() {
             return n;
           });
           if (accountId !== null) {
-            const list = await listDrafts(accountId, { limit: 50 });
+            const list = await listDrafts(accountId, { contentType: "threads_post", limit: 50 });
             setDrafts(list.drafts);
           }
         } catch (e) {

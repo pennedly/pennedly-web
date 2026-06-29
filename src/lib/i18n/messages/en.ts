@@ -671,7 +671,7 @@ export const en = {
   "patterns.side_structure_multiline": "Multi-line",
   "patterns.side_structure_single": "Single block",
   "patterns.idle_body": "A study reads back through your posts and surfaces the patterns that actually move engagement, each one backed by your own numbers and examples.",
-  "patterns.empty_sub": "A study needs at least {need} published posts to find patterns it can stand behind. Keep writing in the Studio, you're getting there.",
+  "patterns.empty_sub": "A study needs at least {need} published posts to find patterns it can stand behind. Keep writing — you're getting there.",
   "patterns.study_cap": "From your last {n} posts · ranked by strength of evidence",
   "patterns.intro_sub": "What actually drives performance in your posts, found by reading your own history, backed by your own numbers.",
 
@@ -1066,7 +1066,7 @@ export const en = {
 
   // ── My Feed (posts + analytics) ───────────────────────────────
   "dashboard.nav.feed": "feed",
-  "nav.studio": "Studio",
+  "nav.studio": "Create",
   "nav.calendar": "Calendar",
   "calendar.title": "Calendar",
   "calendar.subtitle": "Everything scheduled to go out",
@@ -1079,7 +1079,7 @@ export const en = {
   "calendar.src_failed": "Failed to publish",
   "calendar.written_at_post_time": "Written automatically at post time",
   "calendar.empty_title": "Nothing scheduled yet",
-  "calendar.empty_sub": "Schedule a draft in the Studio — recurring autopilot posts show up here too.",
+  "calendar.empty_sub": "Schedule a post — recurring autopilot posts show up here too.",
   "calendar.error_title": "Couldn't load your calendar",
   "calendar.error_sub": "Something went wrong. Try again.",
   "calendar.close": "Close",
@@ -1094,6 +1094,7 @@ export const en = {
   "nav.brand_tagline": "Drafting partner",
   "nav.group.workspace": "Workspace",
   "nav.group.insight": "Insight",
+  "nav.group.brand": "Brand",
   "nav.group.voice_automation": "Voice & automation",
   "feed.back": "← dashboard",
   "feed.title": "My Feed",
@@ -1101,7 +1102,7 @@ export const en = {
   "feed.empty":
     "No posts yet. Once you publish on Threads, they'll show up here with analytics.",
   "feed.empty_title": "No published posts yet",
-  "feed.empty_cta": "Go to Studio",
+  "feed.empty_cta": "Create a post",
   "feed.sort_label": "Sort posts",
   "feed.sort_recent": "Recent",
   "feed.sort_top": "Top performing",
@@ -1273,7 +1274,7 @@ export const en = {
   "stats.g_hour": "hour",
   "stats.g_day": "day",
   "stats.g_week": "week",
-  "stats.empty_sub": "Stats need at least two weeks of activity to show meaningful trends. Keep publishing in the Studio and your performance will take shape here.",
+  "stats.empty_sub": "Stats need at least two weeks of activity to show meaningful trends. Keep publishing and your performance will take shape here.",
   "stats.empty_meta1": "week so far",
   "stats.empty_meta2": "posts published",
 
@@ -1324,8 +1325,8 @@ export const en = {
   "backfill.nudge_importing_title": "Your history is importing",
   "backfill.nudge_importing_sub": "These numbers are real and growing as we pull the rest of your posts and comments from Threads. Nothing is missing.",
   "backfill.nudge_ready_title": "You're all set up",
-  "backfill.nudge_ready_sub": "Keep publishing from the Studio and the trend line, best times and viral spread fill in here as you go — no waiting period.",
-  "backfill.nudge_cta": "Open the Studio",
+  "backfill.nudge_ready_sub": "Keep publishing and the trend line, best times and viral spread fill in here as you go — no waiting period.",
+  "backfill.nudge_cta": "Create a post",
   // First-run summary-card sub-lines (always-real cards, even at zero).
   "backfill.card_since_connect": "since you connected",
   "backfill.card_no_posts": "no posts yet",
@@ -1538,7 +1539,7 @@ export const en = {
   "onboarding.voice_scratch": "Built from your description",
   "onboarding.voice_later": "Set up later",
   "onboarding.refine_voice": "Refine your voice",
-  "onboarding.go_studio": "Go to Studio",
+  "onboarding.go_studio": "Start creating",
 
   // ── Scenarios ──────────────────────────────────────────────────────────
   "dashboard.nav.scenarios": "scenarios",
@@ -1923,10 +1924,10 @@ export const en = {
   "scenarios.fires.dates": "daily within the date range",
   "scenarios.fires.event": "when the event happens",
   "scenarios.run_now": "Run it now",
-  "scenarios.run_now_note": "Creates a draft — never publishes. You'll find it in Studio.",
+  "scenarios.run_now_note": "Creates a draft — never publishes. You'll find it in Drafts.",
   "scenarios.run_now_save_first": "Save the scenario first, then run it.",
   "scenarios.draft_created": "Draft created.",
-  "scenarios.draft_created_sub": "Nothing was published. You'll find it in Studio.",
+  "scenarios.draft_created_sub": "Nothing was published. You'll find it in Drafts.",
   "scenarios.replied_to": "replying to",
 
   // ── Scenario editor — hybrid C×B step track + large preview ──
@@ -2669,7 +2670,7 @@ export const en = {
   "advisor.error_title": "Couldn’t reach the advisor",
   "advisor.error_sub": "The request timed out. Your data is fine — this is just the connection.",
   "advisor.retry": "Retry",
-  "advisor.open_in_studio": "Open in Studio",
+  "advisor.open_in_studio": "Open in Create",
   "advisor.show_data": "Show me the data",
   "advisor.from_advisor": "From your Advisor",
   // Source labels — the backend returns canonical source ids; the UI maps them

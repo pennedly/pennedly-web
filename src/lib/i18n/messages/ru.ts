@@ -674,7 +674,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "patterns.side_structure_multiline": "Многострочные",
   "patterns.side_structure_single": "Одним блоком",
   "patterns.idle_body": "Исследование перечитывает твои посты и показывает закономерности, которые реально двигают вовлечённость, каждую с твоими же цифрами и примерами.",
-  "patterns.empty_sub": "Для исследования нужно хотя бы {need} опубликованных постов, чтобы выводы были обоснованными. Продолжай писать в Студии, ты почти у цели.",
+  "patterns.empty_sub": "Для исследования нужно хотя бы {need} опубликованных постов, чтобы выводы были обоснованными. Продолжай писать — ты почти у цели.",
   "patterns.study_cap": "По твоим последним {n} постам · отсортировано по силе доказательств",
   "patterns.intro_sub": "Что на самом деле двигает твои посты, найдено по твоей же истории и подкреплено твоими цифрами.",
 
@@ -1066,7 +1066,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
 
   // ── Моя лента (посты + аналитика) ─────────────────────────────
   "dashboard.nav.feed": "лента",
-  "nav.studio": "Студия",
+  "nav.studio": "Создать",
   "nav.calendar": "Календарь",
   "calendar.title": "Календарь",
   "calendar.subtitle": "Всё, что выйдет по расписанию",
@@ -1079,7 +1079,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "calendar.src_failed": "Не удалось опубликовать",
   "calendar.written_at_post_time": "Текст создаётся при выходе",
   "calendar.empty_title": "Пока ничего не запланировано",
-  "calendar.empty_sub": "Запланируй черновик в Студии — повторяющиеся посты автопилота тоже появятся здесь.",
+  "calendar.empty_sub": "Запланируй пост — повторяющиеся посты автопилота тоже появятся здесь.",
   "calendar.error_title": "Не удалось загрузить календарь",
   "calendar.error_sub": "Что-то пошло не так. Попробуйте снова.",
   "calendar.close": "Закрыть",
@@ -1094,6 +1094,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "nav.brand_tagline": "Партнёр по черновикам",
   "nav.group.workspace": "Рабочая область",
   "nav.group.insight": "Аналитика",
+  "nav.group.brand": "Бренд",
   "nav.group.voice_automation": "Голос и автоматизация",
   "feed.back": "← дашборд",
   "feed.title": "Моя лента",
@@ -1101,7 +1102,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "feed.empty":
     "Постов пока нет. Как опубликуешь в Threads — появятся здесь с аналитикой.",
   "feed.empty_title": "Пока нет опубликованных постов",
-  "feed.empty_cta": "В Studio",
+  "feed.empty_cta": "Создать пост",
   "feed.sort_label": "Сортировка постов",
   "feed.sort_recent": "Свежие",
   "feed.sort_top": "Лучшие",
@@ -1273,7 +1274,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "stats.g_hour": "час",
   "stats.g_day": "день",
   "stats.g_week": "неделю",
-  "stats.empty_sub": "Чтобы показать осмысленные тренды, статистике нужно хотя бы две недели активности. Продолжай публиковать в Студии, и картина сложится здесь.",
+  "stats.empty_sub": "Чтобы показать осмысленные тренды, статистике нужно хотя бы две недели активности. Продолжай публиковать, и картина сложится здесь.",
   "stats.empty_meta1": "неделя пока",
   "stats.empty_meta2": "поста опубликовано",
 
@@ -1316,8 +1317,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "backfill.nudge_importing_title": "Твоя история импортируется",
   "backfill.nudge_importing_sub": "Эти числа реальны и растут, пока мы подтягиваем остальные посты и комментарии из Threads. Ничего не теряется.",
   "backfill.nudge_ready_title": "Всё готово к работе",
-  "backfill.nudge_ready_sub": "Продолжай публиковать из Студии — линия тренда, лучшее время и виральный разброс будут заполняться здесь по ходу, без периода ожидания.",
-  "backfill.nudge_cta": "Открыть Студию",
+  "backfill.nudge_ready_sub": "Продолжай публиковать — линия тренда, лучшее время и виральный разброс будут заполняться здесь по ходу, без периода ожидания.",
+  "backfill.nudge_cta": "Создать пост",
   "backfill.card_since_connect": "с момента подключения",
   "backfill.card_no_posts": "постов пока нет",
   "backfill.followers_collect_title": "Рост начинаем отслеживать сегодня",
@@ -1513,7 +1514,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "onboarding.voice_scratch": "Создан из твоего описания",
   "onboarding.voice_later": "Настроить позже",
   "onboarding.refine_voice": "Доработать голос",
-  "onboarding.go_studio": "В Студию",
+  "onboarding.go_studio": "Начать создавать",
 
   // ── Сценарии ───────────────────────────────────────────────────────────
   "dashboard.nav.scenarios": "сценарии",
@@ -1898,10 +1899,10 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "scenarios.fires.dates": "ежедневно в пределах дат",
   "scenarios.fires.event": "когда наступит событие",
   "scenarios.run_now": "Прогнать сейчас",
-  "scenarios.run_now_note": "Создаёт черновик — никогда не публикует. Найдёшь его в Студии.",
+  "scenarios.run_now_note": "Создаёт черновик — никогда не публикует. Найдёшь его в Черновиках.",
   "scenarios.run_now_save_first": "Сначала сохрани сценарий, потом прогоняй.",
   "scenarios.draft_created": "Черновик создан.",
-  "scenarios.draft_created_sub": "Ничего не опубликовано. Найдёшь его в Студии.",
+  "scenarios.draft_created_sub": "Ничего не опубликовано. Найдёшь его в Черновиках.",
   "scenarios.replied_to": "в ответ на",
 
   // ── Редактор сценария — гибрид C×B: дорожка шагов + крупное превью ──
@@ -2625,7 +2626,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "advisor.error_title": "Не удалось связаться с советником",
   "advisor.error_sub": "Истекло время ожидания. С вашими данными всё в порядке — это просто соединение.",
   "advisor.retry": "Повторить",
-  "advisor.open_in_studio": "Открыть в Studio",
+  "advisor.open_in_studio": "Открыть в «Создать»",
   "advisor.show_data": "Показать данные",
   "advisor.from_advisor": "От вашего советника",
   "advisor.source.stats": "Статистика · 7 дней",

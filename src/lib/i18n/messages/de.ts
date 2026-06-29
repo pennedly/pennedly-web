@@ -793,7 +793,7 @@ export const de: Partial<Record<MessageKey, string>> = {
 
   // ── My Feed + Navigation ───────────────────────────────────────
   "dashboard.nav.feed": "Feed",
-  "nav.studio": "Studio",
+  "nav.studio": "Erstellen",
   "nav.calendar": "Kalender",
   "calendar.title": "Kalender",
   "calendar.subtitle": "Alles, was geplant rausgeht",
@@ -806,7 +806,7 @@ export const de: Partial<Record<MessageKey, string>> = {
   "calendar.src_failed": "Veröffentlichung fehlgeschlagen",
   "calendar.written_at_post_time": "Wird zur Sendezeit erstellt",
   "calendar.empty_title": "Noch nichts geplant",
-  "calendar.empty_sub": "Plane einen Entwurf im Studio — wiederkehrende Autopilot-Beiträge erscheinen auch hier.",
+  "calendar.empty_sub": "Plane einen Post — wiederkehrende Autopilot-Beiträge erscheinen auch hier.",
   "calendar.error_title": "Kalender konnte nicht geladen werden",
   "calendar.error_sub": "Etwas ist schiefgelaufen. Versuche es erneut.",
   "calendar.close": "Schließen",
@@ -821,6 +821,7 @@ export const de: Partial<Record<MessageKey, string>> = {
   "nav.brand_tagline": "Schreibpartner",
   "nav.group.workspace": "Arbeitsbereich",
   "nav.group.insight": "Einblicke",
+  "nav.group.brand": "Marke",
   "nav.group.voice_automation": "Stimme & Automatik",
   "feed.back": "← Dashboard",
   "feed.title": "Mein Feed",
@@ -954,7 +955,7 @@ export const de: Partial<Record<MessageKey, string>> = {
   "onboarding.voice_scratch": "Aus deiner Beschreibung gebaut",
   "onboarding.voice_later": "Später eingerichtet",
   "onboarding.refine_voice": "Deine Stimme verfeinern",
-  "onboarding.go_studio": "Zum Studio",
+  "onboarding.go_studio": "Erstellen",
 
   // ── Stats ──────────────────────────────────────────────────────
   "dashboard.nav.stats": "statistik",
@@ -1370,7 +1371,7 @@ export const de: Partial<Record<MessageKey, string>> = {
   "patterns.metric_likes": "Likes",
   "patterns.metric_comments": "Kommentare",
   "patterns.empty_sub":
-    "Eine Analyse braucht mindestens {need} veröffentlichte Beiträge, um belastbare Muster zu finden. Schreib weiter im Studio, du bist auf dem Weg.",
+    "Eine Analyse braucht mindestens {need} veröffentlichte Beiträge, um belastbare Muster zu finden. Schreib weiter, du bist auf dem Weg.",
   "patterns.study_cap":
     "Aus deinen letzten {n} Beiträgen · sortiert nach Beweiskraft",
   "patterns.intro_sub":
@@ -1478,7 +1479,7 @@ export const de: Partial<Record<MessageKey, string>> = {
   "autopilot.jitter_hint_exact": "Postet genau zur Zeit",
   "autopilot.jitter_hint": "Postet innerhalb von ±{n} Min.",
   "feed.empty_title": "Noch keine veröffentlichten Beiträge",
-  "feed.empty_cta": "Zum Studio",
+  "feed.empty_cta": "Erstellen",
   "feed.sort_label": "Beiträge sortieren",
   "feed.sort_recent": "Neueste",
   "feed.sort_top": "Beste",
@@ -1535,7 +1536,7 @@ export const de: Partial<Record<MessageKey, string>> = {
   "stats.g_day": "Tag",
   "stats.g_week": "Woche",
   "stats.empty_sub":
-    "Statistiken brauchen mindestens zwei Wochen Aktivität, um aussagekräftige Trends zu zeigen. Veröffentliche weiter im Studio, und deine Performance nimmt hier Gestalt an.",
+    "Statistiken brauchen mindestens zwei Wochen Aktivität, um aussagekräftige Trends zu zeigen. Veröffentliche weiter, und deine Performance nimmt hier Gestalt an.",
   "stats.empty_meta1": "Woche bisher",
   "stats.empty_meta2": "Beiträge veröffentlicht",
   // ── Backfill / first-run (EN fallback — translate when localizing) ──
@@ -1550,8 +1551,8 @@ export const de: Partial<Record<MessageKey, string>> = {
   "backfill.nudge_importing_title": "Dein Verlauf wird importiert",
   "backfill.nudge_importing_sub": "Diese Zahlen sind echt und wachsen, während wir den Rest deiner Posts und Kommentare aus Threads laden. Es fehlt nichts.",
   "backfill.nudge_ready_title": "You’re all set up",
-  "backfill.nudge_ready_sub": "Poste weiter aus dem Studio, und Trendlinie, beste Zeiten und virale Reichweite füllen sich hier nach und nach — ohne Wartezeit.",
-  "backfill.nudge_cta": "Studio öffnen",
+  "backfill.nudge_ready_sub": "Poste weiter, und Trendlinie, beste Zeiten und virale Reichweite füllen sich hier nach und nach — ohne Wartezeit.",
+  "backfill.nudge_cta": "Erstellen",
   "backfill.card_since_connect": "seit deiner Verbindung",
   "backfill.card_no_posts": "noch keine Posts",
   "backfill.followers_collect_title": "Das Wachstum wird ab heute erfasst",
@@ -1830,10 +1831,10 @@ export const de: Partial<Record<MessageKey, string>> = {
   "scenarios.fires.dates": "täglich innerhalb des Zeitraums",
   "scenarios.fires.event": "wenn das Ereignis eintritt",
   "scenarios.run_now": "Jetzt ausführen",
-  "scenarios.run_now_note": "Erstellt einen Entwurf — veröffentlicht nie. Du findest ihn im Studio.",
+  "scenarios.run_now_note": "Erstellt einen Entwurf — veröffentlicht nie. Du findest ihn in den Entwürfen.",
   "scenarios.run_now_save_first": "Speichere das Szenario zuerst, dann führe es aus.",
   "scenarios.draft_created": "Entwurf erstellt.",
-  "scenarios.draft_created_sub": "Es wurde nichts veröffentlicht. Du findest ihn im Studio.",
+  "scenarios.draft_created_sub": "Es wurde nichts veröffentlicht. Du findest ihn in den Entwürfen.",
   "scenarios.replied_to": "Antwort an",
   "dashboard.nav.advisor": "Advisor",
   "advisor.title": "Advisor",
@@ -1855,7 +1856,7 @@ export const de: Partial<Record<MessageKey, string>> = {
   "advisor.error_title": "Advisor nicht erreichbar",
   "advisor.error_sub": "Die Anfrage hat das Zeitlimit überschritten. Deine Daten sind in Ordnung — es liegt nur an der Verbindung.",
   "advisor.retry": "Erneut versuchen",
-  "advisor.open_in_studio": "Im Studio öffnen",
+  "advisor.open_in_studio": "Erstellen",
   "advisor.show_data": "Zeig mir die Daten",
   "advisor.from_advisor": "Von deinem Advisor",
   "advisor.source.stats": "Statistik · 7 Tage",

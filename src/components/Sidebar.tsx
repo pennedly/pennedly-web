@@ -53,7 +53,13 @@ const GROUPS: { title: MessageKey; items: NavItem[] }[] = [
   {
     title: "nav.group.workspace",
     items: [
+      // «Студия» → «Создать» (nav.studio value renamed); it's the content-creation
+      // hub (brief → draft → review → publish — a verb fits it better than a noun,
+      // and it avoids colliding with the inner «Черновики» status tab). **Автопилот**
+      // raised here (the killer feature); «Сценарии» merged into it (the standalone
+      // /app/autopilot screen redirects to /app/scenarios).
       { href: "/app", label: "nav.studio", icon: IcStudio, exact: true, badgeKey: "studio" },
+      { href: "/app/scenarios", label: "dashboard.nav.autopilot", icon: IcBolt, tester: true },
       { href: "/app/calendar", label: "nav.calendar", icon: IcCalendar },
       { href: "/app/feed", label: "dashboard.nav.feed", icon: IcFeed },
       { href: "/app/replies", label: "dashboard.nav.replies", icon: IcReplies, tester: true, badgeKey: "replies" },
@@ -70,15 +76,12 @@ const GROUPS: { title: MessageKey; items: NavItem[] }[] = [
     ],
   },
   {
-    title: "nav.group.voice_automation",
-    items: [
-      { href: "/app/role-book", label: "dashboard.nav.voice", icon: IcVoice },
-      // «Style» merged into «Voice» as its «Anti-robot» tab — the standalone
-      // /app/style-rules screen is retired (it now redirects to the tab).
-      // «Сценарии» merged into «Автопилот»: one hub entry (the standalone
-      // /app/autopilot screen is retired → it now redirects here).
-      { href: "/app/scenarios", label: "dashboard.nav.autopilot", icon: IcBolt, tester: true },
-    ],
+    // «Бренд» — its own section for the account-bound «Voice» (DNA + the
+    // «Anti-robot» tab). Can't live in global Settings (voice is per-account);
+    // Autopilot moved up to Workspace, so the old «Voice & automation» group is
+    // now just this. «Style» is the «Anti-robot» tab inside Voice (retired route).
+    title: "nav.group.brand",
+    items: [{ href: "/app/role-book", label: "dashboard.nav.voice", icon: IcVoice }],
   },
 ];
 

@@ -788,7 +788,7 @@ export const es: Partial<Record<MessageKey, string>> = {
 
   // ── My Feed + Navegación ───────────────────────────────────────
   "dashboard.nav.feed": "feed",
-  "nav.studio": "Estudio",
+  "nav.studio": "Crear",
   "nav.calendar": "Calendario",
   "calendar.title": "Calendario",
   "calendar.subtitle": "Todo lo que está programado",
@@ -801,7 +801,7 @@ export const es: Partial<Record<MessageKey, string>> = {
   "calendar.src_failed": "Error al publicar",
   "calendar.written_at_post_time": "Se escribe al publicar",
   "calendar.empty_title": "Nada programado aún",
-  "calendar.empty_sub": "Programa un borrador en el Studio — las publicaciones recurrentes del autopiloto también aparecen aquí.",
+  "calendar.empty_sub": "Programa una publicación — las publicaciones recurrentes del autopiloto también aparecen aquí.",
   "calendar.error_title": "No se pudo cargar el calendario",
   "calendar.error_sub": "Algo salió mal. Inténtalo de nuevo.",
   "calendar.close": "Cerrar",
@@ -816,6 +816,7 @@ export const es: Partial<Record<MessageKey, string>> = {
   "nav.brand_tagline": "Compañero de escritura",
   "nav.group.workspace": "Espacio de trabajo",
   "nav.group.insight": "Análisis",
+  "nav.group.brand": "Marca",
   "nav.group.voice_automation": "Voz y automatización",
   "feed.back": "← panel",
   "feed.title": "Mi Feed",
@@ -947,7 +948,7 @@ export const es: Partial<Record<MessageKey, string>> = {
   "onboarding.voice_scratch": "Construida desde tu descripción",
   "onboarding.voice_later": "Configurar más tarde",
   "onboarding.refine_voice": "Refinar tu voz",
-  "onboarding.go_studio": "Ir al Studio",
+  "onboarding.go_studio": "Crear",
 
   // ── Stats ──────────────────────────────────────────────────────
   "dashboard.nav.stats": "estadísticas",
@@ -1356,7 +1357,7 @@ export const es: Partial<Record<MessageKey, string>> = {
   "patterns.metric_likes": "me gusta",
   "patterns.metric_comments": "comentarios",
   "patterns.empty_sub":
-    "Un estudio necesita al menos {need} publicaciones publicadas para encontrar patrones que pueda respaldar. Sigue escribiendo en el Studio, ya casi estás.",
+    "Un estudio necesita al menos {need} publicaciones publicadas para encontrar patrones que pueda respaldar. Sigue escribiendo, ya casi estás.",
   "patterns.study_cap":
     "De tus últimas {n} publicaciones · ordenadas por fuerza de la evidencia",
   "patterns.intro_sub":
@@ -1460,7 +1461,7 @@ export const es: Partial<Record<MessageKey, string>> = {
   "autopilot.jitter_hint_exact": "Publica exactamente a la hora",
   "autopilot.jitter_hint": "Publica dentro de ±{n} min",
   "feed.empty_title": "Aún no hay publicaciones publicadas",
-  "feed.empty_cta": "Ir al Studio",
+  "feed.empty_cta": "Crear",
   "feed.sort_label": "Ordenar publicaciones",
   "feed.sort_recent": "Recientes",
   "feed.sort_top": "Mejor rendimiento",
@@ -1513,7 +1514,7 @@ export const es: Partial<Record<MessageKey, string>> = {
   "stats.g_day": "día",
   "stats.g_week": "semana",
   "stats.empty_sub":
-    "Las estadísticas necesitan al menos dos semanas de actividad para mostrar tendencias con sentido. Sigue publicando en el Studio y tu rendimiento tomará forma aquí.",
+    "Las estadísticas necesitan al menos dos semanas de actividad para mostrar tendencias con sentido. Sigue publicando y tu rendimiento tomará forma aquí.",
   "stats.empty_meta1": "semana hasta ahora",
   "stats.empty_meta2": "publicaciones publicadas",
   // ── Backfill / first-run (EN fallback — translate when localizing) ──
@@ -1528,8 +1529,8 @@ export const es: Partial<Record<MessageKey, string>> = {
   "backfill.nudge_importing_title": "Tu historial se está importando",
   "backfill.nudge_importing_sub": "Estos números son reales y crecen a medida que recopilamos el resto de tus publicaciones y comentarios de Threads. No falta nada.",
   "backfill.nudge_ready_title": "You’re all set up",
-  "backfill.nudge_ready_sub": "Sigue publicando desde el Estudio y la línea de tendencia, los mejores horarios y la difusión viral se irán completando aquí sobre la marcha, sin esperas.",
-  "backfill.nudge_cta": "Abrir el Estudio",
+  "backfill.nudge_ready_sub": "Sigue publicando y la línea de tendencia, los mejores horarios y la difusión viral se irán completando aquí sobre la marcha, sin esperas.",
+  "backfill.nudge_cta": "Crear",
   "backfill.card_since_connect": "desde que te conectaste",
   "backfill.card_no_posts": "aún no hay publicaciones",
   "backfill.followers_collect_title": "El crecimiento empieza a registrarse hoy",
@@ -1807,10 +1808,10 @@ export const es: Partial<Record<MessageKey, string>> = {
   "scenarios.fires.dates": "a diario dentro del rango de fechas",
   "scenarios.fires.event": "cuando ocurra el evento",
   "scenarios.run_now": "Ejecutar ahora",
-  "scenarios.run_now_note": "Crea un borrador: nunca publica. Lo encontrarás en el Estudio.",
+  "scenarios.run_now_note": "Crea un borrador: nunca publica. Lo encontrarás en Borradores.",
   "scenarios.run_now_save_first": "Guarda primero el escenario y luego ejecútalo.",
   "scenarios.draft_created": "Borrador creado.",
-  "scenarios.draft_created_sub": "No se publicó nada. Lo encontrarás en el Estudio.",
+  "scenarios.draft_created_sub": "No se publicó nada. Lo encontrarás en Borradores.",
   "scenarios.replied_to": "respondiendo a",
   "dashboard.nav.advisor": "asesor",
   "advisor.title": "Asesor",
@@ -1832,7 +1833,7 @@ export const es: Partial<Record<MessageKey, string>> = {
   "advisor.error_title": "No se pudo contactar con el asesor",
   "advisor.error_sub": "Se agotó el tiempo de la solicitud. Tus datos están bien: es solo la conexión.",
   "advisor.retry": "Reintentar",
-  "advisor.open_in_studio": "Abrir en el Estudio",
+  "advisor.open_in_studio": "Crear",
   "advisor.show_data": "Muéstrame los datos",
   "advisor.from_advisor": "De tu asesor",
   "advisor.source.stats": "Estadísticas · 7 días",
