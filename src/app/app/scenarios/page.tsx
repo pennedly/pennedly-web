@@ -76,6 +76,7 @@ import {
   type FormState,
   interpolate,
   type MonthDate,
+  perDayTimesFromCfg,
   visibleFields,
 } from "@/components/studio/scenarios-form";
 import {
@@ -178,6 +179,8 @@ function freshForm(preset: ScenarioPreset | null, t: (k: MessageKey) => string):
     // weekly — multi-weekday. A preset may ship `weekdays`; fall back to a single
     // `weekday` (back-compat), else the design default Mon–Fri.
     weekdays: weekdaysFromCfg(preset?.trigger_cfg) ?? [0, 1, 2, 3, 4],
+    perDay: false,
+    perDayTimes: {},
     // «Раз в месяц» / «Раз в год» — fresh defaults from the design. (A preset that
     // ships a monthly/yearly trigger seeds these from its cfg; openEditor does the
     // round-trip for saved scenarios.) Months are 0-indexed in the form.
@@ -675,6 +678,8 @@ export default function ScenariosPage() {
       // array, else seed from a legacy single `weekday` (back-compat read), else
       // the design default Mon–Fri.
       weekdays: weekdaysFromCfg(s.trigger_cfg) ?? [0, 1, 2, 3, 4],
+      perDay: perDayTimesFromCfg(s.trigger_cfg?.per_day_times) !== null,
+      perDayTimes: perDayTimesFromCfg(s.trigger_cfg?.per_day_times) ?? {},
       // «Раз в месяц» / «Раз в год» — reconstructed from trigger_cfg so editing +
       // re-saving reproduces the same shape (absent → the design defaults).
       monthlyDays: monthlyDaysFromCfg(s.trigger_cfg) ?? [1, 15, 31],

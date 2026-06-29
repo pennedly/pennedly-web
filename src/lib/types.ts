@@ -856,6 +856,11 @@ export type Scenario = {
   /** Schedule «Разброс минут» (0–120), lifted from `trigger_cfg.jitter_minutes`.
    *  null/absent → no jitter. */
   jitter_minutes?: number | null;
+  /** Weekly «Разное время в разные дни» — the per-weekday post-times map, lifted
+   *  from `trigger_cfg.per_day_times`. Keyed by weekday string "0".."6" (0=Mon),
+   *  each value a list of hours 0–23 (may be empty = no post that day). null/absent
+   *  → no per-day schedule (the flat weekdays/hours apply). */
+  per_day_times?: Record<string, number[]> | null;
 };
 
 /** Who confirms before a scenario publishes. */

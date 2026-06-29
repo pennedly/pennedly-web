@@ -39,9 +39,11 @@ import {
   IcX,
 } from "@/components/icons";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import {
   daysInMonth,
   MONTHS,
+  PER_DAY_DEFAULT,
   type CooldownUnit,
   type FormState,
   type MonthDate,
@@ -260,11 +262,20 @@ function SlotChip({
   );
 }
 
-// The slot list («несколько раз в день») + jitter slider (cadence modes only).
-// Each slot is a removable 0–23 hour picker; «+ Ещё время» appends one. Whole-hour
-// posting → the .rc-hard caption; the UTC equivalents of all slots are summarised
-// under the list. The list is normalized (deduped, sorted) on every change.
-function TimeSection({ hours, jitter, onHours, onJitter }: { hours: number[]; jitter: number; onHours: (h: number[]) => void; onJitter: (j: number) => void }) {
+// A single multi-slot time list: the removable hour chips + the «+ Ещё время»
+// button. Shared by `TimeSection` (the shared list) and the per-weekday rows
+// («Разное время в разные дни»). The list is normalized (deduped, sorted) on every
+// change so the chip order + the emitted hours always agree. `addLabel` defaults to
+// «+ Ещё время»; the per-day rows pass `compactAdd` for the design's icon-only «+».
+function SlotList({
+  hours,
+  onHours,
+  compactAdd,
+}: {
+  hours: number[];
+  onHours: (h: number[]) => void;
+  compactAdd?: boolean;
+}) {
   const { t } = useTranslation();
   // Always render at least one slot (the form seeds ≥1; this guards stray empties).
   const slots = hours.length > 0 ? hours : [0];
@@ -288,23 +299,36 @@ function TimeSection({ hours, jitter, onHours, onJitter }: { hours: number[]; ji
   function normalize(list: number[]): number[] {
     return Array.from(new Set(list.filter((h) => h >= 0 && h <= 23))).sort((a, b) => a - b);
   }
+  return (
+    <span className="flex flex-wrap items-center gap-2">
+      {slots.map((h, i) => (
+        <SlotChip key={`${h}-${i}`} hour={h} canRemove={slots.length > 1} onChange={(v) => changeSlot(i, v)} onRemove={() => removeSlot(i)} />
+      ))}
+      <button
+        type="button"
+        onClick={addSlot}
+        aria-label={t("scenarios.rc.add_time")}
+        className="inline-flex items-center gap-[5px] rounded-full border border-dashed border-accent/36 bg-accent/[0.09] px-3 py-1.5 text-small font-semibold text-accent transition-colors hover:bg-accent/15"
+      >
+        <IcPlus size={13} /> {!compactAdd && t("scenarios.rc.add_time")}
+      </button>
+    </span>
+  );
+}
+
+// The slot list («несколько раз в день») + jitter slider (cadence modes only).
+// Each slot is a removable 0–23 hour picker; «+ Ещё время» appends one. Whole-hour
+// posting → the .rc-hard caption; the UTC equivalents of all slots are summarised
+// under the list.
+function TimeSection({ hours, jitter, onHours, onJitter }: { hours: number[]; jitter: number; onHours: (h: number[]) => void; onJitter: (j: number) => void }) {
+  const { t } = useTranslation();
+  const slots = hours.length > 0 ? hours : [0];
   const utcLabel = slots.map((h) => `${String(localHourToUtc(h)).padStart(2, "0")}:00`).join(", ");
   return (
     <>
       <label className="flex flex-col gap-1.5">
         <FieldLabel opt={t("scenarios.rc.when_time_opt")}>{t("scenarios.rc.when_time")}</FieldLabel>
-        <span className="flex flex-wrap items-center gap-2">
-          {slots.map((h, i) => (
-            <SlotChip key={`${h}-${i}`} hour={h} canRemove={slots.length > 1} onChange={(v) => changeSlot(i, v)} onRemove={() => removeSlot(i)} />
-          ))}
-          <button
-            type="button"
-            onClick={addSlot}
-            className="inline-flex items-center gap-[5px] rounded-full border border-dashed border-accent/36 bg-accent/[0.09] px-3 py-1.5 text-small font-semibold text-accent transition-colors hover:bg-accent/15"
-          >
-            <IcPlus size={13} /> {t("scenarios.rc.add_time")}
-          </button>
-        </span>
+        <SlotList hours={hours} onHours={onHours} />
         <span className="text-caption tabular-nums text-text-subtle">
           {localUtcOffsetLabel()} · {t("scenarios.ed.sends_utc").replace("{time}", utcLabel)}
         </span>
@@ -330,6 +354,60 @@ function TimeSection({ hours, jitter, onHours, onJitter }: { hours: number[]; ji
       </label>
       <Hard>{t("scenarios.rc.when_hard")}</Hard>
     </>
+  );
+}
+
+// «Разное время в разные дни» — the design's `toggleRow`: a title + sub-line on the
+// left, a Switch on the right (the recipe-editor.css `.rc-toggle-row`).
+function ToggleRow({ title, sub, on, onToggle }: { title: string; sub: string; on: boolean; onToggle: (v: boolean) => void }) {
+  return (
+    <div className="flex items-center justify-between gap-3.5 rounded-md border border-border bg-surface px-[13px] py-[11px]">
+      <div className="min-w-0">
+        <div className="text-small font-medium text-text">{title}</div>
+        <div className="mt-0.5 text-caption leading-[1.4] text-text-subtle">{sub}</div>
+      </div>
+      <Switch checked={on} onCheckedChange={onToggle} aria-label={title} />
+    </div>
+  );
+}
+
+// «Время по дням» — the per-weekday time editor (design `perDayTimes`): one
+// `.daytime-row` per SELECTED weekday (day label 40px + that day's own multi-slot
+// `SlotList`). A day's empty list means no post that day. Seeds a missing day's
+// list from the design defaults (`PER_DAY_DEFAULT`) so a freshly-selected day shows
+// a sensible time. Editing writes back into `form.perDayTimes[weekday]`.
+function PerDayTimes({
+  weekdays,
+  perDayTimes,
+  onChange,
+}: {
+  weekdays: number[];
+  perDayTimes: Record<number, number[]>;
+  onChange: (wd: number, hours: number[]) => void;
+}) {
+  const { t } = useTranslation();
+  const days = [...new Set(weekdays.filter((d) => d >= 0 && d <= 6))].sort((a, b) => a - b);
+  return (
+    <label className="flex flex-col gap-2">
+      <FieldLabel>{t("scenarios.rc.per_day_label")}</FieldLabel>
+      {days.length === 0 ? (
+        <span className="text-caption text-text-subtle">{t("scenarios.rc.per_day_empty")}</span>
+      ) : (
+        <div className="flex flex-col">
+          {days.map((wd) => {
+            const hours = perDayTimes[wd] && perDayTimes[wd].length > 0 ? perDayTimes[wd] : PER_DAY_DEFAULT[wd] ?? [9];
+            return (
+              <div key={wd} className="flex items-center gap-3 border-t border-border py-[9px] first:border-t-0 first:pt-0.5">
+                <span className="w-10 shrink-0 text-small font-semibold text-text">{t(RC_WEEKDAYS[wd])}</span>
+                <span className="min-w-0 flex-1">
+                  <SlotList hours={hours} onHours={(h) => onChange(wd, h)} compactAdd />
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </label>
   );
 }
 
@@ -513,6 +591,25 @@ export function WhenPostBody({
     const list = next.length > 0 ? next : [0];
     update({ hours: list, hour: `${list[0]}:00` });
   };
+  // «Разное время в разные дни» toggle. Turning ON seeds each selected weekday's
+  // list from the design defaults (so every row shows a sensible time), but never
+  // overwrites a day that already has saved times. Turning OFF keeps the map (a
+  // re-toggle restores the rows); only the OFF state's flat `hours` then emits.
+  const setPerDay = (on: boolean) => {
+    if (!on) {
+      update({ perDay: false });
+      return;
+    }
+    const seeded: Record<number, number[]> = { ...form.perDayTimes };
+    for (const wd of form.weekdays) {
+      if (!seeded[wd] || seeded[wd].length === 0) seeded[wd] = PER_DAY_DEFAULT[wd] ?? [9];
+    }
+    update({ perDay: true, perDayTimes: seeded });
+  };
+  // Edit one weekday's per-day time list (deduped/sorted already by SlotList).
+  const setPerDayHours = (wd: number, hours: number[]) => {
+    update({ perDayTimes: { ...form.perDayTimes, [wd]: hours } });
+  };
   return (
     <>
       <label className="flex flex-col gap-1.5">
@@ -563,7 +660,8 @@ export function WhenPostBody({
           <label className="flex flex-col gap-1.5">
             <FieldLabel>{t("scenarios.rc.which_days")}</FieldLabel>
             {/* `wkPills` — the 7 Пн…Вс day pills, multi-select (design default
-                Mon–Fri). Toggling adds/removes the day; selection may be any set. */}
+                Mon–Fri). Toggling adds/removes the day; selection may be any set.
+                In perDay mode, adding a day also seeds its per-day time row. */}
             <span className="flex flex-wrap gap-1.5">
               {RC_WEEKDAYS.map((wd, i) => {
                 const on = form.weekdays.includes(i);
@@ -572,11 +670,15 @@ export function WhenPostBody({
                     key={i}
                     type="button"
                     aria-pressed={on}
-                    onClick={() =>
-                      update({
-                        weekdays: on ? form.weekdays.filter((x) => x !== i) : [...form.weekdays, i].sort((a, b) => a - b),
-                      })
-                    }
+                    onClick={() => {
+                      const weekdays = on ? form.weekdays.filter((x) => x !== i) : [...form.weekdays, i].sort((a, b) => a - b);
+                      // perDay + adding a day with no times yet → seed its default row.
+                      if (form.perDay && !on && (!form.perDayTimes[i] || form.perDayTimes[i].length === 0)) {
+                        update({ weekdays, perDayTimes: { ...form.perDayTimes, [i]: PER_DAY_DEFAULT[i] ?? [9] } });
+                      } else {
+                        update({ weekdays });
+                      }
+                    }}
                     className={cn(
                       "grid h-[34px] min-w-[38px] place-items-center rounded-sm border px-2.5 text-small font-medium transition-colors",
                       on ? "border-primary bg-primary font-semibold text-primary-foreground" : "border-border bg-surface text-text-muted hover:border-text/16",
@@ -588,7 +690,19 @@ export function WhenPostBody({
               })}
             </span>
           </label>
-          <TimeSection hours={form.hours} jitter={form.jitter} onHours={setHours} onJitter={(j) => update({ jitter: j })} />
+          {/* «Разное время в разные дни» — OFF: the shared time list applies to all
+              selected days. ON: a per-weekday time editor (the design's perDay body). */}
+          <ToggleRow
+            title={t("scenarios.rc.per_day_toggle")}
+            sub={t("scenarios.rc.per_day_toggle_sub")}
+            on={form.perDay}
+            onToggle={setPerDay}
+          />
+          {form.perDay ? (
+            <PerDayTimes weekdays={form.weekdays} perDayTimes={form.perDayTimes} onChange={setPerDayHours} />
+          ) : (
+            <TimeSection hours={form.hours} jitter={form.jitter} onHours={setHours} onJitter={(j) => update({ jitter: j })} />
+          )}
         </>
       )}
 

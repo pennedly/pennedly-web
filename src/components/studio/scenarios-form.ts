@@ -57,6 +57,27 @@ export function daysInMonth(mi: number): number {
   return DAYS_IN_MONTH[mi] ?? 31;
 }
 
+// The design's default per-weekday post times for the «Разное время в разные дни»
+// editor: Mon=8, Tue–Thu=9, Fri=12, Sat/Sun=none (the recipe-editor.js
+// `['8:00','9:00','9:00','9:00','12:00','—','—']`). A weekday absent here = no
+// post; used to seed a row when a selected day has no times yet.
+export const PER_DAY_DEFAULT: Record<number, number[]> = { 0: [8], 1: [9], 2: [9], 3: [9], 4: [12] };
+
+// Reconstruct the form's `perDayTimes` map (number keys) from a saved scenario's
+// `per_day_times` (string-keyed "0".."6", hour lists). Each list is deduped/sorted
+// + range-clamped; an explicit empty list is kept (= "no post that day"). Returns
+// null when the cfg carries no usable per-day map (→ the toggle stays OFF).
+export function perDayTimesFromCfg(raw: unknown): Record<number, number[]> | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const out: Record<number, number[]> = {};
+  for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
+    const wd = Number(k);
+    if (!Number.isInteger(wd) || wd < 0 || wd > 6 || !Array.isArray(v)) continue;
+    out[wd] = normalizeHours((v as unknown[]).filter((h): h is number => typeof h === "number"));
+  }
+  return Object.keys(out).length > 0 ? out : null;
+}
+
 // The editable form state (everything the editor owns).
 export type FormState = {
   name: string;
@@ -79,6 +100,14 @@ export type FormState = {
   // default is Mon–Fri ([0,1,2,3,4]); an existing single-weekday scenario seeds
   // this from its `weekday` (see openEditor).
   weekdays: number[];
+  // weekly «Разное время в разные дни» — when ON, each SELECTED weekday gets its
+  // own time-slot list (the shared `hours` no longer applies). The map is keyed
+  // by the weekday index (0=Mon..6=Sun); a weekday with an empty list (or absent
+  // from the map) = no post that day. OFF → the shared `hours` applies to every
+  // selected weekday (the back-compat path). Emitted as trigger_cfg.per_day_times
+  // (string keys "0".."6") only when ON; reconstructed from a saved scenario.
+  perDay: boolean;
+  perDayTimes: Record<number, number[]>;
   // «Раз в месяц» — selected days-of-month (1–31), the «Последний день месяца»
   // toggle, and what to do when a 29–31 day is missing from a short month.
   monthlyDays: number[];
@@ -151,6 +180,24 @@ function normalizeHours(hours: number[]): number[] {
   return Array.from(new Set(valid)).sort((a, b) => a - b);
 }
 
+// Build the weekly `per_day_times` map (string keys "0".."6", deduped/sorted hour
+// lists) from the form's perDayTimes — but ONLY for the SELECTED weekdays that
+// have ≥1 valid hour. A selected weekday with no times is simply omitted (= no
+// post that day); the backend treats the map's keys as the active weekdays. Mirrors
+// `_validate_per_day_times`, so it never 422s. Returns null when nothing qualifies
+// (→ the caller falls back to the flat weekly shape so the trigger is never empty).
+function buildPerDayTimes(s: FormState): Record<string, number[]> | null {
+  const selected = new Set(s.weekdays.filter((d) => Number.isInteger(d) && d >= 0 && d <= 6));
+  const out: Record<string, number[]> = {};
+  for (const [k, list] of Object.entries(s.perDayTimes)) {
+    const wd = Number(k);
+    if (!Number.isInteger(wd) || wd < 0 || wd > 6 || !selected.has(wd)) continue;
+    const hours = normalizeHours(list);
+    if (hours.length > 0) out[String(wd)] = hours;
+  }
+  return Object.keys(out).length > 0 ? out : null;
+}
+
 // Build the trigger_cfg from the КОГДА choice + the preset's base trigger (so a
 // reactive preset keeps its event kind / targets). For a cadence POST kind we
 // also fold in the schedule hour + jitter (the backend stores them in
@@ -179,6 +226,19 @@ function buildTrigger(s: FormState): Record<string, unknown> {
       return withSchedule({ kind: "every_n_days", n: s.nDays, ...(start ? { start_date: start } : {}) });
     }
     case "weekly": {
+      // «Разное время в разные дни» ON → emit `per_day_times` (the per-weekday
+      // post-times map): only the SELECTED weekdays with ≥1 time, keyed "0".."6".
+      // It is the backend's authority over both the days and the hours, so we DROP
+      // `weekdays` + the shared `hour`/`hours` (don't run withSchedule) — jitter is
+      // the one schedule control that still rides along. A perDay toggle with NO
+      // qualifying day falls through to the flat shape so the trigger never empties.
+      if (s.perDay) {
+        const perDay = buildPerDayTimes(s);
+        if (perDay) {
+          const jitter = Number.isInteger(s.jitter) ? Math.min(120, Math.max(0, s.jitter)) : 0;
+          return { kind: "weekly", per_day_times: perDay, jitter_minutes: jitter };
+        }
+      }
       // Multi-weekday — emit the deduped, sorted `weekdays` array (0=Mon..6=Sun).
       // An empty selection falls back to Mon ([0]) so the trigger is never dayless.
       const weekdays = Array.from(new Set(s.weekdays.filter((d) => Number.isInteger(d) && d >= 0 && d <= 6))).sort((a, b) => a - b);

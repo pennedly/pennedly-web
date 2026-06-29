@@ -2166,6 +2166,11 @@ export const en = {
   "scenarios.rc.which_day": "Which day",
   // weekly multi-select (wkPills) — several weekdays
   "scenarios.rc.which_days": "Which days",
+  // «Разное время в разные дни» — toggle + per-weekday time editor
+  "scenarios.rc.per_day_toggle": "Different times on different days",
+  "scenarios.rc.per_day_toggle_sub": "Each selected day gets its own time and slots.",
+  "scenarios.rc.per_day_label": "Time per day",
+  "scenarios.rc.per_day_empty": "Pick weekdays above first.",
   // «Раз в месяц» — day-of-month grid (domGrid)
   "scenarios.rc.dom_label": "Days of the month",
   "scenarios.rc.dom_multi": "you can pick several",

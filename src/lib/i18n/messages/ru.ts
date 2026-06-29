@@ -2141,6 +2141,11 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "scenarios.rc.which_day": "В какой день",
   // weekly multi-select (wkPills) — несколько дней недели
   "scenarios.rc.which_days": "В какие дни",
+  // «Разное время в разные дни» — переключатель + редактор времени по дням недели
+  "scenarios.rc.per_day_toggle": "Разное время в разные дни",
+  "scenarios.rc.per_day_toggle_sub": "У каждого выбранного дня — своё время и слоты.",
+  "scenarios.rc.per_day_label": "Время по дням",
+  "scenarios.rc.per_day_empty": "Сначала выбери дни недели выше.",
   // «Раз в месяц» — сетка чисел месяца (domGrid)
   "scenarios.rc.dom_label": "Числа месяца",
   "scenarios.rc.dom_multi": "можно несколько",
