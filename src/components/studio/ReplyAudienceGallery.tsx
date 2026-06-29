@@ -13,33 +13,43 @@
 //   text      → reply_audience=custom + a PREFILLED editable audience_prompt
 //   custom    → reply_audience=custom + an EMPTY audience_prompt
 
+import { useState } from "react";
 import { useTranslation } from "@/lib/i18n";
 import type { MessageKey } from "@/lib/i18n/messages/en";
 import { cn } from "@/lib/cn";
 import { Switch } from "@/components/ui/switch";
+import { BigText, BigTextModal, type BigTextField } from "./scenarios-recipe";
 import {
   IcArrowLeft,
   IcBriefcase,
   IcBubble,
   IcChat,
   IcCheck,
+  IcExpand,
   IcHeart,
   IcHelp,
+  IcInfo,
   IcPencil,
   IcReplies,
+  IcRefresh,
   IcRepeat,
   IcScale,
+  IcShield,
   IcSliders,
   IcSparkle,
   IcStar,
   IcTag,
   IcUsers,
   IcVoice,
+  IcX,
 } from "@/components/icons";
 import { Badge } from "./Badges";
 import {
   AUDIENCE_PRESETS,
   type AudiencePreset,
+  type ReplyAudience,
+  decomposeAudience,
+  mergeAudiencePrompt,
 } from "./reply-audience";
 
 type IconCmp = (p: { size?: number; className?: string }) => React.ReactNode;
@@ -56,19 +66,17 @@ const AUDIENCE_ICONS: Record<string, IconCmp> = {
   pen: IcPencil,
 };
 
-const TEXTAREA =
-  "w-full rounded-md border border-border bg-surface px-3 py-2 text-body text-text transition-colors focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25 max-md:text-[16px]";
 
 export type ReplyAudienceGalleryProps = {
   /** Built-in reply routine on/off (= account reply mode ≠ off). */
   on: boolean;
   onToggle: (on: boolean) => void;
-  /** The currently-selected preset id (built-in enum or a text/custom preset). */
-  selectedId: string;
-  onSelect: (preset: AudiencePreset) => void;
-  /** The editable audience description (audience_prompt) for text/custom presets. */
-  description: string;
-  onDescription: (v: string) => void;
+  /** The committed reply_audience enum (group A) or "custom" (group B). */
+  audience: ReplyAudience;
+  /** The committed audience_prompt (the merged OR-description for group B). */
+  audiencePrompt: string;
+  /** Lift the edited audience back up (committed on «Назад»). */
+  onChange: (replyAudience: ReplyAudience, audiencePrompt: string) => void;
   /** The «Как отвечать» tone instruction (reply_instruction). Optional. */
   howTo: string;
   onHowTo: (v: string) => void;
@@ -81,17 +89,108 @@ export type ReplyAudienceGalleryProps = {
 export function ReplyAudienceGallery({
   on,
   onToggle,
-  selectedId,
-  onSelect,
-  description,
-  onDescription,
+  audience,
+  audiencePrompt,
+  onChange,
   howTo,
   onHowTo,
   onBack,
   onHouseRules,
 }: ReplyAudienceGalleryProps) {
   const { t } = useTranslation();
-  const selected = AUDIENCE_PRESETS.find((p) => p.id === selectedId) ?? AUDIENCE_PRESETS[1];
+  // The multi-select editing model. Seeded ONCE from the committed value (the
+  // gallery mounts fresh each open). `bIds` are the selected group-B tiles (text
+  // presets + maybe "custom"); `custom` is the «Свой вариант» free clause;
+  // `manual` flags a hand-edited merge (toggles then stop regenerating it).
+  const [init] = useState(() => decomposeAudience(audience, audiencePrompt));
+  const [group, setGroup] = useState<"a" | "b">(init.group);
+  const [aId, setAId] = useState<ReplyAudience>(init.group === "a" ? init.a : "all_except_trolls");
+  const [bIds, setBIds] = useState<string[]>(init.group === "b" ? init.b : []);
+  const [custom, setCustom] = useState(init.group === "b" ? init.custom : "");
+  const [manual, setManual] = useState(false);
+  const [manualDesc, setManualDesc] = useState("");
+  // transient group-conflict notice ("a" = A cleared B · "b" = B cleared A).
+  const [notice, setNotice] = useState<"a" | "b" | null>(null);
+  // which big-text field is open in the full-screen modal (audience / tone).
+  const [bigText, setBigText] = useState<BigTextField>(null);
+
+  // The merged OR-description as currently shown + saved (audience_prompt).
+  const autoDesc = mergeAudiencePrompt(bIds, custom);
+  const desc = manual ? manualDesc : autoDesc;
+
+  // Lift the committed (reply_audience, audience_prompt) up for any next state.
+  function emit(g: "a" | "b", a: ReplyAudience, d: string) {
+    if (g === "a") onChange(a, "");
+    else onChange("custom", d);
+  }
+
+  // Pick a group-A filter (radio). Clears group B + shows the «A снял B» notice
+  // when switching away from a non-empty B selection.
+  function pickA(id: ReplyAudience) {
+    const hadB = group === "b" && bIds.length > 0;
+    setGroup("a");
+    setAId(id);
+    setBIds([]);
+    setCustom("");
+    setManual(false);
+    setManualDesc("");
+    setNotice(hadB ? "a" : null);
+    emit("a", id, "");
+  }
+
+  // Toggle a group-B tile (checkbox). From group A this starts a fresh B
+  // selection (and shows «B снял A»); within B it adds/removes the tile.
+  function toggleB(id: string) {
+    if (group === "a") {
+      setGroup("b");
+      setBIds([id]);
+      const nextCustom = id === "custom" ? "" : "";
+      setCustom(nextCustom);
+      setManual(false);
+      setManualDesc("");
+      setNotice("b");
+      emit("b", "custom", mergeAudiencePrompt([id], nextCustom));
+      return;
+    }
+    const has = bIds.includes(id);
+    const next = has ? bIds.filter((x) => x !== id) : [...bIds, id];
+    const nextCustom = id === "custom" && has ? "" : custom;
+    setBIds(next);
+    if (id === "custom" && has) setCustom("");
+    setNotice(null);
+    // Manual text is preserved across toggles (only the lit tiles change).
+    emit("b", "custom", manual ? manualDesc : mergeAudiencePrompt(next, nextCustom));
+  }
+
+  // Edit the description field. Custom-only stays WYSIWYG (edits the custom
+  // clause); with presets involved, a hand-edit flips the «manual» badge on.
+  function editDesc(value: string) {
+    if (group !== "b") return;
+    const customOnly = bIds.length === 1 && bIds[0] === "custom";
+    if (!manual && customOnly) {
+      setCustom(value);
+      emit("b", "custom", mergeAudiencePrompt(bIds, value));
+      return;
+    }
+    if (!manual) setManual(true);
+    setManualDesc(value);
+    emit("b", "custom", value);
+  }
+
+  // «Собрать заново из выбранного» — drop the manual edit, regenerate from tiles.
+  function regen() {
+    setManual(false);
+    setManualDesc("");
+    emit("b", "custom", mergeAudiencePrompt(bIds, custom));
+  }
+
+  // The OR-fragments to render (auto mode → from the lit tiles, so an internal
+  // «или» inside a fragment is never mistaken for a separator).
+  const fragments: string[] = [];
+  for (const p of AUDIENCE_PRESETS) {
+    if (p.kind === "text" && bIds.includes(p.id) && p.prompt.trim()) fragments.push(p.prompt.trim());
+  }
+  if (bIds.includes("custom") && custom.trim()) fragments.push(custom.trim());
 
   return (
     <div className="mx-auto max-w-[960px] space-y-5">
@@ -116,20 +215,56 @@ export function ReplyAudienceGallery({
           <Switch checked={on} onCheckedChange={onToggle} size="lg" aria-label={t("ap.reply.title")} />
         </div>
 
-        {/* ── «Кому отвечать» section: grid + description panel ── */}
+        {/* ── «Кому отвечать» section: two groups (radio A / checkbox B) ── */}
         <div className="px-[26px] py-[22px]">
           <div className="flex items-center gap-2 text-small font-semibold">
             <IcBubble size={14} /> {t("ap.reply.gallery.who_head")}
           </div>
           <p className="mb-3.5 mt-1 text-caption leading-normal text-text-subtle">{t("ap.reply.gallery.who_desc")}</p>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {AUDIENCE_PRESETS.map((p) => (
-              <PresetCard key={p.id} preset={p} selected={p.id === selectedId} onPick={() => onSelect(p)} />
+          {/* Group A — точные фильтры (выбор один) */}
+          <GroupHead title={t("ap.reply.group_a.title")} rule={t("ap.reply.group_a.rule")} />
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+            {AUDIENCE_PRESETS.filter((p) => p.kind === "builtin").map((p) => (
+              <AudTile
+                key={p.id}
+                preset={p}
+                shape="circle"
+                on={group === "a" && aId === (p.audience as ReplyAudience)}
+                onToggle={() => pickA(p.audience as ReplyAudience)}
+              />
             ))}
           </div>
 
-          <DescriptionPanel preset={selected} description={description} onDescription={onDescription} />
+          {/* Group B — по смыслу комментария (можно несколько) */}
+          <div className="mt-[18px] border-t border-border pt-[18px]">
+            <GroupHead title={t("ap.reply.group_b.title")} rule={t("ap.reply.group_b.rule")} />
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+              {AUDIENCE_PRESETS.filter((p) => p.kind !== "builtin").map((p) => (
+                <AudTile
+                  key={p.id}
+                  preset={p}
+                  shape="square"
+                  on={group === "b" && bIds.includes(p.id)}
+                  onToggle={() => toggleB(p.id)}
+                />
+              ))}
+            </div>
+          </div>
+
+          {notice && <ConflictNotice kind={notice} onDismiss={() => setNotice(null)} />}
+
+          {group === "a" ? (
+            <ReadOnlyFilterNote name={t(aPresetNameKey(aId))} />
+          ) : (
+            <AudienceDescPanel
+              fragments={fragments}
+              manual={manual}
+              hasPreset={bIds.some((id) => id !== "custom")}
+              onExpand={() => setBigText("audience")}
+              onRegen={regen}
+            />
+          )}
         </div>
 
         {/* ── «Как отвечать» — optional tone instruction ── */}
@@ -139,14 +274,7 @@ export function ReplyAudienceGallery({
             <span className="font-normal text-text-subtle">{t("ap.reply.gallery.how_opt")}</span>
           </div>
           <p className="mb-3.5 mt-1 text-caption leading-normal text-text-subtle">{t("ap.reply.gallery.how_desc")}</p>
-          <textarea
-            rows={2}
-            className={cn(TEXTAREA, "min-h-[62px]")}
-            value={howTo}
-            onChange={(e) => onHowTo(e.target.value)}
-            placeholder={t("ap.reply.gallery.how_ph")}
-            aria-label={t("ap.reply.gallery.how_head")}
-          />
+          <BigText value={howTo} hint={t("ap.reply.gallery.how_ph")} onOpen={() => setBigText("tone")} />
         </div>
 
         {/* ── read-only foot facts: «отвечает сама» / «limits in House Rules» ── */}
@@ -155,105 +283,187 @@ export function ReplyAudienceGallery({
           <FootFact icon={<IcSliders size={16} />} title={t("ap.reply.gallery.fact_limits")} bodyKey="ap.reply.gallery.fact_limits_body" onLink={onHouseRules} />
         </div>
       </div>
+
+      {/* full-screen big-text editor for «Описание аудитории» / «Как отвечать» */}
+      {bigText && (
+        <BigTextModal
+          field={bigText}
+          value={bigText === "tone" ? howTo : desc}
+          onChange={bigText === "tone" ? onHowTo : editDesc}
+          onClose={() => setBigText(null)}
+        />
+      )}
     </div>
   );
 }
 
-// One preset card: icon + name + «кому» one-liner + «…» example, accent ring +
-// check when selected, dashed border for «Свой вариант».
-function PresetCard({ preset, selected, onPick }: { preset: AudiencePreset; selected: boolean; onPick: () => void }) {
+// The enum→name i18n key for a group-A filter's read-only note.
+function aPresetNameKey(a: ReplyAudience): MessageKey {
+  const p = AUDIENCE_PRESETS.find((x) => x.kind === "builtin" && x.audience === a);
+  return p ? p.nameKey : "ap.reply.preset.all.name";
+}
+
+// A group label + its rule chip («выбор один» / «можно несколько»).
+function GroupHead({ title, rule }: { title: string; rule: string }) {
+  return (
+    <div className="mb-2.5 flex flex-wrap items-baseline gap-2.5">
+      <span className="text-caption font-semibold uppercase tracking-[0.06em] text-text-subtle">{title}</span>
+      <span className="rounded-full border border-border px-2 py-px font-mono text-[10px] tracking-[0.02em] text-text-subtle">{rule}</span>
+    </div>
+  );
+}
+
+// A single audience tile. Round mark = «один из» (group A), square = «несколько»
+// (group B). Dashed border for «Свой вариант».
+function AudTile({
+  preset,
+  shape,
+  on,
+  onToggle,
+}: {
+  preset: AudiencePreset;
+  shape: "circle" | "square";
+  on: boolean;
+  onToggle: () => void;
+}) {
   const { t } = useTranslation();
   const Icon = AUDIENCE_ICONS[preset.icon] ?? IcBubble;
+  const custom = preset.kind === "custom";
   return (
     <button
       type="button"
-      onClick={onPick}
-      aria-pressed={selected}
+      onClick={onToggle}
+      aria-pressed={on}
       className={cn(
-        "group relative flex h-full flex-col gap-2 rounded-lg border bg-surface p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-text/20 hover:shadow-md",
-        preset.kind === "custom" && "border-dashed",
-        selected
-          ? "border-accent bg-accent/[0.05] ring-1 ring-accent"
-          : "border-border",
+        "relative flex flex-col gap-1 rounded-md border bg-surface px-3.5 py-3 pr-9 text-left transition-colors",
+        custom && "border-dashed",
+        on
+          ? "border-accent bg-accent/[0.06] shadow-[0_0_0_1px_var(--color-accent)]"
+          : "border-border hover:border-text/16",
       )}
     >
-      {selected && (
-        <span className="absolute right-3 top-3 grid h-5 w-5 place-items-center rounded-full bg-accent text-primary-foreground">
-          <IcCheck size={13} />
-        </span>
-      )}
-      <div className="flex items-center gap-2.5 pr-6">
-        <span
-          className={cn(
-            "grid h-9 w-9 shrink-0 place-items-center rounded-md border",
-            selected ? "border-accent/26 bg-accent/12 text-accent" : "border-border bg-surface-2 text-text-muted",
-          )}
-        >
-          <Icon size={18} />
-        </span>
-        <span className="min-w-0 flex-1 text-small font-semibold leading-tight tracking-tight text-text">{t(preset.nameKey)}</span>
-      </div>
-      <p className="min-h-[2.4em] text-caption leading-normal text-text-subtle">{t(preset.whoKey)}</p>
-      <p className="font-mono text-[10.5px] leading-snug text-text-subtle">{t(preset.exampleKey)}</p>
+      <span
+        className={cn(
+          "absolute right-3 top-3 grid h-[18px] w-[18px] place-items-center border-[1.5px] transition-colors",
+          shape === "circle" ? "rounded-full" : "rounded-[5px]",
+          on ? "border-accent bg-accent text-accent-foreground" : "border-border bg-surface",
+        )}
+      >
+        {on && (shape === "circle" ? <span className="h-[7px] w-[7px] rounded-full bg-accent-foreground" /> : <IcCheck size={12} />)}
+      </span>
+      <span className={cn("flex items-center gap-1.5 text-small font-semibold leading-tight text-text", on && "[&_svg]:text-accent")}>
+        <Icon size={14} className="shrink-0 text-text-subtle" /> {t(preset.nameKey)}
+      </span>
+      <span className="text-caption leading-snug text-text-subtle">{t(preset.whoKey)}</span>
     </button>
   );
 }
 
-// The description panel under the grid — 3 modes (SPEC §2–4):
-//   text   → editable textarea PREFILLED with the preset's prompt, «готовое · можно править»
-//   custom → empty textarea + placeholder, «своими словами»
-//   builtin→ NO textarea, a read-only «это точный встроенный фильтр» note, «встроенный фильтр»
-function DescriptionPanel({
-  preset,
-  description,
-  onDescription,
+// The soft, non-blocking notice shown when picking across groups clears the
+// other group's selection. Dismissible; it also clears on the next action.
+function ConflictNotice({ kind, onDismiss }: { kind: "a" | "b"; onDismiss: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <div className="mt-3.5 flex items-start gap-2.5 rounded-md border border-accent/26 bg-accent/[0.07] px-3 py-2.5 text-caption leading-snug text-text-muted">
+      <IcInfo size={15} className="mt-px shrink-0 text-accent" />
+      <span className="min-w-0 flex-1">{t(kind === "a" ? "ap.reply.conflict.a_clears_b" : "ap.reply.conflict.b_clears_a")}</span>
+      <button
+        type="button"
+        onClick={onDismiss}
+        aria-label={t("a11y.remove")}
+        className="grid h-[22px] w-[22px] shrink-0 place-items-center rounded-sm text-text-subtle transition-colors hover:bg-accent/12 hover:text-text"
+      >
+        <IcX size={13} />
+      </button>
+    </div>
+  );
+}
+
+// Group A → a read-only «точный встроенный фильтр» note (no free-text panel).
+function ReadOnlyFilterNote({ name }: { name: string }) {
+  const { t } = useTranslation();
+  return (
+    <div className="mt-4">
+      <div className="mb-2 text-small font-semibold text-text">{t("ap.reply.gallery.desc_label")}</div>
+      <div className="flex items-start gap-2.5 rounded-md border border-border bg-surface-2 px-3.5 py-3 text-small leading-normal text-text-muted">
+        <IcShield size={16} className="mt-px shrink-0 text-text-subtle" />
+        <div>
+          <b className="font-semibold text-text">{t("ap.reply.gallery.readonly_filter")}</b> «{name}»{" "}
+          {t("ap.reply.gallery.readonly_filter_sub")}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Group B → the merged «Описание аудитории» field. Auto mode renders the OR
+// fragments (highlighting the «или» separators); manual mode shows a badge + a
+// «Собрать заново» action. The footer carries «Открыть в отдельном окне».
+function AudienceDescPanel({
+  fragments,
+  manual,
+  hasPreset,
+  onExpand,
+  onRegen,
 }: {
-  preset: AudiencePreset;
-  description: string;
-  onDescription: (v: string) => void;
+  fragments: string[];
+  manual: boolean;
+  hasPreset: boolean;
+  onExpand: () => void;
+  onRegen: () => void;
 }) {
   const { t } = useTranslation();
-
-  if (preset.kind === "builtin") {
-    return (
-      <div className="mt-4 flex flex-col gap-2.5 rounded-lg border border-border bg-surface-2 p-[15px_17px]">
-        <div className="flex flex-wrap items-center gap-2 text-small font-semibold">
-          <IcSliders size={13} /> {t(preset.nameKey)}
-          <span className="rounded-full border border-border bg-surface px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.04em] text-text-subtle">
-            {t("ap.reply.gallery.badge_builtin_filter")}
-          </span>
-        </div>
-        <p className="flex items-start gap-2.5 text-small leading-normal text-text">
-          <IcCheck size={15} className="mt-0.5 shrink-0 text-success" />
-          {t("ap.reply.gallery.builtin_note")}
-        </p>
-      </div>
-    );
-  }
-
-  const isCustom = preset.kind === "custom";
+  const empty = fragments.length === 0;
   return (
-    <div className="mt-4 flex flex-col gap-2.5 rounded-lg border border-accent/26 bg-accent/[0.04] p-[15px_17px]">
-      <div className="flex flex-wrap items-center gap-2 text-small font-semibold">
-        <IcPencil size={13} />
-        {isCustom ? t("ap.reply.gallery.custom_label") : t("ap.reply.gallery.text_label")}
-        <span className="rounded-full border border-accent/30 bg-surface px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.04em] text-accent">
-          {isCustom ? t("ap.reply.gallery.badge_own_words") : t("ap.reply.gallery.badge_editable")}
-        </span>
+    <div className="mt-4">
+      <div className="mb-2 flex items-center gap-2.5">
+        <span className="text-small font-semibold text-text">{t("ap.reply.gallery.desc_label")}</span>
+        {manual && (
+          <span className="inline-flex items-center gap-1 rounded-full border border-accent/32 bg-accent/[0.07] px-2 py-px font-mono text-[10px] text-accent">
+            <IcPencil size={10} /> {t("ap.reply.desc.manual_badge")}
+          </span>
+        )}
       </div>
-      <textarea
-        rows={2}
-        className={cn(TEXTAREA, "min-h-[64px]")}
-        value={description}
-        onChange={(e) => onDescription(e.target.value)}
-        placeholder={t("ap.reply.gallery.desc_ph")}
-        aria-label={isCustom ? t("ap.reply.gallery.custom_label") : t("ap.reply.gallery.text_label")}
-      />
-      <p className="text-caption leading-normal text-text-subtle">
-        {isCustom
-          ? t("ap.reply.gallery.custom_hint")
-          : t("ap.reply.gallery.text_hint").replace("{name}", t(preset.nameKey))}
-      </p>
+      <div className="overflow-hidden rounded-md border border-border bg-surface">
+        <div
+          className="min-h-[56px] cursor-text px-3.5 py-3 text-small leading-[1.65] text-text [text-wrap:pretty]"
+          onClick={onExpand}
+        >
+          {empty ? (
+            <span className="text-text-subtle">{t("ap.reply.desc.placeholder")}</span>
+          ) : (
+            fragments.map((f, i) => (
+              <span key={i}>
+                {i > 0 && <span className="mx-[0.32em] font-bold text-accent">{t("ap.reply.or")}</span>}
+                {f}
+              </span>
+            ))
+          )}
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-x-2.5 gap-y-1.5 border-t border-border bg-surface-2 py-2 pl-3.5 pr-2.5">
+          <span className="min-w-0 flex-1 basis-[160px] text-caption leading-[1.4] text-text-subtle">
+            {manual ? t("ap.reply.desc.hint_manual") : t("ap.reply.desc.hint_auto")}
+          </span>
+          <div className="flex shrink-0 items-center gap-1">
+            {manual && hasPreset && (
+              <button
+                type="button"
+                onClick={onRegen}
+                className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-sm px-[7px] py-1 text-caption font-semibold text-text-subtle transition-colors hover:bg-surface hover:text-text"
+              >
+                <IcRefresh size={12} /> {t("ap.reply.desc.regen")}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onExpand}
+              className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-sm px-[7px] py-1 text-caption font-semibold text-accent transition-colors hover:bg-accent/[0.09]"
+            >
+              <IcExpand size={13} /> {t("scenarios.rc.bigtext_open")}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

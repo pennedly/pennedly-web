@@ -547,11 +547,11 @@ function Stage({
 
       {/* run-now — only ever a draft */}
       {onRunNow && (
-        <div className="flex flex-wrap items-center gap-[11px]">
+        <div className="flex flex-wrap items-start gap-[11px]">
           <Button size="sm" variant="secondary" onClick={onRunNow} loading={running} disabled={!canRunNow} icon={<IcPlay size={14} />}>
             {t("scenarios.run_now")}
           </Button>
-          <span className="flex-1 basis-[130px] text-caption leading-[1.4] text-text-subtle">{t("scenarios.rc.runnow_note")}</span>
+          <span className="flex-1 basis-[130px] pt-0.5 text-caption leading-[1.4] text-text-subtle">{t("scenarios.rc.runnow_note")}</span>
         </div>
       )}
 
@@ -615,18 +615,23 @@ function Layer({
 }
 
 // Layer 3 for a scenario that produces no replies (post / boost / «Акция»): the
-// override settings are reply-only, so there's nothing to override here. An honest
-// N/A note (the design shows the override controls only for reply scenarios).
+// override settings are reply-only, so there's nothing to override here. Instead
+// of a collapsible Layer wrapping a dashed plaque, this IS the whole card — a
+// calm, non-interactive «Слой 3 не применим» note that sits in the layer's place
+// (same surface/border as a collapsed Layer, no chevron, no nested plaque).
 function Layer3NotApplicable() {
   const { t } = useTranslation();
   return (
-    <div className="flex items-start gap-3 rounded-md border border-dashed border-border bg-surface-2 px-4 py-3.5">
-      <span className="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-sm border border-border bg-surface text-text-subtle">
+    <div className="flex items-start gap-3 rounded-lg border border-border bg-surface px-[18px] py-[15px] shadow-sm">
+      <span className="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-sm border border-border bg-surface-2 text-text-subtle">
         <IcShieldHouse size={16} />
       </span>
-      <div className="min-w-0">
-        <div className="text-small font-semibold text-text">{t("scenarios.rc.l3_na_title")}</div>
-        <div className="mt-0.5 text-caption leading-[1.5] text-text-muted">{t("scenarios.rc.l3_na_desc")}</div>
+      <div className="min-w-0 flex-1">
+        <span className="flex flex-wrap items-center gap-2.5 text-[15px] font-semibold tracking-[-0.004em] text-text">
+          {t("scenarios.rc.l3_title_short")}
+          <span className="rounded-full border border-border px-2 py-px font-mono text-[9.5px] uppercase tracking-[0.05em] text-text-subtle">{t("scenarios.rc.layer_pro")}</span>
+        </span>
+        <p className="mt-1 text-caption leading-[1.5] text-text-subtle [text-wrap:pretty]">{t("scenarios.rc.l3_na_desc")}</p>
       </div>
     </div>
   );
@@ -1139,22 +1144,23 @@ export function StepEditor({
               </LayerGroup>
             </Layer>
 
-            <Layer
-              title={t("scenarios.rc.l3_title_short")}
-              proLabel={t("scenarios.rc.layer_pro")}
-              summary={isReplyPolicy ? t("scenarios.rc.l3_summary") : t("scenarios.rc.l3_summary_na")}
-              open={layer3Open}
-              onToggle={() => setLayer3Open((o) => !o)}
-            >
-              {isReplyPolicy ? (
-                // Reply scenarios («Дежурство» / «Ответ на упоминания») — the real
-                // per-scenario reply overrides (replaces the old «скоро» stub).
+            {isReplyPolicy ? (
+              // Reply scenarios («Дежурство» / «Ответ на упоминания») — the real
+              // per-scenario reply overrides inside a collapsible Layer.
+              <Layer
+                title={t("scenarios.rc.l3_title_short")}
+                proLabel={t("scenarios.rc.layer_pro")}
+                summary={t("scenarios.rc.l3_summary")}
+                open={layer3Open}
+                onToggle={() => setLayer3Open((o) => !o)}
+              >
                 <Layer3Override form={form} update={update} inherited={l3Inherited} onOpenCustom={() => setBigText("audience")} />
-              ) : (
-                // Post / boost / «Акция» produce no replies → nothing to override here.
-                <Layer3NotApplicable />
-              )}
-            </Layer>
+              </Layer>
+            ) : (
+              // Post / boost / «Акция» produce no replies → nothing to override. The
+              // N/A card IS the whole layer (not a plaque inside a collapsible card).
+              <Layer3NotApplicable />
+            )}
           </div>
 
           {/* action footer */}

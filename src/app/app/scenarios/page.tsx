@@ -81,7 +81,9 @@ import {
   interpolate,
   isBoostScenario,
   L3_FORM_DEFAULTS,
+  MILESTONE_DEFAULT_TARGETS,
   type MonthDate,
+  normalizeMilestoneTargets,
   perDayTimesFromCfg,
   replyOverridesFromCfg,
   visibleFields,
@@ -102,8 +104,6 @@ import { ReplyRoutineCard } from "@/components/studio/ReplyRoutineCard";
 import { ReplyAudienceGallery } from "@/components/studio/ReplyAudienceGallery";
 import {
   AUDIENCE_PRESETS,
-  type AudiencePreset,
-  audiencePayload,
   presetIdFor,
   type ReplyAudience,
 } from "@/components/studio/reply-audience";
@@ -204,6 +204,9 @@ function freshForm(preset: ScenarioPreset | null, t: (k: MessageKey) => string):
     monthlyDays: monthlyDaysFromCfg(preset?.trigger_cfg) ?? [1, 15, 31],
     monthlyLastDay: (preset?.trigger_cfg?.last_day as boolean) === true,
     monthlyOnMissing: (preset?.trigger_cfg?.on_missing as string) === "skip" ? "skip" : "last",
+    // milestone ladder — a preset that ships `targets` seeds them; else the
+    // design-default ladder (openEditor does the round-trip for saved scenarios).
+    milestoneTargets: milestoneTargetsFromCfg(preset?.trigger_cfg) ?? [...MILESTONE_DEFAULT_TARGETS],
     yearlyDates: yearlyDatesFromCfg(preset?.trigger_cfg) ?? [
       { day: 1, month: 0 },
       { day: 29, month: 1 },
@@ -299,9 +302,10 @@ export default function ScenariosPage() {
   const [replyAudience, setReplyAudience] = useState<ReplyAudience>("all_except_trolls");
   const [audiencePrompt, setAudiencePrompt] = useState("");
   const [replyHowTo, setReplyHowTo] = useState("");
-  // The gallery edits a DRAFT preset/description, committed on «Назад»/toggle so a
-  // built-in pick and a text edit both round-trip through one save.
-  const [replyDraftId, setReplyDraftId] = useState<string>("all_except_trolls");
+  // The gallery edits a DRAFT (reply_audience enum + merged audience_prompt),
+  // committed on «Назад»/toggle so a filter pick and a description edit both
+  // round-trip through one save.
+  const [replyDraftAudience, setReplyDraftAudience] = useState<ReplyAudience>("all_except_trolls");
   const [replyDraftDesc, setReplyDraftDesc] = useState("");
 
   const [loaded, setLoaded] = useState(false);
@@ -779,6 +783,8 @@ export default function ScenariosPage() {
       monthlyDays: monthlyDaysFromCfg(s.trigger_cfg) ?? [1, 15, 31],
       monthlyLastDay: (s.trigger_cfg?.last_day as boolean) === true,
       monthlyOnMissing: (s.trigger_cfg?.on_missing as string) === "skip" ? "skip" : "last",
+      // milestone ladder — restore the saved `targets` (absent → default ladder).
+      milestoneTargets: milestoneTargetsFromCfg(s.trigger_cfg) ?? [...MILESTONE_DEFAULT_TARGETS],
       yearlyDates: yearlyDatesFromCfg(s.trigger_cfg) ?? [
         { day: 1, month: 0 },
         { day: 29, month: 1 },
@@ -990,30 +996,20 @@ export default function ScenariosPage() {
     );
   }
 
-  // «Настроить» → open the «кому отвечать» preset gallery, seeding its draft from
-  // the live audience/description so the right card + description panel show.
+  // «Настроить» → open the «кому отвечать» multi-select gallery, seeding its
+  // draft from the live (audience enum + merged prompt); the gallery decomposes
+  // the prompt back into lit tiles on mount.
   function openReplyGallery() {
-    setReplyDraftId(presetIdFor(replyAudience, audiencePrompt));
+    setReplyDraftAudience(replyAudience);
     setReplyDraftDesc(audiencePrompt);
     setView("reply-gallery");
   }
 
-  // Picking a preset in the gallery: a built-in sets reply_audience to the enum +
-  // clears the description; a text preset prefills the editable description with
-  // its ready prompt; «Свой вариант» empties it. (audience_prompt is only sent
-  // when audience='custom'.)
-  function selectReplyPreset(p: AudiencePreset) {
-    setReplyDraftId(p.id);
-    if (p.kind === "builtin") setReplyDraftDesc("");
-    else if (p.kind === "text") setReplyDraftDesc(p.prompt);
-    else setReplyDraftDesc(""); // custom → empty
-  }
-
-  // Commit the gallery draft → live state + persist. Built-in → {reply_audience}
-  // only; text/custom → {reply_audience:'custom', audience_prompt:<desc>}.
+  // Commit the gallery draft → live state + persist. Group A → {reply_audience}
+  // only; group B → {reply_audience:'custom', audience_prompt:<merged desc>}.
   function commitReplyDraft() {
-    const preset = AUDIENCE_PRESETS.find((p) => p.id === replyDraftId) ?? AUDIENCE_PRESETS[1];
-    const { reply_audience, audience_prompt } = audiencePayload(preset, replyDraftDesc);
+    const reply_audience = replyDraftAudience;
+    const audience_prompt = replyDraftAudience === "custom" ? replyDraftDesc : "";
     const prevAud = replyAudience;
     const prevPrompt = audiencePrompt;
     setReplyAudience(reply_audience);
@@ -1413,10 +1409,12 @@ export default function ScenariosPage() {
             onToggle={(on) => {
               onReplyToggle(on);
             }}
-            selectedId={replyDraftId}
-            onSelect={selectReplyPreset}
-            description={replyDraftDesc}
-            onDescription={setReplyDraftDesc}
+            audience={replyDraftAudience}
+            audiencePrompt={replyDraftDesc}
+            onChange={(a, p) => {
+              setReplyDraftAudience(a);
+              setReplyDraftDesc(p);
+            }}
             howTo={replyHowTo}
             onHowTo={setReplyHowTo}
             onBack={backFromReplyGallery}
@@ -1636,6 +1634,14 @@ function weekdaysFromCfg(cfg: Record<string, unknown> | null | undefined): numbe
 function monthlyDaysFromCfg(cfg: Record<string, unknown> | null | undefined): number[] | null {
   if (!cfg || cfg.kind !== "monthly" || !Array.isArray(cfg.days)) return null;
   return (cfg.days as unknown[]).filter((d): d is number => Number.isInteger(d) && (d as number) >= 1 && (d as number) <= 31);
+}
+// «Круглое число подписчиков» — pull the milestone ladder from an
+// `on_follower_milestone` trigger_cfg. Returns null when the cfg carries no (or
+// no valid) `targets` (→ caller seeds the design-default ladder).
+function milestoneTargetsFromCfg(cfg: Record<string, unknown> | null | undefined): number[] | null {
+  if (!cfg) return null;
+  const targets = normalizeMilestoneTargets(cfg.targets);
+  return targets.length > 0 ? targets : null;
 }
 // «Раз в год» — pull the (day, month) anchors from a `yearly` trigger_cfg. The
 // cfg stores months 1-based; the form is 0-based, so we shift back here.

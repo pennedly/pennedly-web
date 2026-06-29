@@ -51,7 +51,7 @@ import { HouseRules, type ReplyFreq } from "@/components/studio/HouseRules";
 import { StepEditor } from "@/components/studio/scenarios-editor";
 import { ReplyRoutineCard } from "@/components/studio/ReplyRoutineCard";
 import { ReplyAudienceGallery } from "@/components/studio/ReplyAudienceGallery";
-import { AUDIENCE_PRESETS, type AudiencePreset } from "@/components/studio/reply-audience";
+import { AUDIENCE_PRESETS, type ReplyAudience, mergeAudiencePrompt } from "@/components/studio/reply-audience";
 import { Badge, InheritChip, StatusBadge } from "@/components/studio/Badges";
 import { IcReplies, IcRepeat, IcSliders, IcSwap } from "@/components/icons";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
@@ -106,6 +106,7 @@ function FormDemo({ presetId }: { presetId: string }) {
       monthlyDays: [1, 15, 31],
       monthlyLastDay: false,
       monthlyOnMissing: "last",
+      milestoneTargets: [100, 500, 1000, 5000, 10000, 25000, 50000, 100000],
       yearlyDates: [
         { day: 1, month: 0 },
         { day: 29, month: 1 },
@@ -286,6 +287,7 @@ function StepEditorDemo({
       monthlyDays: [1, 15, 31],
       monthlyLastDay: false,
       monthlyOnMissing: "last",
+      milestoneTargets: [100, 500, 1000, 5000, 10000, 25000, 50000, 100000],
       yearlyDates: [
         { day: 1, month: 0 },
         { day: 29, month: 1 },
@@ -440,27 +442,27 @@ function ReplyCardDemo({ state }: { state: "on" | "off" | "paused" }) {
   );
 }
 
-// The «кому отвечать» preset gallery wired to local state — pick any preset and
-// the description panel switches mode (built-in / text-preset / custom).
-function ReplyGalleryDemo({ initialId }: { initialId: string }) {
+// The «кому отвечать» multi-select gallery wired to local state. `initialId`
+// seeds group A (builtin) or a single group-B text preset; `initialPrompt`
+// overrides the seed prompt (e.g. a multi-preset OR-merge).
+function ReplyGalleryDemo({ initialId, initialPrompt }: { initialId: string; initialPrompt?: string }) {
   const seed = AUDIENCE_PRESETS.find((p) => p.id === initialId) ?? AUDIENCE_PRESETS[1];
-  const [selectedId, setSelectedId] = useState(seed.id);
-  const [description, setDescription] = useState(seed.kind === "text" ? seed.prompt : "");
+  const initAud: ReplyAudience = seed.kind === "builtin" ? (seed.audience as ReplyAudience) : "custom";
+  const initPrompt = initialPrompt ?? (seed.kind === "text" ? seed.prompt : "");
+  const [audience, setAudience] = useState<ReplyAudience>(initAud);
+  const [audiencePrompt, setAudiencePrompt] = useState(initPrompt);
   const [howTo, setHowTo] = useState("коротко и тепло, без воды; на грубость не реагирую");
   const [on, setOn] = useState(true);
-  function onSelect(p: AudiencePreset) {
-    setSelectedId(p.id);
-    if (p.kind === "text") setDescription(p.prompt);
-    else setDescription(""); // built-in or custom → cleared/empty
-  }
   return (
     <ReplyAudienceGallery
       on={on}
       onToggle={setOn}
-      selectedId={selectedId}
-      onSelect={onSelect}
-      description={description}
-      onDescription={setDescription}
+      audience={audience}
+      audiencePrompt={audiencePrompt}
+      onChange={(a, p) => {
+        setAudience(a);
+        setAudiencePrompt(p);
+      }}
       howTo={howTo}
       onHowTo={setHowTo}
       onBack={() => {}}
@@ -665,15 +667,18 @@ export default function ScenariosGallery() {
           </div>
         </Section>
 
-        <h2 className="mb-3 mt-8 text-h3 font-semibold">«Кому отвечать» preset gallery (960 · opened from «Настроить»)</h2>
-        <Section title="text preset «про цены» selected · prefilled editable description («готовое · можно править»)">
+        <h2 className="mb-3 mt-8 text-h3 font-semibold">«Кому отвечать» — мультивыбор с защитой от конфликтов (960 · «Настроить»)</h2>
+        <Section title="группа A · точный фильтр «Только вопросы» (radio) → read-only заметка, поля нет">
+          <ReplyGalleryDemo initialId="questions" />
+        </Section>
+        <Section title="группа B · один текстовый пресет «про цены» → редактируемое OR-описание">
           <ReplyGalleryDemo initialId="pricing" />
         </Section>
-        <Section title="«Свой вариант» selected · empty description («своими словами»)">
-          <ReplyGalleryDemo initialId="custom" />
+        <Section title="группа B · два пресета (хвалит + про цены) → склеенное OR-описание через «или»">
+          <ReplyGalleryDemo initialId="praise" initialPrompt={mergeAudiencePrompt(["praise", "pricing"], "")} />
         </Section>
-        <Section title="built-in filter «Только вопросы» selected · NO textarea, read-only note («встроенный фильтр»)">
-          <ReplyGalleryDemo initialId="questions" />
+        <Section title="группа B · «Свой вариант» (пусто) → поле с плейсхолдером">
+          <ReplyGalleryDemo initialId="custom" />
         </Section>
 
         <h2 className="mb-3 mt-8 text-h3 font-semibold">Scenario editor — «карточка-рецепт» (Wave 1)</h2>
@@ -715,6 +720,13 @@ export default function ScenariosGallery() {
         </Section>
         <Section title="POST · slot «Когда» open · mode = По событию (views threshold + порог)">
           <StepEditorDemo presetId="daily_question" demoOpenSlot="when" override={{ when: "event", eventKind: "on_metric_threshold" }} />
+        </Section>
+        <Section title="POST · slot «Когда» open · mode = По событию (круглое число подписчиков → editable milestone ladder chips)">
+          <StepEditorDemo
+            presetId="daily_question"
+            demoOpenSlot="when"
+            override={{ when: "event", eventKind: "on_follower_milestone", milestoneTargets: [100, 500, 1000, 5000, 10000] }}
+          />
         </Section>
         <Section title="POST · slot «Что писать» open (instruction → modal · тема · длина · призыв · hard caption)">
           <StepEditorDemo presetId="daily_question" demoOpenSlot="what" />

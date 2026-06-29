@@ -13,7 +13,7 @@
 // / подписчики / дата в тексте» conditions are simply omitted. Layer 3 is the one
 // honest «скоро» stub by design.
 
-import { type ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 
 import { cn } from "@/lib/cn";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
@@ -60,6 +60,7 @@ import {
   type FormState,
   type MonthDate,
   type MonthlyMissing,
+  normalizeMilestoneTargets,
   type RecipeEvent,
   type RecipeLength,
 } from "./scenarios-form";
@@ -223,7 +224,9 @@ const RC_WEEKDAYS: MessageKey[] = [
 
 function Seg({ options, value, onPick }: { options: { key: string; label: string }[]; value: string; onPick: (k: string) => void }) {
   return (
-    <div className="flex flex-wrap gap-1 rounded-lg border border-border bg-surface-2 p-1">
+    // w-fit so the pill track hugs its options instead of stretching the grey
+    // background to the full column width when everything already fits.
+    <div className="flex w-fit max-w-full flex-wrap gap-1 rounded-lg border border-border bg-surface-2 p-1">
       {options.map((o) => {
         const active = o.key === value;
         return (
@@ -361,23 +364,13 @@ function TimeSection({ hours, jitter, onHours, onJitter }: { hours: number[]; ji
           {localUtcOffsetLabel()} · {t("scenarios.ed.sends_utc").replace("{time}", utcLabel)}
         </span>
       </label>
-      <label className="flex max-w-[300px] flex-col gap-1.5">
+      <label className="flex flex-col gap-1.5">
         <FieldLabel opt={t("scenarios.rc.jitter_opt")}>{t("scenarios.rc.jitter")}</FieldLabel>
-        <span className="flex items-baseline justify-between">
-          <span className="text-caption font-medium text-text-muted">{t("scenarios.rc.jitter_unit")}</span>
-          <span className="text-caption font-semibold tabular-nums text-text">{jitter}</span>
-        </span>
-        <input
-          type="range"
-          min={0}
-          max={120}
+        <Stepper
           value={jitter}
-          aria-label={t("scenarios.rc.jitter")}
-          onChange={(e) => onJitter(Number(e.target.value))}
-          className="rc-range h-[5px] w-full cursor-pointer appearance-none rounded-full outline-none"
-          style={{
-            background: `linear-gradient(90deg, color-mix(in srgb, var(--color-accent) 55%, var(--color-surface)) 0 ${(jitter / 120) * 100}%, var(--color-border) ${(jitter / 120) * 100}% 100%)`,
-          }}
+          onMinus={() => onJitter(Math.max(0, jitter - 5))}
+          onPlus={() => onJitter(Math.min(120, jitter + 5))}
+          suffix={<span className="text-caption font-medium text-text-muted">{t("scenarios.rc.jitter_unit")}</span>}
         />
       </label>
       <Hard>{t("scenarios.rc.when_hard")}</Hard>
@@ -600,6 +593,75 @@ function YearDates({
         <span dangerouslySetInnerHTML={{ __html: t("scenarios.rc.yd_note") }} />
       </p>
     </div>
+  );
+}
+
+// «Круглое число подписчиков» — the editable milestone ladder. Each rung is a
+// removable chip; a draft input adds new positive integers (deduped + sorted).
+// An empty ladder is valid — buildTrigger omits `targets` and the backend falls
+// back to its default ladder.
+function MilestoneLadder({ form, update }: { form: FormState; update: (patch: Partial<FormState>) => void }) {
+  const { t } = useTranslation();
+  const [draft, setDraft] = useState("");
+  const targets = form.milestoneTargets;
+  const add = () => {
+    const n = Number(draft.replace(/\D/g, ""));
+    if (!Number.isInteger(n) || n <= 0) {
+      setDraft("");
+      return;
+    }
+    update({ milestoneTargets: normalizeMilestoneTargets([...targets, n]) });
+    setDraft("");
+  };
+  const remove = (n: number) => update({ milestoneTargets: targets.filter((x) => x !== n) });
+  return (
+    <label className="flex flex-col gap-1.5">
+      <FieldLabel>{t("scenarios.field.milestone_targets")}</FieldLabel>
+      <div className="flex flex-wrap items-center gap-1.5">
+        {targets.map((n) => (
+          <span
+            key={n}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface-2 py-1 pl-3 pr-1.5 text-small font-semibold tabular-nums text-text"
+          >
+            {n.toLocaleString("en-US")}
+            <button
+              type="button"
+              onClick={() => remove(n)}
+              aria-label={t("a11y.remove")}
+              className="grid h-5 w-5 shrink-0 place-items-center rounded-full text-text-subtle transition-colors hover:bg-surface hover:text-danger"
+            >
+              <IcX size={12} />
+            </button>
+          </span>
+        ))}
+        <span className="inline-flex items-center gap-1">
+          <input
+            type="text"
+            inputMode="numeric"
+            aria-label={t("scenarios.field.milestone_targets_add")}
+            placeholder={t("scenarios.field.milestone_targets_ph")}
+            className="h-8 w-[88px] rounded-md border border-border bg-surface px-2.5 text-small tabular-nums text-text focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                add();
+              }
+            }}
+          />
+          <button
+            type="button"
+            onClick={add}
+            aria-label={t("scenarios.field.milestone_targets_add")}
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-dashed border-accent/36 bg-accent/[0.09] text-accent transition-colors hover:bg-accent/15"
+          >
+            <IcPlus size={14} />
+          </button>
+        </span>
+      </div>
+      <span className="text-caption text-text-subtle">{t("scenarios.field.milestone_targets_hint")}</span>
+    </label>
   );
 }
 
@@ -826,6 +888,7 @@ export function WhenPostBody({
               <span className="text-caption text-text-subtle">{t("scenarios.threshold_auto")}</span>
             </label>
           )}
+          {form.eventKind === "on_follower_milestone" && <MilestoneLadder form={form} update={update} />}
           <p className="flex items-start gap-2.5 rounded-md border border-border bg-surface px-3 py-2.5 text-small leading-[1.5] text-text-muted [&_b]:font-semibold [&_b]:text-text">
             <IcGauge size={16} className="mt-px shrink-0 text-accent" />
             <span dangerouslySetInnerHTML={{ __html: t("scenarios.rc.event_note") }} />
@@ -876,14 +939,17 @@ export function WhenMentionBody() {
 // ════════════════════════════════════════════════════════════════════════════
 function CondRow({ icon, title, sub, ctl, onRemove }: { icon: ReactNode; title: string; sub?: string; ctl?: ReactNode; onRemove: () => void }) {
   return (
-    <div className="flex items-center gap-[11px] rounded-md border border-border bg-surface px-[13px] py-[11px]">
-      <span className="grid h-[26px] w-[26px] shrink-0 place-items-center rounded-sm border border-border bg-surface-2 text-text-muted">{icon}</span>
-      <span className="min-w-0 flex-1">
+    // flex-wrap so a wide control (cooldown stepper + ч/дни segment) drops to its
+    // own full-width line on a narrow column instead of overlapping the subtitle
+    // and overflowing the card; stays inline on the right at ≥sm.
+    <div className="flex flex-wrap items-center gap-x-[11px] gap-y-2.5 rounded-md border border-border bg-surface px-[13px] py-[11px]">
+      <span className="order-1 grid h-[26px] w-[26px] shrink-0 place-items-center rounded-sm border border-border bg-surface-2 text-text-muted">{icon}</span>
+      <span className="order-2 min-w-0 flex-1">
         <span className="block text-small font-medium text-text">{title}</span>
         {sub && <span className="mt-px block text-caption leading-[1.4] text-text-subtle">{sub}</span>}
       </span>
-      {ctl && <span className="flex shrink-0 items-center gap-2">{ctl}</span>}
-      <button type="button" onClick={onRemove} aria-label="×" className="grid h-[26px] w-[26px] shrink-0 place-items-center rounded-sm text-text-subtle transition-colors hover:bg-surface-2 hover:text-danger">
+      {ctl && <span className="order-4 flex w-full flex-wrap items-center gap-2 pl-[37px] sm:order-3 sm:w-auto sm:pl-0">{ctl}</span>}
+      <button type="button" onClick={onRemove} aria-label="×" className="order-3 grid h-[26px] w-[26px] shrink-0 place-items-center rounded-sm text-text-subtle transition-colors hover:bg-surface-2 hover:text-danger sm:order-4">
         <IcX size={14} />
       </button>
     </div>
@@ -1012,8 +1078,8 @@ export function BigText({ value, hint, onOpen }: { value: string; hint: string; 
       <div className={cn("min-h-[52px] px-[13px] py-[11px] text-small leading-[1.55] [text-wrap:pretty]", empty ? "text-text-subtle" : "text-text")}>
         {empty ? t("scenarios.rc.bigtext_empty") : value}
       </div>
-      <div className="flex items-center justify-between gap-2.5 border-t border-border bg-surface-2 py-2 pl-[13px] pr-[11px]">
-        <span className="min-w-0 text-caption leading-[1.4] text-text-subtle">{hint}</span>
+      <div className="flex flex-wrap items-center justify-between gap-x-2.5 gap-y-1.5 border-t border-border bg-surface-2 py-2 pl-[13px] pr-[11px]">
+        <span className="min-w-0 flex-1 basis-[160px] text-caption leading-[1.4] text-text-subtle">{hint}</span>
         <button
           type="button"
           onClick={(e) => {

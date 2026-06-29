@@ -32,6 +32,19 @@ export type CooldownUnit = "hours" | "days";
 // threshold or follower milestone — NOT mentions, which need a new engine).
 export type RecipeEvent = "on_metric_threshold" | "on_follower_milestone";
 
+// The design-default milestone ladder — mirrors the backend's
+// `_MILESTONE_DEFAULT_TARGETS` (workers/autopilot.py). Seeds a fresh «круглое
+// число подписчиков» scenario; kept in sync with the backend default.
+export const MILESTONE_DEFAULT_TARGETS: number[] = [100, 500, 1000, 5000, 10000, 25000, 50000, 100000];
+
+// Normalise a milestone ladder for emit/seed: positive integers only, deduped
+// and ascending. Used by buildTrigger (emit) and the cfg round-trip (seed).
+export function normalizeMilestoneTargets(raw: unknown): number[] {
+  if (!Array.isArray(raw)) return [];
+  const ints = raw.filter((v): v is number => typeof v === "number" && Number.isInteger(v) && v > 0);
+  return [...new Set(ints)].sort((a, b) => a - b);
+}
+
 // ── Boost («Комментарий-добавка при росте поста») — the editor-side state ──────
 // A boost is its own scenario kind (NOT a КОГДА mode): when a watched post's
 // metric crosses a threshold, Pennedly appends a pre-written comment to it. The
@@ -328,6 +341,11 @@ export type FormState = {
   monthlyDays: number[];
   monthlyLastDay: boolean;
   monthlyOnMissing: MonthlyMissing;
+  // «По событию» → «круглое число подписчиков» — the editable milestone ladder
+  // (ascending positive ints). Emitted as trigger_cfg.targets; empty → not sent
+  // (the backend falls back to its default ladder). Seeded from the saved cfg or
+  // the design-default ladder (see MILESTONE_DEFAULT_TARGETS).
+  milestoneTargets: number[];
   // «Раз в год» — a list of (day, month) anniversaries (months 0-indexed here).
   yearlyDates: MonthDate[];
   dateFrom: string;
@@ -516,8 +534,15 @@ function buildTrigger(s: FormState): Record<string, unknown> {
           ? { kind: "on_metric_threshold", threshold_views: th }
           : { kind: "on_metric_threshold" };
       }
-      // follower milestone — preserve the preset's `targets` ladder if any.
-      return (base.kind as string) === "on_follower_milestone" ? { ...base } : { kind: "on_follower_milestone" };
+      // follower milestone — emit the user-edited ladder. Empty → omit `targets`
+      // so the backend uses its default ladder. Otherwise carry the preset's base
+      // (minus its baked `targets`) so other cfg slots survive the round-trip.
+      const targets = normalizeMilestoneTargets(s.milestoneTargets);
+      const { targets: _baseTargets, ...baseRest } = base as Record<string, unknown>;
+      const milestoneBase = (base.kind as string) === "on_follower_milestone" ? baseRest : {};
+      return targets.length > 0
+        ? { ...milestoneBase, kind: "on_follower_milestone", targets }
+        : { ...milestoneBase, kind: "on_follower_milestone" };
     }
     case "date_range":
     case "daily":

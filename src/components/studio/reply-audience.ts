@@ -67,6 +67,88 @@ export function audiencePayload(
   return { reply_audience: "custom", audience_prompt: description };
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+//  Multi-select model («Кому отвечать» — Reply-Audience-Multiselect-SPEC)
+//  Two groups: A = the 3 deterministic enum filters (pick ONE, like radio);
+//  B = the text presets + «Свой вариант» (any combination, like checkboxes).
+//  A and B are mutually exclusive. The B selection compiles to a single OR-joined
+//  `audience_prompt` (reply_audience='custom'). The backend is unchanged — one
+//  enum + one free-text field — so all of this is FE-only.
+// ════════════════════════════════════════════════════════════════════════════
+
+// The OR separator used to glue B fragments into one prompt + to split it back.
+export const AUDIENCE_OR = " или ";
+
+// The group an audience preset belongs to (builtin → A, text/custom → B).
+export const AUDIENCE_A_IDS = AUDIENCE_PRESETS.filter((p) => p.kind === "builtin").map((p) => p.id);
+export const AUDIENCE_B_IDS = AUDIENCE_PRESETS.filter((p) => p.kind !== "builtin").map((p) => p.id);
+
+// The editing model the multi-select gallery works with. `manual` is a session
+// flag: ON once the user hand-edits the merged description, so toggling tiles no
+// longer regenerates it (until they hit «Собрать заново»). It's always false on
+// load — a saved prompt is re-derived back into tiles.
+export type AudienceModel =
+  | { group: "a"; a: ReplyAudience }
+  | { group: "b"; b: string[]; custom: string; manual: boolean };
+
+// The TEXT presets in canonical (gallery) order, longest-prompt-first for greedy
+// prefix matching during decompose.
+const TEXT_PRESETS = AUDIENCE_PRESETS.filter((p) => p.kind === "text");
+const TEXT_BY_LEN = [...TEXT_PRESETS].sort((a, b) => b.prompt.length - a.prompt.length);
+
+// Glue the chosen B presets (+ the «Свой вариант» free text) into one OR-prompt,
+// in canonical preset order. Empty fragments are skipped; «custom» contributes
+// its trimmed text last. Returns "" when nothing contributes.
+export function mergeAudiencePrompt(bIds: string[], custom: string): string {
+  const parts: string[] = [];
+  for (const p of TEXT_PRESETS) {
+    if (bIds.includes(p.id) && p.prompt.trim()) parts.push(p.prompt.trim());
+  }
+  if (bIds.includes("custom") && custom.trim()) parts.push(custom.trim());
+  return parts.join(AUDIENCE_OR);
+}
+
+// Reconstruct the editing model from a saved (reply_audience, audience_prompt).
+// A builtin enum → group A. `custom` → greedily decompose the prompt back into
+// known text fragments (+ a custom leftover), so editing keeps the SAME tiles
+// lit. The decomposition is verified to round-trip exactly; if it doesn't (the
+// prompt was hand-written/reordered), it falls back to a single «Свой вариант»
+// holding the whole text — behaviour is preserved either way.
+export function decomposeAudience(audience: ReplyAudience, prompt: string): AudienceModel {
+  if (audience !== "custom") return { group: "a", a: audience };
+  let rest = prompt.trim();
+  const ids: string[] = [];
+  // Greedy: peel off known fragments (longest first) separated by AUDIENCE_OR.
+  for (;;) {
+    const hit = TEXT_BY_LEN.find((p) => rest === p.prompt.trim() || rest.startsWith(p.prompt.trim() + AUDIENCE_OR));
+    if (!hit) break;
+    ids.push(hit.id);
+    rest = rest === hit.prompt.trim() ? "" : rest.slice(hit.prompt.trim().length + AUDIENCE_OR.length);
+    if (rest === "") break;
+  }
+  const leftover = rest.trim();
+  const b = TEXT_PRESETS.filter((p) => ids.includes(p.id)).map((p) => p.id);
+  if (leftover) b.push("custom");
+  const model: AudienceModel = { group: "b", b, custom: leftover, manual: false };
+  // Safety net: if our decomposition doesn't reproduce the exact stored prompt
+  // (e.g. user reordered/edited it by hand), treat the whole thing as «Свой».
+  if (mergeAudiencePrompt(b, leftover) !== prompt.trim()) {
+    return { group: "b", b: prompt.trim() ? ["custom"] : [], custom: prompt.trim(), manual: false };
+  }
+  return model;
+}
+
+// Compile the editing model back to the backend payload (reply_audience +
+// audience_prompt). Group A → the enum, no prompt. Group B → custom + the merged
+// (or hand-edited) prompt.
+export function audienceModelPayload(
+  model: AudienceModel,
+  description: string,
+): { reply_audience: ReplyAudience; audience_prompt: string } {
+  if (model.group === "a") return { reply_audience: model.a, audience_prompt: "" };
+  return { reply_audience: "custom", audience_prompt: description };
+}
+
 // A short audience PHRASE for the card's living sentence («Отвечает <phrase>…»).
 // Built-in presets read from their own phrase key; text/custom read the user's
 // description (trimmed), falling back to a generic «тем, кого ты описал».
