@@ -1486,11 +1486,6 @@ export const de: Partial<Record<MessageKey, string>> = {
   "feed.published_posts": "veröffentlichte Beiträge",
   "feed.on_par": "Auf Augenhöhe",
   "feed.updated": "Gerade aktualisiert",
-  "feed.baseline_title": "Deine Baseline",
-  "feed.baseline_sub_pre": "Durchschnitt über deine letzten",
-  "feed.baseline_sub_post": "Beiträge · 30 Tage",
-  "feed.baseline_none":
-    "Keine veröffentlichten Beiträge in den letzten 30 Tagen",
   "feed.settling": "Setzt sich noch",
   "feed.times_average": "× Durchschnitt",
   "feed.open_threads": "Auf Threads öffnen",

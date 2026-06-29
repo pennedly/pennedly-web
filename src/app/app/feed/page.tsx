@@ -30,7 +30,6 @@ import { Toast, ToastHost } from "@/components/ui/toast";
 import { TweaksPanel, TweakSection, TweakToggle, TweakRadio, useTweaks } from "@/components/tweaks/TweaksPanel";
 import { ErrorBanner } from "@/components/studio/StudioParts";
 import {
-  Baseline,
   ConfirmDelete,
   FeedBar,
   FeedCard,
@@ -318,13 +317,9 @@ export default function FeedPage() {
         ) : phase === "error" ? (
           <ErrorBanner onRetry={() => setTw("state", "Live")} titleKey="feed.error_title" subKey="feed.error_sub" />
         ) : phase === "empty" ? (
-          <>
-            <Baseline posts={0} views={0} likes={0} comments={0} reposts={0} deltaViews={0} sparkline={[]} empty />
-            <FeedEmpty onStudio={() => router.push("/app")} />
-          </>
+          <FeedEmpty onStudio={() => router.push("/app")} />
         ) : (
           <>
-            <Baseline {...baseline} />
             <FeedBar count={cards.length} sort={sort} onSort={onSort} />
             <div className="flex flex-col gap-5">
               {cards.map((p) => (
