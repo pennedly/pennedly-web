@@ -1078,15 +1078,15 @@ export function BigText({ value, hint, onOpen }: { value: string; hint: string; 
       <div className={cn("min-h-[52px] px-[13px] py-[11px] text-small leading-[1.55] [text-wrap:pretty]", empty ? "text-text-subtle" : "text-text")}>
         {empty ? t("scenarios.rc.bigtext_empty") : value}
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-x-2.5 gap-y-1.5 border-t border-border bg-surface-2 py-2 pl-[13px] pr-[11px]">
-        <span className="min-w-0 flex-1 basis-[160px] text-caption leading-[1.4] text-text-subtle">{hint}</span>
+      <div className="flex flex-col gap-1.5 border-t border-border bg-surface-2 px-[13px] py-2.5">
+        <span className="text-caption leading-[1.45] text-text-subtle">{hint}</span>
         <button
           type="button"
           onClick={(e) => {
             e.stopPropagation();
             onOpen();
           }}
-          className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-sm px-[7px] py-1 text-caption font-semibold text-accent transition-colors hover:bg-accent/[0.09]"
+          className="inline-flex shrink-0 items-center gap-1.5 self-start whitespace-nowrap rounded-sm px-[7px] py-1 text-caption font-semibold text-accent transition-colors hover:bg-accent/[0.09]"
         >
           <IcExpand size={13} /> {t("scenarios.rc.bigtext_open")}
         </button>

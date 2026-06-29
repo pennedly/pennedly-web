@@ -512,7 +512,7 @@ function Stage({
   const initials = "А";
   const samplePost = preview?.sample_post?.trim() ? preview.sample_post : t("scenarios.rc.stage_sample_post");
   return (
-    <aside className="flex flex-col gap-[13px] min-[900px]:sticky min-[900px]:top-[18px] min-[900px]:self-start">
+    <aside className="flex flex-col gap-[13px] min-[900px]:sticky min-[900px]:top-[76px] min-[900px]:max-h-[calc(100vh-92px)] min-[900px]:self-start min-[900px]:overflow-y-auto min-[900px]:overflow-x-visible min-[900px]:pr-0.5">
       <div className="inline-flex items-center gap-[7px] text-caption font-semibold uppercase tracking-[0.06em] text-text-subtle">
         <IcEye size={13} /> {t("scenarios.rc.stage_cap")}
       </div>

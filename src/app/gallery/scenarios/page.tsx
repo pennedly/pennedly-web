@@ -677,7 +677,7 @@ export default function ScenariosGallery() {
         <Section title="группа B · два пресета (хвалит + про цены) → склеенное OR-описание через «или»">
           <ReplyGalleryDemo initialId="praise" initialPrompt={mergeAudiencePrompt(["praise", "pricing"], "")} />
         </Section>
-        <Section title="группа B · «Свой вариант» (пусто) → поле с плейсхолдером">
+        <Section title="группа B · пусто → поле «опиши своими словами» (нет плитки «Свой вариант» — пишут прямо в поле)">
           <ReplyGalleryDemo initialId="custom" />
         </Section>
 

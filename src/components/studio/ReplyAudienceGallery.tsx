@@ -103,19 +103,26 @@ export function ReplyAudienceGallery({
   // presets + maybe "custom"); `custom` is the «Свой вариант» free clause;
   // `manual` flags a hand-edited merge (toggles then stop regenerating it).
   const [init] = useState(() => decomposeAudience(audience, audiencePrompt));
+  // There is no «Свой вариант» tile — the description field below the presets IS
+  // the free-text path. So a saved prompt that doesn't cleanly decompose into
+  // preset fragments (`init.b` carries "custom" leftover) opens in MANUAL mode
+  // holding the whole prompt; the matched preset tiles still light.
+  const seededManual = init.group === "b" && init.b.includes("custom");
   const [group, setGroup] = useState<"a" | "b">(init.group);
   const [aId, setAId] = useState<ReplyAudience>(init.group === "a" ? init.a : "all_except_trolls");
-  const [bIds, setBIds] = useState<string[]>(init.group === "b" ? init.b : []);
-  const [custom, setCustom] = useState(init.group === "b" ? init.custom : "");
-  const [manual, setManual] = useState(false);
-  const [manualDesc, setManualDesc] = useState("");
+  const [bIds, setBIds] = useState<string[]>(init.group === "b" ? init.b.filter((id) => id !== "custom") : []);
+  // `manual` = the field was hand-edited (its text wins over the tile-merge until
+  // «Собрать заново» or the user clears it).
+  const [manual, setManual] = useState(seededManual);
+  const [manualDesc, setManualDesc] = useState(seededManual ? audiencePrompt : "");
   // transient group-conflict notice ("a" = A cleared B · "b" = B cleared A).
   const [notice, setNotice] = useState<"a" | "b" | null>(null);
   // which big-text field is open in the full-screen modal (audience / tone).
   const [bigText, setBigText] = useState<BigTextField>(null);
 
-  // The merged OR-description as currently shown + saved (audience_prompt).
-  const autoDesc = mergeAudiencePrompt(bIds, custom);
+  // The merged OR-description as currently shown + saved (audience_prompt). Auto
+  // mode = the lit presets glued with «или»; manual mode = the hand-typed text.
+  const autoDesc = mergeAudiencePrompt(bIds, "");
   const desc = manual ? manualDesc : autoDesc;
 
   // Lift the committed (reply_audience, audience_prompt) up for any next state.
@@ -127,49 +134,44 @@ export function ReplyAudienceGallery({
   // Pick a group-A filter (radio). Clears group B + shows the «A снял B» notice
   // when switching away from a non-empty B selection.
   function pickA(id: ReplyAudience) {
-    const hadB = group === "b" && bIds.length > 0;
+    const hadB = group === "b" && (bIds.length > 0 || (manual && manualDesc.trim() !== ""));
     setGroup("a");
     setAId(id);
     setBIds([]);
-    setCustom("");
     setManual(false);
     setManualDesc("");
     setNotice(hadB ? "a" : null);
     emit("a", id, "");
   }
 
-  // Toggle a group-B tile (checkbox). From group A this starts a fresh B
-  // selection (and shows «B снял A»); within B it adds/removes the tile.
+  // Toggle a group-B preset (checkbox). From group A this starts a fresh B
+  // selection (and shows «B снял A»); within B it adds/removes the preset. A
+  // hand-edited field is preserved across toggles (only the lit tiles change).
   function toggleB(id: string) {
     if (group === "a") {
       setGroup("b");
       setBIds([id]);
-      const nextCustom = id === "custom" ? "" : "";
-      setCustom(nextCustom);
       setManual(false);
       setManualDesc("");
       setNotice("b");
-      emit("b", "custom", mergeAudiencePrompt([id], nextCustom));
+      emit("b", "custom", mergeAudiencePrompt([id], ""));
       return;
     }
     const has = bIds.includes(id);
     const next = has ? bIds.filter((x) => x !== id) : [...bIds, id];
-    const nextCustom = id === "custom" && has ? "" : custom;
     setBIds(next);
-    if (id === "custom" && has) setCustom("");
     setNotice(null);
-    // Manual text is preserved across toggles (only the lit tiles change).
-    emit("b", "custom", manual ? manualDesc : mergeAudiencePrompt(next, nextCustom));
+    emit("b", "custom", manual ? manualDesc : mergeAudiencePrompt(next, ""));
   }
 
-  // Edit the description field. Custom-only stays WYSIWYG (edits the custom
-  // clause); with presets involved, a hand-edit flips the «manual» badge on.
+  // Edit the description field directly → manual mode (the text wins over the
+  // tile-merge). Clearing it back to empty reverts to the auto-merge of the tiles.
   function editDesc(value: string) {
     if (group !== "b") return;
-    const customOnly = bIds.length === 1 && bIds[0] === "custom";
-    if (!manual && customOnly) {
-      setCustom(value);
-      emit("b", "custom", mergeAudiencePrompt(bIds, value));
+    if (value.trim() === "") {
+      setManual(false);
+      setManualDesc("");
+      emit("b", "custom", mergeAudiencePrompt(bIds, ""));
       return;
     }
     if (!manual) setManual(true);
@@ -181,16 +183,15 @@ export function ReplyAudienceGallery({
   function regen() {
     setManual(false);
     setManualDesc("");
-    emit("b", "custom", mergeAudiencePrompt(bIds, custom));
+    emit("b", "custom", mergeAudiencePrompt(bIds, ""));
   }
 
-  // The OR-fragments to render (auto mode → from the lit tiles, so an internal
-  // «или» inside a fragment is never mistaken for a separator).
+  // The OR-fragments to render in AUTO mode — from the lit tiles, so an internal
+  // «или» inside a fragment is never mistaken for a separator.
   const fragments: string[] = [];
   for (const p of AUDIENCE_PRESETS) {
     if (p.kind === "text" && bIds.includes(p.id) && p.prompt.trim()) fragments.push(p.prompt.trim());
   }
-  if (bIds.includes("custom") && custom.trim()) fragments.push(custom.trim());
 
   return (
     <div className="mx-auto max-w-[960px] space-y-5">
@@ -240,7 +241,7 @@ export function ReplyAudienceGallery({
           <div className="mt-[18px] border-t border-border pt-[18px]">
             <GroupHead title={t("ap.reply.group_b.title")} rule={t("ap.reply.group_b.rule")} />
             <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-              {AUDIENCE_PRESETS.filter((p) => p.kind !== "builtin").map((p) => (
+              {AUDIENCE_PRESETS.filter((p) => p.kind === "text").map((p) => (
                 <AudTile
                   key={p.id}
                   preset={p}
@@ -260,7 +261,8 @@ export function ReplyAudienceGallery({
             <AudienceDescPanel
               fragments={fragments}
               manual={manual}
-              hasPreset={bIds.some((id) => id !== "custom")}
+              manualText={manualDesc}
+              hasPreset={bIds.length > 0}
               onExpand={() => setBigText("audience")}
               onRegen={regen}
             />
@@ -402,18 +404,20 @@ function ReadOnlyFilterNote({ name }: { name: string }) {
 function AudienceDescPanel({
   fragments,
   manual,
+  manualText,
   hasPreset,
   onExpand,
   onRegen,
 }: {
   fragments: string[];
   manual: boolean;
+  manualText: string;
   hasPreset: boolean;
   onExpand: () => void;
   onRegen: () => void;
 }) {
   const { t } = useTranslation();
-  const empty = fragments.length === 0;
+  const empty = manual ? manualText.trim() === "" : fragments.length === 0;
   return (
     <div className="mt-4">
       <div className="mb-2 flex items-center gap-2.5">
@@ -431,6 +435,8 @@ function AudienceDescPanel({
         >
           {empty ? (
             <span className="text-text-subtle">{t("ap.reply.desc.placeholder")}</span>
+          ) : manual ? (
+            manualText
           ) : (
             fragments.map((f, i) => (
               <span key={i}>
@@ -440,11 +446,12 @@ function AudienceDescPanel({
             ))
           )}
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-x-2.5 gap-y-1.5 border-t border-border bg-surface-2 py-2 pl-3.5 pr-2.5">
-          <span className="min-w-0 flex-1 basis-[160px] text-caption leading-[1.4] text-text-subtle">
+        {/* footer STACKS: full-width hint on top, action(s) below (item 2). */}
+        <div className="flex flex-col gap-1.5 border-t border-border bg-surface-2 px-3.5 py-2.5">
+          <span className="text-caption leading-[1.45] text-text-subtle">
             {manual ? t("ap.reply.desc.hint_manual") : t("ap.reply.desc.hint_auto")}
           </span>
-          <div className="flex shrink-0 items-center gap-1">
+          <div className="flex flex-wrap items-center gap-x-1 gap-y-1">
             {manual && hasPreset && (
               <button
                 type="button"
