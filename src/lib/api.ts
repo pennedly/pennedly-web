@@ -26,6 +26,7 @@ import type {
   BatchGenerateResult,
   CommentPostsList,
   CommentsList,
+  ComposerBoost,
   DecisionInput,
   DecisionsResponse,
   DeleteDraftResult,
@@ -532,21 +533,36 @@ export async function deleteDraft(
   });
 }
 
-export async function publishDraft(draftId: number): Promise<PublishResult> {
+// Publish an approved draft to Threads. With `boost` (entry-point B), the
+// backend also creates a boost scenario watching the post just published and
+// returns its id in `boost_scenario_id`. Omitting `boost` sends a bodyless POST
+// — byte-for-byte the same request as before, so a plain publish is unchanged.
+export async function publishDraft(
+  draftId: number,
+  boost?: ComposerBoost,
+): Promise<PublishResult> {
   return fetchApi<PublishResult>(`/api/drafts/${draftId}/publish`, {
     method: "POST",
+    ...(boost ? { body: JSON.stringify({ boost }) } : {}),
   });
 }
 
 // Pin an approved post draft to a future UTC time (the worker publishes it
 // then). Re-call to reschedule. `scheduledAtIso` is a full ISO-8601 instant.
+// With `boost` (entry-point B), the intent is parked on the draft and the
+// worker creates the post-targeted boost scenario once it publishes. Omitting
+// `boost` sends only `scheduled_at` — the original request, unchanged.
 export async function scheduleDraft(
   draftId: number,
   scheduledAtIso: string,
+  boost?: ComposerBoost,
 ): Promise<ScheduleResult> {
   return fetchApi<ScheduleResult>(`/api/drafts/${draftId}/schedule`, {
     method: "POST",
-    body: JSON.stringify({ scheduled_at: scheduledAtIso }),
+    body: JSON.stringify({
+      scheduled_at: scheduledAtIso,
+      ...(boost ? { boost } : {}),
+    }),
   });
 }
 

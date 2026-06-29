@@ -60,7 +60,7 @@ import {
   type UiLang,
 } from "@/components/studio/studio-demo";
 import { useDeferredCommit } from "@/lib/use-deferred-commit";
-import type { DraftSummary, Me } from "@/lib/types";
+import type { ComposerBoost, DraftSummary, Me } from "@/lib/types";
 
 const IS_DEV = process.env.NODE_ENV === "development";
 const UNDO_MS = 5000;
@@ -407,17 +407,19 @@ export default function Studio() {
     });
   }
 
-  async function realPublishConfirm() {
+  async function realPublishConfirm(boost?: ComposerBoost) {
     if (publishTarget === null) return;
     const card = publishTarget.card;
     setPublishing(true);
-    captureEvent("ui.publish_confirmed", { draft_id: card.id });
+    captureEvent("ui.publish_confirmed", { draft_id: card.id, boost: boost !== undefined });
     try {
-      const result = await publishDraft(card.id);
+      const result = await publishDraft(card.id, boost);
       setDrafts((p) => p.map((d) => (d.id === card.id ? { ...d, published: true, threads_url: d.threads_url } : d)));
       setPublishTarget(null);
       setTab("published");
       toast(t("studio.toast_published"), "success", { description: selectedAccount?.handle ? `@${selectedAccount.handle}` : `#${result.threads_post_id}` });
+      // Boost attached (entry-point B): the backend returns the new scenario id.
+      if (boost && result.boost_scenario_id != null) toast(t("scenarios.bo.studio.attached"), "success");
     } catch (e) {
       toast(String(e), "error");
     } finally {
@@ -425,17 +427,20 @@ export default function Studio() {
     }
   }
 
-  async function realScheduleConfirm(iso: string) {
+  async function realScheduleConfirm(iso: string, boost?: ComposerBoost) {
     if (publishTarget === null) return;
     const card = publishTarget.card;
     setScheduling(true);
-    captureEvent("ui.schedule_confirmed", { draft_id: card.id });
+    captureEvent("ui.schedule_confirmed", { draft_id: card.id, boost: boost !== undefined });
     try {
-      const result = await scheduleDraft(card.id, iso);
+      const result = await scheduleDraft(card.id, iso, boost);
       setDrafts((p) => p.map((d) => (d.id === card.id ? { ...d, scheduled_at: result.scheduled_at, schedule_failed: false } : d)));
       setPublishTarget(null);
       setTab("scheduled");
       toast(t("studio.toast_scheduled"), "success");
+      // Boost parked on the scheduled draft (the worker creates the scenario on
+      // publish) — confirm it's attached.
+      if (boost) toast(t("scenarios.bo.studio.attached"), "success");
     } catch (e) {
       toast(String(e), "error");
     } finally {
@@ -689,35 +694,38 @@ export default function Studio() {
         text={publishTarget?.card.body ?? ""}
         account={publishTarget?.account ?? null}
         initialMode={publishTarget?.mode ?? "now"}
+        isReply={publishTarget?.card.kind === "reply"}
         publishing={publishing}
         scheduling={scheduling}
         onClose={() => {
           if (!publishing && !scheduling) setPublishTarget(null);
         }}
-        onConfirm={() => {
+        onConfirm={(boost) => {
           if (demoOn) {
             const card = publishTarget?.card;
             if (card) {
               setDemoCards((p) => p.map((c) => (c.id === card.id ? { ...c, status: "published", stats: { likes: 0, replies: 0, reposts: 0 } } : c)));
               setTab("published");
               toast(t("studio.toast_published"), "success", { description: card.author.handle ? `@${card.author.handle}` : undefined });
+              if (boost) toast(t("scenarios.bo.studio.attached"), "success");
             }
             setPublishTarget(null);
           } else {
-            realPublishConfirm();
+            realPublishConfirm(boost);
           }
         }}
-        onSchedule={(iso) => {
+        onSchedule={(iso, boost) => {
           if (demoOn) {
             const card = publishTarget?.card;
             if (card) {
               setDemoCards((p) => p.map((c) => (c.id === card.id ? { ...c, status: "scheduled", scheduledAt: iso } : c)));
               setTab("scheduled");
               toast(t("studio.toast_scheduled"), "success");
+              if (boost) toast(t("scenarios.bo.studio.attached"), "success");
             }
             setPublishTarget(null);
           } else {
-            realScheduleConfirm(iso);
+            realScheduleConfirm(iso, boost);
           }
         }}
       />

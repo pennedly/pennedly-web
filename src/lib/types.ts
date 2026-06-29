@@ -436,6 +436,21 @@ export type PublishResult = {
   status: string;
   threads_post_id: string;
   published_at: string;
+  // The id of the boost scenario created when a boost was attached to this
+  // publish (entry-point B), or null when none was attached. Lets the composer
+  // confirm/link the new routine.
+  boost_scenario_id?: number | null;
+};
+
+// A boost attached to a Studio-composer publish/schedule (boost entry-point B).
+// The target is IMPLICIT (the post being published), so only these three fields
+// are sent — never a `target`. Field constraints mirror the backend's
+// `ComposerBoost`: metric ∈ {comments, likes, views}; threshold a positive int;
+// comment_text non-empty, ≤500 chars (after trim).
+export type ComposerBoost = {
+  metric: "comments" | "likes" | "views";
+  threshold: number;
+  comment_text: string;
 };
 
 // A comment under one of the user's posts (the reply queue), with its

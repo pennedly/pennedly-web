@@ -2419,7 +2419,9 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "scenarios.bo.studio.summary": "Когда этот пост наберёт {n} {metric} → добавить комментарий",
   "scenarios.bo.studio.off_hint": "Выключено — пост опубликуется без бустера",
   "scenarios.bo.studio.target": "Цель: этот пост",
-  "scenarios.bo.studio.soon": "Прицеп бустера при публикации появится скоро — пока настрой его в Автопилоте → Бустер и следи за постами этого сценария.",
+  "scenarios.bo.studio.attached": "Бустер прикреплён к этому посту",
+  "scenarios.bo.studio.err_threshold": "Укажите порог (положительное число)",
+  "scenarios.bo.studio.err_comment": "Напишите комментарий, который добавить",
   // точка входа C (редактор сценария-поста) — секция «Бустер»
   "scenarios.bo.attach_group": "Бустер",
   "scenarios.bo.attach_title": "Добавить бустер для постов этого сценария",

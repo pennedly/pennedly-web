@@ -13,7 +13,7 @@ import { mediaUrl } from "@/lib/api";
 import { extractFirstUrl } from "@/lib/links";
 import { cn } from "@/lib/cn";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
-import type { Idea } from "@/lib/types";
+import type { ComposerBoost, Idea } from "@/lib/types";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Mono } from "@/components/ui/mono";
 import { AccountFace } from "@/components/ui/avatar";
@@ -1403,35 +1403,69 @@ export function FirstRun({ onSetup }: { onSetup: () => void }) {
 // pre-written comment), with the target IMPLICIT (a locked «Цель: этот пост»
 // plaque). Collapsed → a switch + a one-line summary; expanded → the config.
 //
-// HONEST STUB: a boost's `target:{type:"post"}` needs a Pennedly posts.id, which
-// does NOT exist at compose/schedule time (publish returns only a Threads id; a
-// scheduled post isn't published yet). There is no backend endpoint to attach a
-// boost to a draft. So this surface shows the design 1:1 but does NOT create a
-// boost on publish — it carries an honest note pointing to Autopilot → Бустер
-// (which CAN watch this scenario's posts). Wiring it for real needs backend work
-// (a draft→boost link, or a posts.id returned from publish). See the FE report.
+// REAL: when enabled + valid, the dialog sends `boost:{metric,threshold,
+// comment_text}` on Publish/Schedule and the backend creates a boost scenario
+// watching the post (publish: immediately; schedule: when the worker publishes).
+// OFF by default — a boost is sent ONLY when the user enables the section, so a
+// plain publish/schedule is byte-for-byte unchanged. The state lives in
+// `StudioPublishDialog` so it can collect + validate the config and gate submit.
 const STUDIO_BOOST_METRICS: { key: "views" | "likes" | "comments"; icon: ReactNode; labelKey: MessageKey; def: number }[] = [
   { key: "views", icon: <IcEye size={13} />, labelKey: "scenarios.bo.metric_views", def: 5000 },
   { key: "likes", icon: <IcHeart size={13} />, labelKey: "scenarios.bo.metric_likes", def: 200 },
   { key: "comments", icon: <IcBubble size={13} />, labelKey: "scenarios.bo.metric_comments", def: 50 },
 ];
 
-function BoosterAttachSection() {
+// The editable boost config the dialog collects (strings, pre-validation). The
+// dialog derives a validated `ComposerBoost | null` from this.
+type BoostDraft = { metric: "views" | "likes" | "comments"; threshold: string; comment: string };
+const EMPTY_BOOST_DRAFT: BoostDraft = { metric: "views", threshold: "", comment: "" };
+
+// Derive the threshold default for a metric (placeholder + the summary number).
+function boostMetricDef(metric: BoostDraft["metric"]): number {
+  return STUDIO_BOOST_METRICS.find((m) => m.key === metric)!.def;
+}
+
+// Validate a boost draft into the wire shape the backend accepts, or report the
+// first problem. Mirrors the backend's `ComposerBoost`: metric in the set;
+// threshold a positive int; comment_text non-empty after trim, ≤500 chars.
+function validateBoostDraft(
+  d: BoostDraft,
+): { boost: ComposerBoost } | { error: "threshold" | "comment" } {
+  const n = Number(d.threshold);
+  if (!d.threshold.trim() || !Number.isFinite(n) || n < 1) return { error: "threshold" };
+  const comment = d.comment.trim();
+  if (!comment || comment.length > 500) return { error: "comment" };
+  return { boost: { metric: d.metric, threshold: Math.floor(n), comment_text: comment } };
+}
+
+// Controlled boost-attach section. `enabled`/`onToggle` drive the on/off switch;
+// `value`/`onChange` hold the editable config. `error` is the validation key to
+// surface (only shown while enabled + expanded). The parent owns the state so it
+// can collect the boost and gate the submit button.
+function BoosterAttachSection({
+  enabled,
+  onToggle,
+  value,
+  onChange,
+  error,
+}: {
+  enabled: boolean;
+  onToggle: (on: boolean) => void;
+  value: BoostDraft;
+  onChange: (next: BoostDraft) => void;
+  error: "threshold" | "comment" | null;
+}) {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
-  const [metric, setMetric] = useState<"views" | "likes" | "comments">("views");
-  const [threshold, setThreshold] = useState("");
-  const [comment, setComment] = useState("");
-  const def = STUDIO_BOOST_METRICS.find((m) => m.key === metric)!.def;
-  const n = threshold.trim() && Number(threshold) >= 1 ? Math.floor(Number(threshold)) : def;
-  const unit = t(metric === "views" ? "scenarios.bo.unit_views" : metric === "likes" ? "scenarios.bo.unit_likes" : "scenarios.bo.unit_comments");
+  const def = boostMetricDef(value.metric);
+  const n = value.threshold.trim() && Number(value.threshold) >= 1 ? Math.floor(Number(value.threshold)) : def;
+  const unit = t(value.metric === "views" ? "scenarios.bo.unit_views" : value.metric === "likes" ? "scenarios.bo.unit_likes" : "scenarios.bo.unit_comments");
   return (
     <div className="mt-3.5 overflow-hidden rounded-md border border-border bg-surface-2">
       {/* header row — switch + title + one-line summary */}
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
+        onClick={() => onToggle(!enabled)}
+        aria-pressed={enabled}
         className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-surface"
       >
         <span className="grid h-7 w-7 shrink-0 place-items-center rounded-sm border border-accent/24 bg-accent/[0.11] text-accent">
@@ -1440,12 +1474,25 @@ function BoosterAttachSection() {
         <span className="min-w-0 flex-1">
           <span className="block text-small font-semibold text-text">{t("scenarios.bo.studio.title")}</span>
           <span className="mt-px block truncate text-caption text-text-subtle">
-            {open ? t("scenarios.bo.studio.sub") : t("scenarios.bo.studio.summary").replace("{n}", n.toLocaleString()).replace("{metric}", unit)}
+            {enabled ? t("scenarios.bo.studio.summary").replace("{n}", n.toLocaleString()).replace("{metric}", unit) : t("scenarios.bo.studio.off_hint")}
           </span>
         </span>
-        <IcChevRight size={16} className={cn("shrink-0 text-text-subtle transition-transform", open && "rotate-90")} />
+        {/* a real on/off switch — the boost is sent only when this is on */}
+        <span
+          className={cn(
+            "relative h-[22px] w-[38px] shrink-0 rounded-full transition-colors",
+            enabled ? "bg-accent" : "bg-border",
+          )}
+        >
+          <span
+            className={cn(
+              "absolute top-[3px] h-4 w-4 rounded-full bg-surface shadow-sm transition-[left]",
+              enabled ? "left-[19px]" : "left-[3px]",
+            )}
+          />
+        </span>
       </button>
-      {open && (
+      {enabled && (
         <div className="flex flex-col gap-3 border-t border-border px-3 pb-3.5 pt-3">
           {/* locked target plaque — «Цель: этот пост» (implicit, B) */}
           <div className="inline-flex items-center gap-1.5 self-start rounded-full border border-accent/24 bg-accent/[0.08] px-2.5 py-1 text-caption font-semibold text-text-muted">
@@ -1456,12 +1503,12 @@ function BoosterAttachSection() {
             <span className="text-caption font-medium text-text">{t("scenarios.bo.metric_label")}</span>
             <div className="flex flex-wrap gap-1.5">
               {STUDIO_BOOST_METRICS.map((m) => {
-                const on = m.key === metric;
+                const on = m.key === value.metric;
                 return (
                   <button
                     key={m.key}
                     type="button"
-                    onClick={() => setMetric(m.key)}
+                    onClick={() => onChange({ ...value, metric: m.key })}
                     aria-pressed={on}
                     className={cn(
                       "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-caption font-semibold transition-colors",
@@ -1481,9 +1528,13 @@ function BoosterAttachSection() {
               inputMode="numeric"
               min={1}
               placeholder={String(def)}
-              value={threshold}
-              onChange={(e) => setThreshold(e.target.value)}
-              className="h-9 max-w-[160px] rounded-md border border-border bg-surface px-2.5 text-small tabular-nums text-text outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 max-md:h-11 max-md:text-[16px]"
+              value={value.threshold}
+              onChange={(e) => onChange({ ...value, threshold: e.target.value })}
+              aria-invalid={error === "threshold"}
+              className={cn(
+                "h-9 max-w-[160px] rounded-md border bg-surface px-2.5 text-small tabular-nums text-text outline-none focus:ring-2 focus:ring-accent/20 max-md:h-11 max-md:text-[16px]",
+                error === "threshold" ? "border-danger focus:border-danger" : "border-border focus:border-accent",
+              )}
             />
           </label>
           {/* the pre-written comment */}
@@ -1495,17 +1546,23 @@ function BoosterAttachSection() {
               rows={3}
               maxLength={500}
               placeholder={t("scenarios.bo.bt.ph")}
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              className="min-h-[72px] w-full resize-y rounded-md border border-border bg-surface px-3 py-2 text-small leading-[1.55] text-text outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
+              value={value.comment}
+              onChange={(e) => onChange({ ...value, comment: e.target.value })}
+              aria-invalid={error === "comment"}
+              className={cn(
+                "min-h-[72px] w-full resize-y rounded-md border bg-surface px-3 py-2 text-small leading-[1.55] text-text outline-none focus:ring-2 focus:ring-accent/20",
+                error === "comment" ? "border-danger focus:border-danger" : "border-border focus:border-accent",
+              )}
             />
-            <span className="text-caption tabular-nums text-text-subtle">{comment.length} / 500</span>
+            <span className="text-caption tabular-nums text-text-subtle">{value.comment.length} / 500</span>
           </label>
-          {/* honest note — this surface is a preview; the boost is set up in Autopilot */}
-          <p className="flex items-start gap-2 rounded-md border border-warning/26 bg-warning/[0.07] px-3 py-2.5 text-caption leading-[1.5] text-text-muted">
-            <IcInfo size={14} className="mt-px shrink-0 text-warning" />
-            <span>{t("scenarios.bo.studio.soon")}</span>
-          </p>
+          {/* validation hint — only when the enabled config is incomplete */}
+          {error && (
+            <p className="flex items-start gap-2 rounded-md border border-danger/26 bg-danger/[0.07] px-3 py-2.5 text-caption leading-[1.5] text-text-muted">
+              <IcInfo size={14} className="mt-px shrink-0 text-danger" />
+              <span>{error === "threshold" ? t("scenarios.bo.studio.err_threshold") : t("scenarios.bo.studio.err_comment")}</span>
+            </p>
+          )}
         </div>
       )}
     </div>
@@ -1518,6 +1575,7 @@ export function StudioPublishDialog({
   account,
   publishing,
   scheduling = false,
+  isReply = false,
   onClose,
   onConfirm,
   onSchedule,
@@ -1528,22 +1586,36 @@ export function StudioPublishDialog({
   account: { name: string; handle: string | null; initials: string; avatarUrl?: string | null } | null;
   publishing: boolean;
   scheduling?: boolean;
+  // A reply draft can't carry a boost (the backend 422s it — a reply has no
+  // post to watch), so the boost section is hidden for replies.
+  isReply?: boolean;
   onClose: () => void;
-  onConfirm: () => void;
-  onSchedule?: (scheduledAtIso: string) => void;
+  // `boost` is the validated config when the user enabled + filled the section,
+  // else undefined (a plain publish/schedule — the request is unchanged).
+  onConfirm: (boost?: ComposerBoost) => void;
+  onSchedule?: (scheduledAtIso: string, boost?: ComposerBoost) => void;
   initialMode?: "now" | "schedule";
 }) {
   const { t } = useTranslation();
   const [mode, setMode] = useState<"now" | "schedule">("now");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
+  // Boost-attach state (entry-point B). OFF by default — a boost is sent only
+  // when `boostOn` is true, so a plain publish/schedule stays byte-for-byte the
+  // same. A reply never shows the section, so it can never carry a boost.
+  const [boostOn, setBoostOn] = useState(false);
+  const [boostDraft, setBoostDraft] = useState<BoostDraft>(EMPTY_BOOST_DRAFT);
   const busy = publishing || scheduling;
+  const showBoost = !isReply;
 
   // On open: set the requested mode (Publish → now, Schedule → schedule) and
-  // pre-fill a sensible default time (the next hour).
+  // pre-fill a sensible default time (the next hour). Reset the boost section so
+  // a config from a previous draft never leaks onto the next one.
   useEffect(() => {
     if (!open) return;
     setMode(initialMode);
+    setBoostOn(false);
+    setBoostDraft(EMPTY_BOOST_DRAFT);
     const d = new Date(Date.now() + 60 * 60 * 1000);
     d.setMinutes(0, 0, 0);
     const p = (n: number) => String(n).padStart(2, "0");
@@ -1569,6 +1641,16 @@ export function StudioPublishDialog({
   const validDt = localDt !== null && !Number.isNaN(localDt.getTime());
   const farEnough = validDt && localDt!.getTime() >= Date.now() + 5 * 60 * 1000;
   const utcLabel = validDt ? `= ${localDt!.toISOString().slice(11, 16)} UTC` : "";
+
+  // Validate the boost config (only when the section is enabled + shown). When
+  // valid → `boost` is the wire shape to send; when invalid → `boostError` is the
+  // field to flag and the submit is blocked. When the section is off, neither is
+  // set, so the submit gate + the payload are exactly today's plain publish.
+  const boostResult = boostOn && showBoost ? validateBoostDraft(boostDraft) : null;
+  const boost = boostResult && "boost" in boostResult ? boostResult.boost : undefined;
+  const boostError = boostResult && "error" in boostResult ? boostResult.error : null;
+  // An enabled-but-incomplete boost blocks both Publish and Schedule.
+  const boostBlocks = boostOn && showBoost && boost === undefined;
 
   const seg = (key: "now" | "schedule", icon: ReactNode, label: string) => (
     <button
@@ -1647,16 +1729,24 @@ export function StudioPublishDialog({
         </div>
 
         {/* Entry B — «Бустер для этого поста» (boost config, target = this post,
-            implicit). Honest stub: shows the design but doesn't create a boost on
-            publish (no posts.id at publish time) — see BoosterAttachSection. */}
-        <BoosterAttachSection />
+            implicit). REAL: when enabled + valid, the boost ships on Publish /
+            Schedule (see the submit handlers below). Hidden for reply drafts. */}
+        {showBoost && (
+          <BoosterAttachSection
+            enabled={boostOn}
+            onToggle={setBoostOn}
+            value={boostDraft}
+            onChange={setBoostDraft}
+            error={boostError}
+          />
+        )}
 
         <div className="mt-5 flex items-center justify-end gap-2.5 max-md:flex-col-reverse max-md:items-stretch max-md:gap-2">
           <button onClick={onClose} disabled={busy} className={buttonClasses({ variant: "ghost", className: "max-md:min-h-[44px] max-md:w-full" })}>
             {t("studio.cancel")}
           </button>
           {mode === "now" ? (
-            <Button variant="primary" className="max-md:min-h-[44px] max-md:w-full" icon={<IcCheck size={16} />} loading={publishing} disabled={busy || over || empty} onClick={onConfirm}>
+            <Button variant="primary" className="max-md:min-h-[44px] max-md:w-full" icon={<IcCheck size={16} />} loading={publishing} disabled={busy || over || empty || boostBlocks} onClick={() => onConfirm(boost)}>
               {over ? t("studio.too_long") : t("studio.publish_now")}
             </Button>
           ) : (
@@ -1665,9 +1755,9 @@ export function StudioPublishDialog({
               className="max-md:min-h-[44px] max-md:w-full"
               icon={<IcClock size={16} />}
               loading={scheduling}
-              disabled={busy || over || empty || !farEnough}
+              disabled={busy || over || empty || !farEnough || boostBlocks}
               onClick={() => {
-                if (farEnough && localDt) onSchedule?.(localDt.toISOString());
+                if (farEnough && localDt) onSchedule?.(localDt.toISOString(), boost);
               }}
             >
               {over ? t("studio.too_long") : t("studio.schedule")}

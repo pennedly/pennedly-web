@@ -2445,7 +2445,11 @@ export const en = {
   "scenarios.bo.studio.summary": "When this post hits {n} {metric} → add a comment",
   "scenarios.bo.studio.off_hint": "Off — this post publishes without a booster",
   "scenarios.bo.studio.target": "Target: this post",
-  "scenarios.bo.studio.soon": "Attaching a booster at publish time is coming soon — for now, set it up in Autopilot → Booster and watch this scenario's posts.",
+  // shown after a publish/schedule that carried a boost (entry-point B)
+  "scenarios.bo.studio.attached": "Booster attached to this post",
+  // validation — the enabled booster section is incomplete
+  "scenarios.bo.studio.err_threshold": "Enter a threshold (a positive number)",
+  "scenarios.bo.studio.err_comment": "Write the comment to add",
   // entry C (post-scenario editor) — the «Booster» section
   "scenarios.bo.attach_group": "Booster",
   "scenarios.bo.attach_title": "Add a booster for this scenario's posts",
