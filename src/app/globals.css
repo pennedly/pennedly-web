@@ -125,6 +125,11 @@
    DARK — override ONLY the semantic tokens + elevation. Components don't change.
    ---------------------------------------------------------------------------- */
 .dark {
+  /* Tell the browser to render NATIVE controls dark — number-input spinners,
+     date/time pickers, native scrollbars, the select popup. Without this they
+     stay light-themed (e.g. black ▲▼ stepper arrows invisible on dark). */
+  color-scheme: dark;
+
   --color-bg:                 #0a0a0a;
   --color-surface:            #171717;
   --color-surface-2:          #201f1d;
@@ -158,7 +163,7 @@
   /* Tailwind 4 resets border color to currentColor — pin it to our hairline. */
   *, ::after, ::before { border-color: var(--color-border); }
 
-  html { -webkit-text-size-adjust: 100%; }
+  html { -webkit-text-size-adjust: 100%; color-scheme: light; }
 
   body {
     background-color: var(--color-bg);
