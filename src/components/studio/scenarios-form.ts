@@ -345,11 +345,23 @@ export function compileBody(s: FormState): ScenarioCreate {
     };
   }
 
-  // 2) reply duty → a standalone reply_policy (no post).
+  // 2) reply scenario → a standalone reply_policy (no post). Two flavours:
+  //    • «Дежурство» (reply_duty): replies to comments under the user's posts;
+  //      the trigger is irrelevant to the comment sweep, so none is sent.
+  //    • «Ответ на упоминания» (on_mention): a REACTIVE reply to @mentions —
+  //      the worker `run_mention_reply_scenarios` selects it by
+  //      `trigger_cfg.kind="on_mention"`, so we MUST send that trigger (the
+  //      backend's _resolve_trigger_cfg strips any schedule keys from it). The
+  //      audience/cap/skip ride `action_cfg` (reply_policy) exactly the same way.
   if (s.preset && (s.preset.action_cfg?.kind as string) === "reply_policy") {
     const rd = s.preset.reply_defaults || {};
+    const onMention = (s.preset.trigger_cfg?.kind as string) === "on_mention";
     return {
       name,
+      // on_mention only: send the trigger + the КАК publish mode (ask/auto). A
+      // plain «Дежурство» keeps its byte-identical body (no trigger, no
+      // publish_mode) so existing reply scenarios round-trip unchanged.
+      ...(onMention ? { trigger: { kind: "on_mention" }, publish_mode: s.mode } : {}),
       reply_policy: {
         audience: s.audience || (rd.audience as string) || "all_except_trolls",
         max_per_day: (rd.max_per_day as number) ?? 60,
@@ -377,6 +389,7 @@ export const BAKED_RULE_KEYS: Record<string, string[]> = {
   daily_question: ["scenarios.baked.dq_1", "scenarios.baked.dq_2", "scenarios.baked.dq_3"],
   rubric: ["scenarios.baked.rub_1", "scenarios.baked.rub_2"],
   reply_duty: ["scenarios.baked.rd_1", "scenarios.baked.rd_2", "scenarios.baked.rd_3"],
+  on_mention: ["scenarios.baked.om_1", "scenarios.baked.om_2", "scenarios.baked.om_3"],
   safety_net: ["scenarios.baked.sn_1", "scenarios.baked.sn_2"],
   milestone_thanks: ["scenarios.baked.ms_1", "scenarios.baked.ms_2"],
   seasonal: ["scenarios.baked.se_1", "scenarios.baked.se_2"],

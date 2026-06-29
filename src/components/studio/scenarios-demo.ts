@@ -182,6 +182,31 @@ export const DEMO_PRESETS: ScenarioPreset[] = [
   },
 ];
 
+// «Ответ на упоминания» — a REACTIVE reply scenario (auto-replies to @mentions in
+// the user's voice). Like «Акция», it is a synthetic FE-only catalog entry the
+// backend ships no preset for: it compiles to a `reply_policy` action with a
+// `trigger_cfg.kind="on_mention"` (the worker `run_mention_reply_scenarios` keys
+// off that trigger). The editor renders it with the reply UI, but its «Когда»
+// slot is the locked reactive «когда меня упомянут» (no schedule). The live page
+// appends this to the fetched catalog, same as PROMO_PRESET.
+export const MENTION_PRESET: ScenarioPreset = {
+  id: "on_mention",
+  name_key: "scenarios.preset.on_mention",
+  icon: "IcBolt",
+  group: "reactive",
+  instruction: "",
+  // The default tone (voice/layered guidance) — rides the `reply_instruction`
+  // column. The real localized default would come from the backend; this is the
+  // FE stand-in shown when the user opens a fresh «Ответ на упоминания».
+  reply_instruction:
+    "Тебя упомянули в чужом посте. Ответь как живой автор — тепло, по делу, в своём голосе. Поблагодари за упоминание, если уместно, и продолжи разговор.",
+  trigger_cfg: { kind: "on_mention" },
+  condition_cfg: null,
+  action_cfg: { kind: "reply_policy", audience: "all_except_trolls", max_per_day: 30, skip_low_value: true },
+  fields: [],
+  reply_defaults: { audience: "all_except_trolls", max_per_day: 30, skip_low_value: true },
+};
+
 // «Акция» — the synthetic campaign preset (the preserved promo rich editor). It
 // is NOT a backend catalog preset; the gallery renders it last, gated, with a
 // risk badge. Selecting it opens the promo helper.
@@ -200,8 +225,9 @@ export const PROMO_PRESET: ScenarioPreset = {
 };
 
 // The full demo catalog the gallery renders (real presets + the synthetic
-// «Акция»). The live screen appends PROMO_PRESET to the fetched catalog too.
-export const DEMO_CATALOG: ScenarioPreset[] = [...DEMO_PRESETS, PROMO_PRESET];
+// «Ответ на упоминания» + «Акция»). The live screen appends MENTION_PRESET +
+// PROMO_PRESET to the fetched catalog too (neither ships from the backend).
+export const DEMO_CATALOG: ScenarioPreset[] = [...DEMO_PRESETS, MENTION_PRESET, PROMO_PRESET];
 
 // ── The control-center demo list — covers every card shape the SPEC calls out:
 // a daily question (on, fires every morning), a weekly rubric, a reply duty
@@ -289,5 +315,23 @@ export const DEMO_SCENARIOS: Scenario[] = [
     recent_skips: [
       { local_date: "2026-06-21", reason: "condition", detail: "active_from 2026-07-01", created_at: "2026-06-21T06:00:00Z" },
     ],
+  },
+  {
+    id: 6,
+    name: "Ответ на упоминания",
+    template: null,
+    enabled: false,
+    // Reactive reply scenario — keyed off trigger_cfg.kind="on_mention"; the
+    // worker replies to new @mentions. No schedule (next_run_at stays null).
+    trigger_cfg: { kind: "on_mention" },
+    condition_cfg: null,
+    action_cfg: { kind: "reply_policy", audience: "all_except_trolls", max_per_day: 30, skip_low_value: true },
+    structured: null,
+    instruction: "",
+    reply_instruction: "Тебя упомянули в чужом посте. Ответь как живой автор — тепло, по делу, в своём голосе.",
+    next_run_at: null,
+    last_run_at: "2026-06-22T11:20:00Z",
+    fire_count: 17,
+    recent_skips: [],
   },
 ];

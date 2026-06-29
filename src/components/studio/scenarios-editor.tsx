@@ -53,6 +53,7 @@ import {
   Slot,
   ToneBody,
   WhatPostBody,
+  WhenMentionBody,
   WhenPostBody,
   WhenReplyBody,
   WhoBody,
@@ -196,31 +197,46 @@ function StagePost({
   );
 }
 
-function StageReplyThread({ initials, name, handle }: { initials: string; name: string; handle: string }) {
+function StageReplyThread({ initials, name, handle, mention }: { initials: string; name: string; handle: string; mention?: boolean }) {
   const { t } = useTranslation();
+  // mention: the parent is SOMEONE ELSE's post that tags @you (not your own post
+  // with a comment under it). The «who» line is the mentioner; the «text» is the
+  // post that contains the @mention.
+  const parentName = mention ? t("scenarios.ed.mention_who") : name;
+  const parentHandle = mention ? t("scenarios.ed.mention_handle") : handle;
+  const parentInitials = mention ? t("scenarios.ed.mention_who").slice(0, 1) : initials;
   return (
     <>
       <div className="border-b border-border px-5 py-[18px]">
         <div className="mb-[13px] flex items-center gap-2.5">
-          <StageAvatar initials={initials} />
+          <StageAvatar initials={parentInitials} />
           <div className="leading-tight">
-            <p className="text-small font-semibold text-text">{name}</p>
-            <p className="text-caption text-text-subtle">{handle}</p>
+            <p className="text-small font-semibold text-text">{parentName}</p>
+            <p className="text-caption text-text-subtle">{parentHandle}</p>
           </div>
           <span className="ml-auto text-caption text-text-subtle">{t("scenarios.rc.stage_yesterday")}</span>
         </div>
-        <p className="text-[15px] leading-[1.65] text-text [text-wrap:pretty]">{t("scenarios.ed.parent_post")}</p>
+        <p className="text-[15px] leading-[1.65] text-text [text-wrap:pretty]">{mention ? t("scenarios.ed.mention_post") : t("scenarios.ed.parent_post")}</p>
       </div>
       <div className="px-5 py-4">
-        <p className="mb-2.5 font-mono text-[10px] uppercase tracking-wide text-text-subtle">{t("scenarios.rc.stage_how_reply")}</p>
-        <div className="flex gap-2.5">
-          <StageAvatar initials={t("scenarios.ed.comment_who").slice(0, 1)} size={30} />
-          <div className="min-w-0">
-            <p className="text-caption font-semibold text-text-muted">{t("scenarios.ed.comment_who")}</p>
-            <p className="mt-0.5 text-small text-text-muted [text-wrap:pretty]">{t("scenarios.ed.comment_text")}</p>
+        <p className="mb-2.5 font-mono text-[10px] uppercase tracking-wide text-text-subtle">{mention ? t("scenarios.rc.stage_how_mention") : t("scenarios.rc.stage_how_reply")}</p>
+        {!mention && (
+          <div className="flex gap-2.5">
+            <StageAvatar initials={t("scenarios.ed.comment_who").slice(0, 1)} size={30} />
+            <div className="min-w-0">
+              <p className="text-caption font-semibold text-text-muted">{t("scenarios.ed.comment_who")}</p>
+              <p className="mt-0.5 text-small text-text-muted [text-wrap:pretty]">{t("scenarios.ed.comment_text")}</p>
+            </div>
           </div>
-        </div>
-        <div className="relative mt-2.5 flex gap-2.5 pl-3 before:absolute before:bottom-1.5 before:left-[3px] before:top-0.5 before:w-0.5 before:rounded before:bg-border">
+        )}
+        <div
+          className={cn(
+            "flex gap-2.5",
+            mention
+              ? "mt-0"
+              : "relative mt-2.5 pl-3 before:absolute before:bottom-1.5 before:left-[3px] before:top-0.5 before:w-0.5 before:rounded before:bg-border",
+          )}
+        >
           <StageAvatar initials={initials} size={30} />
           <div className="min-w-0">
             <p className="mb-0.5 flex flex-wrap items-center gap-1.5 text-caption font-semibold text-text">
@@ -229,7 +245,7 @@ function StageReplyThread({ initials, name, handle }: { initials: string; name: 
                 <IcBubble size={11} /> {t("scenarios.ed.reply_tag")}
               </span>
             </p>
-            <p className="text-[14.5px] leading-[1.6] text-text [text-wrap:pretty]">{t("scenarios.ed.bot_reply")}</p>
+            <p className="text-[14.5px] leading-[1.6] text-text [text-wrap:pretty]">{mention ? t("scenarios.ed.bot_reply_mention") : t("scenarios.ed.bot_reply")}</p>
           </div>
         </div>
       </div>
@@ -239,7 +255,9 @@ function StageReplyThread({ initials, name, handle }: { initials: string; name: 
 
 // «Следующие 3 запуска» (or «Ритм проверки» for reply) — computed from the
 // КОГДА mode + hour. Honest-but-approximate (~hour), matching the design rows.
-function NextRuns({ reply, form }: { reply: boolean; form: FormState }) {
+// `mention` reply scenarios fire off each @mention (no poll cadence), so they
+// show a reactive rhythm instead of the comment-duty's «каждые 15 минут».
+function NextRuns({ reply, mention, form }: { reply: boolean; mention?: boolean; form: FormState }) {
   const { t } = useTranslation();
   if (reply) {
     return (
@@ -247,8 +265,17 @@ function NextRuns({ reply, form }: { reply: boolean; form: FormState }) {
         <div className="mb-[11px] flex items-center gap-[7px] text-caption font-semibold uppercase tracking-[0.05em] text-text-subtle">
           <IcRepeat size={13} /> {t("scenarios.rc.runs_rhythm")}
         </div>
-        <RunItem when={t("scenarios.rc.runs_15min")} what={t("scenarios.rc.runs_check")} />
-        <RunItem when={t("scenarios.rc.runs_ready")} what={t("scenarios.rc.runs_draft")} />
+        {mention ? (
+          <>
+            <RunItem when={t("scenarios.rc.runs_on_mention")} what={t("scenarios.rc.runs_check_mention")} />
+            <RunItem when={t("scenarios.rc.runs_ready")} what={t("scenarios.rc.runs_draft")} />
+          </>
+        ) : (
+          <>
+            <RunItem when={t("scenarios.rc.runs_15min")} what={t("scenarios.rc.runs_check")} />
+            <RunItem when={t("scenarios.rc.runs_ready")} what={t("scenarios.rc.runs_draft")} />
+          </>
+        )}
       </div>
     );
   }
@@ -344,6 +371,7 @@ function computeRuns(t: T, form: FormState): string[] {
 
 function Stage({
   reply,
+  mention,
   form,
   preview,
   running,
@@ -353,6 +381,7 @@ function Stage({
   handle,
 }: {
   reply: boolean;
+  mention?: boolean;
   form: FormState;
   preview: ScenarioPreviewT | null;
   running?: boolean;
@@ -375,23 +404,23 @@ function Stage({
       <div className="overflow-hidden rounded-[28px] border border-border bg-surface shadow-lg">
         <div className="flex items-center gap-2.5 border-b border-border bg-surface-2 px-[17px] py-3">
           <span className="h-[9px] w-[9px] shrink-0 rounded-full bg-accent/55" />
-          <span className="text-small font-semibold text-text-muted">{reply ? t("scenarios.rc.stage_bar_reply") : t("scenarios.rc.stage_bar_post")}</span>
+          <span className="text-small font-semibold text-text-muted">{mention ? t("scenarios.rc.stage_bar_mention") : reply ? t("scenarios.rc.stage_bar_reply") : t("scenarios.rc.stage_bar_post")}</span>
           <span className="ml-auto inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.04em] text-text-subtle">
             <span className="h-1.5 w-1.5 rounded-full bg-success shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-success)_20%,transparent)]" />
             {t("scenarios.rc.stage_live")}
           </span>
         </div>
 
-        {reply ? <StageReplyThread initials={initials} name={name} handle={handle} /> : <StagePost initials={initials} name={name} handle={handle} text={samplePost} />}
+        {reply ? <StageReplyThread initials={initials} name={name} handle={handle} mention={mention} /> : <StagePost initials={initials} name={name} handle={handle} text={samplePost} />}
 
         {/* honest invoice line */}
         <p className="flex items-start gap-2 border-t border-border bg-surface-2 px-[17px] py-[11px] text-caption leading-[1.45] text-text-subtle [&_b]:font-semibold [&_b]:text-text-muted">
           <IcSparkle size={13} className="mt-px shrink-0 opacity-85" />
-          <span dangerouslySetInnerHTML={{ __html: reply ? t("scenarios.rc.invoice_reply") : t("scenarios.rc.invoice_post") }} />
+          <span dangerouslySetInnerHTML={{ __html: mention ? t("scenarios.rc.invoice_mention") : reply ? t("scenarios.rc.invoice_reply") : t("scenarios.rc.invoice_post") }} />
         </p>
       </div>
 
-      <NextRuns reply={reply} form={form} />
+      <NextRuns reply={reply} mention={mention} form={form} />
 
       {/* run-now — only ever a draft */}
       {onRunNow && (
@@ -495,6 +524,7 @@ export function StepEditor({
   fieldErrs,
   isReplyPolicy,
   isReactive,
+  isMentionReply,
   bakedRules,
   preview,
   running,
@@ -530,6 +560,10 @@ export function StepEditor({
   producesReplies: boolean;
   isReplyPolicy: boolean;
   isReactive: boolean;
+  /** on_mention: a REACTIVE reply scenario — the «Когда» slot is the locked
+   *  «когда меня упомянут» (no schedule), and the rhythm/sentence reflect that
+   *  it fires off the @mention rather than a poll. Always implies isReplyPolicy. */
+  isMentionReply: boolean;
   bakedRules: string[];
   bakedOpen: boolean;
   onBakedToggle: () => void;
@@ -587,7 +621,29 @@ export function StepEditor({
 
   // ── sentence slots ──
   let prose: ReactNode;
-  if (reply) {
+  if (isMentionReply) {
+    // on_mention — a REACTIVE reply: «Когда меня упомянут → Pennedly ответит на
+    // упоминание твоим голосом — звучит [тон] — и [отправит сам / покажет перед
+    // отправкой]». The «когда» is a locked reactive slot (no schedule); the
+    // audience still lives in КОМУ (Layer 2 + the «who» drawer), kept out of the
+    // headline sentence since a mention has no comment-thread audience to pick.
+    prose = (
+      <>
+        <Slot open={openSlot === "when"} onClick={() => toggleSlot("when")}>
+          {t("scenarios.rc.sent.mention_when")}
+        </Slot>{" "}
+        {t("scenarios.rc.sent.mention_a")}{" "}
+        <Slot open={openSlot === "tone"} onClick={() => toggleSlot("tone")}>
+          {t("scenarios.rc.sent.reply_tone")}
+        </Slot>{" "}
+        {t("scenarios.rc.sent.mention_b")}{" "}
+        <Slot open={openSlot === "how"} onClick={() => toggleSlot("how")}>
+          {form.mode === "auto" ? t("scenarios.rc.sent.how_auto_reply") : t("scenarios.rc.sent.how_ask_reply")}
+        </Slot>
+        .
+      </>
+    );
+  } else if (reply) {
     prose = (
       <>
         {t("scenarios.rc.sent.reply_a")} <LockSlot>{t("scenarios.rc.lock_15min")}</LockSlot> {t("scenarios.rc.sent.reply_b")}{" "}
@@ -656,7 +712,7 @@ export function StepEditor({
   // the open slot's inline drawer
   const drawer = openSlot && (
     <Drawer title={drawerTitle(t, openSlot)} icon={SLOT_ICON[openSlot]} onDone={() => setOpenSlot(null)}>
-      {openSlot === "when" && (reply ? <WhenReplyBody /> : <WhenPostBody form={form} update={update} />)}
+      {openSlot === "when" && (isMentionReply ? <WhenMentionBody /> : reply ? <WhenReplyBody /> : <WhenPostBody form={form} update={update} />)}
       {openSlot === "if" && <IfBody form={form} update={update} menuOpen={condMenuOpen} setMenuOpen={setCondMenuOpen} />}
       {openSlot === "what" && <WhatPostBody form={form} update={update} instructionValue={instructionValue} onOpenInstruction={() => setBigText("instruction")} />}
       {openSlot === "who" && <WhoBody audience={form.audience} onAudience={(a) => update({ audience: a })} audiencePrompt={form.audiencePrompt} onOpenCustom={() => setBigText("audience")} />}
@@ -737,7 +793,7 @@ export function StepEditor({
               <>
                 <span className="inline-flex items-center gap-[7px] text-small text-text-muted">
                   <IcClock size={14} className="shrink-0 text-text-subtle" />
-                  <span dangerouslySetInnerHTML={{ __html: reply ? t("scenarios.rc.status_next_reply") : t("scenarios.rc.status_next_post") }} />
+                  <span dangerouslySetInnerHTML={{ __html: isMentionReply ? t("scenarios.rc.status_next_mention") : reply ? t("scenarios.rc.status_next_reply") : t("scenarios.rc.status_next_post") }} />
                 </span>
                 <span className="ml-auto inline-flex items-center gap-2 rounded-full border border-success/30 bg-success/10 px-3 py-1.5 text-small font-semibold text-success">
                   <span className="h-2 w-2 rounded-full bg-success" />
@@ -871,7 +927,7 @@ export function StepEditor({
         </div>
 
         {/* RIGHT — stage */}
-        <Stage reply={reply} form={form} preview={preview} running={running} runResult={runResult} onRunNow={onRunNow} canRunNow={canRunNow} handle={handle} />
+        <Stage reply={reply} mention={isMentionReply} form={form} preview={preview} running={running} runResult={runResult} onRunNow={onRunNow} canRunNow={canRunNow} handle={handle} />
       </div>
 
       {/* big-text modal — mounted inside the editor (relative positioning above) */}

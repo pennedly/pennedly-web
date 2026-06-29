@@ -82,6 +82,7 @@ import {
 import {
   BLANK_PROMO,
   DEMO_CATALOG,
+  MENTION_PRESET,
   PROMO_PRESET,
   SCENARIOS_TWEAK_DEFAULTS,
 } from "@/components/studio/scenarios-demo";
@@ -306,8 +307,15 @@ export default function ScenariosPage() {
   const update = (patch: Partial<FormState>) => setForm((f) => ({ ...f, ...patch }));
   const setField = (key: string, v: string) => setForm((f) => ({ ...f, fields: { ...f.fields, [key]: v } }));
 
-  // The full catalog the gallery shows = backend presets + the synthetic «Акция».
-  const catalog = useMemo(() => [...presets, PROMO_PRESET], [presets]);
+  // The full catalog the gallery shows = backend presets + the synthetic
+  // «Ответ на упоминания» (on_mention) + «Акция». Neither ships from the backend
+  // today; if it ever ships an `on_mention` preset, prefer that one (dedupe by id).
+  const catalog = useMemo(() => {
+    const base = [...presets];
+    if (!base.some((p) => p.id === MENTION_PRESET.id)) base.push(MENTION_PRESET);
+    base.push(PROMO_PRESET);
+    return base;
+  }, [presets]);
 
   // ── load ──
   useEffect(() => {
@@ -462,6 +470,9 @@ export default function ScenariosPage() {
   const producesReplies = form.helperOn ? true : presetId ? presetProducesReplies(presetId) : false;
   const isReplyPolicy = !!form.preset && (form.preset.action_cfg?.kind as string) === "reply_policy";
   const isReactive = form.when === "event" && !!form.preset && eventKindOf(form.preset.trigger_cfg) !== "";
+  // on_mention — a REACTIVE reply scenario (locked «когда меня упомянут»). Always
+  // implies isReplyPolicy; the editor uses it to swap the «Когда» slot + rhythm.
+  const isMentionReply = !!form.preset && (form.preset.trigger_cfg?.kind as string) === "on_mention";
   const bakedKeys = presetId ? BAKED_RULE_KEYS[presetId] ?? [] : [];
   const bakedRules = bakedKeys.map((k) => t(k as MessageKey));
   const vFields = visibleFields(form.preset);
@@ -1216,6 +1227,7 @@ export default function ScenariosPage() {
             producesReplies={producesReplies}
             isReplyPolicy={isReplyPolicy}
             isReactive={isReactive}
+            isMentionReply={isMentionReply}
             bakedRules={bakedRules}
             bakedOpen={bakedOpen}
             onBakedToggle={() => setBakedOpen((o) => !o)}
@@ -1363,6 +1375,12 @@ function GroupLabel({ icon, children }: { icon: React.ReactNode; children: React
 // shape or trigger kind) so the editor shows the right baked rules + reply block.
 function matchPreset(s: Scenario, catalog: ScenarioPreset[]): ScenarioPreset | null {
   if (s.template === "promo") return catalog.find((p) => p.id === "promo") ?? null;
+  // on_mention is a reply_policy action too — match it on its trigger FIRST so it
+  // doesn't fall into «Дежурство». Falls back to MENTION_PRESET if the live
+  // catalog somehow lacks it (it's injected client-side, not from the backend).
+  if ((s.trigger_cfg?.kind as string) === "on_mention") {
+    return catalog.find((p) => p.id === "on_mention") ?? MENTION_PRESET;
+  }
   if ((s.action_cfg?.kind as string) === "reply_policy") return catalog.find((p) => p.id === "reply_duty") ?? null;
   const kind = (s.trigger_cfg?.kind as string) || "";
   if (kind === "on_metric_threshold") return catalog.find((p) => p.id === "amplify_viral") ?? null;
@@ -1376,8 +1394,12 @@ function scenarioToCreateBody(s: Scenario): Parameters<typeof createScenario>[1]
     return { name: s.name, promo: s.structured };
   }
   if ((s.action_cfg?.kind as string) === "reply_policy") {
+    // on_mention carries its trigger (the worker selects it by trigger_cfg.kind);
+    // a plain «Дежурство» clones without one (the comment sweep ignores it).
+    const onMention = (s.trigger_cfg?.kind as string) === "on_mention";
     return {
       name: s.name,
+      ...(onMention ? { trigger: { kind: "on_mention" }, publish_mode: s.publish_mode } : {}),
       reply_policy: {
         audience: (s.action_cfg?.audience as string) || "all_except_trolls",
         max_per_day: (s.action_cfg?.max_per_day as number) ?? 60,

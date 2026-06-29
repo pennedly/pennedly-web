@@ -826,6 +826,23 @@ export function WhenReplyBody() {
   );
 }
 
+// КОГДА (on_mention) — locked REACTIVE «когда меня упомянут». Unlike the comment
+// duty there's no poll cadence to surface: the scenario fires off the @mention
+// itself (the hourly mention ingest feeds it), so this is a pure explainer + the
+// shared reply-cap/quiet-hours note. No schedule controls.
+export function WhenMentionBody() {
+  const { t } = useTranslation();
+  return (
+    <>
+      <p className="flex items-start gap-2.5 rounded-md border border-border bg-surface px-3 py-2.5 text-small leading-[1.5] text-text-muted [&_b]:font-semibold [&_b]:text-text">
+        <IcLock size={16} className="mt-px shrink-0 text-accent" />
+        <span dangerouslySetInnerHTML={{ __html: t("scenarios.rc.when_mention_body") }} />
+      </p>
+      <Hard>{t("scenarios.rc.when_mention_hard")}</Hard>
+    </>
+  );
+}
+
 // ════════════════════════════════════════════════════════════════════════════
 //  ЕСЛИ — condition builder (Wave 1: 3 honest conditions)
 // ════════════════════════════════════════════════════════════════════════════

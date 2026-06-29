@@ -114,6 +114,7 @@ const GROUP_NOTE: Record<Group, MessageKey> = {
 const IMPACT: Record<string, number> = {
   daily_question: 3,
   reply_duty: 3,
+  on_mention: 2,
   rubric: 2,
   safety_net: 2,
   poll: 2,
@@ -123,7 +124,7 @@ const IMPACT: Record<string, number> = {
   promo: 3,
 };
 // Presets that PRODUCE replies → the form shows the «Как отвечать» block.
-const REPLY_PRESETS = new Set(["daily_question", "reply_duty", "poll", "promo"]);
+const REPLY_PRESETS = new Set(["daily_question", "reply_duty", "poll", "promo", "on_mention"]);
 export function presetProducesReplies(id: string): boolean {
   return REPLY_PRESETS.has(id);
 }
@@ -143,6 +144,7 @@ const GOAL_OF: Record<string, Goal> = {
   rubric: "rhythm",
   safety_net: "rhythm",
   reply_duty: "engage",
+  on_mention: "engage",
   amplify_viral: "engage",
   milestone_thanks: "engage",
   poll: "timely",
@@ -165,7 +167,7 @@ const GOAL_NOTE: Record<Goal, MessageKey> = {
   campaign: "scenarios.goal.campaign_note",
 };
 // Presets that prominently reply to real people → show the honest plaque.
-const PLAQUE_PRESETS = new Set(["reply_duty", "promo"]);
+const PLAQUE_PRESETS = new Set(["reply_duty", "promo", "on_mention"]);
 
 // ── KOGDA (schedule) modes ──
 // Wave 3 (decision б reversed): `monthly` / `yearly` un-hidden.
@@ -227,6 +229,9 @@ function ImpactMeter({ value }: { value: number }) {
 
 // A human-readable "when" hint for a preset card footer.
 function presetWhenHint(p: ScenarioPreset, t: T): string {
+  // on_mention is reactive (fires off the @mention) but isn't a `post`-on-event
+  // kind, so whenModeFromCfg reads it as "daily" — special-case the hint here.
+  if ((p.trigger_cfg?.kind as string) === "on_mention") return t("scenarios.when_hint.on_mention");
   const mode = whenModeFromCfg(p.trigger_cfg, p.condition_cfg);
   switch (mode) {
     case "weekly":

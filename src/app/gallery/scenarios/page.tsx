@@ -43,7 +43,7 @@ import {
   interpolate,
   visibleFields,
 } from "@/components/studio/scenarios-form";
-import { BLANK_PROMO, DEMO_CATALOG, DEMO_PRESETS, DEMO_PROMO, DEMO_SCENARIOS, PROMO_PRESET } from "@/components/studio/scenarios-demo";
+import { BLANK_PROMO, DEMO_CATALOG, DEMO_PROMO, DEMO_SCENARIOS } from "@/components/studio/scenarios-demo";
 import { HouseRules, type ReplyFreq } from "@/components/studio/HouseRules";
 import { StepEditor } from "@/components/studio/scenarios-editor";
 import { ReplyRoutineCard } from "@/components/studio/ReplyRoutineCard";
@@ -299,6 +299,7 @@ function StepEditorDemo({
 
   const isReplyPolicy = !!preset && (preset.action_cfg?.kind as string) === "reply_policy";
   const isReactive = form.when === "event" && !!preset && eventKindOf(preset.trigger_cfg) !== "";
+  const isMentionReply = !!preset && (preset.trigger_cfg?.kind as string) === "on_mention";
   const promoMode = form.helperOn || isPromo;
   const vFields = visibleFields(preset);
   const bakedRules = (BAKED_RULE_KEYS[presetId] ?? []).map((k) => t(k as MessageKey));
@@ -325,6 +326,7 @@ function StepEditorDemo({
       producesReplies={promoMode || isReplyPolicy}
       isReplyPolicy={isReplyPolicy}
       isReactive={isReactive}
+      isMentionReply={isMentionReply}
       bakedRules={bakedRules}
       bakedOpen={false}
       onBakedToggle={() => {}}
@@ -471,7 +473,9 @@ const GAL_PLAIN = mkScenario(94, "Маленькая победа", 9, { trigger
 export default function ScenariosGallery() {
   const { t } = useTranslation();
   const [dark, setDark] = useState(false);
-  const catalog = useMemo(() => [...DEMO_PRESETS, PROMO_PRESET], []);
+  // DEMO_CATALOG = the backend-shaped presets + the synthetic «Ответ на
+  // упоминания» (on_mention) + «Акция» — mirrors what the live page builds.
+  const catalog = useMemo(() => [...DEMO_CATALOG], []);
   function toggleDark() {
     document.documentElement.classList.toggle("dark");
     setDark((d) => !d);
@@ -720,6 +724,24 @@ export default function ScenariosGallery() {
         </Section>
         <Section title="REPLY · Layer 2 «Настроить точнее» open (conditions · tone)">
           <StepEditorDemo presetId="reply_duty" demoLayer2 />
+        </Section>
+        <Section title="REPLY · on_mention «Ответ на упоминания» default (locked «когда меня упомянут» + tone slot + mention stage)">
+          <StepEditorDemo presetId="on_mention" />
+        </Section>
+        <Section title="REPLY · on_mention — new (draft, not saved)">
+          <StepEditorDemo presetId="on_mention" isExisting={false} />
+        </Section>
+        <Section title="REPLY · on_mention — locked «Когда меня упомянут» drawer open (reactive, no schedule)">
+          <StepEditorDemo presetId="on_mention" demoOpenSlot="when" />
+        </Section>
+        <Section title="REPLY · on_mention — «как звучит ответ» (тон) drawer open">
+          <StepEditorDemo presetId="on_mention" demoOpenSlot="tone" />
+        </Section>
+        <Section title="REPLY · on_mention — «отправит сам» (publish-mode auto) drawer open">
+          <StepEditorDemo presetId="on_mention" demoOpenSlot="how" override={{ mode: "auto" }} />
+        </Section>
+        <Section title="REPLY · on_mention — Layer 2 «Настроить точнее» open (conditions · tone)">
+          <StepEditorDemo presetId="on_mention" demoLayer2 />
         </Section>
         <Section title="from-template · «Акция» (promo) — reply kind, sentence prefilled">
           <StepEditorDemo presetId="promo" />

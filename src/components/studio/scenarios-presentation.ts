@@ -61,6 +61,13 @@ export const PRESENTATION: Record<string, PresetPresentation> = {
     skel: { whenKey: "scenarios.skel.reply_duty.when", onlyifKey: "scenarios.skel.reply_duty.onlyif", whatdoKey: "scenarios.skel.reply_duty.whatdo" },
     slots: (t, handle, f) => ({ interval: v(f?.interval || t("scenarios.slot.interval_15")), audience: v(audiencePhrase(t, f?.audience)), who: who(handle) }),
   },
+  on_mention: {
+    kind: "reply",
+    replies: true,
+    sentenceKey: "scenarios.sentence.on_mention",
+    skel: { whenKey: "scenarios.skel.on_mention.when", onlyifKey: null, whatdoKey: "scenarios.skel.on_mention.whatdo" },
+    slots: (_t, handle) => ({ who: who(handle) }),
+  },
   amplify_viral: {
     kind: "post",
     replies: false,
@@ -117,6 +124,11 @@ export function deriveSentence(t: T, s: Scenario, handle: string): DerivedSenten
   const isReply = (s.action_cfg?.kind as string) === "reply_policy";
   if (s.template === "promo") {
     return { template: t("scenarios.sentence.promo"), slots: PRESENTATION.promo.slots(t, handle, fieldsFromScenario(s)), kind: "reply" };
+  }
+  // on_mention is ALSO a reply_policy action, so it must be matched BEFORE the
+  // generic reply branch below (otherwise it would read as «Дежурство»).
+  if (trig === "on_mention") {
+    return { template: t("scenarios.sentence.on_mention"), slots: PRESENTATION.on_mention.slots(t, handle), kind: "reply" };
   }
   if (isReply || trig === "on_new_comment") {
     return { template: t("scenarios.sentence.reply_duty"), slots: PRESENTATION.reply_duty.slots(t, handle, fieldsFromScenario(s)), kind: "reply" };
