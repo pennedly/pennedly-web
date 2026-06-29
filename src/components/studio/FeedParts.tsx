@@ -216,24 +216,32 @@ function TrendChart({ series, avg }: { series: number[]; avg: number }) {
   const { t } = useTranslation();
   const W = 600;
   const H = 112;
-  const PAD = 8;
+  const PAD = 8; // vertical breathing room
+  const PADR = 8; // right inset so the end dot (r3.6 + 2px stroke) isn't clipped by the SVG viewport
   const max = Math.max(...series, avg, 1);
   const n = series.length;
-  const x = (i: number) => (i / (n - 1)) * W;
+  const x = (i: number) => (n > 1 ? (i / (n - 1)) * (W - PADR) : 0);
   const y = (v: number) => H - PAD - (v / max) * (H - PAD * 2);
   const curve = series.map((v, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(" ");
-  const area = `${curve} L${W} ${H} L0 ${H} Z`;
-  const avgY = y(avg);
+  const lastX = x(n - 1);
+  const area = `${curve} L${lastX.toFixed(1)} ${H} L0 ${H} Z`;
+  // The average line + label render as an HTML overlay (not SVG <text>) so the
+  // text stays crisp at any width and can flow OUTSIDE the plot without clipping.
+  const avgPct = (y(avg) / H) * 100;
+  const labelBelow = avgPct < 16; // line near the top → drop the label under it (else it clips the title)
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="auto" role="img" aria-label="Views over time" className="block">
-      <path d={area} fill="var(--color-accent)" fillOpacity="0.1" />
-      <line x1="0" y1={avgY} x2={W} y2={avgY} stroke="var(--color-text-subtle)" strokeWidth="1.2" strokeDasharray="4 4" opacity="0.75" />
-      <text x="6" y={avgY - 5} fill="var(--color-text-subtle)" fontSize="11" fontFamily="var(--font-sans)">
-        {t("feed.your_average")}
-      </text>
-      <path d={curve} fill="none" stroke="var(--color-accent)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx={x(n - 1)} cy={y(series[n - 1])} r="3.6" fill="var(--color-accent)" stroke="var(--color-surface)" strokeWidth="2" />
-    </svg>
+    <div className="relative">
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="auto" role="img" aria-label="Views over time" className="block">
+        <path d={area} fill="var(--color-accent)" fillOpacity="0.1" />
+        <path d={curve} fill="none" stroke="var(--color-accent)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx={lastX} cy={y(series[n - 1])} r="3.6" fill="var(--color-accent)" stroke="var(--color-surface)" strokeWidth="2" />
+      </svg>
+      <div className="pointer-events-none absolute inset-x-0 border-t border-dashed border-text-subtle/70" style={{ top: `${avgPct}%` }}>
+        <span className={cn("absolute left-0 whitespace-nowrap text-caption leading-none text-text-subtle", labelBelow ? "top-[4px]" : "bottom-[4px]")}>
+          {t("feed.your_average")}
+        </span>
+      </div>
+    </div>
   );
 }
 

@@ -98,18 +98,22 @@ export function Sidebar() {
   );
   const accountId = useSelectedAccountId();
   // Nav count badges (§4): items waiting on the user for the active account —
-  // pending drafts (Studio), comments needing a reply (Replies), un-reviewed
+  // pending POST drafts (Studio), comments needing a reply (Replies), un-reviewed
   // audits (Audits). Best-effort; a failed or zero count just hides the badge.
   // Kept fresh — refetch on account switch, on route change, on tab refocus,
   // and on a slow interval — so a cleared item (e.g. a published draft) doesn't
   // leave its badge stuck forever (it previously loaded once per account).
+  // NB: the Studio badge counts ONLY `threads_post` drafts (real count, up to 50)
+  // — never the account-level auto-reply sweep's `comment_reply` byproducts (SKIP
+  // / gated / failed), which aren't a Studio to-do and used to leave a permanent
+  // phantom "1". (`count` is the row count for the page, so the limit caps it.)
   const [counts, setCounts] = useState<Record<string, number>>({});
   useEffect(() => {
     if (!accountId || !getTokens()) return;
     let cancelled = false;
     const refresh = async () => {
       const [d, c, a] = await Promise.allSettled([
-        listDrafts(accountId, { status: "pending", limit: 1 }),
+        listDrafts(accountId, { status: "pending", contentType: "threads_post", limit: 50 }),
         fetchComments(accountId, { limit: 1 }),
         listAudits({ accountId, status: "pending", limit: 1 }),
       ]);
