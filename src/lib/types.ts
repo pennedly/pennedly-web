@@ -916,9 +916,18 @@ export type ScenarioActivity = {
 // `instruction` + optional `reply_instruction` + optional `condition`). They
 // NEVER send `template` — it is resolved server-side as the provenance tag.
 export type ScenarioReplyPolicy = {
-  audience: string; // all_except_trolls | questions | fans
+  audience: string; // all_except_trolls | questions | fans | custom
+  audience_prompt?: string; // free-text filter, required when audience === "custom"
   max_per_day: number;
   skip_low_value: boolean;
+  // ── Layer 3 «Только для этого сценария» — per-scenario reply OVERRIDES ──
+  // OPTIONAL: a present field overrides the account «Правила дома» value for THIS
+  // scenario; an ABSENT field inherits it. Mirrors backend `ReplyPolicyFields`
+  // (api/scenarios.py): `frequency` ∈ the account reply-frequency set; the quiet
+  // hours are 0..23 and only valid as a PAIR (both, or neither).
+  frequency?: "asap" | "half_hourly" | "hourly" | "few_daily" | "daily";
+  quiet_start_hour?: number; // 0..23
+  quiet_end_hour?: number; // 0..23
 };
 
 // Boost («Комментарий-добавка при росте поста») create/update field — mirrors the

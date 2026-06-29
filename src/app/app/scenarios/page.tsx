@@ -80,10 +80,13 @@ import {
   type FormState,
   interpolate,
   isBoostScenario,
+  L3_FORM_DEFAULTS,
   type MonthDate,
   perDayTimesFromCfg,
+  replyOverridesFromCfg,
   visibleFields,
 } from "@/components/studio/scenarios-form";
+import type { L3Inherited } from "@/components/studio/scenarios-recipe";
 import {
   BLANK_PROMO,
   BOOST_PRESET,
@@ -227,6 +230,9 @@ function freshForm(preset: ScenarioPreset | null, t: (k: MessageKey) => string):
     cta: "",
     // КАК — default «Спроси меня» (ask). New scenarios stay drafts-first.
     mode: "ask",
+    // Layer 3 — a fresh scenario inherits every «Правила дома» reply setting (all
+    // override toggles OFF → compileBody emits nothing extra).
+    ...L3_FORM_DEFAULTS,
     // Boost defaults (inert for a non-boost preset). The boost preset flips
     // isBoost + seeds metric/threshold/target/comment from its trigger/action cfg
     // (entry A — the standalone editor with the explicit target picker).
@@ -729,6 +735,15 @@ export default function ScenariosPage() {
     // recipe; reconstruct its metric/threshold/comment/target for round-trip.
     const isBoost = isBoostScenario(s.trigger_cfg, s.action_cfg);
     const boost = boostFromCfg(s.trigger_cfg, s.action_cfg);
+    // Layer 3 — reconstruct the per-scenario reply overrides from action_cfg so an
+    // overridden setting reopens with its toggle ON + value (and an inherited one
+    // OFF). `replyCeiling` is the live account cap a stored max_per_day is compared
+    // against (== ⇒ inherited, ≠ ⇒ overridden). Audience is an override when the
+    // saved audience differs from the inherited account audience (the КОМУ slot
+    // already holds the saved value either way).
+    const savedAudience = (s.action_cfg?.audience as string) || "all_except_trolls";
+    const l3 = replyOverridesFromCfg(s.action_cfg, replyCeiling);
+    const l3WhoOn = (s.action_cfg?.kind as string) === "reply_policy" && savedAudience !== replyAudience;
     const when = whenModeFromCfg(s.trigger_cfg, s.condition_cfg);
     // best-effort: match a catalog preset for the baked-rules + reply detection
     const matched = matchPreset(s, catalog);
@@ -791,6 +806,17 @@ export default function ScenariosPage() {
       // КАК — restore the saved publish mode (absent → treat as 'auto', the
       // current backend default for legacy scenarios).
       mode: s.publish_mode === "ask" ? "ask" : "auto",
+      // Layer 3 — start from the inert defaults, then flip ON + seed values for any
+      // setting the saved scenario overrides (replyOverridesFromCfg + l3WhoOn).
+      ...L3_FORM_DEFAULTS,
+      l3WhoOn,
+      l3LimitOn: l3.limitOn,
+      l3Limit: l3.limit,
+      l3FreqOn: l3.freqOn,
+      l3Freq: l3.freq,
+      l3QuietOn: l3.quietOn,
+      l3QuietFrom: l3.quietFrom,
+      l3QuietTo: l3.quietTo,
       // Boost — reconstruct from trigger_cfg/action_cfg when this is a boost
       // scenario (isBoost drives the editor into the boost recipe); inert
       // otherwise. A saved boost edits as entry "a" (the standalone editor) so the
@@ -1335,6 +1361,17 @@ export default function ScenariosPage() {
             isBoost={form.isBoost}
             boostScenarioOptions={boostScenarioOptions}
             boostPostOptions={boostPostOptions}
+            l3Inherited={{
+              // The live «Правила дома» reply values a scenario inherits, shown in
+              // Layer 3 as «наследуется (значение)» per setting.
+              audience: replyAudience,
+              audiencePrompt,
+              limit: replyCeiling,
+              freq: replyFreq,
+              quietOn,
+              quietFrom,
+              quietTo,
+            }}
             bakedRules={bakedRules}
             bakedOpen={bakedOpen}
             onBakedToggle={() => setBakedOpen((o) => !o)}

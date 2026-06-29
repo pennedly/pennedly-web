@@ -32,7 +32,6 @@ import {
   IcHeart,
   IcInfo,
   IcLink,
-  IcLock,
   IcPencil,
   IcPlay,
   IcRepeat,
@@ -54,6 +53,8 @@ import {
   Drawer,
   HowBody,
   IfBody,
+  type L3Inherited,
+  Layer3Override,
   LockSlot,
   type OpenSlot,
   SLOT_ICON,
@@ -613,7 +614,10 @@ function Layer({
   );
 }
 
-function Layer3Stub() {
+// Layer 3 for a scenario that produces no replies (post / boost / «Акция»): the
+// override settings are reply-only, so there's nothing to override here. An honest
+// N/A note (the design shows the override controls only for reply scenarios).
+function Layer3NotApplicable() {
   const { t } = useTranslation();
   return (
     <div className="flex items-start gap-3 rounded-md border border-dashed border-border bg-surface-2 px-4 py-3.5">
@@ -621,12 +625,8 @@ function Layer3Stub() {
         <IcShieldHouse size={16} />
       </span>
       <div className="min-w-0">
-        <div className="text-small font-semibold text-text">{t("scenarios.rc.l3_title")}</div>
-        <div className="mt-0.5 text-caption leading-[1.5] text-text-muted">{t("scenarios.rc.l3_desc")}</div>
-        <span className="mt-2 inline-block rounded-full border border-border px-2 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.04em] text-text-subtle">
-          <IcLock size={10} className="-mt-px mr-1 inline" />
-          {t("scenarios.rc.l3_soon")}
-        </span>
+        <div className="text-small font-semibold text-text">{t("scenarios.rc.l3_na_title")}</div>
+        <div className="mt-0.5 text-caption leading-[1.5] text-text-muted">{t("scenarios.rc.l3_na_desc")}</div>
       </div>
     </div>
   );
@@ -650,6 +650,7 @@ export function StepEditor({
   isBoost,
   boostScenarioOptions,
   boostPostOptions,
+  l3Inherited,
   bakedRules,
   preview,
   running,
@@ -698,6 +699,10 @@ export function StepEditor({
   boostScenarioOptions: { id: number; label: string }[];
   /** Recent posts the boost's «post» target may watch (id + short preview). */
   boostPostOptions: { id: number; label: string }[];
+  /** The live «Правила дома» values a reply scenario inherits — shown in Layer 3
+   *  as «наследуется (значение)» per setting. Sourced from the account autopilot
+   *  config on the page (sample values on demo). */
+  l3Inherited: L3Inherited;
   bakedRules: string[];
   bakedOpen: boolean;
   onBakedToggle: () => void;
@@ -1131,8 +1136,21 @@ export function StepEditor({
               </LayerGroup>
             </Layer>
 
-            <Layer title={t("scenarios.rc.l3_title_short")} proLabel={t("scenarios.rc.layer_pro")} summary={t("scenarios.rc.l3_summary")} open={layer3Open} onToggle={() => setLayer3Open((o) => !o)}>
-              <Layer3Stub />
+            <Layer
+              title={t("scenarios.rc.l3_title_short")}
+              proLabel={t("scenarios.rc.layer_pro")}
+              summary={isReplyPolicy ? t("scenarios.rc.l3_summary") : t("scenarios.rc.l3_summary_na")}
+              open={layer3Open}
+              onToggle={() => setLayer3Open((o) => !o)}
+            >
+              {isReplyPolicy ? (
+                // Reply scenarios («Дежурство» / «Ответ на упоминания») — the real
+                // per-scenario reply overrides (replaces the old «скоро» stub).
+                <Layer3Override form={form} update={update} inherited={l3Inherited} onOpenCustom={() => setBigText("audience")} />
+              ) : (
+                // Post / boost / «Акция» produce no replies → nothing to override here.
+                <Layer3NotApplicable />
+              )}
             </Layer>
           </div>
 

@@ -31,6 +31,7 @@ import {
   IcInfo,
   IcLink,
   IcLock,
+  IcMoon,
   IcPencil,
   IcPerson,
   IcPlus,
@@ -40,6 +41,7 @@ import {
   IcSliders,
   IcTarget,
   IcTimer,
+  IcUndo,
   IcX,
 } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -50,6 +52,8 @@ import {
   type BoostMetric,
   type BoostTargetType,
   daysInMonth,
+  L3_LIMIT_SLIDER_MAX,
+  L3_LIMIT_SLIDER_MIN,
   MONTHS,
   PER_DAY_DEFAULT,
   type CooldownUnit,
@@ -59,6 +63,7 @@ import {
   type RecipeEvent,
   type RecipeLength,
 } from "./scenarios-form";
+import { type ReplyFreq } from "./HouseRules";
 
 type T = (k: MessageKey) => string;
 
@@ -1552,6 +1557,412 @@ export function ToneBody({ value, onOpen }: { value: string; onOpen: () => void 
       <FieldLabel>{t("scenarios.rc.tone_label")}</FieldLabel>
       <BigText value={value} hint={t("scenarios.rc.tone_hint")} onOpen={onOpen} />
     </label>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  СЛОЙ 3 — «Только для этого сценария» (per-scenario reply overrides)
+//  Ported 1:1 from design-export/.../recipe-editor/Layer3-Scenario-Override-SPEC
+//  + Layer3-HANDOFF. Replaces the old `.rce-stub`. Each of 4 settings INHERITS
+//  «Правила дома» by default (a badge + the inherited value + «Переопределить»);
+//  «Переопределить» reveals the control + «В Правилах дома: …» + «Вернуть к
+//  наследованию». A lead counts the overrides + «Сбросить все переопределения».
+// ════════════════════════════════════════════════════════════════════════════
+
+// The live «Правила дома» values a reply scenario inherits — passed down from the
+// page (the account autopilot config) so each row can show «наследуется (значение)».
+export type L3Inherited = {
+  audience: string; // reply_audience enum (fans | all_except_trolls | questions | custom)
+  audiencePrompt: string; // the account custom audience text (when audience === "custom")
+  limit: number; // replies_per_day ceiling
+  freq: ReplyFreq; // reply check rhythm
+  quietOn: boolean; // account quiet-hours on/off
+  quietFrom: string; // "HH:00"
+  quietTo: string; // "HH:00"
+};
+
+// The 4-way frequency segment (the same control «Правила дома» uses — overriding the
+// SAME account value). Labels reuse the account-level `ap.freq.*` keys.
+const L3_FREQS: { key: ReplyFreq; labelKey: MessageKey }[] = [
+  { key: "instant", labelKey: "ap.freq.instant" },
+  { key: "hourly", labelKey: "ap.freq.hourly" },
+  { key: "few", labelKey: "ap.freq.few" },
+  { key: "daily", labelKey: "ap.freq.daily" },
+];
+
+// A short human phrase for an inherited audience value (for «наследуется (…)» +
+// «В Правилах дома: …»). Built-in enums read their phrase key; «custom» echoes the
+// account's own description (trimmed), else a generic fallback.
+function audienceInheritPhrase(t: T, audience: string, prompt: string): string {
+  if (audience === "fans") return t("scenarios.aud_phrase.fans");
+  if (audience === "questions") return t("scenarios.aud_phrase.questions");
+  if (audience === "custom") return prompt.trim() || t("scenarios.aud_phrase.custom");
+  return t("scenarios.aud_phrase.all");
+}
+function freqPhrase(t: T, f: ReplyFreq): string {
+  return t(L3_FREQS.find((x) => x.key === f)?.labelKey ?? "ap.freq.hourly");
+}
+function quietPhrase(t: T, on: boolean, from: string, to: string): string {
+  if (!on || from === to) return t("scenarios.rc.l3.quiet_none");
+  return `${from} – ${to}`;
+}
+
+// One override row. Collapsed: icon + title + sub + «наследуется (значение)» badge +
+// «Переопределить». Expanded (overridden): the row highlights, the badge flips to
+// «переопределено здесь», the control renders, and a foot shows «В Правилах дома:
+// <inherited>» + «Вернуть к наследованию».
+function L3Row({
+  icon,
+  title,
+  sub,
+  overridden,
+  inheritedPhrase,
+  onOverride,
+  onRevert,
+  children,
+}: {
+  icon: ReactNode;
+  title: string;
+  sub: string;
+  overridden: boolean;
+  /** The INHERITED «Правила дома» value — shown both on the collapsed «Сейчас
+   *  действует» line (when inherited) and in the «В Правилах дома: …» foot (when
+   *  overridden). Always the account value, never the current override. */
+  inheritedPhrase: string;
+  onOverride: () => void;
+  onRevert: () => void;
+  children?: ReactNode;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div
+      className={cn(
+        "flex flex-col gap-3 rounded-lg border px-[15px] py-3.5 transition-colors",
+        overridden ? "border-accent/40 bg-accent/[0.04] shadow-[0_0_0_1px_color-mix(in_srgb,var(--color-accent)_18%,transparent)]" : "border-border bg-surface",
+      )}
+    >
+      <div className="flex items-start gap-3">
+        <span
+          className={cn(
+            "grid h-7 w-7 shrink-0 place-items-center rounded-sm border",
+            overridden ? "border-accent/26 bg-accent/[0.11] text-accent" : "border-border bg-surface-2 text-text-muted",
+          )}
+        >
+          {icon}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="text-small font-semibold text-text">{title}</span>
+            {overridden ? (
+              <span className="inline-flex items-center gap-1 rounded-full border border-accent/30 bg-surface px-[7px] py-px font-mono text-[9.5px] uppercase tracking-[0.03em] text-accent">
+                <IcCheck size={10} /> {t("scenarios.rc.l3.over_badge")}
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 rounded-full border border-dashed border-border bg-surface-2 px-[7px] py-px font-mono text-[9.5px] uppercase tracking-[0.03em] text-text-subtle">
+                <IcShieldHouse size={10} /> {t("scenarios.rc.l3.inherit_badge")}
+              </span>
+            )}
+          </div>
+          <div className="mt-0.5 text-caption leading-[1.45] text-text-subtle">{sub}</div>
+          {!overridden && (
+            <div className="mt-1.5 text-caption text-text-muted">
+              {t("scenarios.rc.l3.now")} <b className="font-semibold text-text">{inheritedPhrase}</b>
+            </div>
+          )}
+        </div>
+        {!overridden && (
+          <button
+            type="button"
+            onClick={onOverride}
+            className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-sm border border-border bg-surface px-2.5 py-1.5 text-caption font-semibold text-text-muted transition-colors hover:border-accent/40 hover:text-accent"
+          >
+            <IcSliders size={12} /> {t("scenarios.rc.l3.override")}
+          </button>
+        )}
+      </div>
+
+      {overridden && (
+        <div className="flex flex-col gap-3 border-t border-accent/15 pt-3">
+          {children}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="inline-flex items-center gap-1.5 text-caption text-text-subtle [&_b]:font-semibold [&_b]:text-text-muted">
+              <IcShieldHouse size={12} className="shrink-0 opacity-80" />
+              <span dangerouslySetInnerHTML={{ __html: t("scenarios.rc.l3.in_house").replace("{value}", inheritedPhrase) }} />
+            </span>
+            <button
+              type="button"
+              onClick={onRevert}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-sm px-2 py-1 text-caption font-semibold text-accent transition-colors hover:bg-accent/[0.09]"
+            >
+              <IcUndo size={12} /> {t("scenarios.rc.l3.revert")}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// The 4-tile audience grid + custom free-text — reused from the КОМУ slot (same
+// AUD_TILES). Lives inside the «Кому отвечать» override row.
+function L3AudienceControl({
+  audience,
+  onAudience,
+  audiencePrompt,
+  onOpenCustom,
+}: {
+  audience: string;
+  onAudience: (a: string) => void;
+  audiencePrompt: string;
+  onOpenCustom: () => void;
+}) {
+  const { t } = useTranslation();
+  const custom = audience === "custom";
+  return (
+    <>
+      <div className="grid grid-cols-2 gap-2.5 max-[520px]:grid-cols-1">
+        {AUD_TILES.map((tile) => {
+          const on = tile.key === audience;
+          return (
+            <button
+              key={tile.key}
+              type="button"
+              onClick={() => onAudience(tile.key)}
+              aria-pressed={on}
+              className={cn(
+                "flex flex-col gap-1 rounded-md border bg-surface px-[13px] py-3 text-left transition-colors",
+                on ? "border-accent bg-accent/[0.06] shadow-[0_0_0_1px_var(--color-accent)]" : "border-border hover:border-text/16",
+              )}
+            >
+              <span className="flex items-center gap-[7px] text-small font-semibold text-text">
+                <span className={cn("shrink-0", on ? "text-accent" : "text-text-subtle")}>{tile.icon}</span>
+                {t(tile.titleKey)}
+              </span>
+              <span className="text-caption leading-[1.4] text-text-subtle">{t(tile.subKey)}</span>
+            </button>
+          );
+        })}
+      </div>
+      {custom && <BigText value={audiencePrompt} hint={t("scenarios.rc.aud_custom_hint")} onOpen={onOpenCustom} />}
+      <p className="inline-flex flex-wrap items-center gap-1.5 text-caption text-text-subtle">
+        <IcLock size={11} className="shrink-0 opacity-70" />
+        {t("scenarios.rc.l3.trolls_always")}
+      </p>
+    </>
+  );
+}
+
+// «Лимит ответов в день» override — the design's big-number slider (5–100).
+function L3LimitControl({ value, onChange }: { value: number; onChange: (n: number) => void }) {
+  const { t } = useTranslation();
+  const pct = ((value - L3_LIMIT_SLIDER_MIN) / (L3_LIMIT_SLIDER_MAX - L3_LIMIT_SLIDER_MIN)) * 100;
+  return (
+    <label className="flex flex-col gap-2">
+      <span className="flex items-baseline justify-between">
+        <span className="text-caption font-medium text-text-muted">{t("scenarios.rc.l3.limit_unit")}</span>
+        <span className="text-h3 font-semibold tabular-nums text-text">{value}</span>
+      </span>
+      <input
+        type="range"
+        min={L3_LIMIT_SLIDER_MIN}
+        max={L3_LIMIT_SLIDER_MAX}
+        value={value}
+        aria-label={t("scenarios.rc.l3.limit_title")}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="rc-range h-[5px] w-full cursor-pointer appearance-none rounded-full outline-none"
+        style={{
+          background: `linear-gradient(90deg, color-mix(in srgb, var(--color-accent) 55%, var(--color-surface)) 0 ${pct}%, var(--color-border) ${pct}% 100%)`,
+        }}
+      />
+    </label>
+  );
+}
+
+// «Частота проверки» override — the 4-way segment (the same account-level control).
+function L3FreqControl({ value, onChange }: { value: ReplyFreq; onChange: (f: ReplyFreq) => void }) {
+  const { t } = useTranslation();
+  return (
+    <Seg options={L3_FREQS.map((f) => ({ key: f.key, label: t(f.labelKey) }))} value={value} onPick={(k) => onChange(k as ReplyFreq)} />
+  );
+}
+
+// «Тихие часы» override — two hour selects + «без тихих часов» (from==to encodes the
+// zero-width "no quiet hours" window the backend accepts).
+function L3QuietControl({
+  from,
+  to,
+  onFrom,
+  onTo,
+}: {
+  from: string;
+  to: string;
+  onFrom: (v: string) => void;
+  onTo: (v: string) => void;
+}) {
+  const { t } = useTranslation();
+  const none = from === to;
+  const HOURS = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, "0")}:00`);
+  const SELECT =
+    "h-9 rounded-md border border-border bg-surface px-2.5 text-small tabular-nums text-text transition-colors focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25 disabled:opacity-50 max-md:min-h-[44px] max-md:text-[16px]";
+  return (
+    <div className="flex flex-col gap-2.5">
+      <div className={cn("flex flex-wrap items-center gap-2 text-small text-text-muted", none && "opacity-50")}>
+        <span>{t("scenarios.rc.l3.quiet_from")}</span>
+        <select className={SELECT} value={from} onChange={(e) => onFrom(e.target.value)} disabled={none} aria-label={t("scenarios.rc.l3.quiet_from")}>
+          {HOURS.map((h) => (
+            <option key={h} value={h}>
+              {h}
+            </option>
+          ))}
+        </select>
+        <span>{t("scenarios.rc.l3.quiet_to")}</span>
+        <select className={SELECT} value={to} onChange={(e) => onTo(e.target.value)} disabled={none} aria-label={t("scenarios.rc.l3.quiet_to")}>
+          {HOURS.map((h) => (
+            <option key={h} value={h}>
+              {h}
+            </option>
+          ))}
+        </select>
+      </div>
+      <label className="inline-flex cursor-pointer items-center gap-2 text-caption text-text-muted">
+        <input
+          type="checkbox"
+          checked={none}
+          onChange={(e) => {
+            // «без тихих часов» = a zero-width window (from==to). Toggling off restores
+            // the design default window so the selects aren't stuck equal.
+            if (e.target.checked) onTo(from);
+            else onTo(from === "23:00" ? "08:00" : "23:00");
+          }}
+          className="h-3.5 w-3.5 rounded-sm border-border text-accent accent-[var(--color-accent)]"
+        />
+        {t("scenarios.rc.l3.quiet_none_toggle")}
+      </label>
+    </div>
+  );
+}
+
+// The Layer-3 accordion BODY — the override list. Reply scenarios only (the editor
+// shows a different note for non-reply kinds). `onOpenCustom` opens the big-text
+// modal for the custom audience (the same modal the КОМУ slot uses).
+export function Layer3Override({
+  form,
+  update,
+  inherited,
+  onOpenCustom,
+}: {
+  form: FormState;
+  update: (patch: Partial<FormState>) => void;
+  inherited: L3Inherited;
+  onOpenCustom: () => void;
+}) {
+  const { t } = useTranslation();
+  const overrides = [form.l3WhoOn, form.l3LimitOn, form.l3FreqOn, form.l3QuietOn];
+  const overCount = overrides.filter(Boolean).length;
+  // Revert «Кому отвечать» to inherited: drop the override flag AND restore the
+  // account audience/prompt into the form (so the КОМУ slot reads inherited again).
+  const revertWho = () => update({ l3WhoOn: false, audience: inherited.audience, audiencePrompt: inherited.audiencePrompt });
+  // Override «Кому отвечать»: flip the flag; the form audience already mirrors the
+  // inherited value at open, so the grid starts on the inherited tile.
+  const overrideWho = () => update({ l3WhoOn: true });
+  const resetAll = () =>
+    update({
+      l3WhoOn: false,
+      audience: inherited.audience,
+      audiencePrompt: inherited.audiencePrompt,
+      l3LimitOn: false,
+      l3FreqOn: false,
+      l3QuietOn: false,
+    });
+  return (
+    <div className="flex flex-col gap-3.5">
+      {/* lead — override counter + reset-all */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="flex items-center gap-2 text-caption text-text-muted [&_b]:font-semibold [&_b]:text-text">
+          <IcShieldHouse size={14} className="shrink-0 text-accent" />
+          {overCount === 0 ? (
+            <span>{t("scenarios.rc.l3.lead_all_inherit")}</span>
+          ) : (
+            <span dangerouslySetInnerHTML={{ __html: t("scenarios.rc.l3.lead_count").replace("{n}", String(overCount)) }} />
+          )}
+        </p>
+        {overCount > 0 && (
+          <button
+            type="button"
+            onClick={resetAll}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-sm px-2 py-1 text-caption font-semibold text-text-muted transition-colors hover:text-danger"
+          >
+            <IcUndo size={12} /> {t("scenarios.rc.l3.reset_all")}
+          </button>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-2.5">
+        {/* 1 — Кому отвечать */}
+        <L3Row
+          icon={<IcPerson size={14} />}
+          title={t("scenarios.rc.l3.who_title")}
+          sub={t("scenarios.rc.l3.who_sub")}
+          overridden={form.l3WhoOn}
+          inheritedPhrase={audienceInheritPhrase(t, inherited.audience, inherited.audiencePrompt)}
+          onOverride={overrideWho}
+          onRevert={revertWho}
+        >
+          <L3AudienceControl
+            audience={form.audience}
+            onAudience={(a) => update({ audience: a })}
+            audiencePrompt={form.audiencePrompt}
+            onOpenCustom={onOpenCustom}
+          />
+        </L3Row>
+
+        {/* 2 — Лимит ответов в день */}
+        <L3Row
+          icon={<IcGauge size={14} />}
+          title={t("scenarios.rc.l3.limit_title")}
+          sub={t("scenarios.rc.l3.limit_sub")}
+          overridden={form.l3LimitOn}
+          inheritedPhrase={t("scenarios.rc.l3.limit_value").replace("{n}", String(inherited.limit))}
+          onOverride={() => update({ l3LimitOn: true, l3Limit: inherited.limit })}
+          onRevert={() => update({ l3LimitOn: false })}
+        >
+          <L3LimitControl value={form.l3Limit} onChange={(n) => update({ l3Limit: n })} />
+        </L3Row>
+
+        {/* 3 — Частота проверки */}
+        <L3Row
+          icon={<IcTimer size={14} />}
+          title={t("scenarios.rc.l3.freq_title")}
+          sub={t("scenarios.rc.l3.freq_sub")}
+          overridden={form.l3FreqOn}
+          inheritedPhrase={freqPhrase(t, inherited.freq)}
+          onOverride={() => update({ l3FreqOn: true, l3Freq: inherited.freq })}
+          onRevert={() => update({ l3FreqOn: false })}
+        >
+          <L3FreqControl value={form.l3Freq} onChange={(f) => update({ l3Freq: f })} />
+        </L3Row>
+
+        {/* 4 — Тихие часы */}
+        <L3Row
+          icon={<IcMoon size={14} />}
+          title={t("scenarios.rc.l3.quiet_title")}
+          sub={t("scenarios.rc.l3.quiet_sub")}
+          overridden={form.l3QuietOn}
+          inheritedPhrase={quietPhrase(t, inherited.quietOn, inherited.quietFrom, inherited.quietTo)}
+          onOverride={() =>
+            update({
+              l3QuietOn: true,
+              // seed from the inherited window when the account has one, else the design default.
+              l3QuietFrom: inherited.quietOn ? inherited.quietFrom : "23:00",
+              l3QuietTo: inherited.quietOn ? inherited.quietTo : "08:00",
+            })
+          }
+          onRevert={() => update({ l3QuietOn: false })}
+        >
+          <L3QuietControl from={form.l3QuietFrom} to={form.l3QuietTo} onFrom={(v) => update({ l3QuietFrom: v })} onTo={(v) => update({ l3QuietTo: v })} />
+        </L3Row>
+      </div>
+    </div>
   );
 }
 

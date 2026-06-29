@@ -42,8 +42,10 @@ import {
   BOOST_FORM_DEFAULTS,
   type FormState,
   interpolate,
+  L3_FORM_DEFAULTS,
   visibleFields,
 } from "@/components/studio/scenarios-form";
+import type { L3Inherited } from "@/components/studio/scenarios-recipe";
 import { BLANK_PROMO, DEMO_CATALOG, DEMO_PROMO, DEMO_SCENARIOS } from "@/components/studio/scenarios-demo";
 import { HouseRules, type ReplyFreq } from "@/components/studio/HouseRules";
 import { StepEditor } from "@/components/studio/scenarios-editor";
@@ -125,6 +127,7 @@ function FormDemo({ presetId }: { presetId: string }) {
       length: "any",
       cta: "",
       mode: "ask",
+      ...L3_FORM_DEFAULTS,
       ...BOOST_FORM_DEFAULTS,
       fields,
     };
@@ -221,6 +224,18 @@ function FormDemo({ presetId }: { presetId: string }) {
   );
 }
 
+// Sample «Правила дома» values the gallery's reply scenarios inherit in Layer 3
+// (mirrors the demo HouseRules: всем-кроме-троллей · до 25 · раз в ~час · 23–08).
+const GAL_L3_INHERITED: L3Inherited = {
+  audience: "all_except_trolls",
+  audiencePrompt: "",
+  limit: 25,
+  freq: "hourly",
+  quietOn: true,
+  quietFrom: "23:00",
+  quietTo: "08:00",
+};
+
 // Hosts the REAL StepEditor (recipe card + large preview) wired to local state,
 // for spec-fidelity review against the recipe-editor source. `demo*` seeds open a
 // slot drawer / modal / layer so every Wave-1 state is reachable without auth;
@@ -292,6 +307,7 @@ function StepEditorDemo({
       length: "any",
       cta: "",
       mode: "ask",
+      ...L3_FORM_DEFAULTS,
       ...BOOST_FORM_DEFAULTS,
       // boost preset → open the boost recipe (entry A) with the design defaults.
       ...(isBoostPreset ? { isBoost: true, boostEntry: "a" as const, boostMetric: "views" as const, boostThreshold: "5000" } : {}),
@@ -336,6 +352,7 @@ function StepEditorDemo({
       isBoost={form.isBoost}
       boostScenarioOptions={[{ id: 1, label: "Утренний вопрос" }, { id: 2, label: "Рубрика недели" }]}
       boostPostOptions={[{ id: 11, label: "Собрал всё, что знаю по теме…" }, { id: 12, label: "Маленькая победа дня" }]}
+      l3Inherited={GAL_L3_INHERITED}
       bakedRules={bakedRules}
       bakedOpen={false}
       onBakedToggle={() => {}}
@@ -716,7 +733,7 @@ export default function ScenariosGallery() {
         <Section title="POST · Layer 2 «Настроить точнее» open (conditions · time · content · baked rules)">
           <StepEditorDemo presetId="daily_question" demoLayer2 />
         </Section>
-        <Section title="POST · Layer 3 stub open («🔒 скоро · второй волной»)">
+        <Section title="POST · Layer 3 open · N/A note (post scenario produces no replies → nothing to override)">
           <StepEditorDemo presetId="daily_question" demoLayer3 />
         </Section>
         <Section title="REPLY · «Дежурство» default (locked «каждые 15 минут» + who/tone slots + reply-thread stage)">
@@ -733,6 +750,21 @@ export default function ScenariosGallery() {
         </Section>
         <Section title="REPLY · Layer 2 «Настроить точнее» open (conditions · tone)">
           <StepEditorDemo presetId="reply_duty" demoLayer2 />
+        </Section>
+        <Section title="REPLY · Layer 3 open · default — everything inherited from «Правила дома» (0 overrides)">
+          <StepEditorDemo presetId="reply_duty" demoLayer3 />
+        </Section>
+        <Section title="REPLY · Layer 3 open · «Лимит ответов» overridden (slider → до 40/день); rest inherited">
+          <StepEditorDemo presetId="reply_duty" demoLayer3 override={{ l3LimitOn: true, l3Limit: 40 }} />
+        </Section>
+        <Section title="REPLY · Layer 3 open · «Кому отвечать» overridden — «Свой вариант» (audience gallery reused)">
+          <StepEditorDemo presetId="reply_duty" demoLayer3 override={{ l3WhoOn: true, audience: "custom", audiencePrompt: "тем, кто спрашивает про цену" }} />
+        </Section>
+        <Section title="REPLY · Layer 3 open · 3 of 4 overridden (audience · limit · quiet) → «Сбросить все»">
+          <StepEditorDemo presetId="reply_duty" demoLayer3 override={{ l3WhoOn: true, audience: "fans", l3LimitOn: true, l3Limit: 60, l3QuietOn: true, l3QuietFrom: "22:00", l3QuietTo: "07:00" }} />
+        </Section>
+        <Section title="REPLY · on_mention · Layer 3 open · «Частота проверки» overridden (segment)">
+          <StepEditorDemo presetId="on_mention" demoLayer3 override={{ l3FreqOn: true, l3Freq: "few" }} />
         </Section>
         <Section title="REPLY · on_mention «Ответ на упоминания» default (locked «когда меня упомянут» + tone slot + mention stage)">
           <StepEditorDemo presetId="on_mention" />

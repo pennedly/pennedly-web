@@ -19,8 +19,10 @@ import type {
   ScenarioCreate,
   ScenarioPreset,
   ScenarioPromoFields,
+  ScenarioReplyPolicy,
 } from "@/lib/types";
 import type { WhenMode } from "./ScenariosParts";
+import { type BackendReplyFreq, type ReplyFreq, freqFromBackend, freqToBackend } from "./HouseRules";
 
 // «Recipe» content shaping — the КАК-длинно/тема/призыв choices fold into the
 // generation instruction (Wave 1: no new backend fields, decision §6.2).
@@ -78,6 +80,105 @@ export const BOOST_FORM_DEFAULTS = {
   attachBoostThreshold: "",
   attachBoostComment: "",
 };
+
+// ── Layer 3 reply-override bounds (mirror backend ReplyPolicyFields) ──
+export const L3_LIMIT_MIN = 1; // backend _REPLY_MAX_PER_DAY_FLOOR
+export const L3_LIMIT_MAX = 500; // backend _REPLY_MAX_PER_DAY_CEIL
+// The design's slider runs 5–100; clamp the editor control to that range (still well
+// within the backend's 1..500 bound, so it never 422s).
+export const L3_LIMIT_SLIDER_MIN = 5;
+export const L3_LIMIT_SLIDER_MAX = 100;
+export const L3_LIMIT_DEFAULT = 25; // the inherited «до 25 в день» House-Rules default
+
+// The Layer-3 reply-override defaults — spread into every FormState construction
+// site (freshForm / openEditor / gallery) so a scenario carries inert override
+// fields (all toggles OFF → compileBody emits nothing → everything inherits «Правила
+// дома») and the sites never drift. openEditor overrides these from a saved
+// scenario's action_cfg (replyOverridesFromCfg); the limit/quiet starting values are
+// re-seeded from the live House-Rules inherited values when a row is flipped ON.
+export const L3_FORM_DEFAULTS = {
+  l3WhoOn: false,
+  l3LimitOn: false,
+  l3Limit: L3_LIMIT_DEFAULT,
+  l3FreqOn: false,
+  l3Freq: "hourly" as ReplyFreq,
+  l3QuietOn: false,
+  l3QuietFrom: "23:00",
+  l3QuietTo: "08:00",
+};
+
+// ── Layer 3 «Только для этого сценария» — per-scenario reply overrides ─────────
+// A reply-producing scenario (reply_policy «Дежурство» / on_mention «Ответ на
+// упоминания») MAY override the account «Правила дома» per field, ON `action_cfg`.
+// Each field is INHERITED by default (the key is simply ABSENT from action_cfg) and
+// OVERRIDDEN only when the user flips its toggle — then the chosen value is emitted.
+// Mirrors backend `ReplyPolicyFields` (api/scenarios.py, commit 8893813):
+//   • audience (+ audience_prompt) — already rides action_cfg (the КОМУ slot); L3's
+//     «Кому отвечать» override edits the SAME form.audience/audiencePrompt.
+//   • max_per_day — the daily reply cap (1..500); always on action_cfg (default 60),
+//     so the L3 «Лимит» override simply sets a non-default value here.
+//   • frequency — the check rhythm; one of the account-level set {asap, half_hourly,
+//     hourly, few_daily, daily}. OMITTED unless overridden (= inherit).
+//   • quiet_start_hour + quiet_end_hour — the quiet window (0..23). Emitted ONLY as a
+//     PAIR (the backend rejects a half-set window); both absent = inherit, start==end
+//     = the explicit "no quiet hours" zero-width window.
+// The frequency control reuses HouseRules' 4-way ReplyFreq (the same control the
+// account-level «Частота проверки» uses), round-tripping through freqToBackend /
+// freqFromBackend — so L3 overrides exactly the value «Правила дома» sets.
+// The reply-override values reconstructed from a saved scenario's action_cfg. A
+// present field → the matching `*On` toggle starts ON (overridden); absent → OFF
+// (inherited). Permissive reads (the worker reads these permissively too); a bad /
+// out-of-range stored value reads as "not overridden".
+export type ReplyOverridesFromCfg = {
+  limitOn: boolean;
+  limit: number;
+  freqOn: boolean;
+  freq: ReplyFreq;
+  quietOn: boolean;
+  quietFrom: string; // "HH:00"
+  quietTo: string; // "HH:00"
+};
+
+function hourToHHMMlocal(h: unknown): string | null {
+  return typeof h === "number" && Number.isInteger(h) && h >= 0 && h <= 23 ? `${String(h).padStart(2, "0")}:00` : null;
+}
+
+// Reconstruct the Layer-3 reply overrides from a saved scenario's action_cfg. Only
+// the OVERRIDABLE-as-optional fields are read here (frequency + the quiet pair + a
+// non-default max_per_day); audience lives in the КОМУ slot already. A field that's
+// absent / malformed → that override toggle starts OFF (inherited). `inheritedLimit`
+// seeds the limit slider's starting value when the cap is inherited.
+export function replyOverridesFromCfg(
+  action: Record<string, unknown> | null | undefined,
+  inheritedLimit: number,
+): ReplyOverridesFromCfg {
+  const cfg = action ?? {};
+  // max_per_day: the backend always stores one (default 60). Treat it as an OVERRIDE
+  // only when it's a valid number that differs from the inherited House-Rules cap —
+  // otherwise the row inherits (so an untouched scenario shows "inherited", not "60").
+  const rawCap = cfg.max_per_day;
+  const capNum =
+    typeof rawCap === "number" && Number.isInteger(rawCap) && rawCap >= L3_LIMIT_MIN && rawCap <= L3_LIMIT_MAX
+      ? rawCap
+      : null;
+  const limitOn = capNum !== null && capNum !== inheritedLimit;
+  // frequency: present + in-set → overridden; else inherit.
+  const rawFreq = cfg.frequency;
+  const freqOn = typeof rawFreq === "string" && ["asap", "half_hourly", "hourly", "few_daily", "daily"].includes(rawFreq);
+  // quiet window: a valid PAIR → overridden; else inherit.
+  const qFrom = hourToHHMMlocal(cfg.quiet_start_hour);
+  const qTo = hourToHHMMlocal(cfg.quiet_end_hour);
+  const quietOn = qFrom !== null && qTo !== null;
+  return {
+    limitOn,
+    limit: capNum ?? inheritedLimit,
+    freqOn,
+    freq: freqOn ? freqFromBackend(rawFreq as BackendReplyFreq) : "hourly",
+    quietOn,
+    quietFrom: qFrom ?? "23:00",
+    quietTo: qTo ?? "08:00",
+  };
+}
 
 // ── Wave 3 «Раз в месяц» / «Раз в год» ──
 // A single (day, month) anchor for the yearly cadence (month is 0-indexed, so
@@ -189,6 +290,21 @@ export type FormState = {
   audience: string; // reply audience (reply_policy / reply presets)
   // a free «Свой вариант» audience description (reply_policy custom audience)
   audiencePrompt: string;
+  // ── Layer 3 «Только для этого сценария» — per-scenario reply overrides ──
+  // Each `l3*On` flag = "this field is overridden for THIS scenario" (vs inherited
+  // from «Правила дома»). When ON, compileBody emits the matching action_cfg key;
+  // when OFF the key is OMITTED (the literal absence = inherit). The audience
+  // override (`l3WhoOn`) reuses `audience`/`audiencePrompt` above (the same КОМУ
+  // values), so there's no separate audience field here. Inert on non-reply
+  // scenarios (Layer 3 isn't shown / nothing is emitted).
+  l3WhoOn: boolean; // override «Кому отвечать» (uses audience/audiencePrompt)
+  l3LimitOn: boolean; // override «Лимит ответов в день»
+  l3Limit: number; // the overridden cap (5–100 in the editor; backend 1..500)
+  l3FreqOn: boolean; // override «Частота проверки»
+  l3Freq: ReplyFreq; // the overridden rhythm (→ freqToBackend on emit)
+  l3QuietOn: boolean; // override «Тихие часы»
+  l3QuietFrom: string; // overridden quiet window start, "HH:00"
+  l3QuietTo: string; // overridden quiet window end, "HH:00" (==from ⇒ no quiet hours)
   // КОГДА
   when: WhenMode;
   nDays: number;
@@ -511,6 +627,37 @@ export function buildAttachedBoostBody(s: FormState, scenarioId: number, scenari
   };
 }
 
+// Build the Layer-3 per-scenario reply OVERRIDES that ride `reply_policy`
+// (action_cfg). Each override field is added ONLY when its toggle is ON — an absent
+// key is the literal "inherit «Правила дома»". Mirrors backend `ReplyPolicyFields`:
+//   • max_per_day (the «Лимит» override) — clamped to the backend 1..500 bound.
+//   • frequency — the «Частота» override → the account-level enum (freqToBackend).
+//   • quiet_start_hour + quiet_end_hour — the «Тихие часы» override, ALWAYS a PAIR
+//     (the backend rejects a half-set window); from==to is the explicit "no quiet
+//     hours" zero-width form. Inherited (toggle OFF) ⇒ neither key is sent.
+// The audience override (l3WhoOn) needs nothing here: audience/audience_prompt
+// already ride the reply_policy body from the КОМУ slot. The flag exists only so the
+// L3 row can show inherited↔overridden; the emitted audience is the same either way.
+export function buildReplyOverrides(s: FormState): Partial<ScenarioReplyPolicy> {
+  const out: Partial<ScenarioReplyPolicy> = {};
+  if (s.l3LimitOn) {
+    const n = Math.round(s.l3Limit);
+    out.max_per_day = Math.min(L3_LIMIT_MAX, Math.max(L3_LIMIT_MIN, Number.isFinite(n) ? n : L3_LIMIT_DEFAULT));
+  }
+  if (s.l3FreqOn) out.frequency = freqToBackend(s.l3Freq);
+  if (s.l3QuietOn) {
+    const fromH = Number(s.l3QuietFrom.split(":")[0]);
+    const toH = Number(s.l3QuietTo.split(":")[0]);
+    // Only emit when BOTH hours parse to a valid 0..23 (the backend needs the pair);
+    // a malformed value falls back to inherit rather than sending a half window.
+    if (Number.isInteger(fromH) && fromH >= 0 && fromH <= 23 && Number.isInteger(toH) && toH >= 0 && toH <= 23) {
+      out.quiet_start_hour = fromH;
+      out.quiet_end_hour = toH;
+    }
+  }
+  return out;
+}
+
 // Compile the full create body. Forks: boost / promo / reply_policy / free.
 export function compileBody(s: FormState): ScenarioCreate {
   const name = s.name.trim();
@@ -545,6 +692,11 @@ export function compileBody(s: FormState): ScenarioCreate {
   if (s.preset && (s.preset.action_cfg?.kind as string) === "reply_policy") {
     const rd = s.preset.reply_defaults || {};
     const onMention = (s.preset.trigger_cfg?.kind as string) === "on_mention";
+    // Layer-3 reply overrides (action_cfg): frequency + quiet pair when overridden.
+    // They spread LAST so an overridden `max_per_day` wins over the preset default;
+    // when no L3 override is set, `buildReplyOverrides` returns {} and the body is
+    // byte-identical to before (existing reply scenarios round-trip unchanged).
+    const overrides = buildReplyOverrides(s);
     return {
       name,
       // on_mention only: send the trigger + the КАК publish mode (ask/auto). A
@@ -555,6 +707,7 @@ export function compileBody(s: FormState): ScenarioCreate {
         audience: s.audience || (rd.audience as string) || "all_except_trolls",
         max_per_day: (rd.max_per_day as number) ?? 60,
         skip_low_value: rd.skip_low_value !== false,
+        ...overrides,
       },
       reply_instruction: s.replyInstruction.trim() || s.preset.reply_instruction,
     };
