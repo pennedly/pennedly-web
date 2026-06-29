@@ -20,14 +20,17 @@ import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { localHourToUtc, localUtcOffsetLabel } from "@/lib/timezone";
 import {
   IcBolt,
+  IcBriefcase,
   IcBubble,
   IcBubbleQuestion,
+  IcChat,
   IcCheck,
   IcClock,
   IcExpand,
   IcEye,
   IcGauge,
   IcHeart,
+  IcHelp,
   IcInfo,
   IcLink,
   IcLock,
@@ -35,13 +38,19 @@ import {
   IcPencil,
   IcPerson,
   IcPlus,
+  IcRefresh,
   IcRepeat,
+  IcScale,
   IcShield,
   IcShieldHouse,
   IcSliders,
+  IcSparkle,
+  IcStar,
+  IcTag,
   IcTarget,
   IcTimer,
   IcUndo,
+  IcUsers,
   IcX,
 } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -65,6 +74,13 @@ import {
   type RecipeLength,
 } from "./scenarios-form";
 import { type ReplyFreq } from "./HouseRules";
+import {
+  AUDIENCE_PRESETS,
+  type AudiencePreset,
+  type ReplyAudience,
+  decomposeAudience,
+  mergeAudiencePrompt,
+} from "./reply-audience";
 
 type T = (k: MessageKey) => string;
 
@@ -1566,6 +1582,319 @@ function ModeCard({ active, tone, title, badge, sub, onPick }: { active: boolean
 }
 
 // ════════════════════════════════════════════════════════════════════════════
+//  КОМУ (reply) — shared two-group MULTI-select picker (Reply-Audience-
+//  Multiselect-SPEC). Used by BOTH the standalone «Кому отвечать» gallery
+//  (ReplyAudienceGallery) and the recipe-editor «Кому отвечать» slot (WhoBody),
+//  so the two surfaces are identical. Group A = the 3 deterministic enum filters
+//  (radio); Group B = the text presets (checkboxes, OR-merged into one
+//  audience_prompt); the two are mutually exclusive. FE-only — backend holds one
+//  reply_audience enum + one free-text audience_prompt. Hosts its own big-text
+//  modal for the description (so manual-mode editing stays consistent).
+// ════════════════════════════════════════════════════════════════════════════
+type AudIconCmp = (p: { size?: number; className?: string }) => ReactNode;
+const AUDIENCE_ICONS: Record<string, AudIconCmp> = {
+  heart: IcHeart,
+  users: IcUsers,
+  help: IcHelp,
+  briefcase: IcBriefcase,
+  sparkle: IcSparkle,
+  tag: IcTag,
+  star: IcStar,
+  chat: IcChat,
+  scale: IcScale,
+  pen: IcPencil,
+};
+
+// The enum→name i18n key for a group-A filter's read-only note.
+function aPresetNameKey(a: ReplyAudience): MessageKey {
+  const p = AUDIENCE_PRESETS.find((x) => x.kind === "builtin" && x.audience === a);
+  return p ? p.nameKey : "ap.reply.preset.all.name";
+}
+
+// A group label + its rule chip («выбор один» / «можно несколько»).
+function AudGroupHead({ title, rule }: { title: string; rule: string }) {
+  return (
+    <div className="mb-2.5 flex flex-wrap items-baseline gap-2.5">
+      <span className="text-caption font-semibold uppercase tracking-[0.06em] text-text-subtle">{title}</span>
+      <span className="rounded-full border border-border px-2 py-px font-mono text-[10px] tracking-[0.02em] text-text-subtle">{rule}</span>
+    </div>
+  );
+}
+
+// A single audience tile. Round mark = «один из» (group A), square = «несколько» (group B).
+function AudTileNew({
+  preset,
+  shape,
+  on,
+  onToggle,
+}: {
+  preset: AudiencePreset;
+  shape: "circle" | "square";
+  on: boolean;
+  onToggle: () => void;
+}) {
+  const { t } = useTranslation();
+  const Icon = AUDIENCE_ICONS[preset.icon] ?? IcBubble;
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-pressed={on}
+      className={cn(
+        "relative flex flex-col gap-1 rounded-md border bg-surface px-3.5 py-3 pr-9 text-left transition-colors",
+        on ? "border-accent bg-accent/[0.06] shadow-[0_0_0_1px_var(--color-accent)]" : "border-border hover:border-text/16",
+      )}
+    >
+      <span
+        className={cn(
+          "absolute right-3 top-3 grid h-[18px] w-[18px] place-items-center border-[1.5px] transition-colors",
+          shape === "circle" ? "rounded-full" : "rounded-[5px]",
+          on ? "border-accent bg-accent text-accent-foreground" : "border-border bg-surface",
+        )}
+      >
+        {on && (shape === "circle" ? <span className="h-[7px] w-[7px] rounded-full bg-accent-foreground" /> : <IcCheck size={12} />)}
+      </span>
+      <span className={cn("flex items-center gap-1.5 text-small font-semibold leading-tight text-text", on && "[&_svg]:text-accent")}>
+        <Icon size={14} className="shrink-0 text-text-subtle" /> {t(preset.nameKey)}
+      </span>
+      <span className="text-caption leading-snug text-text-subtle">{t(preset.whoKey)}</span>
+    </button>
+  );
+}
+
+// The soft, dismissible cross-group conflict notice.
+function AudConflictNotice({ kind, onDismiss }: { kind: "a" | "b"; onDismiss: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <div className="mt-3.5 flex items-start gap-2.5 rounded-md border border-accent/26 bg-accent/[0.07] px-3 py-2.5 text-caption leading-snug text-text-muted">
+      <IcInfo size={15} className="mt-px shrink-0 text-accent" />
+      <span className="min-w-0 flex-1">{t(kind === "a" ? "ap.reply.conflict.a_clears_b" : "ap.reply.conflict.b_clears_a")}</span>
+      <button
+        type="button"
+        onClick={onDismiss}
+        aria-label={t("a11y.remove")}
+        className="grid h-[22px] w-[22px] shrink-0 place-items-center rounded-sm text-text-subtle transition-colors hover:bg-accent/12 hover:text-text"
+      >
+        <IcX size={13} />
+      </button>
+    </div>
+  );
+}
+
+// Group A → a read-only «точный встроенный фильтр» note (no free-text panel).
+function AudReadOnlyNote({ name }: { name: string }) {
+  const { t } = useTranslation();
+  return (
+    <div className="mt-4">
+      <div className="mb-2 text-small font-semibold text-text">{t("ap.reply.gallery.desc_label")}</div>
+      <div className="flex items-start gap-2.5 rounded-md border border-border bg-surface-2 px-3.5 py-3 text-small leading-normal text-text-muted">
+        <IcShield size={16} className="mt-px shrink-0 text-text-subtle" />
+        <div>
+          <b className="font-semibold text-text">{t("ap.reply.gallery.readonly_filter")}</b> «{name}»{" "}
+          {t("ap.reply.gallery.readonly_filter_sub")}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Group B → the merged «Описание аудитории» field (auto OR-render / manual text).
+function AudDescPanel({
+  fragments,
+  manual,
+  manualText,
+  hasPreset,
+  onExpand,
+  onRegen,
+}: {
+  fragments: string[];
+  manual: boolean;
+  manualText: string;
+  hasPreset: boolean;
+  onExpand: () => void;
+  onRegen: () => void;
+}) {
+  const { t } = useTranslation();
+  const empty = manual ? manualText.trim() === "" : fragments.length === 0;
+  return (
+    <div className="mt-4">
+      <div className="mb-2 flex items-center gap-2.5">
+        <span className="text-small font-semibold text-text">{t("ap.reply.gallery.desc_label")}</span>
+        {manual && (
+          <span className="inline-flex items-center gap-1 rounded-full border border-accent/32 bg-accent/[0.07] px-2 py-px font-mono text-[10px] text-accent">
+            <IcPencil size={10} /> {t("ap.reply.desc.manual_badge")}
+          </span>
+        )}
+      </div>
+      <div className="overflow-hidden rounded-md border border-border bg-surface">
+        <div className="min-h-[56px] cursor-text px-3.5 py-3 text-small leading-[1.65] text-text [text-wrap:pretty]" onClick={onExpand}>
+          {empty ? (
+            <span className="text-text-subtle">{t("ap.reply.desc.placeholder")}</span>
+          ) : manual ? (
+            manualText
+          ) : (
+            fragments.map((f, i) => (
+              <span key={i}>
+                {i > 0 && <span className="mx-[0.32em] font-bold text-accent">{t("ap.reply.or")}</span>}
+                {f}
+              </span>
+            ))
+          )}
+        </div>
+        <div className="flex flex-col gap-1.5 border-t border-border bg-surface-2 px-3.5 py-2.5">
+          <span className="text-caption leading-[1.45] text-text-subtle">
+            {manual ? t("ap.reply.desc.hint_manual") : t("ap.reply.desc.hint_auto")}
+          </span>
+          <div className="flex flex-wrap items-center gap-x-1 gap-y-1">
+            {manual && hasPreset && (
+              <button
+                type="button"
+                onClick={onRegen}
+                className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-sm px-[7px] py-1 text-caption font-semibold text-text-subtle transition-colors hover:bg-surface hover:text-text"
+              >
+                <IcRefresh size={12} /> {t("ap.reply.desc.regen")}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onExpand}
+              className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-sm px-[7px] py-1 text-caption font-semibold text-accent transition-colors hover:bg-accent/[0.09]"
+            >
+              <IcExpand size={13} /> {t("scenarios.rc.bigtext_open")}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// The shared picker. Holds the multi-select model, seeded ONCE from the committed
+// (audience, audiencePrompt), lifts a controlled (reply_audience, audience_prompt)
+// up, and hosts its own full-screen description editor.
+export function ReplyAudiencePicker({
+  audience,
+  audiencePrompt,
+  onChange,
+}: {
+  audience: ReplyAudience;
+  audiencePrompt: string;
+  onChange: (replyAudience: ReplyAudience, audiencePrompt: string) => void;
+}) {
+  const { t } = useTranslation();
+  const [init] = useState(() => decomposeAudience(audience, audiencePrompt));
+  const seededManual = init.group === "b" && init.b.includes("custom");
+  const [group, setGroup] = useState<"a" | "b">(init.group);
+  const [aId, setAId] = useState<ReplyAudience>(init.group === "a" ? init.a : "all_except_trolls");
+  const [bIds, setBIds] = useState<string[]>(init.group === "b" ? init.b.filter((id) => id !== "custom") : []);
+  const [manual, setManual] = useState(seededManual);
+  const [manualDesc, setManualDesc] = useState(seededManual ? audiencePrompt : "");
+  const [notice, setNotice] = useState<"a" | "b" | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const autoDesc = mergeAudiencePrompt(bIds, "");
+  const desc = manual ? manualDesc : autoDesc;
+
+  function emit(g: "a" | "b", a: ReplyAudience, d: string) {
+    if (g === "a") onChange(a, "");
+    else onChange("custom", d);
+  }
+  function pickA(id: ReplyAudience) {
+    const hadB = group === "b" && (bIds.length > 0 || (manual && manualDesc.trim() !== ""));
+    setGroup("a");
+    setAId(id);
+    setBIds([]);
+    setManual(false);
+    setManualDesc("");
+    setNotice(hadB ? "a" : null);
+    emit("a", id, "");
+  }
+  function toggleB(id: string) {
+    if (group === "a") {
+      setGroup("b");
+      setBIds([id]);
+      setManual(false);
+      setManualDesc("");
+      setNotice("b");
+      emit("b", "custom", mergeAudiencePrompt([id], ""));
+      return;
+    }
+    const has = bIds.includes(id);
+    const next = has ? bIds.filter((x) => x !== id) : [...bIds, id];
+    setBIds(next);
+    setNotice(null);
+    emit("b", "custom", manual ? manualDesc : mergeAudiencePrompt(next, ""));
+  }
+  function editDesc(value: string) {
+    if (group !== "b") return;
+    if (value.trim() === "") {
+      setManual(false);
+      setManualDesc("");
+      emit("b", "custom", mergeAudiencePrompt(bIds, ""));
+      return;
+    }
+    if (!manual) setManual(true);
+    setManualDesc(value);
+    emit("b", "custom", value);
+  }
+  function regen() {
+    setManual(false);
+    setManualDesc("");
+    emit("b", "custom", mergeAudiencePrompt(bIds, ""));
+  }
+
+  const fragments: string[] = [];
+  for (const p of AUDIENCE_PRESETS) {
+    if (p.kind === "text" && bIds.includes(p.id) && p.prompt.trim()) fragments.push(p.prompt.trim());
+  }
+
+  return (
+    <div>
+      {/* Group A — точные фильтры (выбор один) */}
+      <AudGroupHead title={t("ap.reply.group_a.title")} rule={t("ap.reply.group_a.rule")} />
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+        {AUDIENCE_PRESETS.filter((p) => p.kind === "builtin").map((p) => (
+          <AudTileNew
+            key={p.id}
+            preset={p}
+            shape="circle"
+            on={group === "a" && aId === (p.audience as ReplyAudience)}
+            onToggle={() => pickA(p.audience as ReplyAudience)}
+          />
+        ))}
+      </div>
+
+      {/* Group B — по смыслу комментария (можно несколько) */}
+      <div className="mt-[18px] border-t border-border pt-[18px]">
+        <AudGroupHead title={t("ap.reply.group_b.title")} rule={t("ap.reply.group_b.rule")} />
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+          {AUDIENCE_PRESETS.filter((p) => p.kind === "text").map((p) => (
+            <AudTileNew key={p.id} preset={p} shape="square" on={group === "b" && bIds.includes(p.id)} onToggle={() => toggleB(p.id)} />
+          ))}
+        </div>
+      </div>
+
+      {notice && <AudConflictNotice kind={notice} onDismiss={() => setNotice(null)} />}
+
+      {group === "a" ? (
+        <AudReadOnlyNote name={t(aPresetNameKey(aId))} />
+      ) : (
+        <AudDescPanel
+          fragments={fragments}
+          manual={manual}
+          manualText={manualDesc}
+          hasPreset={bIds.length > 0}
+          onExpand={() => setModalOpen(true)}
+          onRegen={regen}
+        />
+      )}
+
+      {modalOpen && <BigTextModal field="audience" value={desc} onChange={editDesc} onClose={() => setModalOpen(false)} />}
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════
 //  КОМУ (reply) — 4-tile audience gallery + «из Правил дома» badge
 // ════════════════════════════════════════════════════════════════════════════
 const AUD_TILES: { key: string; icon: ReactNode; titleKey: MessageKey; subKey: MessageKey }[] = [
@@ -1577,46 +1906,18 @@ const AUD_TILES: { key: string; icon: ReactNode; titleKey: MessageKey; subKey: M
 
 export function WhoBody({
   audience,
-  onAudience,
   audiencePrompt,
-  onOpenCustom,
+  onChange,
 }: {
   audience: string;
-  onAudience: (a: string) => void;
   audiencePrompt: string;
-  onOpenCustom: () => void;
+  onChange: (a: ReplyAudience, prompt: string) => void;
 }) {
   const { t } = useTranslation();
-  const custom = audience === "custom";
   return (
     <>
-      <label className="flex flex-col gap-1.5">
-        <FieldLabel>{t("scenarios.rc.who_label")}</FieldLabel>
-        <div className="grid grid-cols-2 gap-2.5 max-[520px]:grid-cols-1">
-          {AUD_TILES.map((tile) => {
-            const on = tile.key === audience;
-            return (
-              <button
-                key={tile.key}
-                type="button"
-                onClick={() => onAudience(tile.key)}
-                aria-pressed={on}
-                className={cn(
-                  "flex flex-col gap-1 rounded-md border bg-surface px-[13px] py-3 text-left transition-colors",
-                  on ? "border-accent bg-accent/[0.06] shadow-[0_0_0_1px_var(--color-accent)]" : "border-border hover:border-text/16",
-                )}
-              >
-                <span className="flex items-center gap-[7px] text-small font-semibold text-text">
-                  <span className={cn("shrink-0", on ? "text-accent" : "text-text-subtle")}>{tile.icon}</span>
-                  {t(tile.titleKey)}
-                </span>
-                <span className="text-caption leading-[1.4] text-text-subtle">{t(tile.subKey)}</span>
-              </button>
-            );
-          })}
-        </div>
-      </label>
-      {custom && <BigText value={audiencePrompt} hint={t("scenarios.rc.aud_custom_hint")} onOpen={onOpenCustom} />}
+      <FieldLabel>{t("scenarios.rc.who_label")}</FieldLabel>
+      <ReplyAudiencePicker audience={audience as ReplyAudience} audiencePrompt={audiencePrompt} onChange={onChange} />
       <p className="inline-flex flex-wrap items-center gap-1.5 text-caption text-text-subtle [&_a]:font-semibold [&_a]:text-accent">
         <span className="rounded-full border border-accent/30 px-[7px] py-px font-mono text-[9.5px] uppercase tracking-[0.03em] text-accent">
           <IcShieldHouse size={10} className="-mt-px mr-1 inline" />

@@ -933,7 +933,7 @@ export function StepEditor({
       {openSlot === "metric" && (
         <BoostTriggerBody metric={form.boostMetric} onMetric={setBoostMetric} threshold={form.boostThreshold} onThreshold={(v) => update({ boostThreshold: v })} />
       )}
-      {openSlot === "who" && <WhoBody audience={form.audience} onAudience={(a) => update({ audience: a })} audiencePrompt={form.audiencePrompt} onOpenCustom={() => setBigText("audience")} />}
+      {openSlot === "who" && <WhoBody audience={form.audience} audiencePrompt={form.audiencePrompt} onChange={(a, p) => update({ audience: a, audiencePrompt: p })} />}
       {openSlot === "tone" && <ToneBody value={form.replyInstruction} onOpen={() => setBigText("tone")} />}
       {openSlot === "how" && <HowBody mode={form.mode} onMode={(m) => update({ mode: m })} />}
     </Drawer>

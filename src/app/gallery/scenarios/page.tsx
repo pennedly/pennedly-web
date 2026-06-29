@@ -752,10 +752,10 @@ export default function ScenariosGallery() {
         <Section title="REPLY · «Дежурство» default (locked «каждые 15 минут» + who/tone slots + reply-thread stage)">
           <StepEditorDemo presetId="reply_duty" />
         </Section>
-        <Section title="REPLY · slot «Кому отвечать» open (4-tile gallery)">
+        <Section title="REPLY · slot «Кому отвечать» open — shared two-group multi-select (same as the gallery)">
           <StepEditorDemo presetId="reply_duty" demoOpenSlot="who" />
         </Section>
-        <Section title="REPLY · slot «Кому отвечать» open · «Свой вариант» (free text)">
+        <Section title="REPLY · slot «Кому отвечать» open · group B (custom free text in the description field)">
           <StepEditorDemo presetId="reply_duty" demoOpenSlot="who" override={{ audience: "custom" }} />
         </Section>
         <Section title="REPLY · slot «Как звучит ответ» (тон) open">
