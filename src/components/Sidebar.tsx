@@ -31,7 +31,6 @@ import {
   IcFeed,
   IcReplies,
   IcStudio,
-  IcPencil,
   IcVoice,
   IcX,
   type IconProps,
@@ -74,7 +73,8 @@ const GROUPS: { title: MessageKey; items: NavItem[] }[] = [
     title: "nav.group.voice_automation",
     items: [
       { href: "/app/role-book", label: "dashboard.nav.voice", icon: IcVoice },
-      { href: "/app/style-rules", label: "dashboard.nav.style_rules", icon: IcPencil },
+      // «Style» merged into «Voice» as its «Anti-robot» tab — the standalone
+      // /app/style-rules screen is retired (it now redirects to the tab).
       // «Сценарии» merged into «Автопилот»: one hub entry (the standalone
       // /app/autopilot screen is retired → it now redirects here).
       { href: "/app/scenarios", label: "dashboard.nav.autopilot", icon: IcBolt, tester: true },

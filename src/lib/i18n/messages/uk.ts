@@ -276,6 +276,10 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "voice.busy": "Витягую заново…",
   "voice.to_resolve": "{n} до вирішення",
   "voice.in_sync": "Синхронізовано",
+  "voice.tabs.voice": "Голос",
+  "voice.tabs.antiRobot": "Анти-робот",
+  "voice.tabs.antiRobot.subtitle": "Щоб пости й відповіді не звучали як ШІ.",
+  "voice.tabs.antiRobot.pill": "{on} з {total} увімк",
   "voice.check_running_t": "Перевіряю твій голос на конфлікти…",
   "voice.check_running_s":
     "Порівнюю кожне правило з іншими та з твоїми прикладами.",

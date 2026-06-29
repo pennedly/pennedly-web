@@ -67,6 +67,7 @@ export const IcQuote = (p: IconProps) => <Svg {...p}><path d="M9.5 7C7 7.8 5.5 1
 export const IcSliders = (p: IconProps) => <Svg {...p}><path d="M4 7h9M17 7h3M4 17h3M11 17h9" /><circle cx="15" cy="7" r="2" /><circle cx="9" cy="17" r="2" /></Svg>;
 export const IcFilter = (p: IconProps) => <Svg {...p}><path d="M4 5h16l-6 7v5l-4 2v-7L4 5Z" /></Svg>;
 export const IcPenLine = (p: IconProps) => <Svg {...p}><path d="M4 20h16" /><path d="M5 16h2L16 7a1.6 1.6 0 0 0-2.3-2.3L5 13.5V16Z" /></Svg>;
+export const IcRobot = (p: IconProps) => <Svg {...p}><rect x="5" y="8" width="14" height="11" rx="2.4" /><path d="M12 4.5V8M8.5 4.5h7" /><circle cx="9.3" cy="13" r="1.1" fill="currentColor" stroke="none" /><circle cx="14.7" cy="13" r="1.1" fill="currentColor" stroke="none" /><path d="M9.5 16.2h5M3 12v3M21 12v3" /></Svg>;
 
 /* settings — ported from settings-icons.jsx */
 export const IcUnlink = (p: IconProps) => <Svg {...p}><path d="M9 15l-2 2a3.5 3.5 0 0 1-5-5l2-2M15 9l2-2a3.5 3.5 0 0 1 5 5l-2 2M8 4v2M4 8H2M20 16h2M16 20v-2" /></Svg>;

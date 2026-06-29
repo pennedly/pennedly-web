@@ -279,6 +279,10 @@ export const pt: Partial<Record<MessageKey, string>> = {
   "voice.busy": "Re-extraindo…",
   "voice.to_resolve": "{n} a resolver",
   "voice.in_sync": "Em sincronia",
+  "voice.tabs.voice": "Voz",
+  "voice.tabs.antiRobot": "Anti-robô",
+  "voice.tabs.antiRobot.subtitle": "Opções para que posts e respostas não pareçam de IA.",
+  "voice.tabs.antiRobot.pill": "{on} de {total} ativados",
   "voice.check_running_t": "Analisando sua voz em busca de conflitos…",
   "voice.check_running_s":
     "Comparando cada regra com as outras e com seus exemplos.",

@@ -12,7 +12,7 @@
 // and the backend is untouched. "Match %" isn't a backend metric — omitted.
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import {
   ApiError,
@@ -46,6 +46,7 @@ import {
   IcPlus,
   IcQuote,
   IcRefresh,
+  IcRobot,
   IcScan,
   IcShield,
   IcTags,
@@ -53,6 +54,7 @@ import {
   IcVoice,
   IcX,
 } from "@/components/icons";
+import { AntiRobotPanel } from "@/components/studio/AntiRobotPanel";
 import { SUPPORTED_LANGUAGES } from "@/lib/types";
 import type {
   LanguageCode,
@@ -258,6 +260,27 @@ export default function VoiceEditor() {
   const [translated, setTranslated] = useState<RoleBookSections | null>(null);
   const [translating, setTranslating] = useState(false);
   const transToken = useRef(0);
+
+  // Voice / Anti-robot tabs. The Anti-robot tab hosts the former Style screen.
+  // Initial tab honors ?tab=anti so the old /app/style-rules bookmark (which
+  // now redirects here) lands on the right tab.
+  const searchParams = useSearchParams();
+  const [tab, setTab] = useState<"voice" | "anti">(() =>
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("tab") === "anti"
+      ? "anti"
+      : "voice",
+  );
+  // A client-side redirect (from the retired /app/style-rules route) lands here
+  // via the App Router; sync the tab once the ?tab= param resolves so it opens
+  // on Anti-robot even when the initial render predated the URL commit.
+  const tabParam = searchParams.get("tab");
+  useEffect(() => {
+    if (tabParam === "anti") setTab("anti");
+  }, [tabParam]);
+  // Live on/total counts from the Anti-robot panel — drives the tab chip and
+  // the per-tab topbar pill.
+  const [antiCounts, setAntiCounts] = useState<{ on: number; total: number }>({ on: 0, total: 0 });
 
   // Tester ?demo=1: a tweak panel drives every state on mock content.
   const [demoParam] = useState(() =>
@@ -530,7 +553,7 @@ export default function VoiceEditor() {
   const transName = transLang
     ? (SUPPORTED_LANGUAGES.find((l) => l.code === transLang)?.name ?? transLang)
     : "";
-  const pill = readOnly ? (
+  const voicePill = readOnly ? (
     <TopbarPill tone="accent">{fill(t("voice.translated_pill"), { lang: transName })}</TopbarPill>
   ) : busy ? (
     <TopbarPill tone="accent">{t("voice.busy")}</TopbarPill>
@@ -539,12 +562,65 @@ export default function VoiceEditor() {
   ) : book ? (
     <TopbarPill tone="success">{t("voice.in_sync")}</TopbarPill>
   ) : undefined;
+  // Anti-robot tab: a per-tab "N of M on" pill from the panel's live counts.
+  const antiPill = (
+    <TopbarPill>{fill(t("voice.tabs.antiRobot.pill"), antiCounts)}</TopbarPill>
+  );
+  const pill = tab === "anti" ? antiPill : voicePill;
+
+  // The tab switcher (underline style) sits at the top of the content column.
+  const tabBar = (
+    <div className="border-b border-border">
+      <div className="flex gap-1.5">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "voice"}
+          onClick={() => setTab("voice")}
+          className={cn(
+            "-mb-px inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 whitespace-nowrap border-b-2 px-1.5 py-3 text-small font-semibold transition-colors md:flex-none md:min-h-0",
+            tab === "voice"
+              ? "border-primary text-text"
+              : "border-transparent text-text-subtle hover:text-text",
+          )}
+        >
+          <IcVoice size={15} />
+          {t("voice.tabs.voice")}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "anti"}
+          onClick={() => setTab("anti")}
+          className={cn(
+            "-mb-px inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 whitespace-nowrap border-b-2 px-1.5 py-3 text-small font-semibold transition-colors md:flex-none md:min-h-0",
+            tab === "anti"
+              ? "border-primary text-text"
+              : "border-transparent text-text-subtle hover:text-text",
+          )}
+        >
+          <IcRobot size={16} />
+          {t("voice.tabs.antiRobot")}
+          <span
+            className={cn(
+              "inline-flex h-[18px] min-w-[20px] items-center justify-center rounded-full border border-border bg-surface-2 px-1.5 text-caption font-semibold tabular-nums",
+              tab === "anti" ? "text-text" : "text-text-subtle",
+            )}
+          >
+            {antiCounts.on}/{antiCounts.total}
+          </span>
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-bg text-text">
       <AppTopbar title={t("rolebook.title")} pill={pill} />
       <main className="mx-auto max-w-[720px] space-y-[18px] px-5 pb-24 pt-7 md:px-6">
-        {!book ? (
+        {tabBar}
+        {/* Voice DNA editor — rendered only on the Voice tab. */}
+        {tab === "voice" && (!book ? (
           emptyVoice ? (
             busy ? (
               <ReExtractPanel stepIndex={stepIndex} steps={REEXTRACT_STEPS} postCount={undefined} t={t} />
@@ -744,7 +820,13 @@ export default function VoiceEditor() {
               </>
             )}
           </>
-        )}
+        ))}
+        {/* Anti-robot panel — ALWAYS mounted (hidden when inactive) so its on/total
+            count is known for the tab chip + topbar pill without first visiting the
+            tab, and switching tabs is instant with state preserved. */}
+        <div className={tab === "anti" ? "" : "hidden"}>
+          <AntiRobotPanel accountId={accountId} demoOn={demoOn} onCounts={setAntiCounts} />
+        </div>
       </main>
 
       {reDialog && (

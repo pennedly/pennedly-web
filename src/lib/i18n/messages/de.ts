@@ -280,6 +280,10 @@ export const de: Partial<Record<MessageKey, string>> = {
   "voice.busy": "Leite neu ab…",
   "voice.to_resolve": "{n} zu lösen",
   "voice.in_sync": "Synchron",
+  "voice.tabs.voice": "Stimme",
+  "voice.tabs.antiRobot": "Anti-Roboter",
+  "voice.tabs.antiRobot.subtitle": "Schalter, damit Beiträge und Antworten nicht nach KI klingen.",
+  "voice.tabs.antiRobot.pill": "{on} von {total} an",
   "voice.check_running_t": "Prüfe deine Stimme auf Konflikte…",
   "voice.check_running_s":
     "Vergleiche jede Regel mit den anderen und deinen Beispielen.",
