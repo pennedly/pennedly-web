@@ -109,6 +109,7 @@ function FormDemo({ presetId }: { presetId: string }) {
       dateTo: "",
       threshold: "",
       eventKind: "on_metric_threshold",
+      hours: [9],
       hour: "9:00",
       jitter: 15,
       condNoPostToday: false,
@@ -271,6 +272,7 @@ function StepEditorDemo({
       dateTo: "2026-07-05",
       threshold: "5000",
       eventKind: "on_metric_threshold",
+      hours: [9],
       hour: "9:00",
       jitter: 15,
       condNoPostToday: false,
@@ -648,6 +650,9 @@ export default function ScenariosGallery() {
         </Section>
         <Section title="POST · slot «Когда» open · mode = Каждый день (hour picker + jitter)">
           <StepEditorDemo presetId="daily_question" demoOpenSlot="when" override={{ when: "daily" }} />
+        </Section>
+        <Section title="POST · slot «Когда» open · mode = Каждый день · несколько раз в день (3 слота: 9:00 + 14:00 + 19:00)">
+          <StepEditorDemo presetId="daily_question" demoOpenSlot="when" override={{ when: "daily", hours: [9, 14, 19], hour: "9:00" }} />
         </Section>
         <Section title="POST · slot «Когда» open · mode = Раз в N дней (interval stepper · «Начиная с» empty)">
           <StepEditorDemo presetId="daily_question" demoOpenSlot="when" override={{ when: "every_n_days" }} />

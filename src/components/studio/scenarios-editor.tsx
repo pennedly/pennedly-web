@@ -70,24 +70,35 @@ function audPhrase(t: T, a: string): string {
   return t("scenarios.aud_phrase.all");
 }
 
+// «9:00, 14:00 и 19:00» — the scenario's post times as a human phrase. One slot
+// reads as the single time («9:00»); 2+ slots are listed, the last joined by «и».
+// Reads `form.hours` (the multi-slot list) when it holds 2+, else `form.hour`.
+function timesPhrase(t: T, form: FormState): string {
+  const list = [...new Set(form.hours.filter((h) => h >= 0 && h <= 23))].sort((a, b) => a - b);
+  if (list.length < 2) return form.hour;
+  const labels = list.map((h) => `${h}:00`);
+  return `${labels.slice(0, -1).join(", ")} ${t("common.and")} ${labels[labels.length - 1]}`;
+}
+
 // ── КОГДА → a short human phrase for the sentence slot ──
 function whenPhrase(t: T, form: FormState): string {
+  const time = timesPhrase(t, form);
   switch (form.when) {
     case "every_n_days":
-      return t("scenarios.rc.sent.every_n").replace("{n}", String(form.nDays)).replace("{time}", form.hour);
+      return t("scenarios.rc.sent.every_n").replace("{n}", String(form.nDays)).replace("{time}", time);
     case "weekly":
-      return t("scenarios.rc.sent.weekly").replace("{days}", weekdaysPhrase(t, form)).replace("{time}", form.hour);
+      return t("scenarios.rc.sent.weekly").replace("{days}", weekdaysPhrase(t, form)).replace("{time}", time);
     case "monthly":
-      return t("scenarios.rc.sent.monthly").replace("{days}", monthlyDaysPhrase(t, form)).replace("{time}", form.hour);
+      return t("scenarios.rc.sent.monthly").replace("{days}", monthlyDaysPhrase(t, form)).replace("{time}", time);
     case "yearly":
       return t("scenarios.rc.sent.yearly").replace("{date}", yearlyFirstDatePhrase(t, form));
     case "date_range":
-      return t("scenarios.rc.sent.period").replace("{time}", form.hour);
+      return t("scenarios.rc.sent.period").replace("{time}", time);
     case "event":
       return form.eventKind === "on_follower_milestone" ? t("scenarios.rc.sent.event_followers") : t("scenarios.rc.sent.event_views");
     case "daily":
     default:
-      return t("scenarios.rc.sent.daily").replace("{time}", form.hour);
+      return t("scenarios.rc.sent.daily").replace("{time}", time);
   }
 }
 
@@ -262,11 +273,29 @@ function RunItem({ when, what }: { when: string; what: string }) {
     </div>
   );
 }
+// The sorted slot list (local hours) for the runs list — at least the primary
+// `hour`. Multi-slot scenarios fire once per slot per due day, so the runs expand
+// across slots (then days) until the ~3-row budget is filled.
+function runHours(form: FormState): number[] {
+  const list = [...new Set(form.hours.filter((h) => h >= 0 && h <= 23))].sort((a, b) => a - b);
+  if (list.length > 0) return list;
+  const h = parseInt(form.hour, 10);
+  return [Number.isInteger(h) ? h : 0];
+}
+
 // The next-3 «when» labels. Event scenarios have no schedule → a single row.
 function computeRuns(t: T, form: FormState): string[] {
   const hh = `~${form.hour}`;
+  const slots = runHours(form);
+  // Slot labels for ONE due day, e.g. ["~9:00","~14:00","~19:00"].
+  const slotLabels = slots.map((h) => `~${h}:00`);
   if (form.when === "event") return [t("scenarios.rc.runs_on_event")];
   if (form.when === "every_n_days") {
+    // Multi-slot: list each of today's-anchor slots first (capped at 3), else the
+    // single-slot interval ladder («завтра» / «через N дн.» / «через 2N дн.»).
+    if (slots.length >= 2) {
+      return slotLabels.slice(0, 3).map((s) => t("scenarios.rc.runs_tomorrow").replace("{time}", s));
+    }
     return [
       t("scenarios.rc.runs_tomorrow").replace("{time}", hh),
       t("scenarios.rc.runs_in_n_days").replace("{n}", String(form.nDays)).replace("{time}", hh),
@@ -277,6 +306,10 @@ function computeRuns(t: T, form: FormState): string[] {
     // Multi-weekday — the next runs land on the chosen days; the summary phrase
     // («по будням» / «Пн, Ср и Пт») reads the same on each approximate row.
     const days = weekdaysPhrase(t, form);
+    // Multi-slot: the next due day fires every slot — list them (capped at 3).
+    if (slots.length >= 2) {
+      return slotLabels.slice(0, 3).map((s) => t("scenarios.rc.runs_next_day").replace("{day}", days).replace("{time}", s));
+    }
     return [
       t("scenarios.rc.runs_next_day").replace("{day}", days).replace("{time}", hh),
       t("scenarios.rc.runs_next_day").replace("{day}", days).replace("{time}", hh),
@@ -284,18 +317,24 @@ function computeRuns(t: T, form: FormState): string[] {
     ];
   }
   if (form.when === "monthly") {
-    // Honest-but-approximate: the chosen days, each month, around the hour.
+    // Honest-but-approximate: the chosen days, each month, around the time(s) —
+    // multi-slot times are listed inline in {time} (e.g. «9:00, 14:00 и 19:00»).
     const days = monthlyDaysPhrase(t, form);
+    const mt = `~${timesPhrase(t, form)}`;
     return [
-      t("scenarios.rc.runs_monthly").replace("{days}", days).replace("{time}", hh),
-      t("scenarios.rc.runs_monthly_next").replace("{days}", days).replace("{time}", hh),
+      t("scenarios.rc.runs_monthly").replace("{days}", days).replace("{time}", mt),
+      t("scenarios.rc.runs_monthly_next").replace("{days}", days).replace("{time}", mt),
     ];
   }
   if (form.when === "yearly") {
-    // Single anchored row per the design's «каждый год» feel.
-    return [t("scenarios.rc.runs_yearly").replace("{date}", yearlyFirstDatePhrase(t, form)).replace("{time}", hh)];
+    // Single anchored row per the design's «каждый год» feel (times listed inline).
+    return [t("scenarios.rc.runs_yearly").replace("{date}", yearlyFirstDatePhrase(t, form)).replace("{time}", `~${timesPhrase(t, form)}`)];
   }
-  // daily / date_range → three consecutive days
+  // daily / date_range. Multi-slot: tomorrow fires every slot — list them (cap 3).
+  // Single slot: three consecutive days around the one hour.
+  if (slots.length >= 2) {
+    return slotLabels.slice(0, 3).map((s) => t("scenarios.rc.runs_tomorrow").replace("{time}", s));
+  }
   return [
     t("scenarios.rc.runs_tomorrow").replace("{time}", hh),
     t("scenarios.rc.runs_day2").replace("{time}", hh),

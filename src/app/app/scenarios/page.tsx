@@ -192,7 +192,10 @@ function freshForm(preset: ScenarioPreset | null, t: (k: MessageKey) => string):
     dateTo: (preset?.condition_cfg?.active_to as string) || "",
     threshold: "",
     eventKind,
-    hour: "9:00",
+    // schedule time(s) — a preset may ship a multi-slot `hours` array or a single
+    // `hour`; default to one 9:00 slot. `hour` mirrors the first (sorted) slot.
+    hours: hoursFromCfg(preset?.trigger_cfg) ?? [9],
+    hour: `${(hoursFromCfg(preset?.trigger_cfg) ?? [9])[0]}:00`,
     jitter: 15,
     // recipe condition builder — a fresh preset starts with the preset's own
     // baked conditions reflected (only_if_no_post_today is the only one presets
@@ -686,8 +689,11 @@ export default function ScenariosPage() {
       threshold: s.trigger_cfg?.threshold_views != null ? String(s.trigger_cfg.threshold_views) : "",
       eventKind: (s.trigger_cfg?.kind as string) === "on_follower_milestone" ? "on_follower_milestone" : "on_metric_threshold",
       // Schedule «Время»/«Разброс» — restored from the saved scenario (the backend
-      // surfaces them top-level, sourced from trigger_cfg). Defaults when absent.
-      hour: typeof scenarioHour(s) === "number" ? `${scenarioHour(s)}:00` : "9:00",
+      // surfaces them top-level, sourced from trigger_cfg). Multi-slot scenarios
+      // store `trigger_cfg.hours[]`; single-time ones a lone `hour` — reconstruct
+      // the slot list from either (round-trip safe), `hour` mirrors the first slot.
+      hours: scenarioHours(s) ?? [typeof scenarioHour(s) === "number" ? (scenarioHour(s) as number) : 9],
+      hour: `${(scenarioHours(s) ?? [typeof scenarioHour(s) === "number" ? (scenarioHour(s) as number) : 9])[0]}:00`,
       jitter: scenarioJitter(s) ?? 15,
       // recipe condition builder — reconstructed from condition_cfg so editing +
       // saving keeps the same conditions (an absent key → that row is off).
@@ -1395,6 +1401,30 @@ function scenarioJitter(s: Scenario): number | null {
   if (typeof s.jitter_minutes === "number") return s.jitter_minutes;
   const j = s.trigger_cfg?.jitter_minutes;
   return typeof j === "number" && Number.isInteger(j) && j >= 0 && j <= 120 ? j : null;
+}
+
+// Read whole hours 0–23 from a `hours` field on a trigger_cfg (W2 multi-slot),
+// deduped + sorted. Returns null when absent/empty (→ caller falls back to the
+// single `hour`). Shared by `scenarioHours` (saved scenarios) + `hoursFromCfg`.
+function parseHoursField(raw: unknown): number[] | null {
+  if (!Array.isArray(raw)) return null;
+  const hours = (raw as unknown[]).filter((h): h is number => Number.isInteger(h) && (h as number) >= 0 && (h as number) <= 23);
+  const uniq = [...new Set(hours)].sort((a, b) => a - b);
+  return uniq.length > 0 ? uniq : null;
+}
+// «несколько раз в день» — the saved scenario's multi-slot hour list (W2). The
+// backend lifts `hours` onto trigger_cfg; null when single-time (→ one `hour`).
+function scenarioHours(s: Scenario): number[] | null {
+  return parseHoursField(s.trigger_cfg?.hours);
+}
+// Same, but for a preset's trigger_cfg: prefer a multi-slot `hours`, else seed a
+// single-element list from the preset's `hour`. Null when neither is present.
+function hoursFromCfg(cfg: Record<string, unknown> | null | undefined): number[] | null {
+  if (!cfg) return null;
+  const multi = parseHoursField(cfg.hours);
+  if (multi) return multi;
+  const h = cfg.hour;
+  return typeof h === "number" && Number.isInteger(h) && h >= 0 && h <= 23 ? [h] : null;
 }
 
 // «По дням недели» — pull the selected weekdays (0=Mon..6=Sun) from a `weekly`

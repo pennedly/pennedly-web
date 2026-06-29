@@ -215,35 +215,98 @@ function Seg({ options, value, onPick }: { options: { key: string; label: string
   );
 }
 
-// The hour chip + jitter slider (cadence modes only). Whole-hour posting →
-// the .rc-hard caption; the chip shows the local hour, the caption the UTC time.
-function TimeSection({ hour, jitter, onHour, onJitter }: { hour: string; jitter: number; onHour: (h: string) => void; onJitter: (j: number) => void }) {
+// A single removable time-slot chip — a 0–23 hour picker + an «×» remove button
+// (the design's `.rc-slotchip` + `.scx`). Remove hides on the last slot so the
+// list can never go empty. The chip shows the local hour; the UTC equivalent is
+// summarised once below the whole list.
+function SlotChip({
+  hour,
+  canRemove,
+  onChange,
+  onRemove,
+}: {
+  hour: number;
+  canRemove: boolean;
+  onChange: (h: number) => void;
+  onRemove: () => void;
+}) {
   const { t } = useTranslation();
-  const localHour = parseInt(hour, 10) || 0;
-  const utc = `${String(localHourToUtc(localHour)).padStart(2, "0")}:00`;
+  return (
+    <span className="inline-flex items-center gap-[7px] rounded-full border border-border bg-surface py-1.5 pl-[11px] pr-2 text-small font-semibold tabular-nums text-text">
+      <IcClock size={13} className="text-text-subtle" />
+      <select
+        aria-label={t("scenarios.rc.when_time")}
+        className="cursor-pointer border-none bg-transparent text-small font-semibold tabular-nums text-text outline-none"
+        value={`${hour}:00`}
+        onChange={(e) => onChange(parseInt(e.target.value, 10) || 0)}
+      >
+        {Array.from({ length: 24 }, (_, i) => `${i}:00`).map((h) => (
+          <option key={h} value={h}>
+            {h}
+          </option>
+        ))}
+      </select>
+      {canRemove && (
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label={t("a11y.remove")}
+          className="grid h-[18px] w-[18px] shrink-0 place-items-center rounded-full text-text-subtle transition-colors hover:bg-surface-2 hover:text-text"
+        >
+          <IcX size={12} />
+        </button>
+      )}
+    </span>
+  );
+}
+
+// The slot list («несколько раз в день») + jitter slider (cadence modes only).
+// Each slot is a removable 0–23 hour picker; «+ Ещё время» appends one. Whole-hour
+// posting → the .rc-hard caption; the UTC equivalents of all slots are summarised
+// under the list. The list is normalized (deduped, sorted) on every change.
+function TimeSection({ hours, jitter, onHours, onJitter }: { hours: number[]; jitter: number; onHours: (h: number[]) => void; onJitter: (j: number) => void }) {
+  const { t } = useTranslation();
+  // Always render at least one slot (the form seeds ≥1; this guards stray empties).
+  const slots = hours.length > 0 ? hours : [0];
+  // Append the next free hour (so a fresh slot doesn't collide with an existing
+  // one and vanish on the dedup); fall back to the last hour when all 24 are used.
+  function addSlot() {
+    const used = new Set(slots);
+    let next = (slots[slots.length - 1] + 1) % 24;
+    for (let i = 0; i < 24 && used.has(next); i++) next = (next + 1) % 24;
+    onHours(normalize([...slots, next]));
+  }
+  function changeSlot(i: number, h: number) {
+    onHours(normalize(slots.map((cur, n) => (n === i ? h : cur))));
+  }
+  function removeSlot(i: number) {
+    const next = slots.filter((_, n) => n !== i);
+    onHours(normalize(next.length > 0 ? next : slots.slice(0, 1)));
+  }
+  // Dedup + sort to mirror the backend's stored shape (so the chip order + the
+  // emitted `hours` array always agree, and never 422s).
+  function normalize(list: number[]): number[] {
+    return Array.from(new Set(list.filter((h) => h >= 0 && h <= 23))).sort((a, b) => a - b);
+  }
+  const utcLabel = slots.map((h) => `${String(localHourToUtc(h)).padStart(2, "0")}:00`).join(", ");
   return (
     <>
       <label className="flex flex-col gap-1.5">
-        <FieldLabel>{t("scenarios.rc.when_time")}</FieldLabel>
-        <span className="inline-flex items-center gap-2.5">
-          <span className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1.5">
-            <IcClock size={13} className="text-text-subtle" />
-            <select
-              aria-label={t("scenarios.rc.when_time")}
-              className="cursor-pointer border-none bg-transparent text-small font-semibold tabular-nums text-text outline-none"
-              value={hour}
-              onChange={(e) => onHour(e.target.value)}
-            >
-              {Array.from({ length: 24 }, (_, i) => `${i}:00`).map((h) => (
-                <option key={h} value={h}>
-                  {h}
-                </option>
-              ))}
-            </select>
-          </span>
-          <span className="text-caption tabular-nums text-text-subtle">
-            {localUtcOffsetLabel()} · {t("scenarios.ed.sends_utc").replace("{time}", utc)}
-          </span>
+        <FieldLabel opt={t("scenarios.rc.when_time_opt")}>{t("scenarios.rc.when_time")}</FieldLabel>
+        <span className="flex flex-wrap items-center gap-2">
+          {slots.map((h, i) => (
+            <SlotChip key={`${h}-${i}`} hour={h} canRemove={slots.length > 1} onChange={(v) => changeSlot(i, v)} onRemove={() => removeSlot(i)} />
+          ))}
+          <button
+            type="button"
+            onClick={addSlot}
+            className="inline-flex items-center gap-[5px] rounded-full border border-dashed border-accent/36 bg-accent/[0.09] px-3 py-1.5 text-small font-semibold text-accent transition-colors hover:bg-accent/15"
+          >
+            <IcPlus size={13} /> {t("scenarios.rc.add_time")}
+          </button>
+        </span>
+        <span className="text-caption tabular-nums text-text-subtle">
+          {localUtcOffsetLabel()} · {t("scenarios.ed.sends_utc").replace("{time}", utcLabel)}
         </span>
       </label>
       <label className="flex max-w-[300px] flex-col gap-1.5">
@@ -443,6 +506,13 @@ export function WhenPostBody({
 }) {
   const { t } = useTranslation();
   const mode = form.when;
+  // The slot list edits `hours`; keep the primary `hour` string synced to the
+  // first (sorted) slot so the sentence + «Следующие N запусков» (which read
+  // `form.hour`) reflect the earliest time. The list always stays ≥ 1.
+  const setHours = (next: number[]) => {
+    const list = next.length > 0 ? next : [0];
+    update({ hours: list, hour: `${list[0]}:00` });
+  };
   return (
     <>
       <label className="flex flex-col gap-1.5">
@@ -457,7 +527,7 @@ export function WhenPostBody({
       {mode === "daily" && (
         <>
           <Why>{t("scenarios.rc.daily_why")}</Why>
-          <TimeSection hour={form.hour} jitter={form.jitter} onHour={(h) => update({ hour: h })} onJitter={(j) => update({ jitter: j })} />
+          <TimeSection hours={form.hours} jitter={form.jitter} onHours={setHours} onJitter={(j) => update({ jitter: j })} />
         </>
       )}
 
@@ -484,7 +554,7 @@ export function WhenPostBody({
               onChange={(e) => update({ startDate: e.target.value })}
             />
           </label>
-          <TimeSection hour={form.hour} jitter={form.jitter} onHour={(h) => update({ hour: h })} onJitter={(j) => update({ jitter: j })} />
+          <TimeSection hours={form.hours} jitter={form.jitter} onHours={setHours} onJitter={(j) => update({ jitter: j })} />
         </>
       )}
 
@@ -518,7 +588,7 @@ export function WhenPostBody({
               })}
             </span>
           </label>
-          <TimeSection hour={form.hour} jitter={form.jitter} onHour={(h) => update({ hour: h })} onJitter={(j) => update({ jitter: j })} />
+          <TimeSection hours={form.hours} jitter={form.jitter} onHours={setHours} onJitter={(j) => update({ jitter: j })} />
         </>
       )}
 
@@ -541,7 +611,7 @@ export function WhenPostBody({
               onMissingChange={(v) => update({ monthlyOnMissing: v })}
             />
           </label>
-          <TimeSection hour={form.hour} jitter={form.jitter} onHour={(h) => update({ hour: h })} onJitter={(j) => update({ jitter: j })} />
+          <TimeSection hours={form.hours} jitter={form.jitter} onHours={setHours} onJitter={(j) => update({ jitter: j })} />
         </>
       )}
 
@@ -556,7 +626,7 @@ export function WhenPostBody({
               onChange={(i, next) => update({ yearlyDates: form.yearlyDates.map((d, n) => (n === i ? next : d)) })}
             />
           </label>
-          <TimeSection hour={form.hour} jitter={form.jitter} onHour={(h) => update({ hour: h })} onJitter={(j) => update({ jitter: j })} />
+          <TimeSection hours={form.hours} jitter={form.jitter} onHours={setHours} onJitter={(j) => update({ jitter: j })} />
         </>
       )}
 
@@ -582,7 +652,7 @@ export function WhenPostBody({
               />
             </span>
           </label>
-          <TimeSection hour={form.hour} jitter={form.jitter} onHour={(h) => update({ hour: h })} onJitter={(j) => update({ jitter: j })} />
+          <TimeSection hours={form.hours} jitter={form.jitter} onHours={setHours} onJitter={(j) => update({ jitter: j })} />
           <Why>{t("scenarios.rc.period_why")}</Why>
         </>
       )}

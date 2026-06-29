@@ -2176,6 +2176,9 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "scenarios.rc.threshold": "Порог просмотров",
   "scenarios.rc.event_note": "Это <b>реактивный</b> сценарий — без расписания и времени. Сработает, как только условие выполнится.",
   "scenarios.rc.when_time": "Во сколько",
+  // «несколько раз в день» — список слотов времени (rc-slots) + кнопка добавления
+  "scenarios.rc.when_time_opt": "можно несколько раз в день",
+  "scenarios.rc.add_time": "Ещё время",
   "scenarios.rc.jitter": "Разброс",
   "scenarios.rc.jitter_opt": "чтобы не ровно по будильнику",
   "scenarios.rc.jitter_unit": "± минут",

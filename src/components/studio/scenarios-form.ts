@@ -95,7 +95,14 @@ export type FormState = {
   // POST routines only — local time-of-day + publish jitter for the cadence
   // modes. Sent to the backend as trigger_cfg.hour / trigger_cfg.jitter_minutes
   // (see buildTrigger / compileBody); ignored for event/reply/promo shapes.
-  hour: string; // hour-of-day, e.g. "9:00"
+  hour: string; // primary hour-of-day, e.g. "9:00" (= the first slot; drives the
+  // sentence/runs single-time display + the back-compat single-`hour` emit).
+  // ── Wave 2 «несколько раз в день» — the full slot list (local hours 0–23,
+  // length ≥ 1; the first entry mirrors `hour`). ONE slot → emit the single
+  // trigger_cfg.hour (the once/day back-compat path); 2+ slots → emit
+  // trigger_cfg.hours[] (deduped/sorted) and DROP `hour` (the worker then fires
+  // once per slot/day). Jitter stays one value for the whole scenario.
+  hours: number[];
   jitter: number; // ± minutes of random spread (0 = exact)
   // ── ЕСЛИ — the recipe condition builder (Wave 1: 3 honest conditions) ──
   condNoPostToday: boolean; // → condition_cfg.only_if_no_post_today
@@ -137,6 +144,13 @@ function parseHour(v: string): number | null {
   return Number.isInteger(h) && h >= 0 && h <= 23 ? h : null;
 }
 
+// Normalize the slot list to deduped, sorted whole hours in [0, 23] (matches the
+// backend's `_validate_trigger_hours`, so it never 422s). Empty/garbage → [].
+function normalizeHours(hours: number[]): number[] {
+  const valid = hours.filter((h) => Number.isInteger(h) && h >= 0 && h <= 23);
+  return Array.from(new Set(valid)).sort((a, b) => a - b);
+}
+
 // Build the trigger_cfg from the КОГДА choice + the preset's base trigger (so a
 // reactive preset keeps its event kind / targets). For a cadence POST kind we
 // also fold in the schedule hour + jitter (the backend stores them in
@@ -145,8 +159,17 @@ function buildTrigger(s: FormState): Record<string, unknown> {
   const base = s.preset?.trigger_cfg ?? {};
   const withSchedule = (trigger: Record<string, unknown>): Record<string, unknown> => {
     if (!SCHEDULE_KINDS.has(trigger.kind as string)) return trigger;
-    const hour = parseHour(s.hour);
     const jitter = Number.isInteger(s.jitter) ? Math.min(120, Math.max(0, s.jitter)) : 0;
+    // Multi-slot («несколько раз в день»): 2+ valid time slots → emit the
+    // `hours` array (deduped/sorted) and DROP the single `hour` (the worker fires
+    // once per slot/day). 1 slot → keep the single `hour` (the once/day back-compat
+    // path — Sonya + every existing single-time scenario stays here, unchanged).
+    const hours = normalizeHours(s.hours);
+    if (hours.length >= 2) {
+      return { ...trigger, hours, jitter_minutes: jitter };
+    }
+    // single slot — prefer the slot's hour, else fall back to the `hour` string.
+    const hour = hours.length === 1 ? hours[0] : parseHour(s.hour);
     return { ...trigger, ...(hour !== null ? { hour } : {}), jitter_minutes: jitter };
   };
   switch (s.when) {

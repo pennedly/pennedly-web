@@ -2201,6 +2201,9 @@ export const en = {
   "scenarios.rc.threshold": "Views threshold",
   "scenarios.rc.event_note": "This is a <b>reactive</b> scenario — no schedule, no time. It fires as soon as the condition is met.",
   "scenarios.rc.when_time": "What time",
+  // «multiple times a day» — the time-slot list (rc-slots) + the add button
+  "scenarios.rc.when_time_opt": "can be several times a day",
+  "scenarios.rc.add_time": "Another time",
   "scenarios.rc.jitter": "Spread",
   "scenarios.rc.jitter_opt": "so it's not exactly on the dot",
   "scenarios.rc.jitter_unit": "± minutes",
