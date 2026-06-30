@@ -119,6 +119,7 @@ test.beforeEach(async ({ page, context }) => {
 
   // ── draft actions (return plausible success) ──
   await context.route(/\/api\/drafts\/\d+\/approve$/, ok({ draft_id: 2, status: "approved" }));
+  await context.route(/\/api\/drafts\/\d+\/unapprove$/, ok({ draft_id: 1, status: "pending" }));
   await context.route(/\/api\/drafts\/\d+\/publish$/, ok({
     draft_id: 1, threads_post_id: "th-post-1", threads_url: "https://www.threads.net/@mara_threads/post/1",
   }));
@@ -164,6 +165,25 @@ test("tab switch: Drafts tab shows the pending draft, Ready hides it", async ({ 
   await page.getByRole("tab", { name: /Drafts/ }).click();
   await expect(page.getByText("Pending draft about morning routines")).toBeVisible();
   await expect(page.getByText("Ready draft about coffee rituals")).toHaveCount(0);
+});
+
+test("send back: an approved draft returns to the Drafts column", async ({ page }) => {
+  await page.goto("/app", { waitUntil: "domcontentloaded" });
+
+  // The ready card is in the default "Ready to publish" tab.
+  await expect(page.getByText("Ready draft about coffee rituals")).toBeVisible({ timeout: 15_000 });
+
+  // Open its ⋯ menu and pick «Send back to drafts» (real mode now offers it).
+  await page.getByRole("button", { name: /More actions/i }).first().click();
+  await page.getByRole("menuitem", { name: /Send back to drafts/i }).click();
+
+  // Optimistically it leaves Ready; the "Restored to drafts" toast confirms.
+  await expect(page.getByText("Restored to drafts")).toBeVisible();
+  await expect(page.getByText("Ready draft about coffee rituals")).toHaveCount(0);
+
+  // And it now shows under the Drafts tab.
+  await page.getByRole("tab", { name: /Drafts/ }).click();
+  await expect(page.getByText("Ready draft about coffee rituals")).toBeVisible();
 });
 
 test("publish flow: open the dialog, confirm, see the success toast", async ({ page }) => {

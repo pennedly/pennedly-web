@@ -32,6 +32,7 @@ import {
   setDraftMedia,
   setDraftVideo,
   translateText,
+  unapproveDraft,
   uploadMedia,
 } from "@/lib/api";
 import { captureEvent, identify } from "@/lib/analytics";
@@ -316,6 +317,9 @@ export default function Studio() {
     const original = drafts[idx];
     if (!original) return;
     captureEvent("ui.approve_clicked", { draft_id: card.id });
+    // Cancel an in-flight send-back on the same card so the two opposing deferred
+    // commits can't both fire (which would leave the UI and server disagreeing).
+    deferred.cancel(`send-back-${card.id}`);
     setDrafts((p) => p.map((d) => (d.id === card.id ? { ...d, status: "approved" } : d)));
     const key = `approve-${card.id}`;
     deferred.schedule(
@@ -373,6 +377,45 @@ export default function Studio() {
     );
     toast(t("studio.toast_rejected"), "success", {
       description: t("studio.toast_moved_rejected"),
+      duration: UNDO_MS,
+      undoLabel: t("common.undo"),
+      onUndo: () => {
+        deferred.cancel(key);
+        setDrafts((p) => p.map((d) => (d.id === card.id ? original : d)));
+      },
+    });
+  }
+
+  // «На доработку» — send an approved («ready») card back to the draft column so
+  // it can be tweaked/edited/refined again, then re-approved. Mirrors realReject:
+  // optimistic move + a deferred API call behind an Undo toast.
+  function realSendBack(card: StudioCard) {
+    const idx = drafts.findIndex((d) => d.id === card.id);
+    const original = drafts[idx];
+    if (!original) return;
+    captureEvent("ui.send_back_clicked", { draft_id: card.id });
+    // Cancel an in-flight approve on the same card so the two opposing deferred
+    // commits can't both fire (which would leave the UI and server disagreeing).
+    deferred.cancel(`approve-${card.id}`);
+    setDrafts((p) =>
+      p.map((d) =>
+        d.id === card.id ? { ...d, status: "pending", scheduled_at: null, schedule_failed: false } : d,
+      ),
+    );
+    const key = `send-back-${card.id}`;
+    deferred.schedule(
+      key,
+      async () => {
+        try {
+          await unapproveDraft(card.id);
+        } catch (e) {
+          setDrafts((p) => p.map((d) => (d.id === card.id ? original : d)));
+          toast(String(e), "error");
+        }
+      },
+      UNDO_MS,
+    );
+    toast(t("studio.toast_restored"), "success", {
       duration: UNDO_MS,
       undoLabel: t("common.undo"),
       onUndo: () => {
@@ -467,7 +510,7 @@ export default function Studio() {
       captureEvent("ui.publish_clicked", { draft_id: card.id, mode });
       setPublishTarget({ card, account: selectedAccount, mode });
     },
-    onSendBack: () => {},
+    onSendBack: realSendBack,
     onRestore: () => {},
     onSaveEdit: (card, text) => setEdits((s) => ({ ...s, [card.id]: text })),
     onTweak: async (card, instruction) => {

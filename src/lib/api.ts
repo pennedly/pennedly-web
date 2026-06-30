@@ -523,6 +523,18 @@ export async function rejectDraft(draftId: number): Promise<ApprovalResult> {
   });
 }
 
+// Send an approved-but-unpublished draft back to `pending` so it can be edited
+// again (the «ready» card's «На доработку»). Drops the few-shot corpus row the
+// approval created + detaches any schedule; 409 once the post is live.
+export async function unapproveDraft(
+  draftId: number,
+): Promise<{ draft_id: number; status: string }> {
+  return fetchApi<{ draft_id: number; status: string }>(
+    `/api/drafts/${draftId}/unapprove`,
+    { method: "POST" },
+  );
+}
+
 // Permanently remove a draft (queue cleanup). 409 if it's already
 // published — manage live posts from the feed.
 export async function deleteDraft(

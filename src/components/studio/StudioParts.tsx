@@ -493,8 +493,11 @@ export function DraftCard({
       },
     });
   } else if (status === "ready") {
+    // «На доработку» returns the approved draft to the queue (real + demo). Direct
+    // edit stays demo-only — in real mode the user sends it back first, then the
+    // draft-column tweak/edit/refine path persists the change before re-approval.
+    menuItems.push({ label: t("studio.send_back"), Icon: IcUndo, onClick: () => h.onSendBack(card) });
     if (demo) {
-      menuItems.push({ label: t("studio.send_back"), Icon: IcUndo, onClick: () => h.onSendBack(card) });
       menuItems.push({
         label: t("studio.edit"),
         Icon: IcPencil,
