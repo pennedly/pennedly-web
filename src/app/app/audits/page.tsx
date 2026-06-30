@@ -121,6 +121,7 @@ export default function AuditsPage() {
         wowDelta: a.wowDelta,
         undecided: a.changes.filter((c) => c.status === "undecided").length,
         total: a.changes.length,
+        dims: a.dims,
       }))
     : audits.map((a) => ({
         id: a.id,

@@ -14,6 +14,7 @@ import { localUtcOffsetLabel, utcHourToLocal } from "@/lib/timezone";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { BrandMark, IcArrowDown, IcArrowLeft, IcArrowUp, IcAudit, IcCheck, IcChevDown, IcClock, IcFormat, IcInfo, IcPencil, IcPenLine, IcPower, IcRepeat, IcReplies, IcSparkle, IcTag, IcVoice, IcX } from "@/components/icons";
 import type { ChangeStatus, DemoChange } from "@/components/studio/audits-demo";
+import type { AuditDim } from "@/components/studio/audits-redesign";
 
 export type ChangeModel = DemoChange;
 
@@ -26,6 +27,7 @@ export type AuditRowModel = {
   wowDelta: number | null;
   undecided: number;
   total: number;
+  dims?: AuditDim[]; // 7-dimension coverage strip (hidden until the backend supplies it)
 };
 
 export type AuditDetailModel = {
@@ -166,6 +168,23 @@ export function AuditRow({ audit, onOpen }: { audit: AuditRowModel; onOpen: (id:
             </span>
           )}
         </span>
+        {audit.dims && audit.dims.length > 0 && (
+          <span className="mt-[11px] flex flex-wrap items-center gap-[5px]">
+            <span className="mr-[3px] text-caption text-text-subtle">{t("audit.list.coverage")}</span>
+            {OPTIN_DIMS.map(({ key, Icon }) => {
+              const on = audit.dims!.includes(key as AuditDim);
+              return (
+                <span
+                  key={key}
+                  title={t(`audit.dim.${key}` as MessageKey)}
+                  className={cn("inline-grid h-[22px] w-[22px] place-items-center rounded-[var(--radius-sm)] border border-border bg-surface-2 text-text-muted", !on && "opacity-[0.32]")}
+                >
+                  <Icon size={12} />
+                </span>
+              );
+            })}
+          </span>
+        )}
       </span>
       <span className="flex shrink-0 items-center gap-3.5 max-md:gap-2.5">
         {needs ? (

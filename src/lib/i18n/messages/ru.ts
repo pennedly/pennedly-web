@@ -505,6 +505,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "audit.dim.rules": "Правила",
   "audit.dim.replies": "Ответы",
   "audit.dim.format": "Формат",
+  "audit.list.coverage": "Охват:",
   "audit.optin.eyebrow": "Аудит роста",
   "audit.optin.title": "Раз в неделю — разбор аккаунта от стратега",
   "audit.optin.lede": "Pennedly разбирает твой аккаунт как профессиональный ростовый стратег: <b>что сработало и что нет — с цифрами</b>, и какие конкретные улучшения применить в один клик.",

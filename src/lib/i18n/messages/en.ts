@@ -503,6 +503,7 @@ export const en = {
   "audit.dim.rules": "Rules",
   "audit.dim.replies": "Replies",
   "audit.dim.format": "Format",
+  "audit.list.coverage": "Covers:",
   "audit.optin.eyebrow": "Growth audit",
   "audit.optin.title": "A weekly account review from a strategist",
   "audit.optin.lede": "Pennedly reviews your account like a professional growth strategist: <b>what worked and what didn't — with the numbers</b>, and which concrete improvements to apply in one click.",

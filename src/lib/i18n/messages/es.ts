@@ -165,6 +165,7 @@ export const es: Partial<Record<MessageKey, string>> = {
   "audit.dim.rules": "Reglas",
   "audit.dim.replies": "Respuestas",
   "audit.dim.format": "Formato",
+  "audit.list.coverage": "Cubre:",
   "audit.optin.eyebrow": "Auditoría de crecimiento",
   "audit.optin.title": "Un análisis semanal de tu cuenta, como de un estratega",
   "audit.optin.lede": "Pennedly analiza tu cuenta como un estratega de crecimiento profesional: <b>qué funcionó y qué no — con cifras</b>, y qué mejoras concretas aplicar en un clic.",

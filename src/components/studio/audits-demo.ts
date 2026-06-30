@@ -2,6 +2,8 @@
 // list + detail + every change state can be exercised without the API. The live
 // screens map AuditSummary / AuditDetail into the same shapes.
 
+import type { AuditDim } from "@/components/studio/audits-redesign";
+
 export type ChangeStatus = "undecided" | "applied" | "rejected";
 
 export type DemoChange = {
@@ -23,6 +25,7 @@ export type DemoAudit = {
   summary: string;
   postsAnalyzed: number;
   wowDelta: number | null;
+  dims: AuditDim[]; // which of the 7 dimensions this audit touched (list coverage)
   narrative: string[];
   changes: DemoChange[];
 };
@@ -40,6 +43,7 @@ export const DEMO_AUDITS: DemoAudit[] = [
     summary: "Your shorter, opinion-led posts pulled ahead this week. The coach suggests leaning into them and tightening your openers.",
     postsAnalyzed: 18,
     wowDelta: 12,
+    dims: ["topics", "scenarios", "timing", "voice", "format"],
     narrative: [
       "Strong week. Your views are up 12% over last week, and almost all of that came from five short, opinionated posts that opened with a claim instead of a setup.",
       "The posts that underperformed had a common shape: a warm-up sentence before the real point. Cutting that warm-up is the single highest-leverage change I can see in your voice right now.",
@@ -98,6 +102,7 @@ export const DEMO_AUDITS: DemoAudit[] = [
     summary: "A steady week. One voice tweak applied, one cadence idea passed on.",
     postsAnalyzed: 16,
     wowDelta: 5,
+    dims: ["voice", "timing"],
     narrative: [
       "Solid, consistent week. Views up 5%. Nothing dramatic, which is fine — the compounding is working.",
       "I proposed two small changes; you've already decided on both.",
@@ -114,6 +119,7 @@ export const DEMO_AUDITS: DemoAudit[] = [
     summary: "A down week (−3%). The coach traced it to a run of link-heavy posts.",
     postsAnalyzed: 14,
     wowDelta: -3,
+    dims: ["format"],
     narrative: [
       "Quieter week — views dipped 3%. The dip lines up with a run of posts that leaned on external links, which the algorithm tends to suppress.",
       "The fix below is already applied.",
@@ -129,6 +135,7 @@ export const DEMO_AUDITS: DemoAudit[] = [
     summary: "Good week (+9%). Topic focus paid off.",
     postsAnalyzed: 17,
     wowDelta: 9,
+    dims: ["topics", "voice"],
     narrative: ["Strong week, up 9%. Your tighter topic focus is clearly working — both proposed changes are decided."],
     changes: [
       { id: "c9", category: "Topic", title: "Stay in your lane: writing + consistency", detail: "Your on-topic posts far outperformed. Narrowing the focus.", status: "applied", effectPct: 21 },
@@ -142,6 +149,7 @@ export const DEMO_AUDITS: DemoAudit[] = [
     summary: "Your first audit. A baseline read on your voice.",
     postsAnalyzed: 12,
     wowDelta: null,
+    dims: ["voice"],
     narrative: [
       "Welcome to your first weekly review. I read your last 12 posts to get a baseline on your voice and what's landing.",
       "One small suggestion to start — you can always say no.",

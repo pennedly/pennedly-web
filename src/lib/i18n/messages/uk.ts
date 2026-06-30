@@ -165,6 +165,7 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "audit.dim.rules": "Правила",
   "audit.dim.replies": "Відповіді",
   "audit.dim.format": "Формат",
+  "audit.list.coverage": "Охоплення:",
   "audit.optin.eyebrow": "Аудит зростання",
   "audit.optin.title": "Раз на тиждень — розбір акаунта від стратега",
   "audit.optin.lede": "Pennedly розбирає твій акаунт як професійний стратег зростання: <b>що спрацювало, а що ні — з цифрами</b>, і які конкретні покращення застосувати в один клік.",
