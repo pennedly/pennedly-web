@@ -680,6 +680,10 @@ export type OverviewAccount = {
   views_7d: number;
   posts_week: number;
   replies_to_answer: number;
+  // Triage signals for the cockpit «Требует тебя» queue (per profile): post
+  // drafts awaiting approval + un-reviewed weekly growth audits.
+  pending_drafts: number;
+  pending_audits: number;
   sync_status: OverviewSyncStatus;
   // ISO of the last metrics pull, or null — drives "Updated N ago".
   synced_at: string | null;

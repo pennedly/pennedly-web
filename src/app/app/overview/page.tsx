@@ -29,6 +29,7 @@ import {
   OverviewNudge,
   OverviewSkeleton,
   PortfolioTotals,
+  TriageQueue,
 } from "@/components/studio/OverviewParts";
 import { OVERVIEW_DEMO, OVERVIEW_TWEAK_DEFAULTS, type OverviewDemoState } from "@/components/studio/overview-demo";
 import type { OverviewAccount, OverviewResponse } from "@/lib/types";
@@ -173,6 +174,11 @@ export default function OverviewPage() {
           <OverviewEmpty demo={demoOn} />
         ) : model ? (
           <>
+            <TriageQueue
+              accounts={model.accounts}
+              onOpen={demoOn ? undefined : (acc, path) => openAccount(acc, path)}
+              onRetry={() => setReloadKey((k) => k + 1)}
+            />
             <PortfolioTotals totals={model.totals} />
             <div className={single ? "grid grid-cols-1 gap-[14px]" : "grid grid-cols-1 gap-[14px] md:grid-cols-2"}>
               {model.accounts.map((a) => (
@@ -200,7 +206,7 @@ export default function OverviewPage() {
           <TweakRadio
             label="State"
             value={tw.state}
-            options={["many", "single", "importing", "loading", "empty", "error"]}
+            options={["many", "zeroTriage", "single", "importing", "loading", "empty", "error"]}
             onChange={(v) => setTw("state", v)}
           />
         </TweaksPanel>

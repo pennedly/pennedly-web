@@ -17,7 +17,16 @@ type PluralForms = {
   other: string; // always defined — the fallback for any category
 };
 
-type Unit = "posts" | "replies" | "comments" | "days";
+type Unit =
+  | "posts"
+  | "replies"
+  | "comments"
+  | "days"
+  | "drafts"
+  | "audits"
+  | "proposals"
+  | "items"
+  | "profiles";
 
 // `other` mirrors the plain plural already in the message catalogs; `one`
 // (and `few`/`many` for ru/uk) are the additions that make counts grammatical.
@@ -61,6 +70,56 @@ const UNITS: Record<Unit, Record<LocaleCode, PluralForms>> = {
     fr: { one: "jour", other: "jours" },
     it: { one: "giorno", other: "giorni" },
     pt: { one: "dia", other: "dias" },
+  },
+  drafts: {
+    en: { one: "draft", other: "drafts" },
+    ru: { one: "черновик", few: "черновика", many: "черновиков", other: "черновиков" },
+    uk: { one: "чернетка", few: "чернетки", many: "чернеток", other: "чернеток" },
+    de: { one: "Entwurf", other: "Entwürfe" },
+    es: { one: "borrador", other: "borradores" },
+    fr: { one: "brouillon", other: "brouillons" },
+    it: { one: "bozza", other: "bozze" },
+    pt: { one: "rascunho", other: "rascunhos" },
+  },
+  audits: {
+    en: { one: "audit", other: "audits" },
+    ru: { one: "аудит", few: "аудита", many: "аудитов", other: "аудитов" },
+    uk: { one: "аудит", few: "аудити", many: "аудитів", other: "аудитів" },
+    de: { one: "Audit", other: "Audits" },
+    es: { one: "auditoría", other: "auditorías" },
+    fr: { one: "audit", other: "audits" },
+    it: { one: "audit", other: "audit" },
+    pt: { one: "auditoria", other: "auditorias" },
+  },
+  proposals: {
+    en: { one: "suggestion", other: "suggestions" },
+    ru: { one: "предложение", few: "предложения", many: "предложений", other: "предложений" },
+    uk: { one: "пропозиція", few: "пропозиції", many: "пропозицій", other: "пропозицій" },
+    de: { one: "Vorschlag", other: "Vorschläge" },
+    es: { one: "sugerencia", other: "sugerencias" },
+    fr: { one: "suggestion", other: "suggestions" },
+    it: { one: "suggerimento", other: "suggerimenti" },
+    pt: { one: "sugestão", other: "sugestões" },
+  },
+  items: {
+    en: { one: "item", other: "items" },
+    ru: { one: "пункт", few: "пункта", many: "пунктов", other: "пунктов" },
+    uk: { one: "пункт", few: "пункти", many: "пунктів", other: "пунктів" },
+    de: { one: "Eintrag", other: "Einträge" },
+    es: { one: "elemento", other: "elementos" },
+    fr: { one: "élément", other: "éléments" },
+    it: { one: "elemento", other: "elementi" },
+    pt: { one: "item", other: "itens" },
+  },
+  profiles: {
+    en: { one: "profile", other: "profiles" },
+    ru: { one: "профиль", few: "профиля", many: "профилей", other: "профилей" },
+    uk: { one: "профіль", few: "профілі", many: "профілів", other: "профілів" },
+    de: { one: "Profil", other: "Profile" },
+    es: { one: "perfil", other: "perfiles" },
+    fr: { one: "profil", other: "profils" },
+    it: { one: "profilo", other: "profili" },
+    pt: { one: "perfil", other: "perfis" },
   },
 };
 

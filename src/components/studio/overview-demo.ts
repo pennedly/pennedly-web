@@ -7,7 +7,14 @@
 
 import type { OverviewAccount, OverviewResponse } from "@/lib/types";
 
-export type OverviewDemoState = "many" | "single" | "importing" | "loading" | "empty" | "error";
+export type OverviewDemoState =
+  | "many"
+  | "zeroTriage"
+  | "single"
+  | "importing"
+  | "loading"
+  | "empty"
+  | "error";
 
 // Plain literal (no `as const`) so the tweak values widen to { dark: boolean;
 // state: string } — matching every other screen's *_TWEAK_DEFAULTS. With
@@ -26,6 +33,8 @@ function acc(
   postsWeek: number,
   replies: number,
   syncedAtHoursAgo: number,
+  pendingDrafts = 0,
+  pendingAudits = 0,
 ): OverviewAccount {
   return {
     id,
@@ -39,6 +48,8 @@ function acc(
     views_7d: views7d,
     posts_week: postsWeek,
     replies_to_answer: replies,
+    pending_drafts: pendingDrafts,
+    pending_audits: pendingAudits,
     sync_status: "synced",
     synced_at: new Date(Date.now() - syncedAtHoursAgo * 3600_000).toISOString(),
     sync_summary: null,
@@ -46,9 +57,9 @@ function acc(
   };
 }
 
-const MARA = acc(1, "Mara Lin", "mara.lin", 12438, 312, 98_000, 5, 3, 2);
-const FIELD = acc(2, "Field Notes", "field.notes", 4210, 86, 41_000, 3, 7, 1);
-const STUDIO = acc(3, "Studio Mara", "studio.mara", 1890, -12, 12_000, 2, 0, 3);
+const MARA = acc(1, "Mara Lin", "mara.lin", 12438, 312, 98_000, 5, 3, 2, 2, 1);
+const FIELD = acc(2, "Field Notes", "field.notes", 4210, 86, 41_000, 3, 7, 1, 4, 0);
+const STUDIO = acc(3, "Studio Mara", "studio.mara", 1890, -12, 12_000, 2, 0, 3, 0, 1);
 const LATE: OverviewAccount = {
   id: 4,
   tenant_id: 1,
@@ -61,6 +72,8 @@ const LATE: OverviewAccount = {
   views_7d: 0,
   posts_week: 0,
   replies_to_answer: 0,
+  pending_drafts: 0,
+  pending_audits: 0,
   sync_status: "importing",
   synced_at: null,
   sync_summary: { posts: 42, new_comments: 310, history_posts: 96 },
@@ -94,10 +107,27 @@ const SINGLE: OverviewResponse = {
   accounts: [MARA],
 };
 
+// A calm portfolio: every profile is synced with nothing pending — the triage
+// queue renders its "all caught up" zero state over the same totals + cards.
+const calm = (a: OverviewAccount): OverviewAccount => ({
+  ...a,
+  replies_to_answer: 0,
+  pending_drafts: 0,
+  pending_audits: 0,
+});
+const ZERO_TRIAGE: OverviewResponse = {
+  totals: { ...MANY.totals, replies_to_answer: 0 },
+  accounts: [calm(MARA), calm(FIELD), calm(STUDIO), LATE],
+};
+
 // "importing" demo state = the many view (it already carries an importing card);
 // the standalone importing card is shown in the gallery via LATE directly.
-export const OVERVIEW_DEMO: Record<"many" | "single" | "importing", OverviewResponse> = {
+export const OVERVIEW_DEMO: Record<
+  "many" | "zeroTriage" | "single" | "importing",
+  OverviewResponse
+> = {
   many: MANY,
+  zeroTriage: ZERO_TRIAGE,
   single: SINGLE,
   importing: MANY,
 };

@@ -15,16 +15,22 @@ import { type ReactNode } from "react";
 
 import { cn } from "@/lib/cn";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
+import { pluralUnit } from "@/lib/i18n/plurals";
+import type { LocaleCode } from "@/lib/i18n/locales";
 import { Avatar } from "@/components/ui/avatar";
 import { ConnectThreadsButton } from "@/components/ConnectThreadsButton";
 import { ImportBanner } from "@/components/studio/ImportBanner";
 import { NetworkBadge } from "@/components/studio/NetworkBadge";
 import {
+  IcAlert,
   IcArrowRight,
   IcArrowUp,
   IcArrowDown,
+  IcAudit,
   IcBubble,
   IcChart,
+  IcCheck,
+  IcClock,
   IcEye,
   IcNib,
   IcOverview,
@@ -211,6 +217,186 @@ function Metric({
         {delta}
       </span>
     </div>
+  );
+}
+
+// ── triage queue («Требует тебя») — the cockpit hero ─────────────────────────
+// A prioritized, scannable list of what needs the user across the WHOLE
+// portfolio, above the totals + cards. Each row deep-links into the right
+// screen/profile. Priority is by SIGNAL across profiles: failed syncs + replies
+// (most urgent), then drafts, then audits. Layout rule 1 holds: every value/
+// count/badge/chip/meta is single-line (truncate or whitespace-nowrap) and never
+// pushes a neighbour down, even at 320px or in a long locale (German).
+type TriageType = "sync" | "reply" | "draft" | "audit";
+
+const TRIAGE_ICON: Record<TriageType, ReactNode> = {
+  sync: <IcAlert size={13} />,
+  reply: <IcReply size={13} />,
+  draft: <IcNib size={13} />,
+  audit: <IcAudit size={13} />,
+};
+
+type TriageItem = {
+  key: string;
+  type: TriageType;
+  account: OverviewAccount;
+  title: string;
+  meta: string;
+  // Deep-link for a "go" row (a "retry" row calls onRetry instead).
+  path: string;
+  action: "retry" | "go";
+};
+
+function netLabel(network: string): string {
+  return network.charAt(0).toUpperCase() + network.slice(1);
+}
+
+// Build the prioritized triage items from the portfolio's per-profile signals.
+function buildTriageItems(
+  accounts: OverviewAccount[],
+  locale: LocaleCode,
+  t: (k: MessageKey) => string,
+): TriageItem[] {
+  const sync: TriageItem[] = [];
+  const reply: TriageItem[] = [];
+  const draft: TriageItem[] = [];
+  const audit: TriageItem[] = [];
+  for (const a of accounts) {
+    if (a.sync_status === "error") {
+      sync.push({
+        key: `sync-${a.id}`, type: "sync", account: a, action: "retry", path: "",
+        title: t("overview.triage.sync_failed").replace("{net}", netLabel(a.network)),
+        meta: t("overview.triage.meta.sync"),
+      });
+    }
+    if (a.replies_to_answer > 0) {
+      reply.push({
+        key: `reply-${a.id}`, type: "reply", account: a, action: "go",
+        path: "/app/replies?filter=needs-reply",
+        title: `${a.replies_to_answer} ${pluralUnit(locale, "comments", a.replies_to_answer)} ${t("overview.triage.replies_suffix")}`,
+        meta: t("overview.triage.meta.replies"),
+      });
+    }
+    if (a.pending_drafts > 0) {
+      draft.push({
+        key: `draft-${a.id}`, type: "draft", account: a, action: "go", path: "/app",
+        title: `${a.pending_drafts} ${pluralUnit(locale, "drafts", a.pending_drafts)} ${t("overview.triage.drafts_suffix")}`,
+        meta: t("overview.triage.meta.drafts"),
+      });
+    }
+    if (a.pending_audits > 0) {
+      audit.push({
+        key: `audit-${a.id}`, type: "audit", account: a, action: "go", path: "/app/audits",
+        title: `${a.pending_audits} ${pluralUnit(locale, "audits", a.pending_audits)} ${t("overview.triage.audits_suffix")}`,
+        meta: t("overview.triage.meta.audits"),
+      });
+    }
+  }
+  return [...sync, ...reply, ...draft, ...audit];
+}
+
+// `onOpen(account, path)` switches the active account + routes (the real page
+// passes it; the gallery omits it). `onRetry` re-attempts a failed sync.
+export function TriageQueue({
+  accounts,
+  onOpen,
+  onRetry,
+}: {
+  accounts: OverviewAccount[];
+  onOpen?: (a: OverviewAccount, path: string) => void;
+  onRetry?: (a: OverviewAccount) => void;
+}) {
+  const { t, locale } = useTranslation();
+  const items = buildTriageItems(accounts, locale, t);
+
+  if (items.length === 0) return <TriageZero profiles={accounts.length} />;
+
+  const profileCount = new Set(items.map((i) => i.account.id)).size;
+  const count = `${items.length} ${pluralUnit(locale, "items", items.length)} · ${profileCount} ${pluralUnit(locale, "profiles", profileCount)}`;
+
+  return (
+    <section className="overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
+      <div className="flex items-baseline justify-between gap-3 px-[18px] pb-3 pt-[15px]">
+        <span className="text-small font-semibold text-text">{t("overview.triage.heading")}</span>
+        <span className="shrink-0 whitespace-nowrap text-caption font-medium tabular-nums text-text-subtle">{count}</span>
+      </div>
+      <div className="divide-y divide-border border-t border-border">
+        {items.map((it) => (
+          <TriageRow key={it.key} item={it} onOpen={onOpen} onRetry={onRetry} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function TriageRow({
+  item,
+  onOpen,
+  onRetry,
+}: {
+  item: TriageItem;
+  onOpen?: (a: OverviewAccount, path: string) => void;
+  onRetry?: (a: OverviewAccount) => void;
+}) {
+  const { t } = useTranslation();
+  const a = item.account;
+  const body = (
+    <>
+      <Avatar account={asAccountFace(a)} size={36} className="shrink-0 border border-border" />
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="flex items-center gap-1.5">
+          <span className="grid h-[18px] w-[18px] shrink-0 place-items-center rounded border border-border bg-surface-2 text-text-muted">
+            {TRIAGE_ICON[item.type]}
+          </span>
+          <span className="truncate text-small font-semibold text-text">{item.title}</span>
+        </span>
+        <span className="mt-[3px] flex items-center gap-1.5 text-caption text-text-subtle">
+          <span className="truncate">{a.handle ? `@${a.handle}` : (a.name ?? "")}</span>
+          <span className="shrink-0">·</span>
+          <span className="shrink-0 whitespace-nowrap">{item.meta}</span>
+        </span>
+      </span>
+      {item.action === "retry" ? (
+        <span className="ml-auto inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-md border border-border bg-surface px-2.5 py-1.5 text-caption font-semibold text-text transition-colors group-hover:bg-surface-2">
+          <IcUndo size={13} />
+          {t("overview.triage.retry")}
+        </span>
+      ) : (
+        <span className="ml-auto grid h-[30px] w-[30px] shrink-0 place-items-center rounded-md border border-border bg-surface text-text-muted transition-colors group-hover:bg-surface-2 group-hover:text-text">
+          <IcArrowRight size={16} />
+        </span>
+      )}
+    </>
+  );
+  const cls =
+    "group flex w-full items-center gap-3 px-[18px] py-3 text-left transition-colors hover:bg-surface-2";
+  return item.action === "retry" ? (
+    <button type="button" className={cls} onClick={() => onRetry?.(a)}>
+      {body}
+    </button>
+  ) : (
+    <button type="button" className={cls} onClick={() => onOpen?.(a, item.path)}>
+      {body}
+    </button>
+  );
+}
+
+function TriageZero({ profiles }: { profiles: number }) {
+  const { t } = useTranslation();
+  return (
+    <section className="flex flex-col items-center rounded-lg border border-border bg-surface px-6 py-8 text-center shadow-sm">
+      <span className="grid h-12 w-12 place-items-center rounded-full border border-border bg-surface-2 text-text-muted">
+        <IcCheck size={24} />
+      </span>
+      <div className="mt-3.5 text-small font-semibold text-text">{t("overview.triage.zero.title")}</div>
+      <div className="mt-1 max-w-md text-caption text-text-subtle">
+        {t("overview.triage.zero.body").replace("{n}", String(profiles))}
+      </div>
+      <div className="mt-3 inline-flex items-center gap-1 whitespace-nowrap text-caption text-text-subtle">
+        <IcClock size={12} />
+        {t("overview.triage.zero.foot")}
+      </div>
+    </section>
   );
 }
 
