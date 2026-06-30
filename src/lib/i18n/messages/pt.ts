@@ -814,7 +814,7 @@ export const pt: Partial<Record<MessageKey, string>> = {
   "calendar.toast_moved": "Movido",
   "calendar.toast_unscheduled": "Agendamento cancelado",
   "calendar.toast_retry": "Tentando de novo",
-  "nav.brand_tagline": "Parceiro de escrita",
+  "nav.brand_tagline": "Escreva com sua voz",
   "nav.group.workspace": "Espaço de trabalho",
   "nav.group.insight": "Análise",
   "nav.group.brand": "Marca",

@@ -811,7 +811,7 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "calendar.toast_moved": "Перенесено",
   "calendar.toast_unscheduled": "Знято з розкладу",
   "calendar.toast_retry": "Повтор",
-  "nav.brand_tagline": "Партнер із письма",
+  "nav.brand_tagline": "Пиши своїм голосом",
   "nav.group.workspace": "Робоча область",
   "nav.group.insight": "Аналітика",
   "nav.group.brand": "Бренд",

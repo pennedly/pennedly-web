@@ -1091,7 +1091,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "calendar.toast_moved": "Перенесено",
   "calendar.toast_unscheduled": "Снято с расписания",
   "calendar.toast_retry": "Повтор",
-  "nav.brand_tagline": "Партнёр по черновикам",
+  "nav.brand_tagline": "Пиши в своём голосе",
   "nav.group.workspace": "Рабочая область",
   "nav.group.insight": "Аналитика",
   "nav.group.brand": "Бренд",

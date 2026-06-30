@@ -1091,7 +1091,7 @@ export const en = {
   "calendar.toast_moved": "Moved",
   "calendar.toast_unscheduled": "Unscheduled",
   "calendar.toast_retry": "Retrying",
-  "nav.brand_tagline": "Drafting partner",
+  "nav.brand_tagline": "Write in your voice",
   "nav.group.workspace": "Workspace",
   "nav.group.insight": "Insight",
   "nav.group.brand": "Brand",
