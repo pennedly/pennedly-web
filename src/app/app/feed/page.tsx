@@ -26,6 +26,7 @@ import { captureEvent } from "@/lib/analytics";
 import { useSelectedAccountId } from "@/lib/account";
 import { useTranslation } from "@/lib/i18n";
 import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
+import { IcInfo } from "@/components/icons";
 import { Toast, ToastHost } from "@/components/ui/toast";
 import { TweaksPanel, TweakSection, TweakToggle, TweakRadio, useTweaks } from "@/components/tweaks/TweaksPanel";
 import { ErrorBanner } from "@/components/studio/StudioParts";
@@ -306,6 +307,15 @@ export default function FeedPage() {
         <div className="flex flex-col gap-1">
           <h1 className="text-h1 font-semibold tracking-[-0.015em]">{t("feed.title")}</h1>
           <p className="text-body text-text-muted">{t("feed.subtitle")}</p>
+        </div>
+
+        {/* Beta disclaimer — while the app is in Meta review, the Threads insights
+            API under-reports some metrics (notably likes) for recent posts, so they
+            can read lower here than in the Threads app. Honest heads-up; remove once
+            review clears and the data reconciles. */}
+        <div className="flex items-start gap-2.5 rounded-lg border border-border bg-surface-2 px-3.5 py-2.5 text-caption text-text-muted [text-wrap:pretty]">
+          <IcInfo size={15} className="mt-px shrink-0 text-text-subtle" />
+          <span>{t("feed.beta_notice")}</span>
         </div>
 
         {phase === "loading" ? (

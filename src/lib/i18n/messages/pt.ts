@@ -821,6 +821,7 @@ export const pt: Partial<Record<MessageKey, string>> = {
   "nav.group.voice_automation": "Voz e automação",
   "feed.back": "← painel",
   "feed.title": "Meu Feed",
+  "feed.beta_notice": "Versão beta. Enquanto o app está em análise, algumas métricas (como curtidas) podem diferir das reais no Threads.",
   "feed.subtitle": "Seus posts — cada um com o desempenho frente ao seu normal.",
   "feed.empty":
     "Sem posts ainda. Assim que você publicar no Threads, eles aparecem aqui com as análises.",

@@ -1098,6 +1098,7 @@ export const en = {
   "nav.group.voice_automation": "Voice & automation",
   "feed.back": "← dashboard",
   "feed.title": "My Feed",
+  "feed.beta_notice": "Beta. While the app is under review, some metrics (like likes) may differ from the real counts in Threads.",
   "feed.subtitle": "How your published posts are landing, measured against your own baseline.",
   "feed.empty":
     "No posts yet. Once you publish on Threads, they'll show up here with analytics.",

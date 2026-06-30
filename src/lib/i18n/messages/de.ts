@@ -825,6 +825,7 @@ export const de: Partial<Record<MessageKey, string>> = {
   "nav.group.voice_automation": "Stimme & Automatik",
   "feed.back": "← Dashboard",
   "feed.title": "Mein Feed",
+  "feed.beta_notice": "Beta. Während die App geprüft wird, können einige Kennzahlen (z. B. Likes) von den echten Werten in Threads abweichen.",
   "feed.subtitle":
     "Deine Beiträge — jeder mit dem Vergleich zu deinem Durchschnitt.",
   "feed.empty":
