@@ -130,6 +130,13 @@ export function ImportBanner({ status, summary }: { status: SyncStatus; summary:
 
   const partial = status === "partial";
 
+  // A `partial` result that imported NOTHING (0 posts AND 0 comments) is noise —
+  // e.g. reconnecting an already-synced account re-runs the backfill and finds
+  // nothing new, leaving a confusing "0 posts · 0 comments already here" plaque.
+  // Don't surface a zero-reassurance; just show the normal screen. (A real import
+  // still streams its progress under the `importing` status above.)
+  if (partial && (posts ?? 0) === 0 && (comments ?? 0) === 0) return null;
+
   // Determinate fill only once a post total is known and we have progress
   // against it; before then the bar sweeps (honest about not-yet-knowing).
   const determinate = !partial && total !== null && total > 0 && posts !== null;

@@ -669,7 +669,7 @@ export default function Studio() {
             <FilterTabs active={tab} counts={counts} onChange={setTab} />
 
             <div className={density === "compact" ? "flex flex-col gap-2.5" : "flex flex-col gap-3.5"}>
-              {feedState === "Loading" || (!demoOn && draftsLoading) ? (
+              {feedState === "Loading" || (!demoOn && (draftsLoading || accountId === null)) ? (
                 <>
                   <SkeletonCard />
                   <SkeletonCard />
