@@ -113,11 +113,11 @@ function Total({
 }) {
   return (
     <div className="rounded-lg border border-border bg-surface px-[17px] py-[15px] shadow-sm">
-      <div className="flex items-center gap-[7px] text-caption font-semibold uppercase tracking-[0.03em] text-text-subtle">
-        <span className="grid h-6 w-6 place-items-center rounded-sm border border-border bg-surface-2 text-text-muted">
+      <div className="flex min-w-0 items-center gap-[7px] text-caption font-semibold uppercase tracking-[0.03em] text-text-subtle">
+        <span className="grid h-6 w-6 shrink-0 place-items-center rounded-sm border border-border bg-surface-2 text-text-muted">
           {icon}
         </span>
-        {label}
+        <span className="truncate">{label}</span>
       </div>
       <div
         className={cn(
@@ -200,11 +200,14 @@ function Metric({
 }) {
   return (
     <div className="flex min-w-0 flex-col gap-[3px]">
-      <span className="flex items-center gap-1 text-[10.5px] font-semibold uppercase tracking-[0.03em] text-text-subtle">
-        {icon}
-        {label}
+      {/* Label stays on ONE line (truncate, icon shrink-0) so a long locale can't
+          wrap it and make this tile taller than its siblings — keeping the metric
+          row's baselines aligned (layout rule 1). */}
+      <span className="flex min-w-0 items-center gap-1 text-[10.5px] font-semibold uppercase tracking-[0.03em] text-text-subtle">
+        <span className="shrink-0">{icon}</span>
+        <span className="truncate">{label}</span>
       </span>
-      <span className="flex items-baseline gap-[7px]">
+      <span className="flex items-baseline gap-[7px] whitespace-nowrap">
         <span
           className={cn(
             "text-h3 font-semibold leading-[1.1] tracking-[-0.006em] tabular-nums",
