@@ -1,0 +1,44 @@
+name: typecheck
+
+# Type + build gate for the web app: `tsc --noEmit` (the modified Next.js does
+# NOT typecheck during `next dev`/`next build` reliably, so a type regression
+# can otherwise reach prod) plus a real `next build` to catch build-time
+# breaks. Complements the existing `smoke` (render) and `i18n-parity` workflows.
+# eslint is a follow-up — the repo has no flat eslint config yet.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig.json"
+      - "next.config.*"
+      - ".github/workflows/typecheck.yml"
+  pull_request:
+    paths:
+      - "src/**"
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig.json"
+      - "next.config.*"
+      - ".github/workflows/typecheck.yml"
+
+jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+      - run: npm ci
+      - name: Types (tsc --noEmit)
+        run: npx tsc --noEmit
+      - name: Build (next build)
+        run: npx next build
+        env:
+          # No backend at build time; a placeholder keeps NEXT_PUBLIC_API_URL defined.
+          NEXT_PUBLIC_API_URL: http://localhost:8000
