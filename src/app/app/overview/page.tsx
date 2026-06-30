@@ -135,6 +135,9 @@ export default function OverviewPage() {
   // Single connected account → degrade gracefully to one card + a "connect
   // another" nudge (no empty portfolio-of-one).
   const single = phase === "ready" && !!model && model.accounts.length === 1;
+  // Show per-card network badges only once the portfolio spans >1 network —
+  // invisible on Threads-only today, surfaces the moment LinkedIn connects.
+  const multiNetwork = !!model && new Set(model.accounts.map((a) => a.network)).size > 1;
 
   function openAccount(a: OverviewAccount, path = "/app/stats") {
     setSelectedAccountId(a.id);
@@ -176,6 +179,7 @@ export default function OverviewPage() {
                 <AccountCard
                   key={a.id}
                   account={a}
+                  showNetwork={multiNetwork}
                   onOpen={demoOn ? undefined : (acc) => openAccount(acc)}
                   onOpenStats={demoOn ? undefined : (acc) => openAccount(acc, "/app/stats")}
                   onOpenReplies={demoOn ? undefined : (acc) => openAccount(acc, "/app/replies?filter=needs-reply")}

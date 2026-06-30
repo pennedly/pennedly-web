@@ -18,6 +18,7 @@ import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { Avatar } from "@/components/ui/avatar";
 import { ConnectThreadsButton } from "@/components/ConnectThreadsButton";
 import { ImportBanner } from "@/components/studio/ImportBanner";
+import { NetworkBadge } from "@/components/studio/NetworkBadge";
 import {
   IcArrowRight,
   IcArrowUp,
@@ -219,6 +220,7 @@ function asAccountFace(a: OverviewAccount): ConnectedAccount {
   return {
     id: a.id,
     tenant_id: a.tenant_id,
+    network: a.network,
     threads_user_id: "",
     username: a.handle,
     display_name: a.name,
@@ -241,12 +243,16 @@ export function AccountCard({
   onOpenStats,
   onOpenReplies,
   onRetry,
+  showNetwork,
 }: {
   account: OverviewAccount;
   onOpen?: (a: OverviewAccount) => void;
   onOpenStats?: (a: OverviewAccount) => void;
   onOpenReplies?: (a: OverviewAccount) => void;
   onRetry?: (a: OverviewAccount) => void;
+  // Show the network badge — only when the portfolio spans >1 network (the
+  // overview computes this), so it stays invisible on Threads-only today.
+  showNetwork?: boolean;
 }) {
   const { t, locale } = useTranslation();
   const rep = account.replies_to_answer;
@@ -260,7 +266,12 @@ export function AccountCard({
         <div className="truncate text-small font-semibold leading-[1.25] text-text">
           {account.name ?? account.handle ?? t("overview.account_fallback")}
         </div>
-        {account.handle && <div className="truncate text-caption text-text-subtle">@{account.handle}</div>}
+        {(account.handle || showNetwork) && (
+          <div className="flex items-center gap-1.5 text-caption text-text-subtle">
+            {account.handle && <span className="truncate">@{account.handle}</span>}
+            {showNetwork && <NetworkBadge network={account.network} />}
+          </div>
+        )}
       </div>
       <span className="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-md border border-border bg-surface text-text-muted transition-colors group-hover:bg-surface-2 group-hover:text-text">
         <IcArrowRight size={16} />

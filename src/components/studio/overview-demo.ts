@@ -30,6 +30,7 @@ function acc(
   return {
     id,
     tenant_id: 1,
+    network: "threads",
     name,
     handle,
     avatar: null, // monogram fallback (no demo photo URLs)
@@ -51,6 +52,7 @@ const STUDIO = acc(3, "Studio Mara", "studio.mara", 1890, -12, 12_000, 2, 0, 3);
 const LATE: OverviewAccount = {
   id: 4,
   tenant_id: 1,
+  network: "threads",
   name: "Late Drafts",
   handle: "late.drafts",
   avatar: null,

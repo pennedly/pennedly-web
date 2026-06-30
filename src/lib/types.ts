@@ -55,6 +55,9 @@ export type SyncSummary = {
 export type ConnectedAccount = {
   id: number;
   tenant_id: number;
+  // The social network this profile belongs to ('threads' today) — the
+  // multi-network filter axis, never a scope level.
+  network: string;
   threads_user_id: string;
   username: string | null;
   display_name: string | null;
@@ -664,6 +667,9 @@ export type OverviewSyncStatus = "synced" | "importing" | "error";
 export type OverviewAccount = {
   id: number;
   tenant_id: number;
+  // The social network this profile belongs to ('threads' today) — drives the
+  // network-badge slot on the card + the portfolio's network filter.
+  network: string;
   name: string | null;
   handle: string | null;
   avatar: string | null;
