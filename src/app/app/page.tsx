@@ -28,6 +28,7 @@ import {
   refineDraft,
   rejectDraft,
   scheduleDraft,
+  setAccountTimezone,
   setDraftMedia,
   setDraftVideo,
   translateText,
@@ -179,6 +180,17 @@ export default function Studio() {
             (u ? active.find((a) => a.username === u) : undefined) ??
             active.reduce((a, b) => (b.connected_at > a.connected_at ? b : a));
           setSelectedAccountId(justConnected.id);
+          // A freshly-connected account defaults to 'UTC'; set it to the user's
+          // browser timezone so its cadence + quiet hours run in their local
+          // clock (the per-account tz had no writer before — a non-UTC user's
+          // "09:00" silently ran in UTC). Best-effort; existing accounts were
+          // backfilled by migration b8d3f6a2c1e9.
+          try {
+            const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            if (tz) await setAccountTimezone(justConnected.id, tz);
+          } catch {
+            /* tz is cosmetic to the connect flow; never block the toast */
+          }
         } catch {
           /* the account switcher will still auto-select on its own fetch */
         }

@@ -1120,6 +1120,19 @@ export async function setAuditSettings(
   });
 }
 
+// Set the account's IANA timezone (the cadence + quiet-hours clock). Used to
+// auto-detect the browser timezone on a fresh connect (the per-account tz had no
+// writer before, so non-UTC schedules silently ran in UTC).
+export async function setAccountTimezone(
+  accountId: number,
+  timezone: string,
+): Promise<{ timezone: string }> {
+  return fetchApi<{ timezone: string }>(`/api/accounts/${accountId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ timezone }),
+  });
+}
+
 // ── Style rules (built-in anti-AI-tell defaults) ─────────────────
 
 // Read the full catalog of built-in default rules with this account's
