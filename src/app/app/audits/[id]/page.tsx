@@ -1,24 +1,26 @@
 "use client";
 
-// Single-audit detail (/app/audits/[id]) — the coach's weekly review, rebuilt
-// 1:1 to Audits-SPEC.html. Narrative + tally + change cards with diff / note /
-// autopilot hours / effect chip / approve-reject. Append-only (one decision per
-// change, no undo). The note is sent as the decision's user_comment.
+// Single-audit detail (/app/audits/[id]) — the redesigned «Аудит роста» weekly
+// review: verdict header + self-learning loop + «Разбор недели» + proposals
+// grouped by the 7 dimensions. Renders the SAME AuditDetailRedesign as the
+// ?demo=1 review, fed by the live audit through apiToAuditDetail. Approve/reject
+// is append-only (one decision per proposal, no undo).
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
-import { ApiError, clearTokens, fetchAudit, getTokens, submitAuditDecisions } from "@/lib/api";
+import { ApiError, clearTokens, fetchAudit, fetchMyAccounts, getTokens, submitAuditDecisions } from "@/lib/api";
 import { captureEvent } from "@/lib/analytics";
 import { useTranslation } from "@/lib/i18n";
 import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
 import { Toast, ToastHost } from "@/components/ui/toast";
 import { Spinner } from "@/components/ui/feedback";
-import { AuditDetailView, type AuditHandlers, type ChangeModel } from "@/components/studio/AuditsParts";
-import type { ChangeStatus } from "@/components/studio/audits-demo";
+import { AuditDetailRedesign } from "@/components/studio/AuditDetailRedesign";
+import { apiToAuditDetail } from "@/components/studio/audits-map";
 import type { AuditDetail } from "@/lib/types";
 
 type ToastT = { id: number; title: string; description?: string };
+type Acct = { name: string; handle: string; initials: string };
 
 function fmtDate(iso: string, locale: string): string {
   const d = new Date(iso);
@@ -34,9 +36,9 @@ export default function AuditDetailPage() {
 
   const [demoParam] = useState(() => (typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("demo") === "1" : false));
   const [audit, setAudit] = useState<AuditDetail | null>(null);
+  const [acct, setAcct] = useState<Acct | null>(null);
   const [loading, setLoading] = useState(true);
   const [bootError, setBootError] = useState<string | null>(null);
-  const [notes, setNotes] = useState<Record<string, string>>({});
   const [toasts, setToasts] = useState<ToastT[]>([]);
 
   function toast(title: string, description?: string) {
@@ -57,7 +59,21 @@ export default function AuditDetailPage() {
     }
     (async () => {
       try {
-        setAudit(await fetchAudit(auditId));
+        const a = await fetchAudit(auditId);
+        setAudit(a);
+        // Header (name/handle/initials) is cosmetic — never block the audit on it.
+        try {
+          const list = await fetchMyAccounts();
+          const acc = list.accounts.find((x) => x.id === a.account_id);
+          if (acc) {
+            const name = acc.display_name ?? acc.username ?? `Account ${acc.id}`;
+            const parts = name.trim().split(/\s+/).filter(Boolean);
+            const initials = (parts.length >= 2 ? parts[0][0] + parts[1][0] : name.slice(0, 2)).toUpperCase();
+            setAcct({ name, handle: acc.username ? `@${acc.username}` : "", initials: initials || "?" });
+          }
+        } catch {
+          /* header is cosmetic */
+        }
       } catch (e) {
         if (e instanceof ApiError && e.status === 401) {
           clearTokens();
@@ -71,34 +87,29 @@ export default function AuditDetailPage() {
     })();
   }, [auditId, router, demoParam]);
 
-  async function reload() {
-    try {
-      setAudit(await fetchAudit(auditId));
-    } catch {
-      /* keep current */
-    }
-  }
-
-  async function decide(c: ChangeModel, approved: boolean) {
-    captureEvent("ui.audit_decision", { audit_id: auditId, change_id: c.id, approved });
-    try {
-      await submitAuditDecisions(auditId, [{ change_id: c.id, approved, user_comment: notes[c.id] }]);
-      await reload();
-      if (approved) toast(t("audits.toast_approved_title"), t("audits.toast_approved_sub"));
-      else toast(t("audits.toast_rejected_title"), t("audits.toast_rejected_sub"));
-    } catch (e) {
-      toast(String(e));
-    }
-  }
-
-  const handlers: AuditHandlers = {
-    onApprove: (c) => decide(c, true),
-    onReject: (c) => decide(c, false),
-    onSaveNote: (c, note) => {
-      setNotes((s) => ({ ...s, [c.id]: note ?? "" }));
-      toast(note ? t("audits.toast_note_saved") : t("audits.toast_note_removed"));
+  const decide = useCallback(
+    async (changeId: string, approved: boolean) => {
+      captureEvent("ui.audit_decision", { audit_id: auditId, change_id: changeId, approved });
+      try {
+        await submitAuditDecisions(auditId, [{ change_id: changeId, approved }]);
+        try {
+          setAudit(await fetchAudit(auditId));
+        } catch {
+          /* keep current */
+        }
+        if (approved) toast(t("audits.toast_approved_title"), t("audits.toast_approved_sub"));
+        else toast(t("audits.toast_rejected_title"), t("audits.toast_rejected_sub"));
+      } catch (e) {
+        toast(String(e));
+      }
     },
-  };
+    [auditId, t],
+  );
+
+  const model = useMemo(
+    () => (audit ? apiToAuditDetail(audit, t, (iso) => fmtDate(iso, locale)) : null),
+    [audit, t, locale],
+  );
 
   if (loading) {
     return (
@@ -107,7 +118,7 @@ export default function AuditDetailPage() {
       </div>
     );
   }
-  if (bootError || !audit) {
+  if (bootError || !audit || !model) {
     return (
       <main className="mx-auto max-w-2xl px-3.5 py-16 md:px-6">
         <div className="rounded-lg border border-danger/40 bg-danger/10 p-4 text-small text-danger">{bootError ?? "Not found"}</div>
@@ -115,25 +126,7 @@ export default function AuditDetailPage() {
     );
   }
 
-  const changes: ChangeModel[] = audit.proposed_changes.map((pc) => {
-    const decision = audit.decisions.find((d) => d.change_id === pc.id);
-    const status: ChangeStatus = decision ? (decision.approved ? "applied" : "rejected") : "undecided";
-    return {
-      id: pc.id,
-      category: pc.category ?? pc.kind,
-      title: pc.title,
-      detail: pc.detail ?? "",
-      status,
-      diff: ((d) => (d && (d.old_text || d.new_text || d.before || d.after) ? { before: d.old_text ?? d.before ?? "", after: d.new_text ?? d.after ?? "" } : null))(
-        pc.diff as { old_text?: string; new_text?: string; before?: string; after?: string } | null,
-      ),
-      hoursUtc: pc.payload?.post_hours ?? null,
-      note: notes[pc.id] ?? decision?.user_comment ?? audit.user_comments?.[pc.id] ?? null,
-      effectPct: decision?.effect_pct ?? null,
-    };
-  });
-  const narrative = audit.llm_reasoning ? audit.llm_reasoning.split(/\n\n+/).map((p) => p.trim()).filter(Boolean) : [];
-  const pending = changes.filter((c) => c.status === "undecided").length;
+  const pending = model.proposals.filter((p) => p.status === "undecided").length;
 
   return (
     <div className="min-h-screen bg-bg text-text">
@@ -143,10 +136,13 @@ export default function AuditDetailPage() {
         pill={pending > 0 ? <TopbarPill tone="accent">{pending} {t("audits.to_review")}</TopbarPill> : <TopbarPill tone="success">{t("audits.pill_reviewed")}</TopbarPill>}
       />
       <main className="mx-auto flex max-w-[720px] flex-col gap-4 px-3.5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4 md:gap-5 md:px-6 md:pb-24 md:pt-7">
-        <AuditDetailView
-          audit={{ id: audit.id, title: `Week of ${fmtDate(audit.period_end, locale)}`, range: `${fmtDate(audit.period_start, locale)} – ${fmtDate(audit.period_end, locale)}`, postsAnalyzed: audit.posts_analyzed, narrative, changes }}
+        <AuditDetailRedesign
+          model={model}
+          initials={acct?.initials ?? "·"}
+          name={acct?.name ?? "—"}
+          handle={acct?.handle ?? ""}
           onBack={() => router.push("/app/audits")}
-          h={handlers}
+          h={{ onApprove: (id) => decide(id, true), onReject: (id) => decide(id, false) }}
         />
       </main>
 

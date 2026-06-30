@@ -13,7 +13,9 @@ import { useMemo, useState, type ReactNode } from "react";
 import { AuditOptIn, AuditRow, AuditsEmpty, AuditsSkeleton, type AuditRowModel } from "@/components/studio/AuditsParts";
 import { AuditDetailRedesign } from "@/components/studio/AuditDetailRedesign";
 import { DEMO_AUDIT_DETAIL, type AuditDetailModel, type ProposalStatus } from "@/components/studio/audits-redesign";
+import { apiToAuditDetail } from "@/components/studio/audits-map";
 import { DEMO_AUDITS } from "@/components/studio/audits-demo";
+import type { AuditDetail } from "@/lib/types";
 import { useTranslation } from "@/lib/i18n";
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -44,6 +46,56 @@ function DetailDemo() {
       h={{ onApprove: (id) => setProposal(id, "applied"), onReject: (id) => setProposal(id, "rejected") }}
     />
   );
+}
+
+// A realistic GET /api/audits/{id} payload that exercises every mapper path:
+// the diff / hours / action shapes (power · sliders · powerOff · plus icons),
+// status from decisions (applied+effect · applied+measuring · rejected ·
+// undecided) and the self-learning loop. Renders through apiToAuditDetail so a
+// mapper regression shows up here, not only in prod.
+const SAMPLE_API_DETAIL: AuditDetail = {
+  id: 1,
+  account_id: 1,
+  period_start: "2026-06-23T00:00:00Z",
+  period_end: "2026-06-30T00:00:00Z",
+  posts_analyzed: 6,
+  metrics_summary: {
+    verdict: { verdict: "Ровная неделя: охваты держатся, разговор просел.", signal: "flat", signal_label: "ровно", confidence: "med" },
+    wins: [{ post_id: "1", text: "Пост про утренние ритуалы", num: "4.1k", unit: "просмотров", mult: "×2.4 среднего", why: "конкретный момент" }],
+    losses: [{ post_id: "2", text: "Новости платформы", num: "0.6k", unit: "просмотров", mult: "×0.4 среднего", why: "мимо аудитории" }],
+    caveat: "Всего <b>6 постов</b> — выводы осторожные.",
+  },
+  week_over_week: { delta_pct: -2 },
+  proposed_changes: [
+    { id: "d1", dim: "topics", shape: "diff", high: true, kind: "post_prompt_edit", title: "Чаще пиши про утренние ритуалы", evidence: "3 поста: медиана <b>4.1k</b> против <b>1.7k</b> — <b>×2.4</b>", expect_dir: "up", expect_label: "вовлечённость", confidence: "high", diff: { type: "add_rule", old_text: "Темы распределены поровну.", new_text: "Приоритет — утренние ритуалы и фокус." } },
+    { id: "h1", dim: "timing", shape: "hours", kind: "autopilot_config", title: "Сдвинь «Утренний пост» в вечер", evidence: "твой пик — <b>18:00–21:00</b>, а пост уходит в <b>9:00</b>", expect_dir: "up", expect_label: "просмотры", confidence: "high", payload: { post_hours: [18, 19, 21] }, action_label: "Запуск в вечернее окно по твоему времени" },
+    { id: "a1", dim: "scenarios", shape: "action", kind: "scenario_toggle", title: "Включи сценарий «Дежурство»", evidence: "дремлет <b>2 недели</b>, упущено <b>~9</b> окон", expect_dir: "up", expect_label: "ответы", confidence: "med", payload: { scenario_id: 7, enabled: true }, action_label: "«Дежурство» — ответы на свежие комментарии в течение часа" },
+    { id: "a2", dim: "scenarios", shape: "action", kind: "scenario_set_limit", title: "Подними лимит ответов до 25", evidence: "пропущено <b>14</b> комментариев — упёрся в дневной лимит", expect_dir: "up", expect_label: "охват ответов", confidence: "high", payload: { scenario_id: 8, max_per_day: 25 }, action_label: "Дневной лимит ответов: <b>10 → 25</b>" },
+    { id: "a3", dim: "scenarios", shape: "action", kind: "scenario_toggle", title: "Отключи «Кросс-постинг»", evidence: "6 запусков: медиана <b>0.4k</b> — в <b>4×</b> ниже среднего", expect_dir: "up", expect_label: "среднее по постам", confidence: "med", payload: { scenario_id: 9, enabled: false }, action_label: "«Кросс-постинг» — слабый канал, тянет среднее вниз" },
+    { id: "r1", dim: "rules", shape: "action", kind: "user_rule_add", title: "Добавь правило: не открывать определением", evidence: "5 постов с определения: медиана <b>1.1k</b> против <b>1.7k</b>", expect_dir: "up", expect_label: "дочитывания", confidence: "med", payload: { rule_kind: "post", body: "Открывай пост сценой или моментом, а не определением темы." }, action_label: "«Открывай пост сценой, а не определением темы»" },
+  ],
+  llm_reasoning: "Ровная неделя.",
+  llm_model: "test",
+  status: "pending",
+  user_comments: {},
+  applied_at: null,
+  created_at: "2026-06-30T00:00:00Z",
+  decisions: [
+    { id: 1, change_id: "d1", kind: "post_prompt_edit", approved: true, user_comment: null, decided_at: "2026-06-30T01:00:00Z", applied_change: {}, rolled_back: false, effect_pct: 18, engagement_before_pct: null, engagement_after_pct: null },
+    { id: 2, change_id: "h1", kind: "autopilot_config", approved: true, user_comment: null, decided_at: "2026-06-30T01:00:00Z", applied_change: {}, rolled_back: false, effect_pct: null, engagement_before_pct: null, engagement_after_pct: null },
+    { id: 3, change_id: "a3", kind: "scenario_toggle", approved: false, user_comment: null, decided_at: "2026-06-30T01:00:00Z", applied_change: null, rolled_back: false, effect_pct: null, engagement_before_pct: null, engagement_after_pct: null },
+  ],
+  loop: { up_pct: 18, rolled: 2 },
+};
+
+function MappedFromApiDemo() {
+  const { t, locale } = useTranslation();
+  const fmtDate = (iso: string) => {
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString(locale, { month: "short", day: "numeric" });
+  };
+  const model = apiToAuditDetail(SAMPLE_API_DETAIL, t, fmtDate);
+  return <AuditDetailRedesign model={model} initials="ML" name="Mara Lin" handle="@mara.lin" onBack={() => {}} h={{ onApprove: () => {}, onReject: () => {} }} />;
 }
 
 export default function AuditsGallery() {
@@ -131,6 +183,11 @@ export default function AuditsGallery() {
         <h2 className="mb-3 mt-8 text-h3 font-semibold">Detail — decided states (applied · measuring · +18% effect · rejected)</h2>
         <Section title="first three proposals pre-decided so every footer chip is visible at once">
           <AuditDetailRedesign model={decided} initials="ML" name="Mara Lin" handle="@mara.lin" onBack={() => {}} h={{ onApprove: () => {}, onReject: () => {} }} />
+        </Section>
+
+        <h2 className="mb-3 mt-8 text-h3 font-semibold">Detail — mapped from a live API payload (apiToAuditDetail)</h2>
+        <Section title="a realistic GET /api/audits/{id} response → AuditDetailModel: every shape (diff · hours · 4 action icons), status from decisions, loop. A mapper regression surfaces here.">
+          <MappedFromApiDemo />
         </Section>
       </div>
     </div>

@@ -1169,6 +1169,8 @@ export type AuditSummary = {
   week_over_week_delta_pct: number | null;
   created_at: string;
   applied_at: string | null;
+  // Redesign: which of the 7 dimensions this audit touched (canonical order).
+  dims: string[];
 };
 
 export type AuditsList = {
@@ -1188,9 +1190,27 @@ export type ProposedChange = {
   detail?: string;
   // For prompt edits the diff is { type, where, old_text, new_text } (Q51).
   diff?: { type?: string; where?: string; old_text?: string; new_text?: string } | null;
-  // autopilot_config changes carry post_hours (UTC) instead of a diff.
-  payload?: { post_hours?: number[] } | null;
+  // autopilot_config carries post_hours (UTC); the action kinds carry their own
+  // payload (scenario id + new state, or a new rule's text).
+  payload?: {
+    post_hours?: number[];
+    scenario_id?: number;
+    enabled?: boolean;
+    max_per_day?: number;
+    rule_kind?: string;
+    body?: string;
+  } | null;
   target_section?: string;
+  // Redesign (7-dimension contract): the dimension + display shape + the
+  // evidence/expectation/confidence the «Аудит роста» detail renders.
+  dim?: string; // topics | scenarios | timing | voice | rules | replies | format
+  shape?: string; // diff | hours | action
+  high?: boolean;
+  evidence?: string;
+  expect_dir?: string; // up | flat
+  expect_label?: string;
+  confidence?: string; // high | med | low
+  action_label?: string; // shape=action: the human label (may contain <b>)
 };
 
 export type AuditDecisionRow = {
@@ -1223,6 +1243,9 @@ export type AuditDetail = {
   applied_at: string | null;
   created_at: string;
   decisions: AuditDecisionRow[];
+  // Redesign: the self-learning «петля» — {up_pct, rolled} from measured past
+  // edits, or null when nothing's been measured (FE hides the strip).
+  loop: { up_pct: number | null; rolled: number } | null;
 };
 
 export type DecisionInput = {

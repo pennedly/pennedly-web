@@ -23,7 +23,7 @@ import {
 } from "@/components/studio/AuditsParts";
 import { AUDIT_TWEAK_DEFAULTS, DEMO_AUDITS, type DemoAudit } from "@/components/studio/audits-demo";
 import { AuditDetailRedesign } from "@/components/studio/AuditDetailRedesign";
-import { DEMO_AUDIT_DETAIL, type ProposalStatus } from "@/components/studio/audits-redesign";
+import { DEMO_AUDIT_DETAIL, type AuditDim, type ProposalStatus } from "@/components/studio/audits-redesign";
 import type { AuditSummary } from "@/lib/types";
 
 const IS_DEV = process.env.NODE_ENV === "development";
@@ -131,6 +131,7 @@ export default function AuditsPage() {
         wowDelta: a.week_over_week_delta_pct,
         undecided: Math.max(0, a.proposed_change_count - a.decided_change_count),
         total: a.proposed_change_count,
+        dims: (a.dims ?? []) as AuditDim[],
       }));
 
   const reviewCount = rows.reduce((n, r) => n + r.undecided, 0);
