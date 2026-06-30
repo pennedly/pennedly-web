@@ -1154,7 +1154,7 @@ export function StepEditor({
                 open={layer3Open}
                 onToggle={() => setLayer3Open((o) => !o)}
               >
-                <Layer3Override form={form} update={update} inherited={l3Inherited} onOpenCustom={() => setBigText("audience")} />
+                <Layer3Override form={form} update={update} inherited={l3Inherited} />
               </Layer>
             ) : (
               // Post / boost / «Акция» produce no replies → nothing to override. The

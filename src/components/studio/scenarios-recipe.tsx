@@ -22,7 +22,6 @@ import {
   IcBolt,
   IcBriefcase,
   IcBubble,
-  IcBubbleQuestion,
   IcChat,
   IcCheck,
   IcClock,
@@ -1895,15 +1894,8 @@ export function ReplyAudiencePicker({
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-//  КОМУ (reply) — 4-tile audience gallery + «из Правил дома» badge
+//  КОМУ (reply) — the shared two-group multi-select picker + «из Правил дома» badge
 // ════════════════════════════════════════════════════════════════════════════
-const AUD_TILES: { key: string; icon: ReactNode; titleKey: MessageKey; subKey: MessageKey }[] = [
-  { key: "fans", icon: <IcHeart size={14} />, titleKey: "scenarios.rc.aud_fans", subKey: "scenarios.rc.aud_fans_sub" },
-  { key: "all_except_trolls", icon: <IcShield size={14} />, titleKey: "scenarios.rc.aud_all", subKey: "scenarios.rc.aud_all_sub" },
-  { key: "questions", icon: <IcBubbleQuestion size={14} />, titleKey: "scenarios.rc.aud_questions", subKey: "scenarios.rc.aud_questions_sub" },
-  { key: "custom", icon: <IcPencil size={14} />, titleKey: "scenarios.rc.aud_custom", subKey: "scenarios.rc.aud_custom_sub" },
-];
-
 export function WhoBody({
   audience,
   audiencePrompt,
@@ -2085,55 +2077,6 @@ function L3Row({
   );
 }
 
-// The 4-tile audience grid + custom free-text — reused from the КОМУ slot (same
-// AUD_TILES). Lives inside the «Кому отвечать» override row.
-function L3AudienceControl({
-  audience,
-  onAudience,
-  audiencePrompt,
-  onOpenCustom,
-}: {
-  audience: string;
-  onAudience: (a: string) => void;
-  audiencePrompt: string;
-  onOpenCustom: () => void;
-}) {
-  const { t } = useTranslation();
-  const custom = audience === "custom";
-  return (
-    <>
-      <div className="grid grid-cols-2 gap-2.5 max-[520px]:grid-cols-1">
-        {AUD_TILES.map((tile) => {
-          const on = tile.key === audience;
-          return (
-            <button
-              key={tile.key}
-              type="button"
-              onClick={() => onAudience(tile.key)}
-              aria-pressed={on}
-              className={cn(
-                "flex flex-col gap-1 rounded-md border bg-surface px-[13px] py-3 text-left transition-colors",
-                on ? "border-accent bg-accent/[0.06] shadow-[0_0_0_1px_var(--color-accent)]" : "border-border hover:border-text/16",
-              )}
-            >
-              <span className="flex items-center gap-[7px] text-small font-semibold text-text">
-                <span className={cn("shrink-0", on ? "text-accent" : "text-text-subtle")}>{tile.icon}</span>
-                {t(tile.titleKey)}
-              </span>
-              <span className="text-caption leading-[1.4] text-text-subtle">{t(tile.subKey)}</span>
-            </button>
-          );
-        })}
-      </div>
-      {custom && <BigText value={audiencePrompt} hint={t("scenarios.rc.aud_custom_hint")} onOpen={onOpenCustom} />}
-      <p className="inline-flex flex-wrap items-center gap-1.5 text-caption text-text-subtle">
-        <IcLock size={11} className="shrink-0 opacity-70" />
-        {t("scenarios.rc.l3.trolls_always")}
-      </p>
-    </>
-  );
-}
-
 // «Лимит ответов в день» override — the design's big-number slider (5–100).
 function L3LimitControl({ value, onChange }: { value: number; onChange: (n: number) => void }) {
   const { t } = useTranslation();
@@ -2231,12 +2174,10 @@ export function Layer3Override({
   form,
   update,
   inherited,
-  onOpenCustom,
 }: {
   form: FormState;
   update: (patch: Partial<FormState>) => void;
   inherited: L3Inherited;
-  onOpenCustom: () => void;
 }) {
   const { t } = useTranslation();
   const overrides = [form.l3WhoOn, form.l3LimitOn, form.l3FreqOn, form.l3QuietOn];
@@ -2290,11 +2231,10 @@ export function Layer3Override({
           onOverride={overrideWho}
           onRevert={revertWho}
         >
-          <L3AudienceControl
-            audience={form.audience}
-            onAudience={(a) => update({ audience: a })}
+          <ReplyAudiencePicker
+            audience={form.audience as ReplyAudience}
             audiencePrompt={form.audiencePrompt}
-            onOpenCustom={onOpenCustom}
+            onChange={(a, p) => update({ audience: a, audiencePrompt: p })}
           />
         </L3Row>
 
