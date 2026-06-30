@@ -13,6 +13,7 @@ import { ApiError, clearTokens, fetchEngagement, fetchFollowers, fetchMe, fetchS
 import { useSelectedAccountId } from "@/lib/account";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
+import { BetaNotice } from "@/components/ui/beta-notice";
 import { Button } from "@/components/ui/button";
 import { IcChart, IcReload } from "@/components/icons";
 import { TweaksPanel, TweakSection, TweakToggle, TweakRadio, useTweaks } from "@/components/tweaks/TweaksPanel";
@@ -416,6 +417,10 @@ export default function StatsPage() {
               before posting) never traps the user. */}
           <RangeSeg active={period} onChange={onPeriod} />
         </div>
+
+        {/* Beta disclaimer — same Threads-API likes limitation as the Feed (SPEC §14);
+            the summary tiles include likes, so warn here too. Remove post Meta review. */}
+        <BetaNotice />
 
         {phase === "loading" ? (
           <SkeletonDash />
