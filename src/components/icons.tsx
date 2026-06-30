@@ -68,7 +68,9 @@ export const IcSliders = (p: IconProps) => <Svg {...p}><path d="M4 7h9M17 7h3M4 
 export const IcFilter = (p: IconProps) => <Svg {...p}><path d="M4 5h16l-6 7v5l-4 2v-7L4 5Z" /></Svg>;
 export const IcPenLine = (p: IconProps) => <Svg {...p}><path d="M4 20h16" /><path d="M5 16h2L16 7a1.6 1.6 0 0 0-2.3-2.3L5 13.5V16Z" /></Svg>;
 export const IcPower = (p: IconProps) => <Svg {...p}><path d="M12 4v8" /><path d="M7.5 7a7 7 0 1 0 9 0" /></Svg>;
+export const IcPowerOff = (p: IconProps) => <Svg {...p}><path d="M12 4v6" /><path d="M8 8.5a6 6 0 1 0 8 0" /><path d="M5 5l14 14" /></Svg>;
 export const IcFormat = (p: IconProps) => <Svg {...p}><rect x="4" y="4.5" width="16" height="15" rx="2" /><path d="M4 9.5h16M9 9.5v10" /></Svg>;
+export const IcTrend = (p: IconProps) => <Svg {...p}><path d="M4 16l5-5 3.5 3.5L20 7" /><path d="M15 7h5v5" /></Svg>;
 export const IcRobot = (p: IconProps) => <Svg {...p}><rect x="5" y="8" width="14" height="11" rx="2.4" /><path d="M12 4.5V8M8.5 4.5h7" /><circle cx="9.3" cy="13" r="1.1" fill="currentColor" stroke="none" /><circle cx="14.7" cy="13" r="1.1" fill="currentColor" stroke="none" /><path d="M9.5 16.2h5M3 12v3M21 12v3" /></Svg>;
 
 /* settings — ported from settings-icons.jsx */

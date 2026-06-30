@@ -15,16 +15,15 @@ import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
 import { Toast, ToastHost } from "@/components/ui/toast";
 import { TweaksPanel, TweakSection, TweakToggle, TweakRadio, useTweaks } from "@/components/tweaks/TweaksPanel";
 import {
-  AuditDetailView,
   AuditOptIn,
   AuditRow,
   AuditsEmpty,
   AuditsSkeleton,
-  type AuditHandlers,
   type AuditRowModel,
-  type ChangeModel,
 } from "@/components/studio/AuditsParts";
-import { AUDIT_TWEAK_DEFAULTS, DEMO_AUDITS, type ChangeStatus, type DemoAudit } from "@/components/studio/audits-demo";
+import { AUDIT_TWEAK_DEFAULTS, DEMO_AUDITS, type DemoAudit } from "@/components/studio/audits-demo";
+import { AuditDetailRedesign } from "@/components/studio/AuditDetailRedesign";
+import { DEMO_AUDIT_DETAIL, type ProposalStatus } from "@/components/studio/audits-redesign";
 import type { AuditSummary } from "@/lib/types";
 
 const IS_DEV = process.env.NODE_ENV === "development";
@@ -59,6 +58,11 @@ export default function AuditsPage() {
 
   const [tw, setTw] = useTweaks(AUDIT_TWEAK_DEFAULTS);
   const [demoAudits, setDemoAudits] = useState<DemoAudit[]>(DEMO_AUDITS);
+  // Demo state for the redesigned detail (the new «Аудит роста» model).
+  const [demoDetail, setDemoDetail] = useState(DEMO_AUDIT_DETAIL);
+  function setDemoProposal(id: string, status: ProposalStatus) {
+    setDemoDetail((d) => ({ ...d, proposals: d.proposals.map((p) => (p.id === id ? { ...p, status, effect: status === "applied" ? null : undefined } : p)) }));
+  }
 
   function toast(title: string, description?: string) {
     const id = Date.now() + Math.random();
@@ -171,18 +175,7 @@ export default function AuditsPage() {
     }
   }
 
-  // demo detail handlers
-  function setDemoChange(auditId: number, changeId: string, patch: Partial<ChangeModel>) {
-    setDemoAudits((p) => p.map((a) => (a.id === auditId ? { ...a, changes: a.changes.map((c) => (c.id === changeId ? { ...c, ...patch } : c)) } : a)));
-  }
   const openAuditData = demoAudits.find((a) => a.id === openId) ?? null;
-  const demoHandlers: AuditHandlers = openAuditData
-    ? {
-        onApprove: (c) => { setDemoChange(openAuditData.id, c.id, { status: "applied" as ChangeStatus, effectPct: null }); toast(t("audits.toast_approved_title"), t("audits.toast_approved_sub")); },
-        onReject: (c) => { setDemoChange(openAuditData.id, c.id, { status: "rejected" as ChangeStatus }); toast(t("audits.toast_rejected_title"), t("audits.toast_rejected_sub")); },
-        onSaveNote: (c, note) => { setDemoChange(openAuditData.id, c.id, { note }); toast(note ? t("audits.toast_note_saved") : t("audits.toast_note_removed")); },
-      }
-    : { onApprove: () => {}, onReject: () => {}, onSaveNote: () => {} };
 
   const pill =
     reviewCount > 0 ? (
@@ -210,10 +203,16 @@ export default function AuditsPage() {
       <AppTopbar maxW="720px" title={t("audits.title")} pill={pill} />
       <main className="mx-auto flex max-w-[720px] flex-col gap-4 px-3.5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4 md:gap-5 md:px-6 md:pb-24 md:pt-7">
         {showDetail ? (
-          <AuditDetailView
-            audit={{ id: openAuditData.id, title: openAuditData.title, range: openAuditData.range, postsAnalyzed: openAuditData.postsAnalyzed, narrative: openAuditData.narrative, changes: openAuditData.changes }}
+          <AuditDetailRedesign
+            model={demoDetail}
+            initials="ML"
+            name="Mara Lin"
+            handle="@mara.lin"
             onBack={() => setView("list")}
-            h={demoHandlers}
+            h={{
+              onApprove: (id) => { setDemoProposal(id, "applied"); toast(t("audits.toast_approved_title"), t("audits.toast_approved_sub")); },
+              onReject: (id) => { setDemoProposal(id, "rejected"); toast(t("audits.toast_rejected_title"), t("audits.toast_rejected_sub")); },
+            }}
           />
         ) : showOptIn ? (
           <AuditOptIn onEnable={onEnableAudit} busy={enabling} />
