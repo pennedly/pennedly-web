@@ -1103,6 +1103,23 @@ export async function submitAuditDecisions(
   });
 }
 
+// Whether the weekly audit is enabled for this account (it's OFF / opt-in by
+// default). The «Аудит» screen reads this to show the explainer + «Включить»
+// CTA vs the audit list.
+export async function getAuditSettings(accountId: number): Promise<{ enabled: boolean }> {
+  return fetchApi<{ enabled: boolean }>(`/api/audits/settings?account_id=${accountId}`);
+}
+
+export async function setAuditSettings(
+  accountId: number,
+  enabled: boolean,
+): Promise<{ enabled: boolean }> {
+  return fetchApi<{ enabled: boolean }>(`/api/audits/settings`, {
+    method: "PATCH",
+    body: JSON.stringify({ account_id: accountId, enabled }),
+  });
+}
+
 // ── Style rules (built-in anti-AI-tell defaults) ─────────────────
 
 // Read the full catalog of built-in default rules with this account's

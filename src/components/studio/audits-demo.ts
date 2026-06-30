@@ -29,7 +29,7 @@ export type DemoAudit = {
 
 export const AUDIT_TWEAK_DEFAULTS = {
   dark: false,
-  state: "Live", // Live | Loading | Empty
+  state: "Live", // Live | Loading | Empty | OptIn
 };
 
 export const DEMO_AUDITS: DemoAudit[] = [

@@ -8,7 +8,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { ApiError, clearTokens, fetchMe, getTokens, listAudits } from "@/lib/api";
+import { ApiError, clearTokens, fetchMe, getAuditSettings, getTokens, listAudits, setAuditSettings } from "@/lib/api";
 import { useSelectedAccountId } from "@/lib/account";
 import { useTranslation } from "@/lib/i18n";
 import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
@@ -16,6 +16,7 @@ import { Toast, ToastHost } from "@/components/ui/toast";
 import { TweaksPanel, TweakSection, TweakToggle, TweakRadio, useTweaks } from "@/components/tweaks/TweaksPanel";
 import {
   AuditDetailView,
+  AuditOptIn,
   AuditRow,
   AuditsEmpty,
   AuditsSkeleton,
@@ -51,6 +52,10 @@ export default function AuditsPage() {
   const [view, setView] = useState<"list" | "detail">("list");
   const [openId, setOpenId] = useState<number | null>(null);
   const [toasts, setToasts] = useState<ToastT[]>([]);
+  // Whether the (per-account, token-costing) weekly audit is opted in. null = not
+  // yet known → keep the skeleton up; false → the AuditOptIn front door.
+  const [auditEnabled, setAuditEnabled] = useState<boolean | null>(null);
+  const [enabling, setEnabling] = useState(false);
 
   const [tw, setTw] = useTweaks(AUDIT_TWEAK_DEFAULTS);
   const [demoAudits, setDemoAudits] = useState<DemoAudit[]>(DEMO_AUDITS);
@@ -76,7 +81,11 @@ export default function AuditsPage() {
     setLoaded(false);
     (async () => {
       try {
-        const list = await listAudits({ accountId, limit: 50 });
+        const [settings, list] = await Promise.all([
+          getAuditSettings(accountId),
+          listAudits({ accountId, limit: 50 }),
+        ]);
+        setAuditEnabled(settings.enabled);
         setAudits(list.audits);
       } catch (e) {
         if (e instanceof ApiError && e.status === 401) {
@@ -143,6 +152,25 @@ export default function AuditsPage() {
     }
   }
 
+  async function onEnableAudit() {
+    if (accountId === null || enabling) return;
+    setEnabling(true);
+    try {
+      const r = await setAuditSettings(accountId, true);
+      setAuditEnabled(r.enabled);
+      toast(t("audit.optin.enabled_toast"));
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 401) {
+        clearTokens();
+        router.push("/app/login");
+        return;
+      }
+      toast(t("audit.optin.enable_error"));
+    } finally {
+      setEnabling(false);
+    }
+  }
+
   // demo detail handlers
   function setDemoChange(auditId: number, changeId: string, patch: Partial<ChangeModel>) {
     setDemoAudits((p) => p.map((a) => (a.id === auditId ? { ...a, changes: a.changes.map((c) => (c.id === changeId ? { ...c, ...patch } : c)) } : a)));
@@ -172,6 +200,10 @@ export default function AuditsPage() {
   }
 
   const showDetail = demoOn && view === "detail" && openAuditData;
+  // OFF / opt-in front door: in the real app when this account hasn't turned the
+  // audit on; in demo via the «OptIn» Tweaks state. (`auditEnabled === false`
+  // only after the settings fetch settles, so it never flashes during loading.)
+  const showOptIn = demoOn ? tw.state === "OptIn" : auditEnabled === false;
 
   return (
     <div className="min-h-screen bg-bg text-text">
@@ -183,6 +215,8 @@ export default function AuditsPage() {
             onBack={() => setView("list")}
             h={demoHandlers}
           />
+        ) : showOptIn ? (
+          <AuditOptIn onEnable={onEnableAudit} busy={enabling} />
         ) : (
           <>
             <div className="flex flex-col gap-1">
@@ -215,7 +249,7 @@ export default function AuditsPage() {
           <TweakSection label="Appearance" />
           <TweakToggle label="Dark mode" value={tw.dark} onChange={(v) => setTw("dark", v)} />
           <TweakSection label="State" />
-          <TweakRadio label="State" value={tw.state} options={["Live", "Loading", "Empty"]} onChange={(v) => setTw("state", v)} />
+          <TweakRadio label="State" value={tw.state} options={["Live", "Loading", "Empty", "OptIn"]} onChange={(v) => setTw("state", v)} />
         </TweaksPanel>
       )}
     </div>

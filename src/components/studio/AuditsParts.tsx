@@ -12,7 +12,7 @@ import { cn } from "@/lib/cn";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { localUtcOffsetLabel, utcHourToLocal } from "@/lib/timezone";
 import { Button, buttonClasses } from "@/components/ui/button";
-import { BrandMark, IcArrowDown, IcArrowLeft, IcArrowUp, IcAudit, IcCheck, IcChevDown, IcClock, IcPencil, IcX } from "@/components/icons";
+import { BrandMark, IcArrowDown, IcArrowLeft, IcArrowUp, IcAudit, IcCheck, IcChevDown, IcClock, IcFormat, IcInfo, IcPencil, IcPenLine, IcPower, IcRepeat, IcReplies, IcSparkle, IcTag, IcVoice, IcX } from "@/components/icons";
 import type { ChangeStatus, DemoChange } from "@/components/studio/audits-demo";
 
 export type ChangeModel = DemoChange;
@@ -47,6 +47,87 @@ function fmtHour(h: number): string {
   const am = h < 12;
   const h12 = h % 12 === 0 ? 12 : h % 12;
   return `${h12} ${am ? "AM" : "PM"}`;
+}
+
+// ── AuditOptIn (Screen 0 — the OFF / opt-in front door, built 1:1 to
+// Audit-Redesign-SPEC `bodyOptIn`). Shown at /app/audits when the account hasn't
+// turned the weekly audit on (it's per-account + token-costing → OFF by default).
+// `onEnable` flips `audit_enabled` via PATCH /api/audits/settings. ────────────
+const OPTIN_DIMS = [
+  { key: "topics", Icon: IcTag },
+  { key: "scenarios", Icon: IcRepeat },
+  { key: "timing", Icon: IcClock },
+  { key: "voice", Icon: IcVoice },
+  { key: "rules", Icon: IcPenLine },
+  { key: "replies", Icon: IcReplies },
+  { key: "format", Icon: IcFormat },
+] as const;
+
+const OPTIN_BENEFITS = [
+  { Icon: IcTag, tk: "audit.optin.b1_t", dk: "audit.optin.b1_d" },
+  { Icon: IcRepeat, tk: "audit.optin.b2_t", dk: "audit.optin.b2_d" },
+  { Icon: IcClock, tk: "audit.optin.b3_t", dk: "audit.optin.b3_d" },
+  { Icon: IcSparkle, tk: "audit.optin.b4_t", dk: "audit.optin.b4_d" },
+] as const;
+
+export function AuditOptIn({ onEnable, busy }: { onEnable: () => void; busy?: boolean }) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex flex-col gap-4">
+      <section className="relative overflow-hidden rounded-xl border border-border bg-surface px-[30px] pb-7 pt-8 shadow-sm max-md:px-5 max-md:pb-6 max-md:pt-[26px]">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-20 -top-20 h-60 w-60 rounded-full"
+          style={{ background: "radial-gradient(circle, color-mix(in srgb, var(--color-accent) 9%, transparent) 0%, transparent 70%)" }}
+        />
+        <span className="relative mb-[18px] grid h-[52px] w-[52px] place-items-center rounded-lg border border-accent/25 bg-accent/[0.12] text-accent">
+          <IcAudit size={26} />
+        </span>
+        <div className="text-caption font-semibold uppercase tracking-[0.06em] text-text-subtle">{t("audit.optin.eyebrow")}</div>
+        <h1 className="relative mt-2 text-h1 font-semibold tracking-[-0.02em]">{t("audit.optin.title")}</h1>
+        <p
+          className="relative mt-[11px] max-w-[56ch] text-body leading-[1.62] text-text-muted [text-wrap:pretty] [&_b]:font-semibold [&_b]:text-text"
+          dangerouslySetInnerHTML={{ __html: t("audit.optin.lede") }}
+        />
+        <div className="relative mt-5 flex flex-wrap items-center gap-[7px]">
+          <span className="mr-[3px] text-caption text-text-subtle">{t("audit.optin.dims_cap")}</span>
+          {OPTIN_DIMS.map(({ key, Icon }) => (
+            <span key={key} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-surface-2 px-2.5 py-1 text-caption text-text-muted">
+              <Icon size={12} className="shrink-0 text-text-subtle" />
+              {t(`audit.dim.${key}` as MessageKey)}
+            </span>
+          ))}
+        </div>
+        <div className="relative mt-6 flex flex-wrap items-center gap-3.5">
+          <Button variant="primary" size="lg" icon={<IcPower size={18} />} onClick={onEnable} disabled={busy} className="max-md:flex-1 max-md:basis-full">
+            {t("audit.optin.cta")}
+          </Button>
+          <span className="text-caption text-text-subtle">{t("audit.optin.cta_sub")}</span>
+        </div>
+        <div className="relative mt-4 flex items-start gap-2 text-caption leading-[1.5] text-text-subtle">
+          <IcInfo size={13} className="mt-px shrink-0" />
+          <span>{t("audit.optin.note")}</span>
+        </div>
+      </section>
+      <div className="grid grid-cols-2 gap-3 max-md:grid-cols-1">
+        {OPTIN_BENEFITS.map(({ Icon, tk, dk }) => (
+          <div key={tk} className="flex gap-3 rounded-lg border border-border bg-surface p-4 shadow-sm">
+            <span className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-md border border-border bg-surface-2 text-text-muted">
+              <Icon size={17} />
+            </span>
+            <div>
+              <div className="text-small font-semibold tracking-[-0.003em] text-text">{t(tk as MessageKey)}</div>
+              <div className="mt-1 text-caption leading-[1.5] text-text-muted [text-wrap:pretty]">{t(dk as MessageKey)}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="flex items-start gap-[11px] rounded-lg border border-success/30 bg-success/[0.06] px-[17px] py-[15px]">
+        <IcCheck size={16} className="mt-px shrink-0 text-success" />
+        <div className="text-small leading-[1.55] text-text [&_b]:font-semibold" dangerouslySetInnerHTML={{ __html: t("audit.optin.reassure") }} />
+      </div>
+    </div>
+  );
 }
 
 // ─────────────────────────────── AuditRow ───────────────────────────────────
