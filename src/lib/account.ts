@@ -1,46 +1,80 @@
 "use client";
 
-// Shared selected-account state. Persisted in localStorage under
-// `pennedly.selectedAccountId` so flipping between dashboard /
-// role-book / audits doesn't reset, and reloads stay sticky.
+// Shared view-SCOPE state — the multi-network portfolio IA spine.
 //
-// React 19's useSyncExternalStore lets multiple components on the
-// same page reactively share the value without a context.
+// The scope is one of three levels: Portfolio (the whole Pennedly account) →
+// Brand → Profile, with an orthogonal optional `network` filter ("all my
+// LinkedIn"). Persisted in localStorage so flipping between screens / reloads
+// stays sticky. React's useSyncExternalStore shares it reactively without a
+// context.
+//
+// BACK-COMPAT: today every screen is implicitly a single Profile. The ~15
+// existing readers keep calling `useSelectedAccountId()` / `setSelectedAccountId`
+// unchanged — they read/write the PROFILE scope, returning the profile id at
+// profile scope and null at portfolio/brand scope (the same "no single account"
+// state those screens already handle). Scope-aware screens (home, advisor, stats)
+// use `useScope` / `setScope`.
 
 import { useSyncExternalStore } from "react";
 
-const STORAGE_KEY = "pennedly.selectedAccountId";
+export type ScopeLevel = "portfolio" | "brand" | "profile";
+
+export type Scope = {
+  level: ScopeLevel;
+  // The brand/profile id; null at portfolio scope.
+  id: number | null;
+  // Orthogonal network filter (NOT a scope level): null = all networks.
+  network?: string | null;
+};
+
+const SCOPE_KEY = "pennedly.scope";
+const LEGACY_KEY = "pennedly.selectedAccountId"; // pre-scope single account id
+
+// Stable references for useSyncExternalStore — returning a fresh object each
+// call would loop. The server snapshot is the default profile scope.
+const SERVER_SCOPE: Scope = { level: "profile", id: null, network: null };
 
 const listeners = new Set<() => void>();
 
-function readFromStorage(): number | null {
-  if (typeof window === "undefined") return null;
-  const raw = window.localStorage.getItem(STORAGE_KEY);
-  if (!raw) return null;
-  const n = Number(raw);
-  return Number.isFinite(n) && n > 0 ? n : null;
+function readScope(): Scope {
+  if (typeof window === "undefined") return SERVER_SCOPE;
+  const raw = window.localStorage.getItem(SCOPE_KEY);
+  if (raw) {
+    try {
+      const p = JSON.parse(raw) as Partial<Scope>;
+      const level: ScopeLevel =
+        p.level === "portfolio" || p.level === "brand" ? p.level : "profile";
+      const id = typeof p.id === "number" && p.id > 0 ? p.id : null;
+      const network = typeof p.network === "string" ? p.network : null;
+      return { level, id, network };
+    } catch {
+      /* corrupt JSON → fall through to the legacy key */
+    }
+  }
+  // Migrate the pre-scope single-account selection → a profile scope.
+  const legacy = window.localStorage.getItem(LEGACY_KEY);
+  const n = legacy ? Number(legacy) : NaN;
+  return Number.isFinite(n) && n > 0
+    ? { level: "profile", id: n, network: null }
+    : { level: "profile", id: null, network: null };
 }
 
-let current: number | null = readFromStorage();
+let current: Scope = readScope();
 
 function emit() {
   for (const fn of listeners) fn();
 }
 
-export function getSelectedAccountId(): number | null {
-  return current;
-}
-
-export function setSelectedAccountId(id: number | null): void {
-  current = id;
-  if (typeof window !== "undefined") {
-    if (id === null) {
-      window.localStorage.removeItem(STORAGE_KEY);
-    } else {
-      window.localStorage.setItem(STORAGE_KEY, String(id));
-    }
+function persist() {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(SCOPE_KEY, JSON.stringify(current));
+  // Keep the legacy key in sync so anything still reading it directly (or an
+  // older tab) sees the profile id; cleared at portfolio/brand scope.
+  if (current.level === "profile" && current.id !== null) {
+    window.localStorage.setItem(LEGACY_KEY, String(current.id));
+  } else {
+    window.localStorage.removeItem(LEGACY_KEY);
   }
-  emit();
 }
 
 function subscribe(fn: () => void): () => void {
@@ -50,11 +84,41 @@ function subscribe(fn: () => void): () => void {
   };
 }
 
-/** Reactively read the currently-selected account id. SSR returns null. */
+// ── Scope (the new IA spine) ─────────────────────────────────────────
+export function getScope(): Scope {
+  return current;
+}
+
+export function setScope(scope: Scope): void {
+  current = { network: null, ...scope };
+  persist();
+  emit();
+}
+
+/** Reactively read the global view scope. SSR returns the default profile scope. */
+export function useScope(): Scope {
+  return useSyncExternalStore(subscribe, () => current, () => SERVER_SCOPE);
+}
+
+// ── Back-compat single-account API (the ~15 existing profile-bound readers) ──
+// The profile scope's id, or null at portfolio/brand scope.
+export function getSelectedAccountId(): number | null {
+  return current.level === "profile" ? current.id : null;
+}
+
+export function setSelectedAccountId(id: number | null): void {
+  setScope(
+    id === null
+      ? { level: "profile", id: null, network: null }
+      : { level: "profile", id, network: null },
+  );
+}
+
+/** Reactively read the currently-selected account id (profile scope). SSR → null. */
 export function useSelectedAccountId(): number | null {
   return useSyncExternalStore(
     subscribe,
-    () => current,
+    () => (current.level === "profile" ? current.id : null),
     () => null,
   );
 }
