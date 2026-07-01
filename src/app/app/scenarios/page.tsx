@@ -1096,13 +1096,18 @@ export default function ScenariosPage() {
     try {
       const body = compileBody(form);
       let saved: Scenario;
-      // «Сохранить и включить» defaults to ask (drafts → you approve); going
-      // fully automatic is a conscious opt-in via the enable-moment modal only.
+      // «Сохранить и включить» — the editor's «Как публиковать» slot always wins
+      // (compileBody carries it; on an existing scenario it's seeded from the
+      // saved mode, so enabling never silently rewrites auto → ask). A
+      // brand-new scenario of a shape whose body has NO publish_mode slot
+      // (reply_duty/promo/boost) falls back to the safe ask default on EVERY
+      // create — a plain-saved one would otherwise land on the backend's
+      // 'auto' default and later enable straight into auto-publishing.
       if (editing) {
-        saved = await updateScenario(editing.id, { ...body, ...(enable ? { enabled: true, publish_mode: "ask" } : {}) });
+        saved = await updateScenario(editing.id, { ...body, ...(enable ? { enabled: true } : {}) });
         setScenarios((xs) => xs.map((x) => (x.id === saved.id ? saved : x)));
       } else {
-        saved = await createScenario(accountId, { ...body, enabled: enable, ...(enable ? { publish_mode: "ask" } : {}) });
+        saved = await createScenario(accountId, { ...body, enabled: enable, ...(body.publish_mode === undefined ? { publish_mode: "ask" } : {}) });
         setScenarios((xs) => [...xs, saved]);
       }
       // Entry C — a post-scenario with the «Бустер» section ON spins up a SEPARATE
@@ -1548,15 +1553,17 @@ function matchPreset(s: Scenario, catalog: ScenarioPreset[]): ScenarioPreset | n
 // Compile an EXISTING scenario into a create body for cross-account clone.
 function scenarioToCreateBody(s: Scenario): Parameters<typeof createScenario>[1] {
   if (s.template === "promo" && s.structured) {
-    return { name: s.name, promo: s.structured };
+    return { name: s.name, promo: s.structured, publish_mode: s.publish_mode };
   }
   if ((s.action_cfg?.kind as string) === "reply_policy") {
     // on_mention carries its trigger (the worker selects it by trigger_cfg.kind);
     // a plain «Дежурство» clones without one (the comment sweep ignores it).
+    // publish_mode rides every shape so a clone never loses the source's mode.
     const onMention = (s.trigger_cfg?.kind as string) === "on_mention";
     return {
       name: s.name,
-      ...(onMention ? { trigger: { kind: "on_mention" }, publish_mode: s.publish_mode } : {}),
+      publish_mode: s.publish_mode,
+      ...(onMention ? { trigger: { kind: "on_mention" } } : {}),
       reply_policy: {
         audience: (s.action_cfg?.audience as string) || "all_except_trolls",
         max_per_day: (s.action_cfg?.max_per_day as number) ?? 60,
@@ -1571,6 +1578,7 @@ function scenarioToCreateBody(s: Scenario): Parameters<typeof createScenario>[1]
     instruction: s.instruction,
     reply_instruction: s.reply_instruction,
     condition: s.condition_cfg,
+    publish_mode: s.publish_mode,
   };
 }
 

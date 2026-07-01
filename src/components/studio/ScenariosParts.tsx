@@ -14,7 +14,7 @@
 // form. Raw model lives under «Показать как сценарий». Icons: scenario = repeat;
 // promo = gift; replies = bubble; reactive = bolt-event.
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 
 import { Button, buttonClasses } from "@/components/ui/button";
@@ -1745,10 +1745,12 @@ function PreviewEmpty() {
 // + auto-reply-surprise fix. Says plainly what enabling will do (publish posts
 // vs reply to real people), flags the account autopost gate when it's off, and
 // only then flips it on. Turning OFF is harmless and skips this.
-// The «момент включения» (§8) — not a silent toggle. A mode pick («Спроси меня»
-// default / «Публиковать автоматически»), with an inline autopost gate for post
-// scenarios when account autopublish is off, and a consent checkbox for reply
-// scenarios going fully automatic.
+// The «момент включения» (§8) — not a silent toggle. A mode pick, with an
+// inline autopost gate for post scenarios when account autopublish is off, and
+// a consent checkbox for reply scenarios going fully automatic. «Спроси меня»
+// is the default only for scenarios that don't already carry an 'auto' mode;
+// an existing scenario re-enables into its CURRENT mode (toggling off/on must
+// never silently rewrite auto → ask).
 export function EnableConfirm({
   scenario,
   postAutopilotOn,
@@ -1768,6 +1770,16 @@ export function EnableConfirm({
   const [mode, setMode] = useState<PublishMode>("ask");
   const [consent, setConsent] = useState(false);
   const [enableAutopost, setEnableAutopost] = useState(false);
+  // The component stays mounted between opens (renders null when scenario is
+  // null), so re-sync per open: preselect the scenario's CURRENT mode and reset
+  // the one-shot consents so they don't leak into the next scenario's open.
+  useEffect(() => {
+    if (!scenario) return;
+    setMode(publishModeOf(scenario));
+    setConsent(false);
+    setEnableAutopost(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scenario?.id]);
   if (!scenario) return null;
   const sentence = deriveSentence(t, scenario, handle);
   const isReply = sentence.kind === "reply";
@@ -1798,7 +1810,9 @@ export function EnableConfirm({
             active={mode === "ask"}
             tone="ask"
             title={t("scenarios.enable.ask_title")}
-            badge={t("scenarios.enable.default_badge")}
+            // «По умолчанию» only when ask IS this open's preselect — on an
+            // existing auto scenario the badge would contradict the auto card.
+            badge={publishModeOf(scenario) === "ask" ? t("scenarios.enable.default_badge") : undefined}
             sub={isReply ? t("scenarios.enable.ask_reply_sub") : t("scenarios.enable.ask_post_sub")}
             onPick={() => setMode("ask")}
           />
