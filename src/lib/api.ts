@@ -55,6 +55,7 @@ import type {
   LintFix,
   LintResult,
   Me,
+  MeAccountResponse,
   MentionsList,
   OverviewResponse,
   PatternStudyResult,
@@ -291,6 +292,14 @@ export async function fetchMyAccounts(): Promise<AccountsList> {
 // accounts. Owner-only, all of the user's accounts in one request.
 export async function fetchOverview(): Promise<OverviewResponse> {
   return fetchApi<OverviewResponse>("/api/me/overview");
+}
+
+// The account dashboard (the portfolio home, Account → Brands → Profiles): the
+// user's brands each with their profiles + metric roll-ups, portfolio totals, an
+// account-wide triage-tasks block, and the adaptive-IA `scope` hint (whether the
+// brand level is shown). Owner-only, one request.
+export async function fetchMeAccount(): Promise<MeAccountResponse> {
+  return fetchApi<MeAccountResponse>("/api/me/account");
 }
 
 // Disconnect a connected Threads account: drops the stored token + marks it

@@ -708,6 +708,50 @@ export type OverviewResponse = {
   accounts: OverviewAccount[];
 };
 
+// ── Account dashboard (Account → Brands → Profiles) ──────────────────
+// Mirrors api/me.py MeAccountResponse — the portfolio home. It's the overview
+// GROUPED BY BRAND + an account-wide tasks block + the adaptive-IA scope hint.
+// A profile carries the same headline numbers as an OverviewAccount, plus its
+// brand link.
+export type AccountProfile = OverviewAccount & { brand_id: number | null };
+
+export type AccountBrand = {
+  id: number;
+  name: string;
+  // distinct networks present across the brand's profiles (badge row)
+  networks: string[];
+  // synced-only roll-up of THIS brand's profiles (same rule as the portfolio totals)
+  stats: OverviewTotals;
+  // empty for a just-added brand with no connected profile yet
+  profiles: AccountProfile[];
+};
+
+// The account-wide «Требует тебя» roll-up — the four triage signals summed
+// across every profile.
+export type AccountTasks = {
+  pending_drafts: number;
+  replies_attention: number;
+  sync_errors: number;
+  pending_audits: number;
+};
+
+// Adaptive-IA hint. `show_brand_level` is the switch: false → the dashboard
+// shows profile cards directly (one brand, no pass-through level); true → it
+// shows brand cards that expand into profiles (2+ brands).
+export type AccountScope = {
+  brands_count: number;
+  profiles_count: number;
+  show_brand_level: boolean;
+};
+
+export type MeAccountResponse = {
+  tenant: Tenant;
+  brands: AccountBrand[];
+  totals: OverviewTotals;
+  tasks: AccountTasks;
+  scope: AccountScope;
+};
+
 // Public Voice Test (landing demo): paste posts → sample replies in your voice.
 export type VoiceSample = { comment: string; reply: string };
 export type VoiceTestResponse = { samples: VoiceSample[] };
