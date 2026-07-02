@@ -26,7 +26,8 @@ type Unit =
   | "audits"
   | "proposals"
   | "items"
-  | "profiles";
+  | "profiles"
+  | "brands";
 
 // `other` mirrors the plain plural already in the message catalogs; `one`
 // (and `few`/`many` for ru/uk) are the additions that make counts grammatical.
@@ -120,6 +121,16 @@ const UNITS: Record<Unit, Record<LocaleCode, PluralForms>> = {
     fr: { one: "profil", other: "profils" },
     it: { one: "profilo", other: "profili" },
     pt: { one: "perfil", other: "perfis" },
+  },
+  brands: {
+    en: { one: "brand", other: "brands" },
+    ru: { one: "бренд", few: "бренда", many: "брендов", other: "брендов" },
+    uk: { one: "бренд", few: "бренди", many: "брендів", other: "брендів" },
+    de: { one: "Marke", other: "Marken" },
+    es: { one: "marca", other: "marcas" },
+    fr: { one: "marque", other: "marques" },
+    it: { one: "brand", other: "brand" },
+    pt: { one: "marca", other: "marcas" },
   },
 };
 

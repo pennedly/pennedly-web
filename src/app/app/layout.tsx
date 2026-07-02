@@ -25,7 +25,9 @@ import {
   useHasConnectedAccounts,
 } from "@/lib/accounts";
 
-const SHELL_EXEMPT = new Set(["/app/login", "/app/onboarding"]);
+// /app/account is the ACCOUNT-level dashboard — it renders its OWN account
+// sidebar (not the profile shell), so it opts out like login/onboarding.
+const SHELL_EXEMPT = new Set(["/app/login", "/app/onboarding", "/app/account"]);
 
 export default function AppLayout({
   children,

@@ -9,6 +9,8 @@
 
 import { useState } from "react";
 
+import { pluralUnit } from "@/lib/i18n";
+
 import "@/components/account/account.css";
 import "@/components/account/account-mobile.css";
 import "@/components/account/import-banner.css";
@@ -21,6 +23,8 @@ import {
   DEMO_SINGLE_BRAND,
   demoT,
 } from "@/components/account/account-demo";
+
+const demoPlural = (u: "profiles" | "brands", n: number) => pluralUnit("ru", u, n);
 
 function Section({ title, note, children }: { title: string; note?: string; children: React.ReactNode }) {
   return (
@@ -57,15 +61,15 @@ export default function AccountGallery() {
         </div>
 
         <Section title="1 бренд · 1 профиль (новый пользователь)" note="show_brand_level=false → карточки = профили">
-          <AccountDashboard data={DEMO_ONE_PROFILE} adv={DEMO_ADVISOR} t={demoT} dark={dark} />
+          <AccountDashboard data={DEMO_ONE_PROFILE} adv={DEMO_ADVISOR} t={demoT} plural={demoPlural} dark={dark} />
         </Section>
 
         <Section title="1 бренд · несколько профилей" note="карточки = профили напрямую (incl. importing)">
-          <AccountDashboard data={DEMO_SINGLE_BRAND} adv={DEMO_ADVISOR} t={demoT} dark={dark} />
+          <AccountDashboard data={DEMO_SINGLE_BRAND} adv={DEMO_ADVISOR} t={demoT} plural={demoPlural} dark={dark} />
         </Section>
 
         <Section title="2+ брендов" note="show_brand_level=true → карточки = бренды (incl. sync-error внутри)">
-          <AccountDashboard data={DEMO_MULTI_BRAND} adv={DEMO_ADVISOR} t={demoT} dark={dark} />
+          <AccountDashboard data={DEMO_MULTI_BRAND} adv={DEMO_ADVISOR} t={demoT} plural={demoPlural} dark={dark} />
         </Section>
 
         <Section title="Загрузка (скелет)">

@@ -69,6 +69,9 @@ function Ic({ n, s = 14 }: { n: string; s?: number }) {
 
 // ── translator + helpers ─────────────────────────────────────────────────────
 export type T = (key: string) => string;
+// Grammatical plural for a count — the caller wires it to the app's pluralUnit
+// (locale-aware: «1 профиль» · «3 профиля» · «5 профилей»).
+export type Plural = (unit: "profiles" | "brands", n: number) => string;
 
 const NET_LABEL: Record<string, string> = { threads: "Threads", linkedin: "LinkedIn" };
 const NET_GLYPH: Record<string, string> = { threads: "@", linkedin: "in" };
@@ -284,7 +287,7 @@ function BrandStack({ b }: { b: AccountBrand }) {
   );
 }
 
-export function BrandCard({ b, t }: { b: AccountBrand; t: T }) {
+export function BrandCard({ b, t, plural }: { b: AccountBrand; t: T; plural: Plural }) {
   const pc = b.profiles.length;
   const errors = b.profiles.filter((p) => p.sync_status === "error").length;
   const importing = b.profiles.filter((p) => p.sync_status === "importing").length;
@@ -312,7 +315,7 @@ export function BrandCard({ b, t }: { b: AccountBrand; t: T }) {
         <div className="acc-card-id">
           <div className="acc-card-name">{b.name}</div>
           <div className="acc-card-sub">
-            {pc} {t("acc.profiles_word")}
+            {pc} {plural("profiles", pc)}
           </div>
         </div>
         <span className="acc-go">
@@ -347,7 +350,7 @@ export function AddBrand({ t }: { t: T }) {
 }
 
 // ── cards section (adaptive on scope.show_brand_level) ───────────────────────
-export function CardsSection({ data, t }: { data: MeAccountResponse; t: T }) {
+export function CardsSection({ data, t, plural }: { data: MeAccountResponse; t: T; plural: Plural }) {
   const multi = data.scope.show_brand_level;
   const count = multi ? data.brands.length : data.scope.profiles_count;
   return (
@@ -359,7 +362,7 @@ export function CardsSection({ data, t }: { data: MeAccountResponse; t: T }) {
       </div>
       <div className="acc-grid">
         {multi
-          ? data.brands.map((b) => <BrandCard key={b.id} b={b} t={t} />)
+          ? data.brands.map((b) => <BrandCard key={b.id} b={b} t={t} plural={plural} />)
           : data.brands.flatMap((b) => b.profiles).map((p) => <ProfileCard key={p.id} p={p} t={t} />)}
         <AddBrand t={t} />
       </div>
@@ -401,9 +404,11 @@ function HeaderTotal({
 export function Header({
   data,
   t,
+  plural,
 }: {
   data: MeAccountResponse;
   t: T;
+  plural: Plural;
 }) {
   const totals: OverviewTotals = data.totals;
   const brandsN = data.scope.brands_count;
@@ -412,8 +417,8 @@ export function Header({
   const netLabel = [...new Set(nets)].map((n) => NET_LABEL[n] || n).join(" · ") || "Threads";
   const scale =
     brandsN >= 2
-      ? `${profilesN} ${t("acc.profiles_word")} · ${brandsN} ${t("acc.brands_word")} · ${netLabel}`
-      : `${profilesN} ${t("acc.profiles_word")} · ${netLabel}`;
+      ? `${profilesN} ${plural("profiles", profilesN)} · ${brandsN} ${plural("brands", brandsN)} · ${netLabel}`
+      : `${profilesN} ${plural("profiles", profilesN)} · ${netLabel}`;
   const acctMono = initials(data.tenant.name, null);
   return (
     <div className="acc-head">
@@ -518,7 +523,7 @@ export function Sidebar({ data, t }: { data: MeAccountResponse; t: T }) {
 }
 
 // ── topbar (breadcrumb + flat profile switcher) ──────────────────────────────
-export function Topbar({ data, t, dark }: { data: MeAccountResponse; t: T; dark?: boolean }) {
+export function Topbar({ data, t, plural, dark }: { data: MeAccountResponse; t: T; plural: Plural; dark?: boolean }) {
   const acctMono = initials(data.tenant.name, null);
   const allProfiles = data.brands.flatMap((b) => b.profiles);
   const stack = allProfiles.slice(0, 3);
@@ -540,7 +545,7 @@ export function Topbar({ data, t, dark }: { data: MeAccountResponse; t: T; dark?
           <span className="acc-sw-lab">
             <span className="acc-sw-t">{t("acc.sw_all")}</span>
             <span className="acc-sw-s">
-              {allProfiles.length} {t("acc.profiles_word")}
+              {allProfiles.length} {plural("profiles", allProfiles.length)}
             </span>
           </span>
           <Ic n="chev-down" s={15} />
@@ -672,18 +677,71 @@ export function AccountSkeleton() {
   );
 }
 
+// ── advisor invite (honest, until an account-scope advisor endpoint exists) ───
+// The эталон advisor hero shows a rich verdict + recos; those need a portfolio-
+// scope advisor call the backend doesn't expose yet. Per the "no invented
+// features" rule we ship the real advisor SHELL (rail + scope + open-chat entry)
+// with an honest invite body instead of fabricated numbers — swap to <Advisor>
+// once GET /api/account-advisor lands.
+export function AdvisorInvite({ t, onOpen }: { t: T; onOpen?: () => void }) {
+  return (
+    <section className="acc-adv">
+      <div className="acc-adv-rail">
+        <span className="acc-adv-mark">
+          <Ic n="advisor" s={20} />
+        </span>
+        <div className="acc-adv-headtext">
+          <div className="acc-adv-title">{t("acc.adv_title")}</div>
+          <div className="acc-adv-scope">{t("acc.adv_scope")}</div>
+        </div>
+        <button className="btn btn--secondary btn--sm acc-adv-open" type="button" onClick={onOpen}>
+          <Ic n="advisor" s={15} />
+          {t("acc.adv_open")}
+        </button>
+      </div>
+      <div className="acc-adv-body" style={{ gridTemplateColumns: "1fr" }}>
+        <div className="acc-adv-main">
+          <div className="acc-adv-detail">{t("acc.adv_invite")}</div>
+          <div className="acc-adv-composer" onClick={onOpen} style={{ cursor: "pointer" }}>
+            <span className="ph">{t("acc.adv_ask")}</span>
+            <button className="acc-adv-send" type="button" onClick={onOpen}>
+              <Ic n="send" s={17} />
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ── full dashboard composition ───────────────────────────────────────────────
-export function AccountDashboard({ data, adv, t, dark }: { data: MeAccountResponse; adv: AdvisorData; t: T; dark?: boolean }) {
+export function AccountDashboard({
+  data,
+  adv,
+  t,
+  plural,
+  dark,
+  onOpenAdvisor,
+}: {
+  data: MeAccountResponse;
+  // Rich advisor content (gallery/demo). Omit on the live screen → the honest
+  // AdvisorInvite shell renders instead (no fabricated numbers).
+  adv?: AdvisorData;
+  t: T;
+  plural: Plural;
+  dark?: boolean;
+  onOpenAdvisor?: () => void;
+}) {
   return (
     <div className="acc-shell">
       <Sidebar data={data} t={t} />
       <div className="acc-mainwrap" style={{ minWidth: 0, display: "flex", flexDirection: "column", gap: 18 }}>
-        <Topbar data={data} t={t} dark={dark} />
+        <Topbar data={data} t={t} plural={plural} dark={dark} />
         <div className="acc">
-          <Header data={data} t={t} />
+          <Header data={data} t={t} plural={plural} />
           <TasksStrip tasks={data.tasks} t={t} />
-          <Advisor adv={adv} t={t} />
-          <CardsSection data={data} t={t} />
+          {adv ? <Advisor adv={adv} t={t} /> : <AdvisorInvite t={t} onOpen={onOpenAdvisor} />}
+          <CardsSection data={data} t={t} plural={plural} />
         </div>
       </div>
     </div>
