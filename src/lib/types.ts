@@ -752,6 +752,18 @@ export type MeAccountResponse = {
   scope: AccountScope;
 };
 
+// The account-dashboard advisor HERO — a one-shot, portfolio-wide growth verdict
+// (GET /api/me/account/advisor, tester-gated + cached). Mirrors the backend
+// AccountAdvisorResponse verbatim, so the <Advisor> renders it with no mapping.
+// `tone`/`icon` are constrained server-side to the vocab the UI can render.
+export type AdvisorData = {
+  verdict: string;
+  detail: string;
+  chips: { tone: string; icon: string; text: string }[];
+  grounded: string;
+  recos: { tone?: string; icon: string; t: string; s: string }[];
+};
+
 // Public Voice Test (landing demo): paste posts → sample replies in your voice.
 export type VoiceSample = { comment: string; reply: string };
 export type VoiceTestResponse = { samples: VoiceSample[] };

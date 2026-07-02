@@ -16,10 +16,17 @@ import "@/components/account/import-banner.css";
 
 import { AccountDashboard, AccountSkeleton } from "@/components/account/AccountDashboard";
 import type { Plural, T } from "@/components/account/AccountDashboard";
-import { ApiError, clearTokens, fetchMe, fetchMeAccount, getTokens } from "@/lib/api";
+import {
+  ApiError,
+  clearTokens,
+  fetchMe,
+  fetchMeAccount,
+  fetchMeAccountAdvisor,
+  getTokens,
+} from "@/lib/api";
 import { pluralUnit, useTranslation } from "@/lib/i18n";
 import { ErrorBanner } from "@/components/ui/error-banner";
-import type { MeAccountResponse } from "@/lib/types";
+import type { AdvisorData, MeAccountResponse } from "@/lib/types";
 
 type Phase = "loading" | "ready" | "error";
 
@@ -29,6 +36,10 @@ export default function AccountDashboardPage() {
 
   const [phase, setPhase] = useState<Phase>("loading");
   const [data, setData] = useState<MeAccountResponse | null>(null);
+  // The advisor hero loads SEPARATELY (a cached, sometimes-LLM call) so it never
+  // blocks the dashboard. Null until it arrives / on 204 (thin data) / on error
+  // → the honest AdvisorInvite renders instead of a fabricated verdict.
+  const [adv, setAdv] = useState<AdvisorData | null>(null);
 
   useEffect(() => {
     if (!getTokens()) {
@@ -56,6 +67,13 @@ export default function AccountDashboardPage() {
         }
         setData(acc);
         setPhase("ready");
+        // Fire-and-forget: the hero verdict fills in when ready; a failure or a
+        // 204 (thin data) just leaves the honest invite in place.
+        fetchMeAccountAdvisor()
+          .then((a) => {
+            if (alive) setAdv(a);
+          })
+          .catch(() => {});
       } catch (e) {
         if (!alive) return;
         if (e instanceof ApiError && e.status === 401) {
@@ -110,6 +128,7 @@ export default function AccountDashboardPage() {
       <div className={wrap}>
         <AccountDashboard
           data={data}
+          adv={adv ?? undefined}
           t={tt}
           plural={plural}
           onOpenAdvisor={() => router.push("/app/advisor")}

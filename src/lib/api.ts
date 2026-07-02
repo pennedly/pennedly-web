@@ -13,6 +13,7 @@
 
 import type {
   AccountsList,
+  AdvisorData,
   AdvisorMessage,
   AdvisorResponse,
   ApprovalResult,
@@ -300,6 +301,20 @@ export async function fetchOverview(): Promise<OverviewResponse> {
 // brand level is shown). Owner-only, one request.
 export async function fetchMeAccount(): Promise<MeAccountResponse> {
   return fetchApi<MeAccountResponse>("/api/me/account");
+}
+
+// The account-dashboard advisor HERO: a cached, portfolio-wide growth verdict.
+// Tester-gated + fetched SEPARATELY from the dashboard so an LLM cache-miss never
+// blocks the screen. Returns null on 204 (not enough portfolio data yet → the UI
+// keeps its honest invite). `?refresh=1` forces a fresh generation (tester QA).
+export async function fetchMeAccountAdvisor(
+  opts?: { refresh?: boolean },
+): Promise<AdvisorData | null> {
+  const q = opts?.refresh ? "?refresh=1" : "";
+  const data = await fetchApi<AdvisorData | undefined>(
+    `/api/me/account/advisor${q}`,
+  );
+  return data ?? null;
 }
 
 // Disconnect a connected Threads account: drops the stored token + marks it

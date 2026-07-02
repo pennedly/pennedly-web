@@ -16,9 +16,13 @@ import type {
   AccountBrand,
   AccountProfile,
   AccountTasks,
+  AdvisorData,
   MeAccountResponse,
   OverviewTotals,
 } from "@/lib/types";
+
+// Re-exported so account-demo.ts + consumers can keep importing it from here.
+export type { AdvisorData };
 
 // ── icons (inline, mirrors account-desktop.js P/ic) ──────────────────────────
 const PATHS: Record<string, string> = {
@@ -566,15 +570,9 @@ export function Topbar({ data, t, plural, dark }: { data: MeAccountResponse; t: 
 }
 
 // ── advisor (account scope, hero) — verdict/detail/chips + reco side rail ─────
-export type AdvisorData = {
-  verdict: string;
-  detail: string;
-  chips: { tone: string; icon: string; text: string }[];
-  grounded: string;
-  recos: { tone?: string; icon: string; t: string; s: string }[];
-};
+// AdvisorData now lives in @/lib/types (imported + re-exported at the top).
 
-export function Advisor({ adv, t }: { adv: AdvisorData; t: T }) {
+export function Advisor({ adv, t, onOpen }: { adv: AdvisorData; t: T; onOpen?: () => void }) {
   return (
     <section className="acc-adv">
       <div className="acc-adv-rail">
@@ -585,7 +583,7 @@ export function Advisor({ adv, t }: { adv: AdvisorData; t: T }) {
           <div className="acc-adv-title">{t("acc.adv_title")}</div>
           <div className="acc-adv-scope">{t("acc.adv_scope")}</div>
         </div>
-        <button className="btn btn--secondary btn--sm acc-adv-open" type="button">
+        <button className="btn btn--secondary btn--sm acc-adv-open" type="button" onClick={onOpen}>
           <Ic n="advisor" s={15} />
           {t("acc.adv_open")}
         </button>
@@ -609,9 +607,13 @@ export function Advisor({ adv, t }: { adv: AdvisorData; t: T }) {
             </span>
             <span className="src">{adv.grounded}</span>
           </div>
-          <div className="acc-adv-composer">
+          <div
+            className="acc-adv-composer"
+            onClick={onOpen}
+            style={onOpen ? { cursor: "pointer" } : undefined}
+          >
             <span className="ph">{t("acc.adv_ask")}</span>
-            <button className="acc-adv-send" type="button">
+            <button className="acc-adv-send" type="button" onClick={onOpen}>
               <Ic n="send" s={17} />
             </button>
           </div>
@@ -744,7 +746,11 @@ export function AccountDashboard({
         <div className="acc">
           <Header data={data} t={t} plural={plural} />
           <TasksStrip tasks={data.tasks} t={t} plural={plural} />
-          {adv ? <Advisor adv={adv} t={t} /> : <AdvisorInvite t={t} onOpen={onOpenAdvisor} />}
+          {adv ? (
+            <Advisor adv={adv} t={t} onOpen={onOpenAdvisor} />
+          ) : (
+            <AdvisorInvite t={t} onOpen={onOpenAdvisor} />
+          )}
           <CardsSection data={data} t={t} plural={plural} />
         </div>
       </div>
