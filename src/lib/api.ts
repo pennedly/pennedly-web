@@ -320,12 +320,19 @@ export async function exportAccountData(): Promise<unknown> {
 // Kick off the Threads OAuth connect. Returns the Meta authorize URL the
 // caller should navigate the browser to. `returnTo` is where Meta's
 // callback will 302 us back (must be an allowlisted web origin).
+//
+// `credentials: "include"` is REQUIRED: /start sets an httpOnly nonce cookie the
+// callback matches to block the account-linking CSRF (S1), and the browser only
+// stores a cross-origin Set-Cookie (app.pennedly.com → api.pennedly.com) when
+// the request is credentialed. CORS already allows credentials with an explicit
+// (non-wildcard) origin list.
 export async function startThreadsConnect(
   returnTo: string,
 ): Promise<ThreadsConnectStart> {
   const qs = new URLSearchParams({ return_to: returnTo });
   return fetchApi<ThreadsConnectStart>(
     `/api/threads/oauth/start?${qs.toString()}`,
+    { credentials: "include" },
   );
 }
 
