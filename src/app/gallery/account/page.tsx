@@ -24,7 +24,7 @@ import {
   demoT,
 } from "@/components/account/account-demo";
 
-const demoPlural = (u: "profiles" | "brands", n: number) => pluralUnit("ru", u, n);
+const demoPlural = (u: "profiles" | "brands" | "drafts" | "audits", n: number) => pluralUnit("ru", u, n);
 
 function Section({ title, note, children }: { title: string; note?: string; children: React.ReactNode }) {
   return (

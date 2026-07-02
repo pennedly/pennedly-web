@@ -70,8 +70,10 @@ function Ic({ n, s = 14 }: { n: string; s?: number }) {
 // ── translator + helpers ─────────────────────────────────────────────────────
 export type T = (key: string) => string;
 // Grammatical plural for a count — the caller wires it to the app's pluralUnit
-// (locale-aware: «1 профиль» · «3 профиля» · «5 профилей»).
-export type Plural = (unit: "profiles" | "brands", n: number) => string;
+// (locale-aware: «1 профиль» · «3 профиля» · «5 профилей»). Covers every unit
+// this screen inflects: card counts (profiles/brands) + tasks-strip chips
+// (drafts/audits), so «1 черновик» · «2 черновика» · «5 черновиков» stays correct.
+export type Plural = (unit: "profiles" | "brands" | "drafts" | "audits", n: number) => string;
 
 const NET_LABEL: Record<string, string> = { threads: "Threads", linkedin: "LinkedIn" };
 const NET_GLYPH: Record<string, string> = { threads: "@", linkedin: "in" };
@@ -446,12 +448,14 @@ export function Header({
 // ── tasks strip ──────────────────────────────────────────────────────────────
 const TASK_IC: Record<string, string> = { sync: "alert", reply: "reply", draft: "nib", audit: "audit" };
 
-export function TasksStrip({ tasks, t }: { tasks: AccountTasks; t: T }) {
+export function TasksStrip({ tasks, t, plural }: { tasks: AccountTasks; t: T; plural: Plural }) {
   const chips: { type: string; n: number; label: string }[] = [];
+  // sync + reply labels are invariant phrases («сбой синка» · «к ответу»); the
+  // count-noun chips (drafts/audits) inflect per-locale so «1 черновик» is right.
   if (tasks.sync_errors) chips.push({ type: "sync", n: tasks.sync_errors, label: t("acc.task_sync") });
   if (tasks.replies_attention) chips.push({ type: "reply", n: tasks.replies_attention, label: t("acc.task_replies") });
-  if (tasks.pending_drafts) chips.push({ type: "draft", n: tasks.pending_drafts, label: t("acc.task_drafts") });
-  if (tasks.pending_audits) chips.push({ type: "audit", n: tasks.pending_audits, label: t("acc.task_audits") });
+  if (tasks.pending_drafts) chips.push({ type: "draft", n: tasks.pending_drafts, label: plural("drafts", tasks.pending_drafts) });
+  if (tasks.pending_audits) chips.push({ type: "audit", n: tasks.pending_audits, label: plural("audits", tasks.pending_audits) });
   if (!chips.length) return null;
   return (
     <div className="acc-tasks">
@@ -739,7 +743,7 @@ export function AccountDashboard({
         <Topbar data={data} t={t} plural={plural} dark={dark} />
         <div className="acc">
           <Header data={data} t={t} plural={plural} />
-          <TasksStrip tasks={data.tasks} t={t} />
+          <TasksStrip tasks={data.tasks} t={t} plural={plural} />
           {adv ? <Advisor adv={adv} t={t} /> : <AdvisorInvite t={t} onOpen={onOpenAdvisor} />}
           <CardsSection data={data} t={t} plural={plural} />
         </div>

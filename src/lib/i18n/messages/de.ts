@@ -1979,6 +1979,8 @@ export const de: Partial<Record<MessageKey, string>> = {
   "acc.adv_title": "Account advisor",
   "acc.adv_scope": "across the whole portfolio",
   "acc.adv_open": "Open chat",
+  "acc.adv_grounded": "Grounded in:",
+  "acc.adv_reco": "Recommendations",
   "acc.adv_ask": "Ask about your portfolio…",
   "acc.adv_invite": "Ask the advisor what to post, when, and which account needs attention — grounded in your portfolio's own stats.",
   "acc.profiles_one": "profile",

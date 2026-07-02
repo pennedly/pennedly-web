@@ -2763,6 +2763,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "acc.adv_title": "Советник аккаунта",
   "acc.adv_scope": "по всему портфелю",
   "acc.adv_open": "Открыть чат",
+  "acc.adv_grounded": "Основано на:",
+  "acc.adv_reco": "Рекомендации",
   "acc.adv_ask": "Спросите совет по портфелю…",
   "acc.adv_invite": "Спросите советника, что и когда постить и какому аккаунту нужно внимание — на основе статистики вашего портфеля.",
   "acc.profiles_one": "профиль",
