@@ -12,6 +12,11 @@
 // the эталон markup + class names exactly, so account.css themes them (light +
 // dark) with zero per-element work.
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+
+import { setSelectedAccountId, useSelectedAccountId } from "@/lib/account";
+import { clearTokens, startThreadsConnect } from "@/lib/api";
 import type {
   AccountBrand,
   AccountProfile,
@@ -78,6 +83,62 @@ export type T = (key: string) => string;
 // this screen inflects: card counts (profiles/brands) + tasks-strip chips
 // (drafts/audits), so «1 черновик» · «2 черновика» · «5 черновиков» stays correct.
 export type Plural = (unit: "profiles" | "brands" | "drafts" | "audits", n: number) => string;
+
+// Navigation the dashboard's controls drive. Built once from next/navigation +
+// the selected-account store, threaded to every interactive part so the same
+// components stay presentational (the gallery gets a live router too, harmless).
+export type ProfileView = "studio" | "stats" | "replies";
+export type Nav = {
+  openProfile: (id: number, view?: ProfileView) => void; // switch profile → its screen
+  go: (route: string) => void; // plain push (nav rows, settings, triage)
+  addProfile: () => void; // connect another profile (add-brand / switcher «подключить»)
+  logout: () => void;
+  retry: () => void; // re-fetch after a sync error
+  toggleTheme: () => void;
+};
+
+function useAccountNav(): Nav {
+  const router = useRouter();
+  return {
+    openProfile: (id, view = "studio") => {
+      setSelectedAccountId(id);
+      router.push(
+        view === "stats"
+          ? "/app/stats"
+          : view === "replies"
+            ? "/app/replies?filter=needs"
+            : "/app",
+      );
+    },
+    go: (route) => router.push(route),
+    // «Добавить бренд» / «Подключить профиль» = connect ANOTHER Threads account
+    // → kick off the Threads OAuth (same as ConnectThreadsButton), returning to
+    // the dashboard. Falls back to onboarding if the start call fails.
+    addProfile: () => {
+      const returnUrl =
+        typeof window !== "undefined" ? `${window.location.origin}/app/account` : "/app/account";
+      startThreadsConnect(returnUrl)
+        .then(({ authorize_url }) => {
+          window.location.href = authorize_url;
+        })
+        .catch(() => router.push("/app/onboarding"));
+    },
+    logout: () => {
+      clearTokens();
+      router.push("/app/login");
+    },
+    retry: () => window.location.reload(),
+    toggleTheme: () => {
+      const next = !document.documentElement.classList.contains("dark");
+      document.documentElement.classList.toggle("dark", next);
+      try {
+        localStorage.setItem("theme", next ? "dark" : "light");
+      } catch {
+        /* storage disabled — the toggle still applies for the session */
+      }
+    },
+  };
+}
 
 const NET_LABEL: Record<string, string> = { threads: "Threads", linkedin: "LinkedIn" };
 const NET_GLYPH: Record<string, string> = { threads: "@", linkedin: "in" };
@@ -207,7 +268,8 @@ function ProfileHead({ p }: { p: AccountProfile }) {
   );
 }
 
-export function ProfileCard({ p, t }: { p: AccountProfile; t: T }) {
+export function ProfileCard({ p, t, nav }: { p: AccountProfile; t: T; nav: Nav }) {
+  const open = () => nav.openProfile(p.id, "studio");
   if (p.sync_status === "importing") {
     const im = p.sync_summary || {};
     const posts = im.posts ?? 0;
@@ -237,7 +299,7 @@ export function ProfileCard({ p, t }: { p: AccountProfile; t: T }) {
   }
   if (p.sync_status === "error") {
     return (
-      <div className="acc-card">
+      <div className="acc-card" style={{ cursor: "pointer" }} role="button" tabIndex={0} onClick={open} onKeyDown={(e) => e.key === "Enter" && open()}>
         <ProfileHead p={p} />
         <Metrics4 t={t} d={p} muted />
         <div className="acc-cardfoot">
@@ -245,7 +307,7 @@ export function ProfileCard({ p, t }: { p: AccountProfile; t: T }) {
             <span className="acc-sync-dot" />
             {t("acc.sync_failed")}
           </span>
-          <button className="acc-retry" type="button">
+          <button className="acc-retry" type="button" onClick={(e) => { e.stopPropagation(); nav.retry(); }}>
             <Ic n="undo" s={12} />
             {t("acc.retry")}
           </button>
@@ -255,7 +317,7 @@ export function ProfileCard({ p, t }: { p: AccountProfile; t: T }) {
   }
   const attn = p.replies_to_answer > 0;
   return (
-    <div className="acc-card">
+    <div className="acc-card" style={{ cursor: "pointer" }} role="button" tabIndex={0} onClick={open} onKeyDown={(e) => e.key === "Enter" && open()}>
       <ProfileHead p={p} />
       <Metrics4 t={t} d={p} />
       <div className="acc-cardfoot">
@@ -264,11 +326,15 @@ export function ProfileCard({ p, t }: { p: AccountProfile; t: T }) {
           {t("acc.synced")}
         </span>
         <div className="acc-quick">
-          <a className="acc-quicklink">
+          <a className="acc-quicklink" style={{ cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); nav.openProfile(p.id, "stats"); }}>
             <Ic n="nib" s={12} />
             {t("acc.stats")}
           </a>
-          <a className={`acc-quicklink${attn ? " acc-quicklink--attention" : ""}`}>
+          <a
+            className={`acc-quicklink${attn ? " acc-quicklink--attention" : ""}`}
+            style={{ cursor: "pointer" }}
+            onClick={(e) => { e.stopPropagation(); nav.openProfile(p.id, "replies"); }}
+          >
             <Ic n="reply" s={12} />
             {t("acc.replies_short")}
             {attn ? ` ${p.replies_to_answer}` : ""}
@@ -293,7 +359,51 @@ function BrandStack({ b }: { b: AccountBrand }) {
   );
 }
 
-export function BrandCard({ b, t, plural }: { b: AccountBrand; t: T; plural: Plural }) {
+// One profile row inside an expanded brand card (эталон brandProfileRow).
+function BrandProfileRow({ p, t, nav }: { p: AccountProfile; t: T; nav: Nav }) {
+  let right: React.ReactNode;
+  if (p.sync_status === "importing") {
+    right = (
+      <span className="acc-bp-state acc-bp-state--sync">
+        <span className="ib-spinner" style={{ width: 13, height: 13 }} />
+        {t("acc.importing_n")}
+      </span>
+    );
+  } else if (p.sync_status === "error") {
+    right = (
+      <button className="acc-bp-retry" type="button" onClick={(e) => { e.stopPropagation(); nav.retry(); }}>
+        <Ic n="undo" s={12} />
+        {t("acc.retry")}
+      </button>
+    );
+  } else {
+    right = (
+      <span className="acc-bp-mini">
+        <span className="acc-bp-stat">
+          <span className="acc-bp-statnum">{nfmt(p.followers ?? 0)}</span>
+          <span className="acc-bp-statlab">{t("acc.followers")}</span>
+        </span>
+        <span className="acc-bp-stat">
+          <span className="acc-bp-statnum">{nfmt(p.views_7d)}</span>
+          <span className="acc-bp-statlab">{t("acc.views")}</span>
+        </span>
+      </span>
+    );
+  }
+  return (
+    <a className="acc-bp" style={{ cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); nav.openProfile(p.id, "studio"); }}>
+      <Avatar p={p} cls="acc-bp-av" />
+      <span className="acc-bp-id">
+        <span className="acc-bp-hd">{p.handle || p.name}</span>
+        <span className="acc-bp-sub">{NET_LABEL[p.network] || p.network}</span>
+      </span>
+      {right}
+    </a>
+  );
+}
+
+export function BrandCard({ b, t, plural, nav }: { b: AccountBrand; t: T; plural: Plural; nav: Nav }) {
+  const [expanded, setExpanded] = useState(false);
   const pc = b.profiles.length;
   const errors = b.profiles.filter((p) => p.sync_status === "error").length;
   const importing = b.profiles.filter((p) => p.sync_status === "importing").length;
@@ -305,9 +415,12 @@ export function BrandCard({ b, t, plural }: { b: AccountBrand; t: T; plural: Plu
     posts_week: b.stats.posts_week,
     replies_to_answer: b.stats.replies_to_answer,
   };
+  // Клик по бренду → раскрывает его профили (SPEC: «дашборд бренда, который
+  // раскрывает профили»). The expand button + the head both toggle.
+  const toggle = () => pc > 0 && setExpanded((x) => !x);
   return (
     <div className="acc-card acc-card--brand">
-      <div className="acc-card-head">
+      <div className="acc-card-head" style={pc > 0 ? { cursor: "pointer" } : undefined} role={pc > 0 ? "button" : undefined} tabIndex={pc > 0 ? 0 : undefined} onClick={toggle} onKeyDown={(e) => e.key === "Enter" && toggle()}>
         <span style={{ position: "relative", flex: "0 0 auto" }}>
           <BrandMark mono={brandMono} />
           <span className="acc-brand-net">
@@ -337,15 +450,28 @@ export function BrandCard({ b, t, plural }: { b: AccountBrand; t: T; plural: Plu
           <span className={`acc-brand-statdot${errors || importing ? " acc-brand-statdot--warn" : ""}`} />
           {errors ? `${errors} ${t("acc.error_n")}` : importing ? `${importing} ${t("acc.importing_n")}` : t("acc.synced_all")}
         </span>
+        {pc > 0 ? (
+          <button className="acc-brand-expand" type="button" aria-expanded={expanded} onClick={(e) => { e.stopPropagation(); toggle(); }}>
+            {t("acc.expand")}
+            <Ic n={expanded ? "chev-up" : "chev-down"} s={13} />
+          </button>
+        ) : null}
       </div>
+      {expanded ? (
+        <div className="acc-brand-profiles">
+          {b.profiles.map((p) => (
+            <BrandProfileRow key={p.id} p={p} t={t} nav={nav} />
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
 
 // ── add-brand CTA ────────────────────────────────────────────────────────────
-export function AddBrand({ t }: { t: T }) {
+export function AddBrand({ t, nav }: { t: T; nav: Nav }) {
   return (
-    <a className="acc-add">
+    <a className="acc-add" style={{ cursor: "pointer" }} onClick={nav.addProfile}>
       <span className="acc-add-ico">
         <Ic n="plus" s={20} />
       </span>
@@ -356,7 +482,7 @@ export function AddBrand({ t }: { t: T }) {
 }
 
 // ── cards section (adaptive on scope.show_brand_level) ───────────────────────
-export function CardsSection({ data, t, plural }: { data: MeAccountResponse; t: T; plural: Plural }) {
+export function CardsSection({ data, t, plural, nav }: { data: MeAccountResponse; t: T; plural: Plural; nav: Nav }) {
   const multi = data.scope.show_brand_level;
   const count = multi ? data.brands.length : data.scope.profiles_count;
   return (
@@ -368,9 +494,9 @@ export function CardsSection({ data, t, plural }: { data: MeAccountResponse; t: 
       </div>
       <div className="acc-grid">
         {multi
-          ? data.brands.map((b) => <BrandCard key={b.id} b={b} t={t} plural={plural} />)
-          : data.brands.flatMap((b) => b.profiles).map((p) => <ProfileCard key={p.id} p={p} t={t} />)}
-        <AddBrand t={t} />
+          ? data.brands.map((b) => <BrandCard key={b.id} b={b} t={t} plural={plural} nav={nav} />)
+          : data.brands.flatMap((b) => b.profiles).map((p) => <ProfileCard key={p.id} p={p} t={t} nav={nav} />)}
+        <AddBrand t={t} nav={nav} />
       </div>
     </>
   );
@@ -452,7 +578,7 @@ export function Header({
 // ── tasks strip ──────────────────────────────────────────────────────────────
 const TASK_IC: Record<string, string> = { sync: "alert", reply: "reply", draft: "nib", audit: "audit" };
 
-export function TasksStrip({ tasks, t, plural }: { tasks: AccountTasks; t: T; plural: Plural }) {
+export function TasksStrip({ tasks, t, plural, nav }: { tasks: AccountTasks; t: T; plural: Plural; nav: Nav }) {
   const chips: { type: string; n: number; label: string }[] = [];
   // sync + reply labels are invariant phrases («сбой синка» · «к ответу»); the
   // count-noun chips (drafts/audits) inflect per-locale so «1 черновик» is right.
@@ -475,7 +601,7 @@ export function TasksStrip({ tasks, t, plural }: { tasks: AccountTasks; t: T; pl
           </span>
         ))}
       </div>
-      <a className="acc-tasks-all">
+      <a className="acc-tasks-all" style={{ cursor: "pointer" }} onClick={() => nav.go("/app/overview")}>
         {t("acc.tasks_all")}
         <Ic n="arrow-right" s={13} />
       </a>
@@ -484,8 +610,10 @@ export function TasksStrip({ tasks, t, plural }: { tasks: AccountTasks; t: T; pl
 }
 
 // ── sidebar (account level) ──────────────────────────────────────────────────
-export function Sidebar({ data, t }: { data: MeAccountResponse; t: T }) {
+export function Sidebar({ data, t, nav }: { data: MeAccountResponse; t: T; nav: Nav }) {
   const multi = data.scope.brands_count >= 2;
+  const [loginOpen, setLoginOpen] = useState(false);
+  const mono = initials(data.tenant.name, null);
   return (
     <div className="acc-sb">
       <div className="acc-sb-brand">
@@ -496,45 +624,124 @@ export function Sidebar({ data, t }: { data: MeAccountResponse; t: T }) {
       </div>
       <div className="acc-sb-cap">{t("acc.account_word")}</div>
       <div className="acc-sb-nav">
-        <a className="acc-sb-row acc-sb-row--active">
+        <a className="acc-sb-row acc-sb-row--active" style={{ cursor: "pointer" }}>
           <Ic n="grid" s={17} />
           <span className="acc-sb-rowtxt">{t("acc.nav_dashboard")}</span>
         </a>
         {multi ? (
-          <a className="acc-sb-row">
+          <a
+            className="acc-sb-row"
+            style={{ cursor: "pointer" }}
+            onClick={() => document.querySelector(".acc-sec")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+          >
             <Ic n="layers" s={17} />
             <span className="acc-sb-rowtxt">{t("acc.nav_brands")}</span>
             <span className="acc-sb-badge">{data.scope.brands_count}</span>
           </a>
         ) : null}
-        <a className="acc-sb-row">
+        <a className="acc-sb-row" style={{ cursor: "pointer" }} onClick={() => nav.go("/app/advisor")}>
           <Ic n="advisor" s={17} />
           <span className="acc-sb-rowtxt">{t("acc.nav_advisor")}</span>
         </a>
-        <a className="acc-sb-row">
+        <a className="acc-sb-row" style={{ cursor: "pointer" }} onClick={() => nav.go("/app/settings")}>
           <Ic n="settings" s={17} />
           <span className="acc-sb-rowtxt">{t("acc.nav_settings")}</span>
         </a>
       </div>
-      <div className="acc-sb-foot">
-        <button className="acc-login" type="button">
-          <AcctMark mono={initials(data.tenant.name, null)} />
+      <div className="acc-sb-foot" style={{ position: "relative" }}>
+        <button className="acc-login" type="button" aria-expanded={loginOpen} onClick={() => setLoginOpen((o) => !o)}>
+          <AcctMark mono={mono} />
           <span className="acc-login-who">
             <span className="acc-login-email">{data.tenant.name}</span>
             <span className="acc-login-plan">{data.tenant.plan_tier}</span>
           </span>
           <Ic n="chev-up" s={15} />
         </button>
+        {loginOpen ? (
+          <>
+            <div style={{ position: "fixed", inset: 0, zIndex: 30 }} onClick={() => setLoginOpen(false)} aria-hidden />
+            <div className="acc-loginmenu" style={{ position: "absolute", left: 0, right: 0, bottom: "100%", marginBottom: 8, zIndex: 40 }}>
+              <div className="acc-lm-cap">{t("acc.account_word")}</div>
+              <div className="acc-lm-row">
+                <span className="acc-acctmark">{mono}</span>
+                <span className="acc-lm-who">
+                  <span className="acc-lm-email">{data.tenant.name}</span>
+                  <span className="acc-lm-plan">{data.tenant.plan_tier}</span>
+                </span>
+                <span className="acc-lm-check">
+                  <Ic n="check" s={16} />
+                </span>
+              </div>
+              <div className="acc-lm-sep" />
+              <button className="acc-lm-row acc-lm-row--min" type="button" onClick={() => { setLoginOpen(false); nav.go("/app/settings"); }}>
+                <span className="acc-lm-mini">
+                  <Ic n="settings" s={15} />
+                </span>
+                {t("acc.nav_settings")}
+              </button>
+              <button className="acc-lm-row acc-lm-row--min" type="button" onClick={() => { setLoginOpen(false); nav.logout(); }}>
+                <span className="acc-lm-mini">
+                  <Ic n="logout" s={15} />
+                </span>
+                {t("settings.logout")}
+              </button>
+            </div>
+          </>
+        ) : null}
       </div>
     </div>
   );
 }
 
 // ── topbar (breadcrumb + flat profile switcher) ──────────────────────────────
-export function Topbar({ data, t, plural, dark }: { data: MeAccountResponse; t: T; plural: Plural; dark?: boolean }) {
+function SwitcherRow({ p, active, nav, onDone }: { p: AccountProfile; active: boolean; nav: Nav; onDone: () => void }) {
+  const dotCls =
+    p.sync_status === "error"
+      ? " acc-swrow-stat--error"
+      : p.sync_status === "importing"
+        ? " acc-swrow-stat--importing"
+        : "";
+  return (
+    <button
+      className="acc-swrow"
+      type="button"
+      onClick={() => { onDone(); nav.openProfile(p.id, "studio"); }}
+    >
+      <Avatar p={p} cls="acc-sw-av" />
+      <span className="acc-swrow-who">
+        <span className="acc-swrow-nm">{p.handle || p.name}</span>
+        <span className="acc-swrow-hd">{NET_LABEL[p.network] || p.network}</span>
+      </span>
+      {active ? (
+        <span className="acc-swrow-check">
+          <Ic n="check" s={16} />
+        </span>
+      ) : (
+        <span className={`acc-swrow-stat${dotCls}`} />
+      )}
+    </button>
+  );
+}
+
+export function Topbar({ data, t, plural, dark, nav }: { data: MeAccountResponse; t: T; plural: Plural; dark?: boolean; nav: Nav }) {
   const acctMono = initials(data.tenant.name, null);
   const allProfiles = data.brands.flatMap((b) => b.profiles);
   const stack = allProfiles.slice(0, 3);
+  const multi = data.scope.show_brand_level;
+  const selected = useSelectedAccountId();
+  const [swOpen, setSwOpen] = useState(false);
+  const close = () => setSwOpen(false);
+
+  // Theme icon reflects the live theme: the gallery passes `dark`; the real
+  // screen reads the ambient `.dark` class (and flips it on toggle).
+  const [themeDark, setThemeDark] = useState(!!dark);
+  useEffect(() => {
+    if (dark === undefined && typeof document !== "undefined") {
+      setThemeDark(document.documentElement.classList.contains("dark"));
+    }
+  }, [dark]);
+  const isDark = dark ?? themeDark;
+
   return (
     <div className="acc-top">
       <nav className="acc-crumb">
@@ -544,24 +751,64 @@ export function Topbar({ data, t, plural, dark }: { data: MeAccountResponse; t: 
         </a>
       </nav>
       <div className="acc-top-actions">
-        <button className="acc-sw" type="button">
-          <span className="acc-sw-stack">
-            {stack.map((p) => (
-              <Avatar key={p.id} p={p} />
-            ))}
-          </span>
-          <span className="acc-sw-lab">
-            <span className="acc-sw-t">{t("acc.sw_all")}</span>
-            <span className="acc-sw-s">
-              {allProfiles.length} {plural("profiles", allProfiles.length)}
+        <div style={{ position: "relative" }}>
+          <button className="acc-sw" type="button" aria-expanded={swOpen} onClick={() => setSwOpen((o) => !o)}>
+            <span className="acc-sw-stack">
+              {stack.map((p) => (
+                <Avatar key={p.id} p={p} />
+              ))}
             </span>
-          </span>
-          <Ic n="chev-down" s={15} />
-        </button>
-        <span className="acc-ib">
-          <Ic n={dark ? "sun" : "moon"} s={16} />
+            <span className="acc-sw-lab">
+              <span className="acc-sw-t">{t("acc.sw_all")}</span>
+              <span className="acc-sw-s">
+                {allProfiles.length} {plural("profiles", allProfiles.length)}
+              </span>
+            </span>
+            <Ic n="chev-down" s={15} />
+          </button>
+          {swOpen ? (
+            <>
+              <div style={{ position: "fixed", inset: 0, zIndex: 30 }} onClick={close} aria-hidden />
+              <div className="acc-swmenu" style={{ position: "absolute", right: 0, top: "100%", marginTop: 8, zIndex: 40 }}>
+                {multi ? (
+                  data.brands.map((b) => (
+                    <div key={b.id}>
+                      <div className="acc-swmenu-cap">
+                        <span className="acc-brandmark">{initials(b.name, null)}</span>
+                        <span className="t">{b.name}</span>
+                      </div>
+                      {b.profiles.map((p) => (
+                        <SwitcherRow key={p.id} p={p} active={p.id === selected} nav={nav} onDone={close} />
+                      ))}
+                    </div>
+                  ))
+                ) : (
+                  <>
+                    <div className="acc-swmenu-cap">
+                      <span className="t">{t("acc.sw_jump")}</span>
+                    </div>
+                    {allProfiles.map((p) => (
+                      <SwitcherRow key={p.id} p={p} active={p.id === selected} nav={nav} onDone={close} />
+                    ))}
+                  </>
+                )}
+                <div className="acc-sw-sep" />
+                <button className="acc-swrow acc-swrow--add" type="button" onClick={() => { close(); nav.addProfile(); }}>
+                  <span className="acc-sw-av">
+                    <Ic n="plus" s={15} />
+                  </span>
+                  <span className="acc-swrow-who">
+                    <span className="acc-swrow-nm">{t("acc.sw_connect")}</span>
+                  </span>
+                </button>
+              </div>
+            </>
+          ) : null}
+        </div>
+        <span className="acc-ib" style={{ cursor: "pointer" }} onClick={() => { nav.toggleTheme(); setThemeDark((d) => !d); }}>
+          <Ic n={isDark ? "sun" : "moon"} s={16} />
         </span>
-        <span className="acc-ib">
+        <span className="acc-ib" style={{ cursor: "pointer" }} onClick={() => nav.go("/app/settings")}>
           <Ic n="settings" s={16} />
         </span>
       </div>
@@ -738,20 +985,21 @@ export function AccountDashboard({
   dark?: boolean;
   onOpenAdvisor?: () => void;
 }) {
+  const nav = useAccountNav();
   return (
     <div className="acc-shell">
-      <Sidebar data={data} t={t} />
+      <Sidebar data={data} t={t} nav={nav} />
       <div className="acc-mainwrap" style={{ minWidth: 0, display: "flex", flexDirection: "column", gap: 18 }}>
-        <Topbar data={data} t={t} plural={plural} dark={dark} />
+        <Topbar data={data} t={t} plural={plural} dark={dark} nav={nav} />
         <div className="acc">
           <Header data={data} t={t} plural={plural} />
-          <TasksStrip tasks={data.tasks} t={t} plural={plural} />
+          <TasksStrip tasks={data.tasks} t={t} plural={plural} nav={nav} />
           {adv ? (
             <Advisor adv={adv} t={t} onOpen={onOpenAdvisor} />
           ) : (
             <AdvisorInvite t={t} onOpen={onOpenAdvisor} />
           )}
-          <CardsSection data={data} t={t} plural={plural} />
+          <CardsSection data={data} t={t} plural={plural} nav={nav} />
         </div>
       </div>
     </div>

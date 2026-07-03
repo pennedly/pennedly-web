@@ -121,7 +121,14 @@ export default function RepliesPage() {
   const [loaded, setLoaded] = useState(false);
   const [bootError, setBootError] = useState<string | null>(null);
   const [selectedPost, setSelectedPost] = useState<string | null>(null);
-  const [filter, setFilter] = useState<ReplyFilter>("all");
+  // Initial filter honours a `?filter=<key>` deep-link (e.g. the account
+  // dashboard's «Ответы» quicklink lands on the needs-reply queue); ignored if
+  // the value isn't a real filter key.
+  const [filter, setFilter] = useState<ReplyFilter>(() => {
+    if (typeof window === "undefined") return "all";
+    const f = new URLSearchParams(window.location.search).get("filter");
+    return (FILTER_KEYS as string[]).includes(f ?? "") ? (f as ReplyFilter) : "all";
+  });
   const [generatingId, setGeneratingId] = useState<number | null>(null);
   const [publishTarget, setPublishTarget] = useState<{ comment: ReplyComment; reply: string; draftId: number | null } | null>(null);
   const [publishing, setPublishing] = useState(false);
