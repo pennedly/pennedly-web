@@ -11,11 +11,13 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import "@/components/account/account.css";
+import "@/components/account/account-mobile-shell.css";
 import "@/components/account/account-mobile.css";
 import "@/components/account/import-banner.css";
 
 import { AccountDashboard, AccountSkeleton } from "@/components/account/AccountDashboard";
 import type { Plural, T } from "@/components/account/AccountDashboard";
+import { AccountMobileDashboard, AccountMobileSkeleton } from "@/components/account/AccountMobileDashboard";
 import {
   ApiError,
   clearTokens,
@@ -111,9 +113,14 @@ export default function AccountDashboardPage() {
     return (
       <div className="min-h-screen bg-bg text-text">
         <div className={wrap}>
-          <div className="acc-shell">
-            <div />
-            <AccountSkeleton />
+          <div className="hidden md:block">
+            <div className="acc-shell">
+              <div />
+              <AccountSkeleton />
+            </div>
+          </div>
+          <div className="md:hidden">
+            <AccountMobileSkeleton />
           </div>
         </div>
       </div>
@@ -126,13 +133,26 @@ export default function AccountDashboardPage() {
   return (
     <div className="min-h-screen bg-bg text-text">
       <div className={wrap}>
-        <AccountDashboard
-          data={data}
-          adv={adv ?? undefined}
-          t={tt}
-          plural={plural}
-          onOpenAdvisor={() => router.push("/app/advisor")}
-        />
+        {/* Desktop (≥ md) and mobile (< md) render together; a CSS breakpoint
+            picks one, so there's no JS-breakpoint hydration flicker. */}
+        <div className="hidden md:block">
+          <AccountDashboard
+            data={data}
+            adv={adv ?? undefined}
+            t={tt}
+            plural={plural}
+            onOpenAdvisor={() => router.push("/app/advisor")}
+          />
+        </div>
+        <div className="md:hidden">
+          <AccountMobileDashboard
+            data={data}
+            adv={adv ?? undefined}
+            t={tt}
+            plural={plural}
+            onOpenAdvisor={() => router.push("/app/advisor")}
+          />
+        </div>
       </div>
     </div>
   );

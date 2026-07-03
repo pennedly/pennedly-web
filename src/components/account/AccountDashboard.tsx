@@ -30,7 +30,9 @@ import type {
 export type { AdvisorData };
 
 // ── icons (inline, mirrors account-desktop.js P/ic) ──────────────────────────
-const PATHS: Record<string, string> = {
+// Exported so the mobile dashboard (AccountMobileDashboard) shares the exact
+// same icon set — one source of truth for both breakpoints.
+export const PATHS: Record<string, string> = {
   grid: "<rect x='4' y='4' width='7' height='7' rx='1.5'/><rect x='13' y='4' width='7' height='7' rx='1.5'/><rect x='4' y='13' width='7' height='7' rx='1.5'/><rect x='13' y='13' width='7' height='7' rx='1.5'/>",
   layers: "<path d='M12 4 3 9l9 5 9-5-9-5Z'/><path d='M3 14l9 5 9-5'/>",
   advisor:
@@ -58,9 +60,13 @@ const PATHS: Record<string, string> = {
   sparkle: "<path d='M12 4l1.6 4.8L18 10l-4.4 1.2L12 16l-1.6-4.8L6 10l4.4-1.2L12 4Z'/>",
   moon: "<path d='M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z'/>",
   sun: "<circle cx='12' cy='12' r='4'/><path d='M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19'/>",
+  // close (sheet / drawer dismiss) — the mobile chrome uses it; desktop menus
+  // close on outside-click so it isn't referenced there.
+  x: "<path d='M6 6l12 12M18 6 6 18'/>",
 };
 
-function Ic({ n, s = 14 }: { n: string; s?: number }) {
+// Exported so the mobile dashboard renders identical glyphs (see PATHS above).
+export function Ic({ n, s = 14 }: { n: string; s?: number }) {
   return (
     <svg
       width={s}
@@ -97,7 +103,7 @@ export type Nav = {
   toggleTheme: () => void;
 };
 
-function useAccountNav(): Nav {
+export function useAccountNav(): Nav {
   const router = useRouter();
   return {
     openProfile: (id, view = "studio") => {

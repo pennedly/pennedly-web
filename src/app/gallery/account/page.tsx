@@ -12,10 +12,12 @@ import { useState } from "react";
 import { pluralUnit } from "@/lib/i18n";
 
 import "@/components/account/account.css";
+import "@/components/account/account-mobile-shell.css";
 import "@/components/account/account-mobile.css";
 import "@/components/account/import-banner.css";
 
 import { AccountDashboard, AccountSkeleton } from "@/components/account/AccountDashboard";
+import { AccountMobileDashboard, AccountMobileSkeleton } from "@/components/account/AccountMobileDashboard";
 import {
   DEMO_ADVISOR,
   DEMO_MULTI_BRAND,
@@ -60,22 +62,45 @@ export default function AccountGallery() {
           </button>
         </div>
 
+        {/* Each section renders BOTH breakpoints; a CSS gate (hidden md:block /
+            md:hidden) shows the desktop above md and the mobile below — resize
+            the preview to review each. */}
         <Section title="1 бренд · 1 профиль (новый пользователь)" note="show_brand_level=false → карточки = профили">
-          <AccountDashboard data={DEMO_ONE_PROFILE} adv={DEMO_ADVISOR} t={demoT} plural={demoPlural} dark={dark} />
+          <div className="hidden md:block">
+            <AccountDashboard data={DEMO_ONE_PROFILE} adv={DEMO_ADVISOR} t={demoT} plural={demoPlural} dark={dark} />
+          </div>
+          <div className="md:hidden">
+            <AccountMobileDashboard data={DEMO_ONE_PROFILE} adv={DEMO_ADVISOR} t={demoT} plural={demoPlural} dark={dark} />
+          </div>
         </Section>
 
         <Section title="1 бренд · несколько профилей" note="карточки = профили напрямую (incl. importing)">
-          <AccountDashboard data={DEMO_SINGLE_BRAND} adv={DEMO_ADVISOR} t={demoT} plural={demoPlural} dark={dark} />
+          <div className="hidden md:block">
+            <AccountDashboard data={DEMO_SINGLE_BRAND} adv={DEMO_ADVISOR} t={demoT} plural={demoPlural} dark={dark} />
+          </div>
+          <div className="md:hidden">
+            <AccountMobileDashboard data={DEMO_SINGLE_BRAND} adv={DEMO_ADVISOR} t={demoT} plural={demoPlural} dark={dark} />
+          </div>
         </Section>
 
         <Section title="2+ брендов" note="show_brand_level=true → карточки = бренды (incl. sync-error внутри)">
-          <AccountDashboard data={DEMO_MULTI_BRAND} adv={DEMO_ADVISOR} t={demoT} plural={demoPlural} dark={dark} />
+          <div className="hidden md:block">
+            <AccountDashboard data={DEMO_MULTI_BRAND} adv={DEMO_ADVISOR} t={demoT} plural={demoPlural} dark={dark} />
+          </div>
+          <div className="md:hidden">
+            <AccountMobileDashboard data={DEMO_MULTI_BRAND} adv={DEMO_ADVISOR} t={demoT} plural={demoPlural} dark={dark} />
+          </div>
         </Section>
 
         <Section title="Загрузка (скелет)">
-          <div className="acc-shell">
-            <div />
-            <AccountSkeleton />
+          <div className="hidden md:block">
+            <div className="acc-shell">
+              <div />
+              <AccountSkeleton />
+            </div>
+          </div>
+          <div className="md:hidden">
+            <AccountMobileSkeleton />
           </div>
         </Section>
       </div>

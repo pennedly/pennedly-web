@@ -24,6 +24,7 @@ const RENDER_PAGES = [
   "/terms",
   "/data-deletion",
   "/gallery",
+  "/gallery/account",
   "/gallery/media",
   "/gallery/overview",
   "/gallery/advisor",
