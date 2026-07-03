@@ -14,11 +14,58 @@ import { type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { useTranslation } from "@/lib/i18n";
 import { setMobileNavOpen } from "@/lib/mobileNav";
-import { IcSettings } from "@/components/icons";
+import { useMe } from "@/lib/use-me";
+import { useConnectedAccounts } from "@/components/useConnectedAccounts";
+import { Avatar, nameOf } from "@/components/ui/avatar";
+import { IcChevRight, IcSettings } from "@/components/icons";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 const ICON_BTN =
   "grid h-9 w-9 place-items-center rounded-md border border-border bg-surface text-text-muted transition-colors hover:bg-surface-2 hover:text-text";
+
+// Nav #7 — the profile breadcrumb «Аккаунт › [Бренд ›] Профиль» (Navigation-SPEC
+// + the Navigation-Topbar addendum). Passive orientation: the «Аккаунт» segment
+// (filled account square → /app/account) is a link; the current profile segment
+// (round avatar + @handle) is not. The account level is tester-only for now, so
+// the crumb shows only for testers with a selected profile. Every current user
+// has one brand, so the common shape is the two-segment «Аккаунт › @профиль»
+// (the brand segment appears only at 2+ brands, which needs brand data the
+// lightweight accounts list doesn't carry yet). The «back to account» button is
+// the profile sidebar's first row (§3.2), so the crumb here carries no back CTA.
+function useProfileCrumb() {
+  const me = useMe();
+  const { selectedAccount, effMe } = useConnectedAccounts();
+  // effMe is DEMO_ME under ?demo=1 (a tester); else undefined → the real me.
+  const identity = effMe ?? me;
+  if (identity?.is_tester !== true || !selectedAccount) return null;
+  return {
+    mono: (identity.tenant.name || "?").trim().slice(0, 2).toUpperCase(),
+    handle: selectedAccount.username ? `@${selectedAccount.username}` : nameOf(selectedAccount),
+    account: selectedAccount,
+  };
+}
+
+function CrumbInner({ mono, handle, account }: NonNullable<ReturnType<typeof useProfileCrumb>>) {
+  const { t } = useTranslation();
+  return (
+    <nav aria-label={t("acc.crumb_account")} className="flex min-w-0 items-center gap-1.5">
+      <Link
+        href="/app/account"
+        className="flex shrink-0 items-center gap-1.5 text-text-muted transition-colors hover:text-text"
+      >
+        <span className="grid h-[19px] w-[19px] shrink-0 place-items-center rounded-[5px] bg-primary text-[10px] font-semibold text-primary-foreground">
+          {mono}
+        </span>
+        <span className="text-caption">{t("acc.crumb_account")}</span>
+      </Link>
+      <IcChevRight size={12} className="shrink-0 text-text-subtle opacity-70" />
+      <span className="flex min-w-0 items-center gap-1.5">
+        <Avatar account={account} size={19} />
+        <span className="truncate text-caption font-semibold text-text">{handle}</span>
+      </span>
+    </nav>
+  );
+}
 
 export function TopbarPill({
   tone = "success",
@@ -64,46 +111,65 @@ export function AppTopbar({
   maxW?: string;
 }) {
   const { t } = useTranslation();
+  const crumb = useProfileCrumb();
   return (
     <header className="sticky top-0 z-10 border-b border-border bg-bg/85 backdrop-blur-md">
-      <div
-        className="mx-auto flex h-13 w-full items-center gap-3 px-5 md:h-15 md:px-6"
-        style={{ maxWidth: maxW }}
-      >
-        {/* Phone: hamburger → nav drawer (Sidebar renders the drawer). */}
-        <button
-          type="button"
-          onClick={() => setMobileNavOpen(true)}
-          aria-label={t("nav.more")}
-          className="-ml-1.5 grid h-9 w-9 shrink-0 place-items-center rounded-md text-text-muted transition-colors hover:bg-surface-2 hover:text-text md:hidden"
-        >
-          <svg
-            width="22"
-            height="22"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            aria-hidden
-          >
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="3" y1="12" x2="21" y2="12" />
-            <line x1="3" y1="18" x2="21" y2="18" />
-          </svg>
-        </button>
+      <div className="mx-auto w-full px-5 md:px-6" style={{ maxWidth: maxW }}>
+        {/* Nav #7 — desktop: the crumb is an eyebrow line ABOVE the title row
+            (Navigation-Topbar-SPEC §2, variant B). Hidden on the phone, which
+            gets its own strip under the bar. */}
+        {crumb ? (
+          <div className="hidden items-center pt-2.5 md:flex">
+            <CrumbInner {...crumb} />
+          </div>
+        ) : null}
 
-        <h1 className="truncate text-h3 font-semibold">{title}</h1>
-        {pill}
-        <div className="flex-1" />
-        <div className="flex items-center gap-2">
-          {actions}
-          <ThemeToggle />
-          <Link href="/app/settings" aria-label={t("nav.settings")} className={cn(ICON_BTN, "hidden md:grid")}>
-            <IcSettings size={17} />
-          </Link>
+        <div className="flex h-13 w-full items-center gap-3 md:h-15">
+          {/* Phone: hamburger → nav drawer (Sidebar renders the drawer). */}
+          <button
+            type="button"
+            onClick={() => setMobileNavOpen(true)}
+            aria-label={t("nav.more")}
+            className="-ml-1.5 grid h-9 w-9 shrink-0 place-items-center rounded-md text-text-muted transition-colors hover:bg-surface-2 hover:text-text md:hidden"
+          >
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              aria-hidden
+            >
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          </button>
+
+          <h1 className="truncate text-h3 font-semibold">{title}</h1>
+          {pill}
+          <div className="flex-1" />
+          <div className="flex items-center gap-2">
+            {actions}
+            <ThemeToggle />
+            <Link href="/app/settings" aria-label={t("nav.settings")} className={cn(ICON_BTN, "hidden md:grid")}>
+              <IcSettings size={17} />
+            </Link>
+          </div>
         </div>
       </div>
+
+      {/* Nav #7 — phone: the crumb is a thin strip attached UNDER the bar
+          (Navigation-Topbar-SPEC §4), not inline in the tight bar. */}
+      {crumb ? (
+        <div className="border-t border-border bg-bg/70 md:hidden">
+          <div className="mx-auto flex min-h-[34px] w-full items-center px-5" style={{ maxWidth: maxW }}>
+            <CrumbInner {...crumb} />
+          </div>
+        </div>
+      ) : null}
     </header>
   );
 }
