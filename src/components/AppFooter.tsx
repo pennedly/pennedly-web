@@ -28,6 +28,7 @@ const WIDE_PATHS = new Set([
   "/app/scenarios",
   "/app/overview",
   "/app/calendar",
+  "/app/account",
 ]);
 
 const SUPPORT_EMAIL = "support@pennedly.com";

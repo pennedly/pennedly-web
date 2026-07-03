@@ -17,6 +17,35 @@ import { useRouter } from "next/navigation";
 
 import { setSelectedAccountId, useSelectedAccountId } from "@/lib/account";
 import { clearTokens, startThreadsConnect } from "@/lib/api";
+import {
+  BrandMark as BrandLogo,
+  IcAlert,
+  IcArrowDown,
+  IcArrowRight,
+  IcArrowUp,
+  IcAudit,
+  IcAdvisor,
+  IcBubble,
+  IcCheck,
+  IcChevDown,
+  IcChevRight,
+  IcEye,
+  IcLayers,
+  IcLogout,
+  IcMoon,
+  IcNib,
+  IcOverview,
+  IcPlus,
+  IcReply,
+  IcSend,
+  IcSettings,
+  IcSparkle,
+  IcSun,
+  IcThread,
+  IcUndo,
+  IcUsers,
+  type IconProps,
+} from "@/components/icons";
 import type {
   AccountBrand,
   AccountProfile,
@@ -29,57 +58,30 @@ import type {
 // Re-exported so account-demo.ts + consumers can keep importing it from here.
 export type { AdvisorData };
 
-// ── icons (inline, mirrors account-desktop.js P/ic) ──────────────────────────
-// Exported so the mobile dashboard (AccountMobileDashboard) shares the exact
-// same icon set — one source of truth for both breakpoints.
-export const PATHS: Record<string, string> = {
-  grid: "<rect x='4' y='4' width='7' height='7' rx='1.5'/><rect x='13' y='4' width='7' height='7' rx='1.5'/><rect x='4' y='13' width='7' height='7' rx='1.5'/><rect x='13' y='13' width='7' height='7' rx='1.5'/>",
-  layers: "<path d='M12 4 3 9l9 5 9-5-9-5Z'/><path d='M3 14l9 5 9-5'/>",
-  advisor:
-    "<path d='M4 16V7a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3H9l-4 4v-4Z'/><path d='M8 13l2.6-2.6 1.8 1.8L16 9'/><path d='M13.4 9H16v2.6'/>",
-  settings:
-    "<circle cx='12' cy='12' r='3'/><path d='M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2'/>",
-  users: "<circle cx='9' cy='9' r='3.2'/><path d='M3.5 19a5.5 5.5 0 0 1 11 0'/><path d='M16 6.3a3 3 0 0 1 0 5.4M17.5 19a5.5 5.5 0 0 0-3-4.9'/>",
-  eye: "<path d='M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z'/><circle cx='12' cy='12' r='2.6'/>",
-  nib: "<path d='M4 20 13 11'/><path d='M12 4 20 12 13 11 13 4Z'/><circle cx='6' cy='18' r='0.6'/>",
-  bubble: "<path d='M5 17l-1.5 3.5L8 19h8a3 3 0 0 0 3-3V8a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v6a3 3 0 0 0 1 2.7Z'/>",
-  reply: "<path d='M9 7 4 12l5 5M4 12h9a6 6 0 0 1 6 6v1'/>",
-  audit: "<rect x='5' y='4' width='14' height='17' rx='2'/><path d='M9 4.5h6V7H9Z'/><path d='M8.5 12.5l2 2 4-4.5'/>",
-  up: "<path d='M12 19V6M6 11l6-6 6 6'/>",
-  down: "<path d='M12 5v13M6 13l6 6 6-6'/>",
-  "arrow-right": "<path d='M5 12h14M13 6l6 6-6 6'/>",
-  plus: "<path d='M12 5v14M5 12h14'/>",
-  undo: "<path d='M9 7 5 11l4 4'/><path d='M5 11h9a5 5 0 0 1 0 10h-3'/>",
-  check: "<path d='M4.5 12.5 9.5 17.5 19.5 6.5'/>",
-  "chev-right": "<path d='M9 6l6 6-6 6'/>",
-  "chev-down": "<path d='M6 9l6 6 6-6'/>",
-  "chev-up": "<path d='M6 15l6-6 6 6'/>",
-  logout: "<path d='M14 7V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-2'/><path d='M10 12h10M17 9l3 3-3 3'/>",
-  alert: "<path d='M12 4 2.5 20.5h19L12 4Z'/><path d='M12 10v4'/><circle cx='12' cy='17.4' r='0.5'/>",
-  send: "<path d='M5 12h13M12 5l7 7-7 7'/>",
-  sparkle: "<path d='M12 4l1.6 4.8L18 10l-4.4 1.2L12 16l-1.6-4.8L6 10l4.4-1.2L12 4Z'/>",
-  moon: "<path d='M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z'/>",
-  sun: "<circle cx='12' cy='12' r='4'/><path d='M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19'/>",
-  // close (sheet / drawer dismiss) — the mobile chrome uses it; desktop menus
-  // close on outside-click so it isn't referenced there.
-  x: "<path d='M6 6l12 12M18 6 6 18'/>",
+// ── dynamic-icon map ─────────────────────────────────────────────────────────
+// The dashboard's data (chips / recos / tasks) carries icon names as strings
+// from the design-token vocab (the backend/demo emit these — do NOT change the
+// contract). This maps those token names to the app's design-system icons so
+// `<DynIcon n={someField} />` resolves at runtime. Exported so the mobile
+// dashboard shares one source of truth for both breakpoints.
+export const DYN_ICONS: Record<string, (p: IconProps) => React.JSX.Element> = {
+  users: IcUsers,
+  eye: IcEye,
+  nib: IcNib,
+  bubble: IcBubble,
+  reply: IcReply,
+  audit: IcAudit,
+  up: IcArrowUp,
+  down: IcArrowDown,
+  sparkle: IcSparkle,
+  alert: IcAlert,
 };
 
-// Exported so the mobile dashboard renders identical glyphs (see PATHS above).
-export function Ic({ n, s = 14 }: { n: string; s?: number }) {
-  return (
-    <svg
-      width={s}
-      height={s}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.8}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      dangerouslySetInnerHTML={{ __html: PATHS[n] || "" }}
-    />
-  );
+// Resolves a design-token icon name (chip/reco/task) to an app icon at render
+// time, falling back to the sparkle glyph for any unknown name.
+export function DynIcon({ n, s = 14 }: { n: string; s?: number }) {
+  const C = DYN_ICONS[n] ?? IcSparkle;
+  return <C size={s} />;
 }
 
 // ── translator + helpers ─────────────────────────────────────────────────────
@@ -147,7 +149,9 @@ export function useAccountNav(): Nav {
 }
 
 const NET_LABEL: Record<string, string> = { threads: "Threads", linkedin: "LinkedIn" };
-const NET_GLYPH: Record<string, string> = { threads: "@", linkedin: "in" };
+// LinkedIn keeps its text glyph until a design-system LinkedIn icon exists;
+// Threads renders the app's IcThread inside the badge (see NetBadge / brand net).
+const NET_GLYPH: Record<string, string> = { linkedin: "in" };
 
 function nfmt(n: number): string {
   // Compact thousands like the эталон numbers (12,4k). Keep small numbers plain.
@@ -165,7 +169,7 @@ function Delta({ v }: { v: number | null }) {
   const down = v < 0;
   return (
     <span className={`acc-delta acc-delta--${down ? "down" : "up"}`}>
-      <Ic n={down ? "down" : "up"} s={12} />
+      {down ? <IcArrowDown size={12} /> : <IcArrowUp size={12} />}
       {nfmt(Math.abs(v))}
     </span>
   );
@@ -181,7 +185,7 @@ function BrandMark({ mono, cls = "" }: { mono: string; cls?: string }) {
 function NetBadge({ network }: { network: string }) {
   return (
     <span className={`acc-net acc-net--${network}`} title={NET_LABEL[network] || network}>
-      {NET_GLYPH[network] || "•"}
+      {network === "threads" ? <IcThread size={10} /> : NET_GLYPH[network] || "•"}
     </span>
   );
 }
@@ -219,7 +223,7 @@ function Metric({
   return (
     <div className={`acc-m${attention ? " acc-m--attention" : ""}`}>
       <span className="acc-m-lab">
-        <Ic n={icon} s={11} />
+        <DynIcon n={icon} s={11} />
         <span className="acc-m-labtxt">{lab}</span>
       </span>
       <span className="acc-m-row">
@@ -268,7 +272,7 @@ function ProfileHead({ p }: { p: AccountProfile }) {
         <div className="acc-card-sub">{NET_LABEL[p.network] || p.network}</div>
       </div>
       <span className="acc-go">
-        <Ic n="arrow-right" s={16} />
+        <IcArrowRight size={16} />
       </span>
     </div>
   );
@@ -314,7 +318,7 @@ export function ProfileCard({ p, t, nav }: { p: AccountProfile; t: T; nav: Nav }
             {t("acc.sync_failed")}
           </span>
           <button className="acc-retry" type="button" onClick={(e) => { e.stopPropagation(); nav.retry(); }}>
-            <Ic n="undo" s={12} />
+            <IcUndo size={12} />
             {t("acc.retry")}
           </button>
         </div>
@@ -333,7 +337,7 @@ export function ProfileCard({ p, t, nav }: { p: AccountProfile; t: T; nav: Nav }
         </span>
         <div className="acc-quick">
           <a className="acc-quicklink" style={{ cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); nav.openProfile(p.id, "stats"); }}>
-            <Ic n="nib" s={12} />
+            <IcNib size={12} />
             {t("acc.stats")}
           </a>
           <a
@@ -341,7 +345,7 @@ export function ProfileCard({ p, t, nav }: { p: AccountProfile; t: T; nav: Nav }
             style={{ cursor: "pointer" }}
             onClick={(e) => { e.stopPropagation(); nav.openProfile(p.id, "replies"); }}
           >
-            <Ic n="reply" s={12} />
+            <IcReply size={12} />
             {t("acc.replies_short")}
             {attn ? ` ${p.replies_to_answer}` : ""}
           </a>
@@ -378,7 +382,7 @@ function BrandProfileRow({ p, t, nav }: { p: AccountProfile; t: T; nav: Nav }) {
   } else if (p.sync_status === "error") {
     right = (
       <button className="acc-bp-retry" type="button" onClick={(e) => { e.stopPropagation(); nav.retry(); }}>
-        <Ic n="undo" s={12} />
+        <IcUndo size={12} />
         {t("acc.retry")}
       </button>
     );
@@ -432,7 +436,7 @@ export function BrandCard({ b, t, plural, nav }: { b: AccountBrand; t: T; plural
           <span className="acc-brand-net">
             {b.networks.map((nid) => (
               <span key={nid} className="acc-brand-netbadge">
-                {NET_GLYPH[nid] || "•"}
+                {nid === "threads" ? <IcThread size={10} /> : NET_GLYPH[nid] || "•"}
               </span>
             ))}
           </span>
@@ -444,7 +448,7 @@ export function BrandCard({ b, t, plural, nav }: { b: AccountBrand; t: T; plural
           </div>
         </div>
         <span className="acc-go">
-          <Ic n="arrow-right" s={16} />
+          <IcArrowRight size={16} />
         </span>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 14, minWidth: 0 }}>
@@ -459,7 +463,7 @@ export function BrandCard({ b, t, plural, nav }: { b: AccountBrand; t: T; plural
         {pc > 0 ? (
           <button className="acc-brand-expand" type="button" aria-expanded={expanded} onClick={(e) => { e.stopPropagation(); toggle(); }}>
             {t("acc.expand")}
-            <Ic n={expanded ? "chev-up" : "chev-down"} s={13} />
+            <IcChevDown size={13} className={expanded ? "rotate-180" : undefined} />
           </button>
         ) : null}
       </div>
@@ -479,7 +483,7 @@ export function AddBrand({ t, nav }: { t: T; nav: Nav }) {
   return (
     <a className="acc-add" style={{ cursor: "pointer" }} onClick={nav.addProfile}>
       <span className="acc-add-ico">
-        <Ic n="plus" s={20} />
+        <IcPlus size={20} />
       </span>
       <span className="acc-add-t">{t("acc.add_brand_t")}</span>
       <span className="acc-add-s">{t("acc.add_brand_s")}</span>
@@ -527,7 +531,7 @@ function HeaderTotal({
   return (
     <div className={`acc-ht${attention ? " acc-ht--attention" : ""}`}>
       <div className="acc-ht-lab">
-        <Ic n={icon} s={12} />
+        <DynIcon n={icon} s={12} />
         <span className="acc-ht-labtxt">{lab}</span>
       </div>
       <div className="acc-ht-row">
@@ -596,20 +600,20 @@ export function TasksStrip({ tasks, t, plural, nav }: { tasks: AccountTasks; t: 
   return (
     <div className="acc-tasks">
       <span className="acc-tasks-lab">
-        <Ic n="alert" s={15} />
+        <IcAlert size={15} />
         {t("acc.tasks_title")}
       </span>
       <div className="acc-tasks-chips">
         {chips.map((c) => (
           <span key={c.type} className={`acc-taskchip${c.type === "sync" ? " acc-taskchip--sync" : ""}`}>
-            <Ic n={TASK_IC[c.type]} s={12} />
+            <DynIcon n={TASK_IC[c.type]} s={12} />
             <b>{c.n}</b> {c.label}
           </span>
         ))}
       </div>
       <a className="acc-tasks-all" style={{ cursor: "pointer" }} onClick={() => nav.go("/app/overview")}>
         {t("acc.tasks_all")}
-        <Ic n="arrow-right" s={13} />
+        <IcArrowRight size={13} />
       </a>
     </div>
   );
@@ -624,14 +628,14 @@ export function Sidebar({ data, t, nav }: { data: MeAccountResponse; t: T; nav: 
     <div className="acc-sb">
       <div className="acc-sb-brand">
         <span className="acc-sb-mark">
-          <Ic n="nib" s={16} />
+          <BrandLogo size={30} radius={9} />
         </span>
         <span className="acc-sb-name">Pennedly</span>
       </div>
       <div className="acc-sb-cap">{t("acc.account_word")}</div>
       <div className="acc-sb-nav">
         <a className="acc-sb-row acc-sb-row--active" style={{ cursor: "pointer" }}>
-          <Ic n="grid" s={17} />
+          <IcOverview size={17} />
           <span className="acc-sb-rowtxt">{t("acc.nav_dashboard")}</span>
         </a>
         {multi ? (
@@ -640,17 +644,17 @@ export function Sidebar({ data, t, nav }: { data: MeAccountResponse; t: T; nav: 
             style={{ cursor: "pointer" }}
             onClick={() => document.querySelector(".acc-sec")?.scrollIntoView({ behavior: "smooth", block: "start" })}
           >
-            <Ic n="layers" s={17} />
+            <IcLayers size={17} />
             <span className="acc-sb-rowtxt">{t("acc.nav_brands")}</span>
             <span className="acc-sb-badge">{data.scope.brands_count}</span>
           </a>
         ) : null}
         <a className="acc-sb-row" style={{ cursor: "pointer" }} onClick={() => nav.go("/app/advisor")}>
-          <Ic n="advisor" s={17} />
+          <IcAdvisor size={17} />
           <span className="acc-sb-rowtxt">{t("acc.nav_advisor")}</span>
         </a>
         <a className="acc-sb-row" style={{ cursor: "pointer" }} onClick={() => nav.go("/app/settings")}>
-          <Ic n="settings" s={17} />
+          <IcSettings size={17} />
           <span className="acc-sb-rowtxt">{t("acc.nav_settings")}</span>
         </a>
       </div>
@@ -661,7 +665,7 @@ export function Sidebar({ data, t, nav }: { data: MeAccountResponse; t: T; nav: 
             <span className="acc-login-email">{data.tenant.name}</span>
             <span className="acc-login-plan">{data.tenant.plan_tier}</span>
           </span>
-          <Ic n="chev-up" s={15} />
+          <IcChevDown size={15} className="rotate-180" />
         </button>
         {loginOpen ? (
           <>
@@ -675,19 +679,19 @@ export function Sidebar({ data, t, nav }: { data: MeAccountResponse; t: T; nav: 
                   <span className="acc-lm-plan">{data.tenant.plan_tier}</span>
                 </span>
                 <span className="acc-lm-check">
-                  <Ic n="check" s={16} />
+                  <IcCheck size={16} />
                 </span>
               </div>
               <div className="acc-lm-sep" />
               <button className="acc-lm-row acc-lm-row--min" type="button" onClick={() => { setLoginOpen(false); nav.go("/app/settings"); }}>
                 <span className="acc-lm-mini">
-                  <Ic n="settings" s={15} />
+                  <IcSettings size={15} />
                 </span>
                 {t("acc.nav_settings")}
               </button>
               <button className="acc-lm-row acc-lm-row--min" type="button" onClick={() => { setLoginOpen(false); nav.logout(); }}>
                 <span className="acc-lm-mini">
-                  <Ic n="logout" s={15} />
+                  <IcLogout size={15} />
                 </span>
                 {t("settings.logout")}
               </button>
@@ -720,7 +724,7 @@ function SwitcherRow({ p, active, nav, onDone }: { p: AccountProfile; active: bo
       </span>
       {active ? (
         <span className="acc-swrow-check">
-          <Ic n="check" s={16} />
+          <IcCheck size={16} />
         </span>
       ) : (
         <span className={`acc-swrow-stat${dotCls}`} />
@@ -770,7 +774,7 @@ export function Topbar({ data, t, plural, dark, nav }: { data: MeAccountResponse
                 {allProfiles.length} {plural("profiles", allProfiles.length)}
               </span>
             </span>
-            <Ic n="chev-down" s={15} />
+            <IcChevDown size={15} />
           </button>
           {swOpen ? (
             <>
@@ -801,7 +805,7 @@ export function Topbar({ data, t, plural, dark, nav }: { data: MeAccountResponse
                 <div className="acc-sw-sep" />
                 <button className="acc-swrow acc-swrow--add" type="button" onClick={() => { close(); nav.addProfile(); }}>
                   <span className="acc-sw-av">
-                    <Ic n="plus" s={15} />
+                    <IcPlus size={15} />
                   </span>
                   <span className="acc-swrow-who">
                     <span className="acc-swrow-nm">{t("acc.sw_connect")}</span>
@@ -812,10 +816,10 @@ export function Topbar({ data, t, plural, dark, nav }: { data: MeAccountResponse
           ) : null}
         </div>
         <span className="acc-ib" style={{ cursor: "pointer" }} onClick={() => { nav.toggleTheme(); setThemeDark((d) => !d); }}>
-          <Ic n={isDark ? "sun" : "moon"} s={16} />
+          {isDark ? <IcSun size={16} /> : <IcMoon size={16} />}
         </span>
         <span className="acc-ib" style={{ cursor: "pointer" }} onClick={() => nav.go("/app/settings")}>
-          <Ic n="settings" s={16} />
+          <IcSettings size={16} />
         </span>
       </div>
     </div>
@@ -830,14 +834,14 @@ export function Advisor({ adv, t, onOpen }: { adv: AdvisorData; t: T; onOpen?: (
     <section className="acc-adv">
       <div className="acc-adv-rail">
         <span className="acc-adv-mark">
-          <Ic n="advisor" s={20} />
+          <IcAdvisor size={20} />
         </span>
         <div className="acc-adv-headtext">
           <div className="acc-adv-title">{t("acc.adv_title")}</div>
           <div className="acc-adv-scope">{t("acc.adv_scope")}</div>
         </div>
         <button className="btn btn--secondary btn--sm acc-adv-open" type="button" onClick={onOpen}>
-          <Ic n="advisor" s={15} />
+          <IcAdvisor size={15} />
           {t("acc.adv_open")}
         </button>
       </div>
@@ -848,14 +852,14 @@ export function Advisor({ adv, t, onOpen }: { adv: AdvisorData; t: T; onOpen?: (
           <div className="acc-adv-chips">
             {adv.chips.map((c, i) => (
               <span key={i} className={`acc-chip acc-chip--${c.tone}`}>
-                <Ic n={c.icon} s={13} />
+                <DynIcon n={c.icon} s={13} />
                 <span className="t">{c.text}</span>
               </span>
             ))}
           </div>
           <div className="acc-adv-grounded">
             <span className="lab">
-              <Ic n="sparkle" s={12} />
+              <IcSparkle size={12} />
               {t("acc.adv_grounded")}
             </span>
             <span className="src">{adv.grounded}</span>
@@ -867,7 +871,7 @@ export function Advisor({ adv, t, onOpen }: { adv: AdvisorData; t: T; onOpen?: (
           >
             <span className="ph">{t("acc.adv_ask")}</span>
             <button className="acc-adv-send" type="button" onClick={onOpen}>
-              <Ic n="send" s={17} />
+              <IcSend size={17} />
             </button>
           </div>
         </div>
@@ -876,14 +880,14 @@ export function Advisor({ adv, t, onOpen }: { adv: AdvisorData; t: T; onOpen?: (
           {adv.recos.map((r, i) => (
             <a key={i} className={`acc-rec${r.tone === "danger" ? " acc-rec--danger" : r.tone === "accent" ? " acc-rec--accent" : ""}`}>
               <span className="acc-rec-ic">
-                <Ic n={r.icon} s={15} />
+                <DynIcon n={r.icon} s={15} />
               </span>
               <span className="acc-rec-body">
                 <span className="acc-rec-t">{r.t}</span>
                 <span className="acc-rec-s">{r.s}</span>
               </span>
               <span className="acc-rec-go">
-                <Ic n="chev-right" s={16} />
+                <IcChevRight size={16} />
               </span>
             </a>
           ))}
@@ -947,14 +951,14 @@ export function AdvisorInvite({ t, onOpen }: { t: T; onOpen?: () => void }) {
     <section className="acc-adv">
       <div className="acc-adv-rail">
         <span className="acc-adv-mark">
-          <Ic n="advisor" s={20} />
+          <IcAdvisor size={20} />
         </span>
         <div className="acc-adv-headtext">
           <div className="acc-adv-title">{t("acc.adv_title")}</div>
           <div className="acc-adv-scope">{t("acc.adv_scope")}</div>
         </div>
         <button className="btn btn--secondary btn--sm acc-adv-open" type="button" onClick={onOpen}>
-          <Ic n="advisor" s={15} />
+          <IcAdvisor size={15} />
           {t("acc.adv_open")}
         </button>
       </div>
@@ -964,7 +968,7 @@ export function AdvisorInvite({ t, onOpen }: { t: T; onOpen?: () => void }) {
           <div className="acc-adv-composer" onClick={onOpen} style={{ cursor: "pointer" }}>
             <span className="ph">{t("acc.adv_ask")}</span>
             <button className="acc-adv-send" type="button" onClick={onOpen}>
-              <Ic n="send" s={17} />
+              <IcSend size={17} />
             </button>
           </div>
         </div>

@@ -18,6 +18,7 @@ import "@/components/account/import-banner.css";
 import { AccountDashboard, AccountSkeleton } from "@/components/account/AccountDashboard";
 import type { Plural, T } from "@/components/account/AccountDashboard";
 import { AccountMobileDashboard, AccountMobileSkeleton } from "@/components/account/AccountMobileDashboard";
+import { AppFooter } from "@/components/AppFooter";
 import {
   ApiError,
   clearTokens,
@@ -131,28 +132,36 @@ export default function AccountDashboardPage() {
   const plural: Plural = (unit, n) => pluralUnit(locale, unit, n);
 
   return (
-    <div className="min-h-screen bg-bg text-text">
-      <div className={wrap}>
-        {/* Desktop (≥ md) and mobile (< md) render together; a CSS breakpoint
-            picks one, so there's no JS-breakpoint hydration flicker. */}
-        <div className="hidden md:block">
-          <AccountDashboard
-            data={data}
-            adv={adv ?? undefined}
-            t={tt}
-            plural={plural}
-            onOpenAdvisor={() => router.push("/app/advisor")}
-          />
+    // Sticky-footer column: content grows, the footer pins to the bottom on
+    // short pages. The footer is DESKTOP-only — the mobile dashboard has its own
+    // bottom chrome (the fixed profile switcher), so a footer there would clash.
+    <div className="flex min-h-screen flex-col bg-bg text-text">
+      <div className="flex-1">
+        <div className={wrap}>
+          {/* Desktop (≥ md) and mobile (< md) render together; a CSS breakpoint
+              picks one, so there's no JS-breakpoint hydration flicker. */}
+          <div className="hidden md:block">
+            <AccountDashboard
+              data={data}
+              adv={adv ?? undefined}
+              t={tt}
+              plural={plural}
+              onOpenAdvisor={() => router.push("/app/advisor")}
+            />
+          </div>
+          <div className="md:hidden">
+            <AccountMobileDashboard
+              data={data}
+              adv={adv ?? undefined}
+              t={tt}
+              plural={plural}
+              onOpenAdvisor={() => router.push("/app/advisor")}
+            />
+          </div>
         </div>
-        <div className="md:hidden">
-          <AccountMobileDashboard
-            data={data}
-            adv={adv ?? undefined}
-            t={tt}
-            plural={plural}
-            onOpenAdvisor={() => router.push("/app/advisor")}
-          />
-        </div>
+      </div>
+      <div className="hidden md:block">
+        <AppFooter />
       </div>
     </div>
   );

@@ -22,6 +22,30 @@
 
 import { useEffect, useState } from "react";
 
+import {
+  BrandMark as BrandLogo,
+  IcAdvisor,
+  IcArrowDown,
+  IcArrowRight,
+  IcArrowUp,
+  IcChevDown,
+  IcChevRight,
+  IcCheck,
+  IcLayers,
+  IcLogout,
+  IcMoon,
+  IcNib,
+  IcOverview,
+  IcPlus,
+  IcReply,
+  IcSend,
+  IcSettings,
+  IcSparkle,
+  IcSun,
+  IcThread,
+  IcUndo,
+  IcX,
+} from "@/components/icons";
 import { useSelectedAccountId } from "@/lib/account";
 import type {
   AccountBrand,
@@ -32,12 +56,14 @@ import type {
   OverviewTotals,
 } from "@/lib/types";
 
-import { Ic, useAccountNav } from "./AccountDashboard";
+import { DynIcon, useAccountNav } from "./AccountDashboard";
 import type { Nav, Plural, T } from "./AccountDashboard";
 
 // ── shared helpers (mirror AccountDashboard.tsx) ─────────────────────────────
 const NET_LABEL: Record<string, string> = { threads: "Threads", linkedin: "LinkedIn" };
-const NET_GLYPH: Record<string, string> = { threads: "@", linkedin: "in" };
+// LinkedIn keeps its text glyph; Threads renders the app's IcThread (mirrors the
+// desktop NetBadge / brand-net handling).
+const NET_GLYPH: Record<string, string> = { linkedin: "in" };
 
 function nfmt(n: number): string {
   if (n >= 10000) return (n / 1000).toFixed(n % 1000 === 0 ? 0 : 1).replace(".", ",") + "k";
@@ -54,7 +80,7 @@ function Delta({ v }: { v: number | null }) {
   const down = v < 0;
   return (
     <span className={`ma-delta ma-delta--${down ? "down" : "up"}`}>
-      <Ic n={down ? "down" : "up"} s={11} />
+      {down ? <IcArrowDown size={11} /> : <IcArrowUp size={11} />}
       {nfmt(Math.abs(v))}
     </span>
   );
@@ -70,7 +96,7 @@ function BrandMark({ mono, cls = "" }: { mono: string; cls?: string }) {
 function NetBadge({ network }: { network: string }) {
   return (
     <span className={`ma-net ma-net--${network}`} title={NET_LABEL[network] || network}>
-      {NET_GLYPH[network] || "•"}
+      {network === "threads" ? <IcThread size={9} /> : NET_GLYPH[network] || "•"}
     </span>
   );
 }
@@ -107,7 +133,7 @@ function Total({
   return (
     <div className={`ma-total${attention ? " ma-total--attention" : ""}`}>
       <div className="ma-total-lab">
-        <Ic n={icon} s={12} />
+        <DynIcon n={icon} s={12} />
         <span className="ma-total-labtxt">{lab}</span>
       </div>
       <div className="ma-total-row">
@@ -167,18 +193,18 @@ function TasksStrip({ tasks, t, plural, nav }: { tasks: AccountTasks; t: T; plur
     <section className="ma-tasks">
       <div className="ma-tasks-head">
         <span className="ma-tasks-lab">
-          <Ic n="alert" s={15} />
+          <DynIcon n="alert" s={15} />
           {t("acc.tasks_title")}
         </span>
         <a className="ma-tasks-all" style={{ cursor: "pointer" }} onClick={() => nav.go("/app/overview")}>
           {t("acc.tasks_all")}
-          <Ic n="arrow-right" s={13} />
+          <IcArrowRight size={13} />
         </a>
       </div>
       <div className="ma-tasks-chips">
         {chips.map((c) => (
           <span key={c.type} className={`ma-taskchip${c.type === "sync" ? " ma-taskchip--sync" : ""}`}>
-            <Ic n={TASK_IC[c.type]} s={12} />
+            <DynIcon n={TASK_IC[c.type]} s={12} />
             <b>{c.n}</b> {c.label}
           </span>
         ))}
@@ -193,7 +219,7 @@ function Advisor({ adv, t, onOpen }: { adv: AdvisorData; t: T; onOpen?: () => vo
     <section className="ma-adv">
       <div className="ma-adv-rail">
         <span className="ma-adv-mark">
-          <Ic n="advisor" s={18} />
+          <IcAdvisor size={18} />
         </span>
         <div className="ma-adv-headtext">
           <div className="ma-adv-title">{t("acc.adv_title")}</div>
@@ -206,14 +232,14 @@ function Advisor({ adv, t, onOpen }: { adv: AdvisorData; t: T; onOpen?: () => vo
         <div className="ma-adv-chips">
           {adv.chips.map((c, i) => (
             <span key={i} className={`ma-chip ma-chip--${c.tone}`}>
-              <Ic n={c.icon} s={13} />
+              <DynIcon n={c.icon} s={13} />
               <span className="t">{c.text}</span>
             </span>
           ))}
         </div>
         <div className="ma-adv-grounded">
           <span className="lab">
-            <Ic n="sparkle" s={12} />
+            <IcSparkle size={12} />
             {t("acc.adv_grounded")}
           </span>
           <span className="src">{adv.grounded}</span>
@@ -222,14 +248,14 @@ function Advisor({ adv, t, onOpen }: { adv: AdvisorData; t: T; onOpen?: () => vo
           {adv.recos.map((r, i) => (
             <a key={i} className={`ma-rec${r.tone === "danger" ? " ma-rec--danger" : r.tone === "accent" ? " ma-rec--accent" : ""}`}>
               <span className="ma-rec-ic">
-                <Ic n={r.icon} s={15} />
+                <DynIcon n={r.icon} s={15} />
               </span>
               <span className="ma-rec-body">
                 <span className="ma-rec-t">{r.t}</span>
                 <span className="ma-rec-s">{r.s}</span>
               </span>
               <span className="ma-rec-go">
-                <Ic n="chev-right" s={16} />
+                <IcChevRight size={16} />
               </span>
             </a>
           ))}
@@ -237,11 +263,11 @@ function Advisor({ adv, t, onOpen }: { adv: AdvisorData; t: T; onOpen?: () => vo
         <div className="ma-adv-composer" onClick={onOpen} style={onOpen ? { cursor: "pointer" } : undefined}>
           <span className="ph">{t("acc.adv_ask")}</span>
           <button className="ma-adv-send" type="button" onClick={onOpen}>
-            <Ic n="send" s={16} />
+            <IcSend size={16} />
           </button>
         </div>
         <button className="btn btn--secondary ma-adv-open" type="button" onClick={onOpen}>
-          <Ic n="advisor" s={15} />
+          <IcAdvisor size={15} />
           {t("acc.adv_open")}
         </button>
       </div>
@@ -256,7 +282,7 @@ function AdvisorInvite({ t, onOpen }: { t: T; onOpen?: () => void }) {
     <section className="ma-adv">
       <div className="ma-adv-rail">
         <span className="ma-adv-mark">
-          <Ic n="advisor" s={18} />
+          <IcAdvisor size={18} />
         </span>
         <div className="ma-adv-headtext">
           <div className="ma-adv-title">{t("acc.adv_title")}</div>
@@ -268,11 +294,11 @@ function AdvisorInvite({ t, onOpen }: { t: T; onOpen?: () => void }) {
         <div className="ma-adv-composer" onClick={onOpen} style={{ cursor: "pointer" }}>
           <span className="ph">{t("acc.adv_ask")}</span>
           <button className="ma-adv-send" type="button" onClick={onOpen}>
-            <Ic n="send" s={16} />
+            <IcSend size={16} />
           </button>
         </div>
         <button className="btn btn--secondary ma-adv-open" type="button" onClick={onOpen}>
-          <Ic n="advisor" s={15} />
+          <IcAdvisor size={15} />
           {t("acc.adv_open")}
         </button>
       </div>
@@ -300,7 +326,7 @@ function Metric({
   return (
     <div className={`ma-m${attention ? " ma-m--attention" : ""}`}>
       <span className="ma-m-lab">
-        <Ic n={icon} s={11} />
+        <DynIcon n={icon} s={11} />
         <span className="ma-m-labtxt">{lab}</span>
       </span>
       <span className="ma-m-row">
@@ -344,7 +370,7 @@ function ProfileHead({ p }: { p: AccountProfile }) {
         <div className="ma-card-sub">{NET_LABEL[p.network] || p.network}</div>
       </div>
       <span className="ma-go">
-        <Ic n="chev-right" s={15} />
+        <IcChevRight size={15} />
       </span>
     </div>
   );
@@ -389,7 +415,7 @@ function ProfileCard({ p, t, nav }: { p: AccountProfile; t: T; nav: Nav }) {
             {t("acc.sync_failed")}
           </span>
           <button className="ma-retry" type="button" onClick={(e) => { e.stopPropagation(); nav.retry(); }}>
-            <Ic n="undo" s={12} />
+            <IcUndo size={12} />
             {t("acc.retry")}
           </button>
         </div>
@@ -408,7 +434,7 @@ function ProfileCard({ p, t, nav }: { p: AccountProfile; t: T; nav: Nav }) {
         </span>
         <div className="ma-quick">
           <a className="ma-quicklink" style={{ cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); nav.openProfile(p.id, "stats"); }}>
-            <Ic n="nib" s={11} />
+            <IcNib size={11} />
             {t("acc.stats")}
           </a>
           <a
@@ -416,7 +442,7 @@ function ProfileCard({ p, t, nav }: { p: AccountProfile; t: T; nav: Nav }) {
             style={{ cursor: "pointer" }}
             onClick={(e) => { e.stopPropagation(); nav.openProfile(p.id, "replies"); }}
           >
-            <Ic n="reply" s={11} />
+            <IcReply size={11} />
             {t("acc.replies_short")}
             {attn ? ` ${p.replies_to_answer}` : ""}
           </a>
@@ -452,7 +478,7 @@ function BrandProfileRow({ p, t, nav }: { p: AccountProfile; t: T; nav: Nav }) {
   } else if (p.sync_status === "error") {
     right = (
       <button className="ma-bp-retry" type="button" onClick={(e) => { e.stopPropagation(); nav.retry(); }}>
-        <Ic n="undo" s={12} />
+        <IcUndo size={12} />
         {t("acc.retry")}
       </button>
     );
@@ -500,7 +526,7 @@ function BrandCard({ b, t, plural, nav }: { b: AccountBrand; t: T; plural: Plura
           <span className="ma-brand-net">
             {b.networks.map((nid) => (
               <span key={nid} className="ma-brand-netbadge">
-                {NET_GLYPH[nid] || "•"}
+                {nid === "threads" ? <IcThread size={9} /> : NET_GLYPH[nid] || "•"}
               </span>
             ))}
           </span>
@@ -510,7 +536,7 @@ function BrandCard({ b, t, plural, nav }: { b: AccountBrand; t: T; plural: Plura
           <div className="ma-card-sub">{sub}</div>
         </div>
         <span className="ma-go">
-          <Ic n="chev-right" s={15} />
+          <IcChevRight size={15} />
         </span>
       </div>
       <BrandStack b={b} />
@@ -523,7 +549,7 @@ function BrandCard({ b, t, plural, nav }: { b: AccountBrand; t: T; plural: Plura
         {pc > 0 ? (
           <button className="ma-brand-expand" type="button" aria-expanded={expanded} onClick={(e) => { e.stopPropagation(); toggle(); }}>
             {t("acc.expand")}
-            <Ic n="chev-down" s={13} />
+            <IcChevDown size={13} className={expanded ? "rotate-180" : undefined} />
           </button>
         ) : null}
       </div>
@@ -543,14 +569,14 @@ function AddBrand({ t, nav }: { t: T; nav: Nav }) {
   return (
     <a className="ma-add" style={{ cursor: "pointer" }} onClick={nav.addProfile}>
       <span className="ma-add-ico">
-        <Ic n="plus" s={20} />
+        <IcPlus size={20} />
       </span>
       <span className="ma-add-body">
         <span className="ma-add-t">{t("acc.add_brand_t")}</span>
         <span className="ma-add-s">{t("acc.add_brand_s")}</span>
       </span>
       <span className="ma-add-go">
-        <Ic n="chev-right" s={16} />
+        <IcChevRight size={16} />
       </span>
     </a>
   );
@@ -595,7 +621,7 @@ function SwitcherButton({ data, t, plural, onOpen }: { data: MeAccountResponse; 
         </span>
       </span>
       <span className="ma-swbtn-chev">
-        <Ic n="chev-up" s={16} />
+        <IcChevDown size={16} className="rotate-180" />
       </span>
     </button>
   );
@@ -613,7 +639,7 @@ function SwitcherRow({ p, active, nav, onDone }: { p: AccountProfile; active: bo
       </span>
       {active ? (
         <span className="ma-sw-check">
-          <Ic n="check" s={17} />
+          <IcCheck size={17} />
         </span>
       ) : (
         <span className={`ma-sw-stat${dotCls}`} />
@@ -634,7 +660,7 @@ function SwitcherSheet({ data, t, nav, onClose }: { data: MeAccountResponse; t: 
           <div className="m-sheet-head">
             <div className="m-sheet-title">{t("acc.sw_all")}</div>
             <button className="m-sheet-close" type="button" onClick={onClose}>
-              <Ic n="x" s={16} />
+              <IcX size={16} />
             </button>
           </div>
           {multi ? (
@@ -659,7 +685,7 @@ function SwitcherSheet({ data, t, nav, onClose }: { data: MeAccountResponse; t: 
           )}
           <button className="ma-sw-row" type="button" onClick={() => { onClose(); nav.addProfile(); }}>
             <span className="ma-sw-av ma-sw-av--add">
-              <Ic n="plus" s={16} />
+              <IcPlus size={16} />
             </span>
             <span className="ma-sw-who">
               <span className="ma-sw-nm">{t("acc.sw_connect")}</span>
@@ -672,11 +698,21 @@ function SwitcherSheet({ data, t, nav, onClose }: { data: MeAccountResponse; t: 
 }
 
 // ── nav drawer (hamburger) + login foot ──────────────────────────────────────
+// Drawer nav rows carry a design-token icon name; map it to the app icon set.
+const NAV_ICONS: Record<string, (p: { size?: number }) => React.JSX.Element> = {
+  grid: IcOverview,
+  layers: IcLayers,
+  advisor: IcAdvisor,
+  settings: IcSettings,
+  plus: IcPlus,
+};
+
 function NavRow({ icon, label, active, badge, extraCls, onClick }: { icon: string; label: string; active?: boolean; badge?: number; extraCls?: string; onClick?: () => void }) {
+  const NavIc = NAV_ICONS[icon] ?? IcOverview;
   return (
     <a className={`m-navrow${active ? " m-navrow--active" : ""}${extraCls ? ` ${extraCls}` : ""}`} style={{ cursor: "pointer" }} aria-current={active ? "page" : undefined} onClick={onClick}>
       <span className="m-navrow-ic">
-        <Ic n={icon} s={20} />
+        <NavIc size={20} />
       </span>
       <span className="m-navrow-lbl">{label}</span>
       {badge ? <span className="m-navrow-badge">{badge}</span> : null}
@@ -694,7 +730,7 @@ function NavDrawer({ data, t, nav, onClose, onOpenLogin }: { data: MeAccountResp
         <div className="m-drawer-head">
           <div className="m-drawer-brand">
             <span className="m-brand-mark">
-              <Ic n="nib" s={16} />
+              <BrandLogo size={28} radius={8} />
             </span>
             <div className="db-id">
               <div className="bn">Pennedly</div>
@@ -702,7 +738,7 @@ function NavDrawer({ data, t, nav, onClose, onOpenLogin }: { data: MeAccountResp
             </div>
           </div>
           <button className="m-drawer-close" type="button" onClick={onClose}>
-            <Ic n="x" s={16} />
+            <IcX size={16} />
           </button>
         </div>
         <div className="m-drawer-scroll">
@@ -725,7 +761,7 @@ function NavDrawer({ data, t, nav, onClose, onOpenLogin }: { data: MeAccountResp
               <span className="ma-loginctl-plan">{data.tenant.plan_tier}</span>
             </span>
             <span className="ma-loginctl-chev">
-              <Ic n="chev-up" s={16} />
+              <IcChevDown size={16} className="rotate-180" />
             </span>
           </button>
         </div>
@@ -751,7 +787,7 @@ function LoginSheet({ data, t, nav, onClose }: { data: MeAccountResponse; t: T; 
               <span className="ma-login-plan">{data.tenant.plan_tier}</span>
             </div>
             <button className="m-sheet-close" type="button" onClick={onClose}>
-              <Ic n="x" s={16} />
+              <IcX size={16} />
             </button>
           </div>
           <div className="ma-sw-cap">{t("acc.account_word")}</div>
@@ -762,19 +798,19 @@ function LoginSheet({ data, t, nav, onClose }: { data: MeAccountResponse; t: T; 
               <span className="ma-login-hd">{data.tenant.plan_tier}</span>
             </span>
             <span className="ma-login-check">
-              <Ic n="check" s={17} />
+              <IcCheck size={17} />
             </span>
           </button>
           <div className="m-sheet-sep" />
           <button className="ma-login-row ma-login-row--min" type="button" onClick={() => done(() => nav.go("/app/settings"))}>
             <span className="ma-login-mini">
-              <Ic n="settings" s={16} />
+              <IcSettings size={16} />
             </span>
             {t("acc.nav_settings")}
           </button>
           <button className="ma-login-row ma-login-row--min" type="button" onClick={() => done(nav.logout)}>
             <span className="ma-login-mini">
-              <Ic n="logout" s={16} />
+              <IcLogout size={16} />
             </span>
             {t("settings.logout")}
           </button>
@@ -806,12 +842,12 @@ function Topbar({ data, t, plural, dark, onMenu }: { data: MeAccountResponse; t:
       </button>
       <h1 className="ma-top-title">{t("acc.nav_dashboard")}</h1>
       <span className="ma-top-pill">
-        <Ic n="grid" s={12} />
+        <IcOverview size={12} />
         {pill}
       </span>
       <div className="ma-top-spacer" />
       <button className="ma-top-ic" type="button" aria-label="theme" onClick={() => { nav.toggleTheme(); setThemeDark((d) => !d); }}>
-        <Ic n={isDark ? "sun" : "moon"} s={16} />
+        {isDark ? <IcSun size={16} /> : <IcMoon size={16} />}
       </button>
     </div>
   );
