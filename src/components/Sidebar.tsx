@@ -22,6 +22,7 @@ import { AccountSwitcher } from "@/components/AccountSwitcher";
 import {
   BrandMark,
   IcAdvisor,
+  IcArrowLeft,
   IcAt,
   IcAudit,
   IcCalendar,
@@ -182,6 +183,28 @@ export function Sidebar() {
     </Link>
   );
 
+  // Nav #7 — "back to the account dashboard" from any profile screen: an explicit
+  // «← Аккаунт · Дашборд аккаунта» row above the nav groups (the эталон's
+  // sidebar-first-row placement, consistent on desktop + the mobile drawer). The
+  // account level is tester-only for now, so it shows only for testers; the mark
+  // is the filled account square (level-shape language).
+  const acctMono = (me?.tenant.name ?? "?").trim().slice(0, 2).toUpperCase();
+  const backToAccount = isTester ? (
+    <Link
+      href="/app/account"
+      className="mx-3 mb-2 flex items-center gap-2.5 rounded-md border border-border bg-surface-2 px-2.5 py-2 transition-colors hover:border-text/20 hover:bg-surface"
+    >
+      <IcArrowLeft size={16} className="shrink-0 text-text-subtle" />
+      <span className="grid h-[26px] w-[26px] shrink-0 place-items-center rounded-sm bg-primary text-[12px] font-semibold text-primary-foreground">
+        {acctMono}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-small font-semibold leading-tight text-text">{t("acc.crumb_account")}</span>
+        <span className="block truncate text-caption leading-tight text-text-subtle">{t("acc.nav_back_dash")}</span>
+      </span>
+    </Link>
+  ) : null;
+
   const nav = (
     <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-2">
       {GROUPS.map((group) => {
@@ -242,6 +265,7 @@ export function Sidebar() {
       {/* Desktop (≥ md): fixed left column. */}
       <aside className="z-30 hidden border-r border-border bg-bg md:fixed md:inset-y-0 md:left-0 md:flex md:w-62 md:flex-col md:px-3.5 md:py-4">
         {brand}
+        {backToAccount}
         {nav}
         {bottom}
       </aside>
@@ -269,6 +293,7 @@ export function Sidebar() {
               <IcX size={18} />
             </button>
             {brand}
+            {backToAccount}
             {nav}
             {bottom}
           </aside>

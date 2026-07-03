@@ -31,6 +31,12 @@ export function AccountSwitcher({ me, onLogout }: { me?: Me | null; onLogout?: (
   if (accounts.length === 0) return <ConnectThreadsButton variant="primary" />;
   if (!selectedAccount) return null;
 
+  // «All accounts» → the account home. Testers get the new account DASHBOARD
+  // (/app/account, Account → Brands → Profiles); everyone else keeps the current
+  // read-only portfolio Overview until it's promoted. (Nav #7: the return path
+  // from any profile screen back up to the account level.)
+  const accountHome = effMe?.is_tester ? "/app/account" : "/app/overview";
+
   return (
     <div className="relative">
       <button
@@ -58,7 +64,7 @@ export function AccountSwitcher({ me, onLogout }: { me?: Me | null; onLogout?: (
                 connected count. Only meaningful with ≥1 account (always true
                 here — the 0-account case returns the connect CTA above). */}
             <Link
-              href="/app/overview"
+              href={accountHome}
               onClick={() => setOpen(false)}
               className="mb-1.5 flex items-center gap-2.5 rounded-md border border-accent/20 bg-accent/[0.08] p-2 transition-colors hover:bg-accent/[0.12]"
             >

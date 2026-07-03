@@ -326,6 +326,8 @@ export function Composer({
   disabled,
   busy,
   hint = true,
+  placeholder,
+  hintText,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -334,9 +336,14 @@ export function Composer({
   disabled?: boolean;
   busy?: boolean;
   hint?: boolean;
+  // Copy overrides (the portfolio advisor passes its own placeholder + hint);
+  // default to the growth-advisor keys.
+  placeholder?: string;
+  hintText?: string;
 }) {
   const { t } = useTranslation();
   const canSend = !disabled && !busy && value.trim().length > 0;
+  const ph = placeholder ?? t("advisor.composer_placeholder");
   return (
     <div className="mx-auto max-w-[640px]">
       <div
@@ -361,9 +368,9 @@ export function Composer({
               if (canSend) onSend();
             }
           }}
-          placeholder={t("advisor.composer_placeholder")}
+          placeholder={ph}
           className="max-h-[120px] min-w-0 flex-1 resize-none bg-transparent py-[7px] text-body leading-[1.5] text-text outline-none placeholder:text-text-subtle"
-          aria-label={t("advisor.composer_placeholder")}
+          aria-label={ph}
         />
         <button
           type="button"
@@ -377,7 +384,7 @@ export function Composer({
       </div>
       {hint && (
         <p className="mx-auto mt-2 max-w-[640px] text-center text-caption text-text-subtle">
-          {t("advisor.composer_hint")}
+          {hintText ?? t("advisor.composer_hint")}
         </p>
       )}
     </div>
@@ -385,15 +392,17 @@ export function Composer({
 }
 
 // ── first-run hero ───────────────────────────────────────────────────────────
-export function Hero() {
+// Copy overrides let the portfolio advisor pass its own title/sub; default to
+// the growth-advisor keys.
+export function Hero({ title, sub }: { title?: string; sub?: string } = {}) {
   const { t } = useTranslation();
   return (
     <div className="mx-auto flex max-w-[560px] flex-col items-center px-5 pb-[22px] pt-[38px] text-center">
       <span className={cn("mb-4 grid h-14 w-14 place-items-center rounded-[16px]", ACCENT_TILE)}>
         <IcAdvisor size={26} />
       </span>
-      <h2 className="mb-2 text-h2 font-semibold tracking-[-0.01em] text-text">{t("advisor.hero_title")}</h2>
-      <p className="max-w-[44ch] text-body leading-[1.55] text-text-muted">{t("advisor.hero_sub")}</p>
+      <h2 className="mb-2 text-h2 font-semibold tracking-[-0.01em] text-text">{title ?? t("advisor.hero_title")}</h2>
+      <p className="max-w-[44ch] text-body leading-[1.55] text-text-muted">{sub ?? t("advisor.hero_sub")}</p>
     </div>
   );
 }

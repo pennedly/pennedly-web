@@ -146,7 +146,7 @@ export default function AccountDashboardPage() {
               adv={adv ?? undefined}
               t={tt}
               plural={plural}
-              onOpenAdvisor={() => router.push("/app/advisor")}
+              onOpenAdvisor={() => router.push("/app/account/advisor")}
             />
           </div>
           <div className="md:hidden">
@@ -155,7 +155,7 @@ export default function AccountDashboardPage() {
               adv={adv ?? undefined}
               t={tt}
               plural={plural}
-              onOpenAdvisor={() => router.push("/app/advisor")}
+              onOpenAdvisor={() => router.push("/app/account/advisor")}
             />
           </div>
         </div>

@@ -619,11 +619,19 @@ export function TasksStrip({ tasks, t, plural, nav }: { tasks: AccountTasks; t: 
   );
 }
 
+// Which account-level screen a chrome instance sits on (drives the active nav
+// row + the breadcrumb). The dashboard, the portfolio advisor chat, and account
+// settings share ONE sidebar/topbar set, parameterized by this.
+export type AccountPage = "dashboard" | "advisor" | "settings";
+
 // ── sidebar (account level) ──────────────────────────────────────────────────
-export function Sidebar({ data, t, nav }: { data: MeAccountResponse; t: T; nav: Nav }) {
+export function Sidebar({ data, t, nav, active = "dashboard" }: { data: MeAccountResponse; t: T; nav: Nav; active?: AccountPage }) {
   const multi = data.scope.brands_count >= 2;
   const [loginOpen, setLoginOpen] = useState(false);
   const mono = initials(data.tenant.name, null);
+  // Active row = current page (no navigation); inactive rows go to their route.
+  const row = (page: AccountPage, route: string) =>
+    active === page ? { className: "acc-sb-row acc-sb-row--active" } : { className: "acc-sb-row", onClick: () => nav.go(route) };
   return (
     <div className="acc-sb">
       <div className="acc-sb-brand">
@@ -634,7 +642,7 @@ export function Sidebar({ data, t, nav }: { data: MeAccountResponse; t: T; nav: 
       </div>
       <div className="acc-sb-cap">{t("acc.account_word")}</div>
       <div className="acc-sb-nav">
-        <a className="acc-sb-row acc-sb-row--active" style={{ cursor: "pointer" }}>
+        <a {...row("dashboard", "/app/account")} style={{ cursor: "pointer" }}>
           <IcOverview size={17} />
           <span className="acc-sb-rowtxt">{t("acc.nav_dashboard")}</span>
         </a>
@@ -642,18 +650,22 @@ export function Sidebar({ data, t, nav }: { data: MeAccountResponse; t: T; nav: 
           <a
             className="acc-sb-row"
             style={{ cursor: "pointer" }}
-            onClick={() => document.querySelector(".acc-sec")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+            onClick={() =>
+              active === "dashboard"
+                ? document.querySelector(".acc-sec")?.scrollIntoView({ behavior: "smooth", block: "start" })
+                : nav.go("/app/account")
+            }
           >
             <IcLayers size={17} />
             <span className="acc-sb-rowtxt">{t("acc.nav_brands")}</span>
             <span className="acc-sb-badge">{data.scope.brands_count}</span>
           </a>
         ) : null}
-        <a className="acc-sb-row" style={{ cursor: "pointer" }} onClick={() => nav.go("/app/advisor")}>
+        <a {...row("advisor", "/app/account/advisor")} style={{ cursor: "pointer" }}>
           <IcAdvisor size={17} />
           <span className="acc-sb-rowtxt">{t("acc.nav_advisor")}</span>
         </a>
-        <a className="acc-sb-row" style={{ cursor: "pointer" }} onClick={() => nav.go("/app/settings")}>
+        <a {...row("settings", "/app/account/settings")} style={{ cursor: "pointer" }}>
           <IcSettings size={17} />
           <span className="acc-sb-rowtxt">{t("acc.nav_settings")}</span>
         </a>
@@ -683,7 +695,7 @@ export function Sidebar({ data, t, nav }: { data: MeAccountResponse; t: T; nav: 
                 </span>
               </div>
               <div className="acc-lm-sep" />
-              <button className="acc-lm-row acc-lm-row--min" type="button" onClick={() => { setLoginOpen(false); nav.go("/app/settings"); }}>
+              <button className="acc-lm-row acc-lm-row--min" type="button" onClick={() => { setLoginOpen(false); nav.go("/app/account/settings"); }}>
                 <span className="acc-lm-mini">
                   <IcSettings size={15} />
                 </span>
@@ -818,8 +830,66 @@ export function Topbar({ data, t, plural, dark, nav }: { data: MeAccountResponse
         <span className="acc-ib" style={{ cursor: "pointer" }} onClick={() => { nav.toggleTheme(); setThemeDark((d) => !d); }}>
           {isDark ? <IcSun size={16} /> : <IcMoon size={16} />}
         </span>
-        <span className="acc-ib" style={{ cursor: "pointer" }} onClick={() => nav.go("/app/settings")}>
+        <span className="acc-ib" style={{ cursor: "pointer" }} onClick={() => nav.go("/app/account/settings")}>
           <IcSettings size={16} />
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ── breadcrumb + sub-screen topbar (settings / advisor) ──────────────────────
+// The dashboard's own topbar (above) carries the profile switcher; the
+// sub-screens (settings, advisor) use this simpler bar — a multi-segment
+// breadcrumb «Аккаунт › [page]» (the «Аккаунт» segment links home) + an optional
+// status pill + the theme toggle. Mirrors the эталон account-screens.js topbar.
+export function ScreenTopbar({
+  page,
+  tenantName,
+  t,
+  nav,
+  dark,
+  pill,
+}: {
+  page: AccountPage;
+  tenantName: string;
+  t: T;
+  nav: Nav;
+  dark?: boolean;
+  pill?: string;
+}) {
+  const acctMono = initials(tenantName, null);
+  const pageLabel = page === "settings" ? t("acc.crumb_settings") : t("acc.crumb_advisor");
+  const [themeDark, setThemeDark] = useState(!!dark);
+  useEffect(() => {
+    if (dark === undefined && typeof document !== "undefined") {
+      setThemeDark(document.documentElement.classList.contains("dark"));
+    }
+  }, [dark]);
+  const isDark = dark ?? themeDark;
+  return (
+    <div className="acc-top">
+      <nav className="acc-crumb">
+        <a className="acc-crumb-seg" style={{ cursor: "pointer" }} onClick={() => nav.go("/app/account")}>
+          <AcctMark mono={acctMono} />
+          <span className="acc-crumb-txt">{t("acc.crumb_account")}</span>
+        </a>
+        <span className="acc-crumb-sep">
+          <IcChevRight size={14} />
+        </span>
+        <a className="acc-crumb-seg acc-crumb-seg--current">
+          <span className="acc-crumb-txt">{pageLabel}</span>
+        </a>
+      </nav>
+      <div className="acc-top-actions">
+        {pill ? (
+          <span className="acc-toppill">
+            <IcSparkle size={13} />
+            {pill}
+          </span>
+        ) : null}
+        <span className="acc-ib" style={{ cursor: "pointer" }} onClick={() => { nav.toggleTheme(); setThemeDark((d) => !d); }}>
+          {isDark ? <IcSun size={16} /> : <IcMoon size={16} />}
         </span>
       </div>
     </div>

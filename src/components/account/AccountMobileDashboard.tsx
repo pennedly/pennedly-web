@@ -57,7 +57,7 @@ import type {
 } from "@/lib/types";
 
 import { DynIcon, useAccountNav } from "./AccountDashboard";
-import type { Nav, Plural, T } from "./AccountDashboard";
+import type { AccountPage, Nav, Plural, T } from "./AccountDashboard";
 
 // ── shared helpers (mirror AccountDashboard.tsx) ─────────────────────────────
 const NET_LABEL: Record<string, string> = { threads: "Threads", linkedin: "LinkedIn" };
@@ -720,7 +720,7 @@ function NavRow({ icon, label, active, badge, extraCls, onClick }: { icon: strin
   );
 }
 
-function NavDrawer({ data, t, nav, onClose, onOpenLogin }: { data: MeAccountResponse; t: T; nav: Nav; onClose: () => void; onOpenLogin: () => void }) {
+function NavDrawer({ data, t, nav, onClose, onOpenLogin, active = "dashboard" }: { data: MeAccountResponse; t: T; nav: Nav; onClose: () => void; onOpenLogin: () => void; active?: AccountPage }) {
   const multi = data.scope.brands_count >= 2;
   const go = (route: string) => { onClose(); nav.go(route); };
   return (
@@ -744,10 +744,22 @@ function NavDrawer({ data, t, nav, onClose, onOpenLogin }: { data: MeAccountResp
         <div className="m-drawer-scroll">
           <div className="m-navgroup">
             <div className="m-navcap">{t("acc.account_word")}</div>
-            <NavRow icon="grid" label={t("acc.nav_dashboard")} active onClick={onClose} />
-            {multi ? <NavRow icon="layers" label={t("acc.nav_brands")} badge={data.scope.brands_count} onClick={onClose} /> : null}
-            <NavRow icon="advisor" label={t("acc.nav_advisor")} onClick={() => go("/app/advisor")} />
-            <NavRow icon="settings" label={t("acc.nav_settings")} onClick={() => go("/app/settings")} />
+            <NavRow
+              icon="grid"
+              label={t("acc.nav_dashboard")}
+              active={active === "dashboard"}
+              onClick={active === "dashboard" ? onClose : () => go("/app/account")}
+            />
+            {multi ? (
+              <NavRow
+                icon="layers"
+                label={t("acc.nav_brands")}
+                badge={data.scope.brands_count}
+                onClick={active === "dashboard" ? onClose : () => go("/app/account")}
+              />
+            ) : null}
+            <NavRow icon="advisor" label={t("acc.nav_advisor")} active={active === "advisor"} onClick={() => go("/app/account/advisor")} />
+            <NavRow icon="settings" label={t("acc.nav_settings")} active={active === "settings"} onClick={() => go("/app/account/settings")} />
           </div>
           <div className="m-navgroup">
             <NavRow icon="plus" label={t("acc.add_brand_t")} extraCls="ma-navrow-add" onClick={() => { onClose(); nav.addProfile(); }} />
@@ -802,7 +814,7 @@ function LoginSheet({ data, t, nav, onClose }: { data: MeAccountResponse; t: T; 
             </span>
           </button>
           <div className="m-sheet-sep" />
-          <button className="ma-login-row ma-login-row--min" type="button" onClick={() => done(() => nav.go("/app/settings"))}>
+          <button className="ma-login-row ma-login-row--min" type="button" onClick={() => done(() => nav.go("/app/account/settings"))}>
             <span className="ma-login-mini">
               <IcSettings size={16} />
             </span>
@@ -820,8 +832,26 @@ function LoginSheet({ data, t, nav, onClose }: { data: MeAccountResponse; t: T; 
   );
 }
 
-// ── mobile top bar (hamburger · Дашборд · profiles pill · theme) ─────────────
-function Topbar({ data, t, plural, dark, onMenu }: { data: MeAccountResponse; t: T; plural: Plural; dark?: boolean; onMenu: () => void }) {
+// ── mobile top bar (hamburger · title · [profiles pill] · theme) ─────────────
+// The dashboard shows the profiles-count pill; the sub-screens (settings,
+// advisor) pass their own `title` and drop the pill.
+function Topbar({
+  data,
+  t,
+  plural,
+  dark,
+  onMenu,
+  title,
+  showPill = true,
+}: {
+  data: MeAccountResponse;
+  t: T;
+  plural: Plural;
+  dark?: boolean;
+  onMenu: () => void;
+  title?: string;
+  showPill?: boolean;
+}) {
   const nav = useAccountNav();
   const [themeDark, setThemeDark] = useState(!!dark);
   useEffect(() => {
@@ -840,15 +870,60 @@ function Topbar({ data, t, plural, dark, onMenu }: { data: MeAccountResponse; t:
           <line x1="3" y1="18" x2="21" y2="18" />
         </svg>
       </button>
-      <h1 className="ma-top-title">{t("acc.nav_dashboard")}</h1>
-      <span className="ma-top-pill">
-        <IcOverview size={12} />
-        {pill}
-      </span>
+      <h1 className="ma-top-title">{title ?? t("acc.nav_dashboard")}</h1>
+      {showPill ? (
+        <span className="ma-top-pill">
+          <IcOverview size={12} />
+          {pill}
+        </span>
+      ) : null}
       <div className="ma-top-spacer" />
       <button className="ma-top-ic" type="button" aria-label="theme" onClick={() => { nav.toggleTheme(); setThemeDark((d) => !d); }}>
         {isDark ? <IcSun size={16} /> : <IcMoon size={16} />}
       </button>
+    </div>
+  );
+}
+
+// ── shared mobile shell for the sub-screens (settings / advisor) ─────────────
+// The account mobile chrome without the dashboard body: top bar (title +
+// hamburger + theme, no pill) + the account nav drawer (active row) + the login
+// sheet from its foot. `dock` is an optional fixed element (the advisor's docked
+// composer). Content goes in `children`; `bare` skips the .ma padding wrapper
+// (the chat manages its own full-height layout).
+export function AccountMobileShell({
+  data,
+  t,
+  plural,
+  title,
+  active,
+  dark,
+  children,
+  dock,
+  bare,
+}: {
+  data: MeAccountResponse;
+  t: T;
+  plural: Plural;
+  title: string;
+  active: AccountPage;
+  dark?: boolean;
+  children: React.ReactNode;
+  dock?: React.ReactNode;
+  bare?: boolean;
+}) {
+  const nav = useAccountNav();
+  const [overlay, setOverlay] = useState<null | "drawer" | "login">(null);
+  const close = () => setOverlay(null);
+  return (
+    <div className="acc-mob">
+      <Topbar data={data} t={t} plural={plural} dark={dark} title={title} showPill={false} onMenu={() => setOverlay("drawer")} />
+      {bare ? children : <div className="ma">{children}</div>}
+      {dock}
+      {overlay === "drawer" ? (
+        <NavDrawer data={data} t={t} nav={nav} active={active} onClose={close} onOpenLogin={() => setOverlay("login")} />
+      ) : null}
+      {overlay === "login" ? <LoginSheet data={data} t={t} nav={nav} onClose={close} /> : null}
     </div>
   );
 }

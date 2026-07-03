@@ -1,0 +1,176 @@
+/* account-screens.css — component layer for the account-level SCREENS that sit
+   in the account-dashboard chrome: Account Settings (/app/account/settings) and
+   the Portfolio Advisor chat (/app/account/advisor), plus the Account ↔ Profile
+   navigation controls (#7). Ported 1:1 from the CD эталон
+   (design-export/PennedlyDesign/account-screens.css). Sibling of account.css;
+   built on the app's semantic tokens (globals.css) → light/dark follow the
+   ambient .dark class. Loaded by the account-settings + account-advisor pages
+   after account.css.
+
+   LEVEL SHAPE LANGUAGE (shared with the dashboard): Account = filled square ·
+   Brand = outlined square · Profile = round. RULE 1: single-line elements are
+   min-width:0 + nowrap + ellipsis, fixed neighbours flex:0 0 auto. RULE 2:
+   containers sized for the German length.
+
+   The chat's message vocabulary is the profile advisor's shared React
+   components (components/advisor/AdvisorParts.tsx, pure Tailwind); only the chat
+   SHELL — the pinned portfolio verdict + docked composer frame — lives here as
+   .acc-chat*. */
+
+/* ═══════════════════════ shared: page intro + card ═══════════════════════ */
+.acc-page { display: flex; flex-direction: column; gap: 16px; min-width: 0; container-type: inline-size; container-name: accpage; }
+.acc-page * { box-sizing: border-box; }
+.acc-pagehead { display: flex; flex-direction: column; gap: 6px; min-width: 0; margin-bottom: 2px; }
+.acc-pagehead-t { font-size: var(--text-h1); font-weight: 600; letter-spacing: -0.015em; color: var(--color-text); line-height: 1.1; }
+.acc-pagehead-d { font-size: var(--text-body); color: var(--color-text-muted); line-height: 1.55; max-width: 60ch; text-wrap: pretty; }
+
+.acc-card2 { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow: hidden; min-width: 0; }
+.acc-card2-head { padding: 15px 18px 0; min-width: 0; }
+.acc-card2-h { font-size: var(--text-h3); font-weight: 600; letter-spacing: -0.006em; color: var(--color-text); line-height: 1.2; }
+.acc-card2-d { font-size: var(--text-small); color: var(--color-text-muted); margin-top: 4px; line-height: 1.5; text-wrap: pretty; }
+.acc-card2-body { padding: 15px 18px 17px; min-width: 0; }
+.acc-card2--danger { border-color: color-mix(in srgb, var(--color-danger) 34%, var(--color-border)); }
+.acc-card2--danger .acc-card2-h { color: var(--color-danger); }
+
+/* endpoint tag — shows the REAL backend action a control maps to */
+.acc-endpoint { display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; font-family: var(--font-mono); font-size: 11px; font-weight: 500; letter-spacing: .01em; color: var(--color-text-subtle); background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 2px 7px; white-space: nowrap; }
+.acc-endpoint b { color: var(--color-text-muted); font-weight: 600; }
+
+/* ═══════════════════════ settings: account identity ═══════════════════════ */
+.acc-set-id { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.acc-set-id .acc-acctmark { width: 52px; height: 52px; font-size: 21px; }
+.acc-set-id-who { flex: 1 1 auto; min-width: 0; }
+.acc-set-id-nm { font-size: var(--text-h3); font-weight: 600; letter-spacing: -0.006em; color: var(--color-text); line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.acc-set-id-em { font-size: var(--text-small); color: var(--color-text-subtle); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.acc-plan-badge { display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface)); border: 1px solid color-mix(in srgb, var(--color-accent) 28%, transparent); border-radius: var(--radius-full); padding: 4px 11px; white-space: nowrap; }
+.acc-plan-badge svg { width: 13px; height: 13px; flex: 0 0 auto; }
+
+/* editable field + key/value rows */
+.acc-set-field { margin-top: 16px; min-width: 0; }
+.acc-set-field .field-label { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.acc-set-field .field { max-width: 100%; }
+.acc-set-rows { margin-top: 16px; border-top: 1px solid var(--color-border); }
+.acc-set-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--color-border); min-width: 0; }
+.acc-set-row:last-child { border-bottom: none; }
+.acc-set-row .sr-k { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 8px; font-size: var(--text-small); color: var(--color-text-muted); }
+.acc-set-row .sr-k svg { width: 15px; height: 15px; opacity: .7; flex: 0 0 auto; }
+.acc-set-row .sr-v { font-size: var(--text-small); font-weight: 600; color: var(--color-text); text-align: right; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.acc-set-row .sr-v.mono { font-family: var(--font-mono); font-weight: 500; }
+
+/* ═══════════════════════ settings: language grid ═══════════════════════ */
+.acc-langgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+@container accpage (max-width: 520px) { .acc-langgrid { grid-template-columns: 1fr; } }
+.acc-lang { display: flex; align-items: center; gap: 12px; text-align: left; padding: 10px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); cursor: pointer; min-width: 0; transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard); }
+.acc-lang:hover { background: var(--color-surface-2); border-color: color-mix(in srgb, var(--color-text) 16%, var(--color-border)); }
+.acc-lang--active { border-color: var(--color-text); box-shadow: 0 0 0 1px var(--color-text); }
+.acc-lang-code { flex: 0 0 auto; width: 34px; height: 34px; display: grid; place-items: center; font-family: var(--font-mono); font-size: 13px; font-weight: 500; letter-spacing: .04em; color: var(--color-text-muted); border-radius: var(--radius-sm); background: var(--color-surface-2); border: 1px solid var(--color-border); }
+.acc-lang--active .acc-lang-code { border-color: color-mix(in srgb, var(--color-text) 30%, var(--color-border)); color: var(--color-text); }
+.acc-lang-txt { flex: 1 1 auto; min-width: 0; }
+.acc-lang-nm { display: block; font-size: var(--text-small); font-weight: 600; color: var(--color-text); line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.acc-lang-rg { display: block; font-size: var(--text-caption); color: var(--color-text-subtle); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.acc-lang-tick { flex: 0 0 auto; color: var(--color-text); opacity: 0; display: grid; }
+.acc-lang--active .acc-lang-tick { opacity: 1; }
+
+/* ═══════════════════════ settings: action row (export) + danger (delete) ═══════════════════════ */
+.acc-actionrow { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.acc-actionrow + .acc-actionrow { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--color-border); }
+.acc-actionrow-ico { flex: 0 0 auto; width: 40px; height: 40px; display: grid; place-items: center; border-radius: var(--radius-md); background: var(--color-surface-2); border: 1px solid var(--color-border); color: var(--color-text-muted); }
+.acc-actionrow-ico--danger { color: var(--color-danger); background: color-mix(in srgb, var(--color-danger) 12%, var(--color-surface)); border-color: color-mix(in srgb, var(--color-danger) 26%, transparent); }
+.acc-actionrow-txt { flex: 1 1 auto; min-width: 0; }
+.acc-actionrow-t { font-size: var(--text-small); font-weight: 600; color: var(--color-text); display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.acc-actionrow-s { font-size: var(--text-caption); color: var(--color-text-subtle); margin-top: 3px; line-height: 1.45; text-wrap: pretty; }
+.acc-actionrow-act { flex: 0 0 auto; margin-left: auto; align-self: center; }
+@container accpage (max-width: 460px) {
+  .acc-actionrow { flex-wrap: wrap; }
+  .acc-actionrow-act { margin-left: 54px; }
+}
+
+/* export: preparing / ready inline states */
+.acc-export-state { display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto; font-size: var(--text-small); font-weight: 500; color: var(--color-text-muted); white-space: nowrap; }
+.acc-export-state .spinner { width: 14px; height: 14px; border-radius: var(--radius-full); border: 2px solid color-mix(in srgb, var(--color-text) 24%, transparent); border-top-color: var(--color-accent); animation: spin 0.6s linear infinite; flex: 0 0 auto; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.acc-export-ready { display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto; font-size: var(--text-small); font-weight: 600; color: var(--color-success); white-space: nowrap; }
+.acc-export-ready svg { flex: 0 0 auto; }
+
+/* delete: inline two-step confirm block */
+.acc-del-confirm { margin-top: 15px; padding: 15px; border: 1px solid color-mix(in srgb, var(--color-danger) 30%, var(--color-border)); border-radius: var(--radius-md); background: color-mix(in srgb, var(--color-danger) 6%, var(--color-surface)); }
+.acc-del-confirm-t { font-size: var(--text-small); font-weight: 600; color: var(--color-text); }
+.acc-del-confirm-s { font-size: var(--text-caption); color: var(--color-text-muted); margin-top: 4px; line-height: 1.5; text-wrap: pretty; }
+.acc-del-type { margin-top: 12px; }
+.acc-del-type-lab { font-size: var(--text-caption); color: var(--color-text-subtle); margin-bottom: 6px; }
+.acc-del-type-lab b { color: var(--color-danger); font-family: var(--font-mono); font-weight: 600; letter-spacing: .04em; }
+.acc-del-actions { display: flex; align-items: center; gap: 9px; margin-top: 13px; flex-wrap: wrap; }
+.acc-deleting { display: flex; align-items: center; gap: 11px; margin-top: 15px; padding: 14px 15px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-2); }
+.acc-deleting .spinner { width: 16px; height: 16px; border-radius: var(--radius-full); border: 2px solid color-mix(in srgb, var(--color-danger) 30%, transparent); border-top-color: var(--color-danger); animation: spin 0.6s linear infinite; flex: 0 0 auto; }
+.acc-deleting-t { font-size: var(--text-small); font-weight: 600; color: var(--color-text); }
+.acc-deleting-s { font-size: var(--text-caption); color: var(--color-text-subtle); margin-top: 1px; }
+
+/* settings skeleton */
+.acc-set-skel { background: linear-gradient(100deg, var(--color-surface-2) 28%, color-mix(in srgb, var(--color-text) 7%, var(--color-surface-2)) 50%, var(--color-surface-2) 72%); background-size: 220% 100%; animation: shimmer 1.4s linear infinite; border-radius: 6px; }
+@keyframes shimmer { from { background-position: 220% 0; } to { background-position: -120% 0; } }
+@media (prefers-reduced-motion: reduce) { .acc-set-skel { animation: none; } }
+
+/* ═══════════════════════ account ↔ profile navigation (#7) ═══════════════════════ */
+/* "Back to account dashboard" — the explicit escape hatch from any PROFILE
+   screen. Two sanctioned placements (a screen picks ONE, consistently):
+   (a) .acc-back  — a pill button, top-right of the profile topbar;
+   (b) .acc-backrow — the first row of the profile sidebar. */
+.acc-back { display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto; padding: 5px 12px 5px 6px; border: 1px solid var(--color-border); border-radius: var(--radius-full); background: var(--color-surface); color: var(--color-text-muted); cursor: pointer; text-decoration: none; white-space: nowrap; font-size: var(--text-small); font-weight: 500; transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard); }
+.acc-back:hover { background: var(--color-surface-2); color: var(--color-text); }
+.acc-back .acc-acctmark { width: 24px; height: 24px; border-radius: var(--radius-sm); font-size: 12px; }
+.acc-back svg { flex: 0 0 auto; opacity: .8; }
+.acc-back-arrow { color: var(--color-text-subtle); }
+
+.acc-backrow { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--radius-md); border: 1px solid var(--color-border); background: var(--color-surface-2); color: var(--color-text-muted); text-decoration: none; cursor: pointer; min-width: 0; font-size: var(--text-small); font-weight: 500; }
+.acc-backrow:hover { background: var(--color-surface); color: var(--color-text); border-color: color-mix(in srgb, var(--color-text) 18%, var(--color-border)); }
+.acc-backrow .acc-back-arrow { flex: 0 0 auto; color: var(--color-text-subtle); }
+.acc-backrow .acc-acctmark { width: 26px; height: 26px; border-radius: var(--radius-sm); font-size: 12px; }
+.acc-backrow-txt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.acc-backrow-t { font-size: var(--text-small); font-weight: 600; color: var(--color-text); line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.acc-backrow-s { font-size: var(--text-caption); color: var(--color-text-subtle); line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ═══════════════════════ portfolio advisor CHAT ═══════════════════════ */
+/* screen shell: pinned hero verdict (never scrolls) → thread → docked composer */
+.acc-chat { display: flex; flex-direction: column; height: 620px; min-width: 0; background: var(--color-bg); border-radius: var(--radius-lg); overflow: hidden; }
+.acc-chat--tall { height: 680px; }
+
+/* pinned portfolio-summary hero (the dashboard advisor verdict, always visible) */
+.acc-chat-pinned { flex: 0 0 auto; border-bottom: 1px solid var(--color-border); background: color-mix(in srgb, var(--color-accent) 5%, var(--color-surface)); padding: 14px 18px; }
+.acc-chat-pinned-cap { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.acc-chat-pinned-mark { width: 26px; height: 26px; border-radius: var(--radius-sm); flex: 0 0 auto; display: grid; place-items: center; background: color-mix(in srgb, var(--color-accent) 14%, var(--color-surface)); border: 1px solid color-mix(in srgb, var(--color-accent) 26%, transparent); color: var(--color-accent); }
+.acc-chat-pinned-caplab { font-size: var(--text-caption); font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--color-text-subtle); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.acc-chat-pinned-scope { flex: 0 0 auto; margin-left: auto; font-size: var(--text-caption); color: var(--color-text-subtle); white-space: nowrap; }
+.acc-chat-pinned-verdict { font-size: var(--text-body); font-weight: 600; letter-spacing: -0.004em; color: var(--color-text); line-height: 1.4; margin-top: 9px; text-wrap: pretty; }
+.acc-chat-pinned-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+
+/* scroll + thread (mirrors advisor.css) */
+.acc-chat-scroll { flex: 1 1 auto; overflow-y: auto; padding: 18px 16px; min-height: 0; }
+.acc-chat-scroll::-webkit-scrollbar { width: 8px; }
+.acc-chat-scroll::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--color-text) 14%, transparent); border-radius: 9999px; }
+.acc-chat-thread { display: flex; flex-direction: column; gap: 22px; max-width: 620px; margin: 0 auto; }
+.acc-chat-foot { flex: 0 0 auto; padding: 12px 16px 14px; border-top: 1px solid var(--color-border); background: var(--color-surface); }
+.acc-chat-foot-inner { max-width: 620px; margin: 0 auto; }
+
+/* ═══════════════════════ app additions (not in the standalone spec) ═══════════════════════ */
+/* The spec leaned on ds/components.css for the field label/hint base + a topbar
+   status pill; the app has no such layer (it uses React <Input>/<Button>), so
+   the few primitives the account SCREENS need are declared here on tokens. */
+
+/* field label + hint (the account-settings Name field) */
+.acc-set-field .field-label { font-size: var(--text-small); font-weight: 500; color: var(--color-text); margin-bottom: 7px; }
+.acc-set-field .field-hint { font-size: var(--text-caption); color: var(--color-text-subtle); margin-top: 6px; line-height: 1.45; }
+.acc-set-field .field-saved { display: inline-flex; align-items: center; gap: 5px; color: var(--color-success); font-weight: 600; }
+
+/* topbar status pill (advisor crumb — "grounded in your portfolio") */
+.acc-toppill { display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; font-size: var(--text-caption); font-weight: 600; white-space: nowrap; padding: 4px 11px 4px 9px; border-radius: var(--radius-full); color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface)); border: 1px solid color-mix(in srgb, var(--color-accent) 26%, transparent); }
+.acc-toppill svg { flex: 0 0 auto; }
+
+/* clickable (non-current) breadcrumb segments — the spec's crumb had only the
+   current one; the account SCREENS add a leading "Аккаунт" that links home. */
+.acc-crumb-seg[role="link"], a.acc-crumb-seg { cursor: pointer; }
+
+/* chat: fill the viewport height (minus the account chrome above) instead of the
+   spec's fixed 620px frame, so the pinned verdict + composer stay put and only
+   the thread scrolls. The subtraction ≈ page padding + breadcrumb topbar + gap. */
+.acc-chat--page { height: calc(100dvh - 150px); min-height: 420px; }
+@media (max-width: 880px) { .acc-chat--page { height: calc(100dvh - 120px); } }

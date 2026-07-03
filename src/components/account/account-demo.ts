@@ -2,7 +2,7 @@
 // sample data (account-data.js). No auth / no backend; drives /gallery/account
 // so every mode + state is reviewable against the spec.
 
-import type { AccountProfile, MeAccountResponse } from "@/lib/types";
+import type { AccountProfile, Me, MeAccountResponse } from "@/lib/types";
 import type { AdvisorData, T } from "./AccountDashboard";
 
 function prof(over: Partial<AccountProfile> & { id: number }): AccountProfile {
@@ -64,6 +64,17 @@ function totals(profiles: AccountProfile[]): MeAccountResponse["totals"] {
 }
 
 const TENANT = { id: 1, name: "Alex Rivera", slug: null, plan_tier: "PRO", accounts_limit: 50 };
+
+// The signed-in user (for the account settings gallery — identity card + locale).
+export const DEMO_ME: Me = {
+  user_id: 1,
+  email: "alex@pennedly.com",
+  display_name: "Alex Rivera",
+  tenant: TENANT,
+  is_tester: true,
+  locale: "ru",
+  avatar_url: null,
+};
 
 function tasks(profiles: AccountProfile[]) {
   return {
@@ -183,8 +194,68 @@ const RU: Record<string, string> = {
   "acc.adv_scope": "по всему портфелю",
   "acc.adv_open": "Открыть чат",
   "acc.adv_grounded": "Основано на:",
-  "acc.adv_ask": "Спросите совет по портфелю…",
+  "acc.adv_ask": "Спросите о портфеле…",
   "acc.adv_reco": "Рекомендации",
+  // ── settings screen ──
+  "acc.set_lead": "Аккаунт, язык интерфейса, тариф и ваши данные. Настройки отдельных профилей живут внутри каждого профиля.",
+  "acc.set_name": "Имя",
+  "acc.set_name_hint": "Так вас видят в Pennedly.",
+  "acc.set_email": "Email",
+  "acc.set_plan": "Тариф",
+  "acc.set_plan_note": "Оплата пока не подключена.",
+  "acc.set_save": "Сохранить",
+  "acc.set_saved": "Имя сохранено",
+  "acc.set_lang_cap": "Язык интерфейса",
+  "acc.set_lang_hint": "Меняет язык меток и меню Pennedly. Черновики остаются на том языке, на котором вы их пишете.",
+  "acc.set_data_cap": "Данные",
+  "acc.export_t": "Экспорт данных",
+  "acc.export_s": "Заберите все посты, черновики и статистику по портфелю одним архивом.",
+  "acc.export_btn": "Экспортировать",
+  "acc.export_preparing": "Готовим…",
+  "acc.export_prep_note": "Собираем ваши данные…",
+  "acc.export_ready": "Экспорт готов",
+  "acc.export_ready_note": "Файл скачан.",
+  "acc.export_download": "Скачать снова",
+  "acc.export_failed": "Не удалось экспортировать. Попробуйте ещё раз.",
+  "acc.danger_cap": "Опасная зона",
+  "acc.delete_t": "Удалить аккаунт",
+  "acc.delete_s": "Навсегда удаляет аккаунт, все бренды, профили и данные. Отменить нельзя.",
+  "acc.delete_btn": "Удалить аккаунт",
+  "acc.delete_confirm_t": "Удалить аккаунт безвозвратно?",
+  "acc.delete_confirm_s": "Будут удалены аккаунт, все бренды и профили, посты, черновики и статистика. Это необратимо.",
+  "acc.delete_type_lab": "Для подтверждения введите",
+  "acc.delete_type_word": "УДАЛИТЬ",
+  "acc.delete_cancel": "Отмена",
+  "acc.delete_go": "Удалить навсегда",
+  "acc.deleting": "Удаляем аккаунт…",
+  "acc.deleting_note": "Отзываем доступы и стираем данные.",
+  "acc.delete_failed": "Не удалось удалить аккаунт. Попробуйте ещё раз.",
+  // ── advisor chat ──
+  "acc.adv_pill": "На основе всего портфеля",
+  "acc.adv_pinned_cap": "Сводка портфеля",
+  "acc.adv_reading": "Читаю статистику портфеля…",
+  "acc.adv_thin_t": "Пока мало данных по портфелю",
+  "acc.adv_thin_s": "Профили ещё набирают историю. Как накопится за пару недель, дам конкретику по росту; пока помогу с базовой настройкой.",
+  "acc.adv_hero_sub": "Читаю статистику всех профилей портфеля, их голоса и недавние посты: совет под ваш аккаунт, а не общие подсказки.",
+  "acc.adv_starter_fix": "Что чинить в первую очередь?",
+  "acc.adv_starter_pace": "Где просел темп постинга?",
+  "acc.adv_starter_grow": "Какой профиль растёт быстрее?",
+  "acc.adv_composer_hint": "Pennedly читает статистику, голоса и посты всех профилей портфеля.",
+  // ── navigation (#7) ──
+  "acc.nav_back_dash": "Дашборд аккаунта",
+  "acc.crumb_settings": "Настройки",
+  "acc.crumb_advisor": "Советник",
+  // ── advisor chat vocabulary (AdvisorParts reads these) ──
+  "advisor.assistant_name": "Советник Pennedly",
+  "advisor.grounded_in": "На основе",
+  "advisor.try_asking": "Спросите, например",
+  "advisor.open_in_studio": "Открыть в Создать",
+  "advisor.show_data": "Показать данные",
+  "advisor.error_title": "Не удалось связаться с советником",
+  "advisor.error_sub": "Запрос отвалился по таймауту. Данные целы, это только соединение.",
+  "advisor.retry": "Повторить",
+  "advisor.composer_placeholder": "Спросите о портфеле…",
+  "advisor.composer_hint": "Pennedly читает статистику, голоса и посты всех профилей портфеля.",
 };
 
 export const demoT: T = (k) => RU[k] ?? k;

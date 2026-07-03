@@ -1,0 +1,31 @@
+/* account-screens-mobile.css — PHONE additions for the account-level SCREENS,
+   ported from the CD эталон (design-export/PennedlyDesign/account-screens-mobile.css).
+   Account Settings reuses the desktop .acc-card2 cards directly (they are
+   container-query responsive), so this file only adds the phone CHAT chrome: the
+   pinned portfolio verdict (sticky at the top of the scroll) and the docked
+   composer. The chat's message vocabulary is the shared AdvisorParts components
+   (Tailwind). Built on the app's semantic tokens; scoped under .acc-mob. */
+
+/* pinned portfolio-summary verdict — sticky, always visible while the thread scrolls */
+.acc-mob .ma-chat-pinned { position: sticky; top: 6px; z-index: 5; background: color-mix(in srgb, var(--color-accent) 6%, var(--color-surface)); border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 12px 13px; margin-bottom: 16px; min-width: 0; }
+.acc-mob .ma-chat-pinned-cap { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.acc-mob .ma-chat-pinned-mark { width: 24px; height: 24px; border-radius: var(--radius-sm); flex: 0 0 auto; display: grid; place-items: center; background: color-mix(in srgb, var(--color-accent) 14%, var(--color-surface)); border: 1px solid color-mix(in srgb, var(--color-accent) 26%, transparent); color: var(--color-accent); }
+.acc-mob .ma-chat-pinned-caplab { font-size: var(--text-caption); font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--color-text-subtle); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.acc-mob .ma-chat-pinned-scope { margin-left: auto; flex: 0 0 auto; font-size: var(--text-caption); color: var(--color-text-subtle); white-space: nowrap; }
+.acc-mob .ma-chat-pinned-verdict { font-size: var(--text-small); font-weight: 600; color: var(--color-text); line-height: 1.4; margin-top: 9px; text-wrap: pretty; }
+.acc-mob .ma-chat-pinned-chips { display: flex; gap: 7px; margin: 10px -13px 0; padding: 0 13px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.acc-mob .ma-chat-pinned-chips::-webkit-scrollbar { display: none; }
+.acc-mob .ma-chat-pinned-chips .acc-chip { flex: 0 0 auto; }
+
+/* thread — leaves room for the docked composer */
+.acc-mob .ma-chat-body { display: block; padding: 4px 14px 0; }
+.acc-mob .ma-chat-thread { display: flex; flex-direction: column; gap: 20px; padding-bottom: 90px; }
+.acc-mob .ma-chat-thread .adv-hero, .acc-mob .ma-chat-body .adv-hero { padding-top: 8px; }
+
+/* docked composer (fixed above the safe area on the real full-viewport page) */
+.acc-mob .ma-chat-dock { position: fixed; left: 10px; right: 10px; bottom: calc(10px + var(--safe-bottom, 0px)); z-index: 30; }
+
+/* settings: tighten the desktop cards a touch on the phone (the .acc-page sits
+   inside the shell's padded .ma, so only the gap changes here). */
+.acc-mob .acc-pagehead { margin-bottom: 0; }
+.acc-mob .acc-page { gap: 14px; }

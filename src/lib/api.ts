@@ -317,6 +317,22 @@ export async function fetchMeAccountAdvisor(
   return data ?? null;
 }
 
+// The account-scope advisor CHAT (tester-gated): the conversational sibling of
+// the dashboard hero. Sends the whole conversation and returns the advisor's
+// next reply, grounded in the WHOLE portfolio's data. Same response shape as the
+// per-account chat, so it renders with the identical chat components.
+export async function chatAccountAdvisor(
+  messages: AdvisorMessage[],
+): Promise<AdvisorResponse> {
+  return fetchApi<AdvisorResponse>(`/api/me/account/advisor/chat`, {
+    method: "POST",
+    body: JSON.stringify({
+      messages,
+      tz_offset: -new Date().getTimezoneOffset(),
+    }),
+  });
+}
+
 // Disconnect a connected Threads account: drops the stored token + marks it
 // disconnected server-side, but keeps the account's content. Reconnect via
 // OAuth restores it.
@@ -836,6 +852,17 @@ export async function setMyLocale(
   return fetchApi(`/api/me/locale`, {
     method: "PUT",
     body: JSON.stringify({ locale }),
+  });
+}
+
+// Update the signed-in user's display name (the Account Settings Name field).
+// Trimmed + length-bounded server-side; email stays immutable.
+export async function updateMyDisplayName(
+  displayName: string,
+): Promise<{ display_name: string }> {
+  return fetchApi(`/api/me`, {
+    method: "PATCH",
+    body: JSON.stringify({ display_name: displayName }),
   });
 }
 

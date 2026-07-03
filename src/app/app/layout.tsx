@@ -25,9 +25,11 @@ import {
   useHasConnectedAccounts,
 } from "@/lib/accounts";
 
-// /app/account is the ACCOUNT-level dashboard — it renders its OWN account
-// sidebar (not the profile shell), so it opts out like login/onboarding.
-const SHELL_EXEMPT = new Set(["/app/login", "/app/onboarding", "/app/account"]);
+// The /app/account/* screens (dashboard + settings + portfolio advisor) are
+// ACCOUNT-level — each renders its OWN account sidebar (not the profile shell),
+// so they opt out like login/onboarding.
+const SHELL_EXEMPT = new Set(["/app/login", "/app/onboarding"]);
+const isAccountScreen = (path: string) => path === "/app/account" || path.startsWith("/app/account/");
 
 export default function AppLayout({
   children,
@@ -36,7 +38,7 @@ export default function AppLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const exempt = SHELL_EXEMPT.has(pathname);
+  const exempt = SHELL_EXEMPT.has(pathname) || isAccountScreen(pathname);
   const hasAccounts = useHasConnectedAccounts();
   // Tester `?demo=1` review mode: render the shell standalone (mock content lives
   // in the page) without waiting on auth / a connected account — so the demo opens
