@@ -2061,7 +2061,14 @@ function L3Row({
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="inline-flex items-center gap-1.5 text-caption text-text-subtle [&_b]:font-semibold [&_b]:text-text-muted">
               <IcShieldHouse size={12} className="shrink-0 opacity-80" />
-              <span dangerouslySetInnerHTML={{ __html: t("scenarios.rc.l3.in_house").replace("{value}", inheritedPhrase) }} />
+              {/* inheritedPhrase is owner free-text — render it as an escaped JSX
+                  child, never innerHTML (H4 self-XSS). The <b> keeps the parent's
+                  [&_b] styling; the label ({value} placeholder) is split around it. */}
+              <span>
+                {t("scenarios.rc.l3.in_house").split("{value}")[0]}
+                <b>{inheritedPhrase}</b>
+                {t("scenarios.rc.l3.in_house").split("{value}")[1] ?? ""}
+              </span>
             </span>
             <button
               type="button"

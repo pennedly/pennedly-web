@@ -2412,7 +2412,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "scenarios.rc.l3.now": "Сейчас действует:",
   "scenarios.rc.l3.override": "Переопределить",
   "scenarios.rc.l3.revert": "Вернуть к наследованию",
-  "scenarios.rc.l3.in_house": "В Правилах дома: <b>{value}</b>",
+  "scenarios.rc.l3.in_house": "В Правилах дома: {value}",
   // строки
   "scenarios.rc.l3.who_title": "Кому отвечать",
   "scenarios.rc.l3.who_sub": "Только для этого сценария.",

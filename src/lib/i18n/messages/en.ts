@@ -2437,7 +2437,7 @@ export const en = {
   "scenarios.rc.l3.now": "Now in effect:",
   "scenarios.rc.l3.override": "Override",
   "scenarios.rc.l3.revert": "Back to inherited",
-  "scenarios.rc.l3.in_house": "In “House rules”: <b>{value}</b>",
+  "scenarios.rc.l3.in_house": "In “House rules”: {value}",
   // rows
   "scenarios.rc.l3.who_title": "Who to reply to",
   "scenarios.rc.l3.who_sub": "Just for this scenario.",
