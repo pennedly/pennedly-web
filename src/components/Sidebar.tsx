@@ -13,7 +13,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { clearTokens, fetchComments, fetchMe, getTokens, listAudits, listDrafts, setMyLocale } from "@/lib/api";
+import { logout, fetchComments, fetchMe, getTokens, listAudits, listDrafts, setMyLocale } from "@/lib/api";
 import { captureEvent, resetIdentity } from "@/lib/analytics";
 import { useSelectedAccountId } from "@/lib/account";
 import { setMobileNavOpen, useMobileNavOpen } from "@/lib/mobileNav";
@@ -169,7 +169,11 @@ export function Sidebar() {
   function onLogout() {
     captureEvent("ui.logout_clicked");
     resetIdentity();
-    clearTokens();
+    // Fire-and-forget: logout() clears the local tokens synchronously first,
+    // then best-effort revokes the server session (keepalive survives the
+    // redirect). Don't await it, so a slow/offline network can't stall the
+    // sign-out — matches AccountDashboard's logout.
+    void logout();
     router.push("/app/login");
   }
 

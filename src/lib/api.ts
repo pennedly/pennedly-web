@@ -90,6 +90,20 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 const TOKEN_KEY = "pennedly.tokens";
 
+// Bounded so a stalled /refresh can't hold the cross-tab Web Lock (and every
+// other tab's refresh) hostage until the OS socket timeout fires; and so a
+// hung /logout can't stall the sign-out redirect.
+const REFRESH_TIMEOUT_MS = 10_000;
+const LOGOUT_TIMEOUT_MS = 3_000;
+
+// AbortSignal.timeout is widely available; guard so an older engine simply gets
+// no timeout (undefined signal = fetch ignores it) rather than a throw.
+function timeoutSignal(ms: number): AbortSignal | undefined {
+  return typeof AbortSignal !== "undefined" && "timeout" in AbortSignal
+    ? AbortSignal.timeout(ms)
+    : undefined;
+}
+
 export function setTokens(pair: TokenPair): void {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(TOKEN_KEY, JSON.stringify(pair));
@@ -108,6 +122,31 @@ export function getTokens(): TokenPair | null {
     return JSON.parse(raw) as TokenPair;
   } catch {
     return null;
+  }
+}
+
+/**
+ * Sign out. Clears the local tokens IMMEDIATELY (so the user is signed out
+ * on this device the moment they click), then best-effort revokes the server
+ * session so a leaked refresh token can't be redeemed for up to 30 days.
+ * Never throws — a failed/blocked revoke still leaves the client signed out.
+ * `keepalive` lets the revoke survive the redirect that usually follows.
+ */
+export async function logout(): Promise<void> {
+  const refresh = getTokens()?.refresh_token;
+  clearTokens();
+  if (refresh && BASE_URL) {
+    try {
+      await fetch(`${BASE_URL}/api/auth/logout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh_token: refresh }),
+        keepalive: true,
+        signal: timeoutSignal(LOGOUT_TIMEOUT_MS),
+      });
+    } catch {
+      // Already signed out locally; a network failure here is non-fatal.
+    }
   }
 }
 
@@ -130,33 +169,77 @@ export class ApiError extends Error {
   }
 }
 
-// Shared in-flight refresh promise — coalesces concurrent 401s.
+// Shared in-flight refresh promise — coalesces concurrent 401s in THIS tab.
 let refreshPromise: Promise<TokenPair | null> | null = null;
+
+// The actual rotate call, run INSIDE a cross-tab lock (see refreshTokensOnce).
+// `triggeringToken` is the refresh token that was current when our 401 fired.
+// If a sibling tab already rotated it while we waited for the lock, we adopt
+// the fresh pair instead of spending — and losing — another rotation.
+async function rotateRefresh(triggeringToken: string): Promise<TokenPair | null> {
+  const latest = getTokens();
+  // A sibling tab already rotated → adopt its fresh pair, no server round-trip.
+  if (latest?.refresh_token && latest.refresh_token !== triggeringToken) {
+    return latest;
+  }
+  if (!latest?.refresh_token) return null;
+  try {
+    const res = await fetch(`${BASE_URL}/api/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh_token: latest.refresh_token }),
+      signal: timeoutSignal(REFRESH_TIMEOUT_MS),
+    });
+    if (!res.ok) {
+      // Before wiping the whole login, re-read once: a sibling may have rotated
+      // between our read and this response — adopt the live pair if so.
+      const after = getTokens();
+      if (after?.refresh_token && after.refresh_token !== latest.refresh_token) {
+        return after;
+      }
+      // Sign out ONLY on a genuine auth rejection. A 5xx / 429 (proxy blip,
+      // cold start, rate-limit, brief restart) leaves a perfectly valid refresh
+      // token — treat it as transient: keep the session, let the caller surface
+      // a retryable error instead of a logout.
+      if (res.status === 401 || res.status === 403) {
+        clearTokens();
+      }
+      return null;
+    }
+    const pair = (await res.json()) as TokenPair;
+    setTokens(pair);
+    return pair;
+  } catch {
+    // Network reject / timeout abort — keep tokens; a blip is survivable.
+    return null;
+  }
+}
 
 async function refreshTokensOnce(): Promise<TokenPair | null> {
   if (refreshPromise) return refreshPromise;
-  const current = getTokens();
-  if (!current?.refresh_token) return null;
+  const triggering = getTokens()?.refresh_token;
+  if (!triggering) return null;
 
   refreshPromise = (async () => {
     try {
-      const res = await fetch(`${BASE_URL}/api/auth/refresh`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refresh_token: current.refresh_token }),
-      });
-      if (!res.ok) {
-        // Refresh token expired / revoked → caller will redirect.
-        clearTokens();
-        return null;
+      // Serialize refresh ACROSS TABS. Without this, two tabs whose access
+      // token expired both POST /refresh with the same token; rotation lets one
+      // win and revokes the other's, whose failure used to clearTokens() and
+      // take the whole shared-origin login down (the top cause of "logged out
+      // for no reason"). The Web Lock makes the second tab read and reuse the
+      // freshly-rotated token instead of racing. Prod is HTTPS (a secure
+      // context), so Web Locks is available; the no-locks fallback below is
+      // best-effort only (a narrow cross-tab wipe window remains) for legacy
+      // engines.
+      const locks = typeof navigator !== "undefined" ? navigator.locks : undefined;
+      if (locks?.request) {
+        return await locks.request("pennedly.token-refresh", () =>
+          rotateRefresh(triggering),
+        );
       }
-      const pair = (await res.json()) as TokenPair;
-      setTokens(pair);
-      return pair;
-    } catch {
-      return null;
+      return await rotateRefresh(triggering);
     } finally {
-      // Release the lock on the next microtask so a follow-up call gets
+      // Release the per-tab lock on the next microtask so a follow-up call gets
       // a fresh promise instead of the resolved one.
       queueMicrotask(() => {
         refreshPromise = null;
@@ -197,7 +280,18 @@ async function fetchApi<T>(path: string, init?: RequestInit): Promise<T> {
     const refreshed = await refreshTokensOnce();
     if (refreshed) {
       res = await rawFetch(path, init, refreshed.access_token);
+    } else if (getTokens() !== null) {
+      // Refresh failed but the session is still valid — rotateRefresh clears the
+      // tokens ONLY on a genuine 401/403, so a surviving token means this was a
+      // transient 5xx / rate-limit / network blip. Do NOT let the original 401
+      // reach the page handlers (they sign the user out on any 401). Surface a
+      // retryable error instead, so a proxy hiccup can't log the user out.
+      throw new ApiError(503, {
+        detail: "Authentication temporarily unavailable, please retry.",
+      });
     }
+    // else: refresh cleared the tokens (genuine expiry/revoke) → fall through so
+    // the original 401 propagates and the page handlers sign out correctly.
   }
 
   if (!res.ok) {

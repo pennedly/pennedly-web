@@ -16,7 +16,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { setSelectedAccountId, useSelectedAccountId } from "@/lib/account";
-import { clearTokens, startThreadsConnect } from "@/lib/api";
+import { logout, startThreadsConnect } from "@/lib/api";
 import {
   BrandMark as BrandLogo,
   IcAlert,
@@ -132,7 +132,7 @@ export function useAccountNav(): Nav {
         .catch(() => router.push("/app/onboarding"));
     },
     logout: () => {
-      clearTokens();
+      void logout();
       router.push("/app/login");
     },
     retry: () => window.location.reload(),
