@@ -713,7 +713,16 @@ export type OverviewResponse = {
 // GROUPED BY BRAND + an account-wide tasks block + the adaptive-IA scope hint.
 // A profile carries the same headline numbers as an OverviewAccount, plus its
 // brand link.
-export type AccountProfile = OverviewAccount & { brand_id: number | null };
+export type AccountProfile = Omit<OverviewAccount, "sync_status"> & {
+  brand_id: number | null;
+  // A profile whose OAuth was revoked/expired — its row + all config (drafts /
+  // voice / scenarios / history) are kept, it is held OUT of every metric/total,
+  // and the dashboard renders it with a "Disconnected" pill + Reconnect.
+  // `sync_status` carries the "disconnected" sentinel beside the live states.
+  disconnected: boolean;
+  disconnected_at: string | null;
+  sync_status: OverviewSyncStatus | "disconnected";
+};
 
 export type AccountBrand = {
   id: number;
@@ -740,7 +749,8 @@ export type AccountTasks = {
 // shows brand cards that expand into profiles (2+ brands).
 export type AccountScope = {
   brands_count: number;
-  profiles_count: number;
+  profiles_count: number; // LIVE (connected) profiles only
+  disconnected_count: number;
   show_brand_level: boolean;
 };
 

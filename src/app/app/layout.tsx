@@ -46,6 +46,11 @@ export default function AppLayout({
   const [demo] = useState(
     () => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("demo") === "1",
   );
+  // Tester gate for the durable account dashboard: a tester with zero connected
+  // accounts lands on /app/account (the in-dashboard empty state) instead of the
+  // full-screen wizard; non-testers keep the current onboarding flow until it is
+  // promoted. Null until /me resolves, so we never redirect on a stale guess.
+  const [isTester, setIsTester] = useState<boolean | null>(null);
 
   // Check connected-account presence once we enter the shell area. The store
   // persists across SPA navigations, so this only fetches on first entry;
@@ -65,16 +70,23 @@ export default function AppLayout({
   useEffect(() => {
     if (!getTokens()) return;
     fetchMe()
-      .then((m) => adoptServerLocale(m.locale))
-      .catch(() => {});
+      .then((m) => {
+        adoptServerLocale(m.locale);
+        setIsTester(m.is_tester === true);
+      })
+      // A failed /me must still resolve the flag, or a zero-account user hangs on
+      // the loader forever (the redirect below waits on isTester !== null). Fall
+      // back to the safe prior default: non-tester → the /app/onboarding wizard.
+      .catch(() => setIsTester(false));
   }, []);
 
-  // Zero connected accounts → the dedicated full-screen connect flow.
+  // Zero connected accounts → route by tester status (wait for the flag so we
+  // don't redirect on a stale guess): testers to the durable account dashboard's
+  // in-dashboard empty state, others to the full-screen onboarding wizard.
   useEffect(() => {
-    if (!demo && !exempt && hasAccounts === false) {
-      router.replace("/app/onboarding");
-    }
-  }, [demo, exempt, hasAccounts, router]);
+    if (demo || exempt || hasAccounts !== false || isTester === null) return;
+    router.replace(isTester ? "/app/account" : "/app/onboarding");
+  }, [demo, exempt, hasAccounts, isTester, router]);
 
   // Pre-app focused flows (login, onboarding) render bare — no sidebar.
   if (exempt) {

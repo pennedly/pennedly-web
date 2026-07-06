@@ -55,7 +55,11 @@ export default function AccountAdvisorPage() {
         }
         const acc = await fetchMeAccount();
         if (!alive) return;
-        if (acc.scope.profiles_count === 0) {
+        // Durable dashboard: only a truly-empty tenant (never connected) goes to
+        // the wizard. An all-disconnected tenant (0 live, ≥1 disconnected) stays
+        // in the account chrome — the AllDisconnected sidebar links here, so
+        // bouncing mid-reconnect would read as a logout. Mirrors account/page.tsx.
+        if (acc.scope.profiles_count === 0 && acc.scope.disconnected_count === 0) {
           router.replace("/app/onboarding");
           return;
         }

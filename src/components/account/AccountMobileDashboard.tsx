@@ -56,7 +56,7 @@ import type {
   OverviewTotals,
 } from "@/lib/types";
 
-import { DynIcon, useAccountNav } from "./AccountDashboard";
+import { DynIcon, IcCheckSm, relSince, useAccountNav } from "./AccountDashboard";
 import type { AccountPage, Nav, Plural, T } from "./AccountDashboard";
 
 // ── shared helpers (mirror AccountDashboard.tsx) ─────────────────────────────
@@ -378,6 +378,47 @@ function ProfileHead({ p }: { p: AccountProfile }) {
 
 function ProfileCard({ p, t, nav }: { p: AccountProfile; t: T; nav: Nav }) {
   const open = () => nav.openProfile(p.id, "studio");
+  if (p.disconnected) {
+    const mono = (p.name || p.handle || "?").slice(0, 2).toUpperCase();
+    return (
+      <div className="ma-card ma-card--disc">
+        <div className="ma-card-head">
+          <span className="ma-av ma-av--disc">
+            {p.avatar ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={p.avatar} alt="" />
+            ) : (
+              <span className="mono">{mono}</span>
+            )}
+          </span>
+          <div className="ma-card-id">
+            <div className="ma-card-name">{p.name || p.handle}</div>
+            <div className="ma-card-sub">
+              {p.handle} · {NET_LABEL[p.network] || p.network}
+            </div>
+          </div>
+        </div>
+        <div className="ma-disc-status">
+          <span className="status-pill status-pill--warning">
+            <i className="pill-dot" />
+            {t("acc.disc_pill")}
+          </span>
+          <span className="ma-disc-safe">
+            <IcCheckSm s={11} />
+            {t("acc.disc_safe")}
+          </span>
+        </div>
+        <div className="ma-cardfoot ma-cardfoot--disc">
+          <span className="ma-disc-since">
+            {t("acc.disc_prefix")} {relSince(p.disconnected_at, nav.locale)}
+          </span>
+          <button className="btn btn--primary btn--sm ma-reconnect" type="button" onClick={() => nav.addProfile()}>
+            {t("acc.reconnect")}
+          </button>
+        </div>
+      </div>
+    );
+  }
   if (p.sync_status === "importing") {
     const im = p.sync_summary || {};
     const posts = im.posts ?? 0;
@@ -467,6 +508,22 @@ function BrandStack({ b }: { b: AccountBrand }) {
 }
 
 function BrandProfileRow({ p, t, nav }: { p: AccountProfile; t: T; nav: Nav }) {
+  // A disconnected profile inside an expanded brand is non-navigable — offer
+  // Reconnect, not a jump into a dead studio (mirrors the desktop row).
+  if (p.disconnected) {
+    return (
+      <div className="ma-bp ma-bp--disc">
+        <Avatar p={p} cls="ma-bp-av" />
+        <span className="ma-bp-id">
+          <span className="ma-bp-hd">{p.handle || p.name}</span>
+          <span className="ma-bp-sub">{t("acc.disc_pill")}</span>
+        </span>
+        <button className="ma-bp-reconnect" type="button" onClick={(e) => { e.stopPropagation(); nav.addProfile(); }}>
+          {t("acc.reconnect")}
+        </button>
+      </div>
+    );
+  }
   let right: React.ReactNode;
   if (p.sync_status === "importing") {
     right = (
@@ -509,6 +566,7 @@ function BrandCard({ b, t, plural, nav }: { b: AccountBrand; t: T; plural: Plura
   const pc = b.profiles.length;
   const errors = b.profiles.filter((p) => p.sync_status === "error").length;
   const importing = b.profiles.filter((p) => p.sync_status === "importing").length;
+  const disc = b.profiles.filter((p) => p.disconnected).length;
   const agg = {
     followers: b.stats.followers,
     followers_delta: b.stats.followers_delta,
@@ -543,8 +601,14 @@ function BrandCard({ b, t, plural, nav }: { b: AccountBrand; t: T; plural: Plura
       <Metrics4 t={t} d={agg} />
       <div className="ma-cardfoot">
         <span className="ma-brand-statline">
-          <span className={`ma-brand-statdot${errors ? " ma-brand-statdot--warn" : importing ? " ma-brand-statdot--imp" : ""}`} />
-          {errors ? `${errors} ${t("acc.error_n")}` : importing ? `${importing} ${t("acc.importing_n")}` : t("acc.synced_all")}
+          <span className={`ma-brand-statdot${errors || disc ? " ma-brand-statdot--warn" : importing ? " ma-brand-statdot--imp" : ""}`} />
+          {errors
+            ? `${errors} ${t("acc.error_n")}`
+            : disc
+              ? `${disc} ${t("acc.disconnected_n")}`
+              : importing
+                ? `${importing} ${t("acc.importing_n")}`
+                : t("acc.synced_all")}
         </span>
         {pc > 0 ? (
           <button className="ma-brand-expand" type="button" aria-expanded={expanded} onClick={(e) => { e.stopPropagation(); toggle(); }}>
@@ -585,7 +649,9 @@ function AddBrand({ t, nav }: { t: T; nav: Nav }) {
 // ── cards section (adaptive on scope.show_brand_level) ───────────────────────
 function CardsSection({ data, t, plural, nav }: { data: MeAccountResponse; t: T; plural: Plural; nav: Nav }) {
   const multi = data.scope.show_brand_level;
-  const count = multi ? data.brands.length : data.scope.profiles_count;
+  // Count visible cards (live + disconnected), not profiles_count (LIVE-only),
+  // so a mixed single-brand grid never reads "3 profiles" over 4 cards.
+  const count = multi ? data.brands.length : data.brands.flatMap((b) => b.profiles).length;
   return (
     <>
       <div className="ma-sec">
@@ -606,7 +672,10 @@ function CardsSection({ data, t, plural, nav }: { data: MeAccountResponse; t: T;
 // ── flat profile switcher: bottom-docked button + sheet ──────────────────────
 function SwitcherButton({ data, t, plural, onOpen }: { data: MeAccountResponse; t: T; plural: Plural; onOpen: () => void }) {
   const allProfiles = data.brands.flatMap((b) => b.profiles);
-  const stack = allProfiles.slice(0, 3);
+  // The count + avatar stack reflect LIVE profiles only — a disconnected profile
+  // is a reconnect target, not an active profile (mirrors the desktop switcher).
+  const live = allProfiles.filter((p) => !p.disconnected);
+  const stack = live.slice(0, 3);
   return (
     <button className="ma-swbtn" type="button" onClick={onOpen}>
       <span className="ma-swbtn-stack">
@@ -617,7 +686,7 @@ function SwitcherButton({ data, t, plural, onOpen }: { data: MeAccountResponse; 
       <span className="ma-swbtn-who">
         <span className="ma-swbtn-t">{t("acc.sw_all")}</span>
         <span className="ma-swbtn-s">
-          {allProfiles.length} {plural("profiles", allProfiles.length)}
+          {live.length} {plural("profiles", live.length)}
         </span>
       </span>
       <span className="ma-swbtn-chev">
@@ -627,7 +696,20 @@ function SwitcherButton({ data, t, plural, onOpen }: { data: MeAccountResponse; 
   );
 }
 
-function SwitcherRow({ p, active, nav, onDone }: { p: AccountProfile; active: boolean; nav: Nav; onDone: () => void }) {
+function SwitcherRow({ p, active, t, nav, onDone }: { p: AccountProfile; active: boolean; t: T; nav: Nav; onDone: () => void }) {
+  // Disconnected → non-navigable, reconnects instead of opening a dead studio.
+  if (p.disconnected) {
+    return (
+      <button className="ma-sw-row ma-sw-row--disc" type="button" onClick={() => { onDone(); nav.addProfile(); }}>
+        <Avatar p={p} cls="ma-sw-av" />
+        <span className="ma-sw-who">
+          <span className="ma-sw-nm">{p.handle || p.name}</span>
+          <span className="ma-sw-hd">{t("acc.disc_pill")}</span>
+        </span>
+        <span className="ma-sw-reconnect">{t("acc.reconnect")}</span>
+      </button>
+    );
+  }
   const dotCls =
     p.sync_status === "error" ? " ma-sw-stat--error" : p.sync_status === "importing" ? " ma-sw-stat--importing" : "";
   return (
@@ -671,7 +753,7 @@ function SwitcherSheet({ data, t, nav, onClose }: { data: MeAccountResponse; t: 
                   <span className="t">{b.name}</span>
                 </div>
                 {b.profiles.map((p) => (
-                  <SwitcherRow key={p.id} p={p} active={p.id === selected} nav={nav} onDone={onClose} />
+                  <SwitcherRow key={p.id} p={p} active={p.id === selected} t={t} nav={nav} onDone={onClose} />
                 ))}
               </div>
             ))
@@ -679,7 +761,7 @@ function SwitcherSheet({ data, t, nav, onClose }: { data: MeAccountResponse; t: 
             <>
               <div className="ma-sw-cap">{t("acc.sw_jump")}</div>
               {data.brands.flatMap((b) => b.profiles).map((p) => (
-                <SwitcherRow key={p.id} p={p} active={p.id === selected} nav={nav} onDone={onClose} />
+                <SwitcherRow key={p.id} p={p} active={p.id === selected} t={t} nav={nav} onDone={onClose} />
               ))}
             </>
           )}
@@ -1002,6 +1084,81 @@ export function AccountMobileDashboard({
         <TasksStrip tasks={data.tasks} t={t} plural={plural} nav={nav} />
         {adv ? <Advisor adv={adv} t={t} onOpen={onOpenAdvisor} /> : <AdvisorInvite t={t} onOpen={onOpenAdvisor} />}
         <CardsSection data={data} t={t} plural={plural} nav={nav} />
+        <div style={{ height: 78 }} />
+      </div>
+
+      <SwitcherButton data={data} t={t} plural={plural} onOpen={() => setOverlay("switcher")} />
+
+      {overlay === "switcher" ? <SwitcherSheet data={data} t={t} nav={nav} onClose={close} /> : null}
+      {overlay === "drawer" ? <NavDrawer data={data} t={t} nav={nav} onClose={close} onOpenLogin={() => setOverlay("login")} /> : null}
+      {overlay === "login" ? <LoginSheet data={data} t={t} nav={nav} onClose={close} /> : null}
+    </div>
+  );
+}
+
+// ── all-disconnected (had profiles, all now disconnected) — MOBILE ────────────
+// The phone sibling of AccountEmpty's <AllDisconnected/>: the reassurance
+// treatment (identity head + "workspace is safe" banner + disconnected cards +
+// connect-another), NOT a zeroed dashboard. Routing full AccountMobileDashboard
+// here read as "everything's gone" (Header "0 profiles" + zero totals + tasks +
+// advisor invite). Keeps the mobile chrome (top bar + drawer + the bottom
+// switcher, whose sheet lists the reconnect rows + connect).
+export function AccountMobileAllDisconnected({
+  data,
+  t,
+  plural,
+  dark,
+}: {
+  data: MeAccountResponse;
+  t: T;
+  plural: Plural;
+  dark?: boolean;
+}) {
+  const nav = useAccountNav();
+  const [overlay, setOverlay] = useState<null | "switcher" | "drawer" | "login">(null);
+  const close = () => setOverlay(null);
+  const disc = data.brands.flatMap((b) => b.profiles).filter((p) => p.disconnected);
+  return (
+    <div className="acc-mob">
+      <Topbar data={data} t={t} plural={plural} dark={dark} showPill={false} onMenu={() => setOverlay("drawer")} />
+      <div className="ma">
+        {/* identity-only head — shows the disconnected count, never a fake "0" */}
+        <div className="ma-head">
+          <AcctMark mono={initials(data.tenant.name, null)} />
+          <div className="ma-head-txt">
+            <div className="ma-head-name">{data.tenant.name}</div>
+            <div className="ma-head-meta">
+              <span className="ma-head-scale">
+                {disc.length} {plural("profiles", disc.length)}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div className="ma-reassure">
+          <span className="ma-reassure-mark">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M12 3 5 6v5.5c0 4.3 3 7.4 7 8.8 4-1.4 7-4.5 7-8.8V6l-7-3Z" />
+            </svg>
+          </span>
+          <div className="ma-reassure-body">
+            <div className="ma-reassure-t">{t("acc.reassure_title")}</div>
+            <div className="ma-reassure-s">{t("acc.reassure_sub")}</div>
+          </div>
+        </div>
+        <div className="ma-sec">
+          <span className="ma-sec-t">{t("acc.disc_section")}</span>
+          <span className="ma-sec-n">{disc.length}</span>
+          <span className="ma-sec-note">{t("acc.disc_section_note")}</span>
+        </div>
+        <div className="ma-grid">
+          {disc.map((p) => (
+            <ProfileCard key={p.id} p={p} t={t} nav={nav} />
+          ))}
+        </div>
+        <button className="btn btn--secondary ma-connect-another" type="button" onClick={() => nav.addProfile()}>
+          <IcPlus size={15} />
+          {t("acc.connect_another")}
+        </button>
         <div style={{ height: 78 }} />
       </div>
 

@@ -1,0 +1,210 @@
+/* account-empty.css — DELTA styles for the durable-dashboard states
+   (Account-Dashboard-Empty-SPEC). Layers on ds/tokens.css + ds/components.css +
+   account.css. Additive: only new selectors, so the existing Account-Dashboard
+   specs are unaffected. Every colour is a semantic token → light/dark follow the
+   ambient .dark class. RULE 1 (single-line elements never wrap → ellipsis) and
+   RULE 2 (containers sized for German) hold here too. */
+
+/* ═══════════ dimmed avatar for a disconnected profile ═══════════ */
+/* identity stays crisp; the photo is muted to read as inactive */
+.acc-av--disc img { filter: grayscale(0.55) opacity(0.6); }
+.acc-av--disc .mono { opacity: 0.7; }
+.acc-av--disc { border-style: dashed; }
+
+/* ═══════════ 1 — never-connected: warm single-purpose empty state ═══════════ */
+.acc--empty { align-items: center; }
+.acc-empty {
+  width: 100%; max-width: 540px; margin: 6px auto; text-align: center;
+  display: flex; flex-direction: column; align-items: center;
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl); box-shadow: var(--shadow-sm);
+  padding: 44px 40px 34px;
+}
+.acc-empty-mark {
+  width: 64px; height: 64px; border-radius: var(--radius-lg); flex: 0 0 auto;
+  display: grid; place-items: center; margin-bottom: 20px;
+  background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--color-accent) 24%, transparent);
+  color: var(--color-accent);
+}
+.acc-empty-eyebrow {
+  font-family: var(--font-mono); font-size: var(--text-caption); font-weight: 500;
+  letter-spacing: .04em; text-transform: uppercase; color: var(--color-accent);
+  margin-bottom: 10px;
+}
+.acc-empty-t {
+  font-size: var(--text-h2); font-weight: 600; letter-spacing: -0.012em;
+  color: var(--color-text); line-height: 1.2; margin: 0; text-wrap: balance;
+}
+.acc-empty-s {
+  font-size: var(--text-body); color: var(--color-text-muted); line-height: 1.6;
+  margin: 12px 0 0; max-width: 46ch; text-wrap: pretty;
+}
+.acc-empty-cta { margin-top: 24px; }
+
+/* "what happens next" reassurance — reuses the onboarding connect trust rows */
+.acc-next {
+  margin-top: 30px; width: 100%; text-align: left;
+  border-top: 1px solid var(--color-border); padding-top: 22px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.acc-next-cap {
+  font-size: var(--text-caption); font-weight: 600; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--color-text-subtle); margin-bottom: 2px;
+}
+.acc-next-row { display: flex; align-items: flex-start; gap: 11px; min-width: 0; }
+.acc-next-ic {
+  width: 28px; height: 28px; border-radius: var(--radius-sm); flex: 0 0 auto;
+  display: grid; place-items: center; margin-top: 1px;
+  background: var(--color-surface-2); border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+.acc-next-t { font-size: var(--text-small); color: var(--color-text-muted); line-height: 1.5; min-width: 0; text-wrap: pretty; }
+
+/* ═══════════ 2 — all-disconnected ═══════════ */
+/* identity-only header — no totals tiles, so it never fakes metrics */
+.acc-head--idonly { gap: 13px; }
+
+/* the anti-"I lost my workspace" reassurance banner (calm accent, not danger) */
+.acc-reassure {
+  display: flex; align-items: flex-start; gap: 13px; min-width: 0;
+  padding: 15px 17px; border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--color-accent) 7%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--color-accent) 26%, var(--color-border));
+}
+.acc-reassure-mark {
+  width: 38px; height: 38px; border-radius: var(--radius-md); flex: 0 0 auto;
+  display: grid; place-items: center; margin-top: 1px;
+  background: color-mix(in srgb, var(--color-accent) 14%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--color-accent) 26%, transparent);
+  color: var(--color-accent);
+}
+.acc-reassure-body { min-width: 0; flex: 1 1 auto; }
+.acc-reassure-t { font-size: var(--text-small); font-weight: 600; color: var(--color-text); }
+.acc-reassure-s { font-size: var(--text-small); color: var(--color-text-muted); line-height: 1.55; margin-top: 3px; text-wrap: pretty; }
+
+/* status pill (the "Disconnected" badge) — ported 1:1 from the CD эталон
+   ds/components.css, which the live app does NOT import; the disconnected cards
+   are the only consumers, so the rule lives here. Unscoped so it resolves on
+   desktop AND mobile (nothing else defines .status-pill). */
+.status-pill {
+  display: inline-flex; align-items: center; gap: 7px; white-space: nowrap;
+  font-size: var(--text-small); color: var(--color-text-muted);
+  padding: 5px 11px 5px 9px; border: 1px solid var(--color-border);
+  border-radius: var(--radius-full); background: var(--color-surface);
+}
+.pill-dot { width: 6px; height: 6px; border-radius: var(--radius-full); background: currentColor; }
+.status-pill .pill-dot { width: 7px; height: 7px; }
+.status-pill--warning { color: var(--color-warning); border-color: color-mix(in srgb, var(--color-warning) 30%, var(--color-border)); }
+.status-pill--warning .pill-dot { background: var(--color-warning); }
+
+/* disconnected profile card — warning-toned, recoverable (distinct from the
+   danger-toned sync-error card). No metrics: a disconnected profile has no data. */
+.acc-card--disc { border-color: color-mix(in srgb, var(--color-warning) 30%, var(--color-border)); }
+.acc-card--disc:hover { border-color: color-mix(in srgb, var(--color-warning) 44%, var(--color-border)); box-shadow: var(--shadow-md); }
+.acc-disc-status { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 15px; min-width: 0; }
+.acc-disc-safe { display: inline-flex; align-items: center; gap: 5px; font-size: var(--text-caption); color: var(--color-text-subtle); white-space: nowrap; }
+.acc-disc-safe svg { width: 12px; height: 12px; color: var(--color-success); flex: 0 0 auto; }
+.acc-cardfoot--disc { justify-content: space-between; }
+.acc-disc-since { font-size: var(--text-caption); color: var(--color-text-subtle); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.acc-reconnect { flex: 0 0 auto; white-space: nowrap; }
+
+/* switcher / brand-profile row for a disconnected profile — non-navigable, it
+   offers Reconnect (not a jump into a dead studio). Warning-toned sub, accent
+   Reconnect affordance; a dashed avatar echoes the disconnected-card treatment. */
+.acc-swrow--disc .acc-swrow-hd { color: var(--color-warning); }
+.acc-swrow--disc .acc-sw-av { border-style: dashed; }
+.acc-swrow-reconnect { flex: 0 0 auto; white-space: nowrap; font-size: var(--text-caption); font-weight: 600; color: var(--color-accent); }
+.acc-bp--disc { border-style: dashed; border-color: color-mix(in srgb, var(--color-warning) 30%, var(--color-border)); }
+.acc-bp--disc .acc-bp-sub { color: var(--color-warning); }
+.acc-bp--disc .acc-bp-av { border-style: dashed; }
+.acc-bp-reconnect { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; font-size: var(--text-caption); font-weight: 600; color: var(--color-accent); padding: 5px 9px; border-radius: var(--radius-full); border: 1px solid color-mix(in srgb, var(--color-accent) 28%, transparent); background: color-mix(in srgb, var(--color-accent) 8%, var(--color-surface)); cursor: pointer; }
+.acc-bp-reconnect svg { flex: 0 0 auto; }
+
+/* connect-another row (secondary CTA under the disconnected cards) */
+.acc-connect-row { display: flex; margin-top: 2px; }
+
+/* ═══════════ topbar chrome variants (chrome persists in every state) ═══════════ */
+/* never-connected → a Connect pill sits where the flat switcher would be */
+.acc-connect {
+  display: inline-flex; align-items: center; gap: 7px; flex: 0 0 auto;
+  height: 36px; padding: 0 14px; border-radius: var(--radius-full); cursor: pointer;
+  font-size: var(--text-small); font-weight: 600; white-space: nowrap;
+  color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--color-accent) 30%, var(--color-border));
+}
+.acc-connect:hover { background: color-mix(in srgb, var(--color-accent) 16%, var(--color-surface)); }
+.acc-connect svg { flex: 0 0 auto; }
+
+/* all-disconnected → the flat switcher persists but reads as disconnected */
+.acc-sw--disc .acc-sw-t { color: var(--color-text-muted); }
+.acc-sw-warn { width: 8px; height: 8px; border-radius: var(--radius-full); flex: 0 0 auto; background: var(--color-warning); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-warning) 18%, transparent); }
+
+/* ═══════════ error — shared inline banner (mirrors shell.css §3.8) ═══════════ */
+.error-banner {
+  display: flex; align-items: center; gap: 14px; padding: 16px 18px;
+  background: color-mix(in srgb, var(--color-danger) 8%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--color-danger) 30%, var(--color-border));
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); min-width: 0;
+}
+.error-banner .eb-mark {
+  width: 34px; height: 34px; flex: 0 0 auto; display: grid; place-items: center;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--color-danger) 16%, var(--color-surface));
+  color: var(--color-danger);
+}
+.error-banner .eb-body { flex: 1 1 auto; min-width: 0; }
+.error-banner .eb-title { font-size: var(--text-small); font-weight: 600; color: var(--color-text); }
+.error-banner .eb-sub { font-size: var(--text-caption); color: var(--color-text-muted); margin-top: 2px; line-height: 1.5; text-wrap: pretty; }
+.error-banner .btn { flex: 0 0 auto; }
+
+/* ═══════════ narrow container (Rule 1 proof) ═══════════ */
+@container acc (max-width: 560px) {
+  .acc-empty { padding: 34px 22px 26px; }
+  .acc-cardfoot--disc { flex-direction: column; align-items: stretch; gap: 10px; }
+  .acc-cardfoot--disc .acc-reconnect { width: 100%; justify-content: center; }
+}
+
+/* ═══════════ A — shared network picker + full-screen first connect ═══════════ */
+/* Each tile carries the network's REAL brand mark (NetMark → ThreadsLogo /
+   LinkedInLogo SVG), tinted per network via a semantic-token `tone`
+   (Threads = ink · LinkedIn = accent). A third network drops in as one more row
+   with zero layout surprise. */
+.acc-net-tile { width: 44px; height: 44px; border-radius: var(--radius-md); flex: 0 0 auto; display: grid; place-items: center; font-weight: 700; font-size: 17px; letter-spacing: -0.02em; }
+.acc-net-tile--ink { background: var(--color-primary); color: var(--color-primary-foreground); }
+.acc-net-tile--accent { background: color-mix(in srgb, var(--color-accent) 16%, var(--color-surface)); color: var(--color-accent); border: 1px solid color-mix(in srgb, var(--color-accent) 30%, transparent); }
+
+.acc-netpick { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+.acc-netpick-cap { font-size: var(--text-caption); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--color-text-subtle); margin-bottom: 2px; }
+.acc-netrow { display: flex; align-items: center; gap: 13px; width: 100%; text-align: left; padding: 13px 15px; border-radius: var(--radius-lg); border: 1px solid var(--color-border); background: var(--color-surface); min-width: 0; }
+.acc-netrow--live { cursor: pointer; transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard); }
+.acc-netrow--live:hover { border-color: color-mix(in srgb, var(--color-text) 24%, var(--color-border)); box-shadow: var(--shadow-sm); }
+.acc-netrow--primary { border-color: color-mix(in srgb, var(--color-accent) 34%, var(--color-border)); background: color-mix(in srgb, var(--color-accent) 4%, var(--color-surface)); }
+.acc-netrow--soon { opacity: .58; cursor: default; pointer-events: none; }
+.acc-netrow-body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.acc-netrow-nm { font-size: var(--text-body); font-weight: 600; color: var(--color-text); line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.acc-netrow-sub { font-size: var(--text-caption); color: var(--color-text-subtle); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+.acc-netrow-go { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; font-size: var(--text-small); font-weight: 600; color: var(--color-accent); }
+.acc-netrow-go svg { flex: 0 0 auto; }
+.acc-netrow-badge { flex: 0 0 auto; white-space: nowrap; font-size: var(--text-caption); font-weight: 600; letter-spacing: .02em; color: var(--color-text-subtle); background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius-full); padding: 3px 10px; }
+
+/* popover / modal picker (Connect another · Reconnect) */
+.acc-pickcard { width: 380px; max-width: 100%; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); padding: 18px; }
+.acc-pickcard-head { margin-bottom: 14px; }
+.acc-pickcard-t { font-size: var(--text-h3); font-weight: 600; letter-spacing: -0.006em; color: var(--color-text); }
+.acc-pickcard-s { font-size: var(--text-small); color: var(--color-text-muted); line-height: 1.5; margin-top: 4px; text-wrap: pretty; }
+
+/* full-screen first connect (brand-new user, 0 profiles ever) */
+.acc-first { min-height: 560px; display: flex; flex-direction: column; }
+.acc-first-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 8px; }
+.acc-first-brand { display: inline-flex; align-items: center; gap: 9px; font-weight: 600; letter-spacing: -0.01em; color: var(--color-text); }
+.acc-first-logo { width: 30px; height: 30px; border-radius: var(--radius-sm); display: grid; place-items: center; background: var(--color-primary); color: var(--color-primary-foreground); flex: 0 0 auto; }
+.acc-first-logout { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-small); font-weight: 500; color: var(--color-text-muted); background: transparent; border: none; cursor: pointer; padding: 6px 8px; border-radius: var(--radius-md); }
+.acc-first-logout:hover { background: var(--color-surface-2); color: var(--color-text); }
+.acc-first-inner { flex: 1 1 auto; width: 100%; max-width: 460px; margin: 0 auto; display: flex; flex-direction: column; justify-content: center; padding: 30px 0; text-align: center; }
+.acc-first-eyebrow { font-family: var(--font-mono); font-size: var(--text-caption); font-weight: 500; letter-spacing: .04em; text-transform: uppercase; color: var(--color-accent); margin-bottom: 12px; }
+.acc-first-t { font-size: var(--text-h1); font-weight: 600; letter-spacing: -0.02em; color: var(--color-text); line-height: 1.12; margin: 0; text-wrap: balance; }
+.acc-first-s { font-size: var(--text-body); color: var(--color-text-muted); line-height: 1.6; margin: 12px 0 26px; text-wrap: pretty; }
+.acc-first-inner .acc-netpick { text-align: left; }
+.acc-first-next { margin-top: 26px; text-align: left; border-top: none; padding-top: 0; }

@@ -2,6 +2,7 @@
 // sample data (account-data.js). No auth / no backend; drives /gallery/account
 // so every mode + state is reviewable against the spec.
 
+import { ru } from "@/lib/i18n/messages/ru";
 import type { AccountProfile, Me, MeAccountResponse } from "@/lib/types";
 import type { AdvisorData, T } from "./AccountDashboard";
 
@@ -24,6 +25,8 @@ function prof(over: Partial<AccountProfile> & { id: number }): AccountProfile {
     synced_at: null,
     sync_summary: null,
     sync_started_at: null,
+    disconnected: false,
+    disconnected_at: null,
     ...over,
   };
 }
@@ -92,7 +95,7 @@ export const DEMO_ONE_PROFILE: MeAccountResponse = {
   brands: [brand(1, "Mara Lin", ONE)],
   totals: totals(ONE),
   tasks: tasks(ONE),
-  scope: { brands_count: 1, profiles_count: 1, show_brand_level: false },
+  scope: { brands_count: 1, profiles_count: 1, disconnected_count: 0, show_brand_level: false },
 };
 
 // ── single brand · many profiles ──
@@ -108,7 +111,7 @@ export const DEMO_SINGLE_BRAND: MeAccountResponse = {
   brands: [brand(1, "Studio", SINGLE)],
   totals: totals(SINGLE),
   tasks: { ...tasks(SINGLE), sync_errors: 0 },
-  scope: { brands_count: 1, profiles_count: SINGLE.length, show_brand_level: false },
+  scope: { brands_count: 1, profiles_count: SINGLE.length, disconnected_count: 0, show_brand_level: false },
 };
 
 // ── 2+ brands ──
@@ -121,7 +124,53 @@ export const DEMO_MULTI_BRAND: MeAccountResponse = {
   brands: [brand(1, "Studio", B1), brand(2, "Co Works", B2), brand(3, "Northwind", B3)],
   totals: totals(MULTI),
   tasks: { ...tasks(MULTI), pending_drafts: 3, pending_audits: 1 },
-  scope: { brands_count: 3, profiles_count: MULTI.length, show_brand_level: true },
+  scope: { brands_count: 3, profiles_count: MULTI.length, disconnected_count: 0, show_brand_level: true },
+};
+
+// ── durable-dashboard empty states (disconnected / reconnect) ──
+const nowMinus = (days: number) => new Date(Date.now() - days * 86_400_000).toISOString();
+const DISC1 = prof({ id: 11, handle: "@mara.lin", name: "Mara Lin", disconnected: true, disconnected_at: nowMinus(2), sync_status: "disconnected" });
+const DISC2 = prof({ id: 12, handle: "@field.notes", name: "Field Notes", disconnected: true, disconnected_at: nowMinus(5), sync_status: "disconnected" });
+const DISC3 = prof({ id: 13, handle: "@mara.co", name: "Mara Co", disconnected: true, disconnected_at: nowMinus(21), sync_status: "disconnected" });
+
+// every profile disconnected → the in-dashboard reconnect state (0 live)
+const ALL_DISC = [DISC1, DISC2, DISC3];
+export const DEMO_ALL_DISCONNECTED: MeAccountResponse = {
+  tenant: TENANT,
+  brands: [brand(1, "Studio Mara", ALL_DISC)],
+  totals: totals([]),
+  tasks: tasks([]),
+  scope: { brands_count: 1, profiles_count: 0, disconnected_count: 3, show_brand_level: false },
+};
+
+// multi-brand WITH a disconnected profile — verifies the disconnected paths that
+// only exist in 2+ brand mode (BrandProfileRow reconnect row on expand, BrandCard
+// "N disconnected" status, switcher live-only count). No such fixture existed
+// before, which is exactly why the multi-brand disconnected regressions shipped
+// unverified.
+const MBD_DISC = prof({ id: 15, handle: "@studio.old", name: "Studio Old", disconnected: true, disconnected_at: nowMinus(9), sync_status: "disconnected" });
+const MBD_B1 = [{ ...MARA }, { ...NOTES }, MBD_DISC];
+const MBD_B2 = [{ ...CO }, { ...ERRORED }];
+const MBD_B3 = [prof({ id: 16, handle: "@northwind", name: "Northwind", network: "linkedin", followers: 4300, followers_delta: 120, views_7d: 9800, posts_week: 2 })];
+const MBD_ALL = [...MBD_B1, ...MBD_B2, ...MBD_B3];
+const MBD_LIVE = MBD_ALL.filter((p) => !p.disconnected);
+export const DEMO_MULTI_BRAND_DISC: MeAccountResponse = {
+  tenant: TENANT,
+  brands: [brand(1, "Studio", MBD_B1), brand(2, "Co Works", MBD_B2), brand(3, "Northwind", MBD_B3)],
+  totals: totals(MBD_ALL),
+  tasks: { ...tasks(MBD_ALL), pending_drafts: 2 },
+  scope: { brands_count: 3, profiles_count: MBD_LIVE.length, disconnected_count: 1, show_brand_level: true },
+};
+
+// mixed: live + disconnected side by side in one grid
+const D_STUDIO = prof({ id: 14, handle: "@mara.studio", name: "Studio Mara", disconnected: true, disconnected_at: nowMinus(1), sync_status: "disconnected" });
+const MIX = [{ ...MARA }, { ...NOTES, pending_drafts: 2 }, D_STUDIO, { ...CO }];
+export const DEMO_MIXED: MeAccountResponse = {
+  tenant: TENANT,
+  brands: [brand(1, "Studio", MIX)],
+  totals: totals(MIX),
+  tasks: tasks(MIX),
+  scope: { brands_count: 1, profiles_count: 3, disconnected_count: 1, show_brand_level: false },
 };
 
 // ── advisor sample (account scope) ──
@@ -258,4 +307,6 @@ const RU: Record<string, string> = {
   "advisor.composer_hint": "Pennedly читает статистику, голоса и посты всех профилей портфеля.",
 };
 
-export const demoT: T = (k) => RU[k] ?? k;
+// Demo overrides first, then the real ru catalog (so new keys resolve in the
+// gallery without duplicating their translations here), then the key itself.
+export const demoT: T = (k) => RU[k] ?? ru[k as keyof typeof ru] ?? k;

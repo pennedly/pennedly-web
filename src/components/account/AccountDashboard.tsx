@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 
 import { setSelectedAccountId, useSelectedAccountId } from "@/lib/account";
 import { logout, startThreadsConnect } from "@/lib/api";
+import { useTranslation } from "@/lib/i18n";
 import {
   BrandMark as BrandLogo,
   IcAlert,
@@ -103,11 +104,14 @@ export type Nav = {
   logout: () => void;
   retry: () => void; // re-fetch after a sync error
   toggleTheme: () => void;
+  locale: string; // active app locale — for date/relative-time formatting (relSince)
 };
 
 export function useAccountNav(): Nav {
   const router = useRouter();
+  const { locale } = useTranslation();
   return {
+    locale,
     openProfile: (id, view = "studio") => {
       setSelectedAccountId(id);
       router.push(
@@ -148,7 +152,7 @@ export function useAccountNav(): Nav {
   };
 }
 
-const NET_LABEL: Record<string, string> = { threads: "Threads", linkedin: "LinkedIn" };
+export const NET_LABEL: Record<string, string> = { threads: "Threads", linkedin: "LinkedIn" };
 // LinkedIn keeps its text glyph until a design-system LinkedIn icon exists;
 // Threads renders the app's IcThread inside the badge (see NetBadge / brand net).
 const NET_GLYPH: Record<string, string> = { linkedin: "in" };
@@ -189,7 +193,7 @@ function NetBadge({ network }: { network: string }) {
     </span>
   );
 }
-function Avatar({ p, cls = "acc-av" }: { p: AccountProfile; cls?: string }) {
+export function Avatar({ p, cls = "acc-av" }: { p: AccountProfile; cls?: string }) {
   return (
     <span className={cls}>
       {p.avatar ? (
@@ -262,6 +266,76 @@ function Metrics4({
   );
 }
 
+// ── disconnected profile card ────────────────────────────────────────────────
+// A profile whose OAuth was revoked/expired (p.disconnected). It keeps its row +
+// all config; we render a reassuring, recoverable card (no metrics) with a
+// "Disconnected" pill + Reconnect, so a dead profile is visible and restorable
+// rather than hidden. Shown both in the all-disconnected dashboard and inline in
+// the mixed grid. Reconnect re-runs the same Threads OAuth (same app reactivates
+// the existing row).
+export const IcCheckSm = ({ s = 12 }: { s?: number }) => (
+  <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M5 12l4.5 4.5L19 7" />
+  </svg>
+);
+const IcLinkSm = ({ s = 13 }: { s?: number }) => (
+  <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 15 15 9" />
+    <path d="M11 6.6 12.5 5.1a4 4 0 0 1 5.6 5.6L16.6 12.2" />
+    <path d="M13 17.4 11.5 18.9a4 4 0 0 1-5.6-5.6L7.4 11.8" />
+  </svg>
+);
+
+// "N days/weeks/months ago", localized to the ACTIVE app locale (pass nav.locale,
+// NOT the browser's) — so a ru/de/es UI on an English browser still reads
+// «2 дня назад», per [[feedback_localize_to_user_locale]]. A malformed ISO stamp
+// yields "" instead of throwing.
+export function relSince(iso: string | null, locale: string): string {
+  if (!iso) return "";
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return "";
+  const day = Math.max(0, Math.round((Date.now() - then) / 86_400_000));
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+  if (day < 7) return rtf.format(-day, "day");
+  if (day < 30) return rtf.format(-Math.round(day / 7), "week");
+  return rtf.format(-Math.round(day / 30), "month");
+}
+
+export function DisconnectedCard({ p, t, nav }: { p: AccountProfile; t: T; nav: Nav }) {
+  return (
+    <div className="acc-card acc-card--disc">
+      <div className="acc-card-head">
+        <Avatar p={p} cls="acc-av acc-av--disc" />
+        <div className="acc-card-id">
+          <div className="acc-card-name">{p.name || p.handle}</div>
+          <div className="acc-card-sub">
+            {p.handle} · {NET_LABEL[p.network] || p.network}
+          </div>
+        </div>
+      </div>
+      <div className="acc-disc-status">
+        <span className="status-pill status-pill--warning">
+          <i className="pill-dot" />
+          {t("acc.disc_pill")}
+        </span>
+        <span className="acc-disc-safe">
+          <IcCheckSm s={12} />
+          {t("acc.disc_safe")}
+        </span>
+      </div>
+      <div className="acc-cardfoot acc-cardfoot--disc">
+        <span className="acc-disc-since">
+          {t("acc.disc_prefix")} {relSince(p.disconnected_at, nav.locale)}
+        </span>
+        <button className="btn btn--primary btn--sm acc-reconnect" type="button" onClick={() => nav.addProfile()}>
+          <IcLinkSm s={13} />
+          {t("acc.reconnect")}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── profile card (single-brand mode) ─────────────────────────────────────────
 function ProfileHead({ p }: { p: AccountProfile }) {
   return (
@@ -280,6 +354,9 @@ function ProfileHead({ p }: { p: AccountProfile }) {
 
 export function ProfileCard({ p, t, nav }: { p: AccountProfile; t: T; nav: Nav }) {
   const open = () => nav.openProfile(p.id, "studio");
+  // A disconnected profile renders as a recoverable card (pill + Reconnect),
+  // not a clickable live card — so the mixed grid shows dead profiles inline.
+  if (p.disconnected) return <DisconnectedCard p={p} t={t} nav={nav} />;
   if (p.sync_status === "importing") {
     const im = p.sync_summary || {};
     const posts = im.posts ?? 0;
@@ -371,6 +448,24 @@ function BrandStack({ b }: { b: AccountBrand }) {
 
 // One profile row inside an expanded brand card (эталон brandProfileRow).
 function BrandProfileRow({ p, t, nav }: { p: AccountProfile; t: T; nav: Nav }) {
+  // A disconnected profile inside an expanded brand is non-navigable — there is
+  // no live studio to open. Render a recoverable row (pill + Reconnect) instead
+  // of a clickable "0 followers" link into a dead screen.
+  if (p.disconnected) {
+    return (
+      <div className="acc-bp acc-bp--disc">
+        <Avatar p={p} cls="acc-bp-av" />
+        <span className="acc-bp-id">
+          <span className="acc-bp-hd">{p.handle || p.name}</span>
+          <span className="acc-bp-sub">{t("acc.disc_pill")}</span>
+        </span>
+        <button className="acc-bp-reconnect" type="button" onClick={(e) => { e.stopPropagation(); nav.addProfile(); }}>
+          <IcLinkSm s={12} />
+          {t("acc.reconnect")}
+        </button>
+      </div>
+    );
+  }
   let right: React.ReactNode;
   if (p.sync_status === "importing") {
     right = (
@@ -417,6 +512,7 @@ export function BrandCard({ b, t, plural, nav }: { b: AccountBrand; t: T; plural
   const pc = b.profiles.length;
   const errors = b.profiles.filter((p) => p.sync_status === "error").length;
   const importing = b.profiles.filter((p) => p.sync_status === "importing").length;
+  const disc = b.profiles.filter((p) => p.disconnected).length;
   const brandMono = initials(b.name, null);
   const agg = {
     followers: b.stats.followers,
@@ -457,8 +553,14 @@ export function BrandCard({ b, t, plural, nav }: { b: AccountBrand; t: T; plural
       <Metrics4 t={t} d={agg} />
       <div className="acc-cardfoot">
         <span className="acc-brand-statline">
-          <span className={`acc-brand-statdot${errors || importing ? " acc-brand-statdot--warn" : ""}`} />
-          {errors ? `${errors} ${t("acc.error_n")}` : importing ? `${importing} ${t("acc.importing_n")}` : t("acc.synced_all")}
+          <span className={`acc-brand-statdot${errors || importing || disc ? " acc-brand-statdot--warn" : ""}`} />
+          {errors
+            ? `${errors} ${t("acc.error_n")}`
+            : disc
+              ? `${disc} ${t("acc.disconnected_n")}`
+              : importing
+                ? `${importing} ${t("acc.importing_n")}`
+                : t("acc.synced_all")}
         </span>
         {pc > 0 ? (
           <button className="acc-brand-expand" type="button" aria-expanded={expanded} onClick={(e) => { e.stopPropagation(); toggle(); }}>
@@ -494,7 +596,10 @@ export function AddBrand({ t, nav }: { t: T; nav: Nav }) {
 // ── cards section (adaptive on scope.show_brand_level) ───────────────────────
 export function CardsSection({ data, t, plural, nav }: { data: MeAccountResponse; t: T; plural: Plural; nav: Nav }) {
   const multi = data.scope.show_brand_level;
-  const count = multi ? data.brands.length : data.scope.profiles_count;
+  // Single-brand grid renders every profile card (live + disconnected), so the
+  // section count matches the visible cards — not profiles_count (LIVE-only),
+  // which would read "3 profiles" over 4 cards in a mixed state.
+  const count = multi ? data.brands.length : data.brands.flatMap((b) => b.profiles).length;
   return (
     <>
       <div className="acc-sec">
@@ -716,7 +821,21 @@ export function Sidebar({ data, t, nav, active = "dashboard" }: { data: MeAccoun
 }
 
 // ── topbar (breadcrumb + flat profile switcher) ──────────────────────────────
-function SwitcherRow({ p, active, nav, onDone }: { p: AccountProfile; active: boolean; nav: Nav; onDone: () => void }) {
+function SwitcherRow({ p, active, t, nav, onDone }: { p: AccountProfile; active: boolean; t: T; nav: Nav; onDone: () => void }) {
+  // A disconnected profile has no live studio to open — the row reconnects
+  // (re-runs Threads OAuth) instead of navigating to a dead screen.
+  if (p.disconnected) {
+    return (
+      <button className="acc-swrow acc-swrow--disc" type="button" onClick={() => { onDone(); nav.addProfile(); }}>
+        <Avatar p={p} cls="acc-sw-av" />
+        <span className="acc-swrow-who">
+          <span className="acc-swrow-nm">{p.handle || p.name}</span>
+          <span className="acc-swrow-hd">{t("acc.disc_pill")}</span>
+        </span>
+        <span className="acc-swrow-reconnect">{t("acc.reconnect")}</span>
+      </button>
+    );
+  }
   const dotCls =
     p.sync_status === "error"
       ? " acc-swrow-stat--error"
@@ -748,7 +867,11 @@ function SwitcherRow({ p, active, nav, onDone }: { p: AccountProfile; active: bo
 export function Topbar({ data, t, plural, dark, nav }: { data: MeAccountResponse; t: T; plural: Plural; dark?: boolean; nav: Nav }) {
   const acctMono = initials(data.tenant.name, null);
   const allProfiles = data.brands.flatMap((b) => b.profiles);
-  const stack = allProfiles.slice(0, 3);
+  // The "N profiles" claim + the avatar stack count LIVE profiles only — a
+  // disconnected profile is a reconnect target, not an active profile, so an
+  // all-disconnected tenant honestly reads "0 profiles" (not "3").
+  const liveProfiles = allProfiles.filter((p) => !p.disconnected);
+  const stack = liveProfiles.slice(0, 3);
   const multi = data.scope.show_brand_level;
   const selected = useSelectedAccountId();
   const [swOpen, setSwOpen] = useState(false);
@@ -783,7 +906,7 @@ export function Topbar({ data, t, plural, dark, nav }: { data: MeAccountResponse
             <span className="acc-sw-lab">
               <span className="acc-sw-t">{t("acc.sw_all")}</span>
               <span className="acc-sw-s">
-                {allProfiles.length} {plural("profiles", allProfiles.length)}
+                {liveProfiles.length} {plural("profiles", liveProfiles.length)}
               </span>
             </span>
             <IcChevDown size={15} />
@@ -800,7 +923,7 @@ export function Topbar({ data, t, plural, dark, nav }: { data: MeAccountResponse
                         <span className="t">{b.name}</span>
                       </div>
                       {b.profiles.map((p) => (
-                        <SwitcherRow key={p.id} p={p} active={p.id === selected} nav={nav} onDone={close} />
+                        <SwitcherRow key={p.id} p={p} active={p.id === selected} t={t} nav={nav} onDone={close} />
                       ))}
                     </div>
                   ))
@@ -810,7 +933,7 @@ export function Topbar({ data, t, plural, dark, nav }: { data: MeAccountResponse
                       <span className="t">{t("acc.sw_jump")}</span>
                     </div>
                     {allProfiles.map((p) => (
-                      <SwitcherRow key={p.id} p={p} active={p.id === selected} nav={nav} onDone={close} />
+                      <SwitcherRow key={p.id} p={p} active={p.id === selected} t={t} nav={nav} onDone={close} />
                     ))}
                   </>
                 )}

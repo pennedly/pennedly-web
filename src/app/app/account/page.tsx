@@ -13,11 +13,18 @@ import { useRouter } from "next/navigation";
 import "@/components/account/account.css";
 import "@/components/account/account-mobile-shell.css";
 import "@/components/account/account-mobile.css";
+import "@/components/account/account-empty.css";
+import "@/components/account/account-empty-mobile.css";
 import "@/components/account/import-banner.css";
 
 import { AccountDashboard, AccountSkeleton } from "@/components/account/AccountDashboard";
 import type { Plural, T } from "@/components/account/AccountDashboard";
-import { AccountMobileDashboard, AccountMobileSkeleton } from "@/components/account/AccountMobileDashboard";
+import { AllDisconnected, FirstConnect } from "@/components/account/AccountEmpty";
+import {
+  AccountMobileAllDisconnected,
+  AccountMobileDashboard,
+  AccountMobileSkeleton,
+} from "@/components/account/AccountMobileDashboard";
 import { AppFooter } from "@/components/AppFooter";
 import {
   ApiError,
@@ -62,21 +69,21 @@ export default function AccountDashboardPage() {
         }
         const acc = await fetchMeAccount();
         if (!alive) return;
-        // No profile connected yet → the account isn't set up; send to onboarding
-        // (the dashboard has nothing to show and the design routes empty here).
-        if (acc.scope.profiles_count === 0) {
-          router.replace("/app/onboarding");
-          return;
-        }
+        // The dashboard is DURABLE above profiles: with no LIVE profile we no
+        // longer bounce to the full-screen wizard (that read as a logout). The
+        // render picks an in-dashboard empty state (never-connected → picker,
+        // all-disconnected → reconnect) from scope, keeping the workspace.
         setData(acc);
         setPhase("ready");
-        // Fire-and-forget: the hero verdict fills in when ready; a failure or a
-        // 204 (thin data) just leaves the honest invite in place.
-        fetchMeAccountAdvisor()
-          .then((a) => {
-            if (alive) setAdv(a);
-          })
-          .catch(() => {});
+        // The advisor hero only makes sense with a live portfolio; skip it in the
+        // empty states. Fire-and-forget otherwise.
+        if (acc.scope.profiles_count > 0) {
+          fetchMeAccountAdvisor()
+            .then((a) => {
+              if (alive) setAdv(a);
+            })
+            .catch(() => {});
+        }
       } catch (e) {
         if (!alive) return;
         if (e instanceof ApiError && e.status === 401) {
@@ -130,6 +137,41 @@ export default function AccountDashboardPage() {
 
   const tt: T = (k) => t(k as Parameters<typeof t>[0]);
   const plural: Plural = (unit, n) => pluralUnit(locale, unit, n);
+
+  const liveCount = data.scope.profiles_count;
+  const discCount = data.scope.disconnected_count;
+
+  // Brand-new user (never connected) → full-screen "choose a network" picker.
+  if (liveCount === 0 && discCount === 0) {
+    return (
+      <div className="min-h-screen bg-bg text-text">
+        <FirstConnect t={tt} />
+      </div>
+    );
+  }
+
+  // Every profile disconnected → the in-dashboard reconnect state (keep the full
+  // chrome; do NOT bounce to the wizard). Mobile reuses its dashboard, which
+  // renders the disconnected profiles inline.
+  if (liveCount === 0) {
+    return (
+      <div className="flex min-h-screen flex-col bg-bg text-text">
+        <div className="flex-1">
+          <div className={wrap}>
+            <div className="hidden md:block">
+              <AllDisconnected data={data} t={tt} plural={plural} />
+            </div>
+            <div className="md:hidden">
+              <AccountMobileAllDisconnected data={data} t={tt} plural={plural} />
+            </div>
+          </div>
+        </div>
+        <div className="hidden md:block">
+          <AppFooter />
+        </div>
+      </div>
+    );
+  }
 
   return (
     // Sticky-footer column: content grows, the footer pins to the bottom on
