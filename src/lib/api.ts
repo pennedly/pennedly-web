@@ -664,6 +664,21 @@ export async function rejectDraft(draftId: number): Promise<ApprovalResult> {
   });
 }
 
+// Persist an in-progress edit of a PENDING draft (Studio «Save») so it survives a
+// reload and re-renders instead of reverting to the LLM text. The server stores it
+// in content_drafts.edited_text (separate from the immutable LLM generated_text);
+// the list then shows the edit and a later approve ships it. 409 once the draft is
+// approved/published — send it back to draft first.
+export async function updateDraftText(
+  draftId: number,
+  text: string,
+): Promise<{ id: number; text: string }> {
+  return fetchApi<{ id: number; text: string }>(`/api/drafts/${draftId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ text }),
+  });
+}
+
 // Send an approved-but-unpublished draft back to `pending` so it can be edited
 // again (the «ready» card's «На доработку»). Drops the few-shot corpus row the
 // approval created + detaches any schedule; 409 once the post is live.

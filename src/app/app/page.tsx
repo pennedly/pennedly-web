@@ -33,6 +33,7 @@ import {
   setDraftVideo,
   translateText,
   unapproveDraft,
+  updateDraftText,
   uploadMedia,
 } from "@/lib/api";
 import { captureEvent, identify } from "@/lib/analytics";
@@ -512,7 +513,31 @@ export default function Studio() {
     },
     onSendBack: realSendBack,
     onRestore: () => {},
-    onSaveEdit: (card, text) => setEdits((s) => ({ ...s, [card.id]: text })),
+    onSaveEdit: async (card, text) => {
+      // Persist the edit so it survives a reload + re-render (no more revert to
+      // the LLM text). Optimistic: show it immediately via the local overlay,
+      // then PATCH; on success fold it into the draft's display text and drop the
+      // overlay; on error revert + surface it.
+      const original = drafts.find((d) => d.id === card.id);
+      setEdits((s) => ({ ...s, [card.id]: text }));
+      try {
+        const r = await updateDraftText(card.id, text);
+        setDrafts((p) => p.map((d) => (d.id === card.id ? { ...d, generated_text: r.text } : d)));
+        setEdits((s) => {
+          const n = { ...s };
+          delete n[card.id];
+          return n;
+        });
+      } catch (e) {
+        setEdits((s) => {
+          const n = { ...s };
+          delete n[card.id];
+          return n;
+        });
+        if (original) setDrafts((p) => p.map((d) => (d.id === card.id ? original : d)));
+        toast(String(e), "error");
+      }
+    },
     onTweak: async (card, instruction) => {
       const result = await refineDraft(card.id, instruction);
       setDrafts((p) => p.map((d) => (d.id === card.id ? { ...d, generated_text: result.text } : d)));
