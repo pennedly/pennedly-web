@@ -571,6 +571,8 @@ export const en = {
   "audit.group.approved": "{n} approved",
   "audit.group.rejected": "{n} rejected",
   "audit.optin.enabled_toast": "Audit turned on",
+  "audit.optin.disable": "Turn off the audit",
+  "audit.optin.disabled_toast": "Weekly audit turned off",
   "audit.optin.enable_error": "Couldn't turn it on — try again",
   "audits.subtitle":
     "Each week the coach reviews how your posts performed and proposes edits to your voice. Approve or reject each suggestion individually.",

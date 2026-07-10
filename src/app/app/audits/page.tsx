@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 
 import { ApiError, clearTokens, fetchMe, getAuditSettings, getTokens, listAudits, setAuditSettings } from "@/lib/api";
 import { useSelectedAccountId } from "@/lib/account";
+import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n";
 import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
 import { Toast, ToastHost } from "@/components/ui/toast";
@@ -177,6 +178,25 @@ export default function AuditsPage() {
     }
   }
 
+  async function onDisableAudit() {
+    if (accountId === null || enabling) return;
+    setEnabling(true);
+    try {
+      const r = await setAuditSettings(accountId, false);
+      setAuditEnabled(r.enabled);
+      toast(t("audit.optin.disabled_toast"));
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 401) {
+        clearTokens();
+        router.push("/app/login");
+        return;
+      }
+      toast(t("audit.optin.enable_error"));
+    } finally {
+      setEnabling(false);
+    }
+  }
+
   const openAuditData = demoAudits.find((a) => a.id === openId) ?? null;
 
   const pill =
@@ -220,9 +240,16 @@ export default function AuditsPage() {
           <AuditOptIn onEnable={onEnableAudit} busy={enabling} />
         ) : (
           <>
-            <div className="flex flex-col gap-1">
-              <h1 className="text-h1 font-semibold tracking-[-0.015em]">{t("audits.title")}</h1>
-              <p className="max-w-[64ch] text-body text-text-muted">{t("audits.list_sub")}</p>
+            <div className="flex items-start justify-between gap-3 max-md:flex-col">
+              <div className="flex flex-col gap-1">
+                <h1 className="text-h1 font-semibold tracking-[-0.015em]">{t("audits.title")}</h1>
+                <p className="max-w-[64ch] text-body text-text-muted">{t("audits.list_sub")}</p>
+              </div>
+              {!demoOn && auditEnabled === true && (
+                <Button size="sm" variant="ghost" disabled={enabling} onClick={() => void onDisableAudit()} className="shrink-0">
+                  {t("audit.optin.disable")}
+                </Button>
+              )}
             </div>
             {phase === "loading" ? (
               <AuditsSkeleton />

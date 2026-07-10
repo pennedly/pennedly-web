@@ -10,6 +10,7 @@ import { type ReactNode } from "react";
 
 import { cn } from "@/lib/cn";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
+import { smoothAreaPath, smoothLinePath } from "@/lib/chart";
 import { IcArrowDown, IcArrowRight, IcArrowUp, IcBubble, IcChart, IcClock, IcEye, IcHeart, IcLock, IcNib, IcSparkle } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { fmt } from "@/components/studio/FeedParts";
@@ -148,10 +149,9 @@ export function ColumnChart({ cap, headline, headlinePct, series }: { cap: strin
   const PADB = 4;
   const xAt = (i: number) => (series.length <= 1 ? W / 2 : PADX + (i / (series.length - 1)) * (W - PADX * 2));
   const yAt = (v: number) => H - PADB - (v / max) * (H - PADT - PADB);
-  const line = series.map((b, i) => `${i === 0 ? "M" : "L"}${xAt(i).toFixed(1)} ${yAt(b.value).toFixed(1)}`).join(" ");
-  const area = line
-    ? `${line} L${xAt(series.length - 1).toFixed(1)} ${(H - PADB).toFixed(1)} L${xAt(0).toFixed(1)} ${(H - PADB).toFixed(1)} Z`
-    : "";
+  const pts = series.map((b, i) => ({ x: xAt(i), y: yAt(b.value) }));
+  const line = smoothLinePath(pts);
+  const area = line ? smoothAreaPath(pts, H - PADB) : "";
 
   return (
     <section className="rounded-lg border border-border bg-surface px-5 pb-4 pt-[18px] shadow-sm">
@@ -295,8 +295,9 @@ function FollowerLine({ series }: { series: number[] }) {
   const n = series.length;
   const x = (i: number) => PAD + (i / (n - 1)) * (W - PAD * 2);
   const y = (v: number) => H - PAD - ((v - min) / span) * (H - PAD * 2);
-  const curve = series.map((v, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(" ");
-  const area = `${curve} L${x(n - 1).toFixed(1)} ${H} L${x(0).toFixed(1)} ${H} Z`;
+  const pts = series.map((v, i) => ({ x: x(i), y: y(v) }));
+  const curve = smoothLinePath(pts);
+  const area = smoothAreaPath(pts, H);
   return (
     <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="auto" role="img" aria-label="Followers over time" className="mt-4 block">
       <path d={area} fill="var(--color-accent)" fillOpacity="0.1" />

@@ -573,6 +573,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "audit.group.approved": "{n} одобрено",
   "audit.group.rejected": "{n} отклонено",
   "audit.optin.enabled_toast": "Аудит включён",
+  "audit.optin.disable": "Выключить аудит",
+  "audit.optin.disabled_toast": "Еженедельный аудит выключен",
   "audit.optin.enable_error": "Не удалось включить — попробуй ещё раз",
   "audits.subtitle":
     "Каждую неделю коуч анализирует как сработали твои посты и предлагает правки голоса. Одобряй или отклоняй каждое предложение по отдельности.",

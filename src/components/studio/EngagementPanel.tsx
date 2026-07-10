@@ -17,6 +17,7 @@
 //   • a per-point hover tooltip (weekday + date / value) via invisible hover
 //     bands + a cursor line + hover dot, with sparse x-axis labels.
 
+import { smoothAreaPath, smoothLinePath } from "@/lib/chart";
 import { useMemo, useState, type ReactNode } from "react";
 
 import { cn } from "@/lib/cn";
@@ -248,8 +249,9 @@ function EngChart({ window, metric, metricLabel, locale }: { window: EngagementP
   const PADB = 4;
   const xAt = (i: number) => (n <= 1 ? 50 : (i / (n - 1)) * 100);
   const yAt = (v: number) => PADT + (1 - v / max) * (100 - PADT - PADB);
-  const line = window.map((p, i) => `${i === 0 ? "M" : "L"}${xAt(i).toFixed(2)} ${yAt(metricValue(p, metric)).toFixed(2)}`).join(" ");
-  const area = line ? `${line} L${xAt(n - 1).toFixed(2)} 100 L${xAt(0).toFixed(2)} 100 Z` : "";
+  const pts = window.map((p, i) => ({ x: xAt(i), y: yAt(metricValue(p, metric)) }));
+  const line = smoothLinePath(pts);
+  const area = line ? smoothAreaPath(pts, 100) : "";
   const floorY = yAt(0); // = 100 - PADB
 
   // Sparse x-axis: ~5 evenly-spaced labels incl. first + last, clamped to the
@@ -374,7 +376,7 @@ function ThinData({ data, metric, locale }: { data: EngagementHistory | null; me
   const PADT = 8;
   const PADB = 4;
   const yAt = (v: number) => PADT + (1 - v / max) * (100 - PADT - PADB);
-  const line = points.map((p, i) => `${i === 0 ? "M" : "L"}${xAt(i).toFixed(2)} ${yAt(metricValue(p, metric)).toFixed(2)}`).join(" ");
+  const line = smoothLinePath(points.map((p, i) => ({ x: xAt(i), y: yAt(metricValue(p, metric)) })));
 
   const daysWord = pluralUnit(locale as LocaleCode, "days", realDays);
   const note = t("stats.eng_thin_note").replace("{days}", `${realDays} ${daysWord}`);
