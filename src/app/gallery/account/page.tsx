@@ -14,6 +14,10 @@ import { pluralUnit } from "@/lib/i18n";
 import "@/components/account/account.css";
 import "@/components/account/account-mobile-shell.css";
 import "@/components/account/account-mobile.css";
+// The add-flow network-picker dialog/sheet styles live with the empty states;
+// same import order as /app/account/page.tsx (empty → banner).
+import "@/components/account/account-empty.css";
+import "@/components/account/account-empty-mobile.css";
 import "@/components/account/import-banner.css";
 
 import { AccountDashboard, AccountSkeleton } from "@/components/account/AccountDashboard";

@@ -42,11 +42,14 @@ import {
   IcSettings,
   IcSparkle,
   IcSun,
-  IcThread,
   IcUndo,
   IcUsers,
   type IconProps,
 } from "@/components/icons";
+// Real network logos + the add-flow dialog (shared with the empty states).
+// Type-only in the other direction (networks.tsx imports `type {Nav, T}` from
+// here), so there is no runtime cycle.
+import { ConnectNetworkDialog, NetLogo } from "./networks";
 import type {
   AccountBrand,
   AccountProfile,
@@ -100,7 +103,15 @@ export type ProfileView = "studio" | "stats" | "replies";
 export type Nav = {
   openProfile: (id: number, view?: ProfileView) => void; // switch profile → its screen
   go: (route: string) => void; // plain push (nav rows, settings, triage)
-  addProfile: () => void; // connect another profile (add-brand / switcher «подключить»)
+  // The ADD flow (add-brand tile / switcher-drawer «подключить»): opens the
+  // network picker (Threads live · LinkedIn soon) — the dashboard roots
+  // override the hook default with their dialog/sheet opener, so the user
+  // always gets the network CHOICE first.
+  addProfile: () => void;
+  // Direct Threads OAuth — the picker's Threads row + the per-profile
+  // Reconnect buttons (a disconnected THREADS profile has a known network, no
+  // choice to make).
+  connectThreads: () => void;
   logout: () => void;
   retry: () => void; // re-fetch after a sync error
   toggleTheme: () => void;
@@ -110,6 +121,15 @@ export type Nav = {
 export function useAccountNav(): Nav {
   const router = useRouter();
   const { locale } = useTranslation();
+  const connectThreads = () => {
+    const returnUrl =
+      typeof window !== "undefined" ? `${window.location.origin}/app/account` : "/app/account";
+    startThreadsConnect(returnUrl)
+      .then(({ authorize_url }) => {
+        window.location.href = authorize_url;
+      })
+      .catch(() => router.push("/app/onboarding"));
+  };
   return {
     locale,
     openProfile: (id, view = "studio") => {
@@ -123,18 +143,16 @@ export function useAccountNav(): Nav {
       );
     },
     go: (route) => router.push(route),
-    // «Добавить бренд» / «Подключить профиль» = connect ANOTHER Threads account
-    // → kick off the Threads OAuth (same as ConnectThreadsButton), returning to
-    // the dashboard. Falls back to onboarding if the start call fails.
-    addProfile: () => {
-      const returnUrl =
-        typeof window !== "undefined" ? `${window.location.origin}/app/account` : "/app/account";
-      startThreadsConnect(returnUrl)
-        .then(({ authorize_url }) => {
-          window.location.href = authorize_url;
-        })
-        .catch(() => router.push("/app/onboarding"));
-    },
+    // Direct Threads OAuth (same as ConnectThreadsButton), returning to the
+    // dashboard; falls back to onboarding if the start call fails. Reached from
+    // the network picker's Threads row and the per-profile Reconnect buttons.
+    connectThreads,
+    // Hook default for the ADD flow = direct connect; the dashboard roots
+    // (desktop + mobile + all-disconnected) override it with their
+    // network-picker opener, so every «Добавить бренд» / «Подключить профиль»
+    // shows the choice (Threads live · LinkedIn soon) instead of bouncing
+    // straight into OAuth.
+    addProfile: connectThreads,
     logout: () => {
       void logout();
       router.push("/app/login");
@@ -153,9 +171,10 @@ export function useAccountNav(): Nav {
 }
 
 export const NET_LABEL: Record<string, string> = { threads: "Threads", linkedin: "LinkedIn" };
-// LinkedIn keeps its text glyph until a design-system LinkedIn icon exists;
-// Threads renders the app's IcThread inside the badge (see NetBadge / brand net).
-const NET_GLYPH: Record<string, string> = { linkedin: "in" };
+// Known networks render their REAL logo via NetLogo (networks.tsx — never an
+// invented glyph); this text map is only the fallback for a FUTURE network id
+// the FE doesn't know yet.
+const NET_GLYPH: Record<string, string> = {};
 
 function nfmt(n: number): string {
   // Compact thousands like the эталон numbers (12,4k). Keep small numbers plain.
@@ -189,7 +208,7 @@ function BrandMark({ mono, cls = "" }: { mono: string; cls?: string }) {
 function NetBadge({ network }: { network: string }) {
   return (
     <span className={`acc-net acc-net--${network}`} title={NET_LABEL[network] || network}>
-      {network === "threads" ? <IcThread size={10} /> : NET_GLYPH[network] || "•"}
+      {NetLogo({ network, s: 10 }) ?? NET_GLYPH[network] ?? "•"}
     </span>
   );
 }
@@ -327,7 +346,7 @@ export function DisconnectedCard({ p, t, nav }: { p: AccountProfile; t: T; nav: 
         <span className="acc-disc-since">
           {t("acc.disc_prefix")} {relSince(p.disconnected_at, nav.locale)}
         </span>
-        <button className="btn btn--primary btn--sm acc-reconnect" type="button" onClick={() => nav.addProfile()}>
+        <button className="btn btn--primary btn--sm acc-reconnect" type="button" onClick={() => nav.connectThreads()}>
           <IcLinkSm s={13} />
           {t("acc.reconnect")}
         </button>
@@ -459,7 +478,7 @@ function BrandProfileRow({ p, t, nav }: { p: AccountProfile; t: T; nav: Nav }) {
           <span className="acc-bp-hd">{p.handle || p.name}</span>
           <span className="acc-bp-sub">{t("acc.disc_pill")}</span>
         </span>
-        <button className="acc-bp-reconnect" type="button" onClick={(e) => { e.stopPropagation(); nav.addProfile(); }}>
+        <button className="acc-bp-reconnect" type="button" onClick={(e) => { e.stopPropagation(); nav.connectThreads(); }}>
           <IcLinkSm s={12} />
           {t("acc.reconnect")}
         </button>
@@ -532,7 +551,7 @@ export function BrandCard({ b, t, plural, nav }: { b: AccountBrand; t: T; plural
           <span className="acc-brand-net">
             {b.networks.map((nid) => (
               <span key={nid} className="acc-brand-netbadge">
-                {nid === "threads" ? <IcThread size={10} /> : NET_GLYPH[nid] || "•"}
+                {NetLogo({ network: nid, s: 10 }) ?? NET_GLYPH[nid] ?? "•"}
               </span>
             ))}
           </span>
@@ -826,7 +845,7 @@ function SwitcherRow({ p, active, t, nav, onDone }: { p: AccountProfile; active:
   // (re-runs Threads OAuth) instead of navigating to a dead screen.
   if (p.disconnected) {
     return (
-      <button className="acc-swrow acc-swrow--disc" type="button" onClick={() => { onDone(); nav.addProfile(); }}>
+      <button className="acc-swrow acc-swrow--disc" type="button" onClick={() => { onDone(); nav.connectThreads(); }}>
         <Avatar p={p} cls="acc-sw-av" />
         <span className="acc-swrow-who">
           <span className="acc-swrow-nm">{p.handle || p.name}</span>
@@ -1188,7 +1207,13 @@ export function AccountDashboard({
   dark?: boolean;
   onOpenAdvisor?: () => void;
 }) {
-  const nav = useAccountNav();
+  const baseNav = useAccountNav();
+  const [pickOpen, setPickOpen] = useState(false);
+  // Every add-affordance below (add-brand tile, switcher «Подключить профиль»)
+  // opens the network picker; only its Threads row (nav.connectThreads) starts
+  // the OAuth. Per-profile Reconnect buttons bypass the picker — their network
+  // is already known.
+  const nav = { ...baseNav, addProfile: () => setPickOpen(true) };
   return (
     <div className="acc-shell">
       <Sidebar data={data} t={t} nav={nav} />
@@ -1205,6 +1230,7 @@ export function AccountDashboard({
           <CardsSection data={data} t={t} plural={plural} nav={nav} />
         </div>
       </div>
+      <ConnectNetworkDialog open={pickOpen} onClose={() => setPickOpen(false)} t={t} nav={baseNav} />
     </div>
   );
 }

@@ -2784,6 +2784,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "acc.first_title": "Подключите первый аккаунт",
   "acc.first_sub": "Начнём с Threads. Pennedly изучит ваши недавние посты, поймёт голос и поможет писать; вы одобряете каждый пост.",
   "acc.picker_choose": "Выберите сеть",
+  "acc.pick_sheet_t": "Подключить аккаунт",
+  "acc.pick_sheet_s": "Выберите сеть для подключения.",
   "acc.net_live": "Живая сеть",
   "acc.net_soon": "Скоро",
   "acc.net_soon_sub": "Скоро. Команда Pennedly уже работает над этим.",

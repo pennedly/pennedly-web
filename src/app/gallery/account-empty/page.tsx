@@ -21,7 +21,8 @@ import "@/components/account/import-banner.css";
 
 import { AccountDashboard, useAccountNav } from "@/components/account/AccountDashboard";
 import { AccountMobileAllDisconnected, AccountMobileDashboard } from "@/components/account/AccountMobileDashboard";
-import { AllDisconnected, FirstConnect, NetworkPicker } from "@/components/account/AccountEmpty";
+import { AllDisconnected, FirstConnect } from "@/components/account/AccountEmpty";
+import { NetworkPicker } from "@/components/account/networks";
 import { DEMO_ALL_DISCONNECTED, DEMO_MIXED, DEMO_MULTI_BRAND_DISC, demoT } from "@/components/account/account-demo";
 
 const demoPlural = (u: "profiles" | "brands" | "drafts" | "audits", n: number) => pluralUnit("ru", u, n);

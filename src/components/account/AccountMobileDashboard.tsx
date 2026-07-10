@@ -42,7 +42,6 @@ import {
   IcSettings,
   IcSparkle,
   IcSun,
-  IcThread,
   IcUndo,
   IcX,
 } from "@/components/icons";
@@ -58,12 +57,14 @@ import type {
 
 import { DynIcon, IcCheckSm, relSince, useAccountNav } from "./AccountDashboard";
 import type { AccountPage, Nav, Plural, T } from "./AccountDashboard";
+// Real network logos + the add-flow bottom sheet (shared with desktop/empty).
+import { ConnectNetworkSheet, NetLogo } from "./networks";
 
 // ── shared helpers (mirror AccountDashboard.tsx) ─────────────────────────────
 const NET_LABEL: Record<string, string> = { threads: "Threads", linkedin: "LinkedIn" };
-// LinkedIn keeps its text glyph; Threads renders the app's IcThread (mirrors the
-// desktop NetBadge / brand-net handling).
-const NET_GLYPH: Record<string, string> = { linkedin: "in" };
+// Known networks render their REAL logo via NetLogo (networks.tsx — never an
+// invented glyph); the text map is only a fallback for an unknown network id.
+const NET_GLYPH: Record<string, string> = {};
 
 function nfmt(n: number): string {
   if (n >= 10000) return (n / 1000).toFixed(n % 1000 === 0 ? 0 : 1).replace(".", ",") + "k";
@@ -96,7 +97,7 @@ function BrandMark({ mono, cls = "" }: { mono: string; cls?: string }) {
 function NetBadge({ network }: { network: string }) {
   return (
     <span className={`ma-net ma-net--${network}`} title={NET_LABEL[network] || network}>
-      {network === "threads" ? <IcThread size={9} /> : NET_GLYPH[network] || "•"}
+      {NetLogo({ network, s: 9 }) ?? NET_GLYPH[network] ?? "•"}
     </span>
   );
 }
@@ -412,7 +413,7 @@ function ProfileCard({ p, t, nav }: { p: AccountProfile; t: T; nav: Nav }) {
           <span className="ma-disc-since">
             {t("acc.disc_prefix")} {relSince(p.disconnected_at, nav.locale)}
           </span>
-          <button className="btn btn--primary btn--sm ma-reconnect" type="button" onClick={() => nav.addProfile()}>
+          <button className="btn btn--primary btn--sm ma-reconnect" type="button" onClick={() => nav.connectThreads()}>
             {t("acc.reconnect")}
           </button>
         </div>
@@ -518,7 +519,7 @@ function BrandProfileRow({ p, t, nav }: { p: AccountProfile; t: T; nav: Nav }) {
           <span className="ma-bp-hd">{p.handle || p.name}</span>
           <span className="ma-bp-sub">{t("acc.disc_pill")}</span>
         </span>
-        <button className="ma-bp-reconnect" type="button" onClick={(e) => { e.stopPropagation(); nav.addProfile(); }}>
+        <button className="ma-bp-reconnect" type="button" onClick={(e) => { e.stopPropagation(); nav.connectThreads(); }}>
           {t("acc.reconnect")}
         </button>
       </div>
@@ -584,7 +585,7 @@ function BrandCard({ b, t, plural, nav }: { b: AccountBrand; t: T; plural: Plura
           <span className="ma-brand-net">
             {b.networks.map((nid) => (
               <span key={nid} className="ma-brand-netbadge">
-                {nid === "threads" ? <IcThread size={9} /> : NET_GLYPH[nid] || "•"}
+                {NetLogo({ network: nid, s: 9 }) ?? NET_GLYPH[nid] ?? "•"}
               </span>
             ))}
           </span>
@@ -700,7 +701,7 @@ function SwitcherRow({ p, active, t, nav, onDone }: { p: AccountProfile; active:
   // Disconnected → non-navigable, reconnects instead of opening a dead studio.
   if (p.disconnected) {
     return (
-      <button className="ma-sw-row ma-sw-row--disc" type="button" onClick={() => { onDone(); nav.addProfile(); }}>
+      <button className="ma-sw-row ma-sw-row--disc" type="button" onClick={() => { onDone(); nav.connectThreads(); }}>
         <Avatar p={p} cls="ma-sw-av" />
         <span className="ma-sw-who">
           <span className="ma-sw-nm">{p.handle || p.name}</span>
@@ -994,9 +995,13 @@ export function AccountMobileShell({
   dock?: React.ReactNode;
   bare?: boolean;
 }) {
-  const nav = useAccountNav();
-  const [overlay, setOverlay] = useState<null | "drawer" | "login">(null);
+  const baseNav = useAccountNav();
+  const [overlay, setOverlay] = useState<null | "drawer" | "login" | "connect">(null);
   const close = () => setOverlay(null);
+  // The drawer's «Добавить бренд» row must open the network picker here too —
+  // this shell hosts the mobile settings/advisor screens, the one drawer home
+  // the dashboard-root override doesn't reach.
+  const nav = { ...baseNav, addProfile: () => setOverlay("connect") };
   return (
     <div className="acc-mob">
       <Topbar data={data} t={t} plural={plural} dark={dark} title={title} showPill={false} onMenu={() => setOverlay("drawer")} />
@@ -1006,6 +1011,7 @@ export function AccountMobileShell({
         <NavDrawer data={data} t={t} nav={nav} active={active} onClose={close} onOpenLogin={() => setOverlay("login")} />
       ) : null}
       {overlay === "login" ? <LoginSheet data={data} t={t} nav={nav} onClose={close} /> : null}
+      {overlay === "connect" ? <ConnectNetworkSheet t={t} nav={baseNav} onClose={close} /> : null}
     </div>
   );
 }
@@ -1070,11 +1076,14 @@ export function AccountMobileDashboard({
   dark?: boolean;
   onOpenAdvisor?: () => void;
 }) {
-  const nav = useAccountNav();
-  // One overlay open at a time (sheet | drawer | login), the .m-scrim closes it —
-  // mirroring the desktop menu open/close pattern.
-  const [overlay, setOverlay] = useState<null | "switcher" | "drawer" | "login">(null);
+  const baseNav = useAccountNav();
+  // One overlay open at a time (sheet | drawer | login | connect), the .m-scrim
+  // closes it — mirroring the desktop menu open/close pattern.
+  const [overlay, setOverlay] = useState<null | "switcher" | "drawer" | "login" | "connect">(null);
   const close = () => setOverlay(null);
+  // Add-affordances open the network-picker sheet; only its Threads row starts
+  // the OAuth (baseNav.connectThreads). Reconnect buttons stay direct.
+  const nav = { ...baseNav, addProfile: () => setOverlay("connect") };
   return (
     <div className="acc-mob">
       <Topbar data={data} t={t} plural={plural} dark={dark} onMenu={() => setOverlay("drawer")} />
@@ -1092,6 +1101,7 @@ export function AccountMobileDashboard({
       {overlay === "switcher" ? <SwitcherSheet data={data} t={t} nav={nav} onClose={close} /> : null}
       {overlay === "drawer" ? <NavDrawer data={data} t={t} nav={nav} onClose={close} onOpenLogin={() => setOverlay("login")} /> : null}
       {overlay === "login" ? <LoginSheet data={data} t={t} nav={nav} onClose={close} /> : null}
+      {overlay === "connect" ? <ConnectNetworkSheet t={t} nav={baseNav} onClose={close} /> : null}
     </div>
   );
 }
@@ -1114,9 +1124,12 @@ export function AccountMobileAllDisconnected({
   plural: Plural;
   dark?: boolean;
 }) {
-  const nav = useAccountNav();
-  const [overlay, setOverlay] = useState<null | "switcher" | "drawer" | "login">(null);
+  const baseNav = useAccountNav();
+  const [overlay, setOverlay] = useState<null | "switcher" | "drawer" | "login" | "connect">(null);
   const close = () => setOverlay(null);
+  // «Подключить ещё один» opens the network picker; the per-card Reconnects
+  // (known Threads profiles) keep going straight to the OAuth.
+  const nav = { ...baseNav, addProfile: () => setOverlay("connect") };
   const disc = data.brands.flatMap((b) => b.profiles).filter((p) => p.disconnected);
   return (
     <div className="acc-mob">
@@ -1167,6 +1180,7 @@ export function AccountMobileAllDisconnected({
       {overlay === "switcher" ? <SwitcherSheet data={data} t={t} nav={nav} onClose={close} /> : null}
       {overlay === "drawer" ? <NavDrawer data={data} t={t} nav={nav} onClose={close} onOpenLogin={() => setOverlay("login")} /> : null}
       {overlay === "login" ? <LoginSheet data={data} t={t} nav={nav} onClose={close} /> : null}
+      {overlay === "connect" ? <ConnectNetworkSheet t={t} nav={baseNav} onClose={close} /> : null}
     </div>
   );
 }

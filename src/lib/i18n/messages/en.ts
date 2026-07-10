@@ -2830,6 +2830,8 @@ export const en = {
   "acc.first_title": "Connect your first account",
   "acc.first_sub": "We start with Threads. Pennedly reads your recent posts, learns your voice and helps you write; you approve every post.",
   "acc.picker_choose": "Choose a network",
+  "acc.pick_sheet_t": "Connect account",
+  "acc.pick_sheet_s": "Choose a network to connect.",
   "acc.net_live": "Live network",
   "acc.net_soon": "Coming soon",
   "acc.net_soon_sub": "Coming soon. The Pennedly team is on it.",
