@@ -38,6 +38,12 @@
 .acc-net--threads { color: var(--color-text); }
 .acc-net--linkedin { color: var(--color-accent); }
 .acc-sw-av .acc-net, .acc-bp-av .acc-net, .acc-rec-av .acc-net { min-width: 13px; height: 13px; font-size: 8px; border-radius: 5px; }
+/* Real-logo glyph sizes per badge context (the component renders one nominal
+   size; CSS scales it so the 13px switcher/brand-row badges don't overflow
+   their inset ring). */
+.acc-net svg { width: 12px; height: 12px; }
+.acc-sw-av .acc-net svg, .acc-bp-av .acc-net svg, .acc-rec-av .acc-net svg { width: 9px; height: 9px; }
+.acc-brand-netbadge svg { width: 11px; height: 11px; }
 
 /* Account = filled square; Brand = outlined square */
 .acc-acctmark, .acc-brandmark {

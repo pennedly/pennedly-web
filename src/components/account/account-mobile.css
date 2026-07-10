@@ -34,6 +34,10 @@
 .acc-mob .ma-net--threads { color: var(--color-text); }
 .acc-mob .ma-net--linkedin { color: var(--color-accent); }
 .acc-mob .ma-sw-av .ma-net, .acc-mob .ma-bp-av .ma-net { min-width: 12px; height: 12px; font-size: 7.5px; border-radius: 4px; }
+/* Real-logo glyph sizes per badge context (mirrors account.css). */
+.acc-mob .ma-net svg { width: 11px; height: 11px; }
+.acc-mob .ma-sw-av .ma-net svg, .acc-mob .ma-bp-av .ma-net svg { width: 8px; height: 8px; }
+.acc-mob .ma-brand-netbadge svg { width: 10px; height: 10px; }
 
 /* Account = filled square; Brand = outlined square */
 .acc-mob .ma-acctmark, .acc-mob .ma-brandmark { flex: 0 0 auto; display: grid; place-items: center; font-weight: 600; letter-spacing: -0.01em; }

@@ -97,7 +97,7 @@ function BrandMark({ mono, cls = "" }: { mono: string; cls?: string }) {
 function NetBadge({ network }: { network: string }) {
   return (
     <span className={`ma-net ma-net--${network}`} title={NET_LABEL[network] || network}>
-      {NetLogo({ network, s: 9 }) ?? NET_GLYPH[network] ?? "•"}
+      {NetLogo({ network, s: 11, bold: true }) ?? NET_GLYPH[network] ?? "•"}
     </span>
   );
 }
@@ -585,7 +585,7 @@ function BrandCard({ b, t, plural, nav }: { b: AccountBrand; t: T; plural: Plura
           <span className="ma-brand-net">
             {b.networks.map((nid) => (
               <span key={nid} className="ma-brand-netbadge">
-                {NetLogo({ network: nid, s: 9 }) ?? NET_GLYPH[nid] ?? "•"}
+                {NetLogo({ network: nid, s: 10, bold: true }) ?? NET_GLYPH[nid] ?? "•"}
               </span>
             ))}
           </span>

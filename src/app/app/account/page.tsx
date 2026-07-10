@@ -7,7 +7,7 @@
 // screen is finished + promoted. Adaptive: at one brand the cards are profiles;
 // at 2+ they are brands (scope.show_brand_level).
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import "@/components/account/account.css";
@@ -32,13 +32,30 @@ import {
   fetchMe,
   fetchMeAccount,
   fetchMeAccountAdvisor,
+  fetchMyAccounts,
+  fetchOnboardingStatus,
   getTokens,
+  setAccountTimezone,
 } from "@/lib/api";
+import { captureEvent } from "@/lib/analytics";
+import { isOnboardingSkipped, setSelectedAccountId } from "@/lib/account";
 import { pluralUnit, useTranslation } from "@/lib/i18n";
 import { ErrorBanner } from "@/components/ui/error-banner";
+import { Toast, ToastHost } from "@/components/ui/toast";
 import type { AdvisorData, MeAccountResponse } from "@/lib/types";
 
 type Phase = "loading" | "ready" | "error";
+
+// While any profile is mid-backfill the dashboard re-fetches itself so the
+// «Импортируем историю» card shows LIVE counts and flips to synced the moment
+// `initial_sync` finishes — without this the card sat on «0 постов · 0
+// комментариев» forever until a manual reload (the 2026-07-10 report).
+const IMPORT_POLL_MS = 7000;
+const IMPORT_POLL_MAX = 60; // ~7 min — past any realistic backfill
+
+function anyImporting(acc: MeAccountResponse): boolean {
+  return acc.brands.some((b) => b.profiles.some((p) => p.sync_status === "importing"));
+}
 
 export default function AccountDashboardPage() {
   const router = useRouter();
@@ -50,6 +67,81 @@ export default function AccountDashboardPage() {
   // blocks the dashboard. Null until it arrives / on 204 (thin data) / on error
   // → the honest AdvisorInvite renders instead of a fabricated verdict.
   const [adv, setAdv] = useState<AdvisorData | null>(null);
+  const [toastMsg, setToastMsg] = useState<{ text: string; tone: "success" | "error" } | null>(null);
+  // Auto-dismiss the landing toast (the Toast component itself is inert).
+  useEffect(() => {
+    if (!toastMsg) return;
+    const id = window.setTimeout(() => setToastMsg(null), 4800);
+    return () => window.clearTimeout(id);
+  }, [toastMsg]);
+
+  // ── post-OAuth landing (threads_connected=1 → this page is the return_to of
+  // the add-flow). Mirrors the Studio handler: toast + switch the selected
+  // account to the just-connected one + seed its timezone — and, the missing
+  // piece Zakhar hit on the reganomika1 re-onboarding test: a brand-new account
+  // NEEDS ITS VOICE ONBOARDING, so when the fresh profile has no role_book yet
+  // (needs_onboarding && not skipped) we route straight into the wizard instead
+  // of leaving the user staring at the import card with no path forward.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const connected = params.get("threads_connected");
+    const err = params.get("threads_error");
+    if (!connected && !err) return;
+    const strip = () => {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("threads_connected");
+      url.searchParams.delete("threads_error");
+      url.searchParams.delete("username");
+      window.history.replaceState({}, "", url.pathname + url.search + url.hash);
+    };
+    if (connected !== "1") {
+      if (err) {
+        setToastMsg({
+          text: err === "account_limit" ? t("accounts.connect_limit") : t("accounts.connect_error"),
+          tone: "error",
+        });
+        captureEvent("threads.connect_failed", { reason: err });
+      }
+      strip();
+      return;
+    }
+    const u = params.get("username");
+    captureEvent("threads.connect_succeeded");
+    strip();
+    let alive = true;
+    void (async () => {
+      try {
+        const list = await fetchMyAccounts();
+        const active = list.accounts.filter((a) => a.disconnected_at === null);
+        if (active.length === 0) return;
+        const justConnected =
+          (u ? active.find((a) => a.username === u) : undefined) ??
+          active.reduce((a, b) => (b.connected_at > a.connected_at ? b : a));
+        setSelectedAccountId(justConnected.id);
+        try {
+          const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+          if (tz) await setAccountTimezone(justConnected.id, tz);
+        } catch {
+          /* tz is cosmetic to the connect flow */
+        }
+        const ob = await fetchOnboardingStatus(justConnected.id);
+        if (!alive) return;
+        if (ob.needs_onboarding && !isOnboardingSkipped(justConnected.id)) {
+          router.replace("/app/onboarding");
+          return;
+        }
+        if (!alive) return;
+        setToastMsg({ text: u ? `@${u} · ${t("accounts.connected")}` : t("accounts.connected"), tone: "success" });
+      } catch {
+        /* fail-soft: the dashboard itself still renders the new profile */
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!getTokens()) {
@@ -99,9 +191,49 @@ export default function AccountDashboardPage() {
     };
   }, [router]);
 
+  // Live-refresh while any profile is importing: the backfill takes ~a minute
+  // and now writes progressive counts (initial_sync._update_sync_progress), so
+  // polling turns the import card into a real progress readout and flips it to
+  // synced when done. Keyed on the BOOLEAN (not the data object) so the
+  // interval survives each setData instead of being re-created per poll, and
+  // the poll counter accumulates toward its cap in a ref.
+  const importing = phase === "ready" && data !== null && anyImporting(data);
+  const pollCount = useRef(0);
+  useEffect(() => {
+    if (!importing) {
+      pollCount.current = 0;
+      return;
+    }
+    let inFlight = false;
+    const id = window.setInterval(async () => {
+      if (inFlight) return; // a slow poll must not overlap/re-order the next one
+      pollCount.current += 1;
+      if (pollCount.current > IMPORT_POLL_MAX) {
+        window.clearInterval(id);
+        return;
+      }
+      inFlight = true;
+      try {
+        const acc = await fetchMeAccount();
+        setData(acc); // `importing` recomputes off the fresh data and stops us
+      } catch {
+        /* transient poll failure — keep the current view, try again next tick */
+      } finally {
+        inFlight = false;
+      }
+    }, IMPORT_POLL_MS);
+    return () => window.clearInterval(id);
+  }, [importing]);
+
   // The account.css layer is width-tokened (--content-wide); center it like the
   // other data screens.
   const wrap = "mx-auto w-full max-w-[1180px] px-4 py-5 md:px-6 md:py-6";
+
+  const toastHost = toastMsg ? (
+    <ToastHost>
+      <Toast title={toastMsg.text} tone={toastMsg.tone} />
+    </ToastHost>
+  ) : null;
 
   if (phase === "error") {
     return (
@@ -113,6 +245,7 @@ export default function AccountDashboardPage() {
             onRetry={() => window.location.reload()}
           />
         </div>
+        {toastHost}
       </div>
     );
   }
@@ -131,6 +264,7 @@ export default function AccountDashboardPage() {
             <AccountMobileSkeleton />
           </div>
         </div>
+        {toastHost}
       </div>
     );
   }
@@ -146,6 +280,7 @@ export default function AccountDashboardPage() {
     return (
       <div className="min-h-screen bg-bg text-text">
         <FirstConnect t={tt} />
+        {toastHost}
       </div>
     );
   }
@@ -169,6 +304,7 @@ export default function AccountDashboardPage() {
         <div className="hidden md:block">
           <AppFooter />
         </div>
+        {toastHost}
       </div>
     );
   }
@@ -205,6 +341,7 @@ export default function AccountDashboardPage() {
       <div className="hidden md:block">
         <AppFooter />
       </div>
+      {toastHost}
     </div>
   );
 }
