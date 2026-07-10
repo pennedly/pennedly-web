@@ -31,6 +31,7 @@ const RENDER_PAGES = [
   "/gallery/advisor",
   "/gallery/engagement",
   "/gallery/scenarios",
+  "/gallery/studio-publish",
 ];
 
 for (const path of RENDER_PAGES) {

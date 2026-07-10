@@ -1476,7 +1476,9 @@ function BoosterAttachSection({
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-small font-semibold text-text">{t("scenarios.bo.studio.title")}</span>
-          <span className="mt-px block truncate text-caption text-text-subtle">
+          {/* Wraps like the design's .gcph-sum (growth-comment.css) — `truncate`
+              clipped the summary/off-hint to one ellipsised line. */}
+          <span className="mt-px block text-caption leading-[1.45] text-text-subtle [text-wrap:pretty]">
             {enabled ? t("scenarios.bo.studio.summary").replace("{n}", n.toLocaleString()).replace("{metric}", unit) : t("scenarios.bo.studio.off_hint")}
           </span>
         </span>
@@ -1679,8 +1681,13 @@ export function StudioPublishDialog({
         if (e.target === e.currentTarget && !busy) onClose();
       }}
     >
+      {/* The panel itself is the scroll container: with the booster section
+          expanded the dialog can outgrow the viewport, and without a max-height
+          + overflow-y here the only scrollable element was the nested text
+          preview — the wheel scrolled the preview while the Publish/Cancel
+          footer stayed unreachable (the BACKLOG booster bug). */}
       <div
-        className="w-full max-w-[420px] rounded-2xl border border-border bg-surface p-6 shadow-lg max-md:max-w-none max-md:rounded-b-none max-md:rounded-t-2xl max-md:pb-[calc(24px+env(safe-area-inset-bottom))]"
+        className="max-h-[calc(100dvh-48px)] w-full max-w-[420px] overflow-y-auto rounded-2xl border border-border bg-surface p-6 shadow-lg max-md:max-h-[88dvh] max-md:max-w-none max-md:rounded-b-none max-md:rounded-t-2xl max-md:pb-[calc(24px+env(safe-area-inset-bottom))]"
         style={{ animation: "dialog-in var(--duration-slow) var(--ease-entrance) both" }}
       >
         <div className="flex gap-3">

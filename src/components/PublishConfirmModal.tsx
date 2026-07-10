@@ -77,7 +77,11 @@ export function PublishConfirmModal({
         if (e.target === e.currentTarget && !isPublishing) onClose();
       }}
     >
-      <div className="w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-lg">
+      {/* max-h + overflow-y: the panel scrolls itself if it ever outgrows the
+          viewport (same guard as StudioPublishDialog — without it the nested
+          preview is the only scrollable element and the footer can become
+          unreachable on short viewports). */}
+      <div className="max-h-[calc(100dvh-48px)] w-full max-w-md overflow-y-auto rounded-2xl border border-border bg-surface p-6 shadow-lg">
         <h2 id="publish-modal-title" className="text-h3 font-semibold">
           {t("publish.title")}
         </h2>
