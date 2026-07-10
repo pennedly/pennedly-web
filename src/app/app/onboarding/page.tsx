@@ -434,7 +434,10 @@ function ChooseStep({
 
       <div role="radiogroup" aria-label={t("a11y.voice_setup_method")} className="mt-6 flex flex-col gap-3">
         {modes.map((m) => {
-          const disabled = m.id === "analyze" && !enoughPosts;
+          // While the history import is still running the analyze branch stays
+          // SELECTABLE (the wait happens inside the analyze stage); it locks
+          // only on the TERMINAL too-few verdict (import done, < the floor).
+          const disabled = m.id === "analyze" && !enoughPosts && !importing;
           const active = selected === m.id && !disabled;
           return (
             <button
@@ -482,29 +485,29 @@ function ChooseStep({
                       {t("onboarding.recommended")}
                     </span>
                   )}
-                  {disabled && importing && (
+                  {!enoughPosts && importing && (
                     <span className="inline-flex shrink-0 items-center gap-[6px] whitespace-nowrap rounded-full border border-border bg-surface px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.03em] text-text-muted">
                       <span className="inline-block h-[11px] w-[11px] animate-spin rounded-full border-[1.5px] border-current border-t-transparent opacity-70" />
                       {t("onboarding.choice_importing_chip")}
                     </span>
                   )}
-                  {disabled && !importing && (
+                  {disabled && (
                     <span className="inline-flex shrink-0 items-center gap-[5px] whitespace-nowrap rounded-full border border-border bg-surface px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.03em] text-text-muted">
                       <IcLock size={12} /> {t("onboarding.choice_locked").replace("{need}", String(MIN_POSTS))}
                     </span>
                   )}
                 </span>
                 <span className="mt-[5px] block text-pretty text-small leading-normal text-text-muted">
-                  {disabled
-                    ? importing
-                      ? t("onboarding.choice_importing_reason")
-                          .replace("{handle}", handle)
-                          .replace("{have}", String(postCount))
-                      : t("onboarding.choice_locked_reason")
+                  {m.id === "analyze" && !enoughPosts && importing
+                    ? t("onboarding.choice_importing_reason")
+                        .replace("{handle}", handle)
+                        .replace("{have}", String(postCount))
+                    : disabled
+                      ? t("onboarding.choice_locked_reason")
                           .replace("{need}", String(MIN_POSTS))
                           .replace("{handle}", handle)
                           .replace("{have}", String(postCount))
-                    : m.desc}
+                      : m.desc}
                 </span>
                 {!disabled && (
                   <span className="mt-[9px] inline-flex items-center gap-1.5 text-caption text-text-subtle">
@@ -544,11 +547,15 @@ function AnalyzeStep({
   stepIndex,
   slow,
   onCancel,
+  importingNote,
 }: {
   account: ConnectedAccount | null;
   stepIndex: number;
   slow?: boolean;
   onCancel?: () => void;
+  // Pre-analysis wait: the history import is still landing posts — shown as a
+  // live first row (spinner + counting copy) above the analysis steps.
+  importingNote?: string;
 }) {
   const { t } = useTranslation();
   return (
@@ -564,6 +571,14 @@ function AnalyzeStep({
           </span>
         )}
         <div className="mt-[22px] flex w-full max-w-[340px] flex-col gap-0.5 text-left">
+          {importingNote && (
+            <div className="flex items-center gap-3 px-1 py-[11px]">
+              <span className="grid h-[22px] w-[22px] shrink-0 place-items-center rounded-full border border-accent text-accent">
+                <span className="h-[11px] w-[11px] animate-spin rounded-full border-2 border-current border-t-transparent" />
+              </span>
+              <span className="text-small font-medium text-text">{importingNote}</span>
+            </div>
+          )}
           {ANALYZE_STEPS.map((k, i) => {
             const state = i < stepIndex ? "done" : i === stepIndex ? "active" : "todo";
             return (
@@ -1129,6 +1144,7 @@ export default function OnboardingPage() {
   const [mode, setMode] = useState<Mode>(null);
   const [anIndex, setAnIndex] = useState(0);
   const [analyzeSlow, setAnalyzeSlow] = useState(false);
+  const [awaitingImport, setAwaitingImport] = useState(false);
 
   const [desc, setDesc] = useState("");
   const [write, setWrite] = useState<string[]>([]);
@@ -1237,6 +1253,12 @@ export default function OnboardingPage() {
         // The recommended branch just unlocked and the user hasn't chosen
         // anything themselves — move the preselection onto it.
         if (st.can_analyze && !userPicked.current) setMode("analyze");
+        // Terminal short verdict while idling on choose: the analyze card just
+        // locked — a lingering mode="analyze" would keep Continue armed on a
+        // disabled card (the hard guard above also covers it; this fixes the UI).
+        if (!st.can_analyze && !(st.importing ?? false)) {
+          setMode((m) => (m === "analyze" ? null : m));
+        }
       } catch {
         /* transient poll failure — try again next tick */
       } finally {
@@ -1256,9 +1278,11 @@ export default function OnboardingPage() {
   // confirm or switch. Only fills an empty selection; never overrides a choice.
   useEffect(() => {
     if (stage === "choose" && status && mode === null) {
-      setMode(enoughPosts ? "analyze" : "scratch");
+      // While the import is still landing posts the analyze branch is the
+      // optimistic default — the wait happens inside the analyze stage.
+      setMode(enoughPosts || importing ? "analyze" : "scratch");
     }
-  }, [stage, status, mode, enoughPosts]);
+  }, [stage, status, mode, enoughPosts, importing]);
 
   async function onConnect() {
     setConnectStatus("connecting");
@@ -1277,6 +1301,32 @@ export default function OnboardingPage() {
   async function runAnalyze() {
     if (accountId === null) return;
     setError(null);
+    // HARD floor guard: below the post floor with the import finished, analyze
+    // must never fire (the backend only rejects at ZERO posts, so a stale
+    // mode="analyze" clicking Continue would run a real low-quality extraction).
+    if (!enoughPosts && !importing) {
+      setMode(null); // the preset effect re-fills with "scratch"
+      setError(
+        t("onboarding.import_too_few")
+          .replace("{need}", String(MIN_POSTS))
+          .replace("{have}", String(postCount)),
+      );
+      setStage("choose");
+      return;
+    }
+    // The import is still landing posts and the floor isn't met yet: enter the
+    // analyze stage in a WAITING phase — the status poll keeps running, and the
+    // effect below fires the real analysis the moment enough posts land (or
+    // bails to the terminal locked verdict if the import ends short). Preview
+    // testers wait the same way (a below-floor preview is as misleading).
+    if (!enoughPosts && importing) {
+      captureEvent("ui.onboarding_analyze_wait_import", { account_id: accountId });
+      setAwaitingImport(true);
+      setStage("analyze");
+      setAnIndex(0);
+      setAnalyzeSlow(false);
+      return;
+    }
     captureEvent("ui.onboarding_analyze", { account_id: accountId, preview });
     if (preview) {
       setBusy(true);
@@ -1333,10 +1383,48 @@ export default function OnboardingPage() {
   function cancelAnalyze() {
     timers.current.forEach(clearTimeout);
     timers.current = [];
+    setAwaitingImport(false);
     setAnalyzeSlow(false);
     setError(null);
     setStage("choose");
   }
+
+  // The wait stage must not outlive the status poll (it hard-caps at 60 ticks
+  // with no state change): a bounded timeout bails back to choose with the
+  // standard slow-analyze message.
+  useEffect(() => {
+    if (!awaitingImport || stage !== "analyze") return;
+    const id = window.setTimeout(() => {
+      setAwaitingImport(false);
+      setError(t("onboarding.analyze_timeout"));
+      setStage("choose");
+    }, 120_000);
+    return () => window.clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [awaitingImport, stage]);
+
+  // The analyze-stage WAIT resolves off the live status poll: enough posts →
+  // run the real analysis; import finished short → back to choose with the
+  // terminal locked verdict spelled out.
+  useEffect(() => {
+    if (!awaitingImport || stage !== "analyze") return;
+    if (enoughPosts) {
+      setAwaitingImport(false);
+      void runAnalyze();
+      return;
+    }
+    if (!importing) {
+      setAwaitingImport(false);
+      setMode(null); // never leave a locked card "selected" — preset → scratch
+      setError(
+        t("onboarding.import_too_few")
+          .replace("{need}", String(MIN_POSTS))
+          .replace("{have}", String(postCount)),
+      );
+      setStage("choose");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [awaitingImport, stage, enoughPosts, importing, postCount]);
 
   async function onCreate() {
     if (accountId === null) return;
@@ -1416,7 +1504,17 @@ export default function OnboardingPage() {
               importing={importing}
             />
           ) : stage === "analyze" ? (
-            <AnalyzeStep account={acct} stepIndex={anIndex} slow={analyzeSlow} onCancel={cancelAnalyze} />
+            <AnalyzeStep
+              account={acct}
+              stepIndex={awaitingImport ? -1 : anIndex}
+              slow={analyzeSlow || awaitingImport}
+              onCancel={cancelAnalyze}
+              importingNote={
+                awaitingImport
+                  ? t("onboarding.import_wait_note").replace("{have}", String(postCount))
+                  : undefined
+              }
+            />
           ) : stage === "scratch" ? (
             <ScratchStep
               desc={desc}

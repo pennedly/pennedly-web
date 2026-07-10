@@ -68,6 +68,13 @@ export default function AccountDashboardPage() {
   // → the honest AdvisorInvite renders instead of a fabricated verdict.
   const [adv, setAdv] = useState<AdvisorData | null>(null);
   const [toastMsg, setToastMsg] = useState<{ text: string; tone: "success" | "error" } | null>(null);
+  // A successful OAuth return holds the page on the loading skeleton until the
+  // routing decision lands (onboarding redirect vs stay) — without this the
+  // dashboard painted for a beat and THEN jumped into the wizard.
+  const [postOauthPending, setPostOauthPending] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("threads_connected") === "1";
+  });
   // Auto-dismiss the landing toast (the Toast component itself is inert).
   useEffect(() => {
     if (!toastMsg) return;
@@ -87,7 +94,14 @@ export default function AccountDashboardPage() {
     const params = new URLSearchParams(window.location.search);
     const connected = params.get("threads_connected");
     const err = params.get("threads_error");
-    if (!connected && !err) return;
+    if (!connected && !err) {
+      // StrictMode (dev) runs this effect twice: pass #1 strips the params and
+      // its async chain dies on the alive-flag, pass #2 lands here with a clean
+      // URL — clear the pending flag so the skeleton can't strand (a no-op in
+      // prod, where the initializer already resolved to false).
+      setPostOauthPending(false);
+      return;
+    }
     const strip = () => {
       const url = new URL(window.location.href);
       url.searchParams.delete("threads_connected");
@@ -114,14 +128,17 @@ export default function AccountDashboardPage() {
       try {
         const list = await fetchMyAccounts();
         const active = list.accounts.filter((a) => a.disconnected_at === null);
-        if (active.length === 0) return;
+        if (active.length === 0) {
+          if (alive) setPostOauthPending(false);
+          return;
+        }
         const justConnected =
           (u ? active.find((a) => a.username === u) : undefined) ??
           active.reduce((a, b) => (b.connected_at > a.connected_at ? b : a));
         setSelectedAccountId(justConnected.id);
         try {
           const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-          if (tz) await setAccountTimezone(justConnected.id, tz);
+          if (tz) void setAccountTimezone(justConnected.id, tz).catch(() => {});
         } catch {
           /* tz is cosmetic to the connect flow */
         }
@@ -132,9 +149,11 @@ export default function AccountDashboardPage() {
           return;
         }
         if (!alive) return;
+        setPostOauthPending(false); // staying — reveal the dashboard
         setToastMsg({ text: u ? `@${u} · ${t("accounts.connected")}` : t("accounts.connected"), tone: "success" });
       } catch {
         /* fail-soft: the dashboard itself still renders the new profile */
+        if (alive) setPostOauthPending(false);
       }
     })();
     return () => {
@@ -250,7 +269,7 @@ export default function AccountDashboardPage() {
     );
   }
 
-  if (phase === "loading" || !data) {
+  if (phase === "loading" || !data || postOauthPending) {
     return (
       <div className="min-h-screen bg-bg text-text">
         <div className={wrap}>

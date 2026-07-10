@@ -1240,6 +1240,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "onboarding.analyze_slow": "Это дольше обычного — вернуться",
   "onboarding.analyze_timeout": "Настройка голоса слишком долгая. Попробуй ещё раз.",
   "onboarding.choice_importing_chip": "Импортируем посты…",
+  "onboarding.import_too_few": "Импорт завершился: нашлось только {have} постов (нужно {need}). Начни с нуля — вариант разблокируется, когда постов станет больше.",
+  "onboarding.import_wait_note": "Импортируем твои посты — уже {have}",
   "onboarding.choice_importing_reason": "Pennedly ещё импортирует твою историю из {handle} — уже {have}. Обычно это занимает около минуты; вариант разблокируется сам.",
   "onboarding.analyze_locked": "Нужно {need} постов для разбора. У тебя {have}.",
   "onboarding.analyzing": "Разбираю твои посты…",
