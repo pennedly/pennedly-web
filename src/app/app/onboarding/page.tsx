@@ -474,7 +474,7 @@ function ChooseStep({
                     absolute top-right check (right-4) on the selected card. */}
                 <span className="flex items-center gap-[9px] pr-7 max-[560px]:flex-wrap">
                   <span className="text-h3 font-semibold tracking-[-0.006em]">{t(m.title)}</span>
-                  {m.recommended && !disabled && (
+                  {m.recommended && !disabled && !(importing && !enoughPosts) && (
                     <span
                       className="shrink-0 whitespace-nowrap rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.03em] text-accent"
                       style={{
@@ -485,12 +485,6 @@ function ChooseStep({
                       {t("onboarding.recommended")}
                     </span>
                   )}
-                  {!enoughPosts && importing && (
-                    <span className="inline-flex shrink-0 items-center gap-[6px] whitespace-nowrap rounded-full border border-border bg-surface px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.03em] text-text-muted">
-                      <span className="inline-block h-[11px] w-[11px] animate-spin rounded-full border-[1.5px] border-current border-t-transparent opacity-70" />
-                      {t("onboarding.choice_importing_chip")}
-                    </span>
-                  )}
                   {disabled && (
                     <span className="inline-flex shrink-0 items-center gap-[5px] whitespace-nowrap rounded-full border border-border bg-surface px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.03em] text-text-muted">
                       <IcLock size={12} /> {t("onboarding.choice_locked").replace("{need}", String(MIN_POSTS))}
@@ -498,17 +492,18 @@ function ChooseStep({
                   )}
                 </span>
                 <span className="mt-[5px] block text-pretty text-small leading-normal text-text-muted">
-                  {m.id === "analyze" && !enoughPosts && importing
-                    ? t("onboarding.choice_importing_reason")
+                  {disabled
+                    ? t("onboarding.choice_locked_reason")
+                        .replace("{need}", String(MIN_POSTS))
                         .replace("{handle}", handle)
                         .replace("{have}", String(postCount))
-                    : disabled
-                      ? t("onboarding.choice_locked_reason")
-                          .replace("{need}", String(MIN_POSTS))
-                          .replace("{handle}", handle)
-                          .replace("{have}", String(postCount))
-                      : m.desc}
+                    : m.desc}
                 </span>
+                {m.id === "analyze" && importing && !enoughPosts && (
+                  <span className="mt-[7px] block text-pretty text-caption leading-normal text-text-subtle">
+                    {t("onboarding.analyze_new_hint")}
+                  </span>
+                )}
                 {!disabled && (
                   <span className="mt-[9px] inline-flex items-center gap-1.5 text-caption text-text-subtle">
                     <IcClock size={13} /> {t(m.meta)}
