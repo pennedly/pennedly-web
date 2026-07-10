@@ -918,8 +918,6 @@ export const pt: Partial<Record<MessageKey, string>> = {
   "feed.vs_avg": "× sua média",
   "feed.fresh": "ainda assentando",
   "feed.open": "abrir no Threads ↗",
-  "feed.growth": "crescimento",
-  "feed.growth_none": "ainda não há dados suficientes para uma curva",
   "feed.autoreply_on": "auto-respostas ativas",
   "feed.autoreply_off": "auto-respostas inativas",
   "feed.autoreply_hint":
@@ -1557,10 +1555,7 @@ export const pt: Partial<Record<MessageKey, string>> = {
   "feed.settling": "Ainda assentando",
   "feed.times_average": "× a média",
   "feed.open_threads": "Abrir no Threads",
-  "feed.views_over": "Visualizações ao longo de",
   "feed.your_average": "sua média",
-  "feed.posted": "Publicado",
-  "feed.now": "Agora",
   "feed.delete_post": "Excluir post",
   "feed.delete_title": "Excluir este post?",
   "feed.delete_sub":

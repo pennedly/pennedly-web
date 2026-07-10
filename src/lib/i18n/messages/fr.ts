@@ -918,8 +918,6 @@ export const fr: Partial<Record<MessageKey, string>> = {
   "feed.vs_avg": "× ta moyenne",
   "feed.fresh": "encore en cours",
   "feed.open": "ouvrir dans Threads ↗",
-  "feed.growth": "croissance",
-  "feed.growth_none": "pas encore assez de données pour une courbe",
   "feed.autoreply_on": "auto-réponses actives",
   "feed.autoreply_off": "auto-réponses inactives",
   "feed.autoreply_hint":
@@ -1584,10 +1582,7 @@ export const fr: Partial<Record<MessageKey, string>> = {
   "feed.settling": "Encore en cours",
   "feed.times_average": "× la moyenne",
   "feed.open_threads": "Ouvrir sur Threads",
-  "feed.views_over": "Vues sur",
   "feed.your_average": "ta moyenne",
-  "feed.posted": "Publié",
-  "feed.now": "Maintenant",
   "feed.delete_post": "Supprimer le post",
   "feed.delete_title": "Supprimer ce post ?",
   "feed.delete_sub":

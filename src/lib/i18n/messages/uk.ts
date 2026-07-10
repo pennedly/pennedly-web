@@ -915,8 +915,6 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "feed.vs_avg": "× твоє середнє",
   "feed.fresh": "ще набирає",
   "feed.open": "відкрити у Threads ↗",
-  "feed.growth": "зростання",
-  "feed.growth_none": "поки замало даних для кривої",
   "feed.autoreply_on": "автовідповіді увімк.",
   "feed.autoreply_off": "автовідповіді вимк.",
   "feed.autoreply_hint":
@@ -1576,10 +1574,7 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "feed.settling": "Ще набирає",
   "feed.times_average": "× від середнього",
   "feed.open_threads": "Відкрити у Threads",
-  "feed.views_over": "Перегляди за",
   "feed.your_average": "твоє середнє",
-  "feed.posted": "Опубліковано",
-  "feed.now": "Зараз",
   "feed.delete_post": "Видалити пост",
   "feed.delete_title": "Видалити цей пост?",
   "feed.delete_sub":

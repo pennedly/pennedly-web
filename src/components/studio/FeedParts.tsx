@@ -2,10 +2,10 @@
 
 // My Feed presentational layer — pure components driven by props, so the live
 // screen (real API) and the ?demo=1 review (mock data) render identical pixels.
-// Built 1:1 to Feed-SPEC.html: Baseline summary, sort segment, post cards with
+// Built to Feed-SPEC.html: Baseline summary, sort segment, post cards with
 // ViralityBadge ("Still settling" / "{r}× average" / "On par"), hero+sub metrics,
-// expandable growth chart (SVG), auto-reply pill, ⋯-menu (translate + delete),
-// confirm-delete dialog.
+// auto-reply pill, ⋯-menu (translate + delete), confirm-delete dialog. The
+// per-post growth chart was REMOVED 2026-07-10 (Zakhar: убрать «рост поста»).
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
@@ -21,7 +21,6 @@ import {
   IcArrowLeft,
   IcArrowUp,
   IcBubble,
-  IcChart,
   IcCheck,
   IcChevDown,
   IcClock,
@@ -72,7 +71,6 @@ export type FeedCardModel = {
 
 export type FeedHandlers = {
   onToggleAutoReply: (p: FeedCardModel) => void;
-  onToggleGrowth: (p: FeedCardModel) => void;
   onDelete: (p: FeedCardModel) => void;
   onTranslate: (p: FeedCardModel, lang: UiLang) => Promise<string>;
 };
@@ -129,40 +127,6 @@ function ViralityBadge({ ratio, settling }: { ratio: number; settling?: boolean 
       {ratio.toFixed(1)}
       {t("feed.times_average")}
     </span>
-  );
-}
-
-// ───────────────────────────── TrendChart ───────────────────────────────────
-function TrendChart({ series, avg }: { series: number[]; avg: number }) {
-  const { t } = useTranslation();
-  const W = 600;
-  const H = 112;
-  const PAD = 8; // vertical breathing room
-  const PADR = 8; // right inset so the end dot (r3.6 + 2px stroke) isn't clipped by the SVG viewport
-  const max = Math.max(...series, avg, 1);
-  const n = series.length;
-  const x = (i: number) => (n > 1 ? (i / (n - 1)) * (W - PADR) : 0);
-  const y = (v: number) => H - PAD - (v / max) * (H - PAD * 2);
-  const curve = series.map((v, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(" ");
-  const lastX = x(n - 1);
-  const area = `${curve} L${lastX.toFixed(1)} ${H} L0 ${H} Z`;
-  // The average line + label render as an HTML overlay (not SVG <text>) so the
-  // text stays crisp at any width and can flow OUTSIDE the plot without clipping.
-  const avgPct = (y(avg) / H) * 100;
-  const labelBelow = avgPct < 16; // line near the top → drop the label under it (else it clips the title)
-  return (
-    <div className="relative">
-      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="auto" role="img" aria-label="Views over time" className="block">
-        <path d={area} fill="var(--color-accent)" fillOpacity="0.1" />
-        <path d={curve} fill="none" stroke="var(--color-accent)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx={lastX} cy={y(series[n - 1])} r="3.6" fill="var(--color-accent)" stroke="var(--color-surface)" strokeWidth="2" />
-      </svg>
-      <div className="pointer-events-none absolute inset-x-0 border-t border-dashed border-text-subtle/70" style={{ top: `${avgPct}%` }}>
-        <span className={cn("absolute left-0 whitespace-nowrap text-caption leading-none text-text-subtle", labelBelow ? "top-[4px]" : "bottom-[4px]")}>
-          {t("feed.your_average")}
-        </span>
-      </div>
-    </div>
   );
 }
 
@@ -486,8 +450,6 @@ export function FeedCard({
   authorAvatar,
   authorName,
   authorHandle,
-  growthOpen,
-  growthSeries,
   tester,
   h,
 }: {
@@ -497,8 +459,6 @@ export function FeedCard({
   authorAvatar?: string | null;
   authorName: string;
   authorHandle: string;
-  growthOpen: boolean;
-  growthSeries: number[] | null;
   tester: boolean;
   h: FeedHandlers;
 }) {
@@ -585,30 +545,6 @@ export function FeedCard({
         </div>
       </div>
 
-      {/* growth panel */}
-      {growthOpen && (
-        <div
-          className="mt-3.5 rounded-md border border-border bg-surface-2 px-4 pb-3 pt-4"
-          style={{ animation: "card-in var(--duration-base) var(--ease-entrance) both" }}
-        >
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <span className="text-small font-semibold">{t("feed.views_over")} {p.time}</span>
-            <span className="text-caption text-text-subtle">{fmt(p.views)} {t("feed.views")}</span>
-          </div>
-          {growthSeries && growthSeries.length > 1 ? (
-            <>
-              <TrendChart series={growthSeries} avg={baselineViews} />
-              <div className="mt-[7px] flex justify-between text-caption text-text-subtle">
-                <span>{t("feed.posted")}</span>
-                <span>{t("feed.now")}</span>
-              </div>
-            </>
-          ) : (
-            <p className="py-4 text-center text-caption text-text-subtle">{t("feed.growth_none")}</p>
-          )}
-        </div>
-      )}
-
       {/* footer — desktop: one row; mobile two-tier (auto-replies pill on its own meta line, then action row) */}
       <div className="mt-3.5 flex items-center gap-3 border-t border-border pt-[13px] max-md:flex-col max-md:items-stretch max-md:gap-2.5">
         <button
@@ -624,20 +560,6 @@ export function FeedCard({
           {p.autoReply ? t("feed.autoreply_on") : t("feed.autoreply_off")}
         </button>
         <div className="ml-auto flex items-center gap-2 max-md:ml-0 max-md:w-full">
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => h.onToggleGrowth(p)}
-            aria-expanded={growthOpen}
-            aria-label={t("feed.growth")}
-            className="max-md:h-11 max-md:w-11 max-md:shrink-0 max-md:gap-0 max-md:p-0"
-          >
-            <IcChart size={15} />
-            <span className="inline-flex items-center gap-2 max-md:hidden">
-              {t("feed.growth")}
-              <IcChevDown size={14} className={cn("transition-transform", growthOpen && "rotate-180")} />
-            </span>
-          </Button>
           <a
             href="#"
             target="_blank"

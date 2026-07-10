@@ -628,6 +628,9 @@ export type FeedResponse = {
   reference: FeedReference;
   posts: FeedPost[];
   count: number;
+  // Older posts remain beyond this page (offset pagination — the feed's
+  // «Показать ещё»). Optional for the one mixed-version deploy window.
+  has_more?: boolean;
 };
 
 // Follower-growth line on Stats. Daily snapshots (Threads has no history, so it

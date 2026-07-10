@@ -2,7 +2,7 @@
 
 // My Feed (/app/feed) — published-posts analytics, rebuilt 1:1 to Feed-SPEC.html.
 // Baseline summary → sort segment → post cards with a virality verdict vs the
-// account's own baseline, hero+sub metrics, an expandable growth chart, a
+// account's own baseline, hero+sub metrics, a
 // per-post auto-reply toggle, inline translate and delete. Real API wiring is
 // preserved; a tester ?demo=1 panel (dark/state/sort) drives every state.
 
@@ -17,13 +17,13 @@ import {
   fetchFeed,
   fetchMe,
   fetchMyAccounts,
-  fetchPostMetricsHistory,
   getTokens,
   setPostAutoReply,
   translateText,
 } from "@/lib/api";
 import { captureEvent } from "@/lib/analytics";
 import { useSelectedAccountId } from "@/lib/account";
+import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n";
 import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
 import { BetaNotice } from "@/components/ui/beta-notice";
@@ -77,8 +77,8 @@ export default function FeedPage() {
   const [sort, setSort] = useState<"recent" | "top">("recent");
   // The account reply mode resolves a post's NULL (inherit) auto_reply for display.
   const [replyMode, setReplyMode] = useState<"off" | "all" | "selected">("all");
-  const [growthOpen, setGrowthOpen] = useState<number | null>(null);
-  const [growth, setGrowth] = useState<Record<number, number[]>>({});
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<FeedCardModel | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [toasts, setToasts] = useState<ToastT[]>([]);
@@ -120,6 +120,7 @@ export default function FeedPage() {
     (async () => {
       try {
         const data = await fetchFeed(accountId, { limit: 50 });
+        setHasMore(data.has_more ?? false);
         setPosts(data.posts);
         setReference(data.reference);
       } catch (e) {
@@ -200,10 +201,6 @@ export default function FeedPage() {
         : "ready";
 
   // ── handlers ──
-  function growthSeries(p: FeedCardModel): number[] | null {
-    if (demoOn) return demoPosts.find((d) => d.id === p.id)?.growth ?? null;
-    return growth[p.id] ?? null;
-  }
 
   const realHandlers: FeedHandlers = {
     onToggleAutoReply: (p) => {
@@ -215,24 +212,26 @@ export default function FeedPage() {
       });
       toast(next ? t("feed.autoreply_on") : t("feed.autoreply_off"), "success", { description: next ? t("feed.autoreply_sub_on") : t("feed.autoreply_sub_off") });
     },
-    onToggleGrowth: async (p) => {
-      if (growthOpen === p.id) {
-        setGrowthOpen(null);
-        return;
-      }
-      setGrowthOpen(p.id);
-      if (!growth[p.id]) {
-        try {
-          const g = await fetchPostMetricsHistory(p.id);
-          setGrowth((m) => ({ ...m, [p.id]: g.series.map((s) => s.views ?? 0) }));
-        } catch {
-          setGrowth((m) => ({ ...m, [p.id]: [] }));
-        }
-      }
-    },
     onDelete: (p) => setDeleteTarget(p),
     onTranslate: async (p, lang) => (await translateText(p.text, lang.code)).translated_text,
   };
+
+  // Fetch the next page of OLDER posts and append (offset pagination — the
+  // backend orders by published_at DESC, so `offset = posts.length` continues
+  // where the current list ends).
+  async function loadMore() {
+    if (accountId === null || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const data = await fetchFeed(accountId, { limit: 50, offset: posts.length });
+      setPosts((ps) => [...ps, ...data.posts.filter((n) => !ps.some((x) => x.id === n.id))]);
+      setHasMore(data.has_more ?? false);
+    } catch {
+      /* transient — the button stays for a retry */
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   const demoHandlers: FeedHandlers = {
     onToggleAutoReply: (p) => {
@@ -240,7 +239,6 @@ export default function FeedPage() {
       setDemoPosts((ps) => ps.map((x) => (x.id === p.id ? { ...x, autoReply: next } : x)));
       toast(next ? t("feed.autoreply_on") : t("feed.autoreply_off"), "success", { description: next ? t("feed.autoreply_sub_on") : t("feed.autoreply_sub_off") });
     },
-    onToggleGrowth: (p) => setGrowthOpen((cur) => (cur === p.id ? null : p.id)),
     onDelete: (p) => setDeleteTarget(p),
     onTranslate: async (p, lang) => {
       await new Promise((r) => setTimeout(r, 500));
@@ -337,13 +335,18 @@ export default function FeedPage() {
                   authorAvatar={demoOn ? null : account.avatarUrl}
                   authorName={demoOn ? "Mara Lin" : account.name}
                   authorHandle={demoOn ? "mara.lin" : account.handle}
-                  growthOpen={growthOpen === p.id}
-                  growthSeries={growthSeries(p)}
                   tester={demoOn ? true : isTester}
                   h={handlers}
                 />
               ))}
             </div>
+            {!demoOn && hasMore && (
+              <div className="mt-5 flex justify-center">
+                <Button variant="secondary" loading={loadingMore} onClick={() => void loadMore()}>
+                  {t("feed.load_more")}
+                </Button>
+              </div>
+            )}
           </>
         )}
       </main>

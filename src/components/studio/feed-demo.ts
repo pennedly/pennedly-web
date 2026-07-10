@@ -18,7 +18,6 @@ export type FeedDemoPost = {
   reposts: number;
   settling?: boolean; // is_fresh — still settling
   autoReply: boolean;
-  growth: number[]; // cumulative views series for the trend chart
 };
 
 export type FeedDemoBaseline = {
@@ -59,7 +58,6 @@ export const FEED_DEMO_POSTS: FeedDemoPost[] = [
     comments: 86,
     reposts: 73,
     autoReply: true,
-    growth: [0, 9000, 21000, 32000, 41000, 48200],
   },
   {
     id: 2,
@@ -74,7 +72,6 @@ export const FEED_DEMO_POSTS: FeedDemoPost[] = [
     reposts: 3,
     settling: true,
     autoReply: true,
-    growth: [0, 400, 900, 1400, 1800, 2100],
   },
   {
     id: 3,
@@ -87,7 +84,6 @@ export const FEED_DEMO_POSTS: FeedDemoPost[] = [
     comments: 31,
     reposts: 19,
     autoReply: false,
-    growth: [0, 6000, 14000, 22000, 28000, 31800],
   },
   {
     id: 4,
@@ -99,7 +95,6 @@ export const FEED_DEMO_POSTS: FeedDemoPost[] = [
     comments: 28,
     reposts: 16,
     autoReply: true,
-    growth: [0, 5000, 11000, 16000, 20000, 22400],
   },
   {
     id: 5,
@@ -111,7 +106,6 @@ export const FEED_DEMO_POSTS: FeedDemoPost[] = [
     comments: 19,
     reposts: 11,
     autoReply: false,
-    growth: [0, 4000, 8000, 11500, 14000, 15600],
   },
   {
     id: 6,
@@ -123,6 +117,5 @@ export const FEED_DEMO_POSTS: FeedDemoPost[] = [
     comments: 9,
     reposts: 5,
     autoReply: false,
-    growth: [0, 2200, 4300, 6000, 7400, 8400],
   },
 ];

@@ -945,10 +945,11 @@ export async function setPostAutoReply(
 // ── My Feed (posts + inline analytics) ───────────────────────────
 export async function fetchFeed(
   accountId: number,
-  params?: { limit?: number },
+  params?: { limit?: number; offset?: number },
 ): Promise<FeedResponse> {
   const qs = new URLSearchParams();
   if (params?.limit) qs.set("limit", String(params.limit));
+  if (params?.offset) qs.set("offset", String(params.offset));
   const suffix = qs.toString() ? `?${qs.toString()}` : "";
   return fetchApi<FeedResponse>(`/api/accounts/${accountId}/feed${suffix}`);
 }
