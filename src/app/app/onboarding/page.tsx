@@ -386,6 +386,7 @@ function ChooseStep({
   onBack,
   enoughPosts,
   postCount,
+  importing = false,
 }: {
   account: ConnectedAccount | null;
   selected: Mode;
@@ -394,6 +395,10 @@ function ChooseStep({
   onBack: (() => void) | null;
   enoughPosts: boolean;
   postCount: number;
+  // The on-connect backfill is still running: the analyze card shows a live
+  // "importing your posts…" state instead of the terminal locked verdict —
+  // the page polls the status and the card unlocks by itself.
+  importing?: boolean;
 }) {
   const { t } = useTranslation();
   const handle = account?.username ? `@${account.username}` : "your account";
@@ -477,7 +482,13 @@ function ChooseStep({
                       {t("onboarding.recommended")}
                     </span>
                   )}
-                  {disabled && (
+                  {disabled && importing && (
+                    <span className="inline-flex shrink-0 items-center gap-[6px] whitespace-nowrap rounded-full border border-border bg-surface px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.03em] text-text-muted">
+                      <span className="inline-block h-[11px] w-[11px] animate-spin rounded-full border-[1.5px] border-current border-t-transparent opacity-70" />
+                      {t("onboarding.choice_importing_chip")}
+                    </span>
+                  )}
+                  {disabled && !importing && (
                     <span className="inline-flex shrink-0 items-center gap-[5px] whitespace-nowrap rounded-full border border-border bg-surface px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.03em] text-text-muted">
                       <IcLock size={12} /> {t("onboarding.choice_locked").replace("{need}", String(MIN_POSTS))}
                     </span>
@@ -485,10 +496,14 @@ function ChooseStep({
                 </span>
                 <span className="mt-[5px] block text-pretty text-small leading-normal text-text-muted">
                   {disabled
-                    ? t("onboarding.choice_locked_reason")
-                        .replace("{need}", String(MIN_POSTS))
-                        .replace("{handle}", handle)
-                        .replace("{have}", String(postCount))
+                    ? importing
+                      ? t("onboarding.choice_importing_reason")
+                          .replace("{handle}", handle)
+                          .replace("{have}", String(postCount))
+                      : t("onboarding.choice_locked_reason")
+                          .replace("{need}", String(MIN_POSTS))
+                          .replace("{handle}", handle)
+                          .replace("{have}", String(postCount))
                     : m.desc}
                 </span>
                 {!disabled && (
@@ -1198,6 +1213,39 @@ export default function OnboardingPage() {
 
   const enoughPosts = status?.can_analyze ?? false;
   const postCount = status?.post_count ?? 0;
+  const importing = status?.importing ?? false;
+
+  // The just-connected account races the ~1-min history backfill: while it
+  // runs, poll the status so the analyze card counts up and unlocks by itself
+  // (before this, the wizard froze on the first-seconds snapshot — «их 3»).
+  const userPicked = useRef(false);
+  useEffect(() => {
+    if (!importing || accountId == null) return;
+    let inFlight = false;
+    let polls = 0;
+    const id = window.setInterval(async () => {
+      if (inFlight) return;
+      polls += 1;
+      if (polls > 60) {
+        window.clearInterval(id);
+        return;
+      }
+      inFlight = true;
+      try {
+        const st = await fetchOnboardingStatus(accountId);
+        setStatus(st);
+        // The recommended branch just unlocked and the user hasn't chosen
+        // anything themselves — move the preselection onto it.
+        if (st.can_analyze && !userPicked.current) setMode("analyze");
+      } catch {
+        /* transient poll failure — try again next tick */
+      } finally {
+        inFlight = false;
+      }
+    }, 5000);
+    return () => window.clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [importing, accountId]);
   // Revisit = arrived already set up (came from Settings): Connect is done,
   // show "Back to Settings". First-run shows "Skip for now".
   const firstRun = !alreadySetUp;
@@ -1357,11 +1405,15 @@ export default function OnboardingPage() {
             <ChooseStep
               account={acct}
               selected={mode}
-              onSelect={setMode}
+              onSelect={(m) => {
+                userPicked.current = true;
+                setMode(m);
+              }}
               onContinue={() => (mode === "analyze" ? runAnalyze() : setStage("scratch"))}
               onBack={null}
               enoughPosts={enoughPosts}
               postCount={postCount}
+              importing={importing}
             />
           ) : stage === "analyze" ? (
             <AnalyzeStep account={acct} stepIndex={anIndex} slow={analyzeSlow} onCancel={cancelAnalyze} />

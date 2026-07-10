@@ -153,6 +153,11 @@ export type OnboardingStatus = {
   post_count: number;
   can_analyze: boolean;
   min_posts_to_analyze: number; // Q53 — the post_count gate `can_analyze` checks
+  // True while the on-connect backfill is still running: post_count/can_analyze
+  // are a moving snapshot then — the wizard polls and shows an importing state
+  // instead of a terminal "you only have N" verdict. Optional for the one
+  // mixed-version deploy window (old API → treat as false).
+  importing?: boolean;
 };
 
 export type FromScratchInput = {
