@@ -470,7 +470,10 @@ export default function Studio() {
     captureEvent("ui.publish_confirmed", { draft_id: card.id, boost: boost !== undefined });
     try {
       const result = await publishDraft(card.id, boost);
-      setDrafts((p) => p.map((d) => (d.id === card.id ? { ...d, published: true, threads_url: d.threads_url } : d)));
+      // Carry the permalink the publish returned so the just-published card's
+      // «Open in Threads» is live immediately (was keeping the draft's stale
+      // pre-publish null → dead «#»). Fall back to the old value if Meta gave none.
+      setDrafts((p) => p.map((d) => (d.id === card.id ? { ...d, published: true, threads_url: result.threads_url ?? d.threads_url } : d)));
       setPublishTarget(null);
       setTab("published");
       toast(t("studio.toast_published"), "success", { description: selectedAccount?.handle ? `@${selectedAccount.handle}` : `#${result.threads_post_id}` });

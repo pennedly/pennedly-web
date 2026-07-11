@@ -267,14 +267,20 @@ export function PostContext({ post }: { post: ReplyPost }) {
       <p className="mt-2 text-body leading-[1.55] text-text max-md:line-clamp-2">{post.text}</p>
       <div className="mt-3 flex items-center justify-between gap-3">
         <span className="text-caption text-text-subtle">{post.time}</span>
-        <a
-          href={post.threadsUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex shrink-0 items-center gap-1.5 text-small font-medium text-accent hover:underline hover:underline-offset-2"
-        >
-          {t("replies.open_in_threads")} <IcExternal size={14} />
-        </a>
+        {post.threadsUrl ? (
+          <a
+            href={post.threadsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex shrink-0 items-center gap-1.5 text-small font-medium text-accent hover:underline hover:underline-offset-2"
+          >
+            {t("replies.open_in_threads")} <IcExternal size={14} />
+          </a>
+        ) : (
+          <span aria-disabled className="inline-flex shrink-0 items-center gap-1.5 text-small font-medium text-text-subtle opacity-60">
+            {t("replies.open_in_threads")} <IcExternal size={14} />
+          </span>
+        )}
       </div>
     </div>
   );
@@ -650,9 +656,15 @@ export function CommentCard({
             </span>,
           )}
           {actions(
-            <a href="#" target="_blank" rel="noopener noreferrer" className={buttonClasses({ variant: "secondary", size: "sm", className: growCls })}>
-              <IcExternal size={15} /> {t("replies.open_in_threads")}
-            </a>,
+            c.url ? (
+              <a href={c.url} target="_blank" rel="noopener noreferrer" className={buttonClasses({ variant: "secondary", size: "sm", className: growCls })}>
+                <IcExternal size={15} /> {t("replies.open_in_threads")}
+              </a>
+            ) : (
+              <span aria-disabled className={buttonClasses({ variant: "secondary", size: "sm", className: cn(growCls, "pointer-events-none opacity-45") })}>
+                <IcExternal size={15} /> {t("replies.open_in_threads")}
+              </span>
+            ),
           )}
         </>
       );

@@ -444,6 +444,10 @@ export type PublishResult = {
   status: string;
   threads_post_id: string;
   published_at: string;
+  // Public Threads permalink Meta returned for the just-published post (null if
+  // none). Lets the composer wire a live «Open in Threads» right away instead of
+  // holding the draft's stale pre-publish null.
+  threads_url: string | null;
   // The id of the boost scenario created when a boost was attached to this
   // publish (entry-point B), or null when none was attached. Lets the composer
   // confirm/link the new routine.

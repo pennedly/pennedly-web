@@ -20,6 +20,9 @@ export type ReplyComment = {
   replyTranslated?: string | null;
   time: string;
   repliedTime?: string | null;
+  // Public Threads permalink of the comment itself, for «Open in Threads» on a
+  // replied comment. Null when Meta didn't return one → the CTA renders disabled.
+  url?: string | null;
   // One image attached to the reply draft (relative /media/... URL).
   media?: { url: string; alt?: string | null }[];
 };
@@ -28,7 +31,9 @@ export type ReplyPost = {
   id: string;
   text: string;
   time: string;
-  threadsUrl: string;
+  // Public Threads permalink of the parent post. Null when we don't have one
+  // (Meta omitted it and it hasn't re-synced) → PostContext renders the link disabled.
+  threadsUrl: string | null;
 };
 
 // Only two tweaks in Replies (no account / density / tab — see spec §6).
@@ -107,6 +112,7 @@ export const DEMO_COMMENTS: ReplyComment[] = [
     reply: "Thanks Sara. Simple and repeatable beats clever and rare, every time.",
     time: "5h",
     repliedTime: "4h",
+    url: "https://www.threads.net/@mara.lin/post/demoA",
   },
   // ── pB ──
   {

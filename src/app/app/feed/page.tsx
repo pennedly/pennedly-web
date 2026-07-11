@@ -156,7 +156,7 @@ export default function FeedPage() {
   // ── unified cards + baseline ──
   const cards: FeedCardModel[] = useMemo(() => {
     const list: FeedCardModel[] = demoOn
-      ? demoPosts
+      ? demoPosts.map((d) => ({ ...d, threadsUrl: "https://www.threads.net/" }))
       : posts.map((fp) => ({
           id: fp.id,
           kind: "post",
@@ -169,6 +169,7 @@ export default function FeedPage() {
           settling: fp.is_fresh,
           autoReply: fp.auto_reply ?? (replyMode === "all"),
           media: fp.media ?? [],
+          threadsUrl: fp.threads_url,
         }));
     return sort === "top" ? [...list].sort((a, b) => b.views - a.views) : list;
   }, [demoOn, demoPosts, posts, sort, locale, replyMode]);

@@ -305,7 +305,7 @@ export default function RepliesPage() {
       id: String(p.post_id),
       text: p.post_text ?? "",
       time: relativeTime(p.post_published_at, locale),
-      threadsUrl: p.post_threads_url ?? "#",
+      threadsUrl: p.post_threads_url,
     }));
     const map: Record<string, ReplyComment[]> = {};
     for (const c of comments) {
@@ -325,6 +325,7 @@ export default function RepliesPage() {
         // and the UI then drops the "·" + time chip instead of faking it.
         time: relativeTime(c.published_at, locale),
         repliedTime: relativeTime(c.replied_at, locale) || null,
+        url: c.comment_url,
         media: c.draft_media ?? [],
       });
     }

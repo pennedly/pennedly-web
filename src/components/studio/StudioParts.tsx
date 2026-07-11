@@ -928,14 +928,23 @@ export function DraftCard({
           </div>
           <div className="ml-auto flex items-center gap-2 max-md:w-full">
             <CardMenu items={[]} translatedLang={translated?.lang ?? null} onTranslate={runTranslate} onShowOriginal={() => setTranslated(null)} />
-            <a
-              href={card.threadsUrl ?? "#"}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={buttonClasses({ variant: "secondary", size: "sm", className: "max-md:h-auto max-md:min-h-[44px] max-md:flex-1 max-md:whitespace-normal" })}
-            >
-              <IcExternal size={15} /> {t("studio.open_threads")}
-            </a>
+            {card.threadsUrl ? (
+              <a
+                href={card.threadsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={buttonClasses({ variant: "secondary", size: "sm", className: "max-md:h-auto max-md:min-h-[44px] max-md:flex-1 max-md:whitespace-normal" })}
+              >
+                <IcExternal size={15} /> {t("studio.open_threads")}
+              </a>
+            ) : (
+              <span
+                aria-disabled
+                className={buttonClasses({ variant: "secondary", size: "sm", className: "pointer-events-none opacity-45 max-md:h-auto max-md:min-h-[44px] max-md:flex-1 max-md:whitespace-normal" })}
+              >
+                <IcExternal size={15} /> {t("studio.open_threads")}
+              </span>
+            )}
           </div>
         </>
       );

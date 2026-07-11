@@ -67,6 +67,10 @@ export type FeedCardModel = {
   settling?: boolean;
   autoReply: boolean;
   media?: { url: string; alt?: string | null; type?: string | null; poster?: string | null }[];
+  // Public Threads permalink for «Open in Threads». Null when we don't have one
+  // yet (a fresh post before ingest, or Meta returned none) → the CTA renders
+  // disabled instead of linking to a dead «#».
+  threadsUrl?: string | null;
 };
 
 export type FeedHandlers = {
@@ -139,7 +143,7 @@ function FeedMenu({
   onShowOriginal,
   onDelete,
 }: {
-  threadsUrl: string;
+  threadsUrl: string | null;
   translatedLang: UiLang | null;
   tester: boolean;
   onTranslate: (l: UiLang) => void;
@@ -196,9 +200,15 @@ function FeedMenu({
                 <span className="flex-1">{t("studio.translate")}</span>
                 <IcChevDown size={13} className="-rotate-90 text-text-subtle" />
               </button>
-              <a role="menuitem" href={threadsUrl} target="_blank" rel="noopener noreferrer" onClick={shut} className={cn(item, "text-text hover:bg-surface-2")}>
-                <IcExternal size={15} /> {t("feed.open_threads")}
-              </a>
+              {threadsUrl ? (
+                <a role="menuitem" href={threadsUrl} target="_blank" rel="noopener noreferrer" onClick={shut} className={cn(item, "text-text hover:bg-surface-2")}>
+                  <IcExternal size={15} /> {t("feed.open_threads")}
+                </a>
+              ) : (
+                <span role="menuitem" aria-disabled className={cn(item, "text-text-subtle opacity-50")}>
+                  <IcExternal size={15} /> {t("feed.open_threads")}
+                </span>
+              )}
               {tester && (
                 <>
                   <div className="my-1 h-px bg-border" />
@@ -560,16 +570,25 @@ export function FeedCard({
           {p.autoReply ? t("feed.autoreply_on") : t("feed.autoreply_off")}
         </button>
         <div className="ml-auto flex items-center gap-2 max-md:ml-0 max-md:w-full">
-          <a
-            href="#"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={buttonClasses({ variant: "primary", size: "sm", className: "max-md:h-auto max-md:min-h-[44px] max-md:flex-1 max-md:whitespace-normal" })}
-          >
-            <IcExternal size={15} /> {t("feed.open_threads")}
-          </a>
+          {p.threadsUrl ? (
+            <a
+              href={p.threadsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={buttonClasses({ variant: "primary", size: "sm", className: "max-md:h-auto max-md:min-h-[44px] max-md:flex-1 max-md:whitespace-normal" })}
+            >
+              <IcExternal size={15} /> {t("feed.open_threads")}
+            </a>
+          ) : (
+            <span
+              aria-disabled
+              className={buttonClasses({ variant: "primary", size: "sm", className: "pointer-events-none opacity-45 max-md:h-auto max-md:min-h-[44px] max-md:flex-1 max-md:whitespace-normal" })}
+            >
+              <IcExternal size={15} /> {t("feed.open_threads")}
+            </span>
+          )}
           <FeedMenu
-            threadsUrl="#"
+            threadsUrl={p.threadsUrl ?? null}
             translatedLang={translated?.lang ?? null}
             tester={tester}
             onTranslate={runTranslate}
