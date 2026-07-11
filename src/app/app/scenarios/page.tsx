@@ -1087,7 +1087,7 @@ export default function ScenariosPage() {
       return;
     }
     if (demoOn) {
-      toast(enable ? t("scenarios.toast_on") : t("scenarios.toast_saved"));
+      toast(enable && !editing ? t("scenarios.toast_on") : t("scenarios.toast_saved"));
       backToList();
       return;
     }
@@ -1104,7 +1104,11 @@ export default function ScenariosPage() {
       // create — a plain-saved one would otherwise land on the backend's
       // 'auto' default and later enable straight into auto-publishing.
       if (editing) {
-        saved = await updateScenario(editing.id, { ...body, ...(enable ? { enabled: true } : {}) });
+        // Editing NEVER touches enabled (A2): a disabled routine stays disabled
+        // after «Сохранить» — arming happens only through the list card's
+        // explicit toggle + EnableConfirm. The old `enabled: true` spread here
+        // silently armed a routine the user opened "just to look".
+        saved = await updateScenario(editing.id, body);
         setScenarios((xs) => xs.map((x) => (x.id === saved.id ? saved : x)));
       } else {
         saved = await createScenario(accountId, { ...body, enabled: enable, ...(body.publish_mode === undefined ? { publish_mode: "ask" } : {}) });
@@ -1124,7 +1128,7 @@ export default function ScenariosPage() {
           toast(String(e), "error");
         }
       }
-      toast(enable ? t("scenarios.toast_on") : t("scenarios.toast_saved"));
+      toast(enable && !editing ? t("scenarios.toast_on") : t("scenarios.toast_saved"));
       backToList();
     } catch (e) {
       setSaveErr(true);
@@ -1362,6 +1366,7 @@ export default function ScenariosPage() {
             update={update}
             setField={setField}
             isExisting={!!editing}
+            enabled={editing?.enabled ?? false}
             nameErr={nameErr}
             fieldErrs={fieldErrs}
             askErr={askErr}

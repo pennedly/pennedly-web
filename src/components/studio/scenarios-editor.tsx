@@ -647,6 +647,7 @@ export function StepEditor({
   update,
   setField,
   isExisting,
+  enabled,
   nameErr,
   fieldErrs,
   isReplyPolicy,
@@ -684,6 +685,10 @@ export function StepEditor({
   update: (patch: Partial<FormState>) => void;
   setField: (key: string, v: string) => void;
   isExisting: boolean;
+  // The saved routine's REAL on/off state (false for a new draft). Drives the
+  // status pill — never inferred from isExisting (that's what showed «Активна»
+  // on a disabled routine).
+  enabled: boolean;
   nameErr: boolean;
   fieldErrs: Record<string, boolean>;
   askErr: boolean;
@@ -1005,9 +1010,11 @@ export function StepEditor({
       <div className="grid grid-cols-1 items-start gap-[30px] min-[900px]:grid-cols-[minmax(0,1fr)_392px]">
         {/* LEFT — the recipe */}
         <div className="flex min-w-0 flex-col gap-4">
-          {/* status row */}
+          {/* status row — keys on the REAL enabled state, not mere existence: a
+              saved-but-OFF routine shows the neutral «Выключен» pill and no
+              «fires next…» line (which would be a lie while it can't fire). */}
           <div className="flex flex-wrap items-center gap-3">
-            {isExisting ? (
+            {isExisting && enabled ? (
               <>
                 <span className="inline-flex items-center gap-[7px] text-small text-text-muted">
                   <IcClock size={14} className="shrink-0 text-text-subtle" />
@@ -1018,6 +1025,11 @@ export function StepEditor({
                   {t("scenarios.rc.status_active")}
                 </span>
               </>
+            ) : isExisting ? (
+              <span className="ml-auto inline-flex items-center gap-2 rounded-full border border-border bg-surface-2 px-3 py-1.5 text-small font-semibold text-text-subtle">
+                <span className="h-2 w-2 rounded-full bg-ink-400" />
+                {t("scenarios.status_off")}
+              </span>
             ) : (
               <>
                 <span className="inline-flex items-center gap-[7px] text-small text-text-muted">
@@ -1176,11 +1188,17 @@ export function StepEditor({
                 </div>
               </div>
             )}
+            {/* Existing routine: ONE honest «Сохранить» that never touches the
+                on/off state (enabling lives on the list card's explicit toggle +
+                EnableConfirm). Only a NEW routine offers the create-time choice
+                «сохранить выключенным» vs «сохранить и включить». */}
             <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center">
-              <Button variant="secondary" onClick={onSave} loading={saving} className="max-sm:w-full">
-                {t("scenarios.rc.save_off")}
-              </Button>
-              <Button variant="primary" onClick={onSaveOn} loading={saving} icon={<IcCheck size={15} />} className="max-sm:w-full">
+              {!isExisting && (
+                <Button variant="secondary" onClick={onSave} loading={saving} className="max-sm:w-full">
+                  {t("scenarios.rc.save_off")}
+                </Button>
+              )}
+              <Button variant="primary" onClick={isExisting ? onSave : onSaveOn} loading={saving} icon={<IcCheck size={15} />} className="max-sm:w-full">
                 {isExisting ? t("scenarios.save") : t("scenarios.save_on")}
               </Button>
               {isExisting && (

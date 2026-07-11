@@ -244,6 +244,7 @@ const GAL_L3_INHERITED: L3Inherited = {
 function StepEditorDemo({
   presetId,
   isExisting = true,
+  enabled = true,
   override,
   demoOpenSlot,
   demoModal,
@@ -252,6 +253,7 @@ function StepEditorDemo({
 }: {
   presetId: string;
   isExisting?: boolean;
+  enabled?: boolean;
   override?: Partial<FormState>;
   demoOpenSlot?: import("@/components/studio/scenarios-recipe").OpenSlot;
   demoModal?: import("@/components/studio/scenarios-recipe").BigTextField;
@@ -343,6 +345,7 @@ function StepEditorDemo({
       update={up}
       setField={setField}
       isExisting={isExisting}
+      enabled={enabled}
       nameErr={false}
       fieldErrs={{}}
       askErr={false}
@@ -687,6 +690,9 @@ export default function ScenariosGallery() {
         </Section>
         <Section title="POST · new «черновик, не сохранён» (status row + «Сохранить и включить»)">
           <StepEditorDemo presetId="daily_question" isExisting={false} />
+        </Section>
+        <Section title="POST · existing ВЫКЛЮЧЕНА (серая пилюля «Выключен», нет «сработает…», одна кнопка «Сохранить» — не включает)">
+          <StepEditorDemo presetId="daily_question" enabled={false} />
         </Section>
         <Section title="POST · slot «Когда» open · mode = Каждый день (hour picker + jitter)">
           <StepEditorDemo presetId="daily_question" demoOpenSlot="when" override={{ when: "daily" }} />
