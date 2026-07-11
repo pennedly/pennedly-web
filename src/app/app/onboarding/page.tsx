@@ -111,15 +111,25 @@ const TOPICS_WRITE = ["Writing craft", "Building in public", "Productivity", "De
 const TOPICS_AVOID = ["Politics", "Crypto", "Hustle culture", "Personal drama", "Engagement bait"];
 const MIN_POSTS = 15;
 
-function errMsg(e: unknown): string {
+function errMsg(e: unknown, t: (k: MessageKey) => string): string {
+  // Friendly copy, not transport internals (B7): the old form surfaced
+  // «502: <!DOCTYPE html>…» (a proxy error page) and «TypeError: Failed to
+  // fetch» verbatim in the onboarding banner.
   if (e instanceof ApiError) {
     const d =
       typeof e.detail === "object" && e.detail !== null && "detail" in (e.detail as Record<string, unknown>)
         ? (e.detail as { detail: unknown }).detail
         : e.detail;
-    return `${e.status}: ${String(d)}`;
+    const s = typeof d === "string" ? d.trim() : "";
+    // A short, clean 4xx detail is a real message worth showing (quota text,
+    // validation). Anything else — 5xx, HTML error pages, empty/object
+    // bodies — collapses to human copy.
+    if (e.status < 500 && s && s.length <= 200 && !s.includes("<")) return s;
+    return t("onboarding.err_server");
   }
-  return String(e);
+  // Non-ApiError on a fetch path = the request never got an answer
+  // (offline, DNS, CORS, timeout).
+  return t("onboarding.err_network");
 }
 
 // ────────────────────────────── Theme toggle ────────────────────────────────
@@ -1213,7 +1223,7 @@ export default function OnboardingPage() {
           router.replace("/app/login");
           return;
         }
-        setError(errMsg(e));
+        setError(errMsg(e, t));
         setStage("choose");
       }
     })();
@@ -1330,7 +1340,7 @@ export default function OnboardingPage() {
         setMode("analyze");
         setStage("done");
       } catch (e) {
-        setError(errMsg(e));
+        setError(errMsg(e, t));
       } finally {
         setBusy(false);
       }
@@ -1365,7 +1375,7 @@ export default function OnboardingPage() {
         setError(t("onboarding.analyze_none"));
         setStage("scratch");
       } else {
-        setError(errMsg(e));
+        setError(errMsg(e, t));
         setStage("choose");
       }
     } finally {
@@ -1443,7 +1453,7 @@ export default function OnboardingPage() {
       setMode("scratch");
       setStage("done");
     } catch (e) {
-      setError(errMsg(e));
+      setError(errMsg(e, t));
     } finally {
       setBusy(false);
     }

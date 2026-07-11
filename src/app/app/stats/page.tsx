@@ -14,6 +14,7 @@ import { useSelectedAccountId } from "@/lib/account";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
 import { BetaNotice } from "@/components/ui/beta-notice";
+import { ErrorBanner } from "@/components/ui/error-banner";
 import { Button } from "@/components/ui/button";
 import { IcChart, IcReload } from "@/components/icons";
 import { TweaksPanel, TweakSection, TweakToggle, TweakRadio, useTweaks } from "@/components/tweaks/TweaksPanel";
@@ -120,6 +121,10 @@ export default function StatsPage() {
   const [engStatus, setEngStatus] = useState<"loading" | "ready" | "error">("loading");
   const [loading, setLoading] = useState(true);
   const [bootError, setBootError] = useState<string | null>(null);
+  // Bumped by the ErrorBanner's «Повторить» — re-runs the stats load after a
+  // real fetch failure (B5: the raw String(e) box had no way back, and the
+  // screen stuck on account/period switch).
+  const [reloadKey, setReloadKey] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const autoDone = useRef<number | null>(null);
 
@@ -139,6 +144,7 @@ export default function StatsPage() {
     }
     if (accountId === null) return;
     setLoading(true);
+    setBootError(null);
     (async () => {
       try {
         setStats(await fetchStats(accountId, { period }));
@@ -153,7 +159,7 @@ export default function StatsPage() {
         setLoading(false);
       }
     })();
-  }, [accountId, period, router, demoParam]);
+  }, [accountId, period, router, demoParam, reloadKey]);
 
   // Follower-growth line — independent of `period` (the endpoint returns the
   // full series), fetched once per account, fail-soft so it never blocks the
@@ -309,9 +315,11 @@ export default function StatsPage() {
   }
 
   if (bootError) {
+    // Friendly §3.8 error state with a real Retry — never the raw String(e)
+    // («ApiError: 500 …») transport dump (B5).
     return (
       <main className="mx-auto max-w-2xl px-6 py-16">
-        <div className="rounded-lg border border-danger/40 bg-danger/10 p-4 text-small text-danger">{bootError}</div>
+        <ErrorBanner onRetry={() => setReloadKey((k) => k + 1)} />
       </main>
     );
   }

@@ -1224,6 +1224,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "feed.autoreply_sub_on": "Pennedly будет писать ответы на новые комментарии",
   "feed.autoreply_sub_off": "На новые комментарии ответы не пишутся",
   "feed.error_title": "Не удалось загрузить ленту",
+  "feed.delete_error": "Не удалось удалить пост. Попробуй ещё раз.",
   "feed.error_sub": "Что-то пошло не так при загрузке ленты. Попробуй ещё раз.",
 
   // ── Онбординг ─────────────────────────────────────────────────
@@ -1240,6 +1241,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "onboarding.analyze_count": "постов готово к разбору",
   "onboarding.analyze_none": "Постов пока нет. Начни с нуля.",
   "onboarding.analyze_slow": "Это дольше обычного — вернуться",
+  "onboarding.err_network": "Нет соединения. Проверь интернет и попробуй ещё раз.",
+  "onboarding.err_server": "Что-то пошло не так с нашей стороны. Попробуй ещё раз через минуту.",
   "onboarding.analyze_timeout": "Настройка голоса слишком долгая. Попробуй ещё раз.",
   "onboarding.import_too_few": "Импорт завершился: нашлось только {have} постов (нужно {need}). Начни с нуля — вариант разблокируется, когда постов станет больше.",
   "onboarding.analyze_new_hint": "Если аккаунт новый и постов почти нет — выбери «Создать с нуля».",

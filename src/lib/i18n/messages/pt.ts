@@ -1566,6 +1566,7 @@ export const pt: Partial<Record<MessageKey, string>> = {
     "O Pennedly vai escrever respostas aos novos comentários",
   "feed.autoreply_sub_off": "Os novos comentários não recebem respostas",
   "feed.error_title": "Não foi possível carregar seu feed",
+  "feed.delete_error": "Não foi possível excluir a publicação. Tente de novo.",
   "feed.error_sub": "Algo deu errado ao carregar seu feed. Tente de novo.",
   "stats.updated_hourly": "Atualizado a cada hora",
   "stats.sub_this_period": "neste período",
@@ -1645,6 +1646,8 @@ export const pt: Partial<Record<MessageKey, string>> = {
   "onboarding.pv_sound_cap": "Como você soa",
   // ── wave C backfill ──
   "onboarding.analyze_slow": "Está demorando mais que o normal — voltar",
+  "onboarding.err_network": "Sem conexão. Verifique sua internet e tente de novo.",
+  "onboarding.err_server": "Algo deu errado do nosso lado. Tente de novo em instantes.",
   "onboarding.analyze_timeout": "A configuração da voz está demorando demais. Tente novamente.",
   "stats.eng_title": "Engajamento",
   "stats.eng_per_day": "por dia",

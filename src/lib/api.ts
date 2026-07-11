@@ -304,11 +304,21 @@ async function fetchApi<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   if (!res.ok) {
+    // Read the body ONCE as text, then try JSON. The old json()-then-text()
+    // fallback double-consumed the stream: on a non-JSON body (a proxy's HTML
+    // 502 page) res.json() marked the body used, the fallback res.text() threw
+    // "body already read", and the caller saw a bare TypeError instead of
+    // ApiError(502, html) — which error UIs then misread as a network failure.
     let body: unknown = null;
     try {
-      body = await res.json();
+      const raw = await res.text();
+      try {
+        body = JSON.parse(raw);
+      } catch {
+        body = raw;
+      }
     } catch {
-      body = await res.text();
+      body = null;
     }
     throw new ApiError(res.status, body);
   }

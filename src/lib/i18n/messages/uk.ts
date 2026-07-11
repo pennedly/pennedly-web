@@ -1584,6 +1584,7 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "feed.autoreply_sub_on": "Pennedly писатиме відповіді на нові коментарі",
   "feed.autoreply_sub_off": "На нові коментарі відповіді не пишуться",
   "feed.error_title": "Не вдалося завантажити стрічку",
+  "feed.delete_error": "Не вдалося видалити допис. Спробуйте ще раз.",
   "feed.error_sub":
     "Щось пішло не так під час завантаження стрічки. Спробуй ще раз.",
 
@@ -1670,6 +1671,8 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "onboarding.pv_sound_cap": "Як ти звучиш",
   // ── wave C backfill ──
   "onboarding.analyze_slow": "Це триває довше, ніж зазвичай — повернутися назад",
+  "onboarding.err_network": "Немає з'єднання. Перевірте інтернет і спробуйте ще раз.",
+  "onboarding.err_server": "Щось пішло не так з нашого боку. Спробуйте ще раз за хвилину.",
   "onboarding.analyze_timeout": "Налаштування голосу триває надто довго. Спробуйте ще раз.",
   "stats.eng_title": "Залученість",
   "stats.eng_per_day": "на день",

@@ -1224,6 +1224,7 @@ export const en = {
   "feed.autoreply_sub_on": "Pennedly will draft replies to new comments",
   "feed.autoreply_sub_off": "New comments won't get drafted replies",
   "feed.error_title": "Couldn’t load your feed",
+  "feed.delete_error": "Couldn't delete the post. Give it another try.",
   "feed.error_sub": "Something went wrong loading your feed. Give it another try.",
 
   // ── Onboarding ────────────────────────────────────────────────
@@ -1240,6 +1241,8 @@ export const en = {
   "onboarding.analyze_count": "posts ready to analyze",
   "onboarding.analyze_none": "No posts yet. Build from scratch instead.",
   "onboarding.analyze_slow": "This is taking longer than usual — go back",
+  "onboarding.err_network": "No connection. Check your internet and try again.",
+  "onboarding.err_server": "Something went wrong on our side. Please try again in a moment.",
   "onboarding.analyze_timeout": "Voice setup is taking too long. Please try again.",
   "onboarding.import_too_few": "The import finished: only {have} posts found (need {need}). Start from scratch — the option unlocks once you post more.",
   "onboarding.analyze_new_hint": "New account with almost no posts? Pick “Start from scratch”.",

@@ -73,6 +73,10 @@ export default function FeedPage() {
   const [reference, setReference] = useState<FeedReference | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [bootError, setBootError] = useState<string | null>(null);
+  // Bumped by the ErrorBanner's «Повторить» — re-runs the load effect after a
+  // real fetch failure (B5: a raw 500/timeout used to render String(e) with no
+  // way back short of a full reload).
+  const [reloadKey, setReloadKey] = useState(0);
   const [account, setAccount] = useState<{ name: string; handle: string; initials: string; avatarUrl: string | null }>({ name: "You", handle: "you", initials: "Y", avatarUrl: null });
   const [sort, setSort] = useState<"recent" | "top">("recent");
   // The account reply mode resolves a post's NULL (inherit) auto_reply for display.
@@ -106,7 +110,10 @@ export default function FeedPage() {
         setAccount({ name, handle: a.username ?? "you", initials: name.slice(0, 2).toUpperCase(), avatarUrl: a.profile_picture_url });
       }
     }).catch(() => {});
-  }, [accountId]);
+    // reloadKey: the ErrorBanner's «Повторить» re-runs this too — after a full
+    // outage the identity fetch above failed soft, and a feed-only retry would
+    // leave every card authored by the "You/@you" placeholder.
+  }, [accountId, reloadKey]);
 
   // real feed load
   useEffect(() => {
@@ -117,6 +124,7 @@ export default function FeedPage() {
     }
     if (accountId === null) return;
     setLoaded(false);
+    setBootError(null);
     (async () => {
       try {
         const data = await fetchFeed(accountId, { limit: 50 });
@@ -134,7 +142,7 @@ export default function FeedPage() {
         setLoaded(true);
       }
     })();
-  }, [accountId, router, demoParam]);
+  }, [accountId, router, demoParam, reloadKey]);
 
   // Reply mode for resolving NULL (inherit) per-post flags — fail-soft.
   useEffect(() => {
@@ -197,9 +205,11 @@ export default function FeedPage() {
           : "ready"
     : !loaded
       ? "loading"
-      : cards.length === 0
-        ? "empty"
-        : "ready";
+      : bootError
+        ? "error"
+        : cards.length === 0
+          ? "empty"
+          : "ready";
 
   // ── handlers ──
 
@@ -282,7 +292,9 @@ export default function FeedPage() {
           },
         });
       })
-      .catch((e) => toast(String(e), "error"))
+      // Human copy, not `String(e)` («ApiError: 500 …») — the raw form leaked
+      // transport details into a user-facing toast (B5).
+      .catch(() => toast(t("feed.delete_error"), "error"))
       .finally(() => setDeleting(false));
   }
 
@@ -291,17 +303,11 @@ export default function FeedPage() {
     if (demoOn) setTw("sort", s === "top" ? "Top" : "Recent");
   }
 
-  if (bootError) {
-    return (
-      <main className="mx-auto max-w-2xl px-6 py-16">
-        <div className="rounded-lg border border-danger/40 bg-danger/10 p-4 text-small text-danger">{bootError}</div>
-      </main>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-bg text-text">
-      <AppTopbar maxW="960px" title={t("feed.title")} pill={<TopbarPill tone="success">{t("feed.updated")}</TopbarPill>} />
+      {/* No green «Updated just now» over a failed/still-loading feed — the
+          success pill shows only when the feed actually loaded. */}
+      <AppTopbar maxW="960px" title={t("feed.title")} pill={phase === "ready" || phase === "empty" ? <TopbarPill tone="success">{t("feed.updated")}</TopbarPill> : undefined} />
       <main className="mx-auto flex max-w-[960px] flex-col gap-4 px-3.5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4 md:gap-5 md:px-6 md:pb-24 md:pt-7">
         <div className="flex flex-col gap-1">
           <h1 className="text-h1 font-semibold tracking-[-0.015em]">{t("feed.title")}</h1>
@@ -320,7 +326,14 @@ export default function FeedPage() {
             ))}
           </div>
         ) : phase === "error" ? (
-          <ErrorBanner onRetry={() => setTw("state", "Live")} titleKey="feed.error_title" subKey="feed.error_sub" />
+          <ErrorBanner
+            onRetry={() => {
+              if (demoOn) setTw("state", "Live");
+              else setReloadKey((k) => k + 1);
+            }}
+            titleKey="feed.error_title"
+            subKey="feed.error_sub"
+          />
         ) : phase === "empty" ? (
           <FeedEmpty onStudio={() => router.push("/app")} />
         ) : (

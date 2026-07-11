@@ -113,6 +113,9 @@ export default function Studio() {
   const [scheduling, setScheduling] = useState(false);
   const [toasts, setToasts] = useState<ToastT[]>([]);
   const [bootError, setBootError] = useState<string | null>(null);
+  // Bumped by the boot ErrorBanner's «Повторить» — re-runs the fetchMe boot
+  // effect after a real failure (B5: the raw String(e) box had no way back).
+  const [bootRetryKey, setBootRetryKey] = useState(0);
   const [needsVoiceSetup, setNeedsVoiceSetup] = useState(false);
   const [voiceReady, setVoiceReady] = useState<boolean | null>(null);
 
@@ -142,6 +145,7 @@ export default function Studio() {
       router.push("/app/login");
       return;
     }
+    setBootError(null);
     (async () => {
       try {
         const profile = await fetchMe();
@@ -156,7 +160,7 @@ export default function Studio() {
         setBootError(String(e));
       }
     })();
-  }, [router]);
+  }, [router, bootRetryKey]);
 
   // ── post-OAuth landing toast ──
   useEffect(() => {
@@ -262,7 +266,11 @@ export default function Studio() {
         setDraftsLoading(false);
       }
     })();
-  }, [accountId, router]);
+    // bootRetryKey: the boot ErrorBanner's «Повторить» must re-run THIS effect
+    // too — during a full outage the drafts/onboarding fetch above failed
+    // silently (non-401 swallowed), and a fetchMe-only retry would land on an
+    // empty Studio with the user's real drafts invisible.
+  }, [accountId, router, bootRetryKey]);
 
   // ── selected account identity (card avatar/name) ──
   useEffect(() => {
@@ -281,7 +289,9 @@ export default function Studio() {
         setSelectedAccount({ name, handle: a.username, initials: initials || "?", avatarUrl: a.profile_picture_url });
       })
       .catch(() => {});
-  }, [accountId]);
+    // bootRetryKey: same reason as the drafts effect — refresh the card
+    // identity after an outage-recovery retry (it fails soft to null otherwise).
+  }, [accountId, bootRetryKey]);
 
   // ── demo dark toggle ──
   useEffect(() => {
@@ -704,9 +714,11 @@ export default function Studio() {
   );
 
   if (bootError) {
+    // Friendly §3.8 error state with a real Retry — never the raw String(e)
+    // («ApiError: 500 …») transport dump (B5).
     return (
       <main className="mx-auto max-w-2xl px-6 py-16">
-        <div className="rounded-lg border border-danger/40 bg-danger/10 p-4 text-small text-danger">{bootError}</div>
+        <ErrorBanner onRetry={() => setBootRetryKey((k) => k + 1)} />
       </main>
     );
   }

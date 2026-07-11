@@ -1575,6 +1575,7 @@ export const de: Partial<Record<MessageKey, string>> = {
   "feed.autoreply_sub_off":
     "Für neue Kommentare werden keine Antworten entworfen",
   "feed.error_title": "Dein Feed konnte nicht geladen werden",
+  "feed.delete_error": "Der Beitrag konnte nicht gelöscht werden. Bitte versuch es erneut.",
   "feed.error_sub":
     "Beim Laden deines Feeds ist etwas schiefgelaufen. Versuch es noch mal.",
   "stats.updated_hourly": "Stündlich aktualisiert",
@@ -1655,6 +1656,8 @@ export const de: Partial<Record<MessageKey, string>> = {
   "onboarding.pv_sound_cap": "Wie du klingst",
   // ── wave C backfill ──
   "onboarding.analyze_slow": "Das dauert länger als sonst — zurück",
+  "onboarding.err_network": "Keine Verbindung. Prüfe dein Internet und versuch es erneut.",
+  "onboarding.err_server": "Bei uns ist etwas schiefgelaufen. Bitte versuch es gleich erneut.",
   "onboarding.analyze_timeout": "Die Voice-Einrichtung dauert zu lange. Bitte versuch es erneut.",
   "stats.eng_title": "Engagement",
   "stats.eng_per_day": "pro Tag",
