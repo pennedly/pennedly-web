@@ -88,7 +88,7 @@ import type {
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 
-const TOKEN_KEY = "pennedly.tokens";
+export const TOKEN_KEY = "pennedly.tokens";
 
 // Bounded so a stalled /refresh can't hold the cross-tab Web Lock (and every
 // other tab's refresh) hostage until the OS socket timeout fires; and so a
@@ -109,9 +109,18 @@ export function setTokens(pair: TokenPair): void {
   window.localStorage.setItem(TOKEN_KEY, JSON.stringify(pair));
 }
 
+// Modules that cache per-user data (account-data, use-me) register here so a
+// logout/401 wipes their module-scope caches — otherwise a logout→login in the
+// SAME tab (client nav, no reload) would leak the previous user's data.
+const _tokensClearedListeners: (() => void)[] = [];
+export function onTokensCleared(fn: () => void): void {
+  _tokensClearedListeners.push(fn);
+}
+
 export function clearTokens(): void {
   if (typeof window === "undefined") return;
   window.localStorage.removeItem(TOKEN_KEY);
+  for (const fn of _tokensClearedListeners) fn();
 }
 
 export function getTokens(): TokenPair | null {

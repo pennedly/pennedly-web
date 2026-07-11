@@ -7,9 +7,6 @@
 // current /app/settings. Maps to real endpoints: name → PATCH /api/me, language
 // → PUT /api/me/locale, export → GET /api/me/export, delete → DELETE /api/me.
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-
 import "@/components/account/account.css";
 import "@/components/account/account-mobile-shell.css";
 import "@/components/account/account-mobile.css";
@@ -24,62 +21,14 @@ import {
 } from "@/components/account/AccountSettings";
 import type { Plural, T } from "@/components/account/AccountDashboard";
 import { AppFooter } from "@/components/AppFooter";
-import { ApiError, clearTokens, fetchMe, fetchMeAccount, getTokens } from "@/lib/api";
+import { useAccountData } from "@/lib/use-account-data";
 import { pluralUnit, useTranslation } from "@/lib/i18n";
 import { ErrorBanner } from "@/components/ui/error-banner";
-import type { Me, MeAccountResponse } from "@/lib/types";
-
-type Phase = "loading" | "ready" | "error";
 
 export default function AccountSettingsPage() {
-  const router = useRouter();
   const { t, locale } = useTranslation();
-
-  const [phase, setPhase] = useState<Phase>("loading");
-  const [me, setMe] = useState<Me | null>(null);
-  const [data, setData] = useState<MeAccountResponse | null>(null);
-
-  useEffect(() => {
-    if (!getTokens()) {
-      router.push("/app/login");
-      return;
-    }
-    let alive = true;
-    (async () => {
-      try {
-        const m = await fetchMe();
-        if (!alive) return;
-        if (m.is_tester !== true) {
-          router.replace("/app/overview");
-          return;
-        }
-        const acc = await fetchMeAccount();
-        if (!alive) return;
-        // Durable dashboard: only a truly-empty tenant (never connected) goes to
-        // the wizard. An all-disconnected tenant (0 live, ≥1 disconnected) stays
-        // in the account chrome — the AllDisconnected sidebar links here, so
-        // bouncing mid-reconnect would read as a logout. Mirrors account/page.tsx.
-        if (acc.scope.profiles_count === 0 && acc.scope.disconnected_count === 0) {
-          router.replace("/app/onboarding");
-          return;
-        }
-        setMe(m);
-        setData(acc);
-        setPhase("ready");
-      } catch (e) {
-        if (!alive) return;
-        if (e instanceof ApiError && e.status === 401) {
-          clearTokens();
-          router.push("/app/login");
-          return;
-        }
-        setPhase("error");
-      }
-    })();
-    return () => {
-      alive = false;
-    };
-  }, [router]);
+  // Shared cache: re-visiting from the dashboard/advisor renders instantly.
+  const { me, data, phase } = useAccountData();
 
   const wrap = "mx-auto w-full max-w-[1180px] px-4 py-5 md:px-6 md:py-6";
 

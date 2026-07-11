@@ -22,6 +22,7 @@ import {
   getTokens,
   setMyLocale,
 } from "@/lib/api";
+import { invalidateAccountData } from "@/lib/account-data";
 import {
   getSelectedAccountId,
   setSelectedAccountId,
@@ -185,6 +186,9 @@ export default function SettingsPage() {
       await disconnectAccount(a.id);
       setAccounts((list) => list.filter((x) => x.id !== a.id));
       if (getSelectedAccountId() === a.id) setSelectedAccountId(null);
+      // The portfolio changed — drop the account-dashboard cache so it doesn't
+      // show the just-disconnected profile as live for up to the TTL.
+      invalidateAccountData();
       refreshAccountsPresence();
       setConfirmId(null);
       toast(`${t("settings.disconnect_toast")} · @${a.username ?? a.id}`);

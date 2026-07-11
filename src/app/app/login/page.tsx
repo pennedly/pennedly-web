@@ -24,6 +24,7 @@ import {
   setTokens,
   verifyEmailCode,
 } from "@/lib/api";
+import { invalidateAccountData } from "@/lib/account-data";
 import { captureEvent, identify } from "@/lib/analytics";
 import {
   LOCALES,
@@ -589,6 +590,7 @@ function LoginPageInner() {
       try {
         const pair = await consumeMagicLink(incomingToken);
         setTokens(pair);
+        invalidateAccountData(); // wipe any prior user's cached account data
         try {
           const me = await fetchMe();
           identify(me.user_id, me.tenant.id);
@@ -618,6 +620,7 @@ function LoginPageInner() {
       try {
         const pair = await exchangeGoogleHandoff(incomingHandoff);
         setTokens(pair);
+        invalidateAccountData(); // wipe any prior user's cached account data
         try {
           const me = await fetchMe();
           identify(me.user_id, me.tenant.id);
@@ -675,6 +678,7 @@ function LoginPageInner() {
     try {
       const pair = await verifyEmailCode(email, value.trim());
       setTokens(pair);
+      invalidateAccountData(); // wipe any prior user's cached account data
       try {
         const me = await fetchMe();
         identify(me.user_id, me.tenant.id);
@@ -716,6 +720,7 @@ function LoginPageInner() {
     try {
       const pair = await devLogin(devEmail);
       setTokens(pair);
+      invalidateAccountData(); // wipe any prior user's cached account data
       try {
         const me = await fetchMe();
         identify(me.user_id, me.tenant.id);

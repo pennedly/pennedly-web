@@ -29,14 +29,18 @@ import { AppFooter } from "@/components/AppFooter";
 import {
   ApiError,
   clearTokens,
-  fetchMe,
-  fetchMeAccount,
-  fetchMeAccountAdvisor,
   fetchMyAccounts,
   fetchOnboardingStatus,
   getTokens,
   setAccountTimezone,
 } from "@/lib/api";
+import {
+  loadAdvisor,
+  loadMe,
+  loadMeAccount,
+  peekAdvisor,
+  peekMeAccount,
+} from "@/lib/account-data";
 import { captureEvent } from "@/lib/analytics";
 import { isOnboardingSkipped, setSelectedAccountId } from "@/lib/account";
 import { pluralUnit, useTranslation } from "@/lib/i18n";
@@ -61,12 +65,15 @@ export default function AccountDashboardPage() {
   const router = useRouter();
   const { t, locale } = useTranslation();
 
-  const [phase, setPhase] = useState<Phase>("loading");
-  const [data, setData] = useState<MeAccountResponse | null>(null);
+  // Seed from the shared module cache (account-data.ts) so navigating BACK to
+  // the dashboard from advisor/settings renders instantly (no skeleton); the
+  // effect below revalidates in the background.
+  const [data, setData] = useState<MeAccountResponse | null>(peekMeAccount());
+  const [phase, setPhase] = useState<Phase>(peekMeAccount() ? "ready" : "loading");
   // The advisor hero loads SEPARATELY (a cached, sometimes-LLM call) so it never
   // blocks the dashboard. Null until it arrives / on 204 (thin data) / on error
   // → the honest AdvisorInvite renders instead of a fabricated verdict.
-  const [adv, setAdv] = useState<AdvisorData | null>(null);
+  const [adv, setAdv] = useState<AdvisorData | null>(peekAdvisor());
   const [toastMsg, setToastMsg] = useState<{ text: string; tone: "success" | "error" } | null>(null);
   // A successful OAuth return holds the page on the loading skeleton until the
   // routing decision lands (onboarding redirect vs stay) — without this the
@@ -171,14 +178,14 @@ export default function AccountDashboardPage() {
     (async () => {
       try {
         // Tester gate: this screen is round-2 (in-progress). Non-testers keep the
-        // current portfolio Overview until it's promoted.
-        const me = await fetchMe();
+        // current portfolio Overview until it's promoted. (Cached → instant.)
+        const me = await loadMe();
         if (!alive) return;
         if (me.is_tester !== true) {
           router.replace("/app/overview");
           return;
         }
-        const acc = await fetchMeAccount();
+        const acc = await loadMeAccount();
         if (!alive) return;
         // The dashboard is DURABLE above profiles: with no LIVE profile we no
         // longer bounce to the full-screen wizard (that read as a logout). The
@@ -187,9 +194,9 @@ export default function AccountDashboardPage() {
         setData(acc);
         setPhase("ready");
         // The advisor hero only makes sense with a live portfolio; skip it in the
-        // empty states. Fire-and-forget otherwise.
+        // empty states. Fire-and-forget otherwise (cached → instant on re-visit).
         if (acc.scope.profiles_count > 0) {
-          fetchMeAccountAdvisor()
+          loadAdvisor()
             .then((a) => {
               if (alive) setAdv(a);
             })
@@ -202,7 +209,9 @@ export default function AccountDashboardPage() {
           router.push("/app/login");
           return;
         }
-        setPhase("error");
+        // A background-revalidate failure must not blank a cached screen — only
+        // error when there's nothing to show.
+        if (!peekMeAccount()) setPhase("error");
       }
     })();
     return () => {
@@ -233,7 +242,9 @@ export default function AccountDashboardPage() {
       }
       inFlight = true;
       try {
-        const acc = await fetchMeAccount();
+        // Force past the cache TTL — the poll wants LIVE import progress, and it
+        // updates the shared cache so a switch away and back stays current.
+        const acc = await loadMeAccount(true);
         setData(acc); // `importing` recomputes off the fresh data and stops us
       } catch {
         /* transient poll failure — keep the current view, try again next tick */

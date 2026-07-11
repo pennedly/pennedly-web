@@ -34,6 +34,7 @@ import {
   setMyLocale,
   updateMyDisplayName,
 } from "@/lib/api";
+import { patchMeCache } from "@/lib/account-data";
 import { LOCALES } from "@/lib/i18n/locales";
 import { setLocale, useLocale } from "@/lib/i18n";
 import type { LocaleCode } from "@/lib/i18n/locales";
@@ -95,6 +96,9 @@ function AccountCard({ me, t }: { me: Me; t: T }) {
       const res = await updateMyDisplayName(name.trim());
       setName(res.display_name);
       setBaseName(res.display_name);
+      // Keep the shared cache current so switching back to the dashboard/advisor
+      // shows the new name without a refetch.
+      patchMeCache((m) => ({ ...m, display_name: res.display_name }));
       setSaved(true);
     } catch {
       setErr(true);
