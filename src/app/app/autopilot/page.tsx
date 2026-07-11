@@ -14,7 +14,12 @@ import { useRouter } from "next/navigation";
 export default function AutopilotPage() {
   const router = useRouter();
   useEffect(() => {
-    router.replace("/app/scenarios");
+    // Carry ?demo=1 through so the retired bookmark still reaches the hub's
+    // tester demo mode (mirrors /app/style-rules → role-book).
+    const demo =
+      typeof window !== "undefined" &&
+      new URLSearchParams(window.location.search).get("demo") === "1";
+    router.replace(`/app/scenarios${demo ? "?demo=1" : ""}`);
   }, [router]);
   return null;
 }

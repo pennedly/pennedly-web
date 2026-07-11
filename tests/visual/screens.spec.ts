@@ -1131,29 +1131,33 @@ test("Autopilot", async ({ page }) => {
   await shoot(page, "autopilot");
 });
 
-test("Autopilot — demo states", async ({ page }) => {
-  // Tester ?demo=1: 2-tweak panel (dark + state) over the seven phases.
+test("Autopilot hub — demo states", async ({ page }) => {
+  // The merged «Автопилот» hub at /app/scenarios (the standalone /app/autopilot
+  // was retired into it). Tester ?demo=1 tweaks: Master on (toggle), Reply state
+  // + State (radios). Drives the real current controls — the pre-merge
+  // select-based tweak panel is gone.
   await page.setViewportSize({ width: 1280, height: 2200 });
   await setup(page);
-  await page.goto("/app/autopilot?demo=1");
+  await page.goto("/app/scenarios?demo=1");
   await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
   await page.waitForTimeout(800);
-  await shoot(page, "autopilot-demo"); // default: master ON, populated
+  await shoot(page, "autopilot-demo"); // default: master ON, routines populated
   await page.getByRole("button", { name: "Open tweaks" }).click();
   await page.waitForTimeout(150);
-  const sel = page.locator("select.twk-field").first();
-  await sel.selectOption("Off");
+  await page.getByRole("switch", { name: "Master on" }).click();
   await page.waitForTimeout(250);
-  await shoot(page, "autopilot-demo-off"); // master off + reassurance
-  await sel.selectOption("PolicyOff");
+  await shoot(page, "autopilot-demo-off"); // master off + dimmed body
+  await page.getByRole("switch", { name: "Master on" }).click(); // back on
+  await page.getByRole("radio", { name: "paused" }).click(); // Reply state (3-opt segmented)
   await page.waitForTimeout(250);
-  await shoot(page, "autopilot-demo-policyoff");
-  await sel.selectOption("Replies");
+  await shoot(page, "autopilot-demo-reply-paused"); // reply routine paused
+  await page.getByRole("radio", { name: "off" }).click();
   await page.waitForTimeout(250);
-  await shoot(page, "autopilot-demo-replies"); // activity replies tab
-  await sel.selectOption("Empty");
+  await shoot(page, "autopilot-demo-reply-off");
+  // State (4 options → <select> fallback, not radios).
+  await page.locator("select.twk-field").first().selectOption("Empty");
   await page.waitForTimeout(250);
-  await shoot(page, "autopilot-demo-empty");
+  await shoot(page, "autopilot-demo-empty"); // first-run teach-by-example
 });
 
 test("Voice", async ({ page }) => {
@@ -1212,32 +1216,6 @@ test("Style rules", async ({ page }) => {
   await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
   await page.waitForTimeout(700);
   await shoot(page, "style-rules");
-});
-
-test("Style rules — demo states", async ({ page }) => {
-  // Tester ?demo=1: tweaks (dark / density / yourRules / screen) over the catalog.
-  await page.setViewportSize({ width: 1280, height: 2200 });
-  await setup(page);
-  await page.goto("/app/style-rules?demo=1");
-  await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
-  await page.waitForTimeout(800);
-  await shoot(page, "style-rules-demo"); // default: your rules + catalog
-  await page.getByRole("button", { name: "Open tweaks" }).click();
-  await page.waitForTimeout(150);
-  await page.getByRole("radio", { name: "Empty" }).click();
-  await page.waitForTimeout(250);
-  await shoot(page, "style-rules-demo-empty"); // your-rules empty
-  await page.getByRole("radio", { name: "Some" }).click();
-  await page.getByRole("radio", { name: "Catalog" }).click();
-  await page.waitForTimeout(250);
-  await shoot(page, "style-rules-demo-catalog"); // grouped built-in only
-  await page.getByRole("radio", { name: "Default" }).click();
-  await page.getByRole("radio", { name: "Compact" }).click();
-  await page.waitForTimeout(250);
-  await shoot(page, "style-rules-demo-compact"); // compact density
-  await page.getByRole("radio", { name: "Loading" }).click();
-  await page.waitForTimeout(250);
-  await shoot(page, "style-rules-demo-loading"); // skeleton
 });
 
 test("Settings", async ({ page }) => {
