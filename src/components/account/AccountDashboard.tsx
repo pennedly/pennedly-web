@@ -1211,6 +1211,7 @@ export function AccountDashboard({
   plural,
   dark,
   onOpenAdvisor,
+  onRetry,
 }: {
   data: MeAccountResponse;
   // Rich advisor content (gallery/demo). Omit on the live screen → the honest
@@ -1220,6 +1221,9 @@ export function AccountDashboard({
   plural: Plural;
   dark?: boolean;
   onOpenAdvisor?: () => void;
+  // In-place refetch for the sync-error «Повторить» (C9). Omitted (gallery/demo)
+  // → the nav default (full page reload) stays.
+  onRetry?: () => void;
 }) {
   const baseNav = useAccountNav();
   const [pickOpen, setPickOpen] = useState(false);
@@ -1227,7 +1231,7 @@ export function AccountDashboard({
   // opens the network picker; only its Threads row (nav.connectThreads) starts
   // the OAuth. Per-profile Reconnect buttons bypass the picker — their network
   // is already known.
-  const nav = { ...baseNav, addProfile: () => setPickOpen(true) };
+  const nav = { ...baseNav, addProfile: () => setPickOpen(true), ...(onRetry ? { retry: onRetry } : {}) };
   return (
     <div className="acc-shell">
       <Sidebar data={data} t={t} nav={nav} />

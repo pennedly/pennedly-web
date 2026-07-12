@@ -964,11 +964,14 @@ export async function setPostAutoReply(
 // ── My Feed (posts + inline analytics) ───────────────────────────
 export async function fetchFeed(
   accountId: number,
-  params?: { limit?: number; offset?: number },
+  params?: { limit?: number; offset?: number; sort?: "recent" | "top" },
 ): Promise<FeedResponse> {
   const qs = new URLSearchParams();
   if (params?.limit) qs.set("limit", String(params.limit));
   if (params?.offset) qs.set("offset", String(params.offset));
+  // Server-side order (C6): 'top' ranks by lifetime views across the WHOLE
+  // history — a client-side sort of the loaded page can't surface old hits.
+  if (params?.sort && params.sort !== "recent") qs.set("sort", params.sort);
   const suffix = qs.toString() ? `?${qs.toString()}` : "";
   return fetchApi<FeedResponse>(`/api/accounts/${accountId}/feed${suffix}`);
 }

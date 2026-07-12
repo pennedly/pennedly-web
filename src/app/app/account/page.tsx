@@ -7,7 +7,7 @@
 // screen is finished + promoted. Adaptive: at one brand the cards are profiles;
 // at 2+ they are brands (scope.show_brand_level).
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import "@/components/account/account.css";
@@ -70,6 +70,9 @@ export default function AccountDashboardPage() {
   // effect below revalidates in the background.
   const [data, setData] = useState<MeAccountResponse | null>(peekMeAccount());
   const [phase, setPhase] = useState<Phase>(peekMeAccount() ? "ready" : "loading");
+  // Bumped by the boot ErrorBanner's «Повторить» — re-runs the boot effect in
+  // place (C9: it used to window.location.reload()).
+  const [retryKey, setRetryKey] = useState(0);
   // The advisor hero loads SEPARATELY (a cached, sometimes-LLM call) so it never
   // blocks the dashboard. Null until it arrives / on 204 (thin data) / on error
   // → the honest AdvisorInvite renders instead of a fabricated verdict.
@@ -217,7 +220,19 @@ export default function AccountDashboardPage() {
     return () => {
       alive = false;
     };
-  }, [router]);
+  }, [router, retryKey]);
+
+  // In-place refetch for the per-profile sync-error «Повторить» (C9): force
+  // past the cache TTL and swap the fresh payload in — no full page reload.
+  const refreshData = useCallback(async () => {
+    try {
+      const acc = await loadMeAccount(true);
+      setData(acc);
+      setPhase("ready");
+    } catch {
+      setToastMsg({ text: t("acc.error_title"), tone: "error" });
+    }
+  }, [t]);
 
   // Live-refresh while any profile is importing: the backfill takes ~a minute
   // and now writes progressive counts (initial_sync._update_sync_progress), so
@@ -272,7 +287,10 @@ export default function AccountDashboardPage() {
           <ErrorBanner
             title={t("acc.error_title")}
             subtitle={t("acc.error_sub")}
-            onRetry={() => window.location.reload()}
+            onRetry={() => {
+              setPhase("loading");
+              setRetryKey((k) => k + 1);
+            }}
           />
         </div>
         {toastHost}
@@ -355,6 +373,7 @@ export default function AccountDashboardPage() {
               t={tt}
               plural={plural}
               onOpenAdvisor={() => router.push("/app/account/advisor")}
+              onRetry={refreshData}
             />
           </div>
           <div className="md:hidden">
@@ -364,6 +383,7 @@ export default function AccountDashboardPage() {
               t={tt}
               plural={plural}
               onOpenAdvisor={() => router.push("/app/account/advisor")}
+              onRetry={refreshData}
             />
           </div>
         </div>

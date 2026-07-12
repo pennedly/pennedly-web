@@ -1673,6 +1673,9 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "onboarding.analyze_slow": "Це триває довше, ніж зазвичай — повернутися назад",
   "onboarding.err_network": "Немає з'єднання. Перевірте інтернет і спробуйте ще раз.",
   "onboarding.err_server": "Щось пішло не так з нашого боку. Спробуйте ще раз за хвилину.",
+  "onboarding.import_too_few": "Імпорт завершився: знайшлося лише {have} дописів (потрібно {need}). Почніть з нуля — варіант розблокується, коли дописів стане більше.",
+  "onboarding.analyze_new_hint": "Якщо акаунт новий і дописів майже немає — оберіть «Почати з нуля».",
+  "onboarding.import_wait_note": "Імпортуємо ваші дописи — вже {have}",
   "onboarding.analyze_timeout": "Налаштування голосу триває надто довго. Спробуйте ще раз.",
   "stats.eng_title": "Залученість",
   "stats.eng_per_day": "на день",
@@ -2007,4 +2010,5 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "acc.brands_many": "brands",
   "acc.error_title": "Couldn't load your dashboard",
   "acc.error_sub": "Something went wrong. Try again.",
+  "scenarios.bo.attach_name_suffix": "— бустер",
 };

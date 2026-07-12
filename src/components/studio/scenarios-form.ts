@@ -635,14 +635,22 @@ export function buildBoost(s: FormState): ScenarioBoost {
 // caller supplies the (already-saved) scenario's id + name; returns a full
 // ScenarioCreate (a separate scenario, OFF by default — the user enables it like
 // any other). Returns null when the attach section is off or the comment is empty.
-export function buildAttachedBoostBody(s: FormState, scenarioId: number, scenarioName: string): ScenarioCreate | null {
+export function buildAttachedBoostBody(
+  s: FormState,
+  scenarioId: number,
+  scenarioName: string,
+  // Localized companion-name suffix («— бустер» / "— booster") — passed in by
+  // the caller because this module has no i18n context (C11: it used to be
+  // hardcoded Russian for every locale).
+  boosterSuffix: string,
+): ScenarioCreate | null {
   if (!s.attachBoostOn || !s.attachBoostComment.trim() || scenarioId <= 0) return null;
   const th = Number(s.attachBoostThreshold);
   const threshold = s.attachBoostThreshold.trim() && Number.isFinite(th) && th >= 1
     ? Math.min(1_000_000_000, Math.floor(th))
     : BOOST_DEFAULT_THRESHOLD[s.attachBoostMetric];
   return {
-    name: `${scenarioName} — бустер`,
+    name: `${scenarioName} ${boosterSuffix}`,
     boost: {
       metric: s.attachBoostMetric,
       threshold,

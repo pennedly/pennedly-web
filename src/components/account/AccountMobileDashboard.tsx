@@ -1071,6 +1071,7 @@ export function AccountMobileDashboard({
   plural,
   dark,
   onOpenAdvisor,
+  onRetry,
 }: {
   data: MeAccountResponse;
   adv?: AdvisorData;
@@ -1078,6 +1079,9 @@ export function AccountMobileDashboard({
   plural: Plural;
   dark?: boolean;
   onOpenAdvisor?: () => void;
+  // In-place refetch for the sync-error «Повторить» (C9). Omitted (gallery/demo)
+  // → the nav default (full page reload) stays.
+  onRetry?: () => void;
 }) {
   const baseNav = useAccountNav();
   // One overlay open at a time (sheet | drawer | login | connect), the .m-scrim
@@ -1086,7 +1090,7 @@ export function AccountMobileDashboard({
   const close = () => setOverlay(null);
   // Add-affordances open the network-picker sheet; only its Threads row starts
   // the OAuth (baseNav.connectThreads). Reconnect buttons stay direct.
-  const nav = { ...baseNav, addProfile: () => setOverlay("connect") };
+  const nav = { ...baseNav, addProfile: () => setOverlay("connect"), ...(onRetry ? { retry: onRetry } : {}) };
   return (
     <div className="acc-mob">
       <Topbar data={data} t={t} plural={plural} dark={dark} onMenu={() => setOverlay("drawer")} />

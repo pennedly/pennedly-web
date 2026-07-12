@@ -2565,6 +2565,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "scenarios.bo.studio.err_comment": "Напишите комментарий, который добавить",
   // точка входа C (редактор сценария-поста) — секция «Бустер»
   "scenarios.bo.attach_group": "Бустер",
+  "scenarios.bo.attach_name_suffix": "— бустер",
   "scenarios.bo.attach_title": "Добавить бустер для постов этого сценария",
   "scenarios.bo.attach_sub": "Когда пост этого сценария залетит, добавить к нему комментарий",
   "scenarios.bo.attach_target": "Цель: посты этого сценария",

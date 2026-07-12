@@ -2593,6 +2593,7 @@ export const en = {
   "scenarios.bo.studio.err_comment": "Write the comment to add",
   // entry C (post-scenario editor) — the «Booster» section
   "scenarios.bo.attach_group": "Booster",
+  "scenarios.bo.attach_name_suffix": "— booster",
   "scenarios.bo.attach_title": "Add a booster for this scenario's posts",
   "scenarios.bo.attach_sub": "When a post from this scenario takes off, add a comment to it",
   "scenarios.bo.attach_target": "Target: this scenario's posts",

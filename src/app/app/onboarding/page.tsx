@@ -1160,8 +1160,29 @@ export default function OnboardingPage() {
   useEffect(() => {
     if (!getTokens()) return;
     fetchMe()
-      .then((m) => setTester(m.is_tester))
+      .then((m) => {
+        setTester(m.is_tester);
+        // C8: a non-tester who lands with ?demo=1 used to hang on the loader
+        // forever — the boot effect skipped the real load while the demo
+        // render itself is tester-gated. The boot guard checks BOTH the tweak
+        // flag AND the raw URL (isDemoUrl), so dropping the flag alone is not
+        // enough: strip the param from the URL too, then flip the flag — the
+        // boot effect (deps: tw.demo) re-runs and finally loads live data.
+        if (m.is_tester !== true && !IS_DEV) {
+          try {
+            const url = new URL(window.location.href);
+            if (url.searchParams.has("demo")) {
+              url.searchParams.delete("demo");
+              window.history.replaceState({}, "", url.toString());
+            }
+          } catch {
+            /* no-op */
+          }
+          setTw("demo", false);
+        }
+      })
       .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
     if (tw.demo) document.documentElement.classList.toggle("dark", !!tw.dark);

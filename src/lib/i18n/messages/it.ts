@@ -1676,6 +1676,9 @@ export const it: Partial<Record<MessageKey, string>> = {
   "onboarding.analyze_slow": "Sta richiedendo più tempo del solito — torna indietro",
   "onboarding.err_network": "Nessuna connessione. Controlla la rete e riprova.",
   "onboarding.err_server": "Qualcosa è andato storto da parte nostra. Riprova tra un attimo.",
+  "onboarding.import_too_few": "Importazione completata: trovati solo {have} post (ne servono {need}). Parti da zero — l'opzione si sblocca quando pubblichi di più.",
+  "onboarding.analyze_new_hint": "Account nuovo con quasi nessun post? Scegli «Parti da zero».",
+  "onboarding.import_wait_note": "Importiamo i tuoi post — finora {have}",
   "onboarding.analyze_timeout": "La configurazione della voce richiede troppo tempo. Riprova.",
   "stats.eng_title": "Engagement",
   "stats.eng_per_day": "al giorno",
@@ -2010,4 +2013,5 @@ export const it: Partial<Record<MessageKey, string>> = {
   "acc.brands_many": "brands",
   "acc.error_title": "Couldn't load your dashboard",
   "acc.error_sub": "Something went wrong. Try again.",
+  "scenarios.bo.attach_name_suffix": "— booster",
 };

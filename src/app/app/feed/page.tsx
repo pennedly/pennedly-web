@@ -6,7 +6,7 @@
 // per-post auto-reply toggle, inline translate and delete. Real API wiring is
 // preserved; a tester ?demo=1 panel (dark/state/sort) drives every state.
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -77,6 +77,12 @@ export default function FeedPage() {
   // real fetch failure (B5: a raw 500/timeout used to render String(e) with no
   // way back short of a full reload).
   const [reloadKey, setReloadKey] = useState(0);
+  // Request generation: bumped on every (re)load. A response whose generation
+  // is stale is discarded — without this, quick Recent↔Top toggles raced
+  // (last-to-RESOLVE won, so a slow Top page could land under the Recent
+  // segment), and an in-flight «Показать старые» could splice an old-sort page
+  // into the new-sort list.
+  const loadGen = useRef(0);
   const [account, setAccount] = useState<{ name: string; handle: string; initials: string; avatarUrl: string | null }>({ name: "You", handle: "you", initials: "Y", avatarUrl: null });
   const [sort, setSort] = useState<"recent" | "top">("recent");
   // The account reply mode resolves a post's NULL (inherit) auto_reply for display.
@@ -125,13 +131,18 @@ export default function FeedPage() {
     if (accountId === null) return;
     setLoaded(false);
     setBootError(null);
+    const gen = ++loadGen.current;
     (async () => {
       try {
-        const data = await fetchFeed(accountId, { limit: 50 });
+        // Sort lives SERVER-side (C6): 'top' must rank the whole history, not
+        // the loaded page — switching re-fetches page one in the new order.
+        const data = await fetchFeed(accountId, { limit: 50, sort });
+        if (gen !== loadGen.current) return; // superseded by a newer load
         setHasMore(data.has_more ?? false);
         setPosts(data.posts);
         setReference(data.reference);
       } catch (e) {
+        if (gen !== loadGen.current) return;
         if (e instanceof ApiError && e.status === 401) {
           clearTokens();
           router.push("/app/login");
@@ -139,10 +150,10 @@ export default function FeedPage() {
         }
         setBootError(String(e));
       } finally {
-        setLoaded(true);
+        if (gen === loadGen.current) setLoaded(true);
       }
     })();
-  }, [accountId, router, demoParam, reloadKey]);
+  }, [accountId, router, demoParam, reloadKey, sort]);
 
   // Reply mode for resolving NULL (inherit) per-post flags — fail-soft.
   useEffect(() => {
@@ -179,7 +190,9 @@ export default function FeedPage() {
           media: fp.media ?? [],
           threadsUrl: fp.threads_url,
         }));
-    return sort === "top" ? [...list].sort((a, b) => b.views - a.views) : list;
+    // Real mode arrives already server-ordered (C6); only the demo's mock
+    // list still sorts client-side.
+    return demoOn && sort === "top" ? [...list].sort((a, b) => b.views - a.views) : list;
   }, [demoOn, demoPosts, posts, sort, locale, replyMode]);
 
   const baseline = demoOn
@@ -233,8 +246,12 @@ export default function FeedPage() {
   async function loadMore() {
     if (accountId === null || loadingMore) return;
     setLoadingMore(true);
+    // Discard the response if a reload/sort-toggle happened while it was in
+    // flight — appending an old-sort page into the new list mixed orders.
+    const gen = loadGen.current;
     try {
-      const data = await fetchFeed(accountId, { limit: 50, offset: posts.length });
+      const data = await fetchFeed(accountId, { limit: 50, offset: posts.length, sort });
+      if (gen !== loadGen.current) return;
       setPosts((ps) => [...ps, ...data.posts.filter((n) => !ps.some((x) => x.id === n.id))]);
       setHasMore(data.has_more ?? false);
     } catch {

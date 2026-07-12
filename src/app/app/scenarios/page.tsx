@@ -1118,7 +1118,7 @@ export default function ScenariosPage() {
       // boost scenario watching THIS scenario's posts (target {type:"scenario"}).
       // Created OFF (the user enables it like any routine); a failure here is
       // surfaced but doesn't undo the main save (the scenario itself is saved).
-      const companion = !form.isBoost ? buildAttachedBoostBody(form, saved.id, saved.name) : null;
+      const companion = !form.isBoost ? buildAttachedBoostBody(form, saved.id, saved.name, t("scenarios.bo.attach_name_suffix")) : null;
       if (companion) {
         try {
           const boostSaved = await createScenario(accountId, { ...companion, enabled: false });

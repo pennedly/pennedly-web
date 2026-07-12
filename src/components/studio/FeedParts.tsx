@@ -108,7 +108,7 @@ export function FeedBar({ count, sort, onSort }: { count: number; sort: "recent"
 }
 
 // ───────────────────────────── ViralityBadge ────────────────────────────────
-function ViralityBadge({ ratio, settling }: { ratio: number; settling?: boolean }) {
+function ViralityBadge({ ratio, settling }: { ratio: number | null; settling?: boolean }) {
   const { t } = useTranslation();
   const base =
     "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-[5px] text-caption font-semibold leading-none max-md:shrink-0 max-md:whitespace-normal max-md:text-balance max-md:leading-tight";
@@ -118,6 +118,9 @@ function ViralityBadge({ ratio, settling }: { ratio: number; settling?: boolean 
         <IcClock size={12} className="animate-pulse" /> {t("feed.settling")}
       </span>
     );
+  // No baseline yet (avg_views 0 — fresh account / thin history): a ratio
+  // would be a lie («0.0× average» on every card, C10) — show nothing.
+  if (ratio === null) return null;
   if (ratio >= 1.5)
     return (
       <span className={cn(base, "border-success/30 bg-success/[0.13] text-success")}>
@@ -474,7 +477,7 @@ export function FeedCard({
 }) {
   const { t } = useTranslation();
   const [translated, setTranslated] = useState<{ lang: UiLang; body: string } | null>(null);
-  const ratio = baselineViews > 0 ? p.views / baselineViews : 0;
+  const ratio = baselineViews > 0 ? p.views / baselineViews : null;
   const body = translated ? translated.body : p.text;
   // Link card: only when the post carries no image media (Threads shows a card
   // OR media, not both) and the body has a URL. Extracted from the original
