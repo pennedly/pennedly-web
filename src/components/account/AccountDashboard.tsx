@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { setSelectedAccountId, useSelectedAccountId } from "@/lib/account";
+import { useMe } from "@/lib/use-account-data";
 import { logout, startThreadsConnect } from "@/lib/api";
 import { useTranslation } from "@/lib/i18n";
 import {
@@ -185,6 +186,18 @@ function nfmt(n: number): string {
 function initials(name: string | null, handle: string | null): string {
   const s = (name || handle || "?").trim();
   return s.slice(0, 2).toUpperCase();
+}
+
+// Identity for the account chrome (head, sidebar login, breadcrumb, drawers).
+// The эталон shows the signed-in USER — name in the head, email in the login
+// controls — while the live code had substituted `tenant.name` («X's
+// workspace») everywhere, which also froze renames (audit B8: a Settings
+// name-edit never reached the chrome). Reads the LIVE cached /me (re-renders
+// on a rename via subscribeMe); falls back to the tenant name until /me lands.
+export function useChromeIdentity(tenantName: string): { name: string; email: string; mono: string } {
+  const me = useMe();
+  const name = (me?.display_name || "").trim() || tenantName;
+  return { name, email: me?.email ?? tenantName, mono: initials(name, null) };
 }
 
 function Delta({ v }: { v: number | null }) {
@@ -685,13 +698,13 @@ export function Header({
     brandsN >= 2
       ? `${profilesN} ${plural("profiles", profilesN)} · ${brandsN} ${plural("brands", brandsN)} · ${netLabel}`
       : `${profilesN} ${plural("profiles", profilesN)} · ${netLabel}`;
-  const acctMono = initials(data.tenant.name, null);
+  const id = useChromeIdentity(data.tenant.name);
   return (
     <div className="acc-head">
       <div className="acc-head-id">
-        <AcctMark mono={acctMono} />
+        <AcctMark mono={id.mono} />
         <div className="acc-head-txt">
-          <div className="acc-head-name">{data.tenant.name}</div>
+          <div className="acc-head-name">{id.name}</div>
           <div className="acc-head-meta">
             <span className="acc-head-plan">{data.tenant.plan_tier}</span>
             <span className="acc-head-scale">{scale}</span>
@@ -752,7 +765,8 @@ export type AccountPage = "dashboard" | "advisor" | "settings";
 export function Sidebar({ data, t, nav, active = "dashboard" }: { data: MeAccountResponse; t: T; nav: Nav; active?: AccountPage }) {
   const multi = data.scope.brands_count >= 2;
   const [loginOpen, setLoginOpen] = useState(false);
-  const mono = initials(data.tenant.name, null);
+  const id = useChromeIdentity(data.tenant.name);
+  const mono = id.mono;
   // Active row = current page (no navigation); inactive rows go to their route.
   const row = (page: AccountPage, route: string) =>
     active === page ? { className: "acc-sb-row acc-sb-row--active" } : { className: "acc-sb-row", onClick: () => nav.go(route) };
@@ -798,7 +812,7 @@ export function Sidebar({ data, t, nav, active = "dashboard" }: { data: MeAccoun
         <button className="acc-login" type="button" aria-expanded={loginOpen} onClick={() => setLoginOpen((o) => !o)}>
           <AcctMark mono={mono} />
           <span className="acc-login-who">
-            <span className="acc-login-email">{data.tenant.name}</span>
+            <span className="acc-login-email">{id.email}</span>
             <span className="acc-login-plan">{data.tenant.plan_tier}</span>
           </span>
           <IcChevDown size={15} className="rotate-180" />
@@ -811,7 +825,7 @@ export function Sidebar({ data, t, nav, active = "dashboard" }: { data: MeAccoun
               <div className="acc-lm-row">
                 <span className="acc-acctmark">{mono}</span>
                 <span className="acc-lm-who">
-                  <span className="acc-lm-email">{data.tenant.name}</span>
+                  <span className="acc-lm-email">{id.email}</span>
                   <span className="acc-lm-plan">{data.tenant.plan_tier}</span>
                 </span>
                 <span className="acc-lm-check">
@@ -884,7 +898,7 @@ function SwitcherRow({ p, active, t, nav, onDone }: { p: AccountProfile; active:
 }
 
 export function Topbar({ data, t, plural, dark, nav }: { data: MeAccountResponse; t: T; plural: Plural; dark?: boolean; nav: Nav }) {
-  const acctMono = initials(data.tenant.name, null);
+  const acctMono = useChromeIdentity(data.tenant.name).mono;
   const allProfiles = data.brands.flatMap((b) => b.profiles);
   // The "N profiles" claim + the avatar stack count LIVE profiles only — a
   // disconnected profile is a reconnect target, not an active profile, so an
@@ -1000,7 +1014,7 @@ export function ScreenTopbar({
   dark?: boolean;
   pill?: string;
 }) {
-  const acctMono = initials(tenantName, null);
+  const acctMono = useChromeIdentity(tenantName).mono;
   const pageLabel = page === "settings" ? t("acc.crumb_settings") : t("acc.crumb_advisor");
   const [themeDark, setThemeDark] = useState(!!dark);
   useEffect(() => {

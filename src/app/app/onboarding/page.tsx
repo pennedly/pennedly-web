@@ -1460,7 +1460,12 @@ export default function OnboardingPage() {
   }
 
   function onSkip() {
-    if (accountId !== null) setOnboardingSkipped(accountId);
+    // Pre-connect there is nothing to skip TO: without an account the skip
+    // can't be recorded and /app would bounce right back here. The button is
+    // hidden in that state (showSkip); this guard keeps the invariant even if
+    // some future path calls onSkip directly.
+    if (accountId === null) return;
+    setOnboardingSkipped(accountId);
     captureEvent("ui.onboarding_skipped", { account_id: accountId });
     setMode(null);
     setStage("done");
@@ -1476,7 +1481,10 @@ export default function OnboardingPage() {
     );
   }
 
-  const showSkip = firstRun && !preview && !alreadySetUp && stage !== "done" && stage !== "analyze" && stage !== "loading";
+  // accountId !== null: skipping is only meaningful once Threads is connected —
+  // pre-connect, onSkip couldn't record the skip (no account), showed the false
+  // «You're good to go», and /app bounced straight back here (B6).
+  const showSkip = accountId !== null && firstRun && !preview && !alreadySetUp && stage !== "done" && stage !== "analyze" && stage !== "loading";
   const showBack = (alreadySetUp || preview) && stage !== "analyze" && stage !== "loading";
   const wide = stage === "scratch" || (stage === "done" && preview);
   const acct = connectedAccount;

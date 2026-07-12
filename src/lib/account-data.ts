@@ -65,7 +65,10 @@ export function loadMe(): Promise<Me> {
     const gen = generation;
     mePromise = fetchMe()
       .then((m) => {
-        if (gen === generation) meCache = m; // dropped if wiped mid-flight
+        if (gen === generation) {
+          meCache = m; // dropped if wiped mid-flight
+          notifyMe(); // chrome mounted before this resolve picks it up
+        }
         return m;
       })
       .finally(() => {
@@ -123,10 +126,29 @@ export function loadAdvisor(): Promise<AdvisorData | null> {
   return advisorPromise;
 }
 
+// Subscribers notified whenever the cached `/me` identity changes (loaded,
+// patched by a Settings edit, or wiped). Lets mounted chrome (sidebar login
+// menu, monogram, settings identity row) re-render LIVE after a rename instead
+// of showing the stale copy until the next navigation (audit B8).
+type MeListener = () => void;
+const meListeners = new Set<MeListener>();
+
+export function subscribeMe(fn: MeListener): () => void {
+  meListeners.add(fn);
+  return () => meListeners.delete(fn);
+}
+
+function notifyMe(): void {
+  for (const fn of meListeners) fn();
+}
+
 // Optimistic patch after a Settings edit (name / locale) so the cached copy the
 // other screens read stays current without a refetch.
 export function patchMeCache(fn: (m: Me) => Me): void {
-  if (meCache) meCache = fn(meCache);
+  if (meCache) {
+    meCache = fn(meCache);
+    notifyMe();
+  }
 }
 
 // Drop everything and bump the generation so any in-flight fetch is disowned.
@@ -142,6 +164,7 @@ export function invalidateAccountData(): void {
   advisorAt = 0;
   advisorLoaded = false;
   advisorPromise = null;
+  notifyMe(); // identity changed → live chrome must drop the old user's name
 }
 
 // Wipe on logout/401 (this tab) so the next user in the same tab never sees

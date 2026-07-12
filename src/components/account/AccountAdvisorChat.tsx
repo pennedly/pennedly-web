@@ -30,6 +30,7 @@ import {
 } from "@/components/advisor/AdvisorParts";
 import { advisorSourceLabel } from "@/components/advisor/advisor-demo";
 import { IcSparkle } from "@/components/icons";
+import { setSelectedAccountId } from "@/lib/account";
 import { ApiError, chatAccountAdvisor, clearTokens } from "@/lib/api";
 import { useTranslation } from "@/lib/i18n";
 import type { AdvisorData, AdvisorMessage, MeAccountResponse } from "@/lib/types";
@@ -147,8 +148,39 @@ function demoTurns(t: T): Turn[] {
   ];
 }
 
+// Suggestion @handle → LIVE, VOICED profile's account id, from the portfolio
+// payload. Case-insensitive, tolerant of a leading '@' on either side.
+// Disconnected profiles never match (no token — the composer couldn't generate
+// for them); voiceless ones don't either — switching to one would bounce the
+// Studio into the onboarding wizard and lose the seeded brief (B9 follow-up),
+// so the handoff keeps the current profile instead.
+function makeAccountResolver(data: MeAccountResponse) {
+  return (handle: string | null | undefined): number | null => {
+    const h = (handle || "").trim().replace(/^@/, "").toLowerCase();
+    if (!h) return null;
+    for (const b of data.brands) {
+      for (const p of b.profiles) {
+        if (
+          !p.disconnected &&
+          p.has_voice !== false &&
+          (p.handle || "").replace(/^@/, "").toLowerCase() === h
+        )
+          return p.id;
+      }
+    }
+    return null;
+  };
+}
+
 // ── chat state hook (mirrors /app/advisor) ───────────────────────────────────
-function useChat(router: ReturnType<typeof useRouter>, t: T, demoState?: ChatDemoState) {
+function useChat(
+  router: ReturnType<typeof useRouter>,
+  t: T,
+  demoState?: ChatDemoState,
+  // Maps a suggestion's bare @handle to a LIVE profile's account id (null = no
+  // match). Provided by the screens from their MeAccountResponse (B9).
+  resolveAccountId?: (handle: string | null | undefined) => number | null,
+) {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -169,7 +201,13 @@ function useChat(router: ReturnType<typeof useRouter>, t: T, demoState?: ChatDem
     return msgs;
   }
 
-  function openInStudio(brief: string) {
+  function openInStudio(brief: string, accountHandle?: string | null) {
+    // Switch the Studio to the ADVISED profile first (B9): without this the
+    // brief landed on whatever profile happened to be selected, and the draft
+    // was written in the wrong account's voice. No/unknown handle → keep the
+    // current selection (portfolio-wide advice).
+    const id = resolveAccountId?.(accountHandle) ?? null;
+    if (id !== null) setSelectedAccountId(id);
     router.push(`/app?brief=${encodeURIComponent(brief)}`);
   }
 
@@ -193,7 +231,7 @@ function useChat(router: ReturnType<typeof useRouter>, t: T, demoState?: ChatDem
           title: s.title,
           why: s.why,
           brief: s.brief,
-          onOpenStudio: () => openInStudio(s.brief),
+          onOpenStudio: () => openInStudio(s.brief, s.account),
         })),
       };
       setTurns((prev) => {
@@ -280,7 +318,7 @@ export function AccountAdvisorChat({
 }) {
   const router = useRouter();
   const nav = useAccountNav();
-  const { shown, input, setInput, ask, retryLast, busy, scrollRef } = useChat(router, t, demoState);
+  const { shown, input, setInput, ask, retryLast, busy, scrollRef } = useChat(router, t, demoState, makeAccountResolver(data));
   const isFirstRun = shown.length === 0;
   return (
     <div className="acc-shell">
@@ -332,7 +370,7 @@ export function AccountMobileAdvisorChat({
   demoState?: ChatDemoState;
 }) {
   const router = useRouter();
-  const { shown, input, setInput, ask, retryLast, busy } = useChat(router, t, demoState);
+  const { shown, input, setInput, ask, retryLast, busy } = useChat(router, t, demoState, makeAccountResolver(data));
   const isFirstRun = shown.length === 0;
   const dock = (
     <div className="ma-chat-dock">

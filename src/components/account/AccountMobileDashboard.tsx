@@ -55,7 +55,7 @@ import type {
   OverviewTotals,
 } from "@/lib/types";
 
-import { DynIcon, IcCheckSm, relSince, useAccountNav } from "./AccountDashboard";
+import { DynIcon, IcCheckSm, relSince, useAccountNav, useChromeIdentity } from "./AccountDashboard";
 import type { AccountPage, Nav, Plural, T } from "./AccountDashboard";
 // Real network logos + the add-flow bottom sheet (shared with desktop/empty).
 import { ConnectNetworkSheet, NetLogo } from "./networks";
@@ -166,11 +166,12 @@ function Header({ data, t, plural }: { data: MeAccountResponse; t: T; plural: Pl
     brandsN >= 2
       ? `${profilesN} ${plural("profiles", profilesN)} · ${brandsN} ${plural("brands", brandsN)} · ${nets}`
       : `${profilesN} ${plural("profiles", profilesN)} · ${nets}`;
+  const id = useChromeIdentity(data.tenant.name);
   return (
     <div className="ma-head">
-      <AcctMark mono={initials(data.tenant.name, null)} />
+      <AcctMark mono={id.mono} />
       <div className="ma-head-txt">
-        <div className="ma-head-name">{data.tenant.name}</div>
+        <div className="ma-head-name">{id.name}</div>
         <div className="ma-head-meta">
           <span className="ma-head-plan">{data.tenant.plan_tier}</span>
           <span className="ma-head-scale">{scale}</span>
@@ -806,6 +807,7 @@ function NavRow({ icon, label, active, badge, extraCls, onClick }: { icon: strin
 function NavDrawer({ data, t, nav, onClose, onOpenLogin, active = "dashboard" }: { data: MeAccountResponse; t: T; nav: Nav; onClose: () => void; onOpenLogin: () => void; active?: AccountPage }) {
   const multi = data.scope.brands_count >= 2;
   const go = (route: string) => { onClose(); nav.go(route); };
+  const id = useChromeIdentity(data.tenant.name);
   return (
     <>
       <button className="m-scrim" type="button" aria-label="" onClick={onClose} />
@@ -850,9 +852,9 @@ function NavDrawer({ data, t, nav, onClose, onOpenLogin, active = "dashboard" }:
         </div>
         <div className="m-drawer-foot">
           <button className="ma-loginctl" type="button" onClick={onOpenLogin}>
-            <AcctMark mono={initials(data.tenant.name, null)} />
+            <AcctMark mono={id.mono} />
             <span className="ma-loginctl-who">
-              <span className="ma-loginctl-email">{data.tenant.name}</span>
+              <span className="ma-loginctl-email">{id.email}</span>
               <span className="ma-loginctl-plan">{data.tenant.plan_tier}</span>
             </span>
             <span className="ma-loginctl-chev">
@@ -870,6 +872,7 @@ function NavDrawer({ data, t, nav, onClose, onOpenLogin, active = "dashboard" }:
 // maps to the desktop login menu: current-account header + Настройки + Выйти.
 function LoginSheet({ data, t, nav, onClose }: { data: MeAccountResponse; t: T; nav: Nav; onClose: () => void }) {
   const done = (fn: () => void) => { onClose(); fn(); };
+  const id = useChromeIdentity(data.tenant.name);
   return (
     <>
       <button className="m-scrim" type="button" aria-label="" onClick={onClose} />
@@ -878,7 +881,7 @@ function LoginSheet({ data, t, nav, onClose }: { data: MeAccountResponse; t: T; 
           <div className="m-sheet-grip" />
           <div className="ma-login-head">
             <div className="ma-login-head-id">
-              <div className="ma-login-email">{data.tenant.name}</div>
+              <div className="ma-login-email">{id.email}</div>
               <span className="ma-login-plan">{data.tenant.plan_tier}</span>
             </div>
             <button className="m-sheet-close" type="button" onClick={onClose}>
@@ -887,9 +890,9 @@ function LoginSheet({ data, t, nav, onClose }: { data: MeAccountResponse; t: T; 
           </div>
           <div className="ma-sw-cap">{t("acc.account_word")}</div>
           <button className="ma-login-row" type="button">
-            <AcctMark mono={initials(data.tenant.name, null)} />
+            <AcctMark mono={id.mono} />
             <span className="ma-login-who">
-              <span className="ma-login-nm">{data.tenant.name}</span>
+              <span className="ma-login-nm">{id.email}</span>
               <span className="ma-login-hd">{data.tenant.plan_tier}</span>
             </span>
             <span className="ma-login-check">
@@ -1131,15 +1134,16 @@ export function AccountMobileAllDisconnected({
   // (known Threads profiles) keep going straight to the OAuth.
   const nav = { ...baseNav, addProfile: () => setOverlay("connect") };
   const disc = data.brands.flatMap((b) => b.profiles).filter((p) => p.disconnected);
+  const id = useChromeIdentity(data.tenant.name);
   return (
     <div className="acc-mob">
       <Topbar data={data} t={t} plural={plural} dark={dark} showPill={false} onMenu={() => setOverlay("drawer")} />
       <div className="ma">
         {/* identity-only head — shows the disconnected count, never a fake "0" */}
         <div className="ma-head">
-          <AcctMark mono={initials(data.tenant.name, null)} />
+          <AcctMark mono={id.mono} />
           <div className="ma-head-txt">
-            <div className="ma-head-name">{data.tenant.name}</div>
+            <div className="ma-head-name">{id.name}</div>
             <div className="ma-head-meta">
               <span className="ma-head-scale">
                 {disc.length} {plural("profiles", disc.length)}

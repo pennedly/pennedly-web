@@ -327,6 +327,10 @@ export type AdvisorSuggestionData = {
   title: string;
   why: string;
   brief: string;
+  // Portfolio-advisor chat only: bare @handle (no '@') of the profile the
+  // action targets. The FE switches the Studio to that profile before seeding
+  // the brief (B9); null/absent = keep the currently selected profile.
+  account?: string | null;
 };
 
 export type AdvisorResponse = {
@@ -727,6 +731,10 @@ export type OverviewResponse = {
 // brand link.
 export type AccountProfile = Omit<OverviewAccount, "sync_status"> & {
   brand_id: number | null;
+  // The profile has an ACTIVE role_book (voice). The advisor's open-in-Studio
+  // handoff refuses to switch to a voiceless profile (it would bounce into the
+  // onboarding wizard and lose the seeded brief — B9 review follow-up).
+  has_voice?: boolean;
   // A profile whose OAuth was revoked/expired — its row + all config (drafts /
   // voice / scenarios / history) are kept, it is held OUT of every metric/total,
   // and the dashboard renders it with a "Disconnected" pill + Reconnect.

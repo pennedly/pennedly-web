@@ -21,6 +21,7 @@ import {
   Sidebar,
   Topbar,
   useAccountNav,
+  useChromeIdentity,
   type Plural,
   type T,
 } from "./AccountDashboard";
@@ -130,7 +131,7 @@ export function AllDisconnected({
   // a disconnected Threads profile is already known.
   const nav = { ...baseNav, addProfile: () => setPickOpen(true) };
   const disc = data.brands.flatMap((b) => b.profiles).filter((p) => p.disconnected);
-  const acctMono = (data.tenant.name || "PL").slice(0, 2).toUpperCase();
+  const id = useChromeIdentity(data.tenant.name);
   return (
     <div className="acc-shell">
       <Sidebar data={data} t={t} nav={nav} />
@@ -138,9 +139,9 @@ export function AllDisconnected({
         <Topbar data={data} t={t} plural={plural} dark={dark} nav={nav} />
         <div className="acc">
           <div className="acc-head acc-head--idonly">
-            <AcctMark mono={acctMono} />
+            <AcctMark mono={id.mono} />
             <div className="acc-head-txt">
-              <div className="acc-head-name">{data.tenant.name}</div>
+              <div className="acc-head-name">{id.name}</div>
               <div className="acc-head-meta">
                 <span className="acc-head-scale">
                   {disc.length} {plural("profiles", disc.length)}

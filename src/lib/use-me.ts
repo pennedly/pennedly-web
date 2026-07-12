@@ -9,11 +9,15 @@
 import { useEffect, useState } from "react";
 
 import { getTokens } from "@/lib/api";
-import { loadMe, peekMe } from "@/lib/account-data";
+import { loadMe, peekMe, subscribeMe } from "@/lib/account-data";
 import type { Me } from "@/lib/types";
 
 export function useMe(): Me | null {
   const [me, setMe] = useState<Me | null>(peekMe());
+  // Track cache changes (a Settings rename patches it, logout wipes it) so
+  // every consumer — e.g. the AppTopbar breadcrumb monogram — re-renders live
+  // instead of drifting from the account chrome (B8 review follow-up).
+  useEffect(() => subscribeMe(() => setMe(peekMe())), []);
   useEffect(() => {
     const cached = peekMe();
     if (cached) {

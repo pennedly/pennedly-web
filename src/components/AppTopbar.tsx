@@ -39,7 +39,10 @@ function useProfileCrumb() {
   const identity = effMe ?? me;
   if (identity?.is_tester !== true || !selectedAccount) return null;
   return {
-    mono: (identity.tenant.name || "?").trim().slice(0, 2).toUpperCase(),
+    // Same identity rule as the account chrome (useChromeIdentity): the USER's
+    // display name first, tenant name as fallback — so this monogram matches
+    // the account zone and follows a Settings rename live (B8 follow-up).
+    mono: (((identity.display_name || "").trim() || identity.tenant.name || "?")).trim().slice(0, 2).toUpperCase(),
     handle: selectedAccount.username ? `@${selectedAccount.username}` : nameOf(selectedAccount),
     account: selectedAccount,
   };

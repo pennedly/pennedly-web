@@ -10,10 +10,24 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { ApiError, clearTokens, getTokens } from "@/lib/api";
-import { loadMe, loadMeAccount, peekMe, peekMeAccount } from "@/lib/account-data";
+import { loadMe, loadMeAccount, peekMe, peekMeAccount, subscribeMe } from "@/lib/account-data";
 import type { Me, MeAccountResponse } from "@/lib/types";
 
 export type AccountPhase = "loading" | "ready" | "error";
+
+// Live view of the cached `/me` identity. Re-renders when the cache is loaded,
+// patched (Settings rename) or wiped — so chrome that shows the user's
+// name/email (sidebar login menu, monogram, breadcrumb) stays current without
+// prop-drilling a callback through every screen (audit B8).
+export function useMe(): Me | null {
+  const [me, setMe] = useState<Me | null>(peekMe());
+  useEffect(() => subscribeMe(() => setMe(peekMe())), []);
+  // /gallery renders the real components with DEMO data, hermetically (no
+  // auth) — never inject the signed-in dev's real identity into a gallery
+  // state when the module cache happens to be warm in the same tab.
+  if (typeof window !== "undefined" && window.location.pathname.startsWith("/gallery")) return null;
+  return me;
+}
 
 export function useAccountData(): {
   me: Me | null;
@@ -26,6 +40,9 @@ export function useAccountData(): {
   const router = useRouter();
   const cachedAccount = peekMeAccount();
   const [me, setMe] = useState<Me | null>(peekMe());
+  // Track later cache changes (a Settings rename patches the cache) so the
+  // already-mounted screen re-renders with the new identity.
+  useEffect(() => subscribeMe(() => setMe(peekMe())), []);
   const [data, setData] = useState<MeAccountResponse | null>(cachedAccount);
   // Cache present → render immediately; else the usual first-load skeleton.
   const [phase, setPhase] = useState<AccountPhase>(cachedAccount ? "ready" : "loading");
