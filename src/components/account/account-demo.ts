@@ -241,9 +241,9 @@ const RU: Record<string, string> = {
   "acc.task_audits": "аудит",
   "acc.adv_title": "Советник аккаунта",
   "acc.adv_scope": "по всему портфелю",
-  "acc.adv_open": "Открыть чат",
+  "acc.adv_open": "Открыть советника",
   "acc.adv_grounded": "Основано на:",
-  "acc.adv_ask": "Спросите о портфеле…",
+  "acc.adv_ask": "Спросите совет по портфелю…",
   "acc.adv_reco": "Рекомендации",
   // ── settings screen ──
   "acc.set_lead": "Аккаунт, язык интерфейса, тариф и ваши данные. Настройки отдельных профилей живут внутри каждого профиля.",

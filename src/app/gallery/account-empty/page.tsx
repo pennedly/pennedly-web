@@ -13,6 +13,7 @@ import { useState } from "react";
 import { pluralUnit } from "@/lib/i18n";
 
 import "@/components/account/account.css";
+import "@/components/account/account-v3.css";
 import "@/components/account/account-mobile-shell.css";
 import "@/components/account/account-mobile.css";
 import "@/components/account/account-empty.css";

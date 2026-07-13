@@ -35,7 +35,7 @@ import { ApiError, chatAccountAdvisor, clearTokens } from "@/lib/api";
 import { useTranslation } from "@/lib/i18n";
 import type { AdvisorData, AdvisorMessage, MeAccountResponse } from "@/lib/types";
 
-import { DynIcon, ScreenTopbar, Sidebar, useAccountNav } from "./AccountDashboard";
+import { ADVISOR_SEED_KEY, DynIcon, ScreenTopbar, Sidebar, useAccountNav } from "./AccountDashboard";
 import type { Plural, T } from "./AccountDashboard";
 import { AccountMobileShell } from "./AccountMobileDashboard";
 
@@ -180,6 +180,9 @@ function useChat(
   // Maps a suggestion's bare @handle to a LIVE profile's account id (null = no
   // match). Provided by the screens from their MeAccountResponse (B9).
   resolveAccountId?: (handle: string | null | undefined) => number | null,
+  // Which breakpoint variant this instance is (the page mounts both) — decides
+  // which one consumes the seeded first question, so only the visible chat asks.
+  isMobile = false,
 ) {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [input, setInput] = useState("");
@@ -190,6 +193,28 @@ function useChat(
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [turns]);
+
+  // Decision C handoff: the dashboard's ask line / «Открыть советника» / starters
+  // / recos route here, seeding the first question via sessionStorage. Read +
+  // clear it once on mount and fire the turn (clean URL, no re-ask on refresh).
+  // The page mounts BOTH the desktop and the mobile chat (one hidden by a CSS
+  // breakpoint), so only the instance that matches the ACTIVE viewport may
+  // consume the single seed — otherwise the hidden instance would eat it and the
+  // visible chat would render empty. `md` = 768px (Tailwind).
+  useEffect(() => {
+    if (demoState) return;
+    const desktopActive = window.matchMedia("(min-width: 768px)").matches;
+    if (isMobile ? desktopActive : !desktopActive) return;
+    let seed = "";
+    try {
+      seed = sessionStorage.getItem(ADVISOR_SEED_KEY) || "";
+      if (seed) sessionStorage.removeItem(ADVISOR_SEED_KEY);
+    } catch {
+      /* storage disabled — no seed to replay */
+    }
+    if (seed.trim()) void ask(seed, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function buildMessages(question: string, base: Turn[]): AdvisorMessage[] {
     const msgs: AdvisorMessage[] = [];
@@ -318,7 +343,7 @@ export function AccountAdvisorChat({
 }) {
   const router = useRouter();
   const nav = useAccountNav();
-  const { shown, input, setInput, ask, retryLast, busy, scrollRef } = useChat(router, t, demoState, makeAccountResolver(data));
+  const { shown, input, setInput, ask, retryLast, busy, scrollRef } = useChat(router, t, demoState, makeAccountResolver(data), false);
   const isFirstRun = shown.length === 0;
   return (
     <div className="acc-shell">
@@ -370,7 +395,7 @@ export function AccountMobileAdvisorChat({
   demoState?: ChatDemoState;
 }) {
   const router = useRouter();
-  const { shown, input, setInput, ask, retryLast, busy } = useChat(router, t, demoState, makeAccountResolver(data));
+  const { shown, input, setInput, ask, retryLast, busy } = useChat(router, t, demoState, makeAccountResolver(data), true);
   const isFirstRun = shown.length === 0;
   const dock = (
     <div className="ma-chat-dock">

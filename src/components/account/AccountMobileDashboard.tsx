@@ -1,90 +1,52 @@
 "use client";
 
-// Account dashboard — MOBILE (phone, below the `md` breakpoint). A 1:1 React
-// port of the CD эталон (design-export/PennedlyDesign/account-mobile.js), the
-// phone sibling of AccountDashboard.tsx (desktop). Same data contract
+// Account dashboard V3 «Советник» — MOBILE (phone, below the `md` breakpoint).
+// The phone sibling of AccountDashboard.tsx: it renders the SAME shared V3 body
+// (<V3Body/>, width-adaptive via container queries) under the mobile chrome — a
+// top bar (hamburger · title · profiles pill · theme) + a bottom-docked flat
+// profile switcher + a left nav drawer + a login sheet. Same data contract
 // (MeAccountResponse) + the same nav actions (useAccountNav), so the two
-// breakpoints stay in lock-step; only the layout + chrome differ.
+// breakpoints stay in lock-step; only the chrome differs.
 //
-// Structure (эталон order): a mobile top bar (hamburger · Дашборд · profiles
-// pill · theme) → header band → 2×2 portfolio totals → tasks strip → advisor
-// hero → adaptive cards (profiles or brands). Plus three overlays, each opened
-// via useState + closed by tapping the shared .m-scrim (mirroring the desktop
-// menu pattern):
-//   • a bottom-docked flat profile switcher (.ma-swbtn → swSheet)
-//   • a left nav drawer (hamburger → navDrawer, login control pinned to its foot)
-//   • a login sheet (drawer foot → current account · Настройки · Выйти)
+// Decision C (advisor routing): the drawer has NO «Советник» row — the dashboard
+// is the advisor's home; the ask line / starters / recos route into the chat.
 //
-// Copy comes in via the same t()/plural() translators as the desktop, so this
-// serves both the gallery (demo strings) and the live screen (i18n). The .ma-*
-// classes are themed by account-mobile.css (scoped under .acc-mob); the .m-*
-// shell primitives by account-mobile-shell.css.
+// The .ma-* / .m-* chrome classes are themed by account-mobile.css +
+// account-mobile-shell.css; the V3 body by account-v3.css.
 
 import { useEffect, useState } from "react";
 
 import {
   BrandMark as BrandLogo,
-  IcAdvisor,
-  IcArrowDown,
-  IcArrowRight,
-  IcArrowUp,
-  IcChevDown,
-  IcChevRight,
   IcCheck,
+  IcChevDown,
   IcLayers,
   IcLogout,
   IcMoon,
-  IcNib,
   IcOverview,
   IcPlus,
-  IcReply,
-  IcSend,
   IcSettings,
-  IcSparkle,
   IcSun,
-  IcUndo,
   IcX,
 } from "@/components/icons";
 import { useSelectedAccountId } from "@/lib/account";
-import type {
-  AccountBrand,
-  AccountProfile,
-  AccountTasks,
-  AdvisorData,
-  MeAccountResponse,
-  OverviewTotals,
-} from "@/lib/types";
+import type { AccountProfile, AdvisorData, MeAccountResponse } from "@/lib/types";
 
-import { DynIcon, IcCheckSm, relSince, useAccountNav, useChromeIdentity } from "./AccountDashboard";
+import { useAccountNav, useChromeIdentity, V3Body } from "./AccountDashboard";
 import type { AccountPage, Nav, Plural, T } from "./AccountDashboard";
 // Real network logos + the add-flow bottom sheet (shared with desktop/empty).
 import { ConnectNetworkSheet, NetLogo } from "./networks";
 
 // ── shared helpers (mirror AccountDashboard.tsx) ─────────────────────────────
 const NET_LABEL: Record<string, string> = { threads: "Threads", linkedin: "LinkedIn" };
-// Known networks render their REAL logo via NetLogo (networks.tsx — never an
-// invented glyph); the text map is only a fallback for an unknown network id.
-const NET_GLYPH: Record<string, string> = {};
-
-function nfmt(n: number): string {
-  if (n >= 10000) return (n / 1000).toFixed(n % 1000 === 0 ? 0 : 1).replace(".", ",") + "k";
-  return n.toLocaleString("ru-RU");
-}
 
 function initials(name: string | null, handle: string | null): string {
-  const s = (name || handle || "?").trim();
-  return s.slice(0, 2).toUpperCase();
-}
-
-function Delta({ v }: { v: number | null }) {
-  if (v == null) return <span className="ma-delta ma-delta--flat">—</span>;
-  const down = v < 0;
-  return (
-    <span className={`ma-delta ma-delta--${down ? "down" : "up"}`}>
-      {down ? <IcArrowDown size={11} /> : <IcArrowUp size={11} />}
-      {nfmt(Math.abs(v))}
-    </span>
-  );
+  // Word-initials like the эталон monograms, stripping a leading '@' so a
+  // name-less handle never leaks «@F» (mirrors AccountDashboard.initials).
+  const s = (name || handle || "?").replace(/^@/, "").trim();
+  const parts = s.split(/\s+/).filter(Boolean);
+  const out = parts.length >= 2 ? parts[0][0] + parts[1][0] : s.slice(0, 2);
+  return out.toUpperCase() || "?";
 }
 
 // ── marks: account (filled square) · brand (outlined square) · profile (round) ──
@@ -97,7 +59,7 @@ function BrandMark({ mono, cls = "" }: { mono: string; cls?: string }) {
 function NetBadge({ network }: { network: string }) {
   return (
     <span className={`ma-net ma-net--${network}`} title={NET_LABEL[network] || network}>
-      {NetLogo({ network, s: 11, bold: true }) ?? NET_GLYPH[network] ?? "•"}
+      {NetLogo({ network, s: 11, bold: true }) ?? "•"}
     </span>
   );
 }
@@ -115,567 +77,11 @@ function Avatar({ p, cls = "ma-av" }: { p: AccountProfile; cls?: string }) {
   );
 }
 
-// ── portfolio totals (2×2) ───────────────────────────────────────────────────
-function Total({
-  lab,
-  icon,
-  num,
-  sub,
-  extra,
-  attention,
-}: {
-  lab: string;
-  icon: string;
-  num: string;
-  sub: string;
-  extra?: React.ReactNode;
-  attention?: boolean;
-}) {
-  return (
-    <div className={`ma-total${attention ? " ma-total--attention" : ""}`}>
-      <div className="ma-total-lab">
-        <DynIcon n={icon} s={12} />
-        <span className="ma-total-labtxt">{lab}</span>
-      </div>
-      <div className="ma-total-row">
-        <span className="ma-total-num">{num}</span>
-        {extra}
-      </div>
-      <div className="ma-total-sub">{sub}</div>
-    </div>
-  );
-}
-
-function TotalsGrid({ totals, t }: { totals: OverviewTotals; t: T }) {
-  return (
-    <div className="ma-totals">
-      <Total lab={t("acc.followers")} icon="users" num={nfmt(totals.followers)} sub={t("acc.sub_all")} extra={<Delta v={totals.followers_delta} />} />
-      <Total lab={t("acc.views")} icon="eye" num={nfmt(totals.views_7d)} sub={t("acc.sub_7d")} />
-      <Total lab={t("acc.posts")} icon="nib" num={String(totals.posts_week)} sub={t("acc.sub_week")} />
-      <Total lab={t("acc.replies")} icon="bubble" num={String(totals.replies_to_answer)} sub={t("acc.sub_wait")} attention />
-    </div>
-  );
-}
-
-// ── header band (identity + scale line) ──────────────────────────────────────
-function Header({ data, t, plural }: { data: MeAccountResponse; t: T; plural: Plural }) {
-  const brandsN = data.scope.brands_count;
-  const profilesN = data.scope.profiles_count;
-  const nets = [...new Set(data.brands.flatMap((b) => b.networks))].map((n) => NET_LABEL[n] || n).join(" · ") || "Threads";
-  const scale =
-    brandsN >= 2
-      ? `${profilesN} ${plural("profiles", profilesN)} · ${brandsN} ${plural("brands", brandsN)} · ${nets}`
-      : `${profilesN} ${plural("profiles", profilesN)} · ${nets}`;
-  const id = useChromeIdentity(data.tenant.name);
-  return (
-    <div className="ma-head">
-      <AcctMark mono={id.mono} />
-      <div className="ma-head-txt">
-        <div className="ma-head-name">{id.name}</div>
-        <div className="ma-head-meta">
-          <span className="ma-head-plan">{data.tenant.plan_tier}</span>
-          <span className="ma-head-scale">{scale}</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── tasks strip ("Требует тебя") ─────────────────────────────────────────────
-const TASK_IC: Record<string, string> = { sync: "alert", reply: "reply", draft: "nib", audit: "audit" };
-
-function TasksStrip({ tasks, t, plural, nav }: { tasks: AccountTasks; t: T; plural: Plural; nav: Nav }) {
-  const chips: { type: string; n: number; label: string }[] = [];
-  if (tasks.sync_errors) chips.push({ type: "sync", n: tasks.sync_errors, label: t("acc.task_sync") });
-  if (tasks.replies_attention) chips.push({ type: "reply", n: tasks.replies_attention, label: t("acc.task_replies") });
-  if (tasks.pending_drafts) chips.push({ type: "draft", n: tasks.pending_drafts, label: plural("drafts", tasks.pending_drafts) });
-  if (tasks.pending_audits) chips.push({ type: "audit", n: tasks.pending_audits, label: plural("audits", tasks.pending_audits) });
-  if (!chips.length) return null;
-  return (
-    <section className="ma-tasks">
-      <div className="ma-tasks-head">
-        <span className="ma-tasks-lab">
-          <DynIcon n="alert" s={15} />
-          {t("acc.tasks_title")}
-        </span>
-        <a className="ma-tasks-all" style={{ cursor: "pointer" }} onClick={() => nav.go("/app/overview")}>
-          {t("acc.tasks_all")}
-          <IcArrowRight size={13} />
-        </a>
-      </div>
-      <div className="ma-tasks-chips">
-        {chips.map((c) => (
-          <span key={c.type} className={`ma-taskchip${c.type === "sync" ? " ma-taskchip--sync" : ""}`}>
-            <DynIcon n={TASK_IC[c.type]} s={12} />
-            <b>{c.n}</b> {c.label}
-          </span>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-// ── advisor hero (verdict/detail/chips/grounded/recos + composer) ────────────
-function Advisor({ adv, t, onOpen }: { adv: AdvisorData; t: T; onOpen?: () => void }) {
-  return (
-    <section className="ma-adv">
-      <div className="ma-adv-rail">
-        <span className="ma-adv-mark">
-          <IcAdvisor size={18} />
-        </span>
-        <div className="ma-adv-headtext">
-          <div className="ma-adv-title">{t("acc.adv_title")}</div>
-          <div className="ma-adv-scope">{t("acc.adv_scope")}</div>
-        </div>
-      </div>
-      <div className="ma-adv-body">
-        <div className="ma-adv-verdict">{adv.verdict}</div>
-        <div className="ma-adv-detail">{adv.detail}</div>
-        <div className="ma-adv-chips">
-          {adv.chips.map((c, i) => (
-            <span key={i} className={`ma-chip ma-chip--${c.tone}`}>
-              <DynIcon n={c.icon} s={13} />
-              <span className="t">{c.text}</span>
-            </span>
-          ))}
-        </div>
-        <div className="ma-adv-grounded">
-          <span className="lab">
-            <IcSparkle size={12} />
-            {t("acc.adv_grounded")}
-          </span>
-          <span className="src">{adv.grounded}</span>
-        </div>
-        <div className="ma-adv-recos">
-          {adv.recos.map((r, i) => (
-            <a key={i} className={`ma-rec${r.tone === "danger" ? " ma-rec--danger" : r.tone === "accent" ? " ma-rec--accent" : ""}`}>
-              <span className="ma-rec-ic">
-                <DynIcon n={r.icon} s={15} />
-              </span>
-              <span className="ma-rec-body">
-                <span className="ma-rec-t">{r.t}</span>
-                <span className="ma-rec-s">{r.s}</span>
-              </span>
-              <span className="ma-rec-go">
-                <IcChevRight size={16} />
-              </span>
-            </a>
-          ))}
-        </div>
-        <div className="ma-adv-composer" onClick={onOpen} style={onOpen ? { cursor: "pointer" } : undefined}>
-          <span className="ph">{t("acc.adv_ask")}</span>
-          <button className="ma-adv-send" type="button" onClick={onOpen}>
-            <IcSend size={16} />
-          </button>
-        </div>
-        <button className="btn btn--secondary ma-adv-open" type="button" onClick={onOpen}>
-          <IcAdvisor size={15} />
-          {t("acc.adv_open")}
-        </button>
-      </div>
-    </section>
-  );
-}
-
-// Honest invite shell (no fabricated numbers) when no rich advisor data exists —
-// mirrors the desktop AdvisorInvite.
-function AdvisorInvite({ t, onOpen }: { t: T; onOpen?: () => void }) {
-  return (
-    <section className="ma-adv">
-      <div className="ma-adv-rail">
-        <span className="ma-adv-mark">
-          <IcAdvisor size={18} />
-        </span>
-        <div className="ma-adv-headtext">
-          <div className="ma-adv-title">{t("acc.adv_title")}</div>
-          <div className="ma-adv-scope">{t("acc.adv_scope")}</div>
-        </div>
-      </div>
-      <div className="ma-adv-body">
-        <div className="ma-adv-detail">{t("acc.adv_invite")}</div>
-        <div className="ma-adv-composer" onClick={onOpen} style={{ cursor: "pointer" }}>
-          <span className="ph">{t("acc.adv_ask")}</span>
-          <button className="ma-adv-send" type="button" onClick={onOpen}>
-            <IcSend size={16} />
-          </button>
-        </div>
-        <button className="btn btn--secondary ma-adv-open" type="button" onClick={onOpen}>
-          <IcAdvisor size={15} />
-          {t("acc.adv_open")}
-        </button>
-      </div>
-    </section>
-  );
-}
-
-// ── metrics (shared by profile + brand aggregate; vertical table) ────────────
-function Metric({
-  lab,
-  icon,
-  val,
-  unit,
-  extra,
-  attention,
-}: {
-  lab: string;
-  icon: string;
-  val: string;
-  unit?: string;
-  extra?: React.ReactNode;
-  attention?: boolean;
-}) {
-  const noData = val === "—";
-  return (
-    <div className={`ma-m${attention ? " ma-m--attention" : ""}`}>
-      <span className="ma-m-lab">
-        <DynIcon n={icon} s={11} />
-        <span className="ma-m-labtxt">{lab}</span>
-      </span>
-      <span className="ma-m-row">
-        <span className="ma-m-val">
-          {val}
-          {unit && !noData ? <span className="u"> {unit}</span> : null}
-        </span>
-        {extra && !noData ? extra : null}
-      </span>
-    </div>
-  );
-}
-
-function Metrics4({
-  t,
-  d,
-  muted,
-}: {
-  t: T;
-  d: { followers: number | null; followers_delta: number | null; views_7d: number; posts_week: number; replies_to_answer: number };
-  muted?: boolean;
-}) {
-  const followers = d.followers == null ? "—" : nfmt(d.followers);
-  return (
-    <div className="ma-metrics">
-      <Metric lab={t("acc.followers")} icon="users" val={followers} extra={<Delta v={d.followers_delta} />} />
-      <Metric lab={t("acc.views")} icon="eye" val={muted ? "—" : nfmt(d.views_7d)} />
-      <Metric lab={t("acc.posts")} icon="nib" val={muted ? "—" : String(d.posts_week)} unit={t("acc.posts_unit")} />
-      <Metric lab={t("acc.replies")} icon="bubble" val={muted ? "—" : String(d.replies_to_answer)} attention={!muted && d.replies_to_answer > 0} />
-    </div>
-  );
-}
-
-// ── profile card (single-brand mode) ─────────────────────────────────────────
-function ProfileHead({ p }: { p: AccountProfile }) {
-  return (
-    <div className="ma-card-head">
-      <Avatar p={p} />
-      <div className="ma-card-id">
-        <div className="ma-card-name">{p.handle || p.name}</div>
-        <div className="ma-card-sub">{NET_LABEL[p.network] || p.network}</div>
-      </div>
-      <span className="ma-go">
-        <IcChevRight size={15} />
-      </span>
-    </div>
-  );
-}
-
-function ProfileCard({ p, t, nav }: { p: AccountProfile; t: T; nav: Nav }) {
-  const open = () => nav.openProfile(p.id, "studio");
-  if (p.disconnected) {
-    const mono = (p.name || p.handle || "?").slice(0, 2).toUpperCase();
-    return (
-      <div className="ma-card ma-card--disc">
-        <div className="ma-card-head">
-          <span className="ma-av ma-av--disc">
-            {p.avatar ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={p.avatar} alt="" />
-            ) : (
-              <span className="mono">{mono}</span>
-            )}
-          </span>
-          <div className="ma-card-id">
-            <div className="ma-card-name">{p.name || p.handle}</div>
-            <div className="ma-card-sub">
-              {p.handle} · {NET_LABEL[p.network] || p.network}
-            </div>
-          </div>
-        </div>
-        <div className="ma-disc-status">
-          <span className="status-pill status-pill--warning">
-            <i className="pill-dot" />
-            {t("acc.disc_pill")}
-          </span>
-          <span className="ma-disc-safe">
-            <IcCheckSm s={11} />
-            {t("acc.disc_safe")}
-          </span>
-        </div>
-        <div className="ma-cardfoot ma-cardfoot--disc">
-          <span className="ma-disc-since">
-            {t("acc.disc_prefix")} {relSince(p.disconnected_at, nav.locale)}
-          </span>
-          <button className="btn btn--primary btn--sm ma-reconnect" type="button" onClick={() => nav.connectThreads()}>
-            {t("acc.reconnect")}
-          </button>
-        </div>
-      </div>
-    );
-  }
-  if (p.sync_status === "importing") {
-    const im = p.sync_summary || {};
-    const posts = im.posts ?? 0;
-    const comments = im.new_comments ?? 0;
-    const total = im.history_posts ?? 0;
-    const pct = total > 0 ? Math.min(99, Math.round((posts / total) * 100)) : 40;
-    return (
-      <div className="ma-card ma-card--importing">
-        <ProfileHead p={p} />
-        <div className="import-banner import-banner--syncing">
-          <span className="ib-mark">
-            <span className="ib-spinner" />
-          </span>
-          <div className="ib-body">
-            <div className="ib-title">{t("acc.importing")}</div>
-            <div className="ib-sub">
-              <b>{posts}</b> {t("acc.imp_posts")} · <b>{comments}</b> {t("acc.imp_comments")}
-            </div>
-            <div className="ib-bar">
-              <div className="ib-bar-fill" style={{ width: `${pct}%` }} />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-  if (p.sync_status === "error") {
-    return (
-      <div className="ma-card" style={{ cursor: "pointer" }} role="button" tabIndex={0} onClick={open} onKeyDown={(e) => e.key === "Enter" && open()}>
-        <ProfileHead p={p} />
-        <Metrics4 t={t} d={p} muted />
-        <div className="ma-cardfoot">
-          <span className="ma-sync ma-sync--error">
-            <span className="ma-sync-dot" />
-            {t("acc.sync_failed")}
-          </span>
-          <button className="ma-retry" type="button" onClick={(e) => { e.stopPropagation(); nav.retry(); }}>
-            <IcUndo size={12} />
-            {t("acc.retry")}
-          </button>
-        </div>
-      </div>
-    );
-  }
-  const attn = p.replies_to_answer > 0;
-  return (
-    <div className="ma-card" style={{ cursor: "pointer" }} role="button" tabIndex={0} onClick={open} onKeyDown={(e) => e.key === "Enter" && open()}>
-      <ProfileHead p={p} />
-      <Metrics4 t={t} d={p} />
-      <div className="ma-cardfoot">
-        <span className="ma-sync">
-          <span className="ma-sync-dot" />
-          {t("acc.synced")}
-        </span>
-        <div className="ma-quick">
-          <a className="ma-quicklink" style={{ cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); nav.openProfile(p.id, "stats"); }}>
-            <IcNib size={11} />
-            {t("acc.stats")}
-          </a>
-          <a
-            className={`ma-quicklink${attn ? " ma-quicklink--attention" : ""}`}
-            style={{ cursor: "pointer" }}
-            onClick={(e) => { e.stopPropagation(); nav.openProfile(p.id, "replies"); }}
-          >
-            <IcReply size={11} />
-            {t("acc.replies_short")}
-            {attn ? ` ${p.replies_to_answer}` : ""}
-          </a>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── brand card (multi-brand mode) ────────────────────────────────────────────
-function BrandStack({ b }: { b: AccountBrand }) {
-  const shown = b.profiles.slice(0, 3);
-  const more = b.profiles.length - shown.length;
-  return (
-    <span className="ma-stack">
-      {shown.map((p) => (
-        <Avatar key={p.id} p={p} />
-      ))}
-      {more > 0 ? <span className="ma-stack-more">+{more}</span> : null}
-    </span>
-  );
-}
-
-function BrandProfileRow({ p, t, nav }: { p: AccountProfile; t: T; nav: Nav }) {
-  // A disconnected profile inside an expanded brand is non-navigable — offer
-  // Reconnect, not a jump into a dead studio (mirrors the desktop row).
-  if (p.disconnected) {
-    return (
-      <div className="ma-bp ma-bp--disc">
-        <Avatar p={p} cls="ma-bp-av" />
-        <span className="ma-bp-id">
-          <span className="ma-bp-hd">{p.handle || p.name}</span>
-          <span className="ma-bp-sub">{t("acc.disc_pill")}</span>
-        </span>
-        <button className="ma-bp-reconnect" type="button" onClick={(e) => { e.stopPropagation(); nav.connectThreads(); }}>
-          {t("acc.reconnect")}
-        </button>
-      </div>
-    );
-  }
-  let right: React.ReactNode;
-  if (p.sync_status === "importing") {
-    right = (
-      <span className="ma-bp-state ma-bp-state--sync">
-        <span className="ib-spinner" style={{ width: 13, height: 13 }} />
-        {t("acc.importing_n")}
-      </span>
-    );
-  } else if (p.sync_status === "error") {
-    right = (
-      <button className="ma-bp-retry" type="button" onClick={(e) => { e.stopPropagation(); nav.retry(); }}>
-        <IcUndo size={12} />
-        {t("acc.retry")}
-      </button>
-    );
-  } else {
-    right = (
-      <span className="ma-bp-mini">
-        <span className="ma-bp-stat">
-          <span className="ma-bp-statnum">{nfmt(p.followers ?? 0)}</span>
-          <span className="ma-bp-statlab">{t("acc.followers")}</span>
-        </span>
-      </span>
-    );
-  }
-  return (
-    <a className="ma-bp" style={{ cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); nav.openProfile(p.id, "studio"); }}>
-      <Avatar p={p} cls="ma-bp-av" />
-      <span className="ma-bp-id">
-        <span className="ma-bp-hd">{p.handle || p.name}</span>
-        <span className="ma-bp-sub">{NET_LABEL[p.network] || p.network}</span>
-      </span>
-      {right}
-    </a>
-  );
-}
-
-function BrandCard({ b, t, plural, nav }: { b: AccountBrand; t: T; plural: Plural; nav: Nav }) {
-  const [expanded, setExpanded] = useState(false);
-  const pc = b.profiles.length;
-  const errors = b.profiles.filter((p) => p.sync_status === "error").length;
-  const importing = b.profiles.filter((p) => p.sync_status === "importing").length;
-  const disc = b.profiles.filter((p) => p.disconnected).length;
-  const agg = {
-    followers: b.stats.followers,
-    followers_delta: b.stats.followers_delta,
-    views_7d: b.stats.views_7d,
-    posts_week: b.stats.posts_week,
-    replies_to_answer: b.stats.replies_to_answer,
-  };
-  const toggle = () => pc > 0 && setExpanded((x) => !x);
-  const sub = `${pc} ${plural("profiles", pc)}`;
-  return (
-    <div className="ma-card ma-card--brand">
-      <div className="ma-card-head" style={pc > 0 ? { cursor: "pointer" } : undefined} role={pc > 0 ? "button" : undefined} tabIndex={pc > 0 ? 0 : undefined} onClick={toggle} onKeyDown={(e) => e.key === "Enter" && toggle()}>
-        <span style={{ position: "relative", flex: "0 0 auto" }}>
-          <BrandMark mono={initials(b.name, null)} />
-          <span className="ma-brand-net">
-            {b.networks.map((nid) => (
-              <span key={nid} className="ma-brand-netbadge">
-                {NetLogo({ network: nid, s: 10, bold: true }) ?? NET_GLYPH[nid] ?? "•"}
-              </span>
-            ))}
-          </span>
-        </span>
-        <div className="ma-card-id">
-          <div className="ma-card-name">{b.name}</div>
-          <div className="ma-card-sub">{sub}</div>
-        </div>
-        <span className="ma-go">
-          <IcChevRight size={15} />
-        </span>
-      </div>
-      <BrandStack b={b} />
-      <Metrics4 t={t} d={agg} />
-      <div className="ma-cardfoot">
-        <span className="ma-brand-statline">
-          <span className={`ma-brand-statdot${errors || disc ? " ma-brand-statdot--warn" : importing ? " ma-brand-statdot--imp" : ""}`} />
-          {errors
-            ? `${errors} ${t("acc.error_n")}`
-            : disc
-              ? `${disc} ${t("acc.disconnected_n")}`
-              : importing
-                ? `${importing} ${t("acc.importing_n")}`
-                : t("acc.synced_all")}
-        </span>
-        {pc > 0 ? (
-          <button className="ma-brand-expand" type="button" aria-expanded={expanded} onClick={(e) => { e.stopPropagation(); toggle(); }}>
-            {t("acc.expand")}
-            <IcChevDown size={13} className={expanded ? "rotate-180" : undefined} />
-          </button>
-        ) : null}
-      </div>
-      {expanded ? (
-        <div className="ma-brand-profiles">
-          {b.profiles.map((p) => (
-            <BrandProfileRow key={p.id} p={p} t={t} nav={nav} />
-          ))}
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-// ── add-brand CTA ─────────────────────────────────────────────────────────────
-function AddBrand({ t, nav }: { t: T; nav: Nav }) {
-  return (
-    <a className="ma-add" style={{ cursor: "pointer" }} onClick={nav.addProfile}>
-      <span className="ma-add-ico">
-        <IcPlus size={20} />
-      </span>
-      <span className="ma-add-body">
-        <span className="ma-add-t">{t("acc.add_brand_t")}</span>
-        <span className="ma-add-s">{t("acc.add_brand_s")}</span>
-      </span>
-      <span className="ma-add-go">
-        <IcChevRight size={16} />
-      </span>
-    </a>
-  );
-}
-
-// ── cards section (adaptive on scope.show_brand_level) ───────────────────────
-function CardsSection({ data, t, plural, nav }: { data: MeAccountResponse; t: T; plural: Plural; nav: Nav }) {
-  const multi = data.scope.show_brand_level;
-  // Count visible cards (live + disconnected), not profiles_count (LIVE-only),
-  // so a mixed single-brand grid never reads "3 profiles" over 4 cards.
-  const count = multi ? data.brands.length : data.brands.flatMap((b) => b.profiles).length;
-  return (
-    <>
-      <div className="ma-sec">
-        <span className="ma-sec-t">{multi ? t("acc.sec_brands") : t("acc.sec_profiles")}</span>
-        <span className="ma-sec-n">{count}</span>
-        <span className="ma-sec-note">{multi ? t("acc.note_brand") : t("acc.note_profile")}</span>
-      </div>
-      <div className="ma-grid">
-        {multi
-          ? data.brands.map((b) => <BrandCard key={b.id} b={b} t={t} plural={plural} nav={nav} />)
-          : data.brands.flatMap((b) => b.profiles).map((p) => <ProfileCard key={p.id} p={p} t={t} nav={nav} />)}
-        <AddBrand t={t} nav={nav} />
-      </div>
-    </>
-  );
-}
-
 // ── flat profile switcher: bottom-docked button + sheet ──────────────────────
 function SwitcherButton({ data, t, plural, onOpen }: { data: MeAccountResponse; t: T; plural: Plural; onOpen: () => void }) {
   const allProfiles = data.brands.flatMap((b) => b.profiles);
   // The count + avatar stack reflect LIVE profiles only — a disconnected profile
-  // is a reconnect target, not an active profile (mirrors the desktop switcher).
+  // is a reconnect target, not an active profile.
   const live = allProfiles.filter((p) => !p.disconnected);
   const stack = live.slice(0, 3);
   return (
@@ -781,12 +187,10 @@ function SwitcherSheet({ data, t, nav, onClose }: { data: MeAccountResponse; t: 
   );
 }
 
-// ── nav drawer (hamburger) + login foot ──────────────────────────────────────
-// Drawer nav rows carry a design-token icon name; map it to the app icon set.
+// ── nav drawer (hamburger) + login foot — decision C: no «Советник» row ──────
 const NAV_ICONS: Record<string, (p: { size?: number }) => React.JSX.Element> = {
   grid: IcOverview,
   layers: IcLayers,
-  advisor: IcAdvisor,
   settings: IcSettings,
   plus: IcPlus,
 };
@@ -843,7 +247,6 @@ function NavDrawer({ data, t, nav, onClose, onOpenLogin, active = "dashboard" }:
                 onClick={active === "dashboard" ? onClose : () => go("/app/account")}
               />
             ) : null}
-            <NavRow icon="advisor" label={t("acc.nav_advisor")} active={active === "advisor"} onClick={() => go("/app/account/advisor")} />
             <NavRow icon="settings" label={t("acc.nav_settings")} active={active === "settings"} onClick={() => go("/app/account/settings")} />
           </div>
           <div className="m-navgroup">
@@ -868,8 +271,6 @@ function NavDrawer({ data, t, nav, onClose, onOpenLogin, active = "dashboard" }:
 }
 
 // ── login sheet (tenant — opened from the drawer foot) ───────────────────────
-// The эталон shows a demo multi-login list; reality has ONE account, so this
-// maps to the desktop login menu: current-account header + Настройки + Выйти.
 function LoginSheet({ data, t, nav, onClose }: { data: MeAccountResponse; t: T; nav: Nav; onClose: () => void }) {
   const done = (fn: () => void) => { onClose(); fn(); };
   const id = useChromeIdentity(data.tenant.name);
@@ -929,6 +330,7 @@ function Topbar({
   onMenu,
   title,
   showPill = true,
+  titleAsHeading = true,
 }: {
   data: MeAccountResponse;
   t: T;
@@ -937,6 +339,10 @@ function Topbar({
   onMenu: () => void;
   title?: string;
   showPill?: boolean;
+  // The dashboard's page heading is the advisor VERDICT (v3-verdict h1), so the
+  // top-bar title there must NOT be a second h1. Sub-screens (settings/advisor)
+  // have no verdict, so they keep the top-bar title as the page h1 (default).
+  titleAsHeading?: boolean;
 }) {
   const nav = useAccountNav();
   const [themeDark, setThemeDark] = useState(!!dark);
@@ -956,7 +362,11 @@ function Topbar({
           <line x1="3" y1="18" x2="21" y2="18" />
         </svg>
       </button>
-      <h1 className="ma-top-title">{title ?? t("acc.nav_dashboard")}</h1>
+      {titleAsHeading ? (
+        <h1 className="ma-top-title">{title ?? t("acc.nav_dashboard")}</h1>
+      ) : (
+        <div className="ma-top-title">{title ?? t("acc.nav_dashboard")}</div>
+      )}
       {showPill ? (
         <span className="ma-top-pill">
           <IcOverview size={12} />
@@ -975,8 +385,7 @@ function Topbar({
 // The account mobile chrome without the dashboard body: top bar (title +
 // hamburger + theme, no pill) + the account nav drawer (active row) + the login
 // sheet from its foot. `dock` is an optional fixed element (the advisor's docked
-// composer). Content goes in `children`; `bare` skips the .ma padding wrapper
-// (the chat manages its own full-height layout).
+// composer). Content goes in `children`; `bare` skips the .ma padding wrapper.
 export function AccountMobileShell({
   data,
   t,
@@ -1001,9 +410,6 @@ export function AccountMobileShell({
   const baseNav = useAccountNav();
   const [overlay, setOverlay] = useState<null | "drawer" | "login" | "connect">(null);
   const close = () => setOverlay(null);
-  // The drawer's «Добавить бренд» row must open the network picker here too —
-  // this shell hosts the mobile settings/advisor screens, the one drawer home
-  // the dashboard-root override doesn't reach.
   const nav = { ...baseNav, addProfile: () => setOverlay("connect") };
   return (
     <div className="acc-mob">
@@ -1019,51 +425,39 @@ export function AccountMobileShell({
   );
 }
 
-// ── skeleton (loading) ───────────────────────────────────────────────────────
+// ── skeleton (loading) — V3 shape ────────────────────────────────────────────
 export function AccountMobileSkeleton() {
-  const line = (w: string, h: number, mt = 0, r = 6) => (
-    <div className="skel-line" style={{ width: w, height: h, marginTop: mt, borderRadius: r }} />
-  );
-  const card = (
-    <div className="ma-card">
-      <div className="ma-card-head">
-        <span className="ma-av" />
-        <div className="ma-card-id">
-          {line("96px", 13)}
-          {line("60px", 11, 6)}
-        </div>
-      </div>
-      <div className="ma-metrics">
-        {[0, 1, 2, 3].map((i) => (
-          <div key={i} className="skel-line" style={{ height: 16, margin: "9px 0" }} />
-        ))}
-      </div>
-    </div>
-  );
+  const s = (w: string, h: number, mt = 0) => <div className="v-skel" style={{ width: w, height: h, marginTop: mt }} />;
   return (
     <div className="acc-mob">
       <div className="ma">
-        <div className="ma-head">
-          <span className="ma-acctmark" style={{ background: "var(--color-surface-2)", border: "1px solid var(--color-border)" }} />
-          <div style={{ flex: "1 1 auto", minWidth: 0 }}>
-            {line("130px", 16)}
-            {line("180px", 11, 8)}
+        <div className="v3">
+          <div className="v3-id">
+            {s("34px", 34)}
+            {s("150px", 15)}
           </div>
+          <section className="v3-hero">
+            {s("170px", 14)}
+            {s("90%", 26, 16)}
+            {s("70%", 26, 8)}
+            {s("100%", 44, 16)}
+            <div className="v3-recos" style={{ marginTop: 16 }}>
+              {s("100%", 60)}
+              {s("100%", 60)}
+            </div>
+          </section>
+          <section className="v3-evidence">
+            {s("150px", 13)}
+            {s("100%", 72, 12)}
+          </section>
         </div>
-        <div className="ma-totals">
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="skel-line" style={{ height: 74, borderRadius: 14 }} />
-          ))}
-        </div>
-        {card}
-        {card}
         <div style={{ height: 78 }} />
       </div>
     </div>
   );
 }
 
-// ── full mobile dashboard composition ────────────────────────────────────────
+// ── full mobile dashboard composition (mobile chrome + shared V3 body) ───────
 export function AccountMobileDashboard({
   data,
   adv,
@@ -1078,14 +472,14 @@ export function AccountMobileDashboard({
   t: T;
   plural: Plural;
   dark?: boolean;
-  onOpenAdvisor?: () => void;
+  onOpenAdvisor?: (seed?: string) => void;
   // In-place refetch for the sync-error «Повторить» (C9). Omitted (gallery/demo)
   // → the nav default (full page reload) stays.
   onRetry?: () => void;
 }) {
   const baseNav = useAccountNav();
   // One overlay open at a time (sheet | drawer | login | connect), the .m-scrim
-  // closes it — mirroring the desktop menu open/close pattern.
+  // closes it.
   const [overlay, setOverlay] = useState<null | "switcher" | "drawer" | "login" | "connect">(null);
   const close = () => setOverlay(null);
   // Add-affordances open the network-picker sheet; only its Threads row starts
@@ -1093,13 +487,9 @@ export function AccountMobileDashboard({
   const nav = { ...baseNav, addProfile: () => setOverlay("connect"), ...(onRetry ? { retry: onRetry } : {}) };
   return (
     <div className="acc-mob">
-      <Topbar data={data} t={t} plural={plural} dark={dark} onMenu={() => setOverlay("drawer")} />
+      <Topbar data={data} t={t} plural={plural} dark={dark} onMenu={() => setOverlay("drawer")} titleAsHeading={false} />
       <div className="ma">
-        <Header data={data} t={t} plural={plural} />
-        <TotalsGrid totals={data.totals} t={t} />
-        <TasksStrip tasks={data.tasks} t={t} plural={plural} nav={nav} />
-        {adv ? <Advisor adv={adv} t={t} onOpen={onOpenAdvisor} /> : <AdvisorInvite t={t} onOpen={onOpenAdvisor} />}
-        <CardsSection data={data} t={t} plural={plural} nav={nav} />
+        <V3Body data={data} adv={adv} t={t} plural={plural} nav={nav} onOpenAdvisor={onOpenAdvisor} />
         <div style={{ height: 78 }} />
       </div>
 
@@ -1114,81 +504,26 @@ export function AccountMobileDashboard({
 }
 
 // ── all-disconnected (had profiles, all now disconnected) — MOBILE ────────────
-// The phone sibling of AccountEmpty's <AllDisconnected/>: the reassurance
-// treatment (identity head + "workspace is safe" banner + disconnected cards +
-// connect-another), NOT a zeroed dashboard. Routing full AccountMobileDashboard
-// here read as "everything's gone" (Header "0 profiles" + zero totals + tasks +
-// advisor invite). Keeps the mobile chrome (top bar + drawer + the bottom
-// switcher, whose sheet lists the reconnect rows + connect).
+// Decision C + the unified V3 body: the same dashboard, with no rich advisor
+// data → the thin hero detects the all-off portfolio and renders the honest
+// «Все профили отключены» reassurance + a reconnect CTA, while the evidence grid
+// shows each former profile as a reconnect card + «Подключить ещё аккаунт». No
+// separate zeroed screen (that read as "everything's gone").
 export function AccountMobileAllDisconnected({
   data,
   t,
   plural,
   dark,
+  onOpenAdvisor,
 }: {
   data: MeAccountResponse;
   t: T;
   plural: Plural;
   dark?: boolean;
+  // Threaded through so the all-off thin hero's «Открыть советника» + ask line
+  // route to the chat (not dead controls) — the advisor still answers «how do I
+  // reconnect?» with the portfolio disconnected.
+  onOpenAdvisor?: (seed?: string) => void;
 }) {
-  const baseNav = useAccountNav();
-  const [overlay, setOverlay] = useState<null | "switcher" | "drawer" | "login" | "connect">(null);
-  const close = () => setOverlay(null);
-  // «Подключить ещё один» opens the network picker; the per-card Reconnects
-  // (known Threads profiles) keep going straight to the OAuth.
-  const nav = { ...baseNav, addProfile: () => setOverlay("connect") };
-  const disc = data.brands.flatMap((b) => b.profiles).filter((p) => p.disconnected);
-  const id = useChromeIdentity(data.tenant.name);
-  return (
-    <div className="acc-mob">
-      <Topbar data={data} t={t} plural={plural} dark={dark} showPill={false} onMenu={() => setOverlay("drawer")} />
-      <div className="ma">
-        {/* identity-only head — shows the disconnected count, never a fake "0" */}
-        <div className="ma-head">
-          <AcctMark mono={id.mono} />
-          <div className="ma-head-txt">
-            <div className="ma-head-name">{id.name}</div>
-            <div className="ma-head-meta">
-              <span className="ma-head-scale">
-                {disc.length} {plural("profiles", disc.length)}
-              </span>
-            </div>
-          </div>
-        </div>
-        <div className="ma-reassure">
-          <span className="ma-reassure-mark">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M12 3 5 6v5.5c0 4.3 3 7.4 7 8.8 4-1.4 7-4.5 7-8.8V6l-7-3Z" />
-            </svg>
-          </span>
-          <div className="ma-reassure-body">
-            <div className="ma-reassure-t">{t("acc.reassure_title")}</div>
-            <div className="ma-reassure-s">{t("acc.reassure_sub")}</div>
-          </div>
-        </div>
-        <div className="ma-sec">
-          <span className="ma-sec-t">{t("acc.disc_section")}</span>
-          <span className="ma-sec-n">{disc.length}</span>
-          <span className="ma-sec-note">{t("acc.disc_section_note")}</span>
-        </div>
-        <div className="ma-grid">
-          {disc.map((p) => (
-            <ProfileCard key={p.id} p={p} t={t} nav={nav} />
-          ))}
-        </div>
-        <button className="btn btn--secondary ma-connect-another" type="button" onClick={() => nav.addProfile()}>
-          <IcPlus size={15} />
-          {t("acc.connect_another")}
-        </button>
-        <div style={{ height: 78 }} />
-      </div>
-
-      <SwitcherButton data={data} t={t} plural={plural} onOpen={() => setOverlay("switcher")} />
-
-      {overlay === "switcher" ? <SwitcherSheet data={data} t={t} nav={nav} onClose={close} /> : null}
-      {overlay === "drawer" ? <NavDrawer data={data} t={t} nav={nav} onClose={close} onOpenLogin={() => setOverlay("login")} /> : null}
-      {overlay === "login" ? <LoginSheet data={data} t={t} nav={nav} onClose={close} /> : null}
-      {overlay === "connect" ? <ConnectNetworkSheet t={t} nav={baseNav} onClose={close} /> : null}
-    </div>
-  );
+  return <AccountMobileDashboard data={data} t={t} plural={plural} dark={dark} onOpenAdvisor={onOpenAdvisor} />;
 }

@@ -11,13 +11,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import "@/components/account/account.css";
+import "@/components/account/account-v3.css";
 import "@/components/account/account-mobile-shell.css";
 import "@/components/account/account-mobile.css";
 import "@/components/account/account-empty.css";
 import "@/components/account/account-empty-mobile.css";
 import "@/components/account/import-banner.css";
 
-import { AccountDashboard, AccountSkeleton } from "@/components/account/AccountDashboard";
+import { AccountDashboard, AccountSkeleton, ADVISOR_SEED_KEY } from "@/components/account/AccountDashboard";
 import type { Plural, T } from "@/components/account/AccountDashboard";
 import { AllDisconnected, FirstConnect } from "@/components/account/AccountEmpty";
 import {
@@ -320,6 +321,20 @@ export default function AccountDashboardPage() {
   const tt: T = (k) => t(k as Parameters<typeof t>[0]);
   const plural: Plural = (unit, n) => pluralUnit(locale, unit, n);
 
+  // Decision C — the ask line / «Открыть советника» / starters / recos route to
+  // the chat, seeding the first question via sessionStorage (a clean URL, no
+  // re-ask on refresh, no question in the address bar). `undefined` = just open.
+  const openAdvisor = (seed?: string) => {
+    if (seed && seed.trim()) {
+      try {
+        sessionStorage.setItem(ADVISOR_SEED_KEY, seed.trim());
+      } catch {
+        /* storage disabled — the chat still opens, just without a seed */
+      }
+    }
+    router.push("/app/account/advisor");
+  };
+
   const liveCount = data.scope.profiles_count;
   const discCount = data.scope.disconnected_count;
 
@@ -342,10 +357,10 @@ export default function AccountDashboardPage() {
         <div className="flex-1">
           <div className={wrap}>
             <div className="hidden md:block">
-              <AllDisconnected data={data} t={tt} plural={plural} />
+              <AllDisconnected data={data} t={tt} plural={plural} onOpenAdvisor={openAdvisor} />
             </div>
             <div className="md:hidden">
-              <AccountMobileAllDisconnected data={data} t={tt} plural={plural} />
+              <AccountMobileAllDisconnected data={data} t={tt} plural={plural} onOpenAdvisor={openAdvisor} />
             </div>
           </div>
         </div>
@@ -372,7 +387,7 @@ export default function AccountDashboardPage() {
               adv={adv ?? undefined}
               t={tt}
               plural={plural}
-              onOpenAdvisor={() => router.push("/app/account/advisor")}
+              onOpenAdvisor={openAdvisor}
               onRetry={refreshData}
             />
           </div>
@@ -382,7 +397,7 @@ export default function AccountDashboardPage() {
               adv={adv ?? undefined}
               t={tt}
               plural={plural}
-              onOpenAdvisor={() => router.push("/app/account/advisor")}
+              onOpenAdvisor={openAdvisor}
               onRetry={refreshData}
             />
           </div>

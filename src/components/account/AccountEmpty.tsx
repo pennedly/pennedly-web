@@ -10,24 +10,13 @@
 // The mixed state (≥1 live + ≥1 disconnected) is handled by AccountDashboard —
 // its ProfileCard renders a disconnected profile as <DisconnectedCard/> inline.
 
-import { useState } from "react";
-
 import { BrandMark } from "@/components/icons";
 import type { MeAccountResponse } from "@/lib/types";
 
-import {
-  AcctMark,
-  DisconnectedCard,
-  Sidebar,
-  Topbar,
-  useAccountNav,
-  useChromeIdentity,
-  type Plural,
-  type T,
-} from "./AccountDashboard";
-// The real brand logos + the shared NetworkPicker/dialogs live in networks.tsx
-// (one source of truth for the picker AND every network badge).
-import { ConnectNetworkDialog, NetworkPicker } from "./networks";
+import { AccountDashboard, useAccountNav, type Plural, type T } from "./AccountDashboard";
+// The real brand logos + the shared NetworkPicker live in networks.tsx (one
+// source of truth for the picker AND every network badge).
+import { NetworkPicker } from "./networks";
 
 // small inline glyphs (CD EIC style: 1.8 stroke, round)
 function Ic({ d, s = 15 }: { d: React.ReactNode; s?: number }) {
@@ -112,71 +101,26 @@ export function FirstConnect({ t }: { t: T }) {
 }
 
 // ── all-disconnected (had profiles, all now disconnected) — full chrome ───────
+// Decision C + the unified V3 body: this is the SAME dashboard, with no rich
+// advisor data → the thin hero detects the all-off portfolio and renders the
+// honest «Все профили отключены» reassurance + a reconnect CTA, while the
+// evidence grid shows each former profile as a reconnect card + «Подключить ещё
+// аккаунт». Keeping the full chrome (never a zeroed screen) is the anti-«меня
+// разлогинило» treatment — the workspace stays.
 export function AllDisconnected({
   data,
   t,
   plural,
   dark,
+  onOpenAdvisor,
 }: {
   data: MeAccountResponse;
   t: T;
   plural: Plural;
   dark?: boolean;
+  // Threaded through so the all-off thin hero's «Открыть советника» + ask line
+  // route to the chat instead of being dead controls (эталон keeps them wired).
+  onOpenAdvisor?: (seed?: string) => void;
 }) {
-  const baseNav = useAccountNav();
-  const [pickOpen, setPickOpen] = useState(false);
-  // «Подключить ещё один» (and every add-affordance in the chrome) opens the
-  // network CHOICE; only the picker's Threads row starts the OAuth. The
-  // per-card Reconnect buttons keep going straight to Threads — the network of
-  // a disconnected Threads profile is already known.
-  const nav = { ...baseNav, addProfile: () => setPickOpen(true) };
-  const disc = data.brands.flatMap((b) => b.profiles).filter((p) => p.disconnected);
-  const id = useChromeIdentity(data.tenant.name);
-  return (
-    <div className="acc-shell">
-      <Sidebar data={data} t={t} nav={nav} />
-      <div className="acc-mainwrap" style={{ minWidth: 0, display: "flex", flexDirection: "column", gap: 18 }}>
-        <Topbar data={data} t={t} plural={plural} dark={dark} nav={nav} />
-        <div className="acc">
-          <div className="acc-head acc-head--idonly">
-            <AcctMark mono={id.mono} />
-            <div className="acc-head-txt">
-              <div className="acc-head-name">{id.name}</div>
-              <div className="acc-head-meta">
-                <span className="acc-head-scale">
-                  {disc.length} {plural("profiles", disc.length)}
-                </span>
-              </div>
-            </div>
-          </div>
-          <div className="acc-reassure">
-            <span className="acc-reassure-mark">
-              <Ic d={IC.shield} s={20} />
-            </span>
-            <div className="acc-reassure-body">
-              <div className="acc-reassure-t">{t("acc.reassure_title")}</div>
-              <div className="acc-reassure-s">{t("acc.reassure_sub")}</div>
-            </div>
-          </div>
-          <div className="acc-sec">
-            <span className="acc-sec-t">{t("acc.disc_section")}</span>
-            <span className="acc-sec-n">{disc.length}</span>
-            <span className="acc-sec-note">{t("acc.disc_section_note")}</span>
-          </div>
-          <div className="acc-grid">
-            {disc.map((p) => (
-              <DisconnectedCard key={p.id} p={p} t={t} nav={nav} />
-            ))}
-          </div>
-          <div className="acc-connect-row">
-            <button className="btn btn--secondary acc-connect-another" type="button" onClick={() => nav.addProfile()}>
-              <Ic d={IC.plus} s={15} />
-              {t("acc.connect_another")}
-            </button>
-          </div>
-        </div>
-      </div>
-      <ConnectNetworkDialog open={pickOpen} onClose={() => setPickOpen(false)} t={t} nav={baseNav} />
-    </div>
-  );
+  return <AccountDashboard data={data} t={t} plural={plural} dark={dark} onOpenAdvisor={onOpenAdvisor} />;
 }

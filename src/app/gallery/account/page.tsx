@@ -12,6 +12,7 @@ import { useState } from "react";
 import { pluralUnit } from "@/lib/i18n";
 
 import "@/components/account/account.css";
+import "@/components/account/account-v3.css";
 import "@/components/account/account-mobile-shell.css";
 import "@/components/account/account-mobile.css";
 // The add-flow network-picker dialog/sheet styles live with the empty states;
@@ -24,6 +25,7 @@ import { AccountDashboard, AccountSkeleton } from "@/components/account/AccountD
 import { AccountMobileDashboard, AccountMobileSkeleton } from "@/components/account/AccountMobileDashboard";
 import {
   DEMO_ADVISOR,
+  DEMO_MIXED,
   DEMO_MULTI_BRAND,
   DEMO_ONE_PROFILE,
   DEMO_SINGLE_BRAND,
@@ -93,6 +95,24 @@ export default function AccountGallery() {
           </div>
           <div className="md:hidden">
             <AccountMobileDashboard data={DEMO_MULTI_BRAND} adv={DEMO_ADVISOR} t={demoT} plural={demoPlural} dark={dark} />
+          </div>
+        </Section>
+
+        <Section title="Тонкое состояние (советник 204 · мало данных)" note="adv отсутствует → честное приглашение + стартеры, без выдуманного вердикта">
+          <div className="hidden md:block">
+            <AccountDashboard data={DEMO_ONE_PROFILE} t={demoT} plural={demoPlural} dark={dark} />
+          </div>
+          <div className="md:hidden">
+            <AccountMobileDashboard data={DEMO_ONE_PROFILE} t={demoT} plural={demoPlural} dark={dark} />
+          </div>
+        </Section>
+
+        <Section title="Смешанное (живые + отключённый профиль)" note="карточки-каналы: reconnect у отключённого, retry у sync-error">
+          <div className="hidden md:block">
+            <AccountDashboard data={DEMO_MIXED} adv={DEMO_ADVISOR} t={demoT} plural={demoPlural} dark={dark} />
+          </div>
+          <div className="md:hidden">
+            <AccountMobileDashboard data={DEMO_MIXED} adv={DEMO_ADVISOR} t={demoT} plural={demoPlural} dark={dark} />
           </div>
         </Section>
 
