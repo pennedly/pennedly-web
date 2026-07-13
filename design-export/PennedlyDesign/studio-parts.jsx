@@ -66,7 +66,13 @@ function Topbar({ dark, onToggleTheme, voiceReady }) {
   );
 }
 
-/* ------------------------------- Composer ------------------------------ */
+/* ------------------------------- Composer ------------------------------
+   «Строка» — the one canonical composer across the product. A single calm prompt
+   line that discloses its shelf (quick-start chips + 1–4 count + Generate) on
+   focus/typing; the ✨ sparkle swaps the shelf for the Ideas palette (loading →
+   ideas → empty/error), and picking an idea seeds the brief. Cmd/Ctrl+Enter
+   generates. Busy turns the whole block into a drafting status. Self-contained:
+   holds its own focus / ideas state, same prop contract as before. */
 const COMPOSER_CHIPS = [
   "A lesson from this week",
   "React to a trend",
@@ -74,14 +80,41 @@ const COMPOSER_CHIPS = [
   "An unpopular opinion",
 ];
 
-function Composer({ value, onChange, onGenerate, busy, count, onCount }) {
+function Composer({ value, onChange, onGenerate, busy, count, onCount, ideasOutcome = "Results" }) {
   const ref = useRef(null);
+  const [focused, setFocused] = useState(false);
+  const [ideas, setIdeas] = useState(null); // null | 'loading' | 'results' | 'empty' | 'error'
+  const [seeded, setSeeded] = useState(false);
+  const timer = useRef(null);
+
+  const hasText = !!value.trim();
+  const open = focused || hasText || !!ideas;
+
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     el.style.height = "auto";
     el.style.height = Math.min(el.scrollHeight, 160) + "px";
-  }, [value]);
+  }, [value, open]);
+  useEffect(() => () => clearTimeout(timer.current), []);
+
+  const outcomeState = (o) => (o === "Empty" ? "empty" : o === "Error" ? "error" : "results");
+  function brainstorm() {
+    setIdeas("loading");
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => setIdeas(outcomeState(ideasOutcome)), 850);
+  }
+  // Review aid: flipping the Ideas-result tweak while the palette is already
+  // settled reflects live (loading stays loading; closed stays closed).
+  useEffect(() => {
+    setIdeas((cur) => (cur && cur !== "loading" ? outcomeState(ideasOutcome) : cur));
+  }, [ideasOutcome]);
+  function toggleIdeas() { if (ideas) setIdeas(null); else brainstorm(); }
+  function pickIdea(hook) {
+    onChange(hook); setSeeded(true); setIdeas(null);
+    requestAnimationFrame(() => ref.current && ref.current.focus());
+  }
+  const keepFocus = (e) => e.preventDefault();
 
   if (busy) {
     return (
@@ -94,9 +127,11 @@ function Composer({ value, onChange, onGenerate, busy, count, onCount }) {
     );
   }
 
+  const IDEAS = window.STUDIO_IDEAS || [];
+
   return (
-    <div className="composer">
-      <div className="composer-top">
+    <div className={`composer ${open ? "is-active" : ""}`}>
+      <div className={`composer-bar ${open ? "is-open" : ""}`}>
         <window.Avatar src={window.USER.avatar} initials={window.USER.initials} size={38} />
         <textarea
           ref={ref}
@@ -104,32 +139,86 @@ function Composer({ value, onChange, onGenerate, busy, count, onCount }) {
           rows={1}
           placeholder="What do you want to write about? A topic, a hot take, a link…"
           value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onKeyDown={(e) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === "Enter") onGenerate();
-          }}
+          onChange={(e) => { onChange(e.target.value); if (seeded) setSeeded(false); }}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") onGenerate(); }}
         />
+        <kbd className="composer-kbd">⌘↵</kbd>
+        <button
+          className={`composer-spark ${ideas ? "is-on" : ""}`}
+          aria-label="Ideas in your voice" aria-expanded={!!ideas}
+          onMouseDown={keepFocus} onClick={toggleIdeas}
+        >
+          <window.IcSparkle size={18} />
+        </button>
       </div>
-      <div className="composer-row">
-        <div className="chips">
-          {COMPOSER_CHIPS.map((c) => (
-            <button key={c} className="chip" onClick={() => onChange(c)}>
-              <window.IcSparkle size={13} className="chip-ico" />{c}
+
+      {ideas ? (
+        <div className="composer-shelf composer-shelf--ideas">
+          <div className="ideas-head">
+            <span className="ideas-cap"><window.IcSparkle size={12} />Ideas in your voice</span>
+            <div className="ideas-head-acts">
+              {ideas === "results" && (
+                <button className="ideas-iconbtn" aria-label="More ideas" title="More ideas" onMouseDown={keepFocus} onClick={brainstorm}><window.IcTweak size={16} /></button>
+              )}
+              <button className="ideas-iconbtn" aria-label="Close ideas" onMouseDown={keepFocus} onClick={() => setIdeas(null)}><window.IcX size={16} /></button>
+            </div>
+          </div>
+          {ideas === "loading" ? (
+            <>
+              <div className="ideas-loading"><span className="spark"><window.IcSparkle size={17} /></span><span className="ideas-loading-text">Brainstorming ideas in your voice…</span></div>
+              <div className="ideas-skel-list"><div className="ideas-skel-card" /><div className="ideas-skel-card" /><div className="ideas-skel-card" /></div>
+            </>
+          ) : ideas === "empty" ? (
+            <div className="ideas-empty">
+              <div className="ideas-empty-t">No fresh ideas this time</div>
+              <div className="ideas-empty-s">Pennedly didn’t find a new angle worth pitching just now. Try again, or start from a quick-start chip below.</div>
+              <div className="ideas-empty-acts">
+                <button className="ideas-retry" onMouseDown={keepFocus} onClick={brainstorm}><window.IcTweak size={15} />Try again</button>
+                <button className="ideas-ghostbtn" onMouseDown={keepFocus} onClick={() => setIdeas(null)}>Close</button>
+              </div>
+            </div>
+          ) : ideas === "error" ? (
+            <div className="ideas-error">
+              <span className="ie-ico"><window.IcAlert size={17} /></span>
+              <span className="ideas-error-text">Couldn’t reach the idea service. Your brief is safe.</span>
+              <button className="ideas-retry" onMouseDown={keepFocus} onClick={brainstorm}><window.IcUndo size={15} />Try again</button>
+            </div>
+          ) : (
+            <div className="ideas-list">
+              {IDEAS.map((d, i) => (
+                <button key={i} className="idea-card" onMouseDown={keepFocus} onClick={() => pickIdea(d.hook)}>
+                  <span className="idea-text"><span className="idea-hook">{d.hook}</span><span className="idea-angle">{d.angle}</span></span>
+                  <span className="idea-use"><window.IcArrowUp size={14} />Use</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : open ? (
+        <div className="composer-shelf">
+          <div className="chips">
+            <button className="chip chip--ideas" onMouseDown={keepFocus} onClick={brainstorm}><window.IcSparkle size={13} className="chip-ico" />Ideas</button>
+            {COMPOSER_CHIPS.map((c) => (
+              <button key={c} className="chip" onMouseDown={keepFocus} onClick={() => onChange(c)}><window.IcSparkle size={13} className="chip-ico" />{c}</button>
+            ))}
+          </div>
+          <div className="composer-shelf-tools">
+            <span className="composer-shelf-lbl">Drafts</span>
+            <div className="count-seg" role="radiogroup" aria-label="Drafts to generate">
+              {[1, 2, 3, 4].map((n) => (
+                <b key={n} className={count === n ? "on" : ""} role="radio" aria-checked={count === n} onMouseDown={keepFocus} onClick={() => onCount(n)}>{n}</b>
+              ))}
+            </div>
+            {seeded && <span className="ideas-seeded-note"><window.IcSparkle size={13} />Seeded from an idea</span>}
+            <span className="composer-spacer" />
+            <button className="btn btn--primary" onClick={onGenerate} disabled={!hasText}>
+              <window.IcNib size={16} /> Generate
             </button>
-          ))}
+          </div>
         </div>
-        <div className="composer-tools">
-          <select className="field count-select" value={count} onChange={(e) => onCount(Number(e.target.value))} aria-label="Drafts to generate">
-            <option value={1}>1 draft</option>
-            <option value={2}>2 drafts</option>
-            <option value={3}>3 drafts</option>
-            <option value={4}>4 drafts</option>
-          </select>
-          <button className="btn btn--primary" onClick={onGenerate} disabled={!value.trim()}>
-            <window.IcNib size={16} /> Generate
-          </button>
-        </div>
-      </div>
+      ) : null}
     </div>
   );
 }
@@ -204,10 +293,12 @@ function FirstRun({ onSetup }) {
         <button className="btn btn--primary" onClick={onSetup}><window.IcVoice size={16} /> Set up your voice</button>
         <span style={{ fontSize: "var(--text-small)", color: "var(--color-text-subtle)", whiteSpace: "nowrap" }}>~2 minutes</span>
       </div>
-      <div className="composer fr-disabled-composer" style={{ marginTop: 22 }}>
-        <div className="composer-top">
+      <div className="composer composer--disabled fr-disabled-composer" style={{ marginTop: 22 }} aria-hidden="true">
+        <div className="composer-bar">
           <window.Avatar src={window.USER.avatar} initials={window.USER.initials} size={38} />
-          <div className="composer-input" style={{ color: "var(--color-text-subtle)" }}>Set up your voice to start drafting…</div>
+          <div className="composer-input" style={{ color: "var(--color-text-subtle)", alignSelf: "center" }}>Set up your voice to start drafting…</div>
+          <kbd className="composer-kbd">⌘↵</kbd>
+          <span className="composer-spark"><window.IcSparkle size={18} /></span>
         </div>
       </div>
     </div>

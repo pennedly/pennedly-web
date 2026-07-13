@@ -82,6 +82,7 @@
       ]],
       ['Insight', [
         ['stats','chart','Stats',0,false],
+        ['advisor','advisor','Advisor',0,true],
         ['audits','audit','Audits',1,false],
         ['patterns','layers','Pattern study',0,false],
         ['explore','compass','Explore patterns',0,false],
@@ -89,6 +90,7 @@
       ['Voice \u0026 automation', [
         ['voice','voice','Voice',0,false],
         ['stylerules','sliders','Style rules',0,false],
+        ['scenarios','repeat','Scenarios',0,true],
         ['autopilot','autopilot','Autopilot',0,true],
       ]],
     ];
@@ -164,6 +166,90 @@
       + `<div class="m-chiprow">${chip('A lesson from this week')}${chip('React to a trend')}${chip('Reply to recent mentions')}${chip('An unpopular opinion')}</div>`
       + `<div class="m-composer-foot"><select class="field count-select"><option>1 draft</option><option selected>3 drafts</option><option>4 drafts</option></select>`
       + `<button class="btn btn--primary m-gen"${filled?'':' disabled'}>${ic('nib',16)}Generate</button></div></div>`;
+  }
+
+  // «Строка» — the accepted canonical composer (bar + shelf / ideas palette),
+  // phone build. Kept SEPARATE from the legacy composer() above so other exports
+  // that still call composer() (e.g. the Design System page) render unchanged.
+  // state: 'collapsed'|'default'|'filled'|'seeded'|'busy'
+  //        |'ideas-loading'|'ideas-results'|'ideas-empty'|'ideas-error'
+  // opts: { de:true → German strings (chips + seeded) for the localization proof }
+  function stroka(state = 'default', opts = {}) {
+    const de = opts.de;
+    const AV = `<img class="avatar-img" src="${A}mara.png" width="38" height="38" alt=""/>`;
+
+    if (state === 'busy') {
+      return `<div class="m-composer m-composer--busy"><div class="m-drafting"><span class="nib">${ic('nib',24)}</span>`
+        + `<span class="m-drafting-text">Drafting <b>3</b> posts in your voice<span class="dots"><i></i><i></i><i></i></span></span></div></div>`;
+    }
+
+    const T = de ? {
+      ph: 'Worüber möchtest du schreiben? Ein Thema, eine steile These, ein Link…',
+      ideas: 'Ideen',
+      chips: ['Eine Lektion aus dieser Woche','Auf einen Trend reagieren','Auf aktuelle Erwähnungen antworten','Eine unpopuläre Meinung'],
+      drafts: 'Entwürfe', gen: 'Generieren', seeded: 'Aus einer Idee übernommen', cap: 'Ideen in deiner Stimme'
+    } : {
+      ph: 'What do you want to write about? A topic, a hot take, a link…',
+      ideas: 'Ideas',
+      chips: ['A lesson from this week','React to a trend','Reply to recent mentions','An unpopular opinion'],
+      drafts: 'Drafts', gen: 'Generate', seeded: 'Seeded from an idea', cap: 'Ideas in your voice'
+    };
+
+    const isIdeas = state.indexOf('ideas-') === 0;
+    const sub = isIdeas ? state.slice(6) : '';
+    const seeded = state === 'seeded';
+    const filled = seeded || state === 'filled' || de;
+    const val = seeded
+      ? (de ? 'Der beste Beitrag dieses Jahres brach jede Regel, die man mir beigebracht hatte.' : 'The best post I wrote this year broke every rule I’d been taught.')
+      : (filled ? (de ? 'Warum „poste täglich“ die meisten Creator leise ausbrennt' : 'Why most “post daily” advice quietly burns creators out') : '');
+
+    const bar = `<div class="m-composer-bar">${AV}`
+      + `<textarea class="m-composer-input" placeholder="${T.ph}">${val}</textarea>`
+      + `<button class="m-composer-spark${isIdeas ? ' is-on' : ''}" aria-label="Ideas in your voice">${ic('sparkle',18)}</button></div>`;
+
+    // collapsed — just the bar (resting «Строка»)
+    if (state === 'collapsed') return `<div class="m-composer">${bar}</div>`;
+
+    // ideas palette
+    if (isIdeas) {
+      const head = `<div class="ideas-head"><span class="ideas-cap">${ic('sparkle',12)}${T.cap}</span>`
+        + `<div class="ideas-head-acts">`
+        + (sub === 'results' ? `<button class="ideas-iconbtn" aria-label="More ideas">${ic('tweak',16)}</button>` : '')
+        + `<button class="ideas-iconbtn" aria-label="Close ideas">${ic('x',16)}</button></div></div>`;
+      let body;
+      if (sub === 'loading') {
+        body = `<div class="ideas-loading"><span class="spark">${ic('sparkle',17)}</span><span class="ideas-loading-text">Brainstorming ideas in your voice…</span></div>`
+          + `<div class="ideas-skel-list"><div class="ideas-skel-card"></div><div class="ideas-skel-card"></div><div class="ideas-skel-card"></div></div>`;
+      } else if (sub === 'empty') {
+        body = `<div class="ideas-empty"><div class="ideas-empty-t">No fresh ideas this time</div>`
+          + `<div class="ideas-empty-s">Pennedly didn’t find a new angle worth pitching just now. Try again, or start from a quick-start chip.</div>`
+          + `<div class="ideas-empty-acts"><button class="ideas-retry">${ic('tweak',15)}Try again</button><button class="ideas-ghostbtn">Close</button></div></div>`;
+      } else if (sub === 'error') {
+        body = `<div class="ideas-error"><span class="ie-ico">${ic('alert',17)}</span>`
+          + `<span class="ideas-error-text">Couldn’t reach the idea service. Your brief is safe.</span>`
+          + `<button class="ideas-retry">${ic('undo',15)}Try again</button></div>`;
+      } else {
+        const L = [
+          ['The best post I wrote this year took four minutes and broke every rule I’d been taught.','A short story about overthinking — momentum beats polish.'],
+          ['Finding your voice mostly means deleting the sentences that sound like everyone else.','Craft note: subtraction is the real edit.'],
+          ['I almost didn’t post the thing that did the best. Here’s exactly what stopped me.','Vulnerability — the embarrassing draft wins.'],
+          ['Writing every day didn’t make me a better writer. Publishing every day did.','Contrarian take on practice vs. shipping.']
+        ];
+        body = `<div class="ideas-list">` + L.map(function (d) {
+          return `<button class="idea-card"><span class="idea-text"><span class="idea-hook">${d[0]}</span><span class="idea-angle">${d[1]}</span></span><span class="idea-use">${ic('arrow-up',14)}Use</span></button>`;
+        }).join('') + `</div>`;
+      }
+      return `<div class="m-composer is-open">${bar}<div class="m-composer-shelf m-composer-shelf--ideas">${head}${body}</div></div>`;
+    }
+
+    // default shelf (chips + tools)
+    const chip = function (t, cls) { return `<button class="chip${cls ? ' ' + cls : ''}">${ic('sparkle',13)}${t}</button>`; };
+    const chips = `<div class="m-chiprow">${chip(T.ideas, 'chip--ideas')}${T.chips.map(function (c) { return chip(c); }).join('')}</div>`;
+    const seg = `<div class="count-seg">` + [1,2,3,4].map(function (n) { return `<b${n === 3 ? ' class="on"' : ''}>${n}</b>`; }).join('') + `</div>`;
+    const seededNote = seeded ? `<span class="ideas-seeded-note">${ic('sparkle',13)}${T.seeded}</span>` : '';
+    const tools = `<div class="m-shelf-tools"><span class="m-shelf-lbl">${T.drafts}</span>${seg}${seededNote}`
+      + `<button class="btn btn--primary m-gen"${filled ? '' : ' disabled'}>${ic('nib',16)}${T.gen}</button></div>`;
+    return `<div class="m-composer is-open">${bar}<div class="m-composer-shelf">${chips}${tools}</div></div>`;
   }
 
   function filterbar(active = 'ready') {
@@ -490,44 +576,111 @@
     return `<div class="m-rangeseg">` + P.map(([k,l]) => `<button class="m-range-btn${k===active?' m-range-btn--active':''}">${l}</button>`).join('') + `</div>`;
   }
 
-  // stacked summary: hero (Views) on its own line + a 3-up row (Posts/Likes/Replies).
+  // stacked summary: hero (Views) on its own line + a 3-up row (Posts/Likes/Comments).
   function statsSummary(period = '7d') {
     const SUM = {
-      '7d':  { views:'98K',    viewsAvg:'14K',   viewsD:'+26%', posts:'7',   postsD:'+17%', likes:'980',  likesD:'+36%', comments:'56',   commentsD:'+27%' },
-      '3mo': { views:'642K',   viewsAvg:'13.4K', viewsD:'+64%', posts:'48',  postsD:'+23%', likes:'5.8K', likesD:'+49%', comments:'430',  commentsD:'+48%' },
-      'all': { views:'1.64M',  viewsAvg:'9.8K',  viewsD:null,   posts:'168', postsD:null,   likes:'14.2K',likesD:null,   comments:'1,060',commentsD:null },
+      '7d':    { views:'98K',    viewsAvg:'14K',   viewsD:'+26%', posts:'7',   postsD:'+17%', likes:'980',  likesD:'+36%', comments:'56',   commentsD:'+27%' },
+      'month': { views:'318K',   viewsAvg:'15.1K', viewsD:'+37%', posts:'21',  postsD:'+24%', likes:'3.1K', likesD:'+25%', comments:'235',  commentsD:'+29%' },
+      '3mo':   { views:'642K',   viewsAvg:'13.4K', viewsD:'+64%', posts:'48',  postsD:'+23%', likes:'5.8K', likesD:'+49%', comments:'430',  commentsD:'+48%' },
+      'all':   { views:'1.64M',  viewsAvg:'9.8K',  viewsD:null,   posts:'168', postsD:null,   likes:'14.2K',likesD:null,   comments:'1,060',commentsD:null },
     };
     const s = SUM[period] || SUM['7d'];
     const cell = (num, lbl, dl) => `<div class="m-statcell"><div class="sc-num">${num}</div><div class="sc-lbl">${lbl}</div>${dchip(dl)}</div>`;
     return `<div class="m-statsum"><div class="m-stat-hero"><div class="sh-top"><span class="sh-ico">${ic('eye',15)}</span><span class="sh-lbl">Views</span></div>`
       + `<div class="sh-num">${s.views}</div><div class="sh-foot"><span class="sh-sub">${s.viewsAvg} avg / post</span>${dchip(s.viewsD)}</div></div>`
-      + `<div class="m-stat-grid">${cell(s.posts,'Posts',s.postsD)}${cell(s.likes,'Likes',s.likesD)}${cell(s.comments,'Replies',s.commentsD)}</div></div>`;
+      + `<div class="m-stat-grid">${cell(s.posts,'Posts',s.postsD)}${cell(s.likes,'Likes',s.likesD)}${cell(s.comments,'Comments',s.commentsD)}</div></div>`;
   }
 
-  // full-width bar chart: avg views per bucket, dashed average line, bars tinted
-  // above/below that average. Many buckets → the plot scrolls horizontally so
-  // bars + labels stay readable (never a crushed smear).
+  // a daily, GAP-FILLED month: every day present; empty days are [label, 0, 0] stubs.
+  const MONTH_DAILY = (function () {
+    const vals = [14800,0,16200,15100,0,17900,19800,0,12400,15600,14200,0,18900,16700,13200,0,0,21400,17800,15900,14100,0,16800,19200,22000,0,15400,17100,18600,16200];
+    const start = new Date(2026, 4, 5);
+    return vals.map((v, i) => { const d = new Date(start); d.setDate(start.getDate() + i);
+      return [d.toLocaleDateString('en-US', { month:'short', day:'numeric' }), v, v > 0 ? 1 : 0]; });
+  })();
+
+  // full-width bar chart: avg views per bucket on a continuous gap-filled axis.
+  // Every bucket is present; empty buckets (posts:0) render as a tiny zero stub.
+  // The dashed average is computed over POSTED buckets only. Bars above it tint
+  // accent, at/below muted. Many buckets → fixed ~40px bars + horizontal scroll
+  // (never a crushed smear); labels go sparse (~8) so dates stay readable.
   function statsBarChart(period = '7d') {
     const SETS = {
-      '7d':  { buckets:[['Wed',11000],['Thu',13500],['Fri',9800],['Sat',22000],['Sun',12000],['Mon',15500],['Tue',14200]] },
-      '3mo': { buckets:[['Mar 16',9200],['Mar 23',10100],['Mar 30',8800],['Apr 6',11200],['Apr 13',13400],['Apr 20',12100],['Apr 27',15600],['May 4',14800],['May 11',17300],['May 18',16200],['May 25',19800],['Jun 1',22400]] },
+      '7d':   [['Wed',11000,1],['Thu',13500,1],['Fri',9800,1],['Sat',22000,1],['Sun',12000,1],['Mon',15500,1],['Tue',14200,1]],
+      'month': MONTH_DAILY,
+      '3mo':  [['Mar 16',9200,1],['Mar 23',10100,1],['Mar 30',8800,1],['Apr 6',11200,1],['Apr 13',13400,1],['Apr 20',12100,1],['Apr 27',15600,1],['May 4',14800,1],['May 11',17300,1],['May 18',16200,1],['May 25',19800,1],['Jun 1',22400,1]],
     };
-    const set = SETS[period] || SETS['7d'];
-    const vals = set.buckets.map((b) => b[1]);
-    const max = Math.max(...vals);
-    const avg = vals.reduce((a,b) => a+b, 0) / vals.length;
+    const buckets = SETS[period] || SETS['7d'];
+    const posts = (b) => (b[2] === undefined ? 1 : b[2]);
+    const posted = buckets.filter((b) => posts(b) > 0).map((b) => b[1]);
+    const max = Math.max(...buckets.map((b) => b[1]), 1);
+    const avg = posted.reduce((a,b) => a+b, 0) / (posted.length || 1);
     const avgPct = (avg/max) * 100;
-    const wide = set.buckets.length > 8;
+    const wide = buckets.length > 8;
     const colCls = wide ? 'm-colbar-col m-colbar-col--fixed' : 'm-colbar-col';
     const lblCls = wide ? 'm-collabel m-collabel--fixed' : 'm-collabel';
-    const bars = set.buckets.map((b) => {
-      const h = Math.max(3, (b[1]/max)*100);
-      return `<div class="${colCls}"><div class="m-colbar ${b[1]>=avg?'m-colbar--above':'m-colbar--below'}" style="height:${h.toFixed(1)}%"></div></div>`;
+    const every = wide ? Math.ceil(buckets.length / 8) : 1;
+    const bars = buckets.map((b) => {
+      const empty = posts(b) === 0;
+      const h = empty ? 0 : Math.max(3, (b[1]/max)*100);
+      const cls = empty ? 'm-colbar m-colbar--zero' : ('m-colbar ' + (b[1] >= avg ? 'm-colbar--above' : 'm-colbar--below'));
+      return `<div class="${colCls}"><div class="${cls}" style="height:${h.toFixed(1)}%"></div></div>`;
     }).join('');
-    const labels = set.buckets.map((b) => `<span class="${lblCls}">${b[0]}</span>`).join('');
+    const labels = buckets.map((b, i) => `<span class="${lblCls}">${i % every === 0 ? b[0] : ''}</span>`).join('');
     return `<div class="m-chart"><div class="m-chart-scroll"><div class="m-chart-inner${wide?' is-wide':''}">`
       + `<div class="m-colplot"><div class="m-colavg" style="bottom:${avgPct.toFixed(1)}%"><span class="m-colavg-lbl">avg ${sfmt(avg)}</span></div>${bars}</div>`
       + `<div class="m-collabels">${labels}</div></div></div></div>`;
+  }
+
+  // Top posts — top-5 of the window by views; each row links out to Threads.
+  // Verdict "N\u00d7 your average" colour-grades: success \u2265 1.5\u00d7, plain \u2265 0.7\u00d7, muted below.
+  function statsTopPosts() {
+    const P = [
+      ['Most of my replies come from posts that admit a mistake before giving the lesson.','Jun 1',22000,240,31,'1.6','up'],
+      ['The quiet trick to openings: start mid-thought, like the reader walked in mid-conversation.','May 30',19800,210,24,'1.4','mid'],
+      ['I rewrote this six times before it sounded like me. Here\u2019s the version that landed.','May 28',13500,150,12,'0.97','mid'],
+      ['A short thread about saying less — cut the draft you\u2019re scared to cut.','May 27',11000,98,9,'0.79','mid'],
+      ['Notes from a slow week. Not everything has to perform to be worth posting.','May 29',9800,70,6,'0.70','low'],
+    ];
+    return `<div class="m-toplist">` + P.map((p, i) => `<a class="m-toppost">`
+      + `<span class="m-tp-rank">${i+1}</span>`
+      + `<span><span class="m-tp-snippet">${p[0]}</span><span class="m-tp-foot"><span class="m-tp-meta">`
+      + `<span class="m-tp-m">${p[1]}</span><span class="m-tp-m">${ic('eye',12)}${sfmt(p[2])}</span><span class="m-tp-m">${ic('heart',12)}${p[3]}</span><span class="m-tp-m">${ic('bubble',12)}${p[4]}</span></span>`
+      + `<span class="m-tp-verdict m-tp-verdict--${p[6]}">${p[5]}\u00d7<small>your average</small></span></span></span></a>`).join('') + `</div>`;
+  }
+
+  // Best times to post: two stacked mini charts (by hour, by day of week), in the
+  // viewer's LOCAL timezone. Best slot (prefers slots with \u2265 2 posts) tints accent.
+  function btBlock(title, rows, bestLbl) {
+    const max = Math.max(...rows.map((r) => r[1]), 1);
+    const elig = rows.filter((r) => r[2] >= 2); const pool = elig.length ? elig : rows;
+    const best = pool.reduce((a,b) => b[1] > a[1] ? b : a, pool[0]);
+    const wide = rows.length > 8;
+    const colCls = wide ? 'm-bt-col m-bt-col--fixed' : 'm-bt-col';
+    const lblCls = wide ? 'm-bt-label m-bt-label--fixed' : 'm-bt-label';
+    const bars = rows.map((r) => { const isBest = r[0] === best[0]; const h = r[2] === 0 ? 0 : Math.max(3, (r[1]/max)*100);
+      return `<div class="${colCls}"><div class="m-bt-bar${isBest?' m-bt-bar--best':''}" style="height:${h.toFixed(0)}%"></div></div>`; }).join('');
+    const lbls = rows.map((r) => `<span class="${lblCls}${r[0]===best[0]?' m-bt-label--best':''}">${r[0]}</span>`).join('');
+    return `<div class="m-bt-block"><div class="m-bt-head"><span class="m-bt-title">${title}</span><span class="m-bt-best">${ic('clock',12)}Best \u00b7 ${bestLbl}</span></div>`
+      + `<div class="m-bt-scroll"><div class="m-bt-inner${wide?' is-wide':''}"><div class="m-bt-plot">${bars}</div><div class="m-bt-labels">${lbls}</div></div></div></div>`;
+  }
+  function statsBestTimes() {
+    const hours = [['6 AM',3200,1],['9 AM',8600,2],['12 PM',11200,3],['3 PM',7400,2],['6 PM',19800,4],['9 PM',12600,3]];
+    const days  = [['Mon',12000,3],['Tue',14200,3],['Wed',11000,2],['Thu',13500,2],['Fri',9800,2],['Sat',22000,3],['Sun',12000,2]];
+    return `<div class="m-besttimes">` + btBlock('By hour', hours, '6 PM') + btBlock('By day of week', days, 'Sat') + `</div>`;
+  }
+
+  // Performance spread — viral-tier distribution of the window's posts.
+  function statsSpread(period = '7d') {
+    const D = {
+      '7d':    [['Viral','3\u00d7+ your average','viral',1,14],['Good','1.5\u20133\u00d7 average','good',2,29],['Average','0.7\u20131.5\u00d7 average','average',3,43],['Weak','below 0.7\u00d7','weak',1,14]],
+      'month': [['Viral','3\u00d7+ your average','viral',2,10],['Good','1.5\u20133\u00d7 average','good',5,24],['Average','0.7\u20131.5\u00d7 average','average',9,43],['Weak','below 0.7\u00d7','weak',5,23]],
+    };
+    const set = D[period] || D['7d']; const maxC = Math.max(...set.map((t) => t[3]));
+    return `<div class="m-distlist">` + set.map((t) => `<div class="m-distrow"><div class="m-dist-top">`
+      + `<span class="m-dist-name"><span class="m-dist-dot m-tier-${t[2]}"></span>${t[0]}<span class="m-dn-sub">\u00b7 ${t[1]}</span></span>`
+      + `<span class="m-dist-val">${t[3]} post${t[3]===1?'':'s'}<span class="m-dv-pct">${t[4]}%</span></span></div>`
+      + `<div class="m-dist-track"><div class="m-dist-fill m-tier-${t[2]}" style="width:${(t[3]/maxC*100).toFixed(0)}%"></div></div></div>`).join('') + `</div>`;
   }
 
   // best posting hours, in the viewer's LOCAL timezone — a compact bar row + takeaway.
@@ -554,12 +707,14 @@
       + `<div class="m-stats-emeta"><span><b>1</b> week so far</span><span><b>3</b> posts published</span></div></div>`;
   }
 
+  // skeleton MIRRORS the ready layout (selector + summary + chart + 3 panels)
+  // so nothing reflows on load.
   function statsSkeleton() {
     const seg = `<div class="m-rangeseg">` + Array.from({length:6}).map(() => `<span class="skel-line" style="width:72px;height:36px;border-radius:10px;flex:0 0 auto"></span>`).join('') + `</div>`;
     const sumSk = `<article class="m-card skeleton"><div class="skel-line" style="width:60px;height:12px"></div><div class="skel-line" style="width:120px;height:30px;margin-top:12px;border-radius:8px"></div><div class="skel-line" style="width:140px;height:12px;margin-top:12px"></div></article>`;
-    const panSk = `<div class="m-spanel skeleton"><div class="skel-line" style="width:170px;height:16px"></div><div class="skel-line" style="width:100%;height:150px;border-radius:10px;margin-top:16px"></div></div>`;
-    const panSk2 = `<div class="m-spanel skeleton"><div class="skel-line" style="width:140px;height:16px"></div><div class="skel-line" style="width:100%;height:90px;border-radius:10px;margin-top:16px"></div></div>`;
-    return seg + sumSk + panSk + panSk2;
+    const grid = `<div class="m-stat-grid">` + Array.from({length:3}).map(() => `<div class="m-statcell"><div class="skel-line" style="width:50px;height:20px"></div><div class="skel-line" style="width:40px;height:10px;margin-top:8px"></div></div>`).join('') + `</div>`;
+    const pan = (t, h) => `<div class="m-spanel skeleton"><div class="skel-line" style="width:${t}px;height:16px"></div><div class="skel-line" style="width:100%;height:${h}px;border-radius:10px;margin-top:16px"></div></div>`;
+    return seg + sumSk + grid + pan(170,150) + pan(110,170) + pan(150,150) + pan(140,90);
   }
 
   /* -------------------------------- Audits ------------------------------- */
@@ -758,7 +913,7 @@
   /* ------------------------------ Autopilot ------------------------------ */
   // Opt-in automation, OFF by default. Two sections: Auto-post (clock) + Auto-reply
   // (speech bubble). A self-contained toggle keeps it dependency-free.
-  const toggle = (on) => `<span class="m-toggle${on?' is-on':''}" role="switch" aria-checked="${on?'true':'false'}"><span class="m-toggle-knob"></span></span>`;
+  const toggle = (on, lg) => `<span class="m-toggle${lg?' m-toggle--lg':''}${on?' is-on':''}" role="switch" aria-checked="${on?'true':'false'}"><span class="m-toggle-knob"></span></span>`;
 
   function apIntro() {
     return `<div class="m-apintro">${ic('clock',16)}<div><b>Opt-in automation, off by default.</b> Let Pennedly post approved drafts and reply to comments on a schedule — you stay in control and can pause anytime.</div></div>`;
@@ -793,6 +948,100 @@
   function apSkeleton() {
     const secSk = `<div class="m-apsec skeleton"><div style="display:flex;align-items:center;gap:11px"><div class="skel-line" style="width:40px;height:40px;border-radius:10px;flex:0 0 auto"></div><div style="flex:1"><div class="skel-line" style="width:90px;height:15px"></div><div class="skel-line" style="width:170px;height:11px;margin-top:7px"></div></div><div class="skel-line" style="width:46px;height:28px;border-radius:99px;flex:0 0 auto"></div></div></div>`;
     return secSk + secSk;
+  }
+
+  /* ── Refreshed Autopilot mobile components (master · schedules · 5-row policy · activity) ── */
+  const AP_OBJS = [
+    { name:'Morning thought', time:'8:00 AM', offset:'UTC+1', utc:'07:00 UTC', spread:'\u00B1 15 min', spreadHint:'Posts within \u00B115 min', topic:'Writing craft', on:true, seed:true },
+    { name:'Evening question', time:'7:00 PM', offset:'UTC+1', utc:'18:00 UTC', spread:'Exact (no spread)', spreadHint:'Posts exactly at the time', topic:'A question for my audience', on:false, seed:true },
+  ];
+  const AP_POSTS = [
+    { obj:'Morning thought', at:'5h ago', text:'the draft you\u2019re avoiding is usually the one worth writing. open the doc, write one bad sentence, and let it pull you in.', v:'9.4K', l:187, c:14 },
+    { obj:'Midday craft note', at:'yesterday', text:'editing is just deciding, over and over, what you actually meant. the cuts are where the voice shows up.', v:'6.1K', l:132, c:9 },
+  ];
+  const AP_REPLIES = [
+    { ini:'DP', who:'Devon Pierce', handle:'@devon_makes', at:'5h ago', on:'Morning thought', comment:'needed this exact reminder before opening my laptop today.', reply:'honestly i just let it be bad on purpose \u2014 the second sentence is always braver once the first one\u2019s out.' },
+    { ini:'RA', who:'Rivka Adler', handle:'@rivka.k', at:'yesterday', on:'Evening question', comment:'\u201Cwrite every day\u201D wrecked me too. what replaced it?', reply:'\u201Cwrite most weeks, finish what matters.\u201D consistency over streaks \u2014 missing a day stopped meaning anything.' },
+  ];
+
+  function apMaster(on) {
+    return `<div class="m-apmaster${on?' is-on':''}"><span class="m-apmaster-ico">${ic('clock',22)}</span>`
+      + `<div class="m-apmaster-id"><div class="t">Autopilot</div><div class="s"><span class="sdot"></span>${on?'On \u00B7 posting and replying on your schedule':'Off \u00B7 you approve everything yourself'}</div></div>`
+      + toggle(on, true) + `</div>`;
+  }
+  // confirm bottom sheet — primary action ON TOP, ghost cancel below.
+  function apConfirmSheet() {
+    return `<div class="m-csheet-scrim"></div><div class="m-csheet"><div class="m-csheet-grip"></div>`
+      + `<div class="m-csheet-ico">${ic('clock',20)}</div><div class="m-csheet-title">Turn on Autopilot?</div>`
+      + `<div class="m-csheet-sub">Pennedly will publish your enabled schedules and send replies under your policy \u2014 automatically. Every post still appears in your feed, and you can pause anytime.</div>`
+      + `<div class="m-csheet-actions"><button class="btn btn--primary m-btn">${ic('clock',15)} Turn on autopilot</button><button class="btn btn--secondary m-btn">Cancel</button></div></div>`;
+  }
+  function apField(label, val, opts, hint) {
+    const o = opts.map((x) => `<option${x===val?' selected':''}>${x}</option>`).join('');
+    return `<div class="m-field"><label>${label}</label><select class="m-select">${o}</select>${hint?`<span class="m-field-hint">${hint}</span>`:''}</div>`;
+  }
+  function apObjCard(o) {
+    const body = o.confirm
+      ? `<div class="m-objconfirm"><span class="t">Delete this object?</span><button class="btn btn--ghost m-btn" style="flex:1 1 0">Cancel</button><button class="btn btn--danger m-btn" style="flex:1 1 0">Delete</button></div>`
+      : apField('Post time', o.time, ['7:00 AM','8:00 AM','12:00 PM','1:00 PM','7:00 PM'], `${ic('clock',12)}${o.offset} \u00B7 sends ${o.utc}`)
+        + apField('Random spread', o.spread, ['Exact (no spread)','\u00B1 5 min','\u00B1 15 min','\u00B1 30 min'], o.spreadHint)
+        + apField('Topic', o.topic, ['any (round-robin)','Writing craft','Revision & editing','A question for my audience'])
+        + `<div class="m-objseed">${toggle(o.seed)}<span>New posts from this schedule start with auto-reply on</span></div>`
+        + (o.on ? '' : `<div class="m-objpaused">Paused</div>`);
+    return `<div class="m-objcard${o.on?'':' is-off'}"><div class="m-objhead"><input class="m-objname" value="${o.name}" aria-label="Schedule name">${toggle(o.on)}<button class="m-objdel" aria-label="Remove schedule">${ic('trash',16)}</button></div>${body}</div>`;
+  }
+  function apSchedule(objs) {
+    objs = objs || AP_OBJS;
+    const head = `<div class="m-ap2head"><div><div class="t">Scheduled posts</div><div class="s">Each schedule drafts a post in your voice and publishes around the set time \u2014 your local time (UTC+1).</div></div>${objs.length?`<button class="m-ap2add">${ic('plus',15)} Add</button>`:''}</div>`;
+    const body = objs.length
+      ? `<div class="m-ap2body">${objs.map(apObjCard).join('')}</div>`
+      : `<div class="m-ap2body"><div class="m-empty"><div class="m-empty-mark">${ic('clock',24)}</div><div class="m-empty-title">No scheduled posts yet</div><div class="m-empty-sub">Add a schedule and Pennedly will draft and post on a rhythm \u2014 always in your voice, always visible in your feed.</div></div></div>`;
+    return `<div class="m-ap2sec">${head}${body}</div>`;
+  }
+  function apPolicyRow(o) {
+    const inline = (o.switchOn !== undefined) ? toggle(o.switchOn) : '';
+    const below = o.select ? `<div class="m-prow-ctl"><select class="m-select">${o.select.opts.map((x) => `<option${x===o.select.val?' selected':''}>${x}</option>`).join('')}</select></div>` : '';
+    return `<div class="m-prow${o.hero?' m-prow--hero':''}"><div class="m-prow-top"><div style="min-width:0"><div class="m-prow-t">${o.hero?'<span class="star"></span>':''}${o.t}</div><div class="m-prow-d">${o.d}</div></div>${inline}</div>${below}${o.extra||''}</div>`;
+  }
+  function apPolicy(opt) {
+    opt = opt || {}; const mode = opt.mode; const on = mode ? (mode !== 'off') : (opt.on !== false); const quiet = opt.quiet !== false;
+    const rows = ''
+      + apPolicyRow({ t:'Who it replies to', d:'The audience whose comments can get an automatic reply.', select:{ val:'Fans & positive', opts:['Fans & positive','Everyone except trolls','Questions only'] } })
+      + apPolicyRow({ t:'Only reply when it adds value', hero:true, switchOn:true, d:'Skip pure-reaction comments (emoji, \u201Cnice\u201D, \u201Cthanks\u201D) and threads that have run their course \u2014 autopilot reads the context and decides if a reply is worth it.' })
+      + apPolicyRow({ t:'How often to reply', d:'New replies are batched to this rhythm; your daily cap still applies.', select:{ val:'About once an hour', opts:['As they come (~15 min)','About once an hour','A few times a day','Once a day'] } })
+      + apPolicyRow({ t:'Daily reply cap', d:'A safety limit on how many replies autopilot sends each day.', select:{ val:'25 / day', opts:['10 / day','25 / day','50 / day'] } })
+      + apPolicyRow({ t:'Quiet hours', d:'Pause replies overnight. Times are in your local timezone.', switchOn:quiet, extra: quiet ? `<div class="m-prow-quiet"><span class="ql">From</span><select class="m-select"><option selected>11:00 PM</option><option>10:00 PM</option></select><span class="ql">to</span><select class="m-select"><option selected>8:00 AM</option><option>7:00 AM</option></select><span class="qh">${ic('clock',12)} UTC+1 \u00B7 22:00\u201307:00 UTC</span></div>` : '' });
+    return `<div class="m-ap2sec"><div class="m-ap2head"><div><div class="t">Auto-reply policy</div><div class="s">When on, replies are drafted in your voice and sent automatically.</div></div>${mode?'':toggle(on)}</div>`
+      + (mode
+        ? `<div class="m-ap2body"><div class="rmode-row rmode-row--stack"><span class="rmode-label">Reply to comments</span><div class="rmode-seg rmode-seg--full" role="tablist" aria-label="Auto-reply mode">${[['off','Off'],['all','All posts'],['selected','Selected']].map((x) => `<button class="rmode-btn${x[0]===mode?' rmode-btn--active':''}" role="tab" aria-selected="${x[0]===mode}">${x[1]}</button>`).join('')}</div></div>${mode==='selected'?'<div class="rmode-hint">Auto-replies go only to posts you flag in My Feed.</div>':''}<div class="m-policybody${on?'':' is-off'}" style="margin-top:16px">${rows}</div></div></div>`
+        : `<div class="m-ap2body m-policybody${on?'':' is-off'}">${rows}</div></div>`);
+  }
+  function apAutoPostItem(p) {
+    return `<div class="m-autopost"><div class="m-autopost-top"><span class="m-autopost-tag">${ic('clock',12)}${p.obj}</span><span class="m-autopost-time">${p.at}</span></div>`
+      + `<div class="m-autopost-text">${p.text}</div>`
+      + `<div class="m-autopost-foot"><div class="m-autopost-stats"><span class="ms">${ic('eye',12)}${p.v}</span><span class="ms">${ic('heart',12)}${p.l}</span><span class="ms">${ic('bubble',12)}${p.c}</span></div><a class="m-actlink">View post${ic('external',12)}</a></div></div>`;
+  }
+  function apAutoReplyItem(r) {
+    return `<div class="m-autoreply"><div class="m-ar-comment"><span class="m-ar-av">${r.ini}</span><div style="min-width:0"><div class="m-ar-who">${r.who} <span>${r.handle}</span></div><div class="m-ar-ctext">${r.comment}</div></div></div>`
+      + `<div class="m-ar-reply"><div class="m-ar-rwho">You <span class="m-ar-rtag">${ic('bubble',11)}auto-replied</span></div><div class="m-ar-rtext">${r.reply}</div></div>`
+      + `<div class="m-ar-foot"><span>${r.at} \u00B7 on a comment to your \u201C${r.on}\u201D post</span><a class="m-actlink">View thread${ic('external',12)}</a></div></div>`;
+  }
+  function apActivity(tab) {
+    const allTime = `<div class="m-act-alltime"><span class="cap">All time</span><span class="stat"><b>31</b> posts</span><span class="stat"><b>142</b> auto-replies</span></div>`;
+    const objstats = `<div class="m-objstats">` + [['Morning thought',14,'May 30'],['Midday craft note',11,'May 29'],['Evening question',6,'May 28']]
+      .map((c) => `<div class="m-objstat"><span class="nm">${c[0]}</span><span class="rt"><span class="ct">${c[1]}<small>posts</small></span><span class="lt">last ${c[2]}</span></span></div>`).join('') + `</div>`;
+    const list = tab === 'replies' ? AP_REPLIES.map(apAutoReplyItem).join('') : AP_POSTS.map(apAutoPostItem).join('');
+    return `<div class="m-ap2sec"><div class="m-ap2head"><div><div class="t">Activity</div><div class="s">Everything autopilot has done \u2014 read-only.</div></div>`
+      + `<div class="m-acttabs"><button class="m-acttab${tab!=='replies'?' is-on':''}">Posts</button><button class="m-acttab${tab==='replies'?' is-on':''}">Replies</button></div></div>`
+      + `<div class="m-ap2body">${allTime}${objstats}<div class="m-actlist">${list}</div></div></div>`;
+  }
+  function apEmptyActivity() {
+    return `<div class="m-ap2sec"><div class="m-ap2head"><div><div class="t">Activity</div><div class="s">Everything autopilot has done \u2014 read-only.</div></div></div>`
+      + `<div class="m-ap2body"><div class="m-empty"><div class="m-empty-mark">${ic('clock',24)}</div><div class="m-empty-title">No activity yet</div><div class="m-empty-sub">Once autopilot runs, the posts it publishes and the replies it sends will appear here for you to review.</div></div></div></div>`;
+  }
+  function apFooter() {
+    return `<div class="m-apfoot"><div class="ln">${ic('clock',14)}<span>Autopilot follows your <a>Voice</a> and <a>Style rules</a>.</span></div>`
+      + `<div class="ln">${ic('check',14)}<span><b>Only drafts that pass quality checks are published;</b> daily limits apply; everything is logged and can be undone.</span></div></div>`;
   }
 
   /* ----------------------------- Style rules ----------------------------- */
@@ -1299,13 +1548,14 @@
 
   window.MOCK = {
     ic, statusbar, top, tabs, drawer, phone, comp, col, light, dark,
-    composer, filterbar, studioCard, feedCard, feedBaseline, sortBar, deleteSheet,
+    composer, stroka, filterbar, studioCard, feedCard, feedBaseline, sortBar, deleteSheet,
     commentCard, postSwitcher, replyContext, repliesFilter, publishReplySheet, mentionCard,
-    statsPeriods, statsSummary, statsBarChart, statsHours, statsPanel, statsEmpty, statsSkeleton,
+    statsPeriods, statsSummary, statsBarChart, statsHours, statsTopPosts, statsBestTimes, statsSpread, statsPanel, statsEmpty, statsSkeleton,
     auditHeader, auditChange, auditRow, auditEmpty, auditSkeleton,
     patternsIntro, patternCard, patternsEmpty, patternsSkeleton,
     exploreInput, exploreAnalyzing, exploreResultsHead, exploreMeta, exploreCard, exploreEmpty, exploreSkeleton,
     apIntro, apAutoPost, apAutoReply, apReassure, apSkeleton,
+    apMaster, apConfirmSheet, apSchedule, apPolicy, apActivity, apEmptyActivity, apFooter,
     srSectionHead, srCatGroup, srRuleRow, srCustomRow, srAddRule, srDemo, srSkeleton,
     setIdentity, setLanguage, setAccountRow, setAccounts, setAppearance, setDanger,
     disconnectSheet, deleteAccountSheet, setSkeleton,

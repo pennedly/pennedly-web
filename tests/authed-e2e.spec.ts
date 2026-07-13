@@ -141,7 +141,10 @@ test("logged-in dashboard boots: composer + active account + a ready draft", asy
   await page.goto("/app", { waitUntil: "domcontentloaded" });
 
   // The composer (proof the auth/account gate resolved and we're on the board).
-  await expect(page.getByPlaceholder(/what do you want to write about/i)).toBeVisible({ timeout: 15_000 });
+  const composer = page.getByPlaceholder(/what do you want to write about/i);
+  await expect(composer).toBeVisible({ timeout: 15_000 });
+  // The «Строка» composer discloses its shelf (with Generate) on focus/typing.
+  await composer.click();
   await expect(page.getByRole("button", { name: /generate/i }).first()).toBeVisible();
 
   // The active Threads account's identity is on the cards (@handle / name) —

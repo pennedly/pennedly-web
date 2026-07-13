@@ -55,7 +55,6 @@ import {
   IcVoice,
   IcX,
 } from "@/components/icons";
-import { Spinner } from "@/components/ui/feedback";
 import {
   UI_LANGS,
   type StudioCard,
@@ -1050,7 +1049,13 @@ function Stat({ Icon, n }: { Icon: (p: { size?: number }) => ReactNode; n: numbe
   );
 }
 
-// ─────────────────────────────── Composer ───────────────────────────────────
+// ─────────────────────────────── Composer «Строка» ──────────────────────────
+// One calm prompt BAR (avatar + input + ⌘↵ + ✨) that discloses its SHELF
+// (quick-start chips + 1–4 count + Generate) on focus/typing; the ✨ swaps the
+// shelf for the Ideas palette (loading → results / empty / error), and picking
+// an idea seeds the brief. Self-contained focus/ideas state; same prop contract
+// as before. Ideas come from the REAL `onIdeas` fetch — empty = the API returned
+// no ideas, error = it threw (no mock outcome switch).
 const CHIPS: MessageKey[] = ["studio.chip_lesson", "studio.chip_trend", "studio.chip_mentions", "studio.chip_opinion"];
 
 export function StudioComposer({
@@ -1079,29 +1084,75 @@ export function StudioComposer({
   disabled?: boolean;
 }) {
   const { t } = useTranslation();
-  const [ideas, setIdeas] = useState<Idea[] | null>(null);
+  const ref = useRef<HTMLTextAreaElement>(null);
+  const [focused, setFocused] = useState(false);
+  // The exact hook the brief was seeded from (or null). The «из идеи» note shows
+  // only while `value` still equals it — so any edit, a preset-chip replace, OR
+  // the parent clearing the brief on Generate (a prop change that never fires
+  // the textarea onChange) auto-hides the note, no manual reset needed.
+  const [seededHook, setSeededHook] = useState<string | null>(null);
+  const seeded = seededHook !== null && value === seededHook;
+  // Ideas palette (real fetch): open drives the palette; busy/err/list are the
+  // sub-states. A generation counter drops a fetch whose palette was closed or
+  // re-triggered while it was in flight.
+  const [ideasOpen, setIdeasOpen] = useState(false);
   const [ideasBusy, setIdeasBusy] = useState(false);
   const [ideasErr, setIdeasErr] = useState(false);
+  const [ideas, setIdeas] = useState<Idea[] | null>(null);
+  const ideasGen = useRef(0);
+
+  const hasText = !!value.trim();
+  const open = focused || hasText || ideasOpen;
+
+  // Auto-grow the textarea (up to 160px); re-measure when the shelf opens too.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+  }, [value, open]);
+
   async function loadIdeas() {
+    if (disabled) return;
+    const gen = ++ideasGen.current;
+    setIdeasOpen(true);
     setIdeasBusy(true);
     setIdeasErr(false);
     try {
-      setIdeas(await onIdeas());
+      const r = await onIdeas();
+      if (gen === ideasGen.current) setIdeas(r);
     } catch {
-      setIdeasErr(true);
-      setIdeas(null);
+      if (gen === ideasGen.current) {
+        setIdeasErr(true);
+        setIdeas(null);
+      }
     } finally {
-      setIdeasBusy(false);
+      if (gen === ideasGen.current) setIdeasBusy(false);
     }
   }
-  return (
-    <section
-      className={cn(
-        "rounded-xl border bg-surface p-4 pb-3.5 shadow-sm transition-all",
-        busy ? "border-accent/45" : "border-border focus-within:border-accent/55 focus-within:shadow-md",
-      )}
-    >
-      {busy ? (
+  function closeIdeas() {
+    ideasGen.current++; // disown any in-flight fetch
+    setIdeasOpen(false);
+    setIdeasBusy(false);
+    setIdeasErr(false);
+    setIdeas(null);
+  }
+  function toggleIdeas() {
+    if (ideasOpen) closeIdeas();
+    else void loadIdeas();
+  }
+  function pickIdea(hook: string) {
+    onChange(hook);
+    setSeededHook(hook);
+    closeIdeas();
+    requestAnimationFrame(() => ref.current?.focus());
+  }
+  // Keep the tapped control from stealing focus (so the bar stays "open").
+  const keepFocus = (e: React.MouseEvent) => e.preventDefault();
+
+  if (busy) {
+    return (
+      <section className="rounded-2xl border border-accent/45 bg-surface px-4 py-[15px] shadow-sm">
         <div className="flex items-center gap-3 px-0.5 py-1.5">
           <span className="text-text" style={{ animation: "nib-write 1.5s var(--ease-standard) infinite" }}>
             <IcNib size={22} />
@@ -1119,127 +1170,204 @@ export function StudioComposer({
             </span>
           </span>
         </div>
-      ) : (
-        <>
-          <div className="flex items-start gap-3">
-            <AccountFace url={avatarUrl} initials={avatarText} size={38} className="max-md:hidden" />
-            <textarea
-              value={value}
-              onChange={(e) => {
-                onChange(e.target.value);
-                e.target.style.height = "auto";
-                e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`;
-              }}
-              onKeyDown={(e) => {
-                if ((e.metaKey || e.ctrlKey) && e.key === "Enter") onGenerate();
-              }}
-              placeholder={t("studio.composer_placeholder")}
-              rows={1}
-              className="mt-1 min-h-[30px] flex-1 resize-none border-0 bg-transparent text-h3 leading-[1.45] text-text placeholder:text-text-subtle focus:outline-none"
-            />
-          </div>
-          <div className="mt-3 flex flex-wrap items-center gap-2.5 border-t border-border pt-3">
-            <div className="flex w-full flex-nowrap gap-1.5 py-1 -my-1 overflow-x-auto [scrollbar-width:none] [mask-image:linear-gradient(90deg,#000_calc(100%-20px),transparent)]">
-              <button
-                type="button"
-                onClick={loadIdeas}
-                disabled={disabled || ideasBusy}
-                aria-expanded={ideas !== null}
-                className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-accent/40 bg-accent/10 px-2.5 py-1.5 text-small font-medium text-accent transition-colors hover:bg-accent/15 disabled:opacity-50"
-              >
-                <IcSparkle size={13} className={ideasBusy ? "animate-pulse" : ""} /> {t("studio.ideas")}
+      </section>
+    );
+  }
+
+  return (
+    <section className="flex flex-col">
+      {/* the prompt line */}
+      <div
+        className={cn(
+          "flex min-h-[60px] gap-3 rounded-[28px] border bg-surface py-2.5 pl-3.5 pr-3 shadow-sm transition-all",
+          open ? "items-start rounded-xl border-accent/55 shadow-md" : "items-center border-border",
+        )}
+      >
+        <AccountFace url={avatarUrl} initials={avatarText} size={38} className={cn("shrink-0", open && "mt-[3px]")} />
+        <textarea
+          ref={ref}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          onKeyDown={(e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === "Enter") onGenerate();
+          }}
+          placeholder={t("studio.composer_placeholder")}
+          rows={1}
+          className="min-h-[28px] flex-1 resize-none border-0 bg-transparent py-1 text-h3 leading-[1.5] text-text placeholder:text-text-subtle focus:outline-none"
+        />
+        <kbd
+          className={cn(
+            "shrink-0 whitespace-nowrap rounded-[6px] border border-border bg-surface px-[7px] py-[3px] font-mono text-[11px] text-text-subtle [@media(pointer:coarse)]:hidden",
+            open ? "mt-1.5 self-start" : "self-center",
+          )}
+        >
+          ⌘↵
+        </kbd>
+        <button
+          type="button"
+          aria-label={t("studio.ideas_title")}
+          aria-expanded={ideasOpen}
+          disabled={disabled}
+          onMouseDown={keepFocus}
+          onClick={toggleIdeas}
+          className={cn(
+            "grid h-10 w-10 shrink-0 place-items-center rounded-full border transition-colors max-md:h-11 max-md:w-11",
+            ideasOpen ? "border-accent/56 bg-accent/[0.17]" : "border-accent/28 bg-accent/[0.09]",
+            "text-accent hover:bg-accent/[0.16] disabled:opacity-50",
+            open ? "mt-1 self-start" : "self-center",
+          )}
+        >
+          <IcSparkle size={18} className={ideasOpen ? "" : ""} style={ideasOpen ? { animation: "ideas-pulse 1.5s var(--ease-standard) infinite" } : undefined} />
+        </button>
+      </div>
+
+      {/* the ideas palette (replaces the shelf while open) */}
+      {ideasOpen ? (
+        <div className="mt-2 rounded-lg border border-border bg-surface px-3 py-2.5 shadow-sm" style={{ animation: "rcd-in var(--duration-base) var(--ease-entrance) both" }}>
+          <div className="mb-2.5 flex items-center gap-2.5">
+            <span className="inline-flex items-center gap-1.5 text-caption font-semibold uppercase tracking-[0.07em] text-text-subtle">
+              <IcSparkle size={12} className="text-accent" /> {t("studio.ideas_title")}
+            </span>
+            <div className="ml-auto flex shrink-0 items-center gap-0.5">
+              {!ideasBusy && !ideasErr && ideas && ideas.length > 0 && (
+                <button type="button" onMouseDown={keepFocus} onClick={loadIdeas} aria-label={t("studio.ideas_refresh")} title={t("studio.ideas_refresh")} className="grid h-[30px] w-[30px] place-items-center rounded-md text-text-subtle transition-colors hover:bg-surface-2 hover:text-text max-md:h-11 max-md:w-11">
+                  <IcTweak size={16} />
+                </button>
+              )}
+              <button type="button" onMouseDown={keepFocus} onClick={closeIdeas} aria-label={t("studio.ideas_close")} className="grid h-[30px] w-[30px] place-items-center rounded-md text-text-subtle transition-colors hover:bg-surface-2 hover:text-text max-md:h-11 max-md:w-11">
+                <IcX size={16} />
               </button>
-              {CHIPS.map((k) => (
+            </div>
+          </div>
+          {ideasBusy ? (
+            <>
+              <div className="flex items-center gap-2.5 pb-3 pt-0.5">
+                <span className="grid shrink-0 place-items-center text-accent" style={{ animation: "ideas-pulse 1.5s var(--ease-standard) infinite" }}>
+                  <IcSparkle size={17} />
+                </span>
+                <span className="text-small text-text-muted">{t("studio.ideas_loading")}</span>
+              </div>
+              <div className="flex flex-col gap-2">
+                {[0, 1, 2].map((i) => (
+                  <div
+                    key={i}
+                    className="h-[60px] rounded-md border border-border max-md:h-[66px]"
+                    style={{ background: "linear-gradient(90deg, var(--color-surface-2) 0%, color-mix(in srgb, var(--color-text) 6%, var(--color-surface-2)) 50%, var(--color-surface-2) 100%)", backgroundSize: "220% 100%", animation: "shimmer 1.4s linear infinite" }}
+                  />
+                ))}
+              </div>
+            </>
+          ) : ideasErr ? (
+            <div className="flex flex-wrap items-center gap-2.5 rounded-md border border-danger/30 bg-danger/[0.08] px-3 py-2.5">
+              <span className="grid shrink-0 place-items-center text-danger">
+                <IcAlert size={17} />
+              </span>
+              <span className="min-w-0 text-small text-text">{t("studio.ideas_error")}</span>
+              <button type="button" onMouseDown={keepFocus} onClick={loadIdeas} className="ml-auto inline-flex items-center gap-1.5 px-1 py-1.5 text-small font-semibold text-accent transition-colors hover:text-accent/80 max-md:min-h-[44px]">
+                <IcUndo size={15} /> {t("studio.ideas_retry")}
+              </button>
+            </div>
+          ) : ideas && ideas.length > 0 ? (
+            <div className="flex max-h-[348px] flex-col gap-2 overflow-y-auto max-md:max-h-none max-md:overflow-visible">
+              {ideas.map((idea, i) => (
                 <button
-                  key={k}
+                  key={i}
                   type="button"
-                  onClick={() => onChange(t(k))}
-                  className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-surface px-2.5 py-1.5 text-small font-medium text-text-muted transition-colors hover:border-text/20 hover:bg-surface-2 hover:text-text"
+                  onMouseDown={keepFocus}
+                  onClick={() => pickIdea(idea.hook)}
+                  className="group flex w-full items-start gap-3 rounded-md border border-border bg-surface px-[13px] py-[11px] text-left transition-colors hover:border-accent/55 hover:bg-accent/[0.05]"
                 >
-                  <IcSparkle size={13} className="text-text-subtle" />
-                  {t(k)}
+                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <span className="text-body font-semibold leading-[1.45] text-text [text-wrap:pretty]">{idea.hook}</span>
+                    {idea.angle && <span className="text-small leading-[1.45] text-text-muted [text-wrap:pretty]">{idea.angle}</span>}
+                  </span>
+                  <span className="inline-flex shrink-0 items-center gap-1.5 self-center rounded-full border border-accent/26 bg-accent/10 py-1 pl-[7px] pr-[9px] text-caption font-semibold text-accent opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 max-md:opacity-100">
+                    <IcArrowUp size={14} /> {t("studio.ideas_use")}
+                  </span>
                 </button>
               ))}
             </div>
-            <div className="flex w-full items-center justify-end gap-2">
-              <div className="relative max-md:shrink-0">
-                <select
-                  value={count}
-                  onChange={(e) => onCount(Number(e.target.value))}
-                  aria-label={t("dashboard.composer.count_label")}
-                  className="h-10 appearance-none rounded-md border border-border bg-surface pl-3 pr-8 text-small text-text transition-colors hover:bg-surface-2 focus:border-accent focus:outline-none focus:ring-[3px] focus:ring-accent/[0.22]"
-                >
-                  {[1, 2, 3, 4].map((n) => (
-                    <option key={n} value={n}>
-                      {n} {n === 1 ? t("dashboard.composer.draft_one") : t("dashboard.composer.draft_few")}
-                    </option>
-                  ))}
-                </select>
-                <IcChevDown size={14} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-subtle" />
+          ) : (
+            <div className="pb-1 pt-0.5">
+              <div className="text-small font-semibold text-text">{t("studio.ideas_empty")}</div>
+              <div className="mt-1 max-w-[52ch] text-caption leading-[1.5] text-text-subtle [text-wrap:pretty]">{t("studio.ideas_empty_sub")}</div>
+              <div className="mt-3 flex items-center gap-1.5">
+                <button type="button" onMouseDown={keepFocus} onClick={loadIdeas} className="inline-flex items-center gap-1.5 px-1 py-1.5 text-small font-semibold text-accent transition-colors hover:text-accent/80 max-md:min-h-[44px]">
+                  <IcTweak size={15} /> {t("studio.ideas_retry")}
+                </button>
+                <button type="button" onMouseDown={keepFocus} onClick={closeIdeas} className="rounded-md px-2.5 py-1.5 text-small font-semibold text-text-muted transition-colors hover:bg-surface-2 hover:text-text max-md:min-h-[44px]">
+                  {t("studio.ideas_close")}
+                </button>
               </div>
-              <Button variant="primary" icon={<IcNib size={16} />} onClick={onGenerate} disabled={disabled || !value.trim()} className="max-md:h-auto max-md:min-h-[44px] max-md:flex-1 max-md:whitespace-normal">
-                {t("studio.generate")}
-              </Button>
-            </div>
-          </div>
-          {(ideasBusy || ideas !== null || ideasErr) && (
-            <div className="mt-3 border-t border-border pt-3">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="inline-flex items-center gap-1.5 text-caption font-semibold uppercase tracking-[0.05em] text-text-subtle">
-                  <IcSparkle size={12} className="text-accent" /> {t("studio.ideas_title")}
-                </span>
-                {ideas !== null && !ideasBusy && (
-                  <div className="flex items-center gap-0.5">
-                    <button type="button" onClick={loadIdeas} aria-label={t("studio.ideas_refresh")} className="grid h-7 w-7 place-items-center rounded-md text-text-subtle transition-colors hover:bg-surface-2 hover:text-text">
-                      <IcReload size={13} />
-                    </button>
-                    <button type="button" onClick={() => setIdeas(null)} aria-label={t("studio.ideas_close")} className="grid h-7 w-7 place-items-center rounded-md text-text-subtle transition-colors hover:bg-surface-2 hover:text-text">
-                      <IcX size={13} />
-                    </button>
-                  </div>
-                )}
-              </div>
-              {ideasBusy ? (
-                <div className="flex items-center gap-2 px-1 py-3 text-small text-text-muted">
-                  <Spinner size={14} className="text-accent" /> {t("studio.ideas_loading")}
-                </div>
-              ) : ideasErr ? (
-                <div className="flex items-center justify-between gap-2 px-1 py-2 text-small text-text-muted">
-                  <span>{t("studio.ideas_error")}</span>
-                  <button type="button" onClick={loadIdeas} className="font-medium text-accent hover:underline">
-                    {t("studio.ideas_retry")}
-                  </button>
-                </div>
-              ) : ideas && ideas.length > 0 ? (
-                <ul className="flex max-h-[348px] flex-col gap-1.5 overflow-y-auto max-md:max-h-none max-md:overflow-visible">
-                  {ideas.map((idea, i) => (
-                    <li key={i}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onChange(idea.hook);
-                          setIdeas(null);
-                        }}
-                        className="group flex w-full items-start gap-2.5 rounded-lg border border-border bg-surface px-3 py-2.5 text-left transition-colors hover:border-accent/45 hover:bg-accent/[0.04]"
-                      >
-                        <span className="min-w-0 flex-1">
-                          <span className="block text-body font-semibold leading-snug text-text [text-wrap:pretty]">{idea.hook}</span>
-                          {idea.angle && <span className="mt-0.5 block text-small text-text-muted [text-wrap:pretty]">{idea.angle}</span>}
-                        </span>
-                        <span className="mt-0.5 inline-flex shrink-0 items-center gap-1 text-caption font-medium text-accent opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 max-md:opacity-100">
-                          <IcArrowUp size={14} /> {t("studio.ideas_use")}
-                        </span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <div className="px-1 py-2 text-small text-text-muted">{t("studio.ideas_empty")}</div>
-              )}
             </div>
           )}
-        </>
-      )}
+        </div>
+      ) : open ? (
+        /* the shelf — quick-start chips + count + Generate */
+        <div className="mt-2 flex flex-col gap-2.5 rounded-lg border border-border bg-surface px-3 py-2.5 shadow-sm" style={{ animation: "rcd-in var(--duration-base) var(--ease-entrance) both" }}>
+          <div className="flex flex-nowrap gap-[7px] overflow-x-auto overflow-y-hidden [mask-image:linear-gradient(90deg,#000_calc(100%-22px),transparent)] [scrollbar-width:none]">
+            <button
+              type="button"
+              onMouseDown={keepFocus}
+              onClick={loadIdeas}
+              disabled={disabled}
+              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-accent/30 bg-accent/[0.09] px-[11px] py-1.5 text-small font-medium text-accent transition-colors hover:border-accent/46 hover:bg-accent/15 disabled:opacity-50"
+            >
+              <IcSparkle size={13} /> {t("studio.ideas")}
+            </button>
+            {CHIPS.map((k) => (
+              <button
+                key={k}
+                type="button"
+                onMouseDown={keepFocus}
+                onClick={() => onChange(t(k))}
+                className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-surface px-[11px] py-1.5 text-small font-medium text-text-muted transition-colors hover:border-text/18 hover:bg-surface-2 hover:text-text"
+              >
+                <IcSparkle size={13} className="text-text-subtle" /> {t(k)}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2.5 max-md:flex-wrap max-md:gap-x-3 max-md:gap-y-2.5">
+            <span className="shrink-0 whitespace-nowrap text-caption font-semibold uppercase tracking-[0.06em] text-text-subtle">{t("studio.composer_drafts")}</span>
+            <div role="radiogroup" aria-label={t("dashboard.composer.count_label")} className="inline-flex shrink-0 items-center gap-0.5 rounded-full border border-border bg-surface-2 p-0.5">
+              {[1, 2, 3, 4].map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  role="radio"
+                  aria-checked={count === n}
+                  onMouseDown={keepFocus}
+                  onClick={() => onCount(n)}
+                  className={cn(
+                    "grid h-7 w-7 place-items-center rounded-full text-small tabular-nums transition-colors max-md:h-10 max-md:w-[42px]",
+                    count === n ? "bg-primary font-semibold text-primary-foreground" : "font-medium text-text-muted hover:text-text",
+                  )}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+            {seeded && (
+              <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-caption text-accent max-md:basis-full">
+                <IcSparkle size={13} /> {t("studio.seeded_note")}
+              </span>
+            )}
+            <span className="flex-1 max-md:hidden" />
+            <Button
+              variant="primary"
+              icon={<IcNib size={16} />}
+              onMouseDown={keepFocus}
+              onClick={onGenerate}
+              disabled={disabled || !hasText}
+              className="max-md:h-auto max-md:min-h-[44px] max-md:w-full max-md:whitespace-normal"
+            >
+              {t("studio.generate")}
+            </Button>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

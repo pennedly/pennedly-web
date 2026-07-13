@@ -243,6 +243,9 @@
 /* §3.7 skeleton shimmer — surface-2 base with a moving ink-tinted sheen.
    Disabled automatically by the reduced-motion rule above. */
 @keyframes shimmer { from { background-position: 220% 0; } to { background-position: -120% 0; } }
+/* Studio composer «Строка»: the ✨ sparkle pulses while the Ideas palette is
+   open (spark button + loading spark + the Ideas chip). Reduced-motion safe. */
+@keyframes ideas-pulse { 0%, 100% { opacity: 0.5; transform: scale(0.88); } 50% { opacity: 1; transform: scale(1.06); } }
 /* Import-banner indeterminate progress sweep (import-banner.css §progress bar) —
    a 36% chunk slides across before the backfill reports a known post total.
    Globally disabled under the reduced-motion rule above. */

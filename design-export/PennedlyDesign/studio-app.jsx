@@ -45,6 +45,23 @@
  *                  collapsed secondary actions into one "⋯" overflow per card;
  *                  redrew the Send-back/undo icon; aligned the footer char-count +
  *                  status on one baseline; equalized composer count-select + Generate.
+ * ── «Строка» delivery patch (2026-07-12) — what changed ──────────────
+ *   1. Mobile «Строка» is real now. studio.css ≤560 dropped the dead
+ *      `.composer-row{flex-wrap}` rule (class no longer exists) and re-flows the
+ *      shelf so it NEVER overflows at 390 → 320: DRAFTS + 1·2·3·4 stay on one
+ *      row, Generate is full-width on its own row, a seeded note takes its own
+ *      row; chips/ideas keep the scroll-row + fade. Sparkle/segment/idea ⋯ and
+ *      idea cards are ≥44px; idea `Use` shows without hover; the ⌘↵ hint is
+ *      hidden on coarse pointers. Desktop metrics are untouched (frozen/accepted).
+ *   2. Ideas palette gained EMPTY + ERROR (was loading→results only). Driven for
+ *      review by the new `ideas` tweak (Results / Empty / Error); real triggers:
+ *      empty = brainstorm returns 0 hooks, error = brainstorm request fails (503).
+ *      Error is danger-toned and does NOT self-collapse; both offer Try again.
+ *   3. Full «Строка» state set (all specced): collapsed · open-empty · open-text ·
+ *      seeded · ideas-loading · ideas-results · ideas-empty · ideas-error · busy ·
+ *      first-run preview (desaturated, non-interactive under the hero).
+ *   Specs synced: Studio-SPEC §2.5/§4/§6, Studio-Mobile-SPEC §4/§9-12 (+ mock.js
+ *   composer(), mobile/pennedly-mobile.css «Строка» layer). Nothing else touched.
  * ───────────────────────────────────────────────────────────────── */
 
 const { useState: useS, useEffect: useE, useRef: useR } = React;
@@ -327,6 +344,7 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "dark": false,
   "density": "Comfortable",
   "drafts": "3",
+  "ideas": "Results",
   "state": "Normal"
 }/*EDITMODE-END*/;
 
@@ -443,6 +461,7 @@ function App() {
                   value={composer} onChange={setComposer}
                   onGenerate={generate} busy={generating}
                   count={count} onCount={setCount}
+                  ideasOutcome={t.ideas}
                 />
                 <window.FilterTabs filters={filters} active={filter} onChange={setFilter} />
                 <div className="feed">
@@ -485,6 +504,7 @@ function App() {
         <window.TweakRadio label="Feed" value={t.state} options={["Normal", "Loading", "Empty", "Error"]} onChange={(v) => setTweak("state", v)} />
         <window.TweakSection label="Composer" />
         <window.TweakRadio label="Drafts / generate" value={t.drafts} options={["1", "2", "3", "4"]} onChange={(v) => setTweak("drafts", v)} />
+        <window.TweakRadio label="Ideas result" value={t.ideas} options={["Results", "Empty", "Error"]} onChange={(v) => setTweak("ideas", v)} />
         <window.TweakSection label="Appearance" />
         <window.TweakToggle label="Dark mode" value={!!t.dark} onChange={(v) => setTweak("dark", v)} />
         <window.TweakRadio label="Density" value={t.density} options={["Comfortable", "Compact"]} onChange={(v) => setTweak("density", v)} />

@@ -167,38 +167,124 @@ body {
 .content--wide { max-width: var(--content-wide); }
 
 /* ============================ COMPOSER ============================ */
-.composer {
+/* «Строка» — the one canonical composer. A single calm prompt line that
+   discloses its shelf on focus/typing; the ✨ sparkle swaps the shelf for an Ideas
+   palette. Collapsed = a pill; active = a card + shelf (chips + count + Generate).
+   Busy turns the whole block into a drafting status line. Token-only; the whole
+   thing flips light/dark for free. Class contract preserved: `.composer-input`
+   stays the focus target (studio-app.jsx focusComposer / EmptyState CTA). */
+.composer { display: flex; flex-direction: column; }
+
+/* the prompt line */
+.composer-bar {
+  display: flex; align-items: center; gap: 12px;
+  min-height: 60px; padding: 10px 12px 10px 14px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-2xl);
   box-shadow: var(--shadow-sm);
-  padding: 16px 16px 14px;
   transition: border-color var(--duration-base) var(--ease-standard),
-              box-shadow var(--duration-base) var(--ease-standard);
+              box-shadow var(--duration-base) var(--ease-standard),
+              border-radius var(--duration-base) var(--ease-standard);
 }
-.composer:focus-within { border-color: color-mix(in srgb, var(--color-accent) 55%, var(--color-border)); box-shadow: var(--shadow-md); }
-.composer-top { display: flex; align-items: flex-start; gap: 12px; }
+.composer-bar.is-open { align-items: flex-start; border-radius: var(--radius-xl); }
+.composer.is-active .composer-bar {
+  border-color: color-mix(in srgb, var(--color-accent) 55%, var(--color-border));
+  box-shadow: var(--shadow-md);
+}
+.composer-bar .avatar { flex: 0 0 auto; }
+.composer-bar.is-open .avatar { margin-top: 3px; }
+
 .composer-input {
-  flex: 1 1 auto;
+  flex: 1 1 auto; min-width: 0;
   border: none; background: transparent; resize: none;
   font-family: var(--font-sans);
   font-size: var(--text-h3);
-  line-height: 1.45;
+  line-height: 1.5;
   color: var(--color-text);
-  padding: 6px 2px 2px;
-  min-height: 30px;
+  padding: 4px 0 3px;
+  min-height: 28px;
   outline: none;
 }
 .composer-input::placeholder { color: var(--color-text-subtle); }
-.composer-row {
-  display: flex; align-items: center; gap: 10px;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--color-border);
+
+.composer-kbd {
+  flex: 0 0 auto; align-self: center;
+  font-family: var(--font-mono); font-size: 11px; color: var(--color-text-subtle);
+  border: 1px solid var(--color-border); border-radius: 6px;
+  padding: 3px 7px; white-space: nowrap; background: var(--color-surface);
 }
-.chips { display: flex; flex-wrap: wrap; gap: 7px; flex: 1 1 auto; min-width: 0; }
+.composer-bar.is-open .composer-kbd { align-self: flex-start; margin-top: 6px; }
+
+.composer-spark {
+  flex: 0 0 auto; align-self: center;
+  width: 40px; height: 40px; display: grid; place-items: center;
+  border-radius: var(--radius-full);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 28%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent) 9%, var(--color-surface));
+  color: var(--color-accent); cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-standard),
+              border-color var(--duration-fast) var(--ease-standard);
+}
+.composer-bar.is-open .composer-spark { align-self: flex-start; margin-top: 4px; }
+.composer-spark:hover { background: color-mix(in srgb, var(--color-accent) 16%, var(--color-surface)); }
+.composer-spark.is-on {
+  background: color-mix(in srgb, var(--color-accent) 17%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--color-accent) 56%, var(--color-border));
+}
+.composer-spark.is-on svg { animation: ideas-pulse 1.5s var(--ease-standard) infinite; }
+@media (prefers-reduced-motion: reduce) { .composer-spark.is-on svg { animation: none; } }
+
+/* the shelf — revealed under the bar on focus/typing (or the Ideas palette) */
+.composer-shelf {
+  margin-top: 8px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 10px 12px;
+  display: flex; flex-direction: column; gap: 10px;
+  animation: composer-shelf-in var(--duration-base) var(--ease-entrance) both;
+}
+@keyframes composer-shelf-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .composer-shelf { animation: none; } }
+.composer-shelf-tools { display: flex; align-items: center; gap: 10px; }
+.composer-shelf-lbl {
+  font-size: var(--text-caption); font-weight: 600; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--color-text-subtle);
+  white-space: nowrap; flex: 0 0 auto;
+}
+.composer-spacer { flex: 1 1 auto; }
+.composer-shelf-tools .ideas-seeded-note { margin-top: 0; white-space: nowrap; }
+
+/* count segment 1–4, one tap */
+.count-seg {
+  display: inline-flex; align-items: center; gap: 2px; flex: 0 0 auto;
+  background: var(--color-surface-2); border: 1px solid var(--color-border);
+  border-radius: var(--radius-full); padding: 2px;
+}
+.count-seg b {
+  width: 28px; height: 28px; display: grid; place-items: center;
+  font-size: var(--text-small); font-weight: 500; color: var(--color-text-muted);
+  border-radius: var(--radius-full); cursor: pointer; font-variant-numeric: tabular-nums;
+  transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+}
+.count-seg b:hover { color: var(--color-text); }
+.count-seg b.on { background: var(--color-primary); color: var(--color-primary-foreground); font-weight: 600; }
+
+/* chip scroll row (✨ Ideas pill leads; presets follow; never wrap, scroll under a
+   right edge-fade — the same idiom as the mobile .m-chiprow). */
+.chips {
+  display: flex; flex-wrap: nowrap; gap: 7px; flex: 1 1 auto; min-width: 0;
+  overflow-x: auto; overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 22px), transparent);
+          mask-image: linear-gradient(90deg, #000 calc(100% - 22px), transparent);
+}
+.chips::-webkit-scrollbar { display: none; }
 .chip {
-  display: inline-flex; align-items: center; gap: 6px;
+  display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto;
   font-size: var(--text-small); font-weight: 500;
   color: var(--color-text-muted);
   padding: 6px 11px;
@@ -219,8 +305,17 @@ body {
   font-size: var(--text-small); border-radius: var(--radius-md);
 }
 
-/* composer "drafting" state */
-.composer--busy { border-color: color-mix(in srgb, var(--color-accent) 45%, var(--color-border)); }
+/* disabled preview (first-run under the hero): the same строка, desaturated */
+.composer--disabled { filter: grayscale(1); opacity: 0.55; pointer-events: none; user-select: none; }
+
+/* composer "drafting" state — the строка becomes a status card in place */
+.composer--busy {
+  border: 1px solid color-mix(in srgb, var(--color-accent) 45%, var(--color-border));
+  background: var(--color-surface);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-sm);
+  padding: 15px 16px;
+}
 .drafting {
   display: flex; align-items: center; gap: 12px;
   padding: 6px 2px;
@@ -623,9 +718,46 @@ body {
   .nav-item { justify-content: center; padding: 10px; }
   .account { justify-content: center; }
 }
+/* ---- «Строка» on phones (≤560): the shelf must never overflow ----------
+   Desktop metrics are FROZEN (accepted); this layer only re-flows the shelf so
+   the tools row (DRAFTS · 1·2·3·4 · Generate) always fits and the single-liners
+   never wrap. Proven 390 → 320. The old `.composer-row{flex-wrap}` rule was for
+   a composer that no longer exists — removed. */
 @media (max-width: 560px) {
   .content { padding: 18px 14px 88px; }
   .filter .flabel { display: none; }
-  .composer-row { flex-wrap: wrap; }
   .draft-foot { flex-wrap: wrap; }
+
+  /* bar: bigger sparkle tap target (≥44). Avatar + input + ✨ stay one line;
+     the input is already 19px (≥16, no iOS zoom). */
+  .composer-spark { width: 44px; height: 44px; }
+
+  /* chips: keep the scroll-row + right fade; grow the tap height to ≥44 */
+  .chips { gap: 8px; }
+  .chip { min-height: 44px; padding: 8px 13px; }
+
+  /* tools: wrap — [DRAFTS · segment] on row 1; a seeded note (when present) on
+     its own row; Generate full-width on its own row. The flex spacer is not
+     needed once we wrap, so it's removed. */
+  .composer-shelf-tools { flex-wrap: wrap; gap: 10px 12px; }
+  .composer-shelf-tools .composer-spacer { display: none; }
+  .count-seg b { width: 42px; height: 40px; }
+  .composer-shelf-tools .ideas-seeded-note { flex: 1 0 100%; }
+  .composer-shelf-tools .btn--primary {
+    flex: 1 0 100%; justify-content: center; min-height: 44px; white-space: nowrap;
+  }
+
+  /* ideas palette: cap the list to the viewport, reveal Use without hover,
+     grow the head ✕/⟳ and retry/close controls to ≥44. */
+  .composer-shelf--ideas .ideas-list { max-height: 56vh; }
+  .composer-shelf--ideas .idea-use { opacity: 1; }
+  .composer-shelf--ideas .ideas-iconbtn { width: 44px; height: 44px; }
+  .composer-shelf--ideas .idea-card { padding: 12px 13px; }
+  .composer-shelf--ideas .ideas-retry,
+  .composer-shelf--ideas .ideas-ghostbtn { min-height: 44px; }
+}
+
+/* the ⌘↵ hint is keyboard-only — hide it on touch (coarse pointer) */
+@media (pointer: coarse) {
+  .composer-kbd { display: none; }
 }

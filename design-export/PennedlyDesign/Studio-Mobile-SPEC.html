@@ -28,7 +28,7 @@
     <a href="#s3"><span class="n">3</span> Shell: top bar + drawer</a>
     <a class="sub" href="#s3">— drawer open</a>
     <a href="#s4"><span class="n">4</span> Composer — the fix</a>
-    <a class="sub" href="#s4">— idle · drafting</a>
+    <a class="sub" href="#s4">— bar · shelf · ideas</a>
     <a href="#s5"><span class="n">5</span> Card foot by status</a>
     <a class="sub" href="#s5">— overflow menu</a>
     <a href="#s6"><span class="n">6</span> Card sub-states</a>
@@ -64,7 +64,7 @@
     </div>
   </div>
 
-  <div class="note good"><b>What does not change.</b> The brief → generate → review → approve → publish flow, the 500-char limit, the four status filters (Ready / Drafts / Published / Rejected), per-status card footers, tweak-in-your-voice, on-demand translation into the 8 UI locales, the confirm-before-publish step, and reply-drafts being read-only here — all identical to desktop. Mobile is a <em>layout</em> pass; the only structural change is the app shell (tab bar → hamburger drawer), which is shared by every screen.</div>
+  <div class="note good"><b>What does not change.</b> The brief → generate → review → approve → publish flow, the 500-char limit, the four status filters (Ready / Drafts / Published / Rejected), per-status card footers, tweak-in-your-voice, on-demand translation into the 8 UI locales, the confirm-before-publish step, and reply-drafts being read-only here — all identical to desktop. Mobile is a <em>layout</em> pass — including the «Строка» composer, whose concept matches desktop and only re-flows its shelf here. The one structural change is the app shell (tab bar → hamburger drawer), shared by every screen.</div>
 
   <!-- 1 -->
   <section id="s1">
@@ -108,14 +108,30 @@
 
   <!-- 4 -->
   <section id="s4">
-    <h2><span class="h2n">4</span><span class="stg stg--fix">fix</span>Composer — the mobile fix</h2>
-    <p class="section-note">On desktop the composer’s avatar, chips, draft-count and Generate share one row. Squeezed into a phone that row breaks. The mobile composer is a clean vertical stack.</p>
+    <h2><span class="h2n">4</span><span class="stg stg--fix">fix</span>Composer — «Строка» on a phone</h2>
+    <p class="section-note">The composer is «Строка» — the one canonical composer (identical concept to <a class="link" href="Studio-SPEC.html#s2-composer">desktop</a>): a calm prompt <strong>bar</strong> (avatar · input · ✨) that discloses a <strong>shelf</strong> below on focus/typing; the ✨ swaps the shelf for the <strong>Ideas palette</strong>. Desktop metrics are frozen — only the shelf re-flows so it never overflows at 390 → 320.</p>
     <div class="fix">
-      <div class="fix-bad"><h5>Before</h5><p>Chips shrink into a cramped column, “Generate” floats right with dead space between, the placeholder clips, and the avatar steals width.</p></div>
-      <div class="fix-good"><h5>After</h5><p>Avatar dropped to reclaim width. Full-width textarea (placeholder fully visible). Chips in a horizontally <strong>scrollable</strong> row at full size. A full-width footer: draft-count select + Generate (grows, 44px).</p></div>
+      <div class="fix-bad"><h5>The break</h5><p>At 390 the desktop shelf’s tools row — <code>DRAFTS · 1·2·3·4 · Generate</code> on one line — ran off the right edge and clipped “Generate”. (The old ≤560 CSS still targeted <code>.composer-row</code>, a class «Строка» no longer has.)</p></div>
+      <div class="fix-good"><h5>The fix</h5><p>The tools row <strong>wraps</strong>: <code>DRAFTS + 1·2·3·4</code> stay on row 1, a seeded note (when present) takes its own row, and <strong>Generate is full-width</strong> on its own row. Chips stay a scrollable row with a fade. Every single-liner is unwrappable.</p></div>
     </div>
     <div class="stage" id="stg-composer"></div>
-    <div class="note"><b>Rules.</b> Textarea min-height 58px, auto-grows. Chip row is <code>overflow-x:auto; flex-wrap:nowrap</code> with a right-edge mask fade; chips are <code>flex:0 0 auto</code> (never crushed). Footer select is <code>16px</code> text (no iOS zoom), Generate is <code>disabled</code> until the brief is non-empty. Busy state swaps the whole body for the nib animation + “Drafting N posts in your voice”.</div>
+    <div class="note"><b>Bar rules.</b> Avatar 38 + full-height input (<code>text-h3</code> 19px ≥ 16 → no iOS zoom) + ✨ toggle (44×44). The <code>⌘↵</code> hint is <strong>dropped on touch</strong> (<code>@media (pointer:coarse)</code>) — it means nothing without a keyboard. Busy swaps the whole «Строка» for the nib animation + “Drafting N posts in your voice”.</div>
+    <p class="section-note">The ✨ opens the <b>Ideas palette</b> in place of the shelf — loading → results, plus the two real backend outcomes <b>empty</b> and <b>error</b>. Idea cards show <code>Use</code> without hover (touch); the list caps at <code>56vh</code> and scrolls; the ⟳ / ✕ controls are 44×44.</p>
+    <div class="stage" id="stg-ideas"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:130px">«Строка» state</th><th>Phone behavior</th></tr></thead>
+      <tbody>
+        <tr><td><b>collapsed</b></td><td>Just the bar (avatar · input · ✨). No shelf. Resting height ~56.</td></tr>
+        <tr><td><b>open · empty</b></td><td>Focus reveals the shelf: chip scroll-row + tools (DRAFTS · 1·2·3·4 · Generate). Generate <code>disabled</code>.</td></tr>
+        <tr><td><b>open · text</b></td><td>Same, brief typed → Generate enabled.</td></tr>
+        <tr><td><b>seeded</b></td><td>After picking an idea: brief filled, “Seeded from an idea” on its own row above Generate.</td></tr>
+        <tr><td><b>ideas · loading</b></td><td>Palette: pulsing ✨ + 3 shimmer skeleton cards.</td></tr>
+        <tr><td><b>ideas · results</b></td><td>Scrollable list of hook + angle cards, each with a visible <code>Use</code>; ⟳ “more”, ✕ close.</td></tr>
+        <tr><td><b>ideas · empty</b></td><td>Honest “No fresh ideas this time” line + Try again / Close. No fake cards.</td></tr>
+        <tr><td><b>ideas · error</b></td><td>Danger-toned inline error + Try again; the palette does <em>not</em> self-collapse.</td></tr>
+        <tr><td><b>busy</b></td><td>The whole «Строка» becomes the nib-write “Drafting N…” status line.</td></tr>
+      </tbody>
+    </table></div>
   </section>
 
   <!-- 5 -->
@@ -179,7 +195,13 @@
         <tr><td><code>.m-hamburger</code></td><td>40px <code>m-iconbtn--plain</code>; opens the drawer.</td></tr>
         <tr><td><code>.m-drawer</code></td><td>left slide-in; width <code>min(82%, 312px)</code>; full height; brand head + scroll nav + account foot; scrim dismiss.</td></tr>
         <tr><td><code>.m-content</code></td><td>padding 16/14; <code>--notab</code> bottom = <code>26 + safe-area</code> (no tab-bar clearance). gap 16.</td></tr>
-        <tr><td><code>.m-composer</code></td><td>radius-xl; padding 14. Textarea <code>text-h3</code>, min-height 58. <code>.m-chiprow</code> scroll + mask fade.</td></tr>
+        <tr><td><code>.m-composer</code> → <code>.m-composer-bar</code></td><td>Bar: flex; gap 10; min-height 56; padding 10/10/10/12; radius-xl; avatar 38 + input + ✨. Active/focus → accent border + shadow-md.</td></tr>
+        <tr><td><code>.m-composer-input</code></td><td><code>text-h3</code> 19px (≥16, no iOS zoom); flex:1; auto-grow; transparent.</td></tr>
+        <tr><td><code>.m-composer-spark</code></td><td>44×44 accent-tinted round toggle; <code>.is-on</code> → stronger tint + pulsing ✨. No <code>⌘↵</code> on touch.</td></tr>
+        <tr><td><code>.m-composer-shelf</code></td><td>Revealed under the bar: radius-lg; padding 10/12; gap 10. Holds the chip row + tools (or the ideas palette via <code>--ideas</code>).</td></tr>
+        <tr><td><code>.m-chiprow</code></td><td>Scroll row, <code>flex-wrap:nowrap</code> + right mask fade; chips <code>flex:0 0 auto</code>, min-height 44; the ✨ Ideas chip leads (accent tint).</td></tr>
+        <tr><td><code>.m-shelf-tools</code></td><td><code>flex-wrap:wrap; gap 10/12</code>. DRAFTS label + <code>.count-seg</code> (b = 42×40) on row 1; <code>.ideas-seeded-note</code> and <code>.m-gen</code> each <code>flex:1 0 100%</code> (own row). Single-liners <code>nowrap</code>.</td></tr>
+        <tr><td><code>.ideas-*</code> (palette)</td><td><code>.ideas-head/.ideas-cap/.ideas-iconbtn</code> (44); <code>.ideas-list</code> (max 56vh, scroll) of <code>.idea-card</code> (hook/angle + always-on <code>.idea-use</code>); <code>.ideas-loading / .ideas-empty / .ideas-error</code> (danger).</td></tr>
         <tr><td><code>.m-filterbar</code></td><td>scrollable, sticky top:0; filters <code>flex:0 0 auto</code>, height 38, labels kept.</td></tr>
         <tr><td><code>.m-card</code></td><td>radius-lg; padding 14/16/12; <code>card-in</code> entrance.</td></tr>
         <tr><td><code>.m-foot</code></td><td>column; gap 10; meta wraps; <code>.m-foot-row</code> action line.</td></tr>
@@ -200,7 +222,7 @@
         <ul>
           <li>Fixed 248px sidebar; account control at its foot opens upward.</li>
           <li>960px centered column; topbar aligned to it.</li>
-          <li>Composer: one row — avatar + chips + count + Generate.</li>
+          <li>«Строка»: bar (avatar · input · ✨) + shelf (chips · DRAFTS 1·2·3·4 · Generate) in one card; ✨ → Ideas palette.</li>
           <li>Card foot: meta left, ⋯ + one primary right, single line.</li>
           <li>Filter bar: 4 tabs in a row; labels always shown.</li>
           <li>Publish: centered modal dialog.</li>
@@ -210,7 +232,7 @@
         <ul>
           <li>No sidebar, no tab bar — one top bar; hamburger → left nav drawer + account.</li>
           <li>Edge-to-edge column, 14px gutter; free bottom edge.</li>
-          <li>Composer: vertical stack — textarea / scrolling chips / footer.</li>
+          <li>«Строка»: same bar; shelf tools re-flow — DRAFTS·1·2·3·4 on row 1, Generate full-width; ✨ → Ideas palette (incl. empty/error).</li>
           <li>Card foot: two-tier — meta line, then grow-primary + 44px ⋯.</li>
           <li>Filter bar: horizontally scrollable, labels kept.</li>
           <li>Publish: bottom sheet, stacked full-width actions.</li>
@@ -222,8 +244,8 @@
   <!-- 11 -->
   <section id="s11">
     <h2><span class="h2n">11</span>Localization &amp; 360px</h2>
-    <p class="section-note">All Studio strings localize into 8 locales; DE/RU/UK run ~30–40% longer than EN. Nothing assumes English label widths: the Generate label and per-status primaries <strong>wrap to a second line</strong> rather than clip or push the ⋯ off-screen; chips, suggestions and filters scroll horizontally; the title truncates before the pill; nav labels in the drawer wrap. Never bake a label into an image.</p>
-    <div class="note"><b>360px behavior.</b> At the narrow end the same rules hold with no new breakpoint — the gutter stays 14px, the composer/cards just get ~30px narrower. The chip row, suggestion row and filter bar already scroll, so they absorb the loss. The only visible change: long primary labels are slightly more likely to wrap to two lines (still ≥44px, still readable). The drawer stays <code>min(82%, 312px)</code>, so on 360 it’s 82% (≈295px) and the scrim shows a sliver of the screen behind it.</div>
+    <p class="section-note">All Studio strings localize into 8 locales; DE runs ~1.3–1.5× the RU/EN length. In «Строка» the single-liners <strong>never wrap</strong> — <code>DRAFTS</code>, the <code>1·2·3·4</code> segment, the <code>Generate</code> label and “Seeded from an idea” each sit on a row wide enough to hold them (Generate and the seeded note take their own full-width rows; the chip row scrolls). Elsewhere on the card the per-status primary (Approve / Publish) may still wrap to a 2nd line rather than clip. The title truncates before the pill; drawer nav labels wrap. Never bake a label into an image.</p>
+    <div class="note"><b>360px behavior.</b> At the narrow end the same rules hold with no new breakpoint — the gutter stays 14px, the composer/cards just get ~30px narrower. In «Строка», <code>DRAFTS + 1·2·3·4</code> still fit on row 1 (the segment is ~178px, the label ~55–75px), and Generate stays full-width — nothing wraps. The chip row, suggestion row and filter bar already scroll, so they absorb the loss. The drawer stays <code>min(82%, 312px)</code>, so on 360 it’s 82% (≈295px) and the scrim shows a sliver of the screen behind it.</div>
     <div class="stage" id="stg-narrow"></div>
   </section>
 
@@ -234,8 +256,11 @@
       <li>Below 600px there is no sidebar and no tab bar — one 52px top bar with a hamburger far-left.</li>
       <li>Hamburger opens the left drawer; drawer holds the full grouped nav (active = Studio) + the account at its foot.</li>
       <li>Bottom edge is free — content/feed scrolls to the device edge; toast pins to the bottom, not above a bar.</li>
-      <li>Composer is a vertical stack; chips scroll horizontally; placeholder never clips.</li>
-      <li>Generate is full-width-grow, 44px, disabled on empty brief; footer select is 16px text.</li>
+      <li>Composer is «Строка»: bar (avatar · input · ✨) + a shelf that reveals on focus; chips scroll horizontally with a fade; placeholder never clips.</li>
+      <li>Shelf tools never overflow (390→320): DRAFTS · 1·2·3·4 on row 1, Generate full-width on its own row, seeded note its own row; single-liners never wrap.</li>
+      <li>Input is ≥16px (no iOS zoom); ✨ / count segment / idea ✕ / idea cards are ≥44px; the ⌘↵ hint is hidden on touch.</li>
+      <li>✨ opens the Ideas palette in place of the shelf: loading → results, plus empty and error (danger, no self-collapse); Use is visible without hover.</li>
+      <li>One state proven with German strings (chips + seeded) at ~1.4× length with no wrap/clip.</li>
       <li>Every card foot is two-tier; exactly one labelled primary; the ⋯ is 44×44 and holds all secondary actions.</li>
       <li>Sub-states fit the phone: editing (16px textarea + meter), tweak (input + scrolling suggestions), revising (skeleton), translated (Show original), reply = read-only.</li>
       <li>Primary labels wrap to a 2nd line on long locales — never clipped or shrunk; sanity-checked at 360px.</li>
@@ -258,7 +283,7 @@
 
   var top     = M.top({ title:'Studio', pill:'success', menu:true });
   var topWarn = M.top({ title:'Studio', pill:'warning', menu:true });
-  var body    = M.composer('default') + M.filterbar('ready') + M.studioCard('ready') + M.studioCard('draft');
+  var body    = M.stroka('default') + M.filterbar('ready') + M.studioCard('ready') + M.studioCard('draft');
 
   // German translation of seed draft d1 (real STUDIO_TR.d1.de) for the translated sub-state.
   var EN_D1 = "The fastest way to find your voice online: publish the thing you're slightly embarrassed by. The polished version is everyone's. The embarrassing one is yours.";
@@ -275,11 +300,22 @@
     M.col(M.dark('Drawer · dark'), M.phone({ dark:true, top:top, body:body, tabs:false, overlay:M.drawer('studio') }), 'Same drawer, dark tokens.') +
     M.col(M.light('Account'), M.phone({ top:top, body:body, tabs:false, overlay:M.accountSheet() }), 'The drawer’s account control opens the shared account switcher.'));
 
-  /* 4 — composer */
+  /* 4 — «Строка»: bar + shelf core states */
   set('stg-composer',
-    M.col(M.light('Idle'), M.comp(M.composer('default')), 'Generate disabled until a brief is typed.') +
-    M.col(M.light('Drafting'), M.comp(M.composer('busy')), 'Body swaps for the nib animation.') +
-    M.col(M.dark('Idle · dark'), M.comp(M.composer('default'), { dark:true }), ''));
+    M.col(M.light('Collapsed'), M.comp(M.stroka('collapsed')), 'Resting «Строка» — just the bar.') +
+    M.col(M.light('Open · empty'), M.comp(M.stroka('default')), 'Focus reveals the shelf; Generate disabled.') +
+    M.col(M.light('Open · text'), M.comp(M.stroka('filled')), 'Brief typed → Generate enabled.') +
+    M.col(M.light('Seeded'), M.comp(M.stroka('seeded')), '“Seeded from an idea” on its own row above Generate.') +
+    M.col(M.light('Busy'), M.comp(M.stroka('busy')), 'Whole «Строка» → nib “Drafting N…”.') +
+    M.col(M.dark('Open · dark'), M.comp(M.stroka('filled'), { dark:true }), ''));
+
+  /* 4b — ✨ Ideas palette: loading → results, empty, error */
+  set('stg-ideas',
+    M.col(M.light('Loading'), M.comp(M.stroka('ideas-loading')), 'Pulsing ✨ + 3 skeleton cards.') +
+    M.col(M.light('Results'), M.comp(M.stroka('ideas-results')), 'Hook + angle cards; Use visible (touch).') +
+    M.col(M.light('Empty'), M.comp(M.stroka('ideas-empty')), 'Honest line + Try again / Close — no fake cards.') +
+    M.col(M.light('Error'), M.comp(M.stroka('ideas-error')), 'Danger tone + Try again; palette stays open.') +
+    M.col(M.dark('Results · dark'), M.comp(M.stroka('ideas-results'), { dark:true }), ''));
 
   /* 5 — foot by status */
   set('stg-foot',
@@ -313,10 +349,11 @@
   set('stg-misc',
     M.col(M.light('First-run'), M.phone({ top:topWarn, body: M.firstRun(), tabs:false }), 'Voice pill → warning; hero replaces composer+feed.') +
     M.col(M.light('Publish sheet'), M.phone({ top:top, body: body, tabs:false, overlay: M.dialogSheet() }), 'Confirm becomes a bottom sheet.') +
-    M.col(M.light('Toast'), M.phone({ top:top, body: M.composer('default') + M.studioCard('draft'), tabs:false, overlay: M.toast('success',{ notab:true }) }), 'Pins to the bottom edge, Undo present.'));
+    M.col(M.light('Toast'), M.phone({ top:top, body: M.stroka('default') + M.studioCard('draft'), tabs:false, overlay: M.toast('success',{ notab:true }) }), 'Pins to the bottom edge, Undo present.'));
 
-  /* 11 — 360px sanity check */
+  /* 11 — German localization proof + 360px sanity check */
   set('stg-narrow',
+    M.col(M.light('German · shelf + seeded'), M.comp(M.stroka('seeded',{ de:true })), 'German ~1.3–1.5× longer: chips scroll, DRAFTS · 1·2·3·4 hold on row 1, seeded + Generate keep their own rows — nothing wraps or clips.') +
     M.col(M.light('360 · feed'), M.phone({ variant:'sm', top:top, body:body, tabs:false }), 'Same rules at 360px — only ~30px narrower; chips/filters still scroll.') +
     M.col(M.light('360 · drawer'), M.phone({ variant:'sm', top:top, body:body, tabs:false, overlay:M.drawer('studio') }), 'Drawer is 82% (≈295px) at 360; scrim shows a sliver behind.') +
     M.col(M.dark('360 · dark'), M.phone({ variant:'sm', dark:true, top:top, body:body, tabs:false }), ''));
