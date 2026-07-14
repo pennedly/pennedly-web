@@ -393,12 +393,26 @@ export type AdvisorReactiveAction = {
   account?: string | null;
 };
 
+// Enable ONE recurring posting-format scenario preset in one click. daily_question
+// = a daily question post (needs a topic); rubric = a named weekly column (needs a
+// name + a one-line idea). All land as drafts for review.
+export type AdvisorFormatAction = {
+  type: "format";
+  format_kind: "daily_question" | "rubric";
+  title: string;
+  topic?: string;
+  rubric_name?: string;
+  rubric_idea?: string;
+  account?: string | null;
+};
+
 export type AdvisorActionData =
   | AdvisorRoutineAction
   | AdvisorAutoRepliesAction
   | AdvisorVoiceRuleAction
   | AdvisorSchedulePostAction
-  | AdvisorReactiveAction;
+  | AdvisorReactiveAction
+  | AdvisorFormatAction;
 
 export type AdvisorResponse = {
   reply: string;

@@ -225,6 +225,27 @@ export default function AdvisorPage() {
               onOpen: () => router.push("/app/scenarios"),
             };
           }
+          if (act.type === "format") {
+            return {
+              type: "format",
+              title: act.title,
+              formatKind: act.format_kind,
+              topic: act.topic,
+              rubricName: act.rubric_name,
+              rubricIdea: act.rubric_idea,
+              onApply: async () => {
+                await applyAdvisorAction(accountId, {
+                  type: "format",
+                  title: act.title,
+                  kind: act.format_kind,
+                  topic: act.topic,
+                  rubric_name: act.rubric_name,
+                  rubric_idea: act.rubric_idea,
+                });
+              },
+              onOpen: () => router.push("/app/scenarios"),
+            };
+          }
           return {
             type: "routine",
             title: act.title,

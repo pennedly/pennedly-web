@@ -90,6 +90,14 @@ export function ADVISOR_DEMO_TURNS(t: T, onOpenStudio: (brief: string) => void):
     onApply: () => new Promise<void>((r) => setTimeout(r, 600)),
     onOpen: () => {},
   };
+  const formatAction: AdvisorActionCardData = {
+    type: "format",
+    title: "Daily question",
+    formatKind: "daily_question",
+    topic: "coffee brewing tips",
+    onApply: () => new Promise<void>((r) => setTimeout(r, 600)),
+    onOpen: () => {},
+  };
 
   const turn1Chips: AdvisorChip[] = [
     { tone: "down", icon: "eye", label: "7-day views −18%" },
@@ -133,6 +141,7 @@ export function ADVISOR_DEMO_TURNS(t: T, onOpenStudio: (brief: string) => void):
           voiceRuleAction,
           schedulePostAction,
           reactiveAction,
+          formatAction,
         ],
       },
     },

@@ -459,6 +459,8 @@ export async function chatAccountAdvisor(
 //                      scheduled_at; response carries draft_id + scheduled_at.
 //   • "reactive"     → enables one ask-mode reactive scenario (amplify / milestone
 //                      / booster); response carries the created scenario_id.
+//   • "format"       → enables one ask-mode posting-format scenario (daily_question
+//                      / rubric); response carries the created scenario_id.
 type ApplyActionInput =
   | { type: "routine"; title: string; topic: string; times_per_day: number }
   | {
@@ -486,6 +488,14 @@ type ApplyActionInput =
       title: string;
       kind: "amplify" | "milestone" | "booster";
       comment_text?: string;
+    }
+  | {
+      type: "format";
+      title: string;
+      kind: "daily_question" | "rubric";
+      topic?: string;
+      rubric_name?: string;
+      rubric_idea?: string;
     };
 
 export async function applyAdvisorAction(

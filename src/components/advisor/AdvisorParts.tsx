@@ -203,6 +203,13 @@ export type AdvisorActionCardData =
       type: "reactive";
       reactiveKind: "amplify" | "milestone" | "booster";
       commentText?: string; // booster only
+    })
+  | (ActionCardCommon & {
+      type: "format";
+      formatKind: "daily_question" | "rubric";
+      topic?: string; // daily_question
+      rubricName?: string; // rubric
+      rubricIdea?: string; // rubric
     });
 
 const AUDIENCE_KEY: Record<"questions" | "fans" | "all_except_trolls", MessageKey> = {
@@ -280,13 +287,21 @@ export function ActionCard({ a }: { a: AdvisorActionCardData }) {
                 doneLabel: t("adv.act.sched_done"),
                 linkLabel: t("adv.act.sched_link"),
               }
-            : {
-                kindIcon: <IcChart size={17} />,
-                kindLabel: t("adv.act.react_kind"),
-                applyLabel: t("adv.act.react_apply"),
-                doneLabel: t("adv.act.react_done"),
-                linkLabel: t("adv.act.react_link"),
-              };
+            : a.type === "reactive"
+              ? {
+                  kindIcon: <IcChart size={17} />,
+                  kindLabel: t("adv.act.react_kind"),
+                  applyLabel: t("adv.act.react_apply"),
+                  doneLabel: t("adv.act.react_done"),
+                  linkLabel: t("adv.act.react_link"),
+                }
+              : {
+                  kindIcon: <IcNib size={17} />,
+                  kindLabel: t("adv.act.fmt_kind"),
+                  applyLabel: t("adv.act.fmt_apply"),
+                  doneLabel: t("adv.act.fmt_done"),
+                  linkLabel: t("adv.act.fmt_link"),
+                };
 
   if (state === "applied") {
     return (
@@ -358,12 +373,22 @@ export function ActionCard({ a }: { a: AdvisorActionCardData }) {
             {line(<IcNib size={15} />, `«${a.brief}»`)}
             {line(<IcClock size={15} />, `${t("adv.act.sched_when")}: ${a.whenLabel}`)}
           </>
-        ) : (
+        ) : a.type === "reactive" ? (
           <>
             {line(<IcChart size={15} />, t(REACT_BODY_KEY[a.reactiveKind]))}
             {a.reactiveKind === "booster" &&
               a.commentText &&
               line(<IcReply size={15} />, `«${a.commentText}»`)}
+          </>
+        ) : a.formatKind === "daily_question" ? (
+          <>
+            {line(<IcRepeat size={15} />, t("adv.act.fmt_dq"))}
+            {line(<IcNib size={15} />, `${t("adv.act.topic")}: ${a.topic}`)}
+          </>
+        ) : (
+          <>
+            {line(<IcRepeat size={15} />, `${t("adv.act.fmt_rubric")}: ${a.rubricName}`)}
+            {line(<IcNib size={15} />, `«${a.rubricIdea}»`)}
           </>
         )}
       </div>
@@ -403,10 +428,15 @@ export function ActionCard({ a }: { a: AdvisorActionCardData }) {
             <IcClock size={14} className="mt-px shrink-0 text-accent" />
             <span>{t("adv.act.sched_mode")}</span>
           </>
-        ) : (
+        ) : a.type === "reactive" ? (
           <>
             <IcEye size={14} className="mt-px shrink-0 text-accent" />
             <span>{t("adv.act.react_mode")}</span>
+          </>
+        ) : (
+          <>
+            <IcEye size={14} className="mt-px shrink-0 text-accent" />
+            <span>{t("adv.act.fmt_mode")}</span>
           </>
         )}
       </div>

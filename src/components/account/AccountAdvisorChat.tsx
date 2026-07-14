@@ -195,6 +195,16 @@ function demoTurns(t: T): Turn[] {
             onApply: () => new Promise<void>((r) => setTimeout(r, 600)),
             onOpen: () => {},
           },
+          {
+            type: "format",
+            title: "Рубрика «Совет недели»",
+            formatKind: "rubric",
+            rubricName: "Совет недели",
+            rubricIdea: "Один короткий практический совет по теме аккаунта.",
+            targetHandle: "mara.studio",
+            onApply: () => new Promise<void>((r) => setTimeout(r, 600)),
+            onOpen: () => {},
+          },
         ],
       },
     },
@@ -403,6 +413,27 @@ function useChat(
                     title: act.title,
                     kind: act.reactive_kind,
                     comment_text: act.comment_text,
+                  }),
+                onOpen: openAt("/app/scenarios"),
+              };
+            }
+            if (act.type === "format") {
+              return {
+                type: "format",
+                title: act.title,
+                formatKind: act.format_kind,
+                topic: act.topic,
+                rubricName: act.rubric_name,
+                rubricIdea: act.rubric_idea,
+                targetHandle,
+                onApply: () =>
+                  applyTo({
+                    type: "format",
+                    title: act.title,
+                    kind: act.format_kind,
+                    topic: act.topic,
+                    rubric_name: act.rubric_name,
+                    rubric_idea: act.rubric_idea,
                   }),
                 onOpen: openAt("/app/scenarios"),
               };
