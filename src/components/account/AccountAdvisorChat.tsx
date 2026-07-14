@@ -167,6 +167,15 @@ function demoTurns(t: T): Turn[] {
             onApply: () => new Promise<void>((r) => setTimeout(r, 600)),
             onOpen: () => {},
           },
+          {
+            type: "voice_rule",
+            title: "Без эмодзи",
+            ruleText: "Не используй эмодзи.",
+            kind: "both",
+            targetHandle: "mara.studio",
+            onApply: () => new Promise<void>((r) => setTimeout(r, 600)),
+            onOpen: () => {},
+          },
         ],
       },
     },
@@ -323,6 +332,23 @@ function useChat(
                     skip_low_value: act.skip_low_value,
                   }),
                 onOpen: openAt("/app/autopilot"),
+              };
+            }
+            if (act.type === "voice_rule") {
+              return {
+                type: "voice_rule",
+                title: act.title,
+                ruleText: act.rule_text,
+                kind: act.rule_kind,
+                targetHandle,
+                onApply: () =>
+                  applyTo({
+                    type: "voice_rule",
+                    title: act.title,
+                    rule_text: act.rule_text,
+                    kind: act.rule_kind,
+                  }),
+                onOpen: openAt("/app/style-rules"),
               };
             }
             return {

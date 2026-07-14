@@ -171,6 +171,23 @@ export default function AdvisorPage() {
               onOpen: () => router.push("/app/autopilot"),
             };
           }
+          if (act.type === "voice_rule") {
+            return {
+              type: "voice_rule",
+              title: act.title,
+              ruleText: act.rule_text,
+              kind: act.rule_kind,
+              onApply: async () => {
+                await applyAdvisorAction(accountId, {
+                  type: "voice_rule",
+                  title: act.title,
+                  rule_text: act.rule_text,
+                  kind: act.rule_kind,
+                });
+              },
+              onOpen: () => router.push("/app/style-rules"),
+            };
+          }
           return {
             type: "routine",
             title: act.title,

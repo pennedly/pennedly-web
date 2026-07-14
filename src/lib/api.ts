@@ -453,6 +453,8 @@ export async function chatAccountAdvisor(
 //                      response carries the created scenario_id for the deep-link.
 //   • "auto_replies" → turns ON the auto-reply policy (audience / cap / skip);
 //                      no scenario created (scenario_id is null).
+//   • "voice_rule"   → ADDS one standing rule to the account's voice (additive);
+//                      no scenario created (scenario_id is null).
 type ApplyActionInput =
   | { type: "routine"; title: string; topic: string; times_per_day: number }
   | {
@@ -461,6 +463,12 @@ type ApplyActionInput =
       audience: "questions" | "fans" | "all_except_trolls";
       replies_per_day: number;
       skip_low_value: boolean;
+    }
+  | {
+      type: "voice_rule";
+      title: string;
+      rule_text: string;
+      kind: "post" | "reply" | "both";
     };
 
 export async function applyAdvisorAction(

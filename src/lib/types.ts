@@ -359,7 +359,21 @@ export type AdvisorAutoRepliesAction = {
   account?: string | null;
 };
 
-export type AdvisorActionData = AdvisorRoutineAction | AdvisorAutoRepliesAction;
+// Add one standing freeform rule to the account's voice (a user_rules row).
+// Strictly additive — never edits/removes an existing rule. `rule_kind` = which
+// surface it steers (field name matches the backend AdvisorActionOut wire key).
+export type AdvisorVoiceRuleAction = {
+  type: "voice_rule";
+  title: string;
+  rule_text: string;
+  rule_kind: "post" | "reply" | "both";
+  account?: string | null;
+};
+
+export type AdvisorActionData =
+  | AdvisorRoutineAction
+  | AdvisorAutoRepliesAction
+  | AdvisorVoiceRuleAction;
 
 export type AdvisorResponse = {
   reply: string;

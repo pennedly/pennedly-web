@@ -67,6 +67,14 @@ export function ADVISOR_DEMO_TURNS(t: T, onOpenStudio: (brief: string) => void):
     onApply: () => new Promise<void>((r) => setTimeout(r, 600)),
     onOpen: () => {},
   };
+  const voiceRuleAction: AdvisorActionCardData = {
+    type: "voice_rule",
+    title: "No emoji",
+    ruleText: "Don't use emoji.",
+    kind: "both",
+    onApply: () => new Promise<void>((r) => setTimeout(r, 600)),
+    onOpen: () => {},
+  };
 
   const turn1Chips: AdvisorChip[] = [
     { tone: "down", icon: "eye", label: "7-day views −18%" },
@@ -104,7 +112,7 @@ export function ADVISOR_DEMO_TURNS(t: T, onOpenStudio: (brief: string) => void):
         chips: turn2Chips,
         sources: [t("advisor.source.heatmap"), t("advisor.source.posts")],
         suggestions: [scheduleSuggestion],
-        actions: [routineAction, autoRepliesAction],
+        actions: [routineAction, autoRepliesAction, voiceRuleAction],
       },
     },
   ];

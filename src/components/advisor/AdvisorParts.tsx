@@ -161,7 +161,8 @@ export function SuggestionCard({ s }: { s: AdvisorSuggestion }) {
 // A typed card the advisor attaches to propose an action the app applies in one
 // click via an existing gated endpoint. ONE shell, per-type content. Catalog:
 //   • `routine`      — a recurring ask-mode posting scenario (drafts for review);
-//   • `auto_replies` — turn ON the auto-reply policy (applies immediately).
+//   • `auto_replies` — turn ON the auto-reply policy (applies immediately);
+//   • `voice_rule`   — ADD one standing rule to the account's voice (additive).
 // States: proposed → applying → applied (quiet done row + deep-link) | error
 // (inline + Retry). `onApply` runs the apply call (baked in the chat's ask());
 // Cancel dismisses the card locally. `onOpen` deep-links the applied surface.
@@ -184,12 +185,23 @@ export type AdvisorActionCardData =
       audience: "questions" | "fans" | "all_except_trolls";
       repliesPerDay: number;
       skipLowValue: boolean;
+    })
+  | (ActionCardCommon & {
+      type: "voice_rule";
+      ruleText: string;
+      kind: "post" | "reply" | "both";
     });
 
 const AUDIENCE_KEY: Record<"questions" | "fans" | "all_except_trolls", MessageKey> = {
   questions: "adv.act.aud_questions",
   fans: "adv.act.aud_fans",
   all_except_trolls: "adv.act.aud_all_except_trolls",
+};
+
+const VOICE_KIND_KEY: Record<"post" | "reply" | "both", MessageKey> = {
+  post: "adv.act.applies_post",
+  reply: "adv.act.applies_reply",
+  both: "adv.act.applies_both",
 };
 
 export function ActionCard({ a }: { a: AdvisorActionCardData }) {
@@ -209,22 +221,30 @@ export function ActionCard({ a }: { a: AdvisorActionCardData }) {
   };
 
   // Per-type copy (ONE shell, typed content).
-  const isRoutine = a.type === "routine";
-  const cfg = isRoutine
-    ? {
-        kindIcon: <IcRepeat size={17} />,
-        kindLabel: t("adv.act.routine_kind"),
-        applyLabel: t("adv.act.routine_apply"),
-        doneLabel: t("adv.act.routine_done"),
-        linkLabel: t("adv.act.routine_link"),
-      }
-    : {
-        kindIcon: <IcReply size={17} />,
-        kindLabel: t("adv.act.replies_kind"),
-        applyLabel: t("adv.act.replies_apply"),
-        doneLabel: t("adv.act.replies_done"),
-        linkLabel: t("adv.act.replies_link"),
-      };
+  const cfg =
+    a.type === "routine"
+      ? {
+          kindIcon: <IcRepeat size={17} />,
+          kindLabel: t("adv.act.routine_kind"),
+          applyLabel: t("adv.act.routine_apply"),
+          doneLabel: t("adv.act.routine_done"),
+          linkLabel: t("adv.act.routine_link"),
+        }
+      : a.type === "auto_replies"
+        ? {
+            kindIcon: <IcReply size={17} />,
+            kindLabel: t("adv.act.replies_kind"),
+            applyLabel: t("adv.act.replies_apply"),
+            doneLabel: t("adv.act.replies_done"),
+            linkLabel: t("adv.act.replies_link"),
+          }
+        : {
+            kindIcon: <IcNib size={17} />,
+            kindLabel: t("adv.act.voice_kind"),
+            applyLabel: t("adv.act.voice_apply"),
+            doneLabel: t("adv.act.voice_done"),
+            linkLabel: t("adv.act.voice_link"),
+          };
 
   if (state === "applied") {
     return (
@@ -280,11 +300,16 @@ export function ActionCard({ a }: { a: AdvisorActionCardData }) {
             )}
             {line(<IcNib size={15} />, t("adv.act.in_voice"))}
           </>
-        ) : (
+        ) : a.type === "auto_replies" ? (
           <>
             {line(<IcReply size={15} />, t(AUDIENCE_KEY[a.audience]))}
             {line(<IcRepeat size={15} />, `${t("adv.act.up_to")} ${a.repliesPerDay}× ${t("adv.act.per_day")}`)}
             {a.skipLowValue && line(<IcEye size={15} />, t("adv.act.skip_low"))}
+          </>
+        ) : (
+          <>
+            {line(<IcNib size={15} />, `«${a.ruleText}»`)}
+            {line(<IcEye size={15} />, t(VOICE_KIND_KEY[a.kind]))}
           </>
         )}
       </div>
@@ -302,10 +327,15 @@ export function ActionCard({ a }: { a: AdvisorActionCardData }) {
             <IcEye size={14} className="mt-px shrink-0 text-accent" />
             <span>{t("adv.act.mode_review")}</span>
           </>
-        ) : (
+        ) : a.type === "auto_replies" ? (
           <>
             <IcReply size={14} className="mt-px shrink-0 text-accent" />
             <span>{t("adv.act.mode_instant")}</span>
+          </>
+        ) : (
+          <>
+            <IcNib size={14} className="mt-px shrink-0 text-accent" />
+            <span>{t("adv.act.voice_mode")}</span>
           </>
         )}
       </div>
