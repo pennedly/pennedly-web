@@ -221,7 +221,21 @@ export type AdvisorActionCardData =
       controlKind: "pause" | "quiet_hours" | "resume";
       quietStart?: number | null; // quiet_hours
       quietEnd?: number | null; // quiet_hours
+    })
+  | (ActionCardCommon & {
+      type: "best_time_routine";
+      topic?: string;
+      blocks: string[];
+      hoursPreview: number[];
+      timesPerDay: number;
     });
+
+const BLOCK_LABEL_KEY: Record<string, MessageKey> = {
+  morning: "adv.act.block_morning",
+  daytime: "adv.act.block_daytime",
+  evening: "adv.act.block_evening",
+  night: "adv.act.block_night",
+};
 
 const AUDIENCE_KEY: Record<"questions" | "fans" | "all_except_trolls", MessageKey> = {
   questions: "adv.act.aud_questions",
@@ -353,13 +367,21 @@ export function ActionCard({ a }: { a: AdvisorActionCardData }) {
                     doneLabel: t("adv.act.fmt_done"),
                     linkLabel: t("adv.act.fmt_link"),
                   }
-                : {
-                    kindIcon: <CtrlIcon size={17} />,
-                    kindLabel: t(CTRL_META[a.controlKind].kind),
-                    applyLabel: t(CTRL_META[a.controlKind].apply),
-                    doneLabel: t(CTRL_META[a.controlKind].done),
-                    linkLabel: t("adv.act.ctrl_link"),
-                  };
+                : a.type === "best_time_routine"
+                  ? {
+                      kindIcon: <IcClock size={17} />,
+                      kindLabel: t("adv.act.bt_kind"),
+                      applyLabel: t("adv.act.bt_apply"),
+                      doneLabel: t("adv.act.bt_done"),
+                      linkLabel: t("adv.act.bt_link"),
+                    }
+                  : {
+                      kindIcon: <CtrlIcon size={17} />,
+                      kindLabel: t(CTRL_META[a.controlKind].kind),
+                      applyLabel: t(CTRL_META[a.controlKind].apply),
+                      doneLabel: t(CTRL_META[a.controlKind].done),
+                      linkLabel: t("adv.act.ctrl_link"),
+                    };
 
   if (state === "applied") {
     return (
@@ -455,6 +477,21 @@ export function ActionCard({ a }: { a: AdvisorActionCardData }) {
               {line(<IcChart size={15} />, (a.options ?? []).join(" · "))}
             </>
           )
+        ) : a.type === "best_time_routine" ? (
+          <>
+            {line(
+              <IcClock size={15} />,
+              `${a.timesPerDay}× ${t("adv.act.per_day")} · ~${a.hoursPreview.map((h) => `${h}:00`).join(", ")}`,
+            )}
+            {line(
+              <IcRepeat size={15} />,
+              `${t("adv.act.bt_windows")}: ${a.blocks.map((b) => (BLOCK_LABEL_KEY[b] ? t(BLOCK_LABEL_KEY[b]) : b)).join(" · ")}`,
+            )}
+            {line(
+              <IcNib size={15} />,
+              a.topic?.trim() ? `${t("adv.act.topic")}: ${a.topic.trim()}` : t("adv.act.any_topic"),
+            )}
+          </>
         ) : a.controlKind === "quiet_hours" ? (
           <>
             {line(<IcMoon size={15} />, `${t("adv.act.ctrl_quiet_window")}: ${fmtWindow(a.quietStart, a.quietEnd)}`)}
@@ -467,7 +504,7 @@ export function ActionCard({ a }: { a: AdvisorActionCardData }) {
         )}
       </div>
 
-      {a.type === "routine" && a.timesPerDay > 1 && (
+      {(a.type === "routine" || a.type === "best_time_routine") && a.timesPerDay > 1 && (
         <div className="mt-[10px] flex items-center gap-2 text-caption text-warning">
           <IcAlert size={14} className="shrink-0" />
           <span>{t("adv.act.cap_warn").replace("{n}", String(a.timesPerDay))}</span>
@@ -518,6 +555,11 @@ export function ActionCard({ a }: { a: AdvisorActionCardData }) {
           <>
             <IcEye size={14} className="mt-px shrink-0 text-accent" />
             <span>{t("adv.act.fmt_mode")}</span>
+          </>
+        ) : a.type === "best_time_routine" ? (
+          <>
+            <IcEye size={14} className="mt-px shrink-0 text-accent" />
+            <span>{t("adv.act.mode_review")}</span>
           </>
         ) : (
           <>

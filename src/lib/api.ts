@@ -506,6 +506,13 @@ type ApplyActionInput =
       // Account-local nightly hours (0..23); sent only for quiet_hours.
       quiet_start?: number;
       quiet_end?: number;
+    }
+  | {
+      type: "best_time_routine";
+      title: string;
+      topic?: string;
+      // The chosen best-time blocks; the server re-resolves them → hours.
+      blocks: string[];
     };
 
 export async function applyAdvisorAction(

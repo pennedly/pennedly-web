@@ -123,6 +123,17 @@ export function ADVISOR_DEMO_TURNS(t: T, onOpenStudio: (brief: string) => void):
     onApply: () => new Promise<void>((r) => setTimeout(r, 600)),
     onOpen: () => {},
   };
+  const bestTimeAction: AdvisorActionCardData = {
+    type: "best_time_routine",
+    title: "Post at your best times",
+    topic: "",
+    // Blocks in the same chronological order as hoursPreview (daytime→14, evening→20).
+    blocks: ["daytime", "evening"],
+    hoursPreview: [14, 20],
+    timesPerDay: 2,
+    onApply: () => new Promise<void>((r) => setTimeout(r, 600)),
+    onOpen: () => {},
+  };
 
   const turn1Chips: AdvisorChip[] = [
     { tone: "down", icon: "eye", label: "7-day views −18%" },
@@ -170,6 +181,7 @@ export function ADVISOR_DEMO_TURNS(t: T, onOpenStudio: (brief: string) => void):
           pollAction,
           quietAction,
           pauseAction,
+          bestTimeAction,
         ],
       },
     },

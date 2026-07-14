@@ -270,6 +270,25 @@ export default function AdvisorPage() {
               onOpen: () => router.push("/app/autopilot"),
             };
           }
+          if (act.type === "best_time_routine") {
+            return {
+              type: "best_time_routine",
+              title: act.title,
+              topic: act.topic,
+              blocks: act.blocks,
+              hoursPreview: act.hours_preview,
+              timesPerDay: act.times_per_day,
+              onApply: async () => {
+                await applyAdvisorAction(accountId, {
+                  type: "best_time_routine",
+                  title: act.title,
+                  topic: act.topic,
+                  blocks: act.blocks,
+                });
+              },
+              onOpen: () => router.push("/app/scenarios"),
+            };
+          }
           return {
             type: "routine",
             title: act.title,

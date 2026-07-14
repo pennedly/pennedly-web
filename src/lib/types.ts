@@ -422,6 +422,19 @@ export type AdvisorAutomationAction = {
   account?: string | null;
 };
 
+// Like a routine, but the posting hours come from the account's strongest time
+// BLOCKS (morning/daytime/evening/night, chosen from the best-time heatmap). The
+// backend resolves the blocks → account-local hours; hours_preview echoes them.
+export type AdvisorBestTimeRoutineAction = {
+  type: "best_time_routine";
+  title: string;
+  topic?: string;
+  blocks: string[];
+  hours_preview: number[];
+  times_per_day: number;
+  account?: string | null;
+};
+
 export type AdvisorActionData =
   | AdvisorRoutineAction
   | AdvisorAutoRepliesAction
@@ -429,7 +442,8 @@ export type AdvisorActionData =
   | AdvisorSchedulePostAction
   | AdvisorReactiveAction
   | AdvisorFormatAction
-  | AdvisorAutomationAction;
+  | AdvisorAutomationAction
+  | AdvisorBestTimeRoutineAction;
 
 export type AdvisorResponse = {
   reply: string;
