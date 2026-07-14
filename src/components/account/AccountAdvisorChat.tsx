@@ -30,8 +30,8 @@ import {
 } from "@/components/advisor/AdvisorParts";
 import { advisorSourceLabel } from "@/components/advisor/advisor-demo";
 import { IcSparkle } from "@/components/icons";
-import { setSelectedAccountId } from "@/lib/account";
-import { ApiError, chatAccountAdvisor, clearTokens } from "@/lib/api";
+import { setSelectedAccountId, useSelectedAccountId } from "@/lib/account";
+import { ApiError, applyAdvisorAction, chatAccountAdvisor, clearTokens } from "@/lib/api";
 import { useTranslation } from "@/lib/i18n";
 import type { AdvisorData, AdvisorMessage, MeAccountResponse } from "@/lib/types";
 
@@ -188,6 +188,8 @@ function useChat(
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const busy = turns.some((x) => x.status === "thinking");
+  // Fallback apply target for a portfolio action with no named profile.
+  const selectedAccountId = useSelectedAccountId();
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -258,6 +260,36 @@ function useChat(
           brief: s.brief,
           onOpenStudio: () => openInStudio(s.brief, s.account),
         })),
+        actions: res.actions.map((act) => {
+          // Portfolio chat: target the named profile (resolved @handle) or fall
+          // back to the currently selected one; the apply endpoint is per-account.
+          const resolvedId = resolveAccountId?.(act.account) ?? null;
+          const targetId = resolvedId ?? selectedAccountId ?? null;
+          return {
+            type: act.type,
+            title: act.title,
+            topic: act.topic,
+            timesPerDay: act.times_per_day,
+            hoursPreview: act.hours_preview,
+            // Show the @handle ONLY when it resolved to the account we'll apply to
+            // (else we'd claim a target we're not actually using — the fallback
+            // applies to the currently selected profile, with no named-target row).
+            targetHandle: resolvedId != null ? (act.account ?? null) : null,
+            onApply: async () => {
+              if (targetId == null) throw new Error("no target account");
+              await applyAdvisorAction(targetId, {
+                type: "routine",
+                title: act.title,
+                topic: act.topic,
+                times_per_day: act.times_per_day,
+              });
+            },
+            onOpenScenarios: () => {
+              if (targetId != null) setSelectedAccountId(targetId);
+              router.push("/app/scenarios");
+            },
+          };
+        }),
       };
       setTurns((prev) => {
         const next = [...prev];

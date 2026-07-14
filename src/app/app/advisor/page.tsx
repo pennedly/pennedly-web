@@ -18,7 +18,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { ApiError, chatAdvisor, clearTokens, fetchMe, getTokens } from "@/lib/api";
+import { ApiError, applyAdvisorAction, chatAdvisor, clearTokens, fetchMe, getTokens } from "@/lib/api";
 import { useSelectedAccountId } from "@/lib/account";
 import { useTranslation } from "@/lib/i18n";
 import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
@@ -147,6 +147,24 @@ export default function AdvisorPage() {
           why: s.why,
           brief: s.brief,
           onOpenStudio: () => openInStudio(s.brief),
+        })),
+        // Per-account chat: an action targets THIS profile (accountId is non-null
+        // here — the ask() guard returns early otherwise). No profile row.
+        actions: res.actions.map((act) => ({
+          type: act.type,
+          title: act.title,
+          topic: act.topic,
+          timesPerDay: act.times_per_day,
+          hoursPreview: act.hours_preview,
+          onApply: async () => {
+            await applyAdvisorAction(accountId, {
+              type: "routine",
+              title: act.title,
+              topic: act.topic,
+              times_per_day: act.times_per_day,
+            });
+          },
+          onOpenScenarios: () => router.push("/app/scenarios"),
         })),
       };
       setTurns((prev) => {

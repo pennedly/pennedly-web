@@ -4,7 +4,7 @@
 // suggestion cards). Keep copy via i18n so it localizes like the real screen.
 
 import type { MessageKey } from "@/lib/i18n";
-import type { AdvisorChip, AdvisorReplyContent, AdvisorSuggestion } from "@/components/advisor/AdvisorParts";
+import type { AdvisorActionCardData, AdvisorChip, AdvisorReplyContent, AdvisorSuggestion } from "@/components/advisor/AdvisorParts";
 
 type T = (key: MessageKey) => string;
 
@@ -46,6 +46,19 @@ export function ADVISOR_DEMO_TURNS(t: T, onOpenStudio: (brief: string) => void):
     onOpenStudio: () => onOpenStudio("A post scheduled for Tuesday 6 PM — my strongest window."),
   };
 
+  // A one-click action card (the "apply-in-one-click" layer). Demo handlers: the
+  // apply resolves after a beat so the applied/done state is reviewable; open is a
+  // no-op in the gallery.
+  const routineAction: AdvisorActionCardData = {
+    type: "routine",
+    title: "Fishing posts",
+    topic: "fishing",
+    timesPerDay: 3,
+    hoursPreview: [9, 14, 20],
+    onApply: () => new Promise<void>((r) => setTimeout(r, 600)),
+    onOpenScenarios: () => {},
+  };
+
   const turn1Chips: AdvisorChip[] = [
     { tone: "down", icon: "eye", label: "7-day views −18%" },
     { tone: "down", label: "Posts 5 → 3" },
@@ -82,6 +95,7 @@ export function ADVISOR_DEMO_TURNS(t: T, onOpenStudio: (brief: string) => void):
         chips: turn2Chips,
         sources: [t("advisor.source.heatmap"), t("advisor.source.posts")],
         suggestions: [scheduleSuggestion],
+        actions: [routineAction],
       },
     },
   ];

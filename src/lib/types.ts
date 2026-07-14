@@ -333,17 +333,40 @@ export type AdvisorSuggestionData = {
   account?: string | null;
 };
 
+// A one-click advisor ACTION (the "apply-in-one-click" layer). `type` is a CLOSED
+// catalog — only "routine" today (a recurring posting scenario in the account's
+// voice). The FE renders a typed card; Apply → POST /accounts/{id}/advisor/apply.
+export type AdvisorActionData = {
+  type: "routine";
+  title: string;
+  topic: string;
+  times_per_day: number;
+  // The deterministic schedule the backend will create (so the card's schedule
+  // line matches exactly what fires).
+  hours_preview: number[];
+  // Portfolio chat only: bare @handle of the target profile (null = current/only).
+  account?: string | null;
+};
+
 export type AdvisorResponse = {
   reply: string;
   model: string;
   // Which real account signals the reply was grounded in — drives the
   // "Grounded in: …" line in the UI.
   grounded_in: string[];
-  // Structured extras rendered under the prose. Either may be empty.
+  // Structured extras rendered under the prose. Any may be empty.
   chips: AdvisorChipData[];
   suggestions: AdvisorSuggestionData[];
+  actions: AdvisorActionData[];
   prompt_tokens: number;
   completion_tokens: number;
+};
+
+// What POST /accounts/{id}/advisor/apply returns after applying an action.
+export type ApplyActionResponse = {
+  kind: string; // the applied action type ("routine")
+  scenario_id: number;
+  name: string;
 };
 
 export type BatchGenerateError = {

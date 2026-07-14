@@ -16,6 +16,7 @@ import type {
   AdvisorData,
   AdvisorMessage,
   AdvisorResponse,
+  ApplyActionResponse,
   ApprovalResult,
   AutopilotConfig,
   AutopostActivity,
@@ -443,6 +444,20 @@ export async function chatAccountAdvisor(
       messages,
       tz_offset: -new Date().getTimezoneOffset(),
     }),
+  });
+}
+
+// Apply a one-click advisor action against a target profile (owner-scoped,
+// tester-gated). Today the only type is "routine" → creates an ask-mode posting
+// scenario + arms the account's post automation; returns the created scenario so
+// the card can deep-link «Открыть в Автопилоте».
+export async function applyAdvisorAction(
+  accountId: number,
+  action: { type: "routine"; title: string; topic: string; times_per_day: number },
+): Promise<ApplyActionResponse> {
+  return fetchApi<ApplyActionResponse>(`/api/accounts/${accountId}/advisor/apply`, {
+    method: "POST",
+    body: JSON.stringify(action),
   });
 }
 

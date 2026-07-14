@@ -13,20 +13,24 @@
 //   • suggestion card → title + why + "Open in Studio" (handoff) + "Show me the data"
 //   • composer + starter chips · thinking row · inline error row · first-run hero
 
-import { type ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 
 import { cn } from "@/lib/cn";
 import { useTranslation } from "@/lib/i18n";
 import {
   IcAdvisor,
+  IcAlert,
   IcArrowDown,
+  IcArrowRight,
   IcArrowUp,
   IcChart,
+  IcCheck,
   IcClock,
   IcExternal,
   IcEye,
   IcNib,
   IcReply,
+  IcRepeat,
   IcSend,
   IcUndo,
   type IconProps,
@@ -153,6 +157,150 @@ export function SuggestionCard({ s }: { s: AdvisorSuggestion }) {
   );
 }
 
+// ── one-click action card (the advisor's "apply-in-one-click" layer) ─────────
+// A typed card the advisor attaches to propose an action the app applies in one
+// click via an existing gated endpoint. ONE shell, per-type content — today only
+// `routine` (a recurring posting scenario). States: proposed → applying → applied
+// (quiet done row + deep-link) | error (inline + Retry). `onApply` runs the apply
+// call (baked in the chat's ask()); Cancel dismisses the card locally.
+export type AdvisorActionCardData = {
+  type: "routine";
+  title: string;
+  topic: string;
+  timesPerDay: number;
+  hoursPreview: number[];
+  // Portfolio chat only: the target profile's @handle (shown on the card).
+  targetHandle?: string | null;
+  onApply: () => Promise<void>;
+  onOpenScenarios: () => void; // applied → open /app/scenarios
+};
+
+export function ActionCard({ a }: { a: AdvisorActionCardData }) {
+  const { t } = useTranslation();
+  const [state, setState] = useState<"proposed" | "applying" | "applied" | "error">("proposed");
+  const [dismissed, setDismissed] = useState(false);
+  if (dismissed) return null;
+
+  const apply = async () => {
+    setState("applying");
+    try {
+      await a.onApply();
+      setState("applied");
+    } catch {
+      setState("error");
+    }
+  };
+
+  if (state === "applied") {
+    return (
+      <div className="mb-[9px] flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg border border-border bg-surface-2 px-[15px] py-[11px]">
+        <span className="grid h-[22px] w-[22px] shrink-0 place-items-center rounded-full bg-[color-mix(in_srgb,var(--color-success)_16%,var(--color-surface))] text-success">
+          <IcCheck size={14} />
+        </span>
+        <span className="min-w-0 flex-1 text-small text-text">{t("adv.act.routine_done")}</span>
+        <button
+          type="button"
+          onClick={a.onOpenScenarios}
+          className="inline-flex items-center gap-1 text-small font-medium text-accent hover:underline"
+        >
+          {t("adv.act.routine_link")}
+          <IcArrowRight size={14} />
+        </button>
+      </div>
+    );
+  }
+
+  const hoursStr = a.hoursPreview.map((h) => `${h}:00`).join(", ");
+  const applying = state === "applying";
+  const line = (icon: ReactNode, text: string) => (
+    <div className="flex items-center gap-2">
+      <span className="shrink-0 text-text-subtle">{icon}</span>
+      <span className="min-w-0 truncate text-small text-text-muted">{text}</span>
+    </div>
+  );
+
+  return (
+    <div className="mb-[9px] rounded-lg border border-border border-l-[3px] border-l-accent bg-surface p-[14px] shadow-sm">
+      <div className="flex items-center gap-[11px]">
+        <span className={cn("grid h-[34px] w-[34px] shrink-0 place-items-center rounded-[9px]", ACCENT_TILE)}>
+          <IcRepeat size={17} />
+        </span>
+        <div className="min-w-0">
+          <div className="text-caption font-semibold uppercase tracking-[0.03em] text-text-subtle">
+            {t("adv.act.routine_kind")}
+          </div>
+          <div className="truncate text-small font-semibold text-text">{a.title}</div>
+        </div>
+      </div>
+
+      <div className="mt-[11px] flex flex-col gap-[7px]">
+        {line(<IcClock size={15} />, `${a.timesPerDay}× ${t("adv.act.per_day")} · ~${hoursStr}`)}
+        {line(<IcNib size={15} />, a.topic.trim() ? `${t("adv.act.topic")}: ${a.topic.trim()}` : t("adv.act.any_topic"))}
+        {line(<IcNib size={15} />, t("adv.act.in_voice"))}
+      </div>
+
+      {a.timesPerDay > 1 && (
+        <div className="mt-[10px] flex items-center gap-2 text-caption text-warning">
+          <IcAlert size={14} className="shrink-0" />
+          <span>{t("adv.act.cap_warn").replace("{n}", String(a.timesPerDay))}</span>
+        </div>
+      )}
+
+      <div className="mt-[11px] flex items-start gap-2 rounded-md bg-[color-mix(in_srgb,var(--color-accent)_8%,var(--color-surface))] px-3 py-2 text-caption leading-[1.45] text-text-muted">
+        <IcEye size={14} className="mt-px shrink-0 text-accent" />
+        <span>{t("adv.act.mode_review")}</span>
+      </div>
+
+      {a.targetHandle && (
+        <div className="mt-[11px] flex items-center gap-2 border-t border-border pt-[11px] text-caption text-text-subtle">
+          <span className="font-medium text-text-muted">@{a.targetHandle}</span>
+          <span>· {t("adv.act.affects")} · Threads</span>
+        </div>
+      )}
+
+      {state === "error" && (
+        <div className="mt-[11px] flex items-start gap-2 text-caption text-danger">
+          <IcAlert size={15} className="mt-px shrink-0" />
+          <span>
+            <b>{t("adv.act.err_title")}.</b> {t("adv.act.err_sub")}
+          </span>
+        </div>
+      )}
+
+      <div className="mt-[13px] flex flex-wrap gap-2 max-[420px]:flex-col">
+        <button
+          type="button"
+          onClick={apply}
+          disabled={applying}
+          className="inline-flex items-center justify-center gap-1.5 rounded-md bg-primary px-3.5 py-2 text-small font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60 max-[420px]:w-full"
+        >
+          {applying ? (
+            <>
+              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary-foreground/40 border-t-primary-foreground" />
+              {t("adv.act.applying")}
+            </>
+          ) : state === "error" ? (
+            <>
+              <IcUndo size={15} />
+              {t("advisor.retry")}
+            </>
+          ) : (
+            t("adv.act.routine_apply")
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={() => setDismissed(true)}
+          disabled={applying}
+          className="inline-flex items-center justify-center rounded-md px-3 py-2 text-small font-medium text-text-muted transition-colors hover:bg-surface-2 hover:text-text disabled:opacity-60 max-[420px]:w-full"
+        >
+          {t("adv.act.cancel")}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── message rows ─────────────────────────────────────────────────────────────
 export function UserBubble({ text }: { text: string }) {
   return (
@@ -200,6 +348,7 @@ export type AdvisorReplyContent = {
   chips?: AdvisorChip[];
   sources?: string[];
   suggestions?: AdvisorSuggestion[];
+  actions?: AdvisorActionCardData[];
 };
 
 export function AssistantReply({ content }: { content: AdvisorReplyContent }) {
@@ -217,6 +366,13 @@ export function AssistantReply({ content }: { content: AdvisorReplyContent }) {
       )}
       {content.sources && <SourceLine sources={content.sources} />}
       {content.suggestions?.map((s, i) => <SuggestionCard key={i} s={s} />)}
+      {content.actions && content.actions.length > 0 && (
+        <div className="mt-[11px]">
+          {content.actions.map((a, i) => (
+            <ActionCard key={i} a={a} />
+          ))}
+        </div>
+      )}
     </AssistantRow>
   );
 }
