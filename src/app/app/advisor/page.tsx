@@ -250,6 +250,26 @@ export default function AdvisorPage() {
               onOpen: () => router.push("/app/scenarios"),
             };
           }
+          if (act.type === "automation") {
+            return {
+              type: "automation",
+              title: act.title,
+              controlKind: act.control_kind,
+              quietStart: act.quiet_start,
+              quietEnd: act.quiet_end,
+              onApply: async () => {
+                await applyAdvisorAction(accountId, {
+                  type: "automation",
+                  title: act.title,
+                  kind: act.control_kind,
+                  ...(act.control_kind === "quiet_hours"
+                    ? { quiet_start: act.quiet_start ?? undefined, quiet_end: act.quiet_end ?? undefined }
+                    : {}),
+                });
+              },
+              onOpen: () => router.push("/app/autopilot"),
+            };
+          }
           return {
             type: "routine",
             title: act.title,

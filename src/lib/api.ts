@@ -498,6 +498,14 @@ type ApplyActionInput =
       rubric_idea?: string;
       question?: string;
       options?: string[];
+    }
+  | {
+      type: "automation";
+      title: string;
+      kind: "pause" | "quiet_hours" | "resume";
+      // Account-local nightly hours (0..23); sent only for quiet_hours.
+      quiet_start?: number;
+      quiet_end?: number;
     };
 
 export async function applyAdvisorAction(

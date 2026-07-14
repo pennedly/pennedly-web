@@ -107,6 +107,22 @@ export function ADVISOR_DEMO_TURNS(t: T, onOpenStudio: (brief: string) => void):
     onApply: () => new Promise<void>((r) => setTimeout(r, 600)),
     onOpen: () => {},
   };
+  const quietAction: AdvisorActionCardData = {
+    type: "automation",
+    title: "Quiet nights",
+    controlKind: "quiet_hours",
+    quietStart: 23,
+    quietEnd: 7,
+    onApply: () => new Promise<void>((r) => setTimeout(r, 600)),
+    onOpen: () => {},
+  };
+  const pauseAction: AdvisorActionCardData = {
+    type: "automation",
+    title: "Pause automation",
+    controlKind: "pause",
+    onApply: () => new Promise<void>((r) => setTimeout(r, 600)),
+    onOpen: () => {},
+  };
 
   const turn1Chips: AdvisorChip[] = [
     { tone: "down", icon: "eye", label: "7-day views −18%" },
@@ -152,6 +168,8 @@ export function ADVISOR_DEMO_TURNS(t: T, onOpenStudio: (brief: string) => void):
           reactiveAction,
           formatAction,
           pollAction,
+          quietAction,
+          pauseAction,
         ],
       },
     },

@@ -380,8 +380,13 @@ export default function ScenariosPage() {
     if (typeof ap.max_post_scenarios_per_day === "number") setCap(ap.max_post_scenarios_per_day);
     setReplyFreq(freqFromBackend(ap.reply_frequency));
     setReplyCeiling(ap.replies_per_day);
-    const from = hourToHHMM(ap.reply_quiet_start_hour);
-    const to = hourToHHMM(ap.reply_quiet_end_hour);
+    // «Тихие часы» is ONE account window that pauses BOTH posts and auto-replies:
+    // the reply pair (reply_quiet_*) and the post pair (quiet_*) are kept in sync by
+    // every writer (this control + the advisor quiet-hours action). Read from the
+    // reply pair, falling back to the post pair, so an advisor-set window (or a
+    // half-synced row) still shows and can be cleared here.
+    const from = hourToHHMM(ap.reply_quiet_start_hour ?? ap.quiet_start_hour);
+    const to = hourToHHMM(ap.reply_quiet_end_hour ?? ap.quiet_end_hour);
     const on = from !== null && to !== null;
     setQuietOn(on);
     // Keep the last-shown window when the user toggles quiet off (so flipping it
@@ -961,26 +966,50 @@ export default function ScenariosPage() {
     void saveAutopilot({ replies_per_day: n }, () => setReplyCeiling(prev));
   }
   // Quiet hours: a window is "on" when both hours are set; "off" = both null (the
-  // backend's no-window). Toggling on commits the currently-shown From/To.
+  // backend's no-window). Toggling on commits the currently-shown From/To. The
+  // window pauses BOTH posts and auto-replies, so every writer sets the POST pair
+  // (quiet_*) AND the REPLY pair (reply_quiet_*) together — this keeps the worker's
+  // two gates in sync and makes this control the single reader/editor/clearer of the
+  // account «тихие часы» (incl. a window an advisor quiet-hours action set).
   function onQuiet(on: boolean) {
     const prev = quietOn;
     setQuietOn(on);
+    const from = hhmmToHour(quietFrom);
+    const to = hhmmToHour(quietTo);
     const patch = on
-      ? { reply_quiet_start_hour: hhmmToHour(quietFrom), reply_quiet_end_hour: hhmmToHour(quietTo) }
-      : { reply_quiet_start_hour: null, reply_quiet_end_hour: null };
+      ? {
+          reply_quiet_start_hour: from,
+          reply_quiet_end_hour: to,
+          quiet_start_hour: from,
+          quiet_end_hour: to,
+        }
+      : {
+          reply_quiet_start_hour: null,
+          reply_quiet_end_hour: null,
+          quiet_start_hour: null,
+          quiet_end_hour: null,
+        };
     void saveAutopilot(patch, () => setQuietOn(prev));
   }
   function onQuietFrom(v: string) {
     const prev = quietFrom;
     setQuietFrom(v);
     if (!quietOn) return; // off → don't persist a window
-    void saveAutopilot({ reply_quiet_start_hour: hhmmToHour(v) }, () => setQuietFrom(prev));
+    const h = hhmmToHour(v);
+    void saveAutopilot(
+      { reply_quiet_start_hour: h, quiet_start_hour: h },
+      () => setQuietFrom(prev),
+    );
   }
   function onQuietTo(v: string) {
     const prev = quietTo;
     setQuietTo(v);
     if (!quietOn) return;
-    void saveAutopilot({ reply_quiet_end_hour: hhmmToHour(v) }, () => setQuietTo(prev));
+    const h = hhmmToHour(v);
+    void saveAutopilot(
+      { reply_quiet_end_hour: h, quiet_end_hour: h },
+      () => setQuietTo(prev),
+    );
   }
 
 

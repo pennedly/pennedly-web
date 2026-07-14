@@ -408,13 +408,28 @@ export type AdvisorFormatAction = {
   account?: string | null;
 };
 
+// CONTROL the account's automation (unlike the actions above, which ARM it).
+// pause = stop ALL automation (posts + reactions + auto-replies) via the master;
+// resume = turn it back on; quiet_hours = a nightly window (account-local hours,
+// wrap-aware past midnight) when it neither posts nor auto-replies. quiet_start/
+// quiet_end are present only for quiet_hours.
+export type AdvisorAutomationAction = {
+  type: "automation";
+  control_kind: "pause" | "quiet_hours" | "resume";
+  title: string;
+  quiet_start?: number | null;
+  quiet_end?: number | null;
+  account?: string | null;
+};
+
 export type AdvisorActionData =
   | AdvisorRoutineAction
   | AdvisorAutoRepliesAction
   | AdvisorVoiceRuleAction
   | AdvisorSchedulePostAction
   | AdvisorReactiveAction
-  | AdvisorFormatAction;
+  | AdvisorFormatAction
+  | AdvisorAutomationAction;
 
 export type AdvisorResponse = {
   reply: string;

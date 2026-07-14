@@ -29,7 +29,10 @@ import {
   IcClock,
   IcExternal,
   IcEye,
+  IcMoon,
   IcNib,
+  IcPlay,
+  IcPower,
   IcReply,
   IcRepeat,
   IcSend,
@@ -212,6 +215,12 @@ export type AdvisorActionCardData =
       rubricIdea?: string; // rubric
       question?: string; // poll
       options?: string[]; // poll
+    })
+  | (ActionCardCommon & {
+      type: "automation";
+      controlKind: "pause" | "quiet_hours" | "resume";
+      quietStart?: number | null; // quiet_hours
+      quietEnd?: number | null; // quiet_hours
     });
 
 const AUDIENCE_KEY: Record<"questions" | "fans" | "all_except_trolls", MessageKey> = {
@@ -230,6 +239,41 @@ const REACT_BODY_KEY: Record<"amplify" | "milestone" | "booster", MessageKey> = 
   amplify: "adv.act.react_amplify",
   milestone: "adv.act.react_milestone",
   booster: "adv.act.react_booster",
+};
+
+// automation control (pause / quiet_hours / resume): the card shell (icon + the
+// header/apply/done labels) per control_kind.
+const CTRL_META: Record<
+  "pause" | "quiet_hours" | "resume",
+  { icon: IconCmp; kind: MessageKey; apply: MessageKey; done: MessageKey; mode: MessageKey }
+> = {
+  pause: {
+    icon: IcPower,
+    kind: "adv.act.ctrl_pause_kind",
+    apply: "adv.act.ctrl_pause_apply",
+    done: "adv.act.ctrl_pause_done",
+    mode: "adv.act.ctrl_pause_mode",
+  },
+  quiet_hours: {
+    icon: IcMoon,
+    kind: "adv.act.ctrl_quiet_kind",
+    apply: "adv.act.ctrl_quiet_apply",
+    done: "adv.act.ctrl_quiet_done",
+    mode: "adv.act.ctrl_quiet_mode",
+  },
+  resume: {
+    icon: IcPlay,
+    kind: "adv.act.ctrl_resume_kind",
+    apply: "adv.act.ctrl_resume_apply",
+    done: "adv.act.ctrl_resume_done",
+    mode: "adv.act.ctrl_resume_mode",
+  },
+};
+
+// "23:00-07:00" — a plain hyphen range (never an em/en dash).
+const fmtWindow = (s?: number | null, e?: number | null): string => {
+  const h = (n?: number | null) => `${String(n ?? 0).padStart(2, "0")}:00`;
+  return `${h(s)}-${h(e)}`;
 };
 
 export function ActionCard({ a }: { a: AdvisorActionCardData }) {
@@ -254,6 +298,10 @@ export function ActionCard({ a }: { a: AdvisorActionCardData }) {
       setState("error");
     }
   };
+
+  // The automation card's header icon per control_kind (IcNib is an unused
+  // placeholder for the non-automation branches — cfg only reads it for automation).
+  const CtrlIcon = a.type === "automation" ? CTRL_META[a.controlKind].icon : IcNib;
 
   // Per-type copy (ONE shell, typed content).
   const cfg =
@@ -297,13 +345,21 @@ export function ActionCard({ a }: { a: AdvisorActionCardData }) {
                   doneLabel: t("adv.act.react_done"),
                   linkLabel: t("adv.act.react_link"),
                 }
-              : {
-                  kindIcon: <IcNib size={17} />,
-                  kindLabel: t("adv.act.fmt_kind"),
-                  applyLabel: t("adv.act.fmt_apply"),
-                  doneLabel: t("adv.act.fmt_done"),
-                  linkLabel: t("adv.act.fmt_link"),
-                };
+              : a.type === "format"
+                ? {
+                    kindIcon: <IcNib size={17} />,
+                    kindLabel: t("adv.act.fmt_kind"),
+                    applyLabel: t("adv.act.fmt_apply"),
+                    doneLabel: t("adv.act.fmt_done"),
+                    linkLabel: t("adv.act.fmt_link"),
+                  }
+                : {
+                    kindIcon: <CtrlIcon size={17} />,
+                    kindLabel: t(CTRL_META[a.controlKind].kind),
+                    applyLabel: t(CTRL_META[a.controlKind].apply),
+                    doneLabel: t(CTRL_META[a.controlKind].done),
+                    linkLabel: t("adv.act.ctrl_link"),
+                  };
 
   if (state === "applied") {
     return (
@@ -382,21 +438,32 @@ export function ActionCard({ a }: { a: AdvisorActionCardData }) {
               a.commentText &&
               line(<IcReply size={15} />, `«${a.commentText}»`)}
           </>
-        ) : a.formatKind === "daily_question" ? (
+        ) : a.type === "format" ? (
+          a.formatKind === "daily_question" ? (
+            <>
+              {line(<IcRepeat size={15} />, t("adv.act.fmt_dq"))}
+              {line(<IcNib size={15} />, `${t("adv.act.topic")}: ${a.topic}`)}
+            </>
+          ) : a.formatKind === "rubric" ? (
+            <>
+              {line(<IcRepeat size={15} />, `${t("adv.act.fmt_rubric")}: ${a.rubricName}`)}
+              {line(<IcNib size={15} />, `«${a.rubricIdea}»`)}
+            </>
+          ) : (
+            <>
+              {line(<IcNib size={15} />, `${t("adv.act.fmt_poll")}: ${a.question}`)}
+              {line(<IcChart size={15} />, (a.options ?? []).join(" · "))}
+            </>
+          )
+        ) : a.controlKind === "quiet_hours" ? (
           <>
-            {line(<IcRepeat size={15} />, t("adv.act.fmt_dq"))}
-            {line(<IcNib size={15} />, `${t("adv.act.topic")}: ${a.topic}`)}
+            {line(<IcMoon size={15} />, `${t("adv.act.ctrl_quiet_window")}: ${fmtWindow(a.quietStart, a.quietEnd)}`)}
+            {line(<IcReply size={15} />, t("adv.act.ctrl_quiet_body"))}
           </>
-        ) : a.formatKind === "rubric" ? (
-          <>
-            {line(<IcRepeat size={15} />, `${t("adv.act.fmt_rubric")}: ${a.rubricName}`)}
-            {line(<IcNib size={15} />, `«${a.rubricIdea}»`)}
-          </>
+        ) : a.controlKind === "pause" ? (
+          <>{line(<IcPower size={15} />, t("adv.act.ctrl_pause_body"))}</>
         ) : (
-          <>
-            {line(<IcNib size={15} />, `${t("adv.act.fmt_poll")}: ${a.question}`)}
-            {line(<IcChart size={15} />, (a.options ?? []).join(" · "))}
-          </>
+          <>{line(<IcPlay size={15} />, t("adv.act.ctrl_resume_body"))}</>
         )}
       </div>
 
@@ -411,6 +478,13 @@ export function ActionCard({ a }: { a: AdvisorActionCardData }) {
         <div className="mt-[10px] flex items-center gap-2 text-caption text-warning">
           <IcAlert size={14} className="shrink-0" />
           <span>{t("adv.act.sched_quota")}</span>
+        </div>
+      )}
+
+      {a.type === "automation" && a.controlKind === "pause" && (
+        <div className="mt-[10px] flex items-center gap-2 text-caption text-warning">
+          <IcAlert size={14} className="shrink-0" />
+          <span>{t("adv.act.ctrl_pause_warn")}</span>
         </div>
       )}
 
@@ -440,10 +514,15 @@ export function ActionCard({ a }: { a: AdvisorActionCardData }) {
             <IcEye size={14} className="mt-px shrink-0 text-accent" />
             <span>{t("adv.act.react_mode")}</span>
           </>
-        ) : (
+        ) : a.type === "format" ? (
           <>
             <IcEye size={14} className="mt-px shrink-0 text-accent" />
             <span>{t("adv.act.fmt_mode")}</span>
+          </>
+        ) : (
+          <>
+            <CtrlIcon size={14} className="mt-px shrink-0 text-accent" />
+            <span>{t(CTRL_META[a.controlKind].mode)}</span>
           </>
         )}
       </div>

@@ -205,6 +205,16 @@ function demoTurns(t: T): Turn[] {
             onApply: () => new Promise<void>((r) => setTimeout(r, 600)),
             onOpen: () => {},
           },
+          {
+            type: "automation",
+            title: "Тихие ночи",
+            controlKind: "quiet_hours",
+            quietStart: 23,
+            quietEnd: 7,
+            targetHandle: "mara.studio",
+            onApply: () => new Promise<void>((r) => setTimeout(r, 600)),
+            onOpen: () => {},
+          },
         ],
       },
     },
@@ -440,6 +450,29 @@ function useChat(
                     options: act.options,
                   }),
                 onOpen: openAt("/app/scenarios"),
+              };
+            }
+            if (act.type === "automation") {
+              return {
+                type: "automation",
+                title: act.title,
+                controlKind: act.control_kind,
+                quietStart: act.quiet_start,
+                quietEnd: act.quiet_end,
+                targetHandle,
+                onApply: () =>
+                  applyTo({
+                    type: "automation",
+                    title: act.title,
+                    kind: act.control_kind,
+                    ...(act.control_kind === "quiet_hours"
+                      ? {
+                          quiet_start: act.quiet_start ?? undefined,
+                          quiet_end: act.quiet_end ?? undefined,
+                        }
+                      : {}),
+                  }),
+                onOpen: openAt("/app/autopilot"),
               };
             }
             return {
