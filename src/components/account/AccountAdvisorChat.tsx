@@ -122,6 +122,18 @@ function demoTurns(t: T): Turn[] {
             brief: "Открой @mara.co и переподключи синхронизацию.",
           },
         ],
+        actions: [
+          {
+            type: "auto_replies",
+            title: "Автоответы на вопросы",
+            audience: "questions",
+            repliesPerDay: 10,
+            skipLowValue: true,
+            targetHandle: "mara.notes",
+            onApply: () => new Promise<void>((r) => setTimeout(r, 600)),
+            onOpen: () => {},
+          },
+        ],
       },
     },
     {
@@ -142,6 +154,18 @@ function demoTurns(t: T): Turn[] {
             title: "Верни 5 постов в неделю на @mara.studio",
             why: "Профиль просел до 2 постов. Заведу черновик в твоём голосе.",
             brief: "Короткий пост в голосе @mara.studio на тему недели.",
+          },
+        ],
+        actions: [
+          {
+            type: "routine",
+            title: "Посты на @mara.studio",
+            topic: "",
+            timesPerDay: 2,
+            hoursPreview: [9, 18],
+            targetHandle: "mara.studio",
+            onApply: () => new Promise<void>((r) => setTimeout(r, 600)),
+            onOpen: () => {},
           },
         ],
       },
