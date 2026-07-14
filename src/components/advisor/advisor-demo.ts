@@ -75,6 +75,14 @@ export function ADVISOR_DEMO_TURNS(t: T, onOpenStudio: (brief: string) => void):
     onApply: () => new Promise<void>((r) => setTimeout(r, 600)),
     onOpen: () => {},
   };
+  const schedulePostAction: AdvisorActionCardData = {
+    type: "schedule_post",
+    title: "Tuesday launch post",
+    brief: "Announce the new drop with a hook about early access.",
+    whenLabel: "Tue, 18:00",
+    onApply: () => new Promise<void>((r) => setTimeout(r, 600)),
+    onOpen: () => {},
+  };
 
   const turn1Chips: AdvisorChip[] = [
     { tone: "down", icon: "eye", label: "7-day views −18%" },
@@ -112,7 +120,7 @@ export function ADVISOR_DEMO_TURNS(t: T, onOpenStudio: (brief: string) => void):
         chips: turn2Chips,
         sources: [t("advisor.source.heatmap"), t("advisor.source.posts")],
         suggestions: [scheduleSuggestion],
-        actions: [routineAction, autoRepliesAction, voiceRuleAction],
+        actions: [routineAction, autoRepliesAction, voiceRuleAction, schedulePostAction],
       },
     },
   ];

@@ -20,7 +20,8 @@ import { useRouter } from "next/navigation";
 
 import { ApiError, applyAdvisorAction, chatAdvisor, clearTokens, fetchMe, getTokens } from "@/lib/api";
 import { useSelectedAccountId } from "@/lib/account";
-import { useTranslation } from "@/lib/i18n";
+import { getLocale, useTranslation } from "@/lib/i18n";
+import { formatSchedule, nextOccurrence } from "@/lib/schedule";
 import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
 import { IcSparkle } from "@/components/icons";
 import { TweaksPanel, TweakSection, TweakRadio, TweakToggle, useTweaks } from "@/components/tweaks/TweaksPanel";
@@ -186,6 +187,25 @@ export default function AdvisorPage() {
                 });
               },
               onOpen: () => router.push("/app/style-rules"),
+            };
+          }
+          if (act.type === "schedule_post") {
+            // Label the resolved local day/time; resolve the absolute instant FRESH
+            // in onApply (not frozen here) so a slow click can't post a stale time.
+            return {
+              type: "schedule_post",
+              title: act.title,
+              brief: act.brief,
+              whenLabel: formatSchedule(nextOccurrence(act.weekday, act.hour), getLocale()),
+              onApply: async () => {
+                await applyAdvisorAction(accountId, {
+                  type: "schedule_post",
+                  title: act.title,
+                  brief: act.brief,
+                  scheduled_at: nextOccurrence(act.weekday, act.hour).toISOString(),
+                });
+              },
+              onOpen: () => router.push("/app/calendar"),
             };
           }
           return {

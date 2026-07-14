@@ -33,7 +33,8 @@ import { advisorSourceLabel } from "@/components/advisor/advisor-demo";
 import { IcSparkle } from "@/components/icons";
 import { setSelectedAccountId, useSelectedAccountId } from "@/lib/account";
 import { ApiError, applyAdvisorAction, chatAccountAdvisor, clearTokens } from "@/lib/api";
-import { useTranslation } from "@/lib/i18n";
+import { getLocale, useTranslation } from "@/lib/i18n";
+import { formatSchedule, nextOccurrence } from "@/lib/schedule";
 import type { AdvisorData, AdvisorMessage, MeAccountResponse } from "@/lib/types";
 
 import { ADVISOR_SEED_KEY, DynIcon, ScreenTopbar, Sidebar, useAccountNav } from "./AccountDashboard";
@@ -172,6 +173,15 @@ function demoTurns(t: T): Turn[] {
             title: "Без эмодзи",
             ruleText: "Не используй эмодзи.",
             kind: "both",
+            targetHandle: "mara.studio",
+            onApply: () => new Promise<void>((r) => setTimeout(r, 600)),
+            onOpen: () => {},
+          },
+          {
+            type: "schedule_post",
+            title: "Пост во вторник",
+            brief: "Анонс новой подборки с зацепкой про ранний доступ.",
+            whenLabel: "вт, 18:00",
             targetHandle: "mara.studio",
             onApply: () => new Promise<void>((r) => setTimeout(r, 600)),
             onOpen: () => {},
@@ -349,6 +359,26 @@ function useChat(
                     kind: act.rule_kind,
                   }),
                 onOpen: openAt("/app/style-rules"),
+              };
+            }
+            if (act.type === "schedule_post") {
+              // Label the resolved local day/time (weekday+hour, week-agnostic).
+              // Resolve the absolute instant FRESH inside onApply so a slow click
+              // can't post a now-stale time (the card re-resolves at apply, not here).
+              return {
+                type: "schedule_post",
+                title: act.title,
+                brief: act.brief,
+                whenLabel: formatSchedule(nextOccurrence(act.weekday, act.hour), getLocale()),
+                targetHandle,
+                onApply: () =>
+                  applyTo({
+                    type: "schedule_post",
+                    title: act.title,
+                    brief: act.brief,
+                    scheduled_at: nextOccurrence(act.weekday, act.hour).toISOString(),
+                  }),
+                onOpen: openAt("/app/calendar"),
               };
             }
             return {

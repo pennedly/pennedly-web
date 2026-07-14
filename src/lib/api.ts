@@ -455,6 +455,8 @@ export async function chatAccountAdvisor(
 //                      no scenario created (scenario_id is null).
 //   • "voice_rule"   → ADDS one standing rule to the account's voice (additive);
 //                      no scenario created (scenario_id is null).
+//   • "schedule_post"→ generates one post + schedules it to auto-publish at
+//                      scheduled_at; response carries draft_id + scheduled_at.
 type ApplyActionInput =
   | { type: "routine"; title: string; topic: string; times_per_day: number }
   | {
@@ -469,6 +471,13 @@ type ApplyActionInput =
       title: string;
       rule_text: string;
       kind: "post" | "reply" | "both";
+    }
+  | {
+      type: "schedule_post";
+      title: string;
+      brief: string;
+      // Absolute UTC instant the FE resolved from the model's weekday+hour.
+      scheduled_at: string;
     };
 
 export async function applyAdvisorAction(

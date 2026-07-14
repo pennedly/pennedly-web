@@ -370,10 +370,23 @@ export type AdvisorVoiceRuleAction = {
   account?: string | null;
 };
 
+// Generate ONE post in the account's voice and schedule it to AUTO-PUBLISH at a
+// target day/hour. The model emits weekday (1=Mon..7=Sun) + local hour; the FE
+// resolves that to the next future occurrence → an absolute scheduled_at.
+export type AdvisorSchedulePostAction = {
+  type: "schedule_post";
+  title: string;
+  brief: string;
+  weekday: number;
+  hour: number;
+  account?: string | null;
+};
+
 export type AdvisorActionData =
   | AdvisorRoutineAction
   | AdvisorAutoRepliesAction
-  | AdvisorVoiceRuleAction;
+  | AdvisorVoiceRuleAction
+  | AdvisorSchedulePostAction;
 
 export type AdvisorResponse = {
   reply: string;
@@ -391,10 +404,13 @@ export type AdvisorResponse = {
 
 // What POST /accounts/{id}/advisor/apply returns after applying an action.
 export type ApplyActionResponse = {
-  kind: string; // the applied action type ("routine" | "auto_replies")
+  kind: string; // routine | auto_replies | voice_rule | schedule_post
   // Present only for actions that create a scenario (routine); null otherwise.
   scenario_id: number | null;
   name: string;
+  // Present only for "schedule_post" (the generated+scheduled draft); null otherwise.
+  draft_id?: number | null;
+  scheduled_at?: string | null;
 };
 
 export type BatchGenerateError = {

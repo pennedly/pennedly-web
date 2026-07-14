@@ -15,6 +15,7 @@
 
 import { type ReactNode, useState } from "react";
 
+import { ApiError } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import {
@@ -190,6 +191,13 @@ export type AdvisorActionCardData =
       type: "voice_rule";
       ruleText: string;
       kind: "post" | "reply" | "both";
+    })
+  | (ActionCardCommon & {
+      type: "schedule_post";
+      brief: string;
+      // The resolved local time, already formatted for display (the builder also
+      // bakes the absolute scheduled_at into onApply).
+      whenLabel: string;
     });
 
 const AUDIENCE_KEY: Record<"questions" | "fans" | "all_except_trolls", MessageKey> = {
@@ -208,14 +216,21 @@ export function ActionCard({ a }: { a: AdvisorActionCardData }) {
   const { t } = useTranslation();
   const [state, setState] = useState<"proposed" | "applying" | "applied" | "error">("proposed");
   const [dismissed, setDismissed] = useState(false);
+  // On a definitive 4xx (quota 429, validation 422, cap 409) we surface the server's
+  // reason and drop the Retry — retrying can't succeed. A transient 5xx / network drop
+  // keeps the generic message + a Retry. `errText` non-null ⇒ not retryable.
+  const [errText, setErrText] = useState<string | null>(null);
   if (dismissed) return null;
 
   const apply = async () => {
+    setErrText(null);
     setState("applying");
     try {
       await a.onApply();
       setState("applied");
-    } catch {
+    } catch (e) {
+      const client = e instanceof ApiError && e.status >= 400 && e.status < 500;
+      setErrText(client ? (e as ApiError).message : null);
       setState("error");
     }
   };
@@ -238,13 +253,21 @@ export function ActionCard({ a }: { a: AdvisorActionCardData }) {
             doneLabel: t("adv.act.replies_done"),
             linkLabel: t("adv.act.replies_link"),
           }
-        : {
-            kindIcon: <IcNib size={17} />,
-            kindLabel: t("adv.act.voice_kind"),
-            applyLabel: t("adv.act.voice_apply"),
-            doneLabel: t("adv.act.voice_done"),
-            linkLabel: t("adv.act.voice_link"),
-          };
+        : a.type === "voice_rule"
+          ? {
+              kindIcon: <IcNib size={17} />,
+              kindLabel: t("adv.act.voice_kind"),
+              applyLabel: t("adv.act.voice_apply"),
+              doneLabel: t("adv.act.voice_done"),
+              linkLabel: t("adv.act.voice_link"),
+            }
+          : {
+              kindIcon: <IcClock size={17} />,
+              kindLabel: t("adv.act.sched_kind"),
+              applyLabel: t("adv.act.sched_apply"),
+              doneLabel: t("adv.act.sched_done"),
+              linkLabel: t("adv.act.sched_link"),
+            };
 
   if (state === "applied") {
     return (
@@ -306,10 +329,15 @@ export function ActionCard({ a }: { a: AdvisorActionCardData }) {
             {line(<IcRepeat size={15} />, `${t("adv.act.up_to")} ${a.repliesPerDay}× ${t("adv.act.per_day")}`)}
             {a.skipLowValue && line(<IcEye size={15} />, t("adv.act.skip_low"))}
           </>
-        ) : (
+        ) : a.type === "voice_rule" ? (
           <>
             {line(<IcNib size={15} />, `«${a.ruleText}»`)}
             {line(<IcEye size={15} />, t(VOICE_KIND_KEY[a.kind]))}
+          </>
+        ) : (
+          <>
+            {line(<IcNib size={15} />, `«${a.brief}»`)}
+            {line(<IcClock size={15} />, `${t("adv.act.sched_when")}: ${a.whenLabel}`)}
           </>
         )}
       </div>
@@ -318,6 +346,13 @@ export function ActionCard({ a }: { a: AdvisorActionCardData }) {
         <div className="mt-[10px] flex items-center gap-2 text-caption text-warning">
           <IcAlert size={14} className="shrink-0" />
           <span>{t("adv.act.cap_warn").replace("{n}", String(a.timesPerDay))}</span>
+        </div>
+      )}
+
+      {a.type === "schedule_post" && (
+        <div className="mt-[10px] flex items-center gap-2 text-caption text-warning">
+          <IcAlert size={14} className="shrink-0" />
+          <span>{t("adv.act.sched_quota")}</span>
         </div>
       )}
 
@@ -332,10 +367,15 @@ export function ActionCard({ a }: { a: AdvisorActionCardData }) {
             <IcReply size={14} className="mt-px shrink-0 text-accent" />
             <span>{t("adv.act.mode_instant")}</span>
           </>
-        ) : (
+        ) : a.type === "voice_rule" ? (
           <>
             <IcNib size={14} className="mt-px shrink-0 text-accent" />
             <span>{t("adv.act.voice_mode")}</span>
+          </>
+        ) : (
+          <>
+            <IcClock size={14} className="mt-px shrink-0 text-accent" />
+            <span>{t("adv.act.sched_mode")}</span>
           </>
         )}
       </div>
@@ -351,32 +391,36 @@ export function ActionCard({ a }: { a: AdvisorActionCardData }) {
         <div className="mt-[11px] flex items-start gap-2 text-caption text-danger">
           <IcAlert size={15} className="mt-px shrink-0" />
           <span>
-            <b>{t("adv.act.err_title")}.</b> {t("adv.act.err_sub")}
+            <b>{t("adv.act.err_title")}.</b> {errText ?? t("adv.act.err_sub")}
           </span>
         </div>
       )}
 
       <div className="mt-[13px] flex flex-wrap gap-2 max-[420px]:flex-col">
-        <button
-          type="button"
-          onClick={apply}
-          disabled={applying}
-          className="inline-flex items-center justify-center gap-1.5 rounded-md bg-primary px-3.5 py-2 text-small font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60 max-[420px]:w-full"
-        >
-          {applying ? (
-            <>
-              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary-foreground/40 border-t-primary-foreground" />
-              {t("adv.act.applying")}
-            </>
-          ) : state === "error" ? (
-            <>
-              <IcUndo size={15} />
-              {t("advisor.retry")}
-            </>
-          ) : (
-            cfg.applyLabel
-          )}
-        </button>
+        {/* Hide the primary button on a definitive 4xx (errText set) — a Retry can't
+            succeed; the user reads the reason and dismisses. */}
+        {!(state === "error" && errText !== null) && (
+          <button
+            type="button"
+            onClick={apply}
+            disabled={applying}
+            className="inline-flex items-center justify-center gap-1.5 rounded-md bg-primary px-3.5 py-2 text-small font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60 max-[420px]:w-full"
+          >
+            {applying ? (
+              <>
+                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary-foreground/40 border-t-primary-foreground" />
+                {t("adv.act.applying")}
+              </>
+            ) : state === "error" ? (
+              <>
+                <IcUndo size={15} />
+                {t("advisor.retry")}
+              </>
+            ) : (
+              cfg.applyLabel
+            )}
+          </button>
+        )}
         <button
           type="button"
           onClick={() => setDismissed(true)}
