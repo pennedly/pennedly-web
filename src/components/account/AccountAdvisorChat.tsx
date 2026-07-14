@@ -425,6 +425,8 @@ function useChat(
                 topic: act.topic,
                 rubricName: act.rubric_name,
                 rubricIdea: act.rubric_idea,
+                question: act.question,
+                options: act.options,
                 targetHandle,
                 onApply: () =>
                   applyTo({
@@ -434,6 +436,8 @@ function useChat(
                     topic: act.topic,
                     rubric_name: act.rubric_name,
                     rubric_idea: act.rubric_idea,
+                    question: act.question,
+                    options: act.options,
                   }),
                 onOpen: openAt("/app/scenarios"),
               };

@@ -206,10 +206,12 @@ export type AdvisorActionCardData =
     })
   | (ActionCardCommon & {
       type: "format";
-      formatKind: "daily_question" | "rubric";
+      formatKind: "daily_question" | "rubric" | "poll";
       topic?: string; // daily_question
       rubricName?: string; // rubric
       rubricIdea?: string; // rubric
+      question?: string; // poll
+      options?: string[]; // poll
     });
 
 const AUDIENCE_KEY: Record<"questions" | "fans" | "all_except_trolls", MessageKey> = {
@@ -385,10 +387,15 @@ export function ActionCard({ a }: { a: AdvisorActionCardData }) {
             {line(<IcRepeat size={15} />, t("adv.act.fmt_dq"))}
             {line(<IcNib size={15} />, `${t("adv.act.topic")}: ${a.topic}`)}
           </>
-        ) : (
+        ) : a.formatKind === "rubric" ? (
           <>
             {line(<IcRepeat size={15} />, `${t("adv.act.fmt_rubric")}: ${a.rubricName}`)}
             {line(<IcNib size={15} />, `«${a.rubricIdea}»`)}
+          </>
+        ) : (
+          <>
+            {line(<IcNib size={15} />, `${t("adv.act.fmt_poll")}: ${a.question}`)}
+            {line(<IcChart size={15} />, (a.options ?? []).join(" · "))}
           </>
         )}
       </div>

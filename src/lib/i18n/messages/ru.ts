@@ -2774,6 +2774,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "adv.act.fmt_link": "Открыть в Автопилоте",
   "adv.act.fmt_dq": "Свежий вопрос каждый день",
   "adv.act.fmt_rubric": "Рубрика",
+  "adv.act.fmt_poll": "Опрос",
   "adv.act.fmt_mode": "На ревью: каждый пост уходит черновиком.",
   "advisor.open_in_studio": "Открыть в «Создать»",
   "advisor.show_data": "Показать данные",

@@ -2009,6 +2009,7 @@ export const fr: Partial<Record<MessageKey, string>> = {
   "adv.act.fmt_link": "Open in Autopilot",
   "adv.act.fmt_dq": "A fresh question every day",
   "adv.act.fmt_rubric": "Rubric",
+  "adv.act.fmt_poll": "Poll",
   "adv.act.fmt_mode": "On review: each post lands as a draft.",
   "advisor.open_in_studio": "Créer",
   "advisor.show_data": "Montrez-moi les données",

@@ -398,11 +398,13 @@ export type AdvisorReactiveAction = {
 // name + a one-line idea). All land as drafts for review.
 export type AdvisorFormatAction = {
   type: "format";
-  format_kind: "daily_question" | "rubric";
+  format_kind: "daily_question" | "rubric" | "poll";
   title: string;
   topic?: string;
   rubric_name?: string;
   rubric_idea?: string;
+  question?: string;
+  options?: string[];
   account?: string | null;
 };
 

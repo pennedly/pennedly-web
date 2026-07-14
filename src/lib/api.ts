@@ -492,10 +492,12 @@ type ApplyActionInput =
   | {
       type: "format";
       title: string;
-      kind: "daily_question" | "rubric";
+      kind: "daily_question" | "rubric" | "poll";
       topic?: string;
       rubric_name?: string;
       rubric_idea?: string;
+      question?: string;
+      options?: string[];
     };
 
 export async function applyAdvisorAction(

@@ -2818,6 +2818,7 @@ export const en = {
   "adv.act.fmt_link": "Open in Autopilot",
   "adv.act.fmt_dq": "A fresh question every day",
   "adv.act.fmt_rubric": "Rubric",
+  "adv.act.fmt_poll": "Poll",
   "adv.act.fmt_mode": "On review: each post lands as a draft.",
   "advisor.open_in_studio": "Open in Create",
   "advisor.show_data": "Show me the data",
