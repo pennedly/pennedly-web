@@ -198,6 +198,11 @@ export type AdvisorActionCardData =
       // The resolved local time, already formatted for display (the builder also
       // bakes the absolute scheduled_at into onApply).
       whenLabel: string;
+    })
+  | (ActionCardCommon & {
+      type: "reactive";
+      reactiveKind: "amplify" | "milestone" | "booster";
+      commentText?: string; // booster only
     });
 
 const AUDIENCE_KEY: Record<"questions" | "fans" | "all_except_trolls", MessageKey> = {
@@ -210,6 +215,12 @@ const VOICE_KIND_KEY: Record<"post" | "reply" | "both", MessageKey> = {
   post: "adv.act.applies_post",
   reply: "adv.act.applies_reply",
   both: "adv.act.applies_both",
+};
+
+const REACT_BODY_KEY: Record<"amplify" | "milestone" | "booster", MessageKey> = {
+  amplify: "adv.act.react_amplify",
+  milestone: "adv.act.react_milestone",
+  booster: "adv.act.react_booster",
 };
 
 export function ActionCard({ a }: { a: AdvisorActionCardData }) {
@@ -261,13 +272,21 @@ export function ActionCard({ a }: { a: AdvisorActionCardData }) {
               doneLabel: t("adv.act.voice_done"),
               linkLabel: t("adv.act.voice_link"),
             }
-          : {
-              kindIcon: <IcClock size={17} />,
-              kindLabel: t("adv.act.sched_kind"),
-              applyLabel: t("adv.act.sched_apply"),
-              doneLabel: t("adv.act.sched_done"),
-              linkLabel: t("adv.act.sched_link"),
-            };
+          : a.type === "schedule_post"
+            ? {
+                kindIcon: <IcClock size={17} />,
+                kindLabel: t("adv.act.sched_kind"),
+                applyLabel: t("adv.act.sched_apply"),
+                doneLabel: t("adv.act.sched_done"),
+                linkLabel: t("adv.act.sched_link"),
+              }
+            : {
+                kindIcon: <IcChart size={17} />,
+                kindLabel: t("adv.act.react_kind"),
+                applyLabel: t("adv.act.react_apply"),
+                doneLabel: t("adv.act.react_done"),
+                linkLabel: t("adv.act.react_link"),
+              };
 
   if (state === "applied") {
     return (
@@ -334,10 +353,17 @@ export function ActionCard({ a }: { a: AdvisorActionCardData }) {
             {line(<IcNib size={15} />, `«${a.ruleText}»`)}
             {line(<IcEye size={15} />, t(VOICE_KIND_KEY[a.kind]))}
           </>
-        ) : (
+        ) : a.type === "schedule_post" ? (
           <>
             {line(<IcNib size={15} />, `«${a.brief}»`)}
             {line(<IcClock size={15} />, `${t("adv.act.sched_when")}: ${a.whenLabel}`)}
+          </>
+        ) : (
+          <>
+            {line(<IcChart size={15} />, t(REACT_BODY_KEY[a.reactiveKind]))}
+            {a.reactiveKind === "booster" &&
+              a.commentText &&
+              line(<IcReply size={15} />, `«${a.commentText}»`)}
           </>
         )}
       </div>
@@ -372,10 +398,15 @@ export function ActionCard({ a }: { a: AdvisorActionCardData }) {
             <IcNib size={14} className="mt-px shrink-0 text-accent" />
             <span>{t("adv.act.voice_mode")}</span>
           </>
-        ) : (
+        ) : a.type === "schedule_post" ? (
           <>
             <IcClock size={14} className="mt-px shrink-0 text-accent" />
             <span>{t("adv.act.sched_mode")}</span>
+          </>
+        ) : (
+          <>
+            <IcEye size={14} className="mt-px shrink-0 text-accent" />
+            <span>{t("adv.act.react_mode")}</span>
           </>
         )}
       </div>

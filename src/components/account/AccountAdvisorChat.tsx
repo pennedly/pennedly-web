@@ -134,6 +134,15 @@ function demoTurns(t: T): Turn[] {
             onApply: () => new Promise<void>((r) => setTimeout(r, 600)),
             onOpen: () => {},
           },
+          {
+            type: "reactive",
+            title: "Добавка при росте поста",
+            reactiveKind: "booster",
+            commentText: "Спасибо, что дочитали! Продолжение скоро.",
+            targetHandle: "mara.notes",
+            onApply: () => new Promise<void>((r) => setTimeout(r, 600)),
+            onOpen: () => {},
+          },
         ],
       },
     },
@@ -379,6 +388,23 @@ function useChat(
                     scheduled_at: nextOccurrence(act.weekday, act.hour).toISOString(),
                   }),
                 onOpen: openAt("/app/calendar"),
+              };
+            }
+            if (act.type === "reactive") {
+              return {
+                type: "reactive",
+                title: act.title,
+                reactiveKind: act.reactive_kind,
+                commentText: act.comment_text,
+                targetHandle,
+                onApply: () =>
+                  applyTo({
+                    type: "reactive",
+                    title: act.title,
+                    kind: act.reactive_kind,
+                    comment_text: act.comment_text,
+                  }),
+                onOpen: openAt("/app/scenarios"),
               };
             }
             return {

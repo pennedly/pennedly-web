@@ -382,11 +382,23 @@ export type AdvisorSchedulePostAction = {
   account?: string | null;
 };
 
+// Enable ONE reactive scenario preset in one click. amplify = draft a follow-up
+// when a post takes off; milestone = draft a thank-you at a follower milestone;
+// booster = append a comment when a post grows (comment_text). All land as drafts.
+export type AdvisorReactiveAction = {
+  type: "reactive";
+  reactive_kind: "amplify" | "milestone" | "booster";
+  title: string;
+  comment_text?: string;
+  account?: string | null;
+};
+
 export type AdvisorActionData =
   | AdvisorRoutineAction
   | AdvisorAutoRepliesAction
   | AdvisorVoiceRuleAction
-  | AdvisorSchedulePostAction;
+  | AdvisorSchedulePostAction
+  | AdvisorReactiveAction;
 
 export type AdvisorResponse = {
   reply: string;

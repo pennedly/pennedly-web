@@ -457,6 +457,8 @@ export async function chatAccountAdvisor(
 //                      no scenario created (scenario_id is null).
 //   • "schedule_post"→ generates one post + schedules it to auto-publish at
 //                      scheduled_at; response carries draft_id + scheduled_at.
+//   • "reactive"     → enables one ask-mode reactive scenario (amplify / milestone
+//                      / booster); response carries the created scenario_id.
 type ApplyActionInput =
   | { type: "routine"; title: string; topic: string; times_per_day: number }
   | {
@@ -478,6 +480,12 @@ type ApplyActionInput =
       brief: string;
       // Absolute UTC instant the FE resolved from the model's weekday+hour.
       scheduled_at: string;
+    }
+  | {
+      type: "reactive";
+      title: string;
+      kind: "amplify" | "milestone" | "booster";
+      comment_text?: string;
     };
 
 export async function applyAdvisorAction(

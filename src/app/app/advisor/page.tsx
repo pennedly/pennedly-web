@@ -208,6 +208,23 @@ export default function AdvisorPage() {
               onOpen: () => router.push("/app/calendar"),
             };
           }
+          if (act.type === "reactive") {
+            return {
+              type: "reactive",
+              title: act.title,
+              reactiveKind: act.reactive_kind,
+              commentText: act.comment_text,
+              onApply: async () => {
+                await applyAdvisorAction(accountId, {
+                  type: "reactive",
+                  title: act.title,
+                  kind: act.reactive_kind,
+                  comment_text: act.comment_text,
+                });
+              },
+              onOpen: () => router.push("/app/scenarios"),
+            };
+          }
           return {
             type: "routine",
             title: act.title,
