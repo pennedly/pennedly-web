@@ -16,7 +16,7 @@
 import { type ReactNode, useState } from "react";
 
 import { cn } from "@/lib/cn";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, type MessageKey } from "@/lib/i18n";
 import {
   IcAdvisor,
   IcAlert,
@@ -159,20 +159,37 @@ export function SuggestionCard({ s }: { s: AdvisorSuggestion }) {
 
 // ── one-click action card (the advisor's "apply-in-one-click" layer) ─────────
 // A typed card the advisor attaches to propose an action the app applies in one
-// click via an existing gated endpoint. ONE shell, per-type content — today only
-// `routine` (a recurring posting scenario). States: proposed → applying → applied
-// (quiet done row + deep-link) | error (inline + Retry). `onApply` runs the apply
-// call (baked in the chat's ask()); Cancel dismisses the card locally.
-export type AdvisorActionCardData = {
-  type: "routine";
+// click via an existing gated endpoint. ONE shell, per-type content. Catalog:
+//   • `routine`      — a recurring ask-mode posting scenario (drafts for review);
+//   • `auto_replies` — turn ON the auto-reply policy (applies immediately).
+// States: proposed → applying → applied (quiet done row + deep-link) | error
+// (inline + Retry). `onApply` runs the apply call (baked in the chat's ask());
+// Cancel dismisses the card locally. `onOpen` deep-links the applied surface.
+type ActionCardCommon = {
   title: string;
-  topic: string;
-  timesPerDay: number;
-  hoursPreview: number[];
   // Portfolio chat only: the target profile's @handle (shown on the card).
   targetHandle?: string | null;
   onApply: () => Promise<void>;
-  onOpenScenarios: () => void; // applied → open /app/scenarios
+  onOpen: () => void;
+};
+export type AdvisorActionCardData =
+  | (ActionCardCommon & {
+      type: "routine";
+      topic: string;
+      timesPerDay: number;
+      hoursPreview: number[];
+    })
+  | (ActionCardCommon & {
+      type: "auto_replies";
+      audience: "questions" | "fans" | "all_except_trolls";
+      repliesPerDay: number;
+      skipLowValue: boolean;
+    });
+
+const AUDIENCE_KEY: Record<"questions" | "fans" | "all_except_trolls", MessageKey> = {
+  questions: "adv.act.aud_questions",
+  fans: "adv.act.aud_fans",
+  all_except_trolls: "adv.act.aud_all_except_trolls",
 };
 
 export function ActionCard({ a }: { a: AdvisorActionCardData }) {
@@ -191,26 +208,43 @@ export function ActionCard({ a }: { a: AdvisorActionCardData }) {
     }
   };
 
+  // Per-type copy (ONE shell, typed content).
+  const isRoutine = a.type === "routine";
+  const cfg = isRoutine
+    ? {
+        kindIcon: <IcRepeat size={17} />,
+        kindLabel: t("adv.act.routine_kind"),
+        applyLabel: t("adv.act.routine_apply"),
+        doneLabel: t("adv.act.routine_done"),
+        linkLabel: t("adv.act.routine_link"),
+      }
+    : {
+        kindIcon: <IcReply size={17} />,
+        kindLabel: t("adv.act.replies_kind"),
+        applyLabel: t("adv.act.replies_apply"),
+        doneLabel: t("adv.act.replies_done"),
+        linkLabel: t("adv.act.replies_link"),
+      };
+
   if (state === "applied") {
     return (
       <div className="mb-[9px] flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg border border-border bg-surface-2 px-[15px] py-[11px]">
         <span className="grid h-[22px] w-[22px] shrink-0 place-items-center rounded-full bg-[color-mix(in_srgb,var(--color-success)_16%,var(--color-surface))] text-success">
           <IcCheck size={14} />
         </span>
-        <span className="min-w-0 flex-1 text-small text-text">{t("adv.act.routine_done")}</span>
+        <span className="min-w-0 flex-1 text-small text-text">{cfg.doneLabel}</span>
         <button
           type="button"
-          onClick={a.onOpenScenarios}
+          onClick={a.onOpen}
           className="inline-flex items-center gap-1 text-small font-medium text-accent hover:underline"
         >
-          {t("adv.act.routine_link")}
+          {cfg.linkLabel}
           <IcArrowRight size={14} />
         </button>
       </div>
     );
   }
 
-  const hoursStr = a.hoursPreview.map((h) => `${h}:00`).join(", ");
   const applying = state === "applying";
   const line = (icon: ReactNode, text: string) => (
     <div className="flex items-center gap-2">
@@ -223,23 +257,39 @@ export function ActionCard({ a }: { a: AdvisorActionCardData }) {
     <div className="mb-[9px] rounded-lg border border-border border-l-[3px] border-l-accent bg-surface p-[14px] shadow-sm">
       <div className="flex items-center gap-[11px]">
         <span className={cn("grid h-[34px] w-[34px] shrink-0 place-items-center rounded-[9px]", ACCENT_TILE)}>
-          <IcRepeat size={17} />
+          {cfg.kindIcon}
         </span>
         <div className="min-w-0">
           <div className="text-caption font-semibold uppercase tracking-[0.03em] text-text-subtle">
-            {t("adv.act.routine_kind")}
+            {cfg.kindLabel}
           </div>
           <div className="truncate text-small font-semibold text-text">{a.title}</div>
         </div>
       </div>
 
       <div className="mt-[11px] flex flex-col gap-[7px]">
-        {line(<IcClock size={15} />, `${a.timesPerDay}× ${t("adv.act.per_day")} · ~${hoursStr}`)}
-        {line(<IcNib size={15} />, a.topic.trim() ? `${t("adv.act.topic")}: ${a.topic.trim()}` : t("adv.act.any_topic"))}
-        {line(<IcNib size={15} />, t("adv.act.in_voice"))}
+        {a.type === "routine" ? (
+          <>
+            {line(
+              <IcClock size={15} />,
+              `${a.timesPerDay}× ${t("adv.act.per_day")} · ~${a.hoursPreview.map((h) => `${h}:00`).join(", ")}`,
+            )}
+            {line(
+              <IcNib size={15} />,
+              a.topic.trim() ? `${t("adv.act.topic")}: ${a.topic.trim()}` : t("adv.act.any_topic"),
+            )}
+            {line(<IcNib size={15} />, t("adv.act.in_voice"))}
+          </>
+        ) : (
+          <>
+            {line(<IcReply size={15} />, t(AUDIENCE_KEY[a.audience]))}
+            {line(<IcRepeat size={15} />, `${t("adv.act.up_to")} ${a.repliesPerDay}× ${t("adv.act.per_day")}`)}
+            {a.skipLowValue && line(<IcEye size={15} />, t("adv.act.skip_low"))}
+          </>
+        )}
       </div>
 
-      {a.timesPerDay > 1 && (
+      {a.type === "routine" && a.timesPerDay > 1 && (
         <div className="mt-[10px] flex items-center gap-2 text-caption text-warning">
           <IcAlert size={14} className="shrink-0" />
           <span>{t("adv.act.cap_warn").replace("{n}", String(a.timesPerDay))}</span>
@@ -247,8 +297,17 @@ export function ActionCard({ a }: { a: AdvisorActionCardData }) {
       )}
 
       <div className="mt-[11px] flex items-start gap-2 rounded-md bg-[color-mix(in_srgb,var(--color-accent)_8%,var(--color-surface))] px-3 py-2 text-caption leading-[1.45] text-text-muted">
-        <IcEye size={14} className="mt-px shrink-0 text-accent" />
-        <span>{t("adv.act.mode_review")}</span>
+        {a.type === "routine" ? (
+          <>
+            <IcEye size={14} className="mt-px shrink-0 text-accent" />
+            <span>{t("adv.act.mode_review")}</span>
+          </>
+        ) : (
+          <>
+            <IcReply size={14} className="mt-px shrink-0 text-accent" />
+            <span>{t("adv.act.mode_instant")}</span>
+          </>
+        )}
       </div>
 
       {a.targetHandle && (
@@ -285,7 +344,7 @@ export function ActionCard({ a }: { a: AdvisorActionCardData }) {
               {t("advisor.retry")}
             </>
           ) : (
-            t("adv.act.routine_apply")
+            cfg.applyLabel
           )}
         </button>
         <button

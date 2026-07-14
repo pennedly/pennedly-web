@@ -56,7 +56,16 @@ export function ADVISOR_DEMO_TURNS(t: T, onOpenStudio: (brief: string) => void):
     timesPerDay: 3,
     hoursPreview: [9, 14, 20],
     onApply: () => new Promise<void>((r) => setTimeout(r, 600)),
-    onOpenScenarios: () => {},
+    onOpen: () => {},
+  };
+  const autoRepliesAction: AdvisorActionCardData = {
+    type: "auto_replies",
+    title: "Auto-replies to questions",
+    audience: "questions",
+    repliesPerDay: 10,
+    skipLowValue: true,
+    onApply: () => new Promise<void>((r) => setTimeout(r, 600)),
+    onOpen: () => {},
   };
 
   const turn1Chips: AdvisorChip[] = [
@@ -95,7 +104,7 @@ export function ADVISOR_DEMO_TURNS(t: T, onOpenStudio: (brief: string) => void):
         chips: turn2Chips,
         sources: [t("advisor.source.heatmap"), t("advisor.source.posts")],
         suggestions: [scheduleSuggestion],
-        actions: [routineAction],
+        actions: [routineAction, autoRepliesAction],
       },
     },
   ];

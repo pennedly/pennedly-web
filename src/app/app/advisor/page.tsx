@@ -32,6 +32,7 @@ import {
   Starters,
   ThinkingRow,
   UserBubble,
+  type AdvisorActionCardData,
   type AdvisorReplyContent,
   type Starter,
 } from "@/components/advisor/AdvisorParts";
@@ -150,22 +151,43 @@ export default function AdvisorPage() {
         })),
         // Per-account chat: an action targets THIS profile (accountId is non-null
         // here — the ask() guard returns early otherwise). No profile row.
-        actions: res.actions.map((act) => ({
-          type: act.type,
-          title: act.title,
-          topic: act.topic,
-          timesPerDay: act.times_per_day,
-          hoursPreview: act.hours_preview,
-          onApply: async () => {
-            await applyAdvisorAction(accountId, {
-              type: "routine",
+        actions: res.actions.map((act): AdvisorActionCardData => {
+          if (act.type === "auto_replies") {
+            return {
+              type: "auto_replies",
               title: act.title,
-              topic: act.topic,
-              times_per_day: act.times_per_day,
-            });
-          },
-          onOpenScenarios: () => router.push("/app/scenarios"),
-        })),
+              audience: act.audience,
+              repliesPerDay: act.replies_per_day,
+              skipLowValue: act.skip_low_value,
+              onApply: async () => {
+                await applyAdvisorAction(accountId, {
+                  type: "auto_replies",
+                  title: act.title,
+                  audience: act.audience,
+                  replies_per_day: act.replies_per_day,
+                  skip_low_value: act.skip_low_value,
+                });
+              },
+              onOpen: () => router.push("/app/autopilot"),
+            };
+          }
+          return {
+            type: "routine",
+            title: act.title,
+            topic: act.topic,
+            timesPerDay: act.times_per_day,
+            hoursPreview: act.hours_preview,
+            onApply: async () => {
+              await applyAdvisorAction(accountId, {
+                type: "routine",
+                title: act.title,
+                topic: act.topic,
+                times_per_day: act.times_per_day,
+              });
+            },
+            onOpen: () => router.push("/app/scenarios"),
+          };
+        }),
       };
       setTurns((prev) => {
         const next = [...prev];

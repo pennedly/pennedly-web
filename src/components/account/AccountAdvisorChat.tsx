@@ -25,6 +25,7 @@ import {
   Starters,
   ThinkingRow,
   UserBubble,
+  type AdvisorActionCardData,
   type AdvisorReplyContent,
   type Starter,
 } from "@/components/advisor/AdvisorParts";
@@ -260,36 +261,64 @@ function useChat(
           brief: s.brief,
           onOpenStudio: () => openInStudio(s.brief, s.account),
         })),
-        actions: res.actions.map((act) => {
-          // Portfolio chat: target the named profile (resolved @handle) or fall
-          // back to the currently selected one; the apply endpoint is per-account.
-          const resolvedId = resolveAccountId?.(act.account) ?? null;
-          const targetId = resolvedId ?? selectedAccountId ?? null;
-          return {
-            type: act.type,
-            title: act.title,
-            topic: act.topic,
-            timesPerDay: act.times_per_day,
-            hoursPreview: act.hours_preview,
-            // Show the @handle ONLY when it resolved to the account we'll apply to
-            // (else we'd claim a target we're not actually using — the fallback
-            // applies to the currently selected profile, with no named-target row).
-            targetHandle: resolvedId != null ? (act.account ?? null) : null,
-            onApply: async () => {
-              if (targetId == null) throw new Error("no target account");
-              await applyAdvisorAction(targetId, {
-                type: "routine",
+        actions: res.actions
+          .map((act): AdvisorActionCardData | null => {
+            // Portfolio chat: the apply endpoint is per-account, so pin the target.
+            //  · advisor named a profile → apply to THAT exact account;
+            //  · advisor named none → the currently-selected profile.
+            // A named-but-unresolvable profile (disconnected / no voice) must NOT
+            // silently retarget to the selected account — applying a live reply
+            // policy (or a routine) to the wrong profile is worse than nothing —
+            // so we drop the card. `named` truthy here ⇒ it resolved, show the handle.
+            const named = (act.account ?? "").trim();
+            const resolvedId = named ? (resolveAccountId?.(named) ?? null) : null;
+            if (named && resolvedId == null) return null;
+            const targetId = named ? resolvedId : (selectedAccountId ?? null);
+            if (targetId == null) return null;
+            const targetHandle = named ? act.account : null;
+            const applyTo = (payload: Parameters<typeof applyAdvisorAction>[1]) =>
+              applyAdvisorAction(targetId, payload).then(() => {});
+            const openAt = (path: string) => () => {
+              setSelectedAccountId(targetId);
+              router.push(path);
+            };
+            if (act.type === "auto_replies") {
+              return {
+                type: "auto_replies",
                 title: act.title,
-                topic: act.topic,
-                times_per_day: act.times_per_day,
-              });
-            },
-            onOpenScenarios: () => {
-              if (targetId != null) setSelectedAccountId(targetId);
-              router.push("/app/scenarios");
-            },
-          };
-        }),
+                audience: act.audience,
+                repliesPerDay: act.replies_per_day,
+                skipLowValue: act.skip_low_value,
+                targetHandle,
+                onApply: () =>
+                  applyTo({
+                    type: "auto_replies",
+                    title: act.title,
+                    audience: act.audience,
+                    replies_per_day: act.replies_per_day,
+                    skip_low_value: act.skip_low_value,
+                  }),
+                onOpen: openAt("/app/autopilot"),
+              };
+            }
+            return {
+              type: "routine",
+              title: act.title,
+              topic: act.topic,
+              timesPerDay: act.times_per_day,
+              hoursPreview: act.hours_preview,
+              targetHandle,
+              onApply: () =>
+                applyTo({
+                  type: "routine",
+                  title: act.title,
+                  topic: act.topic,
+                  times_per_day: act.times_per_day,
+                }),
+              onOpen: openAt("/app/scenarios"),
+            };
+          })
+          .filter((c): c is AdvisorActionCardData => c !== null),
       };
       setTurns((prev) => {
         const next = [...prev];

@@ -334,9 +334,10 @@ export type AdvisorSuggestionData = {
 };
 
 // A one-click advisor ACTION (the "apply-in-one-click" layer). `type` is a CLOSED
-// catalog — only "routine" today (a recurring posting scenario in the account's
-// voice). The FE renders a typed card; Apply → POST /accounts/{id}/advisor/apply.
-export type AdvisorActionData = {
+// catalog. Each variant maps to an existing per-account operation the FE renders
+// as a typed card; Apply → POST /accounts/{id}/advisor/apply. Portfolio chat sets
+// `account` (bare @handle of the target profile; null = current/only).
+export type AdvisorRoutineAction = {
   type: "routine";
   title: string;
   topic: string;
@@ -344,9 +345,21 @@ export type AdvisorActionData = {
   // The deterministic schedule the backend will create (so the card's schedule
   // line matches exactly what fires).
   hours_preview: number[];
-  // Portfolio chat only: bare @handle of the target profile (null = current/only).
   account?: string | null;
 };
+
+// Turn ON the account's auto-reply policy (audience / daily cap / low-value skip).
+// Applies immediately — the separate POST automation is untouched.
+export type AdvisorAutoRepliesAction = {
+  type: "auto_replies";
+  title: string;
+  audience: "questions" | "fans" | "all_except_trolls";
+  replies_per_day: number;
+  skip_low_value: boolean;
+  account?: string | null;
+};
+
+export type AdvisorActionData = AdvisorRoutineAction | AdvisorAutoRepliesAction;
 
 export type AdvisorResponse = {
   reply: string;
@@ -364,8 +377,9 @@ export type AdvisorResponse = {
 
 // What POST /accounts/{id}/advisor/apply returns after applying an action.
 export type ApplyActionResponse = {
-  kind: string; // the applied action type ("routine")
-  scenario_id: number;
+  kind: string; // the applied action type ("routine" | "auto_replies")
+  // Present only for actions that create a scenario (routine); null otherwise.
+  scenario_id: number | null;
   name: string;
 };
 

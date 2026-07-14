@@ -448,12 +448,24 @@ export async function chatAccountAdvisor(
 }
 
 // Apply a one-click advisor action against a target profile (owner-scoped,
-// tester-gated). Today the only type is "routine" → creates an ask-mode posting
-// scenario + arms the account's post automation; returns the created scenario so
-// the card can deep-link «Открыть в Автопилоте».
+// tester-gated). CLOSED catalog:
+//   • "routine"      → ask-mode posting scenario + arms post automation;
+//                      response carries the created scenario_id for the deep-link.
+//   • "auto_replies" → turns ON the auto-reply policy (audience / cap / skip);
+//                      no scenario created (scenario_id is null).
+type ApplyActionInput =
+  | { type: "routine"; title: string; topic: string; times_per_day: number }
+  | {
+      type: "auto_replies";
+      title: string;
+      audience: "questions" | "fans" | "all_except_trolls";
+      replies_per_day: number;
+      skip_low_value: boolean;
+    };
+
 export async function applyAdvisorAction(
   accountId: number,
-  action: { type: "routine"; title: string; topic: string; times_per_day: number },
+  action: ApplyActionInput,
 ): Promise<ApplyActionResponse> {
   return fetchApi<ApplyActionResponse>(`/api/accounts/${accountId}/advisor/apply`, {
     method: "POST",
