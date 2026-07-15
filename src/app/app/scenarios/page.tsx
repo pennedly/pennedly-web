@@ -893,6 +893,9 @@ export default function ScenariosPage() {
   async function confirmEnable(mode: PublishMode, opts: { enableAutopost: boolean }) {
     const s = pendingEnable;
     if (!s) return;
+    // Already on ⇒ this dialog was opened to CHANGE the mode (not to enable), so
+    // the toast should say "mode saved", not "turned on".
+    const wasEnabled = s.enabled;
     setEnableBusy(true);
     // optimistic: flip on + record the chosen mode
     setScenarios((xs) => xs.map((x) => (x.id === s.id ? { ...x, enabled: true, publish_mode: mode } : x)));
@@ -901,7 +904,7 @@ export default function ScenariosPage() {
     // (post_enabled is dead post-merge — the worker gates only on `enabled`).
     if (opts.enableAutopost) setMasterOn(true);
     if (demoOn) {
-      toast(t("scenarios.toast_on"));
+      toast(wasEnabled ? t("scenarios.mode_saved") : t("scenarios.toast_on"));
       setEnableBusy(false);
       setPendingEnable(null);
       return;
@@ -915,9 +918,14 @@ export default function ScenariosPage() {
       }
       const saved = await updateScenario(s.id, { publish_mode: mode, enabled: true });
       setScenarios((xs) => xs.map((x) => (x.id === saved.id ? saved : x)));
-      toast(t("scenarios.toast_on"));
+      toast(wasEnabled ? t("scenarios.mode_saved") : t("scenarios.toast_on"));
     } catch (e) {
-      setScenarios((xs) => xs.map((x) => (x.id === s.id ? { ...x, enabled: false } : x)));
+      // Roll back to the PRE-change snapshot (`s` predates the optimistic update),
+      // restoring BOTH fields. On a failed enable that's `enabled:false` as before;
+      // now that «Изменить» reuses this dialog for a RUNNING routine, it also restores
+      // `enabled:true` + the original mode on a failed mode-change — so a transient
+      // error never shows a live routine as OFF (or with the unsaved mode).
+      setScenarios((xs) => xs.map((x) => (x.id === s.id ? { ...x, enabled: s.enabled, publish_mode: s.publish_mode } : x)));
       toast(String(e), "error");
     } finally {
       setEnableBusy(false);
@@ -1272,6 +1280,7 @@ export default function ScenariosPage() {
         onOpen={openEditor}
         onApply={applyToAccounts}
         onDelete={(sc) => setDelTarget(sc)}
+        onChangeMode={(sc) => setPendingEnable(sc)}
         inheritFromHouseRules={(s.action_cfg?.kind as string) === "reply_policy"}
         overridesDefault={s.id === overridingScenarioId}
         band={extra?.band}

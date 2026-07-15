@@ -678,6 +678,7 @@ export function ScenarioCard({
   onOpen,
   onApply,
   onDelete,
+  onChangeMode,
   inheritFromHouseRules = false,
   overridesDefault = false,
   band,
@@ -691,6 +692,9 @@ export function ScenarioCard({
   onOpen: (s: Scenario) => void;
   onApply?: (s: Scenario, accountIds: number[]) => void;
   onDelete?: (s: Scenario) => void;
+  /** Switch this routine's publish mode (draft-for-review ↔ publishes-directly).
+   *  Opens the mode-picker dialog; only shown for an enabled routine. */
+  onChangeMode?: (s: Scenario) => void;
   /** Unified Autopilot: this routine's reply cadence/quiet/ceiling come from the
    *  global «Правила дома» → show an «из Правил дома» inherit chip in the footer. */
   inheritFromHouseRules?: boolean;
@@ -712,7 +716,6 @@ export function ScenarioCard({
   // автоматически» promise, shown plainly on the card).
   const sentence = deriveSentence(t, s, handle);
   const mode = publishModeOf(s);
-  const modeKey = (`scenarios.card.${mode}_${sentence.kind}` as MessageKey);
   const ModeIcon = mode === "auto" ? IcBolt : IcEye;
   return (
     <div
@@ -786,10 +789,23 @@ export function ScenarioCard({
         <CadenceStrip s={s} />
       </div>
 
-      {/* who confirms before it goes out — «спрашивает / публикует автоматически» */}
-      <p className={cn("mt-2.5 inline-flex items-center gap-1.5 text-caption", mode === "auto" ? "text-warning" : "text-text-subtle")}>
-        <ModeIcon size={13} /> {t(modeKey)}
-      </p>
+      {/* Publishing mode — a clear badge (draft-for-review vs publishes-directly) so
+          it's unmissable, plus a one-tap switch that opens the mode picker. Amber
+          «note» = the attention state (auto publishes without review). */}
+      <div className="mt-2.5 flex flex-wrap items-center gap-2">
+        <Badge tone={mode === "auto" ? "note" : "neutral"} icon={<ModeIcon size={13} />}>
+          {t(`scenarios.mode_${mode}_${sentence.kind}` as MessageKey)}
+        </Badge>
+        {onChangeMode && s.enabled && (
+          <button
+            type="button"
+            onClick={() => onChangeMode(s)}
+            className="text-caption font-medium text-accent transition-colors hover:underline"
+          >
+            {t("scenarios.change_mode")}
+          </button>
+        )}
+      </div>
 
       <div className="mt-3.5 flex flex-col gap-2 border-t border-border pt-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-caption tabular-nums text-text-subtle">
@@ -1799,7 +1815,9 @@ export function EnableConfirm({
             {isReply ? <IcReplies size={18} /> : <IcRepeat size={18} />}
           </span>
           <div className="min-w-0">
-            <h2 className="text-h3 font-semibold [text-wrap:balance]">{t("scenarios.enable_title").replace("{name}", scenario.name)}</h2>
+            <h2 className="text-h3 font-semibold [text-wrap:balance]">
+              {(scenario.enabled ? t("scenarios.mode_change_title") : t("scenarios.enable_title")).replace("{name}", scenario.name)}
+            </h2>
             <Sentence template={sentence.template} slots={sentence.slots} variant="card" className="mt-1" />
           </div>
         </div>
@@ -1867,7 +1885,7 @@ export function EnableConfirm({
             icon={<IcCheck size={15} />}
             className="max-md:min-h-[44px] max-md:w-full"
           >
-            {t("scenarios.turn_on")}
+            {scenario.enabled ? t("scenarios.mode_change_save") : t("scenarios.turn_on")}
           </Button>
         </div>
       </div>
