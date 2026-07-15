@@ -23,6 +23,8 @@ export type ReplyComment = {
   // Public Threads permalink of the comment itself, for «Open in Threads» on a
   // replied comment. Null when Meta didn't return one → the CTA renders disabled.
   url?: string | null;
+  // Media attached to the incoming Threads comment.
+  commentMedia?: { url: string; alt?: string | null; type?: string | null; poster?: string | null }[];
   // One image attached to the reply draft (relative /media/... URL).
   media?: { url: string; alt?: string | null }[];
 };

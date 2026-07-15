@@ -1147,7 +1147,7 @@ export const en = {
 
   // ── My Feed (posts + analytics) ───────────────────────────────
   "dashboard.nav.feed": "feed",
-  "nav.studio": "Create",
+  "nav.studio": "Drafts",
   "nav.calendar": "Calendar",
   "calendar.title": "Calendar",
   "calendar.subtitle": "Everything scheduled to go out",
@@ -2851,12 +2851,18 @@ export const en = {
   "adv.act.bt_apply": "Create routine",
   "adv.act.bt_done": "Routine created",
   "adv.act.bt_link": "Open in Autopilot",
+  "adv.act.topics_kind": "Topic list",
+  "adv.act.topics_apply": "Add topics",
+  "adv.act.topics_done": "Topics added",
+  "adv.act.topics_link": "Open Drafts",
+  "adv.act.topics_more": "+{n} more",
+  "adv.act.topics_mode": "Adds topics only. Nothing is scheduled or turned on.",
   "adv.act.bt_windows": "Windows",
   "adv.act.block_morning": "morning",
   "adv.act.block_daytime": "daytime",
   "adv.act.block_evening": "evening",
   "adv.act.block_night": "night",
-  "advisor.open_in_studio": "Open in Create",
+  "advisor.open_in_studio": "Open Drafts",
   "advisor.show_data": "Show me the data",
   "advisor.from_advisor": "From your Agent",
   // Source labels — the backend returns canonical source ids; the UI maps them

@@ -533,6 +533,11 @@ type ApplyActionInput =
       topic?: string;
       // The chosen best-time blocks; the server re-resolves them → hours.
       blocks: string[];
+    }
+  | {
+      type: "topics_list";
+      title: string;
+      topics: string[];
     };
 
 export async function applyAdvisorAction(

@@ -326,6 +326,13 @@ export default function RepliesPage() {
         time: relativeTime(c.published_at, locale),
         repliedTime: relativeTime(c.replied_at, locale) || null,
         url: c.comment_url,
+        commentMedia: c.media_url
+          ? [{
+              url: c.media_url,
+              type: c.media_type === "VIDEO" ? "video" : null,
+              poster: c.thumbnail_url,
+            }]
+          : [],
         media: c.draft_media ?? [],
       });
     }

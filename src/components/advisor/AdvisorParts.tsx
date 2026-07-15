@@ -36,6 +36,8 @@ import {
   IcReply,
   IcRepeat,
   IcSend,
+  IcTag,
+  IcTags,
   IcUndo,
   type IconProps,
 } from "@/components/icons";
@@ -228,6 +230,10 @@ export type AdvisorActionCardData =
       blocks: string[];
       hoursPreview: number[];
       timesPerDay: number;
+    })
+  | (ActionCardCommon & {
+      type: "topics_list";
+      topics: string[];
     });
 
 const BLOCK_LABEL_KEY: Record<string, MessageKey> = {
@@ -375,13 +381,21 @@ export function ActionCard({ a }: { a: AdvisorActionCardData }) {
                       doneLabel: t("adv.act.bt_done"),
                       linkLabel: t("adv.act.bt_link"),
                     }
-                  : {
-                      kindIcon: <CtrlIcon size={17} />,
-                      kindLabel: t(CTRL_META[a.controlKind].kind),
-                      applyLabel: t(CTRL_META[a.controlKind].apply),
-                      doneLabel: t(CTRL_META[a.controlKind].done),
-                      linkLabel: t("adv.act.ctrl_link"),
-                    };
+                  : a.type === "topics_list"
+                    ? {
+                        kindIcon: <IcTags size={17} />,
+                        kindLabel: t("adv.act.topics_kind"),
+                        applyLabel: t("adv.act.topics_apply"),
+                        doneLabel: t("adv.act.topics_done"),
+                        linkLabel: t("adv.act.topics_link"),
+                      }
+                    : {
+                        kindIcon: <CtrlIcon size={17} />,
+                        kindLabel: t(CTRL_META[a.controlKind].kind),
+                        applyLabel: t(CTRL_META[a.controlKind].apply),
+                        doneLabel: t(CTRL_META[a.controlKind].done),
+                        linkLabel: t("adv.act.ctrl_link"),
+                      };
 
   if (state === "applied") {
     return (
@@ -492,6 +506,14 @@ export function ActionCard({ a }: { a: AdvisorActionCardData }) {
               a.topic?.trim() ? `${t("adv.act.topic")}: ${a.topic.trim()}` : t("adv.act.any_topic"),
             )}
           </>
+        ) : a.type === "topics_list" ? (
+          <>
+            {a.topics.slice(0, 5).map((topic) => (
+              <div key={topic}>{line(<IcTag size={15} />, topic)}</div>
+            ))}
+            {a.topics.length > 5 &&
+              line(<IcTags size={15} />, t("adv.act.topics_more").replace("{n}", String(a.topics.length - 5)))}
+          </>
         ) : a.controlKind === "quiet_hours" ? (
           <>
             {line(<IcMoon size={15} />, `${t("adv.act.ctrl_quiet_window")}: ${fmtWindow(a.quietStart, a.quietEnd)}`)}
@@ -560,6 +582,11 @@ export function ActionCard({ a }: { a: AdvisorActionCardData }) {
           <>
             <IcEye size={14} className="mt-px shrink-0 text-accent" />
             <span>{t("adv.act.mode_review")}</span>
+          </>
+        ) : a.type === "topics_list" ? (
+          <>
+            <IcTags size={14} className="mt-px shrink-0 text-accent" />
+            <span>{t("adv.act.topics_mode")}</span>
           </>
         ) : (
           <>

@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import { logout, fetchComments, fetchMe, getTokens, listAudits, listDrafts, setMyLocale } from "@/lib/api";
 import { captureEvent, resetIdentity } from "@/lib/analytics";
 import { useSelectedAccountId } from "@/lib/account";
+import { resetAccountsPresenceForSignedOutUser } from "@/lib/accounts";
 import { setMobileNavOpen, useMobileNavOpen } from "@/lib/mobileNav";
 import { getLocale, useTranslation, type MessageKey } from "@/lib/i18n";
 import { AccountSwitcher } from "@/components/AccountSwitcher";
@@ -59,13 +60,11 @@ const GROUPS: { title: MessageKey; items: NavItem[] }[] = [
       // (routines, automation, scheduling…), so it belongs in the do-work group, not
       // analytics. First = the "tell the agent what you need" entry point.
       { href: "/app/advisor", label: "dashboard.nav.advisor", icon: IcAdvisor, tester: true },
-      // «Студия» → «Создать» (nav.studio value renamed); it's the content-creation
-      // hub (brief → draft → review → publish — a verb fits it better than a noun,
-      // and it avoids colliding with the inner «Черновики» status tab). **Автопилот**
-      // raised here (the killer feature); «Сценарии» merged into it (the standalone
-      // /app/autopilot screen redirects to /app/scenarios).
-      { href: "/app", label: "nav.studio", icon: IcStudio, exact: true, badgeKey: "studio" },
+      // «Автопилот» sits directly under Agent: it is the main automation action
+      // surface. `/app` keeps the Studio route but is labeled «Черновики» in nav,
+      // matching what the user mostly finds there after generation/scheduling.
       { href: "/app/scenarios", label: "dashboard.nav.autopilot", icon: IcBolt, tester: true },
+      { href: "/app", label: "nav.studio", icon: IcStudio, exact: true, badgeKey: "studio" },
       { href: "/app/calendar", label: "nav.calendar", icon: IcCalendar },
       { href: "/app/feed", label: "dashboard.nav.feed", icon: IcFeed },
       { href: "/app/replies", label: "dashboard.nav.replies", icon: IcReplies, tester: true, badgeKey: "replies" },
@@ -173,6 +172,7 @@ export function Sidebar() {
   function onLogout() {
     captureEvent("ui.logout_clicked");
     resetIdentity();
+    resetAccountsPresenceForSignedOutUser();
     // Fire-and-forget: logout() clears the local tokens synchronously first,
     // then best-effort revokes the server session (keepalive survives the
     // redirect). Don't await it, so a slow/offline network can't stall the

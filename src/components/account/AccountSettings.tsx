@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/field";
+import { resetAccountsPresenceForSignedOutUser } from "@/lib/accounts";
 import {
   IcArchive,
   IcArrowLeft,
@@ -311,6 +312,7 @@ function DangerCard({ t }: { t: T }) {
     setErr(false);
     try {
       await deleteAccount();
+      resetAccountsPresenceForSignedOutUser();
       clearTokens();
       router.push("/app/login");
     } catch {

@@ -414,6 +414,43 @@ export function ReplyImage({ c, h }: { c: ReplyComment; h: ReplyHandlers }) {
   );
 }
 
+function CommentMedia({ media }: { media?: { url: string; alt?: string | null; type?: string | null; poster?: string | null }[] }) {
+  const { t } = useTranslation();
+  const [broken, setBroken] = useState(false);
+  const first = media?.[0];
+  if (!first) return null;
+  return (
+    <div className="mt-3 max-w-[360px] overflow-hidden rounded-md border border-border bg-surface-2 max-md:max-w-full">
+      {broken ? (
+        <div className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 text-center text-text-subtle">
+          <span className="grid h-10 w-10 place-items-center rounded-md border border-border">
+            <IcImage size={20} />
+          </span>
+          <span className="text-small font-semibold text-text-muted">{t("feed.image_unavailable")}</span>
+        </div>
+      ) : first.type === "video" ? (
+        <video
+          src={mediaUrl(first.url)}
+          poster={first.poster ? mediaUrl(first.poster) : undefined}
+          controls
+          playsInline
+          preload="metadata"
+          onError={() => setBroken(true)}
+          className="max-h-[360px] w-full bg-black object-contain"
+        />
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={mediaUrl(first.url)}
+          alt={first.alt ?? ""}
+          onError={() => setBroken(true)}
+          className="max-h-[360px] w-full object-cover"
+        />
+      )}
+    </div>
+  );
+}
+
 export function CommentCard({
   c,
   youInitials,
@@ -483,7 +520,10 @@ export function CommentCard({
       </div>
 
       {/* comment body */}
-      <p className={cn("mt-[11px] text-body leading-[1.6] text-text", status === "skipped" && "text-text-muted")}>{commentBody}</p>
+      {commentBody.trim() && (
+        <p className={cn("mt-[11px] text-body leading-[1.6] text-text", status === "skipped" && "text-text-muted")}>{commentBody}</p>
+      )}
+      <CommentMedia media={c.commentMedia} />
       {c.lang && (
         <TranslateRow lang={c.lang} on={cmtTr} onToggle={() => setCmtTr((v) => !v)} className="mt-[9px]" />
       )}

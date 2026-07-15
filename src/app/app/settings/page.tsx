@@ -27,7 +27,7 @@ import {
   getSelectedAccountId,
   setSelectedAccountId,
 } from "@/lib/account";
-import { refreshAccountsPresence } from "@/lib/accounts";
+import { refreshAccountsPresence, resetAccountsPresenceForSignedOutUser } from "@/lib/accounts";
 import {
   LOCALES,
   setLocale,
@@ -113,6 +113,7 @@ export default function SettingsPage() {
     try {
       await deleteAccount();
       resetIdentity();
+      resetAccountsPresenceForSignedOutUser();
       clearTokens();
       router.push("/app/login");
     } catch {

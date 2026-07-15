@@ -494,6 +494,21 @@ function useChat(
                 onOpen: openAt("/app/scenarios"),
               };
             }
+            if (act.type === "topics_list") {
+              return {
+                type: "topics_list",
+                title: act.title,
+                topics: act.topics,
+                targetHandle,
+                onApply: () =>
+                  applyTo({
+                    type: "topics_list",
+                    title: act.title,
+                    topics: act.topics,
+                  }),
+                onOpen: openAt("/app"),
+              };
+            }
             return {
               type: "routine",
               title: act.title,

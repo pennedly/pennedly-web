@@ -25,6 +25,7 @@ import { useRouter } from "next/navigation";
 import { setSelectedAccountId, useSelectedAccountId } from "@/lib/account";
 import { useMe } from "@/lib/use-account-data";
 import { logout, startThreadsConnect } from "@/lib/api";
+import { resetAccountsPresenceForSignedOutUser } from "@/lib/accounts";
 import { useTranslation } from "@/lib/i18n";
 import {
   BrandMark as BrandLogo,
@@ -157,6 +158,7 @@ export function useAccountNav(): Nav {
     connectThreads,
     addProfile: connectThreads,
     logout: () => {
+      resetAccountsPresenceForSignedOutUser();
       void logout();
       router.push("/app/login");
     },

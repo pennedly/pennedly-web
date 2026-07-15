@@ -46,6 +46,16 @@ export function refreshAccountsPresence(): Promise<void> {
   return inFlight;
 }
 
+/** Drop per-user account presence before an intentional sign-out/user switch.
+ *  Keep this explicit instead of wiring it to every `clearTokens()` call:
+ *  auth-failure handlers can clear tokens while a page is still mounted, and
+ *  forcing the shell back to its first-load spinner there can interrupt flows. */
+export function resetAccountsPresenceForSignedOutUser(): void {
+  hasConnected = null;
+  inFlight = null;
+  emit();
+}
+
 function subscribe(fn: () => void): () => void {
   listeners.add(fn);
   return () => {

@@ -435,6 +435,13 @@ export type AdvisorBestTimeRoutineAction = {
   account?: string | null;
 };
 
+export type AdvisorTopicsListAction = {
+  type: "topics_list";
+  title: string;
+  topics: string[];
+  account?: string | null;
+};
+
 export type AdvisorActionData =
   | AdvisorRoutineAction
   | AdvisorAutoRepliesAction
@@ -443,7 +450,8 @@ export type AdvisorActionData =
   | AdvisorReactiveAction
   | AdvisorFormatAction
   | AdvisorAutomationAction
-  | AdvisorBestTimeRoutineAction;
+  | AdvisorBestTimeRoutineAction
+  | AdvisorTopicsListAction;
 
 export type AdvisorResponse = {
   reply: string;
@@ -461,7 +469,7 @@ export type AdvisorResponse = {
 
 // What POST /accounts/{id}/advisor/apply returns after applying an action.
 export type ApplyActionResponse = {
-  kind: string; // routine | auto_replies | voice_rule | schedule_post
+  kind: string; // routine | auto_replies | voice_rule | schedule_post | topics_list
   // Present only for actions that create a scenario (routine); null otherwise.
   scenario_id: number | null;
   name: string;
@@ -602,6 +610,10 @@ export type CommentSummary = {
   threads_comment_id: string;
   author_username: string | null;
   text: string | null;
+  // Media attached to the incoming Threads comment, if Meta returned it.
+  media_url: string | null;
+  media_type: string | null;
+  thumbnail_url: string | null;
   comment_url: string | null;
   status: string; // "new" | "drafted" | "replied"
   published_at: string | null;

@@ -289,6 +289,21 @@ export default function AdvisorPage() {
               onOpen: () => router.push("/app/scenarios"),
             };
           }
+          if (act.type === "topics_list") {
+            return {
+              type: "topics_list",
+              title: act.title,
+              topics: act.topics,
+              onApply: async () => {
+                await applyAdvisorAction(accountId, {
+                  type: "topics_list",
+                  title: act.title,
+                  topics: act.topics,
+                });
+              },
+              onOpen: () => router.push("/app"),
+            };
+          }
           return {
             type: "routine",
             title: act.title,

@@ -134,6 +134,13 @@ export function ADVISOR_DEMO_TURNS(t: T, onOpenStudio: (brief: string) => void):
     onApply: () => new Promise<void>((r) => setTimeout(r, 600)),
     onOpen: () => {},
   };
+  const topicsAction: AdvisorActionCardData = {
+    type: "topics_list",
+    title: "Add content lanes",
+    topics: ["Morning routines", "Craft notes", "Behind the scenes"],
+    onApply: () => new Promise<void>((r) => setTimeout(r, 600)),
+    onOpen: () => {},
+  };
 
   const turn1Chips: AdvisorChip[] = [
     { tone: "down", icon: "eye", label: "7-day views −18%" },
@@ -182,6 +189,7 @@ export function ADVISOR_DEMO_TURNS(t: T, onOpenStudio: (brief: string) => void):
           quietAction,
           pauseAction,
           bestTimeAction,
+          topicsAction,
         ],
       },
     },
