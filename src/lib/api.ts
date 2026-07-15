@@ -108,6 +108,25 @@ function timeoutSignal(ms: number): AbortSignal | undefined {
 export function setTokens(pair: TokenPair): void {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(TOKEN_KEY, JSON.stringify(pair));
+  _emitTokensChanged();
+}
+
+// Reactive token-PRESENCE signal (for `useSyncExternalStore`): components
+// subscribe so they react the moment a login writes the token or a logout clears
+// it, WITHOUT waiting for a remount. This is the missing primitive that left an
+// already-mounted authenticated shell unable to bootstrap after an in-SPA login
+// (its mount-only effect never re-ran, so it only recovered on a full refresh).
+// A boolean snapshot (`getTokens() !== null`) means a token-refresh rotation
+// (which also calls setTokens) is a no-op re-render, only login/logout flip it.
+const _tokensChangedListeners = new Set<() => void>();
+function _emitTokensChanged(): void {
+  for (const fn of _tokensChangedListeners) fn();
+}
+export function subscribeTokens(fn: () => void): () => void {
+  _tokensChangedListeners.add(fn);
+  return () => {
+    _tokensChangedListeners.delete(fn);
+  };
 }
 
 // Modules that cache per-user data (account-data, use-me) register here so a
@@ -122,6 +141,7 @@ export function clearTokens(): void {
   if (typeof window === "undefined") return;
   window.localStorage.removeItem(TOKEN_KEY);
   for (const fn of _tokensClearedListeners) fn();
+  _emitTokensChanged();
 }
 
 export function getTokens(): TokenPair | null {

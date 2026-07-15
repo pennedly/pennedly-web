@@ -180,6 +180,7 @@ function EmailForm({
   onGoogle,
   onSubmit,
   busyGoogle,
+  busy = false,
   error,
   t,
 }: {
@@ -188,6 +189,7 @@ function EmailForm({
   onGoogle: () => void;
   onSubmit: () => void;
   busyGoogle: boolean;
+  busy?: boolean;
   error: string | null;
   t: (k: MessageKey) => string;
 }) {
@@ -218,7 +220,7 @@ function EmailForm({
         className="mt-1.5 flex flex-col gap-3.5"
         onSubmit={(e) => {
           e.preventDefault();
-          if (valid) onSubmit();
+          if (valid && !busy) onSubmit();
         }}
       >
         <label className="block">
@@ -238,8 +240,16 @@ function EmailForm({
           />
         </label>
         <Alert text={error} />
-        <button type="submit" disabled={!valid} className={PRIMARY_LG}>
-          <IcMail size={17} /> {t("login.submit_code")}
+        <button type="submit" disabled={!valid || busy} className={PRIMARY_LG}>
+          {busy ? (
+            <>
+              <Spinner /> {t("login.sending")}
+            </>
+          ) : (
+            <>
+              <IcMail size={17} /> {t("login.submit_code")}
+            </>
+          )}
         </button>
       </form>
 
@@ -645,6 +655,7 @@ function LoginPageInner() {
   }
 
   async function onRequestCode() {
+    if (pending) return; // in-flight guard — a 2nd click would email a 2nd code
     setError(null);
     setPending(true);
     captureEvent("ui.signin_requested", { email_length: email.length });
@@ -703,14 +714,17 @@ function LoginPageInner() {
   }
 
   async function onResend() {
-    if (resendIn > 0) return;
+    if (resendIn > 0 || pending) return; // in-flight guard — a 2nd click would email a 2nd code
     setError(null);
+    setPending(true);
     captureEvent("ui.signin_requested", { email_length: email.length, resend: true });
     try {
       await requestEmailCode(email, locale);
       startCooldown();
     } catch {
       setError(t("login.signin_failed"));
+    } finally {
+      setPending(false);
     }
   }
 
@@ -762,6 +776,7 @@ function LoginPageInner() {
             onGoogle={onGoogle}
             onSubmit={onRequestCode}
             busyGoogle={busyGoogle}
+            busy={pending}
             error={error}
             t={t}
           />

@@ -12,13 +12,13 @@
 //     user who disconnects their last account anywhere lands on the connect
 //     screen, not a half-empty app with a dead sidebar.
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 import { AppFooter } from "@/components/AppFooter";
 import { Sidebar } from "@/components/Sidebar";
 import { Spinner } from "@/components/ui/feedback";
-import { fetchMe, getTokens } from "@/lib/api";
+import { fetchMe, getTokens, subscribeTokens } from "@/lib/api";
 import { adoptServerLocale } from "@/lib/i18n";
 import {
   refreshAccountsPresence,
@@ -51,15 +51,25 @@ export default function AppLayout({
   // full-screen wizard; non-testers keep the current onboarding flow until it is
   // promoted. Null until /me resolves, so we never redirect on a stale guess.
   const [isTester, setIsTester] = useState<boolean | null>(null);
+  // Reactive token presence: flips the moment login writes the token (or logout
+  // clears it), so the two bootstrap effects below re-run WITHOUT a remount. This
+  // shared layout wraps both /app/login and /app, so an in-SPA login does NOT
+  // remount it — a mount-only ([]) effect would never re-run and the shell would
+  // hang on the loader until a manual refresh (fixed here).
+  const hasTokens = useSyncExternalStore(
+    subscribeTokens,
+    () => getTokens() !== null,
+    () => false,
+  );
 
   // Check connected-account presence once we enter the shell area. The store
   // persists across SPA navigations, so this only fetches on first entry;
   // connect/disconnect call refreshAccountsPresence() to flip it live.
   useEffect(() => {
-    if (!exempt && getTokens()) {
+    if (!exempt && hasTokens) {
       refreshAccountsPresence();
     }
-  }, [exempt]);
+  }, [exempt, hasTokens]);
 
   // Server→client locale: adopt the user's saved language (me.locale) on load
   // when they haven't explicitly picked one locally — so a returning user's
@@ -68,7 +78,13 @@ export default function AppLayout({
   // every /app page, including onboarding, because hooks run before the
   // shell-exempt early return below.
   useEffect(() => {
-    if (!getTokens()) return;
+    // Logout (or a same-tab user switch): drop the prior user's tester flag back to
+    // null so the zero-account redirect below (gated on isTester !== null) can't fire
+    // with a stale value before the next user's /me resolves.
+    if (!hasTokens) {
+      setIsTester(null);
+      return;
+    }
     fetchMe()
       .then((m) => {
         adoptServerLocale(m.locale);
@@ -78,7 +94,9 @@ export default function AppLayout({
       // the loader forever (the redirect below waits on isTester !== null). Fall
       // back to the safe prior default: non-tester → the /app/onboarding wizard.
       .catch(() => setIsTester(false));
-  }, []);
+    // Re-runs when the token lands (login) — NOT on token-refresh rotations, since
+    // the boolean `hasTokens` snapshot stays true across those.
+  }, [hasTokens]);
 
   // Zero connected accounts → route by tester status (wait for the flag so we
   // don't redirect on a stale guess): testers to the durable account dashboard's
