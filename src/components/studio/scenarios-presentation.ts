@@ -148,7 +148,36 @@ export function deriveSentence(t: T, s: Scenario, handle: string): DerivedSenten
   if (s.condition_cfg && ("active_from" in s.condition_cfg || "active_to" in s.condition_cfg)) {
     return { template: t("scenarios.sentence.generic_dates"), slots: { who: who(handle) }, kind: "post" };
   }
+  // Daily post routine: speak the REAL scheduled time(s) instead of a hardcoded
+  // "every morning" — the routine can fire at any hour (e.g. 21:00), so the promise
+  // line must match the schedule. Falls back to a time-less «every day» line only
+  // when no explicit hour is stored.
+  const dailyHours = dailyPostHours(s.trigger_cfg);
+  if (dailyHours.length) {
+    const time = dailyHours.map((h) => `${h}:00`).join(", ");
+    return { template: t("scenarios.sentence.generic_post_at"), slots: { time: v(time), who: who(handle) }, kind: "post" };
+  }
   return { template: t("scenarios.sentence.generic_post"), slots: { who: who(handle) }, kind: "post" };
+}
+
+// The nominal scheduled hour(s) of a daily post routine, read permissively from
+// `trigger_cfg` (`hours` list preferred, else a single `hour`), deduped + sorted.
+// Mirrors the worker's read (`_scenario_slot_hours` / `_scenario_schedule_hour`) so
+// the card's promise line agrees with when it actually fires. [] = no explicit hour.
+function dailyPostHours(cfg: Scenario["trigger_cfg"]): number[] {
+  const rec = cfg as { hours?: unknown; hour?: unknown } | null | undefined;
+  const out = new Set<number>();
+  const list = rec?.hours;
+  if (Array.isArray(list)) {
+    for (const h of list) {
+      if (typeof h === "number" && Number.isInteger(h) && h >= 0 && h <= 23) out.add(h);
+    }
+  }
+  const one = rec?.hour;
+  if (out.size === 0 && typeof one === "number" && Number.isInteger(one) && one >= 0 && one <= 23) {
+    out.add(one);
+  }
+  return [...out].sort((a, b) => a - b);
 }
 
 // Pull slot-override fields out of a scenario's stored config.
@@ -235,6 +264,15 @@ export const DEMO_CC: Scenario[] = [
     trigger_cfg: { kind: "daily_first_post" }, condition_cfg: { only_if_no_post_today: true, not_before: "19:00" }, action_cfg: { kind: "post" },
     structured: null, instruction: "", reply_instruction: "",
     next_run_at: null, last_run_at: "2026-06-12T17:00:00Z", fire_count: 4, recent_skips: [],
+  },
+  {
+    // Preset-less daily routine (as the Agent creates them) at an EVENING hour — the
+    // sentence must read the real time («Каждый день в 21:00…»), not a hardcoded
+    // «Каждое утро». Auto mode so the «Публикует сразу» badge shows too.
+    id: 6, name: "Вечерняя история", template: null, enabled: true, preset_id: null, publish_mode: "auto",
+    trigger_cfg: { kind: "daily_first_post", hours: [21] }, condition_cfg: { once_per_day: true }, action_cfg: { kind: "post" },
+    structured: null, instruction: "", reply_instruction: "",
+    next_run_at: "2026-06-25T20:00:00Z", last_run_at: null, fire_count: 0, recent_skips: [],
   },
 ];
 
