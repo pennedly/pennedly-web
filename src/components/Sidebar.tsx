@@ -54,6 +54,11 @@ const GROUPS: { title: MessageKey; items: NavItem[] }[] = [
   {
     title: "nav.group.workspace",
     items: [
+      // «Агент» (was «Советник», moved here from Insight 2026-07-15): the advisor is
+      // now an ACTION layer — you tell it what you want and it applies it in one click
+      // (routines, automation, scheduling…), so it belongs in the do-work group, not
+      // analytics. First = the "tell the agent what you need" entry point.
+      { href: "/app/advisor", label: "dashboard.nav.advisor", icon: IcAdvisor, tester: true },
       // «Студия» → «Создать» (nav.studio value renamed); it's the content-creation
       // hub (brief → draft → review → publish — a verb fits it better than a noun,
       // and it avoids colliding with the inner «Черновики» status tab). **Автопилот**
@@ -70,7 +75,6 @@ const GROUPS: { title: MessageKey; items: NavItem[] }[] = [
   {
     title: "nav.group.insight",
     items: [
-      { href: "/app/advisor", label: "dashboard.nav.advisor", icon: IcAdvisor, tester: true },
       { href: "/app/stats", label: "dashboard.nav.stats", icon: IcChart },
       { href: "/app/audits", label: "dashboard.nav.audits", icon: IcAudit, badgeKey: "audits" },
       { href: "/app/patterns/explore", label: "dashboard.nav.explore", icon: IcCompass },
