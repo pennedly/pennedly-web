@@ -471,6 +471,9 @@ export default function VoiceEditor() {
   }
 
   async function onApply(fix: LintFix, idx: number) {
+    // One apply at a time: a second Apply while the first is in flight would
+    // race the role-book version flip server-side (the loser 404s/409s).
+    if (applyingIdx !== null) return;
     if (demoOn) {
       setDismissed((s) => new Set(s).add(idx));
       toast(t("rolebook.lint.toast_fix_applied"));
