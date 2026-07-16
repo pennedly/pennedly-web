@@ -697,6 +697,7 @@ export type MentionSummary = {
 export type MentionsList = {
   mentions: MentionSummary[];
   count: number;
+  missing_mentions_scope?: boolean;
 };
 
 // A live published post on the account (for the published-posts list +

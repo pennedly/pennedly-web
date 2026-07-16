@@ -16,6 +16,7 @@ import { useSelectedAccountId } from "@/lib/account";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { useTesterGuard } from "@/lib/tester";
 import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
+import { ConnectThreadsButton } from "@/components/ConnectThreadsButton";
 import { ErrorBanner } from "@/components/ui/error-banner";
 import { Spinner } from "@/components/ui/feedback";
 import { buttonClasses } from "@/components/ui/button";
@@ -65,6 +66,7 @@ export default function MentionsPage() {
   const demoOn = allow;
   const accountId = useSelectedAccountId();
   const [mentions, setMentions] = useState<MentionSummary[]>([]);
+  const [missingScope, setMissingScope] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [tw, setTw] = useTweaks(MN_TWEAK_DEFAULTS);
@@ -83,9 +85,11 @@ export default function MentionsPage() {
     if (accountId === null) return;
     setLoaded(false);
     setHasError(false);
+    setMissingScope(false);
     try {
       const list = await fetchMentions(accountId, { limit: 50 });
       setMentions(list.mentions);
+      setMissingScope(list.missing_mentions_scope === true);
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) {
         clearTokens();
@@ -113,6 +117,7 @@ export default function MentionsPage() {
     if (!demoOn) return;
     const st = tw.state;
     setHasError(st === "Error");
+    setMissingScope(false);
     setLoaded(st !== "Loading");
     setMentions(st === "Empty" ? [] : DEMO_MENTIONS);
   }, [demoOn, tw.state]);
@@ -145,6 +150,17 @@ export default function MentionsPage() {
             {[0, 1, 2, 3, 4].map((i) => (
               <SkeletonCard key={i} />
             ))}
+          </div>
+        ) : missingScope ? (
+          <div className="flex flex-col items-center rounded-lg border border-border bg-surface px-7 py-16 text-center shadow-sm">
+            <span className="mb-[18px] grid h-[54px] w-[54px] place-items-center rounded-lg border border-border bg-surface-2 text-text-subtle">
+              <IcAt size={24} />
+            </span>
+            <h2 className="text-h2 font-semibold tracking-tight">{t("mentions.reconnect_title")}</h2>
+            <p className="mt-2 max-w-[46ch] text-body leading-relaxed text-text-muted">{t("mentions.reconnect_sub")}</p>
+            <div className="mt-5">
+              <ConnectThreadsButton variant="primary" returnTo="/app/mentions" />
+            </div>
           </div>
         ) : mentions.length === 0 ? (
           <div className="flex flex-col items-center rounded-lg border border-border bg-surface px-7 py-16 text-center shadow-sm">

@@ -1007,6 +1007,9 @@ export const en = {
   "mentions.error_title": "Couldn't load your mentions",
   "mentions.error":
     "Something went wrong reaching Threads. Pennedly will try again on the next hourly check, or retry now.",
+  "mentions.reconnect_title": "Reconnect Threads to load mentions",
+  "mentions.reconnect_sub":
+    "This account was connected without the Threads permission for mentions. Reconnect it once so Pennedly can import posts that tag you.",
 
   // ── Posts (published) ──────────────────────────────────────────
   "dashboard.nav.posts": "posts",

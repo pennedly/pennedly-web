@@ -1007,6 +1007,9 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "mentions.error_title": "Не удалось загрузить упоминания",
   "mentions.error":
     "Что-то пошло не так при обращении к Threads. Pennedly попробует снова при следующей ежечасной проверке, или повтори сейчас.",
+  "mentions.reconnect_title": "Переподключи Threads, чтобы загрузить упоминания",
+  "mentions.reconnect_sub":
+    "Этот аккаунт был подключён без разрешения Threads на упоминания. Переподключи его один раз, и Pennedly сможет импортировать посты, где тебя отметили.",
 
   // ── Posts (published) ──────────────────────────────────────────
   "dashboard.nav.posts": "посты",

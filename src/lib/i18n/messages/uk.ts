@@ -1564,6 +1564,9 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "mentions.error_title": "Не вдалося завантажити згадки",
   "mentions.error":
     "Щось пішло не так під час звернення до Threads. Pennedly спробує знову при наступній щогодинній перевірці, або повтори зараз.",
+  "mentions.reconnect_title": "Перепідключи Threads, щоб завантажити згадки",
+  "mentions.reconnect_sub":
+    "Цей акаунт було підключено без дозволу Threads на згадки. Перепідключи його один раз, і Pennedly зможе імпортувати пости, де тебе позначили.",
 
   // ── Autopilot ──────────────────────────────────────────────────
   "autopilot.toast_rule_deleted": "Правило видалено",

@@ -1572,6 +1572,9 @@ export const fr: Partial<Record<MessageKey, string>> = {
   "mentions.error_title": "Impossible de charger tes mentions",
   "mentions.error":
     "Un problème est survenu en contactant Threads. Pennedly réessaiera à la prochaine vérification horaire, ou réessaie maintenant.",
+  "mentions.reconnect_title": "Reconnecte Threads pour charger les mentions",
+  "mentions.reconnect_sub":
+    "Ce compte a été connecté sans l'autorisation Threads pour les mentions. Reconnecte-le une fois pour que Pennedly puisse importer les posts qui te taguent.",
 
   // ── Autopilot ──────────────────────────────────────────────────
   "autopilot.toast_rule_deleted": "Règle supprimée",

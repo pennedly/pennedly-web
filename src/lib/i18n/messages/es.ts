@@ -1540,6 +1540,9 @@ export const es: Partial<Record<MessageKey, string>> = {
   "mentions.error_title": "No se pudieron cargar tus menciones",
   "mentions.error":
     "Algo salió mal al conectar con Threads. Pennedly lo intentará de nuevo en la próxima comprobación horaria, o reintenta ahora.",
+  "mentions.reconnect_title": "Vuelve a conectar Threads para cargar menciones",
+  "mentions.reconnect_sub":
+    "Esta cuenta se conectó sin el permiso de Threads para menciones. Vuelve a conectarla una vez para que Pennedly pueda importar publicaciones donde te etiqueten.",
   "autopilot.toast_rule_deleted": "Regla eliminada",
   "autopilot.sends_utc": "envía {time} UTC",
   "autopilot.jitter_exact": "Exacto (sin variación)",

@@ -1558,6 +1558,9 @@ export const de: Partial<Record<MessageKey, string>> = {
   "mentions.error_title": "Deine Erwähnungen konnten nicht geladen werden",
   "mentions.error":
     "Beim Zugriff auf Threads ist etwas schiefgelaufen. Pennedly versucht es bei der nächsten stündlichen Prüfung erneut, oder wiederhole jetzt.",
+  "mentions.reconnect_title": "Threads erneut verbinden, um Erwähnungen zu laden",
+  "mentions.reconnect_sub":
+    "Dieses Konto wurde ohne die Threads-Berechtigung für Erwähnungen verbunden. Verbinde es einmal erneut, damit Pennedly Beiträge importieren kann, die dich markieren.",
   "autopilot.toast_rule_deleted": "Regel gelöscht",
   "autopilot.sends_utc": "sendet {time} UTC",
   "autopilot.jitter_exact": "Exakt (keine Streuung)",

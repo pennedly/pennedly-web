@@ -1567,6 +1567,9 @@ export const it: Partial<Record<MessageKey, string>> = {
   "mentions.error_title": "Impossibile caricare le tue menzioni",
   "mentions.error":
     "Qualcosa è andato storto nel raggiungere Threads. Pennedly riproverà al prossimo controllo orario, oppure riprova ora.",
+  "mentions.reconnect_title": "Ricollega Threads per caricare le menzioni",
+  "mentions.reconnect_sub":
+    "Questo account è stato collegato senza il permesso Threads per le menzioni. Ricollegalo una volta per permettere a Pennedly di importare i post in cui vieni taggato.",
 
   // ── Autopilot (resto) ──────────────────────────────────────────
   "autopilot.toast_rule_deleted": "Regola eliminata",
