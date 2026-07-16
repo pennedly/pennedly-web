@@ -1578,6 +1578,10 @@ export type LintFix =
       kind: "add_item";
       section: string;
       text: string;
+    }
+  | {
+      kind: "batch";
+      steps: LintFix[];
     };
 
 export type LintConflict = {

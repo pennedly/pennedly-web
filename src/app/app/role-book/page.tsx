@@ -382,10 +382,14 @@ export default function VoiceEditor() {
 
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
-  // Visible conflicts (after local dismissals).
-  const conflicts: LintConflict[] = lintResult
-    ? lintResult.conflicts.filter((_, i) => !dismissed.has(i))
+  // Visible conflicts (after local dismissals). Keep the original index from
+  // the lint result; filtered array indexes shift after dismiss/apply.
+  const visibleConflicts = lintResult
+    ? lintResult.conflicts
+        .map((conflict, index) => ({ conflict, index }))
+        .filter((it) => !dismissed.has(it.index))
     : [];
+  const conflicts: LintConflict[] = visibleConflicts.map((it) => it.conflict);
 
   // Q60: flag the exact pill by its stable id (the lint response carries an
   // item id per conflict) instead of a fragile text-match. A "" id — the LLM
@@ -453,6 +457,7 @@ export default function VoiceEditor() {
     if (accountId === null) return;
     setChecking(true);
     setDismissed(new Set());
+    setApplyingIdx(null);
     captureEvent("ui.role_book_lint_clicked", { account_id: accountId });
     try {
       const result = await lintRoleBook(accountId, sections);
@@ -478,6 +483,9 @@ export default function VoiceEditor() {
       const rb = await applyLintFix(accountId, fix);
       setBook(rb);
       setSections(normalizeSections(rb.sections));
+      setDismissed((s) => new Set(s).add(idx));
+      setChecking(true);
+      setLintResult(null);
       // Re-lint on the new version so the panel reflects reality.
       try {
         const fresh = await lintRoleBook(accountId);
@@ -489,9 +497,15 @@ export default function VoiceEditor() {
       }
       toast(t("rolebook.lint.toast_fix_applied"));
     } catch (e) {
+      setDismissed((s) => {
+        const next = new Set(s);
+        next.delete(idx);
+        return next;
+      });
       toast(String(e), "error");
     } finally {
       setApplyingIdx(null);
+      setChecking(false);
     }
   }
 
@@ -709,7 +723,7 @@ export default function VoiceEditor() {
                 {/* Voice check — hidden in the read-only translated view */}
                 {!readOnly && (checking || lintResult) && (
                   <VoiceCheck
-                    conflicts={conflicts}
+                    conflicts={visibleConflicts}
                     checking={checking}
                     lastRun={lastRun}
                     applyingIdx={applyingIdx}
@@ -1651,7 +1665,7 @@ function VoiceCheck({
   onRecheck,
   t,
 }: {
-  conflicts: LintConflict[];
+  conflicts: { conflict: LintConflict; index: number }[];
   checking: boolean;
   lastRun: string | null;
   applyingIdx: number | null;
@@ -1704,13 +1718,13 @@ function VoiceCheck({
         </div>
       ) : !clear ? (
         <div className="flex flex-col">
-          {conflicts.map((c, i) => (
+          {conflicts.map(({ conflict: c, index }) => (
             <ConflictCard
-              key={i}
+              key={index}
               conflict={c}
-              applying={applyingIdx === i}
-              onApply={() => c.fix && onApply(c.fix, i)}
-              onDismiss={() => onDismiss(i)}
+              applying={applyingIdx === index}
+              onApply={() => c.fix && onApply(c.fix, index)}
+              onDismiss={() => onDismiss(index)}
               t={t}
             />
           ))}
