@@ -75,7 +75,7 @@ export function TopbarPill({
   icon,
   children,
 }: {
-  tone?: "success" | "warning" | "accent";
+  tone?: "success" | "warning" | "accent" | "neutral";
   // Render this leading glyph instead of the status dot — e.g. a clock for a
   // freshness pill ("Updated hourly") rather than a state pill.
   icon?: ReactNode;
@@ -87,7 +87,13 @@ export function TopbarPill({
         <span
           className={cn(
             "h-[7px] w-[7px] rounded-full",
-            tone === "warning" ? "bg-warning" : tone === "accent" ? "bg-accent" : "bg-success",
+            tone === "warning"
+              ? "bg-warning"
+              : tone === "accent"
+                ? "bg-accent"
+                : tone === "neutral"
+                  ? "bg-text-subtle/60"
+                  : "bg-success",
           )}
         />
       )}

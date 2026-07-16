@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Pennedly · Landing — Mobile spec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="ds/tokens.css"/>
+<link rel="stylesheet" href="ds/components.css"/>
+<link rel="stylesheet" href="mobile/pennedly-mobile.css"/>
+<link rel="stylesheet" href="mobile/frame.css"/>
+<link rel="stylesheet" href="mobile/spec.css"/>
+<link rel="stylesheet" href="landing.css"/>
+<link rel="stylesheet" href="landing-sections.css"/>
+</head>
+<body>
+<div class="layout">
+
+<aside class="toc">
+  <div class="doc-mark">
+    <span class="nib"><svg width="18" height="18" viewBox="0 0 512 512"><g fill="#ededed"><g transform="rotate(42 256 256)"><path d="M236 150 Q236 128 256 128 Q276 128 276 150 L276 300 L256 360 L236 300 Z"/><rect x="236" y="206" width="40" height="7"/></g></g></svg></span>
+    <b>Pennedly</b>
+  </div>
+  <div class="doc-sub">Mobile spec · Landing</div>
+  <nav>
+    <a href="#s1"><span class="n">1</span> Screen identity</a>
+    <a href="#s2"><span class="n">2</span> The full reflow</a>
+    <a href="#s3"><span class="n">3</span> Top bar + language</a>
+    <a href="#s4"><span class="n">4</span> Hero + product-peek</a>
+    <a class="sub" href="#s4">— how the window shrinks</a>
+    <a href="#s5"><span class="n">5</span> Bento → single column</a>
+    <a href="#s6"><span class="n">6</span> Footer</a>
+    <a href="#s7"><span class="n">7</span> Anatomy &amp; values</a>
+    <a href="#s8"><span class="n">8</span> Localization &amp; 360px</a>
+    <a href="#s9"><span class="n">9</span> Checklist</a>
+  </nav>
+  <div class="meta">
+    Screen: <b>Landing</b> (public)<br>
+    Route: <code>/</code><br>
+    Desktop spec: <a class="link" href="Landing-SPEC.html">Landing-SPEC.html</a><br>
+    Phone breakpoint: <code>≤ 600px</code> · ref 390<br>
+    Layer: <code>mobile/pennedly-mobile.css</code><br>
+    System: <a class="link" href="Pennedly Design System.html#m-shell">DS · Mobile</a>
+  </div>
+</aside>
+
+<main>
+  <div class="doc-head">
+    <p class="kicker">Pennedly · Mobile spec · per-screen</p>
+    <h1 class="title">Landing <span>/</span> — phone</h1>
+    <p class="lede">The public marketing homepage — “a drafting partner, not automation; you keep the final say.” <strong>A full-screen public page — no app shell:</strong> it has its <em>own</em> top bar (brand + language switcher + Sign in), no sidebar/hamburger/tab bar. The job on a phone is to reflow the desktop landing so it reads great top-to-bottom at <strong>390px</strong> (sanity-checked at 360): the hero product-peek window shrinks but keeps its essence, the bento feature grid collapses to a single column, and the Sign-in CTA stays thumb-reachable. Same tokens and copy as <a class="link" href="Landing.html">the desktop</a>; only the layout adapts. Frames are the real component layer at 390px, light and dark.</p>
+    <div class="filerow">
+      <span class="chip chip--mob">pennedly-mobile.css</span>
+      <span class="chip">landing-app.jsx</span>
+      <span class="chip">landing-parts.jsx</span>
+      <span class="chip">ds/tokens.css</span>
+    </div>
+  </div>
+
+  <div class="note good"><b>What does not change.</b> It’s a marketing page: the product-peek window is illustrative sample content (English), not live data. “Sign in” goes to <code>/app/login</code>. The honest-positioning copy holds — drafts in your voice, you approve before publishing, multi-account, analytics, opt-in autopilot. The page auto-detects the visitor’s browser language across 8 locales; the switcher changes it. No invented pricing, testimonials, or sections. Mobile is a layout pass; this page has no app shell to adapt.</div>
+
+  <!-- 1 -->
+  <section id="s1">
+    <h2><span class="h2n">1</span>Screen identity</h2>
+    <div class="tbl-wrap"><table><tbody>
+      <tr><th style="width:210px">Route</th><td><code>/</code> — the public homepage (unauthenticated).</td></tr>
+      <tr><th>Shell</th><td><b>None.</b> Its own top bar; no sidebar / hamburger / tab bar.</td></tr>
+      <tr><th>Sections (top→bottom)</th><td>Top bar → hero (status badge · headline · value-prop · CTA) → product-peek window → bento features → footer (with contact + legal).</td></tr>
+      <tr><th>Primary CTA</th><td>“Sign in” (→ <code>/app/login</code>) — in the top bar and the hero.</td></tr>
+      <tr><th>Phone width</th><td>100% − 16px gutters; single column; the page is one long scroll.</td></tr>
+    </tbody></table></div>
+  </section>
+
+  <!-- 2 -->
+  <section id="s2">
+    <h2><span class="h2n">2</span>The full reflow</h2>
+    <p class="section-note">The whole landing, top-to-bottom, light and dark: the pinned top bar, the hero with its stacked CTA, the shrunk product-peek window, the single-column bento, and the footer. (The device clips the long page — scroll to see it all; the close-ups below isolate the key sections.)</p>
+    <div class="stage" id="stg-full"></div>
+  </section>
+
+  <!-- 3 -->
+  <section id="s3">
+    <h2><span class="h2n">3</span>Top bar + language</h2>
+    <p class="section-note">The landing’s own top bar: brand left; language switcher + “Sign in” right. It’s pinned so Sign in is always reachable. The switcher opens a dropdown of the 8 locales (label + code), the current one checked.</p>
+    <div class="stage" id="stg-top"></div>
+    <div class="note"><b>Compact.</b> The theme toggle from desktop folds away on a phone (the page respects the system theme); the top bar keeps just brand · language · Sign in so the row never crowds. The language menu drops below the trigger, right-aligned, over the hero.</div>
+  </section>
+
+  <!-- 4 -->
+  <section id="s4">
+    <h2><span class="h2n">4</span><span class="stg stg--fix">fix</span>Hero + product-peek</h2>
+    <p class="section-note">The hero text reflows to full-width: status badge, headline, value-prop, the “you approve every word” line, then a stacked CTA (full-width Sign in + the contact email). Below it, the product-peek window — the rich Studio illustration — is shrunk to fit.</p>
+    <div class="fix">
+      <div class="fix-bad"><h5>Before</h5><p>The desktop hero is a two-column grid (text beside a wide product window). At 390px the window’s browser chrome, vertical account rail and composer overflow and the caret line clips.</p></div>
+      <div class="fix-good"><h5>After</h5><p>Text stacks above the window. The window keeps its essence — browser dots + URL, the account rail with avatars, the composer drafting in voice with a blinking caret + voice/tone chips + Edit/Approve — but scales down (smaller avatars, tighter padding, <code>text-small</code> body) so it never pushes past the viewport.</p></div>
+    </div>
+    <div class="stage" id="stg-window"></div>
+    <div class="note"><b>Shrink, don’t drop.</b> The window stays a faithful product peek (it’s the proof), just smaller: the rail stays vertical with 26px avatars + the “add” affordance; the composer body steps to <code>text-small</code>; the foot keeps Edit + Approve. It’s an illustration (<code>aria-hidden</code>), English sample text, never wider than the column.</div>
+  </section>
+
+  <!-- 5 -->
+  <section id="s5">
+    <h2><span class="h2n">5</span>Bento → single column</h2>
+    <p class="section-note">The desktop bento (one wide tile, one full-width banner, the rest 1-col) collapses to a <strong>single-column stack</strong> on a phone — every tile becomes a full-width block: icon + title + description. Order is preserved.</p>
+    <div class="stage" id="stg-bento"></div>
+  </section>
+
+  <!-- 6 -->
+  <section id="s6">
+    <h2><span class="h2n">6</span>Footer</h2>
+    <p class="section-note">The footer stacks: the © brand line over the legal links (Privacy Policy · Terms of Service · Data Deletion), each a full-width tappable row. The contact email lives in the hero CTA.</p>
+    <div class="stage" id="stg-foot"></div>
+  </section>
+
+  <!-- 7 -->
+  <section id="s7">
+    <h2><span class="h2n">7</span>Anatomy &amp; exact values</h2>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:210px">Element / class</th><th>Phone value</th></tr></thead>
+      <tbody>
+        <tr><td><code>.m-land-top</code></td><td>pinned brand + language + Sign in; no app shell.</td></tr>
+        <tr><td><code>.m-land</code></td><td>the scrolling page; 16px gutters; safe-area bottom.</td></tr>
+        <tr><td><code>.m-land-h1 / .m-land-lead</code></td><td><code>text-h1</code> headline (balance) + value-prop; both wrap.</td></tr>
+        <tr><td><code>.m-land-cta</code></td><td>full-width Sign in (48px) + centered contact email.</td></tr>
+        <tr><td><code>.m-land-window</code></td><td>shrunk product peek: winbar + rail (26px avatars) + composer; never wider than the column.</td></tr>
+        <tr><td><code>.m-land-caret</code></td><td>blinking caret on the drafting line.</td></tr>
+        <tr><td><code>.m-land-bento</code></td><td>single-column stack; every tile full-width.</td></tr>
+        <tr><td><code>.m-land-foot</code></td><td>stacked © + legal links.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- 8 -->
+  <section id="s8">
+    <h2><span class="h2n">8</span>Localization &amp; 360px</h2>
+    <p class="section-note">The status badge, headline, value-prop, CTA, feature titles/descriptions, footer links and language labels all localize into 8 locales; DE/RU/UK run ~30–40% longer. On a phone: the headline uses <code>text-wrap:balance</code> and wraps to as many lines as needed; the value-prop and feature copy wrap freely; “Sign in” stays a full-width button (label wraps rather than clips); the language switcher shows the short code; the window’s sample text is illustrative English (not localized chrome). The footer links stack so long labels never crowd.</p>
+    <div class="note"><b>360px behavior.</b> No new breakpoint — the gutter stays 16px; the hero, window and tiles get ~30px narrower so copy rewraps. The product-peek window is fluid (its rail + composer are flex), so it shrinks with the column and never overflows. The top bar keeps brand + language + Sign in on one row (Sign in stays a compact pill). The drawer doesn’t exist here.</div>
+    <div class="stage" id="stg-narrow"></div>
+  </section>
+
+  <!-- 9 -->
+  <section id="s9">
+    <h2><span class="h2n">9</span>Checklist</h2>
+    <ul class="check">
+      <li>No app shell — the landing’s own top bar (brand + language switcher + Sign in); no sidebar/hamburger/tab bar.</li>
+      <li>Reads top-to-bottom: top bar → hero → product-peek → bento stack → footer.</li>
+      <li>Hero text reflows full-width; the Sign-in CTA is prominent and thumb-reachable (top bar + hero).</li>
+      <li>The product-peek window shrinks but keeps its essence (browser chrome + account rail + composer + blinking caret) and never exceeds the viewport width.</li>
+      <li>The bento collapses to a single-column stack; wide/banner tiles become full-width blocks; order preserved.</li>
+      <li>The “in development” status badge and honest-positioning copy are present, unchanged.</li>
+      <li>Language switcher opens a dropdown of the 8 locales; current is checked.</li>
+      <li>Footer stacks © + Privacy / Terms / Data Deletion; contact email in the hero.</li>
+      <li>Copy wraps on long locales — never clipped; sanity-checked at 360px; safe-area respected.</li>
+      <li>Correct in light and dark; no hardcoded colour; the window is illustrative (sample content).</li>
+    </ul>
+  </section>
+  <!-- NEW SECTIONS (live · mobile) -->
+  <style>
+    .lstage{display:flex;flex-wrap:wrap;gap:24px 22px;margin:18px 0 8px;align-items:flex-start;}
+    .lcol{display:flex;flex-direction:column;gap:8px;}
+    .lcap{font-family:var(--font-mono);font-size:11px;color:var(--subtle);letter-spacing:.02em;}
+    .lframe{position:relative;background:var(--color-bg);border:1px solid var(--color-border);border-radius:28px;overflow:hidden;container-type:inline-size;width:412px;max-width:100%;}
+    .lframe .voicetest,.lframe .difference{padding-top:34px;padding-bottom:40px;}
+    .lframe .wrap{padding-left:20px;padding-right:20px;}
+  </style>
+  <section id="snew">
+    <h2><span class="h2n">＊</span>New sections — Voice Test · The difference</h2>
+    <p class="section-note">The two new landing sections at phone width (≈390–412px), light and dark. <b>Voice Test</b> (after the hero) is a public, no-signup demo. Its input is finalized on <b>numbered post cards</b>: one full-width field + an <b>Add post</b> button; each added post collapses into a compact numbered card above the field (with <code>×</code> remove), and the field clears for the next. Because each post is its own card, a <b>paragraph break inside a post never splits it</b>. Textareas are ≥16px (no iOS zoom); add / remove / run targets are ≥44px; cards + field are full-width. Cap ~5 (“Add post” hidden at the cap); Run is enabled once there is ≥1 post. <b>The difference</b> (after the bento) is the closed-loop coach strip — on a phone the three step cards <strong>stack</strong> with a <strong>down-arrow</strong> between them. Same tokens and copy as the <a class="link" href="Landing-SPEC.html">desktop spec</a>.</p>
+
+    <h3>Voice Test — input states (phone)</h3>
+    <p class="section-note">Every state at 412px. <b>Empty</b> = field + “Add post”, Run off. <b>1 card</b> = one numbered card above the field. <b>3 cards</b> = Run on; card 1 keeps an internal paragraph break (proof it stays one post). <b>At cap (5)</b> = “Add post” hidden.</p>
+    <div class="lstage" id="lf-minput"></div>
+
+    <h3>Shared states — running · results · error (unchanged)</h3>
+    <div class="lstage" id="lf-mshared"></div>
+
+    <h3>The difference — stacked 3-step loop</h3>
+    <div class="lstage" id="lf-diff"></div>
+
+    <div class="note"><b>Mobile rules.</b> Voice Test column is full-width; textarea ≥16px (no iOS zoom); CTA grows to full width on narrow widths; “No signup” stays in the copy. The difference: cards stack, the → connector rotates to ↓ via the container query. Step copy and the CTA wrap on long locales, never clip.</div>
+  </section>
+
+  <script src="landing-sections-demo.js"></script>
+  <script>
+  (function(){
+    var L=window.LSEC;
+    function fr(html,dark){return '<div class="lframe lframe--m'+(dark?' dark':'')+'">'+html+'</div>';}
+    function col(label,html){return '<div class="lcol"><div class="lcap">'+label+'</div>'+html+'</div>';}
+    function set(id,h){var e=document.getElementById(id);if(e)e.innerHTML=h;}
+    set('lf-minput',
+      col('Empty',fr(L.voiceTest('empty'),false))
+      + col('1 card · dark',fr(L.voiceTest('one'),true))
+      + col('3 cards · light',fr(L.voiceTest('filled'),false))
+      + col('At cap (5) · dark',fr(L.voiceTest('limit'),true)));
+    set('lf-mshared',
+      col('Running',fr(L.voiceTest('running'),false))
+      + col('Results · dark',fr(L.voiceTest('results'),true))
+      + col('Error',fr(L.voiceTest('error'),false)));
+    set('lf-diff', col('Light · stacked',fr(L.difference(false),false))+col('Dark · stacked',fr(L.difference(false),true)));
+  })();
+  </script>
+
+</main>
+</div>
+
+<script src="mobile/sprite.js"></script>
+<script src="mobile/mock.js"></script>
+<script>
+(function () {
+  var M = window.MOCK;
+  function set(id, html){ var e=document.getElementById(id); if(e) e.innerHTML=html; }
+
+  /* 2 — full reflow */
+  set('stg-full',
+    M.col(M.light(), M.landPage(), 'The whole landing, reflowed — scroll within the device.') +
+    M.col(M.dark(), M.landPage({ dark:true }), 'Identical reflow, dark tokens.'));
+
+  /* 3 — top bar + language open */
+  set('stg-top',
+    M.col(M.light('Language open'), M.landPage({ langOpen:true }), 'Brand · language (open) · Sign in.') +
+    M.col(M.dark('Language · dark'), M.landPage({ langOpen:true, dark:true }), ''));
+
+  /* 4 — product-peek close-up */
+  set('stg-window',
+    M.col(M.light('Window'), M.comp(M.landWindow()), 'Shrunk product peek — rail + composer + caret.') +
+    M.col(M.dark('Window · dark'), M.comp(M.landWindow(), { dark:true }), ''));
+
+  /* 5 — bento stack */
+  set('stg-bento',
+    M.col(M.light('Bento stack'), M.comp(M.landBento()), 'Single-column; every tile full-width.') +
+    M.col(M.dark('Bento · dark'), M.comp(M.landBento(), { dark:true }), ''));
+
+  /* 6 — footer */
+  set('stg-foot',
+    M.col(M.light('Footer'), M.comp(M.landFooter()), '© + stacked legal links.') +
+    M.col(M.dark('Footer · dark'), M.comp(M.landFooter(), { dark:true }), ''));
+
+  /* 8 — 360 */
+  set('stg-narrow',
+    M.col(M.light('360 · full'), M.landPage({ variant:'sm' }), 'Same reflow at 360 — copy rewraps; window stays fluid.') +
+    M.col(M.light('360 · window'), M.comp(M.landWindow(), { sm:true }), 'Product peek never overflows at 360.') +
+    M.col(M.dark('360 · dark'), M.landPage({ variant:'sm', dark:true }), ''));
+})();
+</script>
+</body>
+</html>

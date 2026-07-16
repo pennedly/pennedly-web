@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Pennedly · Login — Mobile spec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="ds/tokens.css"/>
+<link rel="stylesheet" href="ds/components.css"/>
+<link rel="stylesheet" href="mobile/pennedly-mobile.css"/>
+<link rel="stylesheet" href="mobile/frame.css"/>
+<link rel="stylesheet" href="mobile/spec.css"/>
+</head>
+<body>
+<div class="layout">
+
+<aside class="toc">
+  <div class="doc-mark">
+    <span class="nib"><svg width="18" height="18" viewBox="0 0 512 512"><g fill="#ededed"><g transform="rotate(42 256 256)"><path d="M236 150 Q236 128 256 128 Q276 128 276 150 L276 300 L256 360 L236 300 Z"/><rect x="236" y="206" width="40" height="7"/></g></g></svg></span>
+    <b>Pennedly</b>
+  </div>
+  <div class="doc-sub">Mobile spec · Login</div>
+  <nav>
+    <a href="#s1"><span class="n">1</span> Screen identity</a>
+    <a href="#s2"><span class="n">2</span> The page frame</a>
+    <a href="#s3"><span class="n">3</span> Email form</a>
+    <a href="#s4"><span class="n">4</span> Code entry</a>
+    <a class="sub" href="#s4">— the 6-cell OTP at 360px</a>
+    <a href="#s5"><span class="n">5</span> Signing in</a>
+    <a href="#s6"><span class="n">6</span> Errors</a>
+    <a class="sub" href="#s6">— rate · invalid · Google</a>
+    <a href="#s7"><span class="n">7</span> Dev drawer (dev-only)</a>
+    <a href="#s8"><span class="n">8</span> Anatomy &amp; values</a>
+    <a href="#s9"><span class="n">9</span> Localization &amp; 360px</a>
+    <a href="#s10"><span class="n">10</span> Checklist</a>
+  </nav>
+  <div class="meta">
+    Screen: <b>Login</b><br>
+    Route: <code>/app/login</code><br>
+    Desktop spec: <a class="link" href="Login-SPEC.html">Login-SPEC.html</a><br>
+    Phone breakpoint: <code>≤ 600px</code> · ref 390<br>
+    Layer: <code>mobile/pennedly-mobile.css</code><br>
+    System: <a class="link" href="Pennedly Design System.html#m-shell">DS · Mobile</a>
+  </div>
+</aside>
+
+<main>
+  <div class="doc-head">
+    <p class="kicker">Pennedly · Mobile spec · per-screen</p>
+    <h1 class="title">Login <span>/app/login</span> — phone</h1>
+    <p class="lede">The single door in — <strong>passwordless</strong>, where sign-in and sign-up are the same flow (a first-time identity just creates the account). <strong>A full-screen public page — no app shell:</strong> no sidebar, hamburger, or tab bar — a centered, narrow card. It keeps its own language switcher (a globe, top area). The card is already narrow, so the job on a phone is to seat it comfortably and make the tight bits fit 360–390px — above all the <strong>6-cell code input</strong>. Same real flow and copy as <a class="link" href="Login.html">the desktop</a>; only the layout adapts. Frames are the real component layer at 390px, light and dark.</p>
+    <div class="filerow">
+      <span class="chip chip--mob">pennedly-mobile.css</span>
+      <span class="chip">login-app.jsx</span>
+      <span class="chip">login-parts.jsx</span>
+      <span class="chip">ds/tokens.css</span>
+    </div>
+  </div>
+
+  <div class="note good"><b>What does not change.</b> Passwordless only: a 6-digit code emailed (with a TTL, limited attempts, and a resend cooldown) OR Google OAuth (a one-time handoff). NO password field, NO social logins other than Google. Sign-in == sign-up. The dev-login drawer is dev-only (off in production). No invented “forgot password”, magic-link entry, or other providers. Mobile is a layout pass; this page has no app shell to adapt.</div>
+
+  <!-- 1 -->
+  <section id="s1">
+    <h2><span class="h2n">1</span>Screen identity</h2>
+    <div class="tbl-wrap"><table><tbody>
+      <tr><th style="width:210px">Route</th><td><code>/app/login</code> — the only unauthenticated screen.</td></tr>
+      <tr><th>Shell</th><td><b>None.</b> No sidebar / hamburger / tab bar — a centered card on a full screen.</td></tr>
+      <tr><th>Kept chrome</th><td>A language switcher (globe + locale) in the top area — login owns its own.</td></tr>
+      <tr><th>Flow</th><td>Email → code, or Google OAuth. Sign-in creates the account on first use.</td></tr>
+      <tr><th>Centering</th><td>Card vertically centered, max-width 360, safe-area aware; dev drawer pinned at the very bottom.</td></tr>
+    </tbody></table></div>
+  </section>
+
+  <!-- 2 -->
+  <section id="s2">
+    <h2><span class="h2n">2</span>The page frame</h2>
+    <p class="section-note">A slim top row holds only the language switcher; the card centers in the remaining space; the dev drawer (dev builds only) sits collapsed at the very bottom. The card is full-width up to 360px with comfortable side gutters.</p>
+    <div class="stage" id="stg-frame"></div>
+  </section>
+
+  <!-- 3 -->
+  <section id="s3">
+    <h2><span class="h2n">3</span>Email form</h2>
+    <p class="section-note">The resting state: brand + tagline, a full-width “Continue with Google” (a monochrome “G” tile — trademark-safe), an “or” divider, a 16px email input + “Email me a code”, and the consent line with Terms/Privacy links.</p>
+    <div class="stage" id="stg-email"></div>
+  </section>
+
+  <!-- 4 -->
+  <section id="s4">
+    <h2><span class="h2n">4</span><span class="stg stg--fix">fix</span>Code entry — the 6-cell OTP at 360px</h2>
+    <p class="section-note">After requesting a code: a 6-cell one-time-code input (auto-advance, paste, focus ring, monospaced), a “Sign in” button, and a 30-second resend cooldown. The cells are the one place a phone can overflow — so they’re sized to fit six across at 360px.</p>
+    <div class="fix">
+      <div class="fix-bad"><h5>Before</h5><p>Fixed-width cells (e.g. 56px each) × 6 + gaps overflow a 360px card and clip the last cell or force a horizontal scroll.</p></div>
+      <div class="fix-good"><h5>After</h5><p>Cells are <code>flex:1; min-width:0</code> with a 7px gap and <code>aspect-ratio:1</code> — six always fit the card width, scaling down on 360 and up on 390 (capped at 56px tall). Mono 22px digits, accent focus ring; a filled cell gets an accent border.</p></div>
+    </div>
+    <div class="stage" id="stg-code"></div>
+    <div class="note"><b>Math.</b> At a 360px device the card is ~328px wide; six flex cells with five 7px gaps → each ≈ (328 − 35) ÷ 6 ≈ 48px — comfortably tappable, never clipped. At 390 they grow to ≈ 53px. Paste fills all six and focuses the last; backspace walks back. Resend is disabled with a live “Resend in 30s” countdown.</div>
+  </section>
+
+  <!-- 5 -->
+  <section id="s5">
+    <h2><span class="h2n">5</span>Signing in</h2>
+    <p class="section-note">During the Google handoff or code consume, the card shows a spinner + status text (“Opening Google…” / “Signing you in…”). The submit buttons also show an inline spinner while busy.</p>
+    <div class="stage" id="stg-signing"></div>
+  </section>
+
+  <!-- 6 -->
+  <section id="s6">
+    <h2><span class="h2n">6</span>Errors</h2>
+    <p class="section-note">Three real failure modes: rate-limited (an alert on the email form), an invalid code (a <strong>danger ring on all six cells + a shake</strong> nudge), and a Google error (an alert above the email fallback). All use the danger treatment; the user can always retry.</p>
+    <div class="stage" id="stg-errors"></div>
+  </section>
+
+  <!-- 7 -->
+  <section id="s7">
+    <h2><span class="h2n">7</span>Dev drawer (dev-only)</h2>
+    <p class="section-note">A collapsed “Developer mode” drawer sits at the very bottom — <strong>dev builds only</strong>, hidden in production. Expanded, it shows the gate pill (<code>DEV_LOGIN enabled</code>), an email-only form that skips the code, and the build hash. Shown here for completeness, badged dev-only.</p>
+    <div class="stage" id="stg-dev"></div>
+  </section>
+
+  <!-- 8 -->
+  <section id="s8">
+    <h2><span class="h2n">8</span>Anatomy &amp; exact values</h2>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:210px">Element / class</th><th>Phone value</th></tr></thead>
+      <tbody>
+        <tr><td><code>.m-lg-top</code></td><td>top row; language switcher only (no app shell).</td></tr>
+        <tr><td><code>.m-lg-scroll</code></td><td>centers the card vertically; 16px gutters; scrolls if tall.</td></tr>
+        <tr><td><code>.m-lg-card</code></td><td>max-width 360; full-width below that.</td></tr>
+        <tr><td><code>.m-lg-google / .m-g-tile</code></td><td>full-width 48px; monochrome “G” tile (trademark-safe).</td></tr>
+        <tr><td><code>.m-lg-input</code></td><td>48px, 16px text (no iOS zoom); accent focus ring.</td></tr>
+        <tr><td><code>.m-lg-otp / .m-lg-otpcell</code></td><td>6 cells <code>flex:1; min-width:0; aspect-ratio:1</code>, gap 7, mono 22px; fits 360.</td></tr>
+        <tr><td><code>.m-lg-otp.is-error</code></td><td>danger ring on all six + a shake animation.</td></tr>
+        <tr><td><code>.m-lg-resend</code></td><td>30s cooldown (“Resend in 30s” → “Resend code”).</td></tr>
+        <tr><td><code>.m-lg-signing / .m-lg-ring</code></td><td>centered spinner + status text.</td></tr>
+        <tr><td><code>.m-lg-dev</code></td><td>dev-only drawer pinned at the bottom; gate pill + email form + build hash.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- 9 -->
+  <section id="s9">
+    <h2><span class="h2n">9</span>Localization &amp; 360px</h2>
+    <p class="section-note">The tagline, button copy, field labels, consent line, resend and error strings all localize into 8 locales; DE/RU/UK run ~30–40% longer. On a phone: the title and sub wrap; “Continue with Google” / “Email me a code” / “Sign in” wrap rather than clip in their full-width buttons; the consent line wraps to multiple lines with its links intact; the language switcher shows the locale code (short in every locale). The OTP digits are locale-neutral.</p>
+    <div class="note"><b>360px behavior.</b> No new breakpoint — the card stays full-width with 16px gutters. The only width-critical element, the 6-cell OTP, is flex-sized so it always fits six across (≈48px cells at 360, ≈53px at 390) without overflow or horizontal scroll. The Google/email buttons and inputs are already full-width. The dev drawer’s email + button row wraps if a locale is long.</div>
+    <div class="stage" id="stg-narrow"></div>
+  </section>
+
+  <!-- 10 -->
+  <section id="s10">
+    <h2><span class="h2n">10</span>Checklist</h2>
+    <ul class="check">
+      <li>No app shell — no sidebar, hamburger, or tab bar. A centered card; the language switcher (globe) is kept, top area.</li>
+      <li>Passwordless: “Continue with Google” (monochrome G tile) + email→code. No password field; no other providers.</li>
+      <li>Google + email input + buttons are full-width; inputs are 16px (no iOS zoom).</li>
+      <li>The 6-cell OTP fits six across at 360px without overflow (flex cells, gap 7, aspect-ratio 1); auto-advance, paste, focus ring, mono.</li>
+      <li>Resend has a 30-second cooldown; “Use a different email” is reachable.</li>
+      <li>Signing-in shows a spinner + status (Google handoff / code consume).</li>
+      <li>Errors: rate-limited alert; invalid code = danger ring on all six cells + shake; Google error alert.</li>
+      <li>Consent line (“Terms and Privacy Policy”) with links is present and wraps.</li>
+      <li>Dev drawer is collapsed at the bottom, badged dev-only (hidden in production); expands to gate pill + email form + build hash.</li>
+      <li>Copy wraps on long locales — never clipped; sanity-checked at 360px; safe-area respected.</li>
+      <li>Correct in light and dark; no hardcoded colour.</li>
+    </ul>
+  </section>
+
+</main>
+</div>
+
+<script src="mobile/sprite.js"></script>
+<script src="mobile/mock.js"></script>
+<script>
+(function () {
+  var M = window.MOCK;
+  function set(id, html){ var e=document.getElementById(id); if(e) e.innerHTML=html; }
+
+  /* 2 — frame */
+  set('stg-frame',
+    M.col(M.light(), M.lgEmail(), 'Lang switcher · centered card · dev drawer pinned bottom.') +
+    M.col(M.dark(), M.lgEmail({ dark:true }), 'Same frame, dark tokens.'));
+
+  /* 3 — email form */
+  set('stg-email',
+    M.col(M.light('Resting'), M.lgEmail(), 'Google · or · email + “Email me a code” · consent.') +
+    M.col(M.dark('Resting · dark'), M.lgEmail({ dark:true }), ''));
+
+  /* 4 — code entry */
+  set('stg-code',
+    M.col(M.light('Code · partial'), M.lgCode({ code:'4821', cooldown:true }), 'Auto-advancing; resend on cooldown.') +
+    M.col(M.light('Code · full'), M.lgCode({ code:'482190' }), 'Six entered; resend available.') +
+    M.col(M.dark('Code · dark'), M.lgCode({ code:'4821', cooldown:true, dark:true }), ''));
+
+  /* 5 — signing in */
+  set('stg-signing',
+    M.col(M.light('Signing in'), M.lgSigning('Signing you in…'), 'Code consume / Google handoff.') +
+    M.col(M.light('Code · busy'), M.lgCode({ code:'482190', busy:true }), 'Inline button spinner.') +
+    M.col(M.dark('Signing · dark'), M.lgSigning('Opening Google…'), ''));
+
+  /* 6 — errors */
+  set('stg-errors',
+    M.col(M.light('Rate-limited'), M.lgEmail({ error:'Too many requests. Wait a moment, then try again.', email:'mara@pennedly.com' }), 'Alert on the email form.') +
+    M.col(M.light('Invalid code'), M.lgCode({ code:'482190', error:'That code didn’t match. Double-check it and try again.' }), 'Danger ring on all six + shake nudge.') +
+    M.col(M.light('Google error'), M.lgGoogleError(), 'Alert above the email fallback.') +
+    M.col(M.dark('Invalid · dark'), M.lgCode({ code:'482190', error:'That code didn’t match. Double-check it and try again.', dark:true }), ''));
+
+  /* 7 — dev drawer */
+  set('stg-dev',
+    M.col(M.light('Dev expanded'), M.lgEmail({ devOpen:true }), 'DEV_LOGIN gate · email-only · build hash.') +
+    M.col(M.dark('Dev · dark'), M.lgEmail({ devOpen:true, dark:true }), ''));
+
+  /* 9 — 360 */
+  set('stg-narrow',
+    M.col(M.light('360 · email'), M.lgEmail({ variant:'sm' }), 'Card holds at 360px.') +
+    M.col(M.light('360 · code'), M.lgCode({ code:'4821', cooldown:true, variant:'sm' }), 'Six cells fit 360 — no overflow.') +
+    M.col(M.dark('360 · invalid · dark'), M.lgCode({ code:'482190', error:'That code didn’t match. Try again.', variant:'sm', dark:true }), 'Danger ring + shake at 360.'));
+})();
+</script>
+</body>
+</html>

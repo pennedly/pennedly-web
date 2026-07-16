@@ -1,0 +1,79 @@
+/* scenarios-mobile-ia.css — IA / NAVIGATION rework layer for «Сценарии» (phone).
+   Sits on ds/tokens.css + mobile/pennedly-mobile.css + scenarios-mobile.css +
+   scenarios-mobile-redesign.css. Adds ONLY the four-surface + wayfinding pieces.
+   Scoped under `.mob`. No hardcoded hex.
+
+   Same four explicit surfaces as desktop, here as a fullscreen drill-down — each
+   level is its own screen with a back-chevron in the top bar; editor/constructor
+   carry a sticky action panel at the bottom:
+     A · Старт / обучение   B · Мои сценарии   C · Каталог   D · Конструктор */
+
+/* ───────── A · teaching: «как это работает» steps + the two CTAs ───────── */
+.mob .m-sc-steps { display: flex; flex-direction: column; gap: 10px; }
+.mob .m-sc-step { display: flex; align-items: flex-start; gap: 12px; padding: 14px 15px; border-radius: var(--radius-lg); background: var(--color-surface); border: 1px solid var(--color-border); box-shadow: var(--shadow-sm); }
+.mob .m-sc-step .ms-n { width: 26px; height: 26px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-full); background: var(--color-text); color: var(--color-bg); font-size: var(--text-caption); font-weight: 700; }
+.mob .m-sc-step .ms-t { font-size: var(--text-small); font-weight: 600; }
+.mob .m-sc-step .ms-d { font-size: var(--text-caption); color: var(--color-text-muted); margin-top: 3px; line-height: 1.5; }
+.mob .m-sc-step .ms-d b { color: var(--color-text); font-weight: 600; }
+.mob .m-sc-teach-cta { display: flex; flex-direction: column; gap: 10px; }
+.mob .m-sc-teach-cta .btn { width: 100%; min-height: 48px; }
+.mob .m-sc-teach-note { font-size: var(--text-caption); color: var(--color-text-subtle); text-align: center; line-height: 1.5; }
+.mob .m-sc-gatenote { display: inline-flex; align-items: center; gap: 7px; align-self: center; font-size: var(--text-caption); color: var(--color-text-subtle); padding: 7px 13px; border: 1px dashed var(--color-border); border-radius: var(--radius-full); background: var(--color-surface-2); }
+.mob .m-sc-gatenote svg { color: var(--color-text-muted); flex: 0 0 auto; }
+.mob .m-sc-teach-exq { font-size: var(--text-small); line-height: 1.5; color: var(--color-text-muted); background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 10px 12px; }
+.mob .m-sc-teach-exq .qk { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-text-subtle); margin-bottom: 5px; }
+.mob .m-sc-teach-exq .qk svg { opacity: 0.8; }
+
+/* ───────── B · active / paused section headers with counts ───────── */
+.mob .m-sc-sec-head { display: flex; align-items: center; gap: 9px; margin: 4px 0 2px; }
+.mob .m-sc-sec-title { font-size: var(--text-caption); font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-text); }
+.mob .m-sc-sec-count { font-size: var(--text-caption); font-weight: 600; font-variant-numeric: tabular-nums; color: var(--color-text-subtle); background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius-full); padding: 1px 9px; }
+.mob .m-sc-sec-head--active .m-sc-sec-count { color: var(--color-success); background: color-mix(in srgb, var(--color-success) 10%, var(--color-surface)); border-color: color-mix(in srgb, var(--color-success) 26%, var(--color-border)); }
+.mob .m-sc-sec-rule { flex: 1 1 auto; height: 1px; background: var(--color-border); }
+/* run-count → link to Активность + edit/delete on the card */
+.mob .m-sc-runlink { font-size: var(--text-caption); color: var(--color-accent); display: inline-flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
+.mob .m-sc-runlink b { font-weight: 600; }
+
+/* ───────── C · catalog card example (concrete generated output) ───────── */
+.mob .m-sc-tcard-ex { margin-top: 2px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-2); overflow: hidden; }
+.mob .m-sc-tcard-ex-k { display: flex; align-items: center; gap: 6px; padding: 7px 11px; font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-text-subtle); border-bottom: 1px solid var(--color-border); }
+.mob .m-sc-tcard-ex-k svg { opacity: 0.8; }
+.mob .m-sc-tcard-ex-body { padding: 10px 12px; font-size: var(--text-caption); line-height: 1.5; color: var(--color-text); }
+.mob .m-sc-tcard-ex-body .exq { color: var(--color-text-muted); }
+.mob .m-sc-tcard-ex-reply { margin-top: 7px; padding-top: 8px; border-top: 1px dashed var(--color-border); }
+.mob .m-sc-tcard-ex-reply .exr-k { font-weight: 600; color: var(--color-accent); display: inline-flex; align-items: center; gap: 5px; }
+/* prominent «с нуля» entry at the top of the catalog */
+.mob .m-sc-scratch-cta { display: flex; align-items: center; gap: 12px; padding: 14px 15px; border: 1px dashed color-mix(in srgb, var(--color-accent) 40%, var(--color-border)); border-radius: var(--radius-lg); background: color-mix(in srgb, var(--color-accent) 5%, var(--color-surface)); }
+.mob .m-sc-scratch-cta .scc-ico { width: 40px; height: 40px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-md); background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface)); border: 1px solid color-mix(in srgb, var(--color-accent) 26%, transparent); color: var(--color-accent); }
+.mob .m-sc-scratch-cta .scc-t { font-size: var(--text-small); font-weight: 600; }
+.mob .m-sc-scratch-cta .scc-d { font-size: var(--text-caption); color: var(--color-text-muted); margin-top: 2px; line-height: 1.45; }
+.mob .m-sc-scratch-cta .scc-chev { margin-left: auto; color: var(--color-text-subtle); flex: 0 0 auto; }
+
+/* ───────── D · constructor: post AND/OR reply action picker ───────── */
+.mob .m-sc-actpick { display: flex; flex-direction: column; gap: 10px; }
+.mob .m-sc-actcard { display: flex; align-items: flex-start; gap: 11px; padding: 13px 14px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+.mob .m-sc-actcard .ac-ico { width: 34px; height: 34px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-md); background: var(--color-surface-2); border: 1px solid var(--color-border); color: var(--color-text-muted); }
+.mob .m-sc-actcard .ac-body { flex: 1 1 auto; min-width: 0; }
+.mob .m-sc-actcard .ac-t { font-size: var(--text-small); font-weight: 600; }
+.mob .m-sc-actcard .ac-d { font-size: var(--text-caption); color: var(--color-text-subtle); margin-top: 2px; line-height: 1.45; }
+.mob .m-sc-actcard .m-toggle { flex: 0 0 auto; margin-top: 2px; }
+.mob .m-sc-actcard.is-on { border-color: color-mix(in srgb, var(--color-accent) 34%, var(--color-border)); background: color-mix(in srgb, var(--color-accent) 5%, var(--color-surface)); }
+.mob .m-sc-actcard.is-on .ac-ico { background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface)); border-color: color-mix(in srgb, var(--color-accent) 26%, transparent); color: var(--color-accent); }
+.mob .m-sc-subblock { margin-top: 12px; padding: 14px 14px; border: 1px solid var(--color-border); border-left: 3px solid var(--color-accent); border-radius: var(--radius-md); background: var(--color-surface); display: flex; flex-direction: column; gap: 13px; }
+.mob .m-sc-subblock-k { font-size: var(--text-caption); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-subtle); display: inline-flex; align-items: center; gap: 7px; }
+.mob .m-sc-tip { border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-2); padding: 11px 13px; }
+.mob .m-sc-tip .tip-k { font-size: var(--text-caption); font-weight: 600; color: var(--color-text-muted); display: inline-flex; align-items: center; gap: 7px; margin-bottom: 6px; }
+.mob .m-sc-tip .tip-k svg { color: var(--color-accent); }
+.mob .m-sc-tip ul { margin: 0; padding-left: 17px; font-size: var(--text-caption); color: var(--color-text-muted); line-height: 1.5; }
+.mob .m-sc-tip .tip-ex { margin-top: 8px; padding: 9px 11px; border-radius: var(--radius-sm); background: var(--color-surface); border: 1px solid var(--color-border); font-size: var(--text-caption); color: var(--color-text); line-height: 1.5; }
+.mob .m-sc-tip .tip-ex b { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-text-subtle); font-weight: 600; display: block; margin-bottom: 4px; }
+.mob .m-sc-compiles { display: inline-flex; align-items: center; gap: 8px; font-size: var(--text-caption); color: var(--color-text-subtle); padding: 9px 12px; border-radius: var(--radius-md); background: var(--color-surface-2); border: 1px solid var(--color-border); }
+.mob .m-sc-compiles b { color: var(--color-text-muted); font-weight: 600; }
+.mob .m-sc-compiles svg { color: var(--color-text-subtle); flex: 0 0 auto; }
+
+/* ───────── sticky bottom ACTION PANEL (editor / constructor) ───────── */
+.mob .m-sc-stickybar { flex: 0 0 auto; display: flex; flex-direction: column; gap: 9px; padding: 11px 14px calc(11px + var(--safe-bottom)); background: color-mix(in srgb, var(--color-surface) 92%, transparent); border-top: 1px solid var(--color-border); backdrop-filter: blur(8px); }
+.mob .m-sc-stickybar .btn { width: 100%; min-height: 46px; }
+.mob .m-sc-stickybar .sb-row { display: flex; gap: 9px; }
+.mob .m-sc-stickybar .sb-row .btn { flex: 1 1 0; }
+.mob .m-sc-stickybar .sb-del { background: transparent; border: none; color: var(--color-danger); font-family: inherit; font-size: var(--text-small); font-weight: 500; display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 40px; cursor: pointer; }

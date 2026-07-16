@@ -1,0 +1,177 @@
+/* scenarios-ia.css — IA / NAVIGATION rework layer for «Сценарии» (desktop).
+   Sits on ds/tokens.css + ds/components.css + scenarios.css and adds ONLY the
+   navigation chrome + the four-surface pieces. Visual language stays native:
+   same ink-on-paper tokens, same cards, same Geist. No hardcoded hex.
+
+   The whole point of this layer: make the FOUR surfaces explicit and always
+   answer "where am I / how do I get back".
+     A · Старт / обучение      — что такое сценарии и зачем
+     B · Мои сценарии (дом)    — активные + на паузе, центр управления
+     C · Каталог шаблонов      — карточки с примером и пояснением
+     D · Конструктор           — гибкий билдер с нуля
+   Every surface above home renders an in-app top bar with «← Мои сценарии» +
+   breadcrumbs, so the path back is never a tiny link again. */
+
+/* ───────────────────── in-app TOP BAR (the wayfinding spine) ───────────────────── */
+/* bleeds to the frame edge so it reads like a real app top bar */
+.sc-topbar {
+  display: flex; align-items: center; gap: 14px;
+  margin: -22px -22px 22px; padding: 13px 22px;
+  border-bottom: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-surface) 50%, var(--color-bg));
+}
+.sc-topbar-l { display: flex; align-items: center; gap: 13px; min-width: 0; flex: 1 1 auto; }
+.sc-topbar-r { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
+.sc-tb-titles { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.sc-tb-title { font-size: var(--text-h3); font-weight: 600; letter-spacing: -0.006em; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* «← Мои сценарии» — the always-present return to home */
+.sc-back {
+  display: inline-flex; align-items: center; gap: 7px; flex: 0 0 auto;
+  height: 34px; padding: 0 13px 0 10px; border: 1px solid var(--color-border);
+  border-radius: var(--radius-md); background: var(--color-surface);
+  color: var(--color-text-muted); font-family: inherit; font-size: var(--text-small); font-weight: 500;
+  cursor: pointer; transition: border-color var(--duration-base) var(--ease-standard), color var(--duration-base) var(--ease-standard), background var(--duration-base) var(--ease-standard);
+}
+.sc-back:hover { background: var(--color-surface-2); color: var(--color-text); border-color: color-mix(in srgb, var(--color-text) 16%, var(--color-border)); }
+.sc-back svg { flex: 0 0 auto; }
+
+/* breadcrumbs — the path, shown above the page title */
+.sc-crumbs { display: flex; align-items: center; gap: 7px; font-size: var(--text-caption); color: var(--color-text-subtle); font-family: var(--font-mono); letter-spacing: 0.01em; }
+.sc-crumbs a { color: var(--color-text-muted); text-decoration: none; }
+.sc-crumbs a:hover { color: var(--color-text); text-decoration: underline; text-underline-offset: 2px; }
+.sc-crumbs .sep { opacity: 0.5; }
+.sc-crumbs .cur { color: var(--color-text); font-weight: 600; }
+
+/* status pill seated in the top bar (uses DS .status-pill); neutral variant for «всё выключено» */
+.sc-topbar .status-pill--neutral { color: var(--color-text-subtle); }
+.sc-topbar .status-pill--neutral .pill-dot { background: var(--color-ink-400); }
+
+/* a quiet «Как это работает» link — available from home at all times */
+.sc-howlink { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 11px; border-radius: var(--radius-md); background: transparent; border: 1px solid transparent; color: var(--color-text-muted); font-family: inherit; font-size: var(--text-small); font-weight: 500; cursor: pointer; }
+.sc-howlink:hover { background: var(--color-surface-2); color: var(--color-text); }
+
+/* ───────────────────── A · СТАРТ / ОБУЧЕНИЕ ───────────────────── */
+.sc-teach { display: flex; flex-direction: column; gap: 26px; }
+.sc-teach-hero { max-width: 64ch; }
+.sc-teach-hero .th-eyebrow { font-family: var(--font-mono); font-size: var(--text-caption); letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-accent); }
+.sc-teach-hero h1 { font-size: var(--text-h1); font-weight: 600; letter-spacing: -0.015em; margin: 8px 0 0; line-height: 1.15; }
+.sc-teach-hero p { font-size: var(--text-body); color: var(--color-text-muted); margin: 10px 0 0; line-height: 1.6; text-wrap: pretty; }
+.sc-teach-hero p b { color: var(--color-text); font-weight: 600; }
+
+.sc-teach-block-k { font-size: var(--text-caption); font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-text-subtle); margin-bottom: 13px; }
+
+/* «как это выглядит» — 3 example cards */
+.sc-teach-examples { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; }
+.sc-teach-ex { display: flex; flex-direction: column; gap: 11px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 16px; }
+.sc-teach-ex-top { display: flex; align-items: center; gap: 11px; }
+.sc-teach-ex-ico { width: 38px; height: 38px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-md); background: color-mix(in srgb, var(--color-accent) 11%, var(--color-surface)); border: 1px solid color-mix(in srgb, var(--color-accent) 24%, transparent); color: var(--color-accent); }
+.sc-teach-ex-title { font-size: var(--text-small); font-weight: 600; line-height: 1.3; }
+.sc-teach-ex-quote { font-size: var(--text-small); line-height: 1.55; color: var(--color-text-muted); background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 11px 13px; text-wrap: pretty; }
+.sc-teach-ex-quote .qk { display: block; font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-text-subtle); margin-bottom: 6px; }
+
+/* «как это работает» — 3 steps */
+.sc-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; counter-reset: step; }
+.sc-step { position: relative; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 16px 17px; }
+.sc-step .st-n { width: 26px; height: 26px; display: grid; place-items: center; border-radius: var(--radius-full); background: var(--color-text); color: var(--color-bg); font-size: var(--text-caption); font-weight: 700; font-variant-numeric: tabular-nums; margin-bottom: 11px; }
+.sc-step .st-t { font-size: var(--text-small); font-weight: 600; }
+.sc-step .st-d { font-size: var(--text-caption); color: var(--color-text-muted); margin-top: 4px; line-height: 1.5; }
+.sc-step .st-d b { color: var(--color-text); font-weight: 600; }
+
+/* the two main CTAs — view templates (→C) / build your own (→D) */
+.sc-teach-cta { display: flex; flex-wrap: wrap; gap: 11px; align-items: center; padding-top: 4px; }
+.sc-teach-cta .btn svg { flex: 0 0 auto; }
+.sc-teach-cta .tc-note { font-size: var(--text-caption); color: var(--color-text-subtle); margin-left: auto; }
+
+/* tester-gated note ribbon (mode is OFF by default, testers only) */
+.sc-gatenote { display: inline-flex; align-items: center; gap: 8px; font-size: var(--text-caption); color: var(--color-text-subtle); padding: 7px 12px; border: 1px dashed var(--color-border); border-radius: var(--radius-full); background: var(--color-surface-2); }
+.sc-gatenote svg { color: var(--color-text-muted); flex: 0 0 auto; }
+
+/* ───────────────────── B · МОИ СЦЕНАРИИ — active / paused split ───────────────────── */
+.sc-groupsec { display: flex; flex-direction: column; gap: 12px; }
+.sc-groupsec + .sc-groupsec { margin-top: 22px; }
+.sc-sec-head { display: flex; align-items: center; gap: 10px; }
+.sc-sec-title { font-size: var(--text-small); font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-text); }
+.sc-sec-count { font-size: var(--text-caption); font-weight: 600; font-variant-numeric: tabular-nums; color: var(--color-text-subtle); background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius-full); padding: 1px 9px; }
+.sc-sec-head--active .sc-sec-count { color: var(--color-success); background: color-mix(in srgb, var(--color-success) 10%, var(--color-surface)); border-color: color-mix(in srgb, var(--color-success) 26%, var(--color-border)); }
+.sc-sec-rule { flex: 1 1 auto; height: 1px; background: var(--color-border); }
+
+/* run-count becomes a real link to Активность; extra card actions */
+.sc-runlink { font-size: var(--text-caption); color: var(--color-accent); display: inline-flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; text-decoration: none; }
+.sc-runlink:hover { text-decoration: underline; text-underline-offset: 2px; }
+.sc-runlink b { font-weight: 600; }
+.sc-iconbtn { width: 32px; height: 32px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-md); border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text-subtle); cursor: pointer; }
+.sc-iconbtn:hover { background: var(--color-surface-2); color: var(--color-text); }
+.sc-iconbtn--danger:hover { color: var(--color-danger); border-color: color-mix(in srgb, var(--color-danger) 36%, var(--color-border)); }
+
+/* ───────────────────── C · КАТАЛОГ — template cards with a concrete EXAMPLE ───────────────────── */
+/* a prominent «с нуля» entry that opens the constructor (D) */
+.sc-scratch-cta { display: flex; align-items: center; gap: 14px; padding: 16px 18px; border: 1px dashed color-mix(in srgb, var(--color-accent) 40%, var(--color-border)); border-radius: var(--radius-lg); background: color-mix(in srgb, var(--color-accent) 5%, var(--color-surface)); }
+.sc-scratch-cta .scc-ico { width: 42px; height: 42px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-md); background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface)); border: 1px solid color-mix(in srgb, var(--color-accent) 26%, transparent); color: var(--color-accent); }
+.sc-scratch-cta .scc-body { flex: 1 1 auto; min-width: 0; }
+.sc-scratch-cta .scc-t { font-size: var(--text-small); font-weight: 600; }
+.sc-scratch-cta .scc-d { font-size: var(--text-caption); color: var(--color-text-muted); margin-top: 2px; line-height: 1.45; }
+
+.sc-tgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.sc-tcard { display: flex; flex-direction: column; gap: 11px; text-align: left; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 17px 18px; cursor: pointer; transition: border-color var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard); min-width: 0; }
+.sc-tcard:hover { border-color: color-mix(in srgb, var(--color-text) 16%, var(--color-border)); box-shadow: var(--shadow-md); }
+.sc-tcard-top { display: flex; align-items: center; gap: 11px; }
+.sc-tcard-ico { width: 40px; height: 40px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-md); background: var(--color-surface-2); border: 1px solid var(--color-border); color: var(--color-text-muted); }
+.sc-tcard--reply .sc-tcard-ico, .sc-tcard--campaign .sc-tcard-ico { background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface)); border-color: color-mix(in srgb, var(--color-accent) 26%, transparent); color: var(--color-accent); }
+.sc-tcard-titles { flex: 1 1 auto; min-width: 0; }
+.sc-tcard-name { font-size: var(--text-small); font-weight: 600; letter-spacing: -0.004em; line-height: 1.25; }
+.sc-tcard-when { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.01em; color: var(--color-text-subtle); display: inline-flex; align-items: center; gap: 5px; margin-top: 3px; }
+.sc-tcard-desc { font-size: var(--text-caption); color: var(--color-text-muted); line-height: 1.55; text-wrap: pretty; }
+/* the mandatory concrete example: what this template would actually generate */
+.sc-tcard-ex { border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-2); overflow: hidden; }
+.sc-tcard-ex-k { display: flex; align-items: center; gap: 6px; padding: 8px 12px; font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-text-subtle); border-bottom: 1px solid var(--color-border); }
+.sc-tcard-ex-k svg { opacity: 0.8; }
+.sc-tcard-ex-body { padding: 11px 13px; font-size: var(--text-caption); line-height: 1.55; color: var(--color-text); text-wrap: pretty; }
+.sc-tcard-ex-body .exq { color: var(--color-text-muted); }
+.sc-tcard-ex-reply { margin-top: 8px; padding-top: 9px; border-top: 1px dashed var(--color-border); }
+.sc-tcard-ex-reply .exr-k { font-weight: 600; color: var(--color-accent); display: inline-flex; align-items: center; gap: 5px; }
+.sc-tcard-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 1px; }
+.sc-tcard-pick { font-size: var(--text-small); font-weight: 600; color: var(--color-accent); display: inline-flex; align-items: center; gap: 6px; }
+.sc-tcard:hover .sc-tcard-pick svg { transform: translateX(2px); }
+.sc-tcard-pick svg { transition: transform var(--duration-base) var(--ease-standard); }
+.sc-tcard--campaign { border-color: color-mix(in srgb, var(--color-warning) 34%, var(--color-border)); background: color-mix(in srgb, var(--color-warning) 4%, var(--color-surface)); }
+
+/* ───────────────────── D · КОНСТРУКТОР — post AND/OR reply action picker ───────────────────── */
+.sc-actpick { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.sc-actcard { display: flex; align-items: flex-start; gap: 11px; padding: 14px 15px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); transition: border-color var(--duration-base) var(--ease-standard), background var(--duration-base) var(--ease-standard); }
+.sc-actcard .ac-ico { width: 34px; height: 34px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-md); background: var(--color-surface-2); border: 1px solid var(--color-border); color: var(--color-text-muted); }
+.sc-actcard .ac-body { flex: 1 1 auto; min-width: 0; }
+.sc-actcard .ac-t { font-size: var(--text-small); font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.sc-actcard .ac-d { font-size: var(--text-caption); color: var(--color-text-subtle); margin-top: 2px; line-height: 1.45; }
+.sc-actcard .switch { margin-left: auto; flex: 0 0 auto; }
+.sc-actcard--on { border-color: color-mix(in srgb, var(--color-accent) 34%, var(--color-border)); background: color-mix(in srgb, var(--color-accent) 5%, var(--color-surface)); }
+.sc-actcard--on .ac-ico { background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface)); border-color: color-mix(in srgb, var(--color-accent) 26%, transparent); color: var(--color-accent); }
+
+/* a revealed sub-block (post fields / reply fields) under the picker */
+.sc-subblock { margin-top: 14px; padding: 15px 16px; border: 1px solid var(--color-border); border-left: 3px solid var(--color-accent); border-radius: var(--radius-md); background: var(--color-surface); display: flex; flex-direction: column; gap: 14px; }
+.sc-subblock-k { font-size: var(--text-caption); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-subtle); display: inline-flex; align-items: center; gap: 7px; }
+
+/* «как написать хорошую инструкцию» tip with an example */
+.sc-tip { border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-2); padding: 12px 14px; }
+.sc-tip .tip-k { font-size: var(--text-caption); font-weight: 600; color: var(--color-text-muted); display: inline-flex; align-items: center; gap: 7px; margin-bottom: 7px; }
+.sc-tip .tip-k svg { color: var(--color-accent); }
+.sc-tip ul { margin: 0; padding-left: 18px; font-size: var(--text-caption); color: var(--color-text-muted); line-height: 1.55; }
+.sc-tip li { margin: 2px 0; }
+.sc-tip .tip-ex { margin-top: 9px; padding: 9px 11px; border-radius: var(--radius-sm); background: var(--color-surface); border: 1px solid var(--color-border); font-size: var(--text-caption); color: var(--color-text); line-height: 1.5; }
+.sc-tip .tip-ex b { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-text-subtle); font-weight: 600; display: block; margin-bottom: 4px; }
+
+/* «соберётся в» — the invariant: one scenario compiles to one of three shapes */
+.sc-compiles { display: inline-flex; align-items: center; gap: 8px; font-size: var(--text-caption); color: var(--color-text-subtle); padding: 8px 12px; border-radius: var(--radius-md); background: var(--color-surface-2); border: 1px solid var(--color-border); }
+.sc-compiles b { color: var(--color-text-muted); font-weight: 600; }
+.sc-compiles svg { color: var(--color-text-subtle); flex: 0 0 auto; }
+
+/* ───────────────────── responsive ───────────────────── */
+@media (max-width: 880px) {
+  .sc-teach-examples, .sc-steps { grid-template-columns: 1fr 1fr; }
+  .sc-tgrid { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .sc-teach-examples, .sc-steps, .sc-actpick { grid-template-columns: 1fr; }
+  .sc-topbar { flex-wrap: wrap; }
+  .sc-teach-cta .tc-note { margin-left: 0; width: 100%; }
+}

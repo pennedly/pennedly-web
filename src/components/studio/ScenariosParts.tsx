@@ -36,6 +36,7 @@ import {
   IcEye,
   IcGift,
   IcHeart,
+  IcInfo,
   IcList,
   IcLock,
   IcNib,
@@ -722,6 +723,8 @@ export function ScenarioCard({
       className={cn(
         "rounded-lg border border-border bg-surface p-4 shadow-sm transition-colors hover:border-text/15 hover:shadow-md md:p-[18px]",
         !s.enabled && "opacity-[0.82]",
+        // амбер-корешок: «Публикует/Отвечает сразу» читается уже по кромке
+        s.enabled && mode === "auto" && "sc-card--auto",
       )}
     >
       <div className="flex items-start gap-3">
@@ -784,27 +787,39 @@ export function ScenarioCard({
         </div>
       ) : null}
 
+      {/* Publish mode — a first-class card state (эталон .rt-mode): full strip
+          with icon + mode + what-it-does + an obvious switch. AUTO = live amber
+          (+ the card spine above); ask = calm neutral; disabled routine = dashed
+          muted, mode visible, no switch. SPEC card order: head → createdoff →
+          mode strip → cadence (on an enabled card the strip sits right under
+          the head since the off-block doesn't render). */}
+      <div
+        className={cn(
+          "rt-mode mt-3",
+          !s.enabled ? "rt-mode--muted" : mode === "auto" ? "rt-mode--auto" : "rt-mode--ask",
+        )}
+      >
+        <span className="rtm-ico">
+          <ModeIcon size={17} />
+        </span>
+        <div className="rtm-body">
+          <div className="rtm-t">{t(`scenarios.mode_${mode}_${sentence.kind}` as MessageKey)}</div>
+          <div className="rtm-d">{t(`scenarios.rtm_d_${mode}_${sentence.kind}` as MessageKey)}</div>
+        </div>
+        {s.enabled && onChangeMode ? (
+          <button type="button" className="rtm-edit" onClick={() => onChangeMode(s)}>
+            <IcSwap size={14} /> {t("scenarios.change_mode")}
+          </button>
+        ) : !s.enabled ? (
+          <span className="rtm-locknote">
+            <IcLock size={12} /> {t("scenarios.rtm_locked")}
+          </span>
+        ) : null}
+      </div>
+
       {/* cadence strip — the WHEN */}
       <div className="mt-3">
         <CadenceStrip s={s} />
-      </div>
-
-      {/* Publishing mode — a clear badge (draft-for-review vs publishes-directly) so
-          it's unmissable, plus a one-tap switch that opens the mode picker. Amber
-          «note» = the attention state (auto publishes without review). */}
-      <div className="mt-2.5 flex flex-wrap items-center gap-2">
-        <Badge tone={mode === "auto" ? "note" : "neutral"} icon={<ModeIcon size={13} />}>
-          {t(`scenarios.mode_${mode}_${sentence.kind}` as MessageKey)}
-        </Badge>
-        {onChangeMode && s.enabled && (
-          <button
-            type="button"
-            onClick={() => onChangeMode(s)}
-            className="text-caption font-medium text-accent transition-colors hover:underline"
-          >
-            {t("scenarios.change_mode")}
-          </button>
-        )}
       </div>
 
       <div className="mt-3.5 flex flex-col gap-2 border-t border-border pt-3 sm:flex-row sm:items-center sm:justify-between">
@@ -1799,8 +1814,18 @@ export function EnableConfirm({
   if (!scenario) return null;
   const sentence = deriveSentence(t, scenario, handle);
   const isReply = sentence.kind === "reply";
-  const showGate = !isReply && mode === "auto" && !postAutopilotOn;
-  const needConsent = isReply && mode === "auto";
+  // Opened via «Изменить» on an already-ON routine ⇒ this is the SPEC's
+  // mode-change dialog: fixed mode titles + dialog subs, a «текущий» chip on
+  // the routine's live mode, the honest master gate, «Сохранение…». A
+  // first-enable open keeps the original enable copy untouched.
+  const isModeChange = scenario.enabled;
+  const current = publishModeOf(scenario);
+  // The master gates BOTH phases (posts AND replies), so the mode-change gate
+  // is kind-agnostic per the SPEC; the first-enable dialog keeps its historical
+  // post-only gate + the reply consent checkbox (not part of the SPEC dialog).
+  const showGate =
+    mode === "auto" && !postAutopilotOn && (isModeChange || !isReply);
+  const needConsent = !isModeChange && isReply && mode === "auto";
   const blocked = (needConsent && !consent) || (showGate && !enableAutopost);
   return (
     <div
@@ -1811,14 +1836,28 @@ export function EnableConfirm({
     >
       <div className="w-full max-w-[480px] rounded-2xl border border-border bg-surface p-6 shadow-lg max-md:max-w-none max-md:rounded-b-none max-md:rounded-t-2xl max-md:pb-[calc(env(safe-area-inset-bottom)+20px)]">
         <div className="flex items-start gap-3">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-success/28 bg-success/12 text-success">
-            {isReply ? <IcReplies size={18} /> : <IcRepeat size={18} />}
-          </span>
+          {/* SPEC pm-head: the mode-change dialog carries a NEUTRAL swap mark +
+              a quiet kind line; first-enable keeps its green mark + sentence. */}
+          {isModeChange ? (
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-border bg-surface-2 text-text-muted">
+              <IcSwap size={19} />
+            </span>
+          ) : (
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-success/28 bg-success/12 text-success">
+              {isReply ? <IcReplies size={18} /> : <IcRepeat size={18} />}
+            </span>
+          )}
           <div className="min-w-0">
             <h2 className="text-h3 font-semibold [text-wrap:balance]">
-              {(scenario.enabled ? t("scenarios.mode_change_title") : t("scenarios.enable_title")).replace("{name}", scenario.name)}
+              {(isModeChange ? t("scenarios.mode_change_title") : t("scenarios.enable_title")).replace("{name}", scenario.name)}
             </h2>
-            <Sentence template={sentence.template} slots={sentence.slots} variant="card" className="mt-1" />
+            {isModeChange ? (
+              <p className="mt-[3px] text-small text-text-muted">
+                {t(isReply ? "scenarios.pm_kind_reply" : "scenarios.pm_kind_post")}
+              </p>
+            ) : (
+              <Sentence template={sentence.template} slots={sentence.slots} variant="card" className="mt-1" />
+            )}
           </div>
         </div>
 
@@ -1827,24 +1866,55 @@ export function EnableConfirm({
           <ModeOption
             active={mode === "ask"}
             tone="ask"
-            title={t("scenarios.enable.ask_title")}
+            icon={isModeChange ? <IcEye size={15} /> : undefined}
+            title={isModeChange ? t(`scenarios.mode_ask_${sentence.kind}` as MessageKey) : t("scenarios.enable.ask_title")}
+            // Mode-change: «текущий» marks the routine's live mode. First-enable:
             // «По умолчанию» only when ask IS this open's preselect — on an
             // existing auto scenario the badge would contradict the auto card.
-            badge={publishModeOf(scenario) === "ask" ? t("scenarios.enable.default_badge") : undefined}
-            sub={isReply ? t("scenarios.enable.ask_reply_sub") : t("scenarios.enable.ask_post_sub")}
+            badge={
+              isModeChange
+                ? current === "ask"
+                  ? t("scenarios.pm_current")
+                  : undefined
+                : current === "ask"
+                  ? t("scenarios.enable.default_badge")
+                  : undefined
+            }
+            badgeTone={isModeChange ? "ask" : "success"}
+            sub={isModeChange ? t(`scenarios.pm_d_ask_${sentence.kind}` as MessageKey) : isReply ? t("scenarios.enable.ask_reply_sub") : t("scenarios.enable.ask_post_sub")}
             onPick={() => setMode("ask")}
           />
           <ModeOption
             active={mode === "auto"}
             tone="auto"
-            title={t("scenarios.enable.auto_title")}
-            sub={isReply ? t("scenarios.enable.auto_reply_sub") : t("scenarios.enable.auto_post_sub")}
+            icon={isModeChange ? <IcBolt size={15} /> : undefined}
+            title={isModeChange ? t(`scenarios.mode_auto_${sentence.kind}` as MessageKey) : t("scenarios.enable.auto_title")}
+            badge={isModeChange && current === "auto" ? t("scenarios.pm_current") : undefined}
+            badgeTone="auto"
+            sub={isModeChange ? t(`scenarios.rtm_d_auto_${sentence.kind}` as MessageKey) : isReply ? t("scenarios.enable.auto_reply_sub") : t("scenarios.enable.auto_post_sub")}
             onPick={() => setMode("auto")}
           />
         </div>
 
-        {/* inline autopost gate — post + auto + account autopublish off */}
-        {showGate && (
+        {/* inline autopost gate — post + auto + account autopublish off. The
+            mode-change dialog uses the SPEC's honest wording («рутина всё равно
+            молчит») and the .pm-gate look; first-enable keeps its own copy. */}
+        {showGate && isModeChange ? (
+          <div className="pm-gate">
+            <span className="pg-ico">
+              <IcInfo size={16} />
+            </span>
+            <div className="pg-body">
+              <p className="pg-t">{t("scenarios.pm_gate_title")}</p>
+              <p className="pg-d">{t("scenarios.pm_gate_desc")}</p>
+              {/* SPEC: switch leads, text follows (plain flex, no spread) */}
+              <label className="pg-toggle">
+                <Switch checked={enableAutopost} onCheckedChange={setEnableAutopost} aria-label={t("scenarios.pm_gate_toggle")} />
+                <span>{t("scenarios.pm_gate_toggle")}</span>
+              </label>
+            </div>
+          </div>
+        ) : showGate ? (
           <div className="mt-3.5 rounded-md border border-warning/28 bg-warning/[0.08] p-3.5">
             <div className="flex items-start gap-2.5">
               <IcBolt size={16} className="mt-0.5 shrink-0 text-warning" />
@@ -1858,7 +1928,7 @@ export function EnableConfirm({
               <Switch checked={enableAutopost} onCheckedChange={setEnableAutopost} aria-label={t("scenarios.enable.gate_toggle").replace("{handle}", handle)} />
             </label>
           </div>
-        )}
+        ) : null}
 
         {/* reactive consent — reply + auto */}
         {needConsent && (
@@ -1885,7 +1955,11 @@ export function EnableConfirm({
             icon={<IcCheck size={15} />}
             className="max-md:min-h-[44px] max-md:w-full"
           >
-            {scenario.enabled ? t("scenarios.mode_change_save") : t("scenarios.turn_on")}
+            {busy && isModeChange
+              ? t("scenarios.pm_saving")
+              : isModeChange
+                ? t("scenarios.mode_change_save")
+                : t("scenarios.turn_on")}
           </Button>
         </div>
       </div>
@@ -1898,6 +1972,8 @@ function ModeOption({
   tone,
   title,
   badge,
+  badgeTone = "success",
+  icon,
   sub,
   onPick,
 }: {
@@ -1905,6 +1981,13 @@ function ModeOption({
   tone: "ask" | "auto";
   title: string;
   badge?: string;
+  /** success = the enable dialog's «По умолчанию» (inline, static tint —
+   *  unchanged legacy look). ask/auto = the mode-change «текущий» chip per the
+   *  эталон .pm-current: pushed to the row's right edge, tinted in the option's
+   *  colour ONLY while that option is selected, neutral grey otherwise. */
+  badgeTone?: "success" | "ask" | "auto";
+  /** SPEC mo-t: the mode-change dialog prefixes the title with eye/bolt. */
+  icon?: ReactNode;
   sub: string;
   onPick: () => void;
 }) {
@@ -1926,11 +2009,30 @@ function ModeOption({
       <span className={cn("mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border-2", active ? (auto ? "border-warning" : "border-accent") : "border-border")}>
         {active && <span className={cn("h-2.5 w-2.5 rounded-full", auto ? "bg-warning" : "bg-accent")} />}
       </span>
-      <span className="min-w-0">
+      <span className="min-w-0 flex-1">
         <span className="flex flex-wrap items-center gap-2 text-small font-semibold text-text">
+          {icon}
           {title}
           {badge && (
-            <span className="rounded-full border border-success/30 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.04em] text-success">{badge}</span>
+            <span
+              className={cn(
+                "rounded-full border px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.04em]",
+                badgeTone === "success"
+                  ? "border-success/30 text-success"
+                  : cn(
+                      // эталон .pm-current: right edge; tinted only while the
+                      // hosting option is selected, neutral grey otherwise.
+                      "ml-auto",
+                      active
+                        ? badgeTone === "auto"
+                          ? "border-warning/34 text-warning"
+                          : "border-accent/34 text-accent"
+                        : "border-border text-text-subtle",
+                    ),
+              )}
+            >
+              {badge}
+            </span>
           )}
         </span>
         <span className="mt-0.5 block text-caption leading-relaxed text-text-muted">{sub}</span>

@@ -1,5 +1,7 @@
 "use client";
 
+import "@/components/studio/publish-mode.css";
+
 // State gallery for Scenarios (/app/scenarios) — renders the REAL components of
 // the «рутинный автопилот» redesign in every state with NO auth / NO backend,
 // for self-verification against Scenarios-{WEB,Mobile}-SPEC. Lives under

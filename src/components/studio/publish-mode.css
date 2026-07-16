@@ -1,0 +1,80 @@
+/* Publish-mode as a first-class card state — ported 1:1 from the эталон
+   design-export/autopilot-publishmode.css (Autopilot-Publish-Mode-SPEC.html).
+   The mode strip (.rt-mode) lives under the routine card's head; an AUTO card
+   also gets an amber spine (.sc-card--auto). The dialog bits (.pm-current chip,
+   .pm-gate block) restyle the mode-change dialog. Tokens only — both themes. */
+
+/* корешок карточки: режим читается уже по кромке */
+.sc-card--auto { border-left: 3px solid var(--color-warning); }
+
+.rt-mode {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 13px; border-radius: var(--radius-md);
+  border: 1px solid var(--color-border); background: var(--color-surface-2);
+}
+.rt-mode .rtm-ico {
+  width: 34px; height: 34px; flex: 0 0 auto; display: grid; place-items: center;
+  border-radius: var(--radius-sm); background: var(--color-surface);
+  border: 1px solid var(--color-border); color: var(--color-text-muted);
+}
+.rt-mode .rtm-body { flex: 1 1 auto; min-width: 0; }
+.rt-mode .rtm-t {
+  font-size: var(--text-small); font-weight: 600; color: var(--color-text);
+  display: inline-flex; align-items: center; gap: 8px; line-height: 1.25;
+}
+.rt-mode .rtm-d {
+  font-size: var(--text-caption); color: var(--color-text-subtle);
+  margin-top: 2px; line-height: 1.4; text-wrap: pretty;
+}
+
+/* переключатель режима — очевидная маленькая кнопка прямо у бейджа */
+.rtm-edit {
+  flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px;
+  height: 34px; padding: 0 13px; border-radius: var(--radius-md);
+  border: 1px solid var(--color-border); background: var(--color-surface);
+  color: var(--color-text-muted); font-family: inherit; font-size: var(--text-small);
+  font-weight: 600; cursor: pointer; white-space: nowrap;
+  transition: border-color var(--duration-base) var(--ease-standard),
+              color var(--duration-base) var(--ease-standard),
+              background var(--duration-base) var(--ease-standard);
+}
+.rtm-edit svg { flex: 0 0 auto; }
+.rtm-edit:hover { background: var(--color-surface-2); color: var(--color-text); border-color: color-mix(in srgb, var(--color-text) 18%, var(--color-border)); }
+
+/* AUTO — «Публикует сразу» / «Отвечает сразу»: живо, энергично, янтарный сигнал */
+.rt-mode--auto { background: color-mix(in srgb, var(--color-warning) 9%, var(--color-surface)); border-color: color-mix(in srgb, var(--color-warning) 30%, var(--color-border)); }
+.rt-mode--auto .rtm-ico { background: color-mix(in srgb, var(--color-warning) 15%, var(--color-surface)); border-color: color-mix(in srgb, var(--color-warning) 30%, transparent); color: var(--color-warning); }
+.rt-mode--auto .rtm-t { color: var(--color-warning); }
+.rt-mode--auto .rtm-edit { border-color: color-mix(in srgb, var(--color-warning) 34%, var(--color-border)); color: var(--color-warning); }
+.rt-mode--auto .rtm-edit:hover { background: color-mix(in srgb, var(--color-warning) 12%, var(--color-surface)); border-color: color-mix(in srgb, var(--color-warning) 52%, var(--color-border)); }
+
+.rt-mode--ask .rtm-ico { color: var(--color-text-muted); }
+
+/* выключенная рутина: режим виден (приглушён), переключателя нет */
+.rt-mode--muted { background: var(--color-surface-2); border-style: dashed; }
+.rt-mode--muted .rtm-ico { background: var(--color-surface-2); color: var(--color-text-subtle); }
+.rt-mode--muted .rtm-t { color: var(--color-text-muted); }
+.rt-mode .rtm-locknote {
+  flex: 0 0 auto; font-size: var(--text-caption); color: var(--color-text-subtle);
+  display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;
+}
+.rt-mode .rtm-locknote svg { flex: 0 0 auto; }
+
+/* «текущий» chip lives in ModeOption as Tailwind (right edge, tinted only
+   while its option is selected) — no CSS rules needed here. */
+
+/* ГЕЙТ: мастер выключен, а рутину переводят в «Публикует сразу» */
+.pm-gate { display: flex; align-items: flex-start; gap: 11px; margin-top: 14px; padding: 13px 15px; border-radius: var(--radius-md); background: color-mix(in srgb, var(--color-warning) 8%, var(--color-surface)); border: 1px solid color-mix(in srgb, var(--color-warning) 28%, var(--color-border)); }
+.pm-gate .pg-ico { width: 30px; height: 30px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--color-warning) 14%, var(--color-surface)); color: var(--color-warning); }
+.pm-gate .pg-body { flex: 1 1 auto; min-width: 0; }
+.pm-gate .pg-t { font-size: var(--text-small); font-weight: 600; color: var(--color-text); }
+.pm-gate .pg-d { font-size: var(--text-caption); color: var(--color-text-muted); margin-top: 2px; line-height: 1.5; }
+.pm-gate .pg-toggle { display: flex; align-items: center; gap: 9px; margin-top: 11px; font-size: var(--text-small); font-weight: 500; color: var(--color-text); }
+
+/* телефон: бейдж складывается в столбик, контрол тянется на всю ширину */
+@media (max-width: 640px) {
+  .rt-mode { flex-wrap: wrap; }
+  .rt-mode .rtm-body { flex: 1 1 100%; }
+  .rtm-edit { width: 100%; height: 44px; justify-content: center; margin-top: 2px; }
+  .rt-mode .rtm-locknote { width: 100%; margin-top: 2px; }
+}

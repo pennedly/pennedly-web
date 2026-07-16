@@ -1,5 +1,7 @@
 "use client";
 
+import "@/components/studio/publish-mode.css";
+
 // Scenarios (/app/scenarios) — the «рутинный автопилот». Rebuilt 1:1 to the new
 // Scenarios-{WEB,Mobile}-SPEC. ONE page, THREE views:
 //   • DISCOVERY — the preset gallery (4 groups, sorted by impact, no «soon», no
@@ -1349,7 +1351,7 @@ export default function ScenariosPage() {
           activeCount > 0 ? (
             <TopbarPill tone="success">{t("scenarios.active").replace("{n}", String(activeCount))}</TopbarPill>
           ) : (
-            <TopbarPill tone="warning">{t("scenarios.all_off")}</TopbarPill>
+            <TopbarPill tone="neutral">{t("scenarios.all_off")}</TopbarPill>
           )
         }
         actions={
@@ -1361,11 +1363,10 @@ export default function ScenariosPage() {
         }
       />
       <main className="mx-auto max-w-[960px] space-y-4 px-3.5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4 md:space-y-5 md:px-6 md:pb-24 md:pt-7">
+        {/* H1 removed (SPEC задача 3): the topbar owns the word «Автопилот» —
+            title + state-only pill; the page keeps only the quiet lead line. */}
         {view === "list" && (
-          <div className="flex flex-col gap-1">
-            <h1 className="text-h1 font-semibold tracking-tight">{t("ap.title")}</h1>
-            <p className="max-w-[60ch] text-small text-text-muted">{t("scenarios.subtitle")}</p>
-          </div>
+          <p className="max-w-[60ch] text-small text-text-muted">{t("scenarios.subtitle")}</p>
         )}
 
         {/* «Правила дома» — the global house-rules header, ON TOP of the routine
