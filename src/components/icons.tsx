@@ -127,6 +127,8 @@ export const IcPlus = (p: IconProps) => <Svg {...p}><path d="M12 5v14M5 12h14" /
 export const IcMinus = (p: IconProps) => <Svg {...p}><path d="M5 12h14" /></Svg>;
 // Wand with a sparkle — "generate" (the mention-routine generated-photo action).
 export const IcWand = (p: IconProps) => <Svg {...p}><path d="M15 4V2M15 10V8M12.5 6.5h-2M19.5 6.5h-2M6 20 16 10l-2-2L4 18l2 2Z" /></Svg>;
+// Route — two nodes joined by a path (the "one mention → one routine" note).
+export const IcRoute = (p: IconProps) => <Svg {...p}><circle cx="6" cy="19" r="2.5" /><circle cx="18" cy="5" r="2.5" /><path d="M8.5 19H15a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h6.5" /></Svg>;
 export const IcClock = (p: IconProps) => <Svg {...p}><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></Svg>;
 export const IcCalendar = (p: IconProps) => <Svg {...p}><rect x="4" y="5.5" width="16" height="15" rx="2.5" /><path d="M4 9.5h16M8.5 3.5v4M15.5 3.5v4" /></Svg>;
 export const IcSkip = (p: IconProps) => <Svg {...p}><path d="M6 5v14M18 5v14M9 12h7M9 12l3-3M9 12l3 3" /></Svg>;
