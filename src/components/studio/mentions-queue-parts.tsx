@@ -474,7 +474,7 @@ export function FilteredStrip({
   );
 }
 
-export function RoutinesEntry({ t, href = "/app/autopilot" }: { t: T; href?: string }) {
+export function RoutinesEntry({ t, href = "/app/mentions/routines" }: { t: T; href?: string }) {
   return (
     <a className="mq-routines" href={href}>
       <span className="rt-ico">
@@ -484,7 +484,6 @@ export function RoutinesEntry({ t, href = "/app/autopilot" }: { t: T; href?: str
         <span className="rt-t">{t("mq.routines.title")}</span>
         <span className="rt-s">{t("mq.routines.sub")}</span>
       </span>
-      <span className="rt-soon">{t("mq.routines.soon")}</span>
       <span className="rt-chev">
         <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
           <path d="M9 6l6 6-6 6" />

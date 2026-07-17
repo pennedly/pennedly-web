@@ -1194,6 +1194,8 @@ export const en = {
   "mrc.status.active": "Fires on the next matching mention",
   "mrc.status.off_badge": "Off",
   "mrc.status.on_badge": "Active",
+  "mrc.default_name": "New mention routine",
+  "mrc.default_name_catchall": "All other safe",
   "mrc.foot.save_off": "Save it off",
   "mrc.foot.save_on": "Save and turn on",
   "mrc.foot.save": "Save",

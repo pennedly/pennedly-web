@@ -20,6 +20,7 @@ import { TweaksPanel, TweakSection, TweakToggle, TweakRadio, useTweaks } from "@
 import {
   DEMO_ROUTINES,
   MR_TWEAK_DEFAULTS,
+  ensureAutopilotMaster,
   isMentionRoutine,
   toRoutine,
   type MRoutine,
@@ -98,12 +99,14 @@ export default function MentionRoutinesPage() {
       if (demoOn) return;
       try {
         await setScenarioEnabled(r.id, on);
+        // Turning a routine ON is a no-op unless the autopilot master is on too.
+        if (on && accountId !== null) await ensureAutopilotMaster(accountId);
       } catch {
         // revert on failure
         setRoutines((rs) => rs.map((x) => (x.id === r.id ? { ...x, enabled: !on } : x)));
       }
     },
-    [demoOn],
+    [demoOn, accountId],
   );
 
   // Create/edit open the constructor — landing in the next slice.

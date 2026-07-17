@@ -154,21 +154,20 @@ function OptionTile({
   );
 }
 
-function BigInst({ value, t, onEdit }: { value: string; t: T; onEdit?: () => void }) {
+function BigInst({ value, t, onChange }: { value: string; t: T; onChange: (v: string) => void }) {
   return (
     <div className="rounded-md border border-border bg-surface p-3">
-      <div className={"text-small leading-relaxed " + (value ? "text-text" : "text-text-subtle")}>
-        {value || t("mrc.inst.placeholder")}
-      </div>
-      <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-border pt-2.5">
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        maxLength={600}
+        rows={2}
+        placeholder={t("mrc.inst.placeholder")}
+        className="w-full resize-y bg-transparent text-small leading-relaxed text-text outline-none placeholder:text-text-subtle"
+      />
+      <div className="mt-2.5 flex items-center gap-2 border-t border-border pt-2.5">
+        <IcPencil size={13} className="shrink-0 text-text-subtle" />
         <span className="text-caption text-text-subtle">{t("mrc.inst.hint")}</span>
-        <button
-          type="button"
-          onClick={onEdit}
-          className="inline-flex items-center gap-1.5 text-caption font-medium text-text-muted transition-colors hover:text-text"
-        >
-          <IcPencil size={13} /> {t("mrc.inst.expand")}
-        </button>
       </div>
     </div>
   );
@@ -521,7 +520,7 @@ export function MentionRoutineConstructor({
                     <label className="mb-1.5 block text-small font-medium">
                       {t("mrc.inst.label")} <span className="text-text-subtle">· {t("mrc.inst.optional")}</span>
                     </label>
-                    <BigInst value={cfg.inst} t={t} />
+                    <BigInst value={cfg.inst} t={t} onChange={(v) => set("inst", v)} />
                   </div>
                 </Drawer>
               )}
@@ -573,7 +572,7 @@ export function MentionRoutineConstructor({
                     <div className="mb-2 text-caption font-semibold uppercase tracking-wide text-text-subtle">
                       {t("mrc.layer2.inst_k")}
                     </div>
-                    <BigInst value={cfg.inst} t={t} />
+                    <BigInst value={cfg.inst} t={t} onChange={(v) => set("inst", v)} />
                   </div>
                 </div>
               </Layer>

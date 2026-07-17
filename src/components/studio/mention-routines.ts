@@ -5,6 +5,7 @@
 // The engine (backend Phase 3) is live; the generated-photo action is «Скоро».
 // Ported from design-export/Pennedly-2026-07-17 (mention-routines-build.js).
 
+import { fetchAutopilot, updateAutopilot } from "@/lib/api";
 import type { Scenario } from "@/lib/types";
 
 export type RoutineMode = "auto" | "ask";
@@ -90,3 +91,18 @@ export const DEMO_ROUTINES: MRoutine[] = [
 ];
 
 export const MR_TWEAK_DEFAULTS = { dark: false, state: "Populated" };
+
+// Enabling a routine (scenario.enabled=true) is a silent no-op unless the account
+// autopilot MASTER gate is on too — `run_mention_reply_scenarios` only fires inside
+// `if account["enabled"]`. So whenever a routine is turned on we also flip the
+// master on, exactly as the scenarios screen does when an auto scenario is enabled
+// (the documented single-master-gate rule). Idempotent + fail-soft: a hiccup leaves
+// the routine enabled and the master flippable elsewhere, never blocks the toggle.
+export async function ensureAutopilotMaster(accountId: number): Promise<void> {
+  try {
+    const ap = await fetchAutopilot(accountId);
+    if (!ap.enabled) await updateAutopilot(accountId, { ...ap, enabled: true });
+  } catch {
+    /* non-fatal */
+  }
+}

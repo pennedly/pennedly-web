@@ -1194,6 +1194,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "mrc.status.active": "Сработает при следующем подходящем упоминании",
   "mrc.status.off_badge": "Выключен",
   "mrc.status.on_badge": "Активна",
+  "mrc.default_name": "Новая рутина упоминаний",
+  "mrc.default_name_catchall": "Все остальные безопасные",
   "mrc.foot.save_off": "Сохранить выключенной",
   "mrc.foot.save_on": "Сохранить и включить",
   "mrc.foot.save": "Сохранить",

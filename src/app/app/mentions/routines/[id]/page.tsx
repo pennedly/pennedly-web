@@ -27,6 +27,7 @@ import {
   emptyConfig,
   type MRConfig,
 } from "@/components/studio/mention-routines-constructor";
+import { ensureAutopilotMaster, isMentionRoutine } from "@/components/studio/mention-routines";
 import type { Scenario, ScenarioCreate } from "@/lib/types";
 
 const IS_DEV = process.env.NODE_ENV === "development";
@@ -48,12 +49,12 @@ function scenarioToConfig(s: Scenario): MRConfig {
   };
 }
 
-function configToBody(cfg: MRConfig, enable: boolean): ScenarioCreate {
+function configToBody(cfg: MRConfig, enable: boolean, fallbackName: string): ScenarioCreate {
   const trigger: Record<string, unknown> = { kind: "on_mention" };
   if (!cfg.catchall && cfg.goal.trim()) trigger.intent = cfg.goal.trim();
   if (cfg.media !== "any") trigger.requires_media = cfg.media;
   return {
-    name: cfg.name.trim() || "Рутина упоминаний",
+    name: cfg.name.trim() || fallbackName,
     enabled: enable,
     publish_mode: cfg.mode,
     trigger,
@@ -115,15 +116,21 @@ export default function MentionRoutineConstructorPage() {
   useEffect(() => {
     if (demoParam) return;
     if (isNew) {
-      setConfig(emptyConfig());
+      setConfig({ ...emptyConfig(), name: t("mrc.default_name") });
       setEnabled(false);
       return;
     }
-    if (accountId === null || scenarioId === null || Number.isNaN(scenarioId)) return;
+    if (accountId === null || scenarioId === null) return;
+    if (Number.isNaN(scenarioId)) {
+      router.push(HUB);
+      return;
+    }
     fetchScenarios(accountId)
       .then((list) => {
         const s = list.scenarios.find((x) => x.id === scenarioId);
-        if (!s) {
+        // Guard the kind: editing a non-mention scenario here would let Save
+        // overwrite its trigger into an on_mention routine (silent corruption).
+        if (!s || !isMentionRoutine(s)) {
           router.push(HUB);
           return;
         }
@@ -138,7 +145,7 @@ export default function MentionRoutineConstructorPage() {
         }
         router.push(HUB);
       });
-  }, [demoParam, isNew, accountId, scenarioId, router]);
+  }, [demoParam, isNew, accountId, scenarioId, router, t]);
 
   useEffect(() => {
     if (!demoOn) return;
@@ -148,19 +155,22 @@ export default function MentionRoutineConstructorPage() {
   const onSave = useCallback(
     async (cfg: MRConfig, enable: boolean) => {
       if (demoOn || accountId === null) return;
+      const fallback = cfg.catchall ? t("mrc.default_name_catchall") : t("mrc.default_name");
       setBusy(true);
       try {
         if (isNew) {
-          await createScenario(accountId, configToBody(cfg, enable));
+          await createScenario(accountId, configToBody(cfg, enable, fallback));
         } else if (scenarioId !== null) {
-          await updateScenario(scenarioId, configToBody(cfg, enable));
+          await updateScenario(scenarioId, configToBody(cfg, enable, fallback));
         }
+        // Saving-and-enabling is a no-op unless the autopilot master is on too.
+        if (enable) await ensureAutopilotMaster(accountId);
         router.push(HUB);
       } catch {
         setBusy(false);
       }
     },
-    [demoOn, accountId, isNew, scenarioId, router],
+    [demoOn, accountId, isNew, scenarioId, router, t],
   );
 
   const onDelete = useCallback(async () => {
