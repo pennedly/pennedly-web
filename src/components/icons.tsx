@@ -101,6 +101,8 @@ export const IcBubble = (p: IconProps) => <Svg {...p}><path d="M5 5h14a1 1 0 0 1
 export const IcBubbleQuestion = (p: IconProps) => <Svg {...p}><path d="M5 5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H9l-4 3.5V6a1 1 0 0 1 1-1Z" /><path d="M10.4 9.3a1.6 1.6 0 1 1 2.2 1.5c-.7.4-1.1.8-1.1 1.6" /><path d="M11.5 14.4h.01" /></Svg>;
 export const IcRepost = (p: IconProps) => <Svg {...p}><path d="M5 8h10l-2.5-2.5M19 16H9l2.5 2.5" /></Svg>;
 export const IcEye = (p: IconProps) => <Svg {...p}><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" /><circle cx="12" cy="12" r="2.6" /></Svg>;
+// Eye with a slash — "media hidden / show". Design mentions-queue veil.
+export const IcEyeOff = (p: IconProps) => <Svg {...p}><path d="M4 4l16 16M9.5 5.9A9.6 9.6 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a15 15 0 0 1-3.2 3.7M6 7.4A15 15 0 0 0 2.5 12S6 18.5 12 18.5c1 0 1.9-.2 2.7-.4" /></Svg>;
 export const IcFeed = (p: IconProps) => <Svg {...p}><path d="M3 14l4-5 4 4 3-6 3 5h4" /></Svg>;
 export const IcChart = (p: IconProps) => <Svg {...p}><path d="M4 19V5M4 19h16" /><path d="M8 16l3.5-4 3 2.5L19 8" /></Svg>;
 // Overview / "All accounts" rollup — a 2×2 tile grid (the portfolio of accounts).
@@ -122,6 +124,7 @@ export const IcBulb = (p: IconProps) => <Svg {...p}><path d="M9.5 18h5M10.5 21h3
 // Spread / scatter — «разнести по времени» (two outward chevrons + a centre bar).
 export const IcSpread = (p: IconProps) => <Svg {...p}><path d="M5 9 2 12l3 3M19 9l3 3-3 3M9 12h6" /></Svg>;
 export const IcPlus = (p: IconProps) => <Svg {...p}><path d="M12 5v14M5 12h14" /></Svg>;
+export const IcMinus = (p: IconProps) => <Svg {...p}><path d="M5 12h14" /></Svg>;
 export const IcClock = (p: IconProps) => <Svg {...p}><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></Svg>;
 export const IcCalendar = (p: IconProps) => <Svg {...p}><rect x="4" y="5.5" width="16" height="15" rx="2.5" /><path d="M4 9.5h16M8.5 3.5v4M15.5 3.5v4" /></Svg>;
 export const IcSkip = (p: IconProps) => <Svg {...p}><path d="M6 5v14M18 5v14M9 12h7M9 12l3-3M9 12l3 3" /></Svg>;

@@ -690,6 +690,14 @@ export type MentionSummary = {
   text: string | null;
   permalink: string | null;
   status: string;
+  // Phase-1/2 triage the backend now returns: the classifier intent
+  // (question/lead/spam/…, `general`/`irrelevant` alias to the UI's
+  // neutral/notforus), the hard-gate/spam skip reason, and the attachment.
+  intent?: string | null;
+  skip_reason?: string | null;
+  media_type?: string | null;
+  media_url?: string | null;
+  thumbnail_url?: string | null;
   published_at: string | null;
   created_at: string;
 };
