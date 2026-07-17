@@ -125,6 +125,8 @@ export const IcBulb = (p: IconProps) => <Svg {...p}><path d="M9.5 18h5M10.5 21h3
 export const IcSpread = (p: IconProps) => <Svg {...p}><path d="M5 9 2 12l3 3M19 9l3 3-3 3M9 12h6" /></Svg>;
 export const IcPlus = (p: IconProps) => <Svg {...p}><path d="M12 5v14M5 12h14" /></Svg>;
 export const IcMinus = (p: IconProps) => <Svg {...p}><path d="M5 12h14" /></Svg>;
+// Wand with a sparkle — "generate" (the mention-routine generated-photo action).
+export const IcWand = (p: IconProps) => <Svg {...p}><path d="M15 4V2M15 10V8M12.5 6.5h-2M19.5 6.5h-2M6 20 16 10l-2-2L4 18l2 2Z" /></Svg>;
 export const IcClock = (p: IconProps) => <Svg {...p}><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></Svg>;
 export const IcCalendar = (p: IconProps) => <Svg {...p}><rect x="4" y="5.5" width="16" height="15" rx="2.5" /><path d="M4 9.5h16M8.5 3.5v4M15.5 3.5v4" /></Svg>;
 export const IcSkip = (p: IconProps) => <Svg {...p}><path d="M6 5v14M18 5v14M9 12h7M9 12l3-3M9 12l3 3" /></Svg>;
