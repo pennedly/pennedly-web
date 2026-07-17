@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Pennedly — Design System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="ds/tokens.css"/>
+<link rel="stylesheet" href="ds/doc.css"/>
+<link rel="stylesheet" href="ds/components.css"/>
+<link rel="stylesheet" href="mobile/pennedly-mobile.css"/>
+<link rel="stylesheet" href="mobile/frame.css"/>
+<style>
+/* Mobile-section helpers (doc chrome only) */
+.m-fix { display:grid; grid-template-columns:1fr 1fr; gap:0; border:1px solid var(--color-border); border-radius:var(--radius-lg); overflow:hidden; margin:16px 0; }
+.m-fix > div { padding:14px 16px; }
+.m-fix .mf-bad { background:color-mix(in srgb, var(--color-danger) 6%, var(--color-surface)); border-right:1px solid var(--color-border); }
+.m-fix .mf-good { background:color-mix(in srgb, var(--color-success) 6%, var(--color-surface)); }
+.m-fix h5 { margin:0 0 6px; font-size:12px; text-transform:uppercase; letter-spacing:0.04em; font-family:var(--font-mono); }
+.m-fix .mf-bad h5 { color:var(--color-danger); }
+.m-fix .mf-good h5 { color:var(--color-success); }
+.m-fix p { font-size:13.5px; margin:0; color:var(--color-text-muted); line-height:1.55; }
+@media (max-width:720px){ .m-fix { grid-template-columns:1fr; } .m-fix .mf-bad { border-right:none; border-bottom:1px solid var(--color-border); } }
+.spec-link { color:var(--color-accent); text-decoration:underline; text-underline-offset:2px; text-decoration-color:color-mix(in srgb,var(--color-accent) 40%,transparent); }
+.mtable { width:100%; border-collapse:collapse; font-size:13.5px; margin:8px 0 16px; }
+.mtable th, .mtable td { text-align:left; padding:9px 12px; border-bottom:1px solid var(--color-border); vertical-align:top; }
+.mtable thead th { font-size:11px; text-transform:uppercase; letter-spacing:0.04em; color:var(--color-text-subtle); font-weight:600; }
+.mtable tbody tr:last-child td { border-bottom:none; }
+.mtable code { font-family:var(--font-mono); font-size:0.86em; background:color-mix(in srgb,var(--color-text) 7%,transparent); padding:1px 5px; border-radius:4px; }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- ============================ SIDEBAR ============================ -->
+  <aside class="sidebar">
+    <div class="brand">
+      <svg width="34" height="34" viewBox="0 0 512 512" aria-hidden="true" style="display:block">
+        <rect width="512" height="512" rx="115" fill="#ededed"/>
+        <g fill="#171717">
+          <path d="M182 348 C248 366 322 352 376 312 C326 330 252 340 188 326 C176 324 174 344 182 348 Z"/>
+          <g transform="rotate(42 256 256)">
+            <path d="M236 150 Q236 128 256 128 Q276 128 276 150 L276 300 L256 360 L236 300 Z"/>
+            <rect x="236" y="206" width="40" height="7"/>
+          </g>
+        </g>
+      </svg>
+      <div>
+        <div class="name">Pennedly</div>
+        <div class="sub">Design System v1.0</div>
+      </div>
+    </div>
+    <nav class="toc">
+      <a href="#overview">Overview</a>
+      <div class="toc-cap">Foundations</div>
+      <a href="#color">Color</a>
+      <a href="#type">Typography</a>
+      <a href="#radius">Radius &amp; elevation</a>
+      <a href="#spacing">Spacing &amp; motion</a>
+      <div class="toc-cap">Code</div>
+      <a href="#tokens">globals.css</a>
+      <a href="#table">Token reference</a>
+      <div class="toc-cap">Components</div>
+      <a href="#buttons">Buttons</a>
+      <a href="#forms">Forms</a>
+      <a href="#surfaces">Cards &amp; badges</a>
+      <a href="#controls">Switch &amp; nav</a>
+      <a href="#overlays">Dialog, toast, table</a>
+      <div class="toc-cap">Mobile</div>
+      <a href="#m-foundations">Phone foundations</a>
+      <a href="#m-shell">App shell &amp; nav</a>
+      <a href="#m-components">Components on mobile</a>
+      <a href="#m-l10n">Localization on a phone</a>
+      <div class="toc-cap">Apply it</div>
+      <a href="#rules">Usage rules</a>
+      <a href="#rollout">Rollout plan</a>
+    </nav>
+  </aside>
+
+  <!-- ============================== MAIN ============================== -->
+  <main class="main">
+    <div class="topbar">
+      <span class="crumb">Pennedly&nbsp;&nbsp;/&nbsp;&nbsp;Design System</span>
+      <button class="theme-toggle" data-theme-toggle aria-label="Toggle theme">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/></svg>
+        <span class="tt-label">Light</span>
+      </button>
+    </div>
+
+    <div class="wrap">
+
+      <!-- ----------------------------- OVERVIEW ----------------------------- -->
+      <section class="sec" id="overview" style="padding-top:52px">
+        <p class="eyebrow">Ink on paper</p>
+        <h1 class="disp">The Pennedly<br/>design system.</h1>
+        <p class="lede">A small, coherent token set built from one idea — a near-black ink mark on warm off-white paper — so the entire product looks like it belongs to the <strong>Drafting Line</strong> app icon. Calm, craft-like, confident. Monochrome, with a single quiet ink-blue accent.</p>
+
+        <div class="demo demo--center" style="margin-top:32px;gap:40px;flex-wrap:wrap">
+          <svg width="132" height="132" viewBox="0 0 512 512" aria-label="Pennedly icon" style="display:block;box-shadow:var(--shadow-md);border-radius:30px">
+            <rect width="512" height="512" rx="115" fill="#ededed"/>
+            <g fill="#171717">
+              <path d="M182 348 C248 366 322 352 376 312 C326 330 252 340 188 326 C176 324 174 344 182 348 Z"/>
+              <g transform="rotate(42 256 256)"><path d="M236 150 Q236 128 256 128 Q276 128 276 150 L276 300 L256 360 L236 300 Z"/><rect x="236" y="206" width="40" height="7"/></g>
+            </g>
+          </svg>
+          <div style="max-width:330px">
+            <h4 class="h3" style="margin-top:0">North star</h4>
+            <p class="body" style="margin:0">Off-white paper <code>#ededed</code>, near-black ink <code>#171717</code>, deepest ink <code>#0a0a0a</code>, generous ~22% rounding. Every surface, type ramp and component below derives from these. Toggle the theme in the top-right — nothing was duplicated to make dark mode work.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ------------------------------- COLOR ------------------------------ -->
+      <section class="sec" id="color">
+        <p class="eyebrow">Foundations</p>
+        <h2 class="h1">Color</h2>
+        <p class="body">One hue only: a warm-neutral ink. The <strong>ink scale</strong> is the raw material; the <strong>semantic roles</strong> are what components actually reference, and they flip in dark mode so component code stays the same.</p>
+
+        <h3 class="h2">Ink scale</h3>
+        <div class="swatch-row" id="ink-scale"></div>
+
+        <h3 class="h2">Semantic roles</h3>
+        <p class="body subtle" style="margin-top:-2px">These are the tokens you reach for — <code>bg-surface</code>, <code>text-text</code>, <code>border-border</code>. Shown in the current theme.</p>
+        <div class="role-row" id="roles"></div>
+
+        <h3 class="h2">The one accent &amp; status</h3>
+        <p class="body">A single restrained accent — <strong>Ink Blue</strong> <code>#2f4cc4</code> (light) / <code>#9aacff</code> (dark) — for links, focus, selection and selected nav. It never fills a primary button; the primary action stays ink. Status colors are desaturated so they sit quietly next to the ink.</p>
+        <div class="role-row" id="accents"></div>
+        <div class="note"><strong>Contrast:</strong> body text, muted text and every solid role pairing meet WCAG AA (≥4.5:1) in both themes. <code>text-subtle</code> is reserved for placeholders &amp; captions and still clears AA on its intended surfaces.</div>
+      </section>
+
+      <!-- -------------------------------- TYPE ------------------------------ -->
+      <section class="sec" id="type">
+        <p class="eyebrow">Foundations</p>
+        <h2 class="h1">Typography</h2>
+        <p class="body">Geist throughout — the same geometric, quietly-engineered letterform family as the icon's monogram potential. Geist Mono for code &amp; token values. A seven-step scale; each step carries its own line-height, weight and tracking as Tailwind 4 modifier tokens.</p>
+        <div class="card" style="margin-top:14px">
+          <div class="spec"><div class="demo-text" style="font:600 var(--text-display)/var(--lh-display) var(--font-sans);letter-spacing:var(--ls-display)">Draft in your voice</div><div class="tk">text-display · 48 / 1.05 / 600</div></div>
+          <div class="spec"><div class="demo-text" style="font:600 var(--text-h1)/var(--lh-h1) var(--font-sans);letter-spacing:var(--ls-h1)">Review &amp; approve</div><div class="tk">text-h1 · 32 / 1.15 / 600</div></div>
+          <div class="spec"><div class="demo-text" style="font:600 var(--text-h2)/var(--lh-h2) var(--font-sans);letter-spacing:var(--ls-h2)">Your drafting partner</div><div class="tk">text-h2 · 24 / 1.2 / 600</div></div>
+          <div class="spec"><div class="demo-text" style="font:600 var(--text-h3)/var(--lh-h3) var(--font-sans);letter-spacing:var(--ls-h3)">Suggested reply</div><div class="tk">text-h3 · 19 / 1.3 / 600</div></div>
+          <div class="spec"><div class="demo-text" style="font:400 var(--text-body)/var(--lh-body) var(--font-sans);max-width:46ch">Pennedly drafts posts and replies that sound like you, then waits — you read every word and decide what ships.</div><div class="tk">text-body · 15 / 1.6 / 400</div></div>
+          <div class="spec"><div class="demo-text" style="font:400 var(--text-small)/var(--lh-small) var(--font-sans);color:var(--color-text-muted)">Last edited 2 minutes ago · Draft</div><div class="tk">text-small · 13 / 1.5 / 400</div></div>
+          <div class="spec"><div class="demo-text" style="font:500 var(--text-caption)/var(--lh-caption) var(--font-sans);letter-spacing:var(--ls-caption);text-transform:uppercase;color:var(--color-text-subtle)">In review</div><div class="tk">text-caption · 12 / 1.4 / 500</div></div>
+        </div>
+      </section>
+
+      <!-- ------------------------- RADIUS & ELEVATION ----------------------- -->
+      <section class="sec" id="radius">
+        <p class="eyebrow">Foundations</p>
+        <h2 class="h1">Radius &amp; elevation</h2>
+        <p class="body">Rounding is generous to echo the icon's soft ~22% corner. Buttons &amp; inputs use <code>md</code>; cards <code>lg</code>; modals the most icon-like <code>2xl</code>. Elevation is soft, low and inky — calm, never floaty; in dark mode borders do most of the separating.</p>
+
+        <h4 class="h3">Radius</h4>
+        <div class="tile-row">
+          <div class="tile"><div class="box" style="border-radius:var(--radius-sm)"></div><span class="lbl">sm · 6px</span></div>
+          <div class="tile"><div class="box" style="border-radius:var(--radius-md)"></div><span class="lbl">md · 10px</span></div>
+          <div class="tile"><div class="box" style="border-radius:var(--radius-lg)"></div><span class="lbl">lg · 14px</span></div>
+          <div class="tile"><div class="box" style="border-radius:var(--radius-xl)"></div><span class="lbl">xl · 20px</span></div>
+          <div class="tile"><div class="box" style="border-radius:var(--radius-2xl)"></div><span class="lbl">2xl · 28px</span></div>
+        </div>
+
+        <h4 class="h3">Elevation</h4>
+        <div class="tile-row">
+          <div class="tile"><div class="box" style="border:none;background:var(--color-surface);box-shadow:var(--shadow-sm);border-radius:var(--radius-lg)"></div><span class="lbl">shadow-sm</span></div>
+          <div class="tile"><div class="box" style="border:none;background:var(--color-surface);box-shadow:var(--shadow-md);border-radius:var(--radius-lg)"></div><span class="lbl">shadow-md</span></div>
+          <div class="tile"><div class="box" style="border:none;background:var(--color-surface);box-shadow:var(--shadow-lg);border-radius:var(--radius-lg)"></div><span class="lbl">shadow-lg</span></div>
+        </div>
+      </section>
+
+      <!-- --------------------------- SPACING & MOTION ----------------------- -->
+      <section class="sec" id="spacing">
+        <p class="eyebrow">Foundations</p>
+        <h2 class="h1">Spacing &amp; motion</h2>
+        <p class="body">A strict <strong>4px grid</strong> (<code>--spacing: 0.25rem</code>). Compose from the steps below; avoid one-off values. Motion is short and gentle — a calm standard easing for most transitions, a softer entrance curve for overlays — and always respects <code>prefers-reduced-motion</code>.</p>
+
+        <h4 class="h3">4px grid</h4>
+        <div class="card" style="display:flex;flex-wrap:wrap;gap:18px;align-items:flex-end">
+          <div id="spacing-scale" style="display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap"></div>
+        </div>
+
+        <h4 class="h3">Motion</h4>
+        <div class="role-row">
+          <div class="role"><div class="dot" style="background:var(--color-surface-2)"></div><div><div class="nm">fast · 120ms</div><div class="use">hovers, tap feedback</div></div></div>
+          <div class="role"><div class="dot" style="background:var(--color-surface-2)"></div><div><div class="nm">base · 180ms</div><div class="use">color &amp; state changes</div></div></div>
+          <div class="role"><div class="dot" style="background:var(--color-surface-2)"></div><div><div class="nm">slow · 240ms</div><div class="use">overlays, dialogs</div></div></div>
+          <div class="role"><div class="dot" style="background:var(--color-surface-2)"></div><div><div class="nm">ease-standard</div><div class="use">(.2,.7,.3,1)</div></div></div>
+          <div class="role"><div class="dot" style="background:var(--color-surface-2)"></div><div><div class="nm">ease-entrance</div><div class="use">(.16,1,.3,1)</div></div></div>
+        </div>
+      </section>
+
+      <!-- ------------------------------ TOKENS ------------------------------ -->
+      <section class="sec" id="tokens">
+        <p class="eyebrow">Code · 1 of 2</p>
+        <h2 class="h1">globals.css</h2>
+        <p class="body">The complete token set as a single Tailwind 4 CSS-first file. <strong>Dark mode is class-based</strong> via <code>@custom-variant dark</code> + a <code>.dark</code> override of the semantic tokens — drop it in, add <code>class="dark"</code> on <code>&lt;html&gt;</code>, done. Paste-ready, no placeholders.</p>
+        <div class="code code--tall">
+          <div class="code-head">
+            <span class="code-file">app/globals.css</span>
+            <button class="copy-btn" data-copy="#globals-code"><span class="cb-label">Copy</span></button>
+          </div>
+          <pre><code id="globals-code">/* loading globals.css… */</code></pre>
+        </div>
+      </section>
+
+      <!-- --------------------------- TOKEN TABLE ---------------------------- -->
+      <section class="sec" id="table">
+        <p class="eyebrow">Code · 2 of 2</p>
+        <h2 class="h1">Token reference</h2>
+        <p class="body">The semantic and foundation tokens, their light/dark values, and when to use each. Ink-scale steps (<code>--color-ink-50…950</code>) are the raw palette — prefer the semantic roles in product code.</p>
+        <div class="tbl-wrap">
+          <table class="tokens" id="token-table"></table>
+        </div>
+      </section>
+
+      <!-- ----------------------------- BUTTONS ------------------------------ -->
+      <section class="sec" id="buttons">
+        <p class="eyebrow">Components</p>
+        <h2 class="h1">Buttons</h2>
+        <p class="body">Primary is <strong>ink</strong> (it flips to paper in dark) — the calmest possible emphasis. Secondary, ghost and danger round it out. Sizes <code>md</code> (40px) and <code>sm</code> (32px).</p>
+        <div class="demo">
+          <button class="btn btn--primary">Approve &amp; post</button>
+          <button class="btn btn--secondary">Save draft</button>
+          <button class="btn btn--ghost">Discard</button>
+          <button class="btn btn--danger">Delete</button>
+          <button class="btn btn--primary" data-loading-demo>Generate draft</button>
+          <button class="btn btn--secondary" disabled>Disabled</button>
+        </div>
+        <div class="demo" style="margin-top:14px">
+          <button class="btn btn--primary btn--sm">Approve</button>
+          <button class="btn btn--secondary btn--sm">Edit</button>
+          <button class="btn btn--ghost btn--sm">Skip</button>
+        </div>
+        <div class="recipe"><div class="r-name">base + primary</div><div style="position:relative"><code class="r-code">inline-flex items-center justify-center gap-2 h-10 px-4 rounded-md text-small font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50 disabled:pointer-events-none bg-primary text-primary-foreground hover:bg-primary/90</code><button class="copy-btn r-copy" data-copy="#self"><span class="cb-label">Copy</span></button></div></div>
+        <div class="recipe"><div class="r-name">secondary</div><div style="position:relative"><code class="r-code">… bg-surface text-text border border-border hover:bg-surface-2</code><button class="copy-btn r-copy" data-copy="#self"><span class="cb-label">Copy</span></button></div></div>
+        <div class="recipe"><div class="r-name">ghost · danger · size-sm</div><div style="position:relative"><code class="r-code">ghost:  bg-transparent text-text-muted hover:bg-surface-2 hover:text-text
+danger: bg-danger text-danger-foreground hover:bg-danger/90
+size sm: swap h-10 px-4 → h-8 px-3 rounded-sm   ·   loading: prefix a &lt;span class="spinner"/&gt; and set aria-disabled</code><button class="copy-btn r-copy" data-copy="#self"><span class="cb-label">Copy</span></button></div></div>
+      </section>
+
+      <!-- ------------------------------ FORMS ------------------------------- -->
+      <section class="sec" id="forms">
+        <p class="eyebrow">Components</p>
+        <h2 class="h1">Inputs, select &amp; textarea</h2>
+        <p class="body">40px tall, <code>md</code> radius, hairline border that turns ink-blue with a soft ring on focus. Error state swaps the border &amp; ring to danger.</p>
+        <div class="demo demo--col" style="max-width:440px;gap:18px">
+          <div><label class="field-label">Display name</label><input class="field" placeholder="e.g. Mara Lin" value="Mara Lin"/></div>
+          <div><label class="field-label">Posting cadence</label><select class="field"><option>A few times a week</option><option>Daily</option><option>Multiple times a day</option></select></div>
+          <div><label class="field-label">Voice notes</label><textarea class="field" rows="3" placeholder="Dry wit, short sentences, no hashtags…"></textarea></div>
+          <div><label class="field-label">Threads handle</label><input class="field field--error" value="mara lin"/><div class="field-hint field-hint--error">Handles can’t contain spaces.</div></div>
+        </div>
+        <div class="recipe"><div class="r-name">input / select / textarea</div><div style="position:relative"><code class="r-code">h-10 w-full rounded-md border border-border bg-surface px-3 text-body text-text placeholder:text-text-subtle transition-colors focus:outline-none focus:border-accent focus:ring-3 focus:ring-accent/25
+error:    border-danger focus:border-danger focus:ring-danger/25
+textarea: h-auto py-2.5 leading-relaxed resize-y      select: appearance-none pr-8</code><button class="copy-btn r-copy" data-copy="#self"><span class="cb-label">Copy</span></button></div></div>
+      </section>
+
+      <!-- -------------------------- CARDS & BADGES -------------------------- -->
+      <section class="sec" id="surfaces">
+        <p class="eyebrow">Components</p>
+        <h2 class="h1">Cards, badges &amp; pills</h2>
+        <div class="demo-grid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr));margin-top:6px">
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <span style="font-weight:600;font-size:var(--text-small)">Reply to @devon</span>
+              <span class="badge badge--neutral"><span class="pill-dot"></span>Draft</span>
+            </div>
+            <p style="margin:0;font-size:var(--text-small);line-height:1.6;color:var(--color-text-muted)">Totally — the trick is to start before you feel ready. I’ll usually open a doc and write the worst possible first line on purpose.</p>
+          </div>
+          <div class="panel">
+            <div style="font-weight:600;font-size:var(--text-small);margin-bottom:12px">Statuses</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+              <span class="badge badge--good"><span class="pill-dot"></span>Approved</span>
+              <span class="badge badge--neutral">Queued</span>
+              <span class="badge badge--bad"><span class="pill-dot"></span>Failed</span>
+            </div>
+            <div style="font-weight:600;font-size:var(--text-small);margin:16px 0 12px">Tags</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+              <span class="tag">writing<button aria-label="Remove">✕</button></span>
+              <span class="tag">advice<button aria-label="Remove">✕</button></span>
+              <span class="tag">long-form<button aria-label="Remove">✕</button></span>
+            </div>
+          </div>
+        </div>
+        <div class="recipe"><div class="r-name">card · panel</div><div style="position:relative"><code class="r-code">card:  rounded-lg border border-border bg-surface p-5 shadow-sm
+panel: rounded-lg border border-border bg-surface-2 p-5</code><button class="copy-btn r-copy" data-copy="#self"><span class="cb-label">Copy</span></button></div></div>
+        <div class="recipe"><div class="r-name">badge (graded) · removable tag</div><div style="position:relative"><code class="r-code">badge:   inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-caption font-medium
+  good:    border-success/30 bg-success/12 text-success
+  neutral: border-border bg-text/[0.06] text-text-muted
+  bad:     border-danger/30 bg-danger/12 text-danger
+tag:     inline-flex items-center gap-1.5 rounded-full border border-border bg-surface-2 py-1 pl-2.5 pr-1.5 text-caption font-medium text-text
+  ✕ btn: grid place-items-center h-4 w-4 rounded-full text-text-subtle hover:bg-text/10 hover:text-text</code><button class="copy-btn r-copy" data-copy="#self"><span class="cb-label">Copy</span></button></div></div>
+      </section>
+
+      <!-- --------------------------- SWITCH & NAV --------------------------- -->
+      <section class="sec" id="controls">
+        <p class="eyebrow">Components</p>
+        <h2 class="h1">Switch &amp; sidebar nav</h2>
+        <div class="demo-grid" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">
+          <div class="card">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:16px">
+              <div><div style="font-weight:600;font-size:var(--text-small)">Auto-draft replies</div><div style="font-size:var(--text-caption);color:var(--color-text-subtle);margin-top:2px">Suggest a reply when you’re mentioned</div></div>
+              <label class="switch"><input type="checkbox" checked/><span class="track"></span><span class="knob"></span></label>
+            </div>
+            <hr class="rule" style="margin:16px 0"/>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:16px">
+              <div><div style="font-weight:600;font-size:var(--text-small)">Send without review</div><div style="font-size:var(--text-caption);color:var(--color-text-subtle);margin-top:2px">Off by design — you approve everything</div></div>
+              <label class="switch"><input type="checkbox"/><span class="track"></span><span class="knob"></span></label>
+            </div>
+          </div>
+          <div class="card" style="padding:12px">
+            <a class="nav-item nav-item--active"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11.4 4H6.5A1.5 1.5 0 0 0 5 5.5v12A1.5 1.5 0 0 0 6.5 19h12a1.5 1.5 0 0 0 1.5-1.5v-4.9"/><path d="M17.9 3.6a1.7 1.7 0 0 1 2.5 2.5l-7.4 7.4-3.2.7.7-3.2Z"/></svg>Drafts</a>
+            <a class="nav-item"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>Queue</a>
+            <a class="nav-item"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6"/></svg>Voice</a>
+            <a class="nav-item"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.3 1a7 7 0 0 0-1.7-1l-.4-2.6h-4l-.4 2.6a7 7 0 0 0-1.7 1l-2.3-1-2 3.4 2 1.5a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7 7 0 0 0 1.7-1l2.3 1 2-3.4-2-1.5a7 7 0 0 0 .1-1Z"/></svg>Settings</a>
+          </div>
+        </div>
+        <div class="recipe"><div class="r-name">nav item (default → hover → active)</div><div style="position:relative"><code class="r-code">flex items-center gap-2.5 rounded-md px-3 py-2 text-small font-medium text-text-muted transition-colors hover:bg-surface-2 hover:text-text
+active: bg-surface-2 text-text font-semibold</code><button class="copy-btn r-copy" data-copy="#self"><span class="cb-label">Copy</span></button></div></div>
+        <div class="recipe"><div class="r-name">switch (headless, checkbox peer)</div><div style="position:relative"><code class="r-code">input: peer sr-only
+track: h-6 w-11 rounded-full bg-ink-300 dark:bg-ink-700 transition-colors peer-checked:bg-primary
+knob:  absolute left-0.5 h-[18px] w-[18px] rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-5</code><button class="copy-btn r-copy" data-copy="#self"><span class="cb-label">Copy</span></button></div></div>
+      </section>
+
+      <!-- ----------------------- DIALOG, TOAST, TABLE ----------------------- -->
+      <section class="sec" id="overlays">
+        <p class="eyebrow">Components</p>
+        <h2 class="h1">Dialog, toast &amp; table</h2>
+        <div class="demo">
+          <button class="btn btn--secondary" data-open-modal>Open dialog</button>
+          <button class="btn btn--secondary" onclick="window.__toast('success')">Success toast</button>
+          <button class="btn btn--secondary" onclick="window.__toast('error')">Error toast</button>
+          <a class="link" href="#overlays">This is a link</a>
+        </div>
+
+        <div class="card" style="padding:0;overflow:hidden;margin-top:18px">
+          <table class="tbl">
+            <thead><tr><th>Draft</th><th>Status</th><th style="text-align:right">Edited</th></tr></thead>
+            <tbody>
+              <tr><td>Reply to @devon</td><td><span class="badge badge--good"><span class="pill-dot"></span>Approved</span></td><td style="text-align:right;color:var(--color-text-subtle)">2m ago</td></tr>
+              <tr><td>Thread: shipping cadence</td><td><span class="badge badge--neutral">Draft</span></td><td style="text-align:right;color:var(--color-text-subtle)">1h ago</td></tr>
+              <tr><td>Reply to @ana</td><td><span class="badge badge--bad"><span class="pill-dot"></span>Failed</span></td><td style="text-align:right;color:var(--color-text-subtle)">Yesterday</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="recipe"><div class="r-name">overlay + dialog · toast · link · table row</div><div style="position:relative"><code class="r-code">overlay: fixed inset-0 z-30 grid place-items-center p-6 bg-ink-950/55 backdrop-blur-sm
+dialog:  w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-lg
+toast:   flex items-start gap-3 rounded-lg border border-border bg-surface px-4 py-3.5 shadow-lg   (mark: h-2 w-2 rounded-full bg-success | bg-danger)
+link:    text-accent underline underline-offset-2 decoration-accent/40 hover:decoration-accent
+th:      text-left text-caption font-semibold uppercase tracking-wide text-text-subtle px-3 py-2.5 border-b border-border
+td/row:  px-3 py-3 border-b border-border text-text   ·   hover:bg-surface-2</code><button class="copy-btn r-copy" data-copy="#self"><span class="cb-label">Copy</span></button></div></div>
+      </section>
+
+      <!-- ============================== MOBILE ============================== -->
+      <section class="sec" id="m-foundations">
+        <p class="eyebrow">Mobile</p>
+        <h2 class="h1">The app on a phone</h2>
+        <p class="body" style="max-width:74ch">The desktop redesign is done. This section is the shared rule set for the <strong>phone</strong> experience — the parts that are true on every <code>/app</code> screen. Nothing about the identity changes: same ink-on-paper, same semantic tokens, same light and dark, same eight locales, same states and flows. Only the <strong>layout</strong> adapts. Every phone below is the real component layer (<code>mobile/pennedly-mobile.css</code>) on the real tokens, shown at a 390px reference width in both themes.</p>
+
+        <div class="note"><strong>Per-screen detail lives in the specs.</strong> This page sets the cross-screen rules. Each screen then has its own pixel-level mobile spec: <a class="spec-link" href="Studio-Mobile-SPEC.html">Studio</a>, <a class="spec-link" href="Feed-Mobile-SPEC.html">Feed</a>, <a class="spec-link" href="Replies-Mobile-SPEC.html">Replies</a> are the canonical reference set; the remaining screens follow the same patterns.</p></div>
+
+        <h3 class="h2">Breakpoints</h3>
+        <p class="body" style="max-width:74ch">One new breakpoint introduces the phone shell. The existing tablet icon-rail (601–900) is unchanged, so the rework is additive.</p>
+        <table class="mtable">
+          <thead><tr><th style="width:150px">Range</th><th>Shell</th><th>What changes</th></tr></thead>
+          <tbody>
+            <tr><td><strong>≤ 600px</strong> · phone</td><td>Top bar + bottom tab bar + “More” drawer. No sidebar.</td><td>The whole mobile layer in this section engages. Reference width 390 (note 360 small-phone behavior).</td></tr>
+            <tr><td>601–900px · tablet</td><td>Existing collapsed <strong>icon-rail</strong> sidebar.</td><td>Unchanged from the shipped desktop build (the legacy <code>880px</code> rail).</td></tr>
+            <tr><td>&gt; 900px · desktop</td><td>Full 248px sidebar.</td><td>Unchanged.</td></tr>
+          </tbody>
+        </table>
+        <div class="note">Gate the phone layer on a single token: <code>@media (max-width: 600px)</code>. It supersedes the older per-screen <code>560px</code> tweaks (which only hid labels and padding); recommend consolidating those onto 600 as each screen adopts this layer.</div>
+
+        <h3 class="h2">Spacing, touch &amp; type</h3>
+        <table class="mtable">
+          <thead><tr><th style="width:200px">Token</th><th>Phone value</th><th>Why</th></tr></thead>
+          <tbody>
+            <tr><td>Content gutter</td><td><code>14px</code> left/right</td><td>Edge-to-edge cards without feeling cramped at 360–390.</td></tr>
+            <tr><td>Section gap</td><td><code>16px</code></td><td>Vertical rhythm in the scroll column (4px grid).</td></tr>
+            <tr><td>Card padding</td><td><code>14px 16px 12px</code></td><td>Tighter than desktop’s 16/18 to reclaim width.</td></tr>
+            <tr><td>Top bar / tab bar</td><td><code>52px</code> / <code>58px + safe-area</code></td><td>Tab bar adds <code>env(safe-area-inset-bottom)</code> for the home indicator.</td></tr>
+            <tr><td>Minimum touch target</td><td><code>44 × 44px</code></td><td>Every primary action, tab, foot button, form control, and sheet row.</td></tr>
+            <tr><td>Form field font</td><td><code>16px</code> on mobile</td><td>Below 16px iOS auto-zooms the viewport on focus — never below 16.</td></tr>
+            <tr><td>Type ramp</td><td>unchanged</td><td>The seven-step ramp already reads on a phone; only cap <code>display</code> (hero) sizes per screen. Body stays 15, inputs lift to 16.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="sec" id="m-shell">
+        <p class="eyebrow">Mobile</p>
+        <h2 class="h1">App shell &amp; navigation</h2>
+        <p class="body" style="max-width:74ch">On desktop the shell is a fixed left sidebar. On a phone it splits into three thumb-reachable pieces: a slim <strong>top bar</strong> (screen identity + a couple of contextual actions), a <strong>bottom tab bar</strong> (the daily destinations), and a <strong>“More” drawer</strong> (everything else, plus account and settings). This is the native phone pattern and keeps the most-used routes under the thumb.</p>
+
+        <div class="stage" id="stg-shell"></div>
+
+        <h3 class="h2">Top bar</h3>
+        <table class="mtable">
+          <thead><tr><th style="width:170px">Slot</th><th>Behavior</th></tr></thead>
+          <tbody>
+            <tr><td>Left</td><td>Screen title (<code>text-h3</code>, truncates with ellipsis) — or the brand mark + “Pennedly” on top-level/public screens. A back chevron prepends on drill-in screens (e.g. an Audit detail).</td></tr>
+            <tr><td>Center (optional)</td><td>A screen-specific <code>status-pill</code> may sit beside the title (Studio shows the voice state). If width is tight on a long locale, the pill drops into the content area instead of crowding the bar.</td></tr>
+            <tr><td>Right</td><td>Up to two utility icon buttons (e.g. theme, search) at 40px + the account avatar (32px → opens the account sheet). Frosted background, sticky.</td></tr>
+          </tbody>
+        </table>
+
+        <h3 class="h2">Bottom tab bar</h3>
+        <p class="body" style="max-width:74ch">Four core Workspace destinations plus <strong>More</strong>. The active tab is ink (not accent — matching the shipped sidebar’s active treatment); inactive tabs are subtle. Unread/queue counts ride the icon as a small accent bubble.</p>
+        <table class="mtable">
+          <thead><tr><th style="width:170px">Tester state</th><th>Tabs</th></tr></thead>
+          <tbody>
+            <tr><td>Tester (full nav)</td><td>Studio · Feed · Replies · Mentions · More — 5 tabs.</td></tr>
+            <tr><td>Non-tester</td><td>Replies &amp; Mentions are gated, so the bar gracefully collapses to <strong>Studio · Feed · More</strong> (3 tabs, evenly spread). The gated routes simply don’t render; nothing else moves.</td></tr>
+          </tbody>
+        </table>
+        <div class="stage" id="stg-tabs"></div>
+
+        <h3 class="h2">“More” drawer &amp; account sheet</h3>
+        <p class="body" style="max-width:74ch">“More” opens a bottom sheet carrying the remaining nav groups (Insight · Voice &amp; automation), an appearance toggle, Settings and Log out. Tapping the avatar opens the <strong>account sheet</strong> — the phone form of the desktop account popover: switch accounts, connect another, identity, Settings, Log out. Both dismiss on the scrim or the grip.</p>
+        <div class="stage" id="stg-sheets"></div>
+      </section>
+
+      <section class="sec" id="m-components">
+        <p class="eyebrow">Mobile</p>
+        <h2 class="h1">Components on mobile</h2>
+        <p class="body" style="max-width:74ch">Shared components get phone layouts here once, so every screen inherits the same behavior. Two of these are direct fixes for problems seen on a real iPhone.</p>
+
+        <h3 class="h2">Card action rows <span style="font-weight:500;color:var(--color-text-subtle);font-size:0.8em">— the canonical fix</span></h3>
+        <div class="m-fix">
+          <div class="mf-bad"><h5>Before · desktop row squeezed</h5><p>The foot (“Auto-replies / Growth / Open in Threads / ⋯”) is one horizontal row. On a phone it crams: “Open in Threads” wraps to two lines, the ⋯ runs off the edge, taps land on the wrong control.</p></div>
+          <div class="mf-good"><h5>After · two-tier foot</h5><p>A meta line that wraps freely, then <strong>one</strong> action row: at most one labelled primary (grows, 44px, wraps not clips) plus 44×44 icon buttons for secondary actions and the ⋯ overflow. Anything beyond moves into ⋯.</p></div>
+        </div>
+        <p class="body" style="max-width:74ch">This one pattern is reused by every card-bearing screen — Studio drafts, Feed posts, Replies comments — so the whole app feels consistent. Below: the same foot across all three (full cards in each screen’s spec).</p>
+        <div class="stage" id="stg-foot"></div>
+
+        <h3 class="h2">Composer <span style="font-weight:500;color:var(--color-text-subtle);font-size:0.8em">— the canonical fix</span></h3>
+        <div class="m-fix">
+          <div class="mf-bad"><h5>Before · chips collapse</h5><p>Chips + draft-count + “Generate” share one desktop row. On a phone the chips shrink into a cramped left column, “Generate” floats to the side, dead space opens up, and the placeholder title clips.</p></div>
+          <div class="mf-good"><h5>After · clean vertical stack</h5><p>Full-width textarea (placeholder fully visible), a <strong>horizontally scrollable</strong> chip row (chips keep full size, never crush), then a full-width action footer: draft-count select + Generate (grows). Nothing floats, no dead space.</p></div>
+        </div>
+        <div class="stage" id="stg-composer"></div>
+
+        <h3 class="h2">Filters, dialogs, toasts &amp; forms</h3>
+        <table class="mtable">
+          <thead><tr><th style="width:150px">Component</th><th>Phone adaptation</th></tr></thead>
+          <tbody>
+            <tr><td>Tabs / filters</td><td>Become a <strong>horizontally scrollable</strong> row (labels stay readable instead of collapsing to icons), sticky directly under the top bar.</td></tr>
+            <tr><td>Dialogs</td><td>Become <strong>bottom sheets</strong>: full-width, top-rounded, slide up, safe-area aware. Actions stack full-width, primary on top. Same content, same flow.</td></tr>
+            <tr><td>Toasts</td><td>Full-width minus 12px gutters, pinned <strong>above</strong> the tab bar. Undo/Retry stays reachable.</td></tr>
+            <tr><td>Metric rows</td><td>Hero metric on its own line; secondary metrics in an even row below (wrap if a locale runs long).</td></tr>
+            <tr><td>Forms</td><td>Single column, labels above, 44px controls, 16px text. Selects and inputs go full-width.</td></tr>
+          </tbody>
+        </table>
+        <div class="stage" id="stg-overlays"></div>
+      </section>
+
+      <section class="sec" id="m-l10n">
+        <p class="eyebrow">Mobile</p>
+        <h2 class="h1">Localization on a phone</h2>
+        <p class="body" style="max-width:74ch">Eight UI locales ship, and German, Russian and Ukrainian routinely run 30–40% longer than English. Phone widths are unforgiving, so the layout must never assume English label lengths. The rules:</p>
+        <div class="dd">
+          <div class="col do"><h5>Do</h5><ul>
+            <li>Let primary buttons <strong>wrap to a second line</strong> (<code>height:auto; min-height:44px; white-space:normal</code>) rather than clip.</li>
+            <li>Keep chips and filters in <strong>scrolling rows</strong> so long labels never crush.</li>
+            <li>Truncate names and handles with ellipsis; never let them push actions off-screen.</li>
+            <li>Let tab labels truncate, falling back to <strong>icon-only</strong> tabs when a locale is extreme.</li>
+          </ul></div>
+          <div class="col dont"><h5>Don’t</h5><ul>
+            <li>Pin any width to an English string length.</li>
+            <li>Bake text into an image — every label stays live text for the translator.</li>
+            <li>Force a single-line foot; collapse to the two-tier pattern instead.</li>
+            <li>Use em-dashes in copy, or shrink type below the ramp to “make it fit”.</li>
+          </ul></div>
+        </div>
+        <p class="body" style="max-width:74ch">Below, the same Studio surfaces rendered with German strings — the primary action wraps, chips scroll, and the tab labels truncate, all without breaking the grid.</p>
+        <div class="stage" id="stg-l10n"></div>
+      </section>
+
+      <!-- ------------------------------ RULES ------------------------------- -->
+      <section class="sec" id="rules">
+        <p class="eyebrow">Apply it</p>
+        <h2 class="h1">Foundations &amp; usage rules</h2>
+        <h4 class="h3">Quick rules</h4>
+        <p class="body" style="max-width:72ch"><strong>Spacing:</strong> everything on the 4px grid; lean on <code>gap-*</code> in flex/grid, not margins. <strong>Radius:</strong> <code>md</code> for controls, <code>lg</code> for cards, <code>2xl</code> for modals — match the size of the thing to the softness of its corner. <strong>Elevation:</strong> <code>sm</code> for resting cards, <code>md</code> for popovers/menus, <code>lg</code> only for overlays; in dark mode let borders carry separation. <strong>Focus:</strong> one rule everywhere — a 2px ink-blue ring at 2px offset (already global in <code>globals.css</code>); never remove it. <strong>Motion:</strong> 120/180/240ms with the standard easing; gate anything decorative behind <code>prefers-reduced-motion</code>. <strong>Iconography:</strong> line icons, ~1.8px stroke, round caps &amp; joins, drawn on a 24px grid — the same calm, single-weight stroke as the pen mark; no filled or duotone icons.</p>
+        <div class="dd">
+          <div class="col do"><h5>Do</h5><ul>
+            <li>Reference semantic tokens (<code>bg-surface</code>, <code>text-text</code>) so dark mode is automatic.</li>
+            <li>Keep primary actions ink; spend the ink-blue accent sparingly on links &amp; focus.</li>
+            <li>Use the ink scale for raw needs (dividers, fills) only when no role fits.</li>
+            <li>Let whitespace and hairlines do the work — this is a calm, papery UI.</li>
+          </ul></div>
+          <div class="col dont"><h5>Don’t</h5><ul>
+            <li>Hard-code hex values or invent one-off grays — every color has a token.</li>
+            <li>Add a second accent or any gradient; the identity is monochrome ink.</li>
+            <li>Stack heavy shadows or tighten radii below <code>sm</code> — it breaks the soft feel.</li>
+            <li>Duplicate styles with <code>dark:</code> when a semantic token already flips.</li>
+          </ul></div>
+        </div>
+      </section>
+
+      <!-- ----------------------------- ROLLOUT ------------------------------ -->
+      <section class="sec" id="rollout">
+        <p class="eyebrow">Apply it</p>
+        <h2 class="h1">Rollout plan</h2>
+        <p class="body">Apply across the codebase in order — tokens first, then swap component class strings surface by surface. Each step is independently shippable.</p>
+        <div class="steps">
+          <div class="step"><div><div class="st-t">Replace <code>app/globals.css</code></div><div class="st-d">Drop in the file from §globals.css. It already <code>@import "tailwindcss"</code> and defines every token + the <code>.dark</code> flip. Delete the old <code>--background/--foreground</code> pair — the new <code>--color-bg</code>/<code>--color-text</code> supersede them.</div></div></div>
+          <div class="step"><div><div class="st-t">Wire the theme class</div><div class="st-d">Ensure your theme provider toggles <code>class="dark"</code> on <code>&lt;html&gt;</code> (most likely already does). No <code>tailwind.config.js</code> needed — config is CSS-first.</div></div></div>
+          <div class="step"><div><div class="st-t">Adopt primitives: Button, then Input/Field</div><div class="st-d">Swap these two first — they appear on every screen. Paste the recipe strings into your existing components; remove any <code>dark:</code> color duplicates as you go.</div></div></div>
+          <div class="step"><div><div class="st-t">Surfaces: Card, Badge, Table, Nav</div><div class="st-d">Convert shells next so pages visually settle onto paper. Replace ad-hoc grays with <code>bg-surface</code>/<code>bg-surface-2</code>/<code>border-border</code>.</div></div></div>
+          <div class="step"><div><div class="st-t">Overlays: Dialog, Toast, Switch</div><div class="st-d">Lower-frequency, higher-polish. Apply <code>rounded-2xl</code> + <code>shadow-lg</code> to dialogs and the entrance easing to mounts.</div></div></div>
+          <div class="step"><div><div class="st-t">Sweep for stragglers</div><div class="st-d">Grep for raw hex (<code>#</code>), <code>shadow-[</code>, and leftover <code>dark:</code> color utilities; replace with tokens. Verify AA on any custom text/background pairing.</div></div></div>
+        </div>
+        <div class="note" style="margin-top:22px">The drop-in files live at the project root: <code>globals.css</code> (ship this) plus this living reference. Toggle the theme above and read each component in both modes before you sign off.</div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- modal + toast host -->
+<div class="overlay" id="demo-modal" style="display:none">
+  <div class="dialog" role="dialog" aria-modal="true">
+    <h3 style="margin:0 0 8px;font:600 var(--text-h3)/1.3 var(--font-sans)">Post this draft?</h3>
+    <p style="margin:0 0 20px;font-size:var(--text-small);line-height:1.6;color:var(--color-text-muted)">It’ll publish to Threads as <strong style="color:var(--color-text)">@mara.lin</strong> immediately. You can still delete it afterwards.</p>
+    <div style="display:flex;justify-content:flex-end;gap:10px">
+      <button class="btn btn--ghost" data-close-modal>Cancel</button>
+      <button class="btn btn--primary" data-close-modal>Approve &amp; post</button>
+    </div>
+  </div>
+</div>
+<div id="toast-host" style="position:fixed;top:18px;right:18px;display:flex;flex-direction:column;gap:10px;z-index:50"></div>
+
+<template id="__bundler_thumbnail">
+  <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><rect width="512" height="512" rx="115" fill="#171717"/><g fill="#ededed" transform="translate(0,6)"><path d="M182 348 C248 366 322 352 376 312 C326 330 252 340 188 326 C176 324 174 344 182 348 Z"/><g transform="rotate(42 256 256)"><path d="M236 150 Q236 128 256 128 Q276 128 276 150 L276 300 L256 360 L236 300 Z"/><rect x="236" y="206" width="40" height="7"/></g></g></svg>
+</template>
+
+<script src="ds/data.js"></script>
+<script src="ds/app.js"></script>
+<script src="mobile/sprite.js"></script>
+<script src="mobile/mock.js"></script>
+<script>
+(function () {
+  var M = window.MOCK;
+  function set(id, html) { var el = document.getElementById(id); if (el) el.innerHTML = html; }
+
+  // shell — Studio in context, light + dark
+  var shellBody = M.composer('default') + M.filterbar('ready') + M.studioCard('ready');
+  set('stg-shell',
+    M.col(M.light(), M.phone({ top: M.top({ title: 'Studio', pill: 'success' }), body: shellBody }), 'The phone shell: slim top bar, scroll column, bottom tab bar. Studio shown.') +
+    M.col(M.dark(), M.phone({ dark: true, top: M.top({ title: 'Studio', pill: 'success' }), body: shellBody }), 'Same screen, dark. Tokens flip; no layout duplicated.'));
+
+  // tab bar — tester vs non-tester
+  set('stg-tabs',
+    M.col(M.light('Tester · 5 tabs'), M.phone({ variant: 'short', top: M.top({ title: 'Studio', pill: 'success' }), body: M.composer('default'), tabs: M.tabs('studio', { testers: true }) }), 'Studio · Feed · Replies · Mentions · More.') +
+    M.col(M.light('Non-tester · 3 tabs'), M.phone({ variant: 'short', top: M.top({ title: 'Studio', pill: 'success' }), body: M.composer('default'), tabs: M.tabs('studio', { testers: false }) }), 'Replies &amp; Mentions are gated, so the bar collapses to three and re-centers.'));
+
+  // sheets
+  set('stg-sheets',
+    M.col(M.light('More drawer'), M.phone({ top: M.top({ title: 'Studio', pill: 'success' }), body: M.composer('default'), overlay: M.moreSheet() }), 'Remaining nav groups + appearance + Settings + Log out.') +
+    M.col(M.light('Account sheet'), M.phone({ top: M.top({ title: 'Studio', pill: 'success' }), body: M.composer('default'), overlay: M.accountSheet() }), 'Tapping the avatar — switch account, connect, identity, log out.') +
+    M.col(M.dark('More · dark'), M.phone({ dark: true, top: M.top({ title: 'Studio', pill: 'success' }), body: M.composer('default'), overlay: M.moreSheet() }), 'Both sheets dismiss on the scrim or grip.'));
+
+  // foot pattern across the three screens
+  set('stg-foot',
+    M.col(M.light('Studio draft'), M.comp(M.studioCard('ready')), 'One primary (Publish) grows; everything else in ⋯.') +
+    M.col(M.light('Feed post'), M.comp(M.feedCard({ autoReplies: true })), 'Growth collapses to an icon; Open on Threads is primary; ⋯ holds Translate/Delete.') +
+    M.col(M.light('Replies draft'), M.comp(M.commentCard('draft')), 'Regenerate &amp; Edit become 44px icons; Approve grows.'));
+
+  // composer fix
+  set('stg-composer',
+    M.col(M.light('Composer · idle'), M.comp(M.composer('default')), 'Full-width field, scrolling chips, count + Generate footer.') +
+    M.col(M.light('Composer · drafting'), M.comp(M.composer('busy')), 'Busy state replaces the body with the nib animation.') +
+    M.col(M.dark('Composer · dark'), M.comp(M.composer('default'), { dark: true }), ''));
+
+  // overlays
+  set('stg-overlays',
+    M.col(M.light('Dialog → sheet'), M.phone({ top: M.top({ title: 'Studio', pill: 'success' }), body: M.composer('default'), overlay: M.dialogSheet() }), 'The publish confirm becomes a bottom sheet; actions stack full-width.') +
+    M.col(M.light('Toast'), M.phone({ top: M.top({ title: 'Studio', pill: 'success' }), body: M.composer('default') + M.studioCard('draft'), overlay: M.toast('success') }), 'Pinned above the tab bar with Undo still reachable.'));
+
+  // localization — German strings, built on the same classes
+  var ic = M.ic;
+  var deCard = '<article class="m-card"><div class="m-card-head"><img class="avatar-img" src="assets/avatars/mara.png" width="38" height="38" alt=""/>'
+    + '<div class="m-card-id"><div class="m-card-name">Mara Lin</div><div class="m-card-sub"><span>@mara.lin</span><span class="sep">·</span><span>vor 2 Std.</span></div></div>'
+    + '<span class="badge" style="background:color-mix(in srgb,var(--color-accent) 12%,var(--color-surface));color:var(--color-accent);border-color:color-mix(in srgb,var(--color-accent) 30%,transparent)"><span class="pill-dot"></span>Bereit</span></div>'
+    + '<p class="m-card-body">Der Trick beim Schreiben ist, den Einsatz beim Anfangen zu senken. Öffne das Dokument und schreibe absichtlich die schlechteste erste Zeile.</p>'
+    + '<div class="m-foot"><div class="m-foot-meta"><span class="cc-inline">218 / 500</span><span class="meta-sep"></span><span class="voice-tag">' + ic('check', 13) + 'Bereit zum Veröffentlichen</span></div>'
+    + '<div class="m-foot-row"><div class="m-menu-anchor"><button class="m-iconbtn--foot">' + ic('more', 18) + '</button></div>'
+    + '<button class="btn btn--primary m-btn m-btn--grow">' + ic('nib', 16) + 'In Threads veröffentlichen</button></div></div></article>';
+  var deComposer = '<div class="m-composer"><textarea class="m-composer-input" placeholder="Worüber möchtest du schreiben? Ein Thema, eine steile These, ein Link…"></textarea>'
+    + '<div class="m-chiprow"><button class="chip">' + ic('sparkle', 13) + 'Eine Lektion dieser Woche</button><button class="chip">' + ic('sparkle', 13) + 'Auf einen Trend reagieren</button><button class="chip">' + ic('sparkle', 13) + 'Eine unbeliebte Meinung</button></div>'
+    + '<div class="m-composer-foot"><select class="field count-select"><option>3 Entwürfe</option></select><button class="btn btn--primary m-gen">' + ic('nib', 16) + 'Generieren</button></div></div>';
+  var deTabs = '<nav class="m-tabbar">'
+    + '<a class="m-tab m-tab--active"><svg class="m-tab-ic"><use href="#i-nib"/></svg><span class="m-tab-badge">4</span><span class="m-tab-lbl">Studio</span></a>'
+    + '<a class="m-tab"><svg class="m-tab-ic"><use href="#i-feed"/></svg><span class="m-tab-lbl">Feed</span></a>'
+    + '<a class="m-tab"><svg class="m-tab-ic"><use href="#i-bubble"/></svg><span class="m-tab-badge">3</span><span class="m-tab-lbl">Antworten</span></a>'
+    + '<a class="m-tab"><svg class="m-tab-ic"><use href="#i-at"/></svg><span class="m-tab-lbl">Erwähnungen</span></a>'
+    + '<a class="m-tab"><svg class="m-tab-ic"><use href="#i-grid"/></svg><span class="m-tab-lbl">Mehr</span></a></nav>';
+  var deTop = '<header class="m-top"><div class="m-top-title">Studio</div><div class="m-top-spacer"></div><div class="m-top-actions"><button class="m-iconbtn">' + ic('moon', 18) + '</button><button class="m-avatar-btn"><img class="avatar-img" src="assets/avatars/mara.png" width="32" height="32" alt=""/></button></div></header>';
+  set('stg-l10n',
+    M.col(M.light('Deutsch'), M.phone({ top: deTop, body: deComposer + deCard, tabs: deTabs }), '“In Threads veröffentlichen” wraps to two lines instead of clipping; chips scroll; “Erwähnungen” truncates in the tab bar.') +
+    M.col(M.light('Foot · isolated'), M.comp(deCard), 'The two-tier foot keeps the primary at 44px even when the label doubles in length.'));
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Pennedly · Studio — Compose media spec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="ds/tokens.css"/>
+<link rel="stylesheet" href="ds/components.css"/>
+<link rel="stylesheet" href="studio.css"/>
+<link rel="stylesheet" href="mobile/pennedly-mobile.css"/>
+<link rel="stylesheet" href="mobile/frame.css"/>
+<link rel="stylesheet" href="compose-media.css"/>
+<link rel="stylesheet" href="mobile/spec.css"/>
+<style>
+  html, body { height: auto; min-height: 100%; }
+  body { background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.62; }
+  .iconrow { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0 6px; }
+  .iconcell { display: flex; flex-direction: column; align-items: center; gap: 9px; width: 96px; padding: 14px 10px 11px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+  .iconcell-glyph { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text); }
+  .iconcell code { font-size: 11px; background: none; border: none; padding: 0; color: var(--muted); white-space: nowrap; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 2px 0 10px; }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--muted); }
+  .legend .lg-dot { width: 10px; height: 10px; border-radius: 9999px; border: 1px solid rgba(0,0,0,.12); }
+</style>
+</head>
+<body>
+
+<!-- NEW compose glyphs — proposed additions to icons.tsx (see §New icons). Same
+     24-grid / 1.8-stroke family; play is filled, drag is dotted. -->
+<svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden" xmlns="http://www.w3.org/2000/svg"><defs>
+  <symbol id="i-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.5"/><path d="M5 17.5l4.5-4.5 3 2.8 3.2-2.8L19 16.5"/></symbol>
+  <symbol id="i-video" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="13" height="12" rx="2.5"/><path d="M16 9.6 L20.5 7 V17 L16 14.4 Z"/></symbol>
+  <symbol id="i-gif" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="6" width="17" height="12" rx="2.5"/><path d="M8 6v12M16 6v12"/></symbol>
+  <symbol id="i-poll" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 19V11M12 19V5M18 19v-5"/></symbol>
+  <symbol id="i-drag" viewBox="0 0 24 24"><circle cx="9" cy="6" r="1.3" fill="currentColor"/><circle cx="15" cy="6" r="1.3" fill="currentColor"/><circle cx="9" cy="12" r="1.3" fill="currentColor"/><circle cx="15" cy="12" r="1.3" fill="currentColor"/><circle cx="9" cy="18" r="1.3" fill="currentColor"/><circle cx="15" cy="18" r="1.3" fill="currentColor"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.4 L18.6 12 L8 18.6 Z" fill="currentColor"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 13v5a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 19 18v-5"/></symbol>
+</defs></svg>
+
+<div class="layout">
+
+<aside class="toc">
+  <div class="doc-mark">
+    <span class="nib"><svg width="18" height="18" viewBox="0 0 512 512"><g fill="#ededed"><g transform="rotate(42 256 256)"><path d="M236 150 Q236 128 256 128 Q276 128 276 150 L276 300 L256 360 L236 300 Z"/><rect x="236" y="206" width="40" height="7"/></g></g></svg></span>
+    <b>Pennedly</b>
+  </div>
+  <div class="doc-sub">Compose spec · Studio media</div>
+  <nav>
+    <a href="#s0"><span class="n">0</span> Where it goes</a>
+    <a href="#sicons"><span class="n">＊</span> New icons needed</a>
+    <a href="#stb"><span class="n">1</span> Toolbar &amp; exclusion</a>
+    <a href="#s2"><span class="n">2</span> Image(s)</a>
+    <a class="sub" href="#salt">— alt-text sheet</a>
+    <a href="#s3"><span class="n">3</span> Video</a>
+    <a href="#s4"><span class="n">4</span> GIF (GIPHY)</a>
+    <a href="#s5"><span class="n">5</span> Link card</a>
+    <a href="#s6"><span class="n">6</span> Poll</a>
+    <a href="#s7"><span class="n">7</span> Thread interplay</a>
+    <a href="#sval"><span class="n">＊</span> Anatomy &amp; values</a>
+    <a href="#sa11y"><span class="n">＊</span> Motion &amp; alt-text</a>
+    <a href="#scheck"><span class="n">✓</span> Checklist</a>
+  </nav>
+  <div class="meta">
+    Screen: <b>Studio</b> · compose media<br>
+    Route: <code>/app/studio</code><br>
+    Extends: <a class="link" href="Studio.html">Studio.html</a> · <a class="link" href="Studio-Mobile-SPEC.html">Mobile</a><br>
+    Surface: draft card · editing<br>
+    New layer: <code>compose-media.css</code><br>
+    Widths: web col · phone <code>390</code><br>
+    System: <a class="link" href="Pennedly Design System.html">Pennedly DS</a>
+  </div>
+</aside>
+
+<main>
+  <div class="doc-head">
+    <p class="kicker">Pennedly · Spec · Studio — post composer media</p>
+    <h1 class="title">Compose media <span>/app/studio</span> — toolbar &amp; attachments</h1>
+    <p class="lede">The shipped draft composer has an editable text area and a small media row (Add image → thumbnail strip). This spec <strong>extends</strong> that row into a full media toolbar for all post media — it does not redesign the card. The toolbar sits below the editor; attachments preview between the editor and the action footer (approve / schedule / publish), matching the shipped placement. Threads caps a part at 500 chars; a post can be a thread (split on a <code>---</code> line) — when it is, <strong>media attaches to the lead part only</strong>. Every attach type is rendered in all its compose states, on the real product layers (<code>studio.css</code> for web, <code>pennedly-mobile.css</code> for phone) — for the web column and at <strong>390px</strong>, in light and dark.</p>
+    <div class="filerow">
+      <span class="chip">compose-media.css</span>
+      <span class="chip">studio-parts.jsx</span>
+      <span class="chip">studio-app.jsx</span>
+      <span class="chip">studio.css</span>
+      <span class="chip">pennedly-mobile.css</span>
+      <span class="chip">ds/tokens.css</span>
+    </div>
+  </div>
+
+  <div class="note good"><b>What stays the same.</b> The editing card (head · <code>.edit-area</code> · <code>.charmeter</code> · footer), the chip idiom, tokens and motion are all unchanged. The shipped image idiom (picker → thumbnail strip → per-image remove, up to a carousel) is preserved and polished — drag-reorder and ALT are added on top. Mobile keeps ≥16px inputs and ≥44px targets.</div>
+
+  <!-- 0 -->
+  <section id="s0">
+    <h2><span class="h2n">0</span>Where the toolbar &amp; previews go</h2>
+    <p class="section-note">One region in the editing card, between the editor + char meter and the action footer. The toolbar is a compact row; attachment previews render beneath it. It respects card padding, never overpowers the draft, and stays thumb-reachable on mobile.</p>
+    <div class="stage" id="stg-anatomy"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:150px">Attach</th><th>Trigger · key states</th></tr></thead>
+      <tbody>
+        <tr><td><b>Image(s)</b></td><td>Image chip → strip (1–20). Per thumb: remove · drag-reorder · ALT. <span class="mono2">empty · 1 · multi · drag · uploading · error</span></td></tr>
+        <tr><td><b>Video</b></td><td>Video chip → upload % → ready (play · duration · ALT). <span class="mono2">empty · uploading · ready · error</span></td></tr>
+        <tr><td><b>GIF</b></td><td>GIF chip → GIPHY picker → one looping tile. <b>Exclusive</b> with image/video. <span class="mono2">picker · loading · empty · attached</span></td></tr>
+        <tr><td><b>Link card</b></td><td>Auto — URL in body. No button. <span class="mono2">detecting · loaded · multiple · unavailable</span></td></tr>
+        <tr><td><b>alt-text</b></td><td>Per-image/video sheet. <span class="mono2">empty · filled</span></td></tr>
+        <tr><td><b>Poll</b> <span class="mono2">(low priority)</span></td><td>2–4 option rows + duration. <span class="mono2">editing</span></td></tr>
+        <tr><td><b>Audio</b></td><td><b>Not designed</b> — there is no audio attach (Threads API has none).</td></tr>
+      </tbody>
+    </table></div>
+    <div class="legend">
+      <span><span class="lg-dot" style="background:#fff"></span>Light frame</span>
+      <span><span class="lg-dot" style="background:#0a0a0a"></span>Dark frame</span>
+      <span><span class="lg-dot" style="background:var(--surface-2)"></span>Wide frame = web column · narrow = phone 390px</span>
+    </div>
+  </section>
+
+  <!-- new icons -->
+  <section id="sicons">
+    <h2><span class="h2n">＊</span>New icons needed</h2>
+    <p class="section-note">The toolbar reuses the existing set where it can (<code>IcLink</code>, <code>IcCheck</code>, <code>IcX</code>, <code>IcPlus</code>, <code>IcSearch</code>, <code>IcGlobe</code>, <code>IcSparkle</code>, <code>IcAlert</code>). These are new — <b>add them to <code>icons.tsx</code></b> in the same 24-grid / 1.8-stroke family. “ALT” and “GIF” tile chips are text labels, not icons.</p>
+    <div class="iconrow" id="stg-icons"></div>
+    <div class="note"><b>Usage.</b> <code>IcImage</code> — Image chip + placeholder. <code>IcVideo</code> — Video chip. <code>IcGif</code> — GIF chip. <code>IcPoll</code> — Poll chip. <code>IcDrag</code> — thumbnail reorder grip. <code>IcPlay</code> — video play badge. <code>IcUpload</code> — picker / drop affordance. No new tokens are introduced.</div>
+  </section>
+
+  <!-- toolbar -->
+  <section id="stb">
+    <h2><span class="h2n">1</span>Toolbar &amp; mutual exclusion</h2>
+    <p class="section-note">A compact row below the editor: <b>Image · Video · GIF · Poll</b> (line-icon chips). The link card has no button — it auto-appears from a URL. GIF is text-only and exclusive with image/video/carousel: when a GIF is attached the Image/Video chips disable with a hint; when image/video is attached, GIF disables. It never silently fails.</p>
+    <div class="stage" id="stg-toolbar"></div>
+    <div class="stage" id="stg-toolbar-m"></div>
+  </section>
+
+  <!-- 2 -->
+  <section id="s2">
+    <h2><span class="h2n">2</span>Image(s)</h2>
+    <p class="section-note">The shipped idiom, polished: picker → thumbnail strip (1–20, posts as a carousel). Per thumbnail — remove (×), a drag grip to reorder, and an ALT affordance (empty vs filled). States: empty · 1 image · multi/carousel · reordering · uploading · error (JPEG/PNG/WebP, ≤8 MB).</p>
+    <div class="stage" id="stg-image"></div>
+    <div class="stage" id="stg-image-m"></div>
+
+    <h3 id="salt">— alt-text sheet</h3>
+    <p class="section-note">A small per-image/video sheet to add an accessibility description. Empty trigger on the thumbnail (“ALT”); once set, the chip turns success-green with a check.</p>
+    <div class="stage" id="stg-alt"></div>
+  </section>
+
+  <!-- 3 -->
+  <section id="s3">
+    <h2><span class="h2n">3</span>Video</h2>
+    <p class="section-note">Picker → upload progress (to Pennedly) → ready thumbnail with a play badge, duration chip, remove, and an ALT affordance. The inline limit hint sits below: MP4/MOV · ≤5 min · ≤1 GB. States: empty · uploading % · ready · error.</p>
+    <div class="stage" id="stg-video"></div>
+    <div class="stage" id="stg-video-m"></div>
+    <div class="note"><b>Threads-side processing is a publish-time concern</b> — not designed on this screen. The composer’s job ends at a successful upload to Pennedly.</div>
+  </section>
+
+  <!-- 4 -->
+  <section id="s4">
+    <h2><span class="h2n">4</span>GIF <span class="tagline">GIPHY · exclusive</span></h2>
+    <p class="section-note">Tapping GIF opens a GIPHY search picker: search field → results grid → pick → a single looping tile with remove + GIPHY attribution. A GIF is mutually exclusive with image/video/carousel (see §1). States: picker (results) · loading · empty results · attached tile.</p>
+    <div class="stage" id="stg-gif"></div>
+    <div class="stage" id="stg-gif-m"></div>
+  </section>
+
+  <!-- 5 -->
+  <section id="s5">
+    <h2><span class="h2n">5</span>Link card</h2>
+    <p class="section-note">When the body contains a URL, a preview card auto-appears under the editor (thumbnail + title + domain) with keep/remove — no button. Pennedly builds the preview. States: detecting/loading skeleton · loaded · multiple links (which one previews) · preview unavailable (tidy domain chip, still removable).</p>
+    <div class="stage" id="stg-link"></div>
+    <div class="stage" id="stg-link-m"></div>
+  </section>
+
+  <!-- 6 -->
+  <section id="s6">
+    <h2><span class="h2n">6</span>Poll <span class="tagline">lower priority</span></h2>
+    <p class="section-note">2–4 option rows + a duration select. Included for completeness; lower priority than the media attaches above.</p>
+    <div class="stage" id="stg-poll"></div>
+  </section>
+
+  <!-- 7 -->
+  <section id="s7">
+    <h2><span class="h2n">7</span>Thread interplay</h2>
+    <p class="section-note">When the post is split into parts (a <code>---</code> line), media rides the <strong>first part only</strong>. The media block sits under Post 1 with an “attached to the first post” cue, and each part keeps its own 500-char budget.</p>
+    <div class="stage" id="stg-thread"></div>
+  </section>
+
+  <!-- values -->
+  <section id="sval">
+    <h2><span class="h2n">＊</span>Anatomy &amp; exact values</h2>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:200px">Element / class</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td><code>.cmedia</code></td><td>Media region: <code>flex-column; gap:12px; margin-top:14px</code> (web) · <code>12px</code> (phone). Lives between <code>.charmeter</code> and the footer.</td></tr>
+        <tr><td><code>.mtoolbar</code> / <code>.mtool</code></td><td>Chip row (reuses chip idiom): 34px pills, line-icon + label. Phone: 44px, horizontal scroll. <code>--disabled</code> dims + <code>.mtool-hint</code> explains why.</td></tr>
+        <tr><td><code>.mstrip</code> / <code>.mthumb</code></td><td>88px (phone 96) rounded thumbs. <code>.mthumb-x</code> remove · <code>.mthumb-grip</code> drag (web) · <code>.mthumb-alt</code> ALT (<code>--set</code> = success+check). <code>.mthumb-up</code> = progress ring; <code>--error</code> = danger.</td></tr>
+        <tr><td><code>.mstrip-add</code></td><td>Dashed add tile; same footprint as a thumb.</td></tr>
+        <tr><td><code>.mvid</code></td><td>16:9 tile: <code>.mvid-play</code> badge · <code>.mvid-dur</code> · <code>.mvid-x</code> · <code>.mvid-alt</code>. Uploading = center % + bottom bar; error = <code>.mvid-fallback</code>. <code>.mhint</code> below.</td></tr>
+        <tr><td><code>.mgif</code></td><td>Single looping tile + <code>.mgif-chip</code> “GIF” + remove + <code>.mgif-attr</code> “via GIPHY”.</td></tr>
+        <tr><td><code>.gifpick</code></td><td>Picker: <code>.gifpick-search</code> (16px input) · 3-col <code>.gifpick-grid</code> · attribution. <code>.gifpick-skel</code> loading · <code>.gifpick-empty</code> no-results.</td></tr>
+        <tr><td><code>.clink</code></td><td>Auto link card: thumb (left web / top phone) + title clamp-2 + domain + remove. <code>--bare</code> + <code>.clink-urlchip</code> for unavailable; <code>.clink-pick</code> chooses which URL.</td></tr>
+        <tr><td><code>.cpoll</code></td><td>Option rows (40/44px inputs) + add + duration select; 2–4 options.</td></tr>
+        <tr><td><code>.altsheet</code></td><td>Alt-text sheet: thumb + prompt + textarea (16px on phone) + count + save.</td></tr>
+        <tr><td><code>.threadcue</code> / <code>.thread-part</code></td><td>Accent-tinted “attached to the first post” cue; the editor shows numbered parts with a connector; media sits under the lead.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- a11y -->
+  <section id="sa11y">
+    <h2><span class="h2n">＊</span>Motion &amp; alt-text</h2>
+    <div class="two">
+      <div class="pane web"><h4>Reduced motion</h4>
+        <ul>
+          <li>The attached GIF tile and GIPHY results don’t auto-animate under <code>prefers-reduced-motion: reduce</code> — they show a still frame with the GIF chip.</li>
+          <li>Upload progress rings/bars and picker skeletons stop animating; the static state remains.</li>
+          <li>No motion is required to understand any state.</li>
+        </ul>
+      </div>
+      <div class="pane mob"><h4>Alt text everywhere</h4>
+        <ul>
+          <li>Every attached image and video exposes an ALT affordance; empty vs filled (success + check) is obvious at a glance.</li>
+          <li>The sheet’s textarea is the accessibility description, saved per attachment and carried to publish.</li>
+          <li>Controls (remove, drag, play) carry <code>aria-label</code>; decorative scrim chips are <code>aria-hidden</code>.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="note danger"><b>Guardrails.</b> No audio attach anywhere. GIF is text-only and exclusive with image/video/carousel — the toolbar makes that obvious. Video processing (Threads-side) is publish-time, not on this screen. The shipped image idiom is preserved, not regressed.</div>
+  </section>
+
+  <!-- checklist -->
+  <section id="scheck">
+    <h2><span class="h2n">✓</span>Checklist</h2>
+    <ul class="check">
+      <li>Toolbar (Image · Video · GIF · Poll) sits below the editor; attachments preview between editor and footer — shipped placement.</li>
+      <li>GIF is exclusive with image/video/carousel: chips disable with a hint in both directions; never silently fails.</li>
+      <li>Images: empty · 1 · multi/carousel · reordering (drag) · uploading · error; per-thumb remove · drag · ALT (empty/filled).</li>
+      <li>Video: empty · uploading % · ready (play · duration · ALT) · error; inline MP4/MOV ≤5 min ≤1 GB hint; processing noted as publish-time.</li>
+      <li>GIF: GIPHY picker (search · results · loading · empty) → single looping tile + attribution + remove.</li>
+      <li>Link card auto-appears from a URL: detecting · loaded · multiple · unavailable (tidy chip, still removable).</li>
+      <li>Alt-text sheet: empty trigger + filled (checked); description per image/video.</li>
+      <li>Poll (low priority): 2–4 options + duration.</li>
+      <li>Thread interplay: media rides the first part; an “attached to the first post” cue is shown.</li>
+      <li>No audio attach anywhere on this screen.</li>
+      <li>Rendered for the web column AND phone 390px, light AND dark; mobile inputs ≥16px, targets ≥44px.</li>
+      <li>New icons (image, video, gif, poll, drag, play, upload) noted for <code>icons.tsx</code>; no new tokens.</li>
+      <li>Reduced-motion honored; alt-text available everywhere media is attached.</li>
+    </ul>
+  </section>
+
+</main>
+</div>
+
+<template id="__bundler_thumbnail">
+  <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><rect width="512" height="512" rx="115" fill="#171717"/><g fill="#ededed"><rect x="150" y="150" width="212" height="120" rx="16"/><circle cx="196" cy="196" r="18" fill="#171717"/><path d="M168 268 L226 212 L262 244 L300 210 L344 268 Z" fill="#171717"/><rect x="150" y="298" width="150" height="20" rx="10"/><rect x="150" y="334" width="212" height="20" rx="10"/></g></svg>
+</template>
+
+<script src="mobile/sprite.js"></script>
+<script src="compose-media-spec.js"></script>
+</body>
+</html>

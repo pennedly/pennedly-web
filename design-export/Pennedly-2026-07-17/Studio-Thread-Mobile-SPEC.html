@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Pennedly · Studio — Thread chains (mobile spec)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="ds/tokens.css"/>
+<link rel="stylesheet" href="ds/components.css"/>
+<link rel="stylesheet" href="studio.css"/>
+<link rel="stylesheet" href="mobile/pennedly-mobile.css"/>
+<link rel="stylesheet" href="mobile/frame.css"/>
+<link rel="stylesheet" href="compose-media.css"/>
+<link rel="stylesheet" href="studio-thread.css"/>
+<link rel="stylesheet" href="mobile/spec.css"/>
+</head>
+<body>
+
+<!-- NEW glyph: #i-thread (three beads on a thread). Missing from studio-icons.jsx — add IcThread to icons.tsx. -->
+<svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden" xmlns="http://www.w3.org/2000/svg"><defs>
+  <symbol id="i-thread" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.3"/><circle cx="12" cy="12" r="2.3"/><circle cx="12" cy="19" r="2.3"/><path d="M12 7.4v2.4"/><path d="M12 14v2.4"/></symbol>
+</defs></svg>
+
+<div class="layout">
+
+<aside class="toc">
+  <div class="doc-mark">
+    <span class="nib"><svg width="18" height="18" viewBox="0 0 512 512"><g fill="#ededed"><g transform="rotate(42 256 256)"><path d="M236 150 Q236 128 256 128 Q276 128 276 150 L276 300 L256 360 L236 300 Z"/><rect x="236" y="206" width="40" height="7"/></g></g></svg></span>
+    <b>Pennedly</b>
+  </div>
+  <div class="doc-sub">Mobile spec · Studio — Thread</div>
+  <nav>
+    <a href="#s1"><span class="n">1</span> Identity &amp; placement</a>
+    <a href="#s2"><span class="n">2</span> Edit · single post</a>
+    <a href="#s3"><span class="n">3</span> Edit · thread</a>
+    <a href="#s4"><span class="n">4</span> Edit · a part over 500</a>
+    <a href="#s5"><span class="n">5</span> View · thread draft</a>
+    <a href="#s6"><span class="n">6</span> View · published</a>
+    <a href="#s7"><span class="n">7</span> Thread + media</a>
+    <a href="#s8"><span class="n">8</span> Localization &amp; 360px</a>
+    <a href="#sval"><span class="n">＊</span> Anatomy &amp; values</a>
+    <a href="#scheck"><span class="n">✓</span> Checklist</a>
+  </nav>
+  <div class="meta">
+    Screen: <b>Studio</b> · thread chains<br>
+    Route: <code>/app</code> · draft card<br>
+    Desktop spec: <a class="link" href="Studio-Thread-SPEC.html">Studio-Thread-SPEC</a><br>
+    Phone breakpoint: <code>≤ 600px</code> · ref 390<br>
+    Layer: <code>studio-thread.css</code> · <code>pennedly-mobile.css</code><br>
+    Live code: <code>StudioParts.tsx</code><br>
+    System: <a class="link" href="Pennedly Design System.html#m-shell">DS · Mobile</a>
+  </div>
+</aside>
+
+<main>
+  <div class="doc-head">
+    <p class="kicker">Pennedly · Mobile spec · Studio — thread chains</p>
+    <h1 class="title">Thread chains <span>/app</span> — phone</h1>
+    <p class="lede">The phone version of <a class="link" href="Studio-Thread-SPEC.html">thread chains</a> on the draft card. A line of only <code>---</code> splits the body into <strong>parts</strong> (≤500 each); the chain posts as a <strong>lead post + chained replies</strong>. <strong>Edit</strong> mode is the editor + a <strong>“New part”</strong> pill + per-part counters that <strong>wrap</strong>; <strong>view</strong> mode is a <strong>“Thread · N”</strong> badge over <strong>full-width stacked part cards</strong>. Everything is thumb-reachable: the pill, counters and footer buttons are ≥44px, the editor is ≥16px. Same states, tokens and copy as the desktop spec — only the layout adapts below 600px. Every frame is the real component layer at 390px (checked at 360), light and dark.</p>
+    <div class="filerow">
+      <span class="chip chip--mob">studio-thread.css</span>
+      <span class="chip">pennedly-mobile.css</span>
+      <span class="chip">StudioParts.tsx</span>
+      <span class="chip">studio-icons.jsx</span>
+      <span class="chip">ds/tokens.css</span>
+    </div>
+  </div>
+
+  <div class="note good"><b>What doesn’t change.</b> A thread is the same draft card when the body has <code>---</code> parts. Each part ≤500; an over-limit part visibly blocks approve/publish (never truncated). Media rides the <b>lead part only</b>. New icon: <b>IcThread</b> (three beads on a thread) — flagged for <code>icons.tsx</code> in the <a class="link" href="Studio-Thread-SPEC.html#sicon">desktop spec</a>.</div>
+
+  <!-- 1 -->
+  <section id="s1">
+    <h2><span class="h2n">1</span>Identity &amp; placement</h2>
+    <p class="section-note">A thread renders on the draft card in the feed, between the header and the action footer. Here it is in full context: top bar, the filter row, and a thread card in view mode with its stacked parts.</p>
+    <div class="stage" id="stg-context"></div>
+  </section>
+
+  <!-- 2 -->
+  <section id="s2">
+    <h2><span class="h2n">2</span>Edit · single post</h2>
+    <p class="section-note">Single-post edit: the 16px editor, the normal char-meter, and the ≥44px “New part” pill that turns it into a thread.</p>
+    <div class="stage" id="stg-single"></div>
+  </section>
+
+  <!-- 3 -->
+  <section id="s3">
+    <h2><span class="h2n">3</span>Edit · thread (2–3 parts)</h2>
+    <p class="section-note">With <code>---</code> parts the counters replace the char-meter and <strong>wrap</strong> across the narrow width; the “New part” pill sits alongside. Separators read literally in the editor.</p>
+    <div class="stage" id="stg-thread"></div>
+  </section>
+
+  <!-- 4 -->
+  <section id="s4">
+    <h2><span class="h2n">4</span>Edit · a part over 500</h2>
+    <p class="section-note">An over-limit part’s counter goes danger/bold, an inline hint appears, and Save (with downstream Approve/Publish) is blocked until it’s trimmed.</p>
+    <div class="stage" id="stg-over"></div>
+  </section>
+
+  <!-- 5 -->
+  <section id="s5">
+    <h2><span class="h2n">5</span>View · thread draft</h2>
+    <p class="section-note">Read mode: a “Thread · 3” badge over <strong>full-width stacked part cards</strong>, chained by a connector; the two-tier foot is ⋯ + Approve.</p>
+    <div class="stage" id="stg-view"></div>
+  </section>
+
+  <!-- 6 -->
+  <section id="s6">
+    <h2><span class="h2n">6</span>View · published</h2>
+    <p class="section-note">Published reads muted, with stats and an “Open in Threads” link that grows to fill the action row.</p>
+    <div class="stage" id="stg-pub"></div>
+  </section>
+
+  <!-- 7 -->
+  <section id="s7">
+    <h2><span class="h2n">7</span>Thread + media (interplay)</h2>
+    <p class="section-note">Media rides the <strong>lead part only</strong> — the lead card shows the media + an “attached to the first post” cue; follow-up parts stay text-only.</p>
+    <div class="stage" id="stg-media"></div>
+  </section>
+
+  <!-- 8 -->
+  <section id="s8">
+    <h2><span class="h2n">8</span>Localization &amp; 360px</h2>
+    <p class="section-note">All copy localizes into 8 locales; DE/RU run ~30–40% longer. Counters use tabular figures and wrap; “Part N” + the “Thread · N” badge never clip. At 360px the same rules hold — the part cards just get ~30px narrower.</p>
+    <div class="stage" id="stg-narrow"></div>
+  </section>
+
+  <!-- values -->
+  <section id="sval">
+    <h2><span class="h2n">＊</span>Anatomy &amp; exact values</h2>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:200px">Element / class</th><th>Phone value</th></tr></thead>
+      <tbody>
+        <tr><td><code>.edit-area</code></td><td>16px (no iOS zoom); parts split on <code>---</code> lines.</td></tr>
+        <tr><td><code>.thr-edit-tools</code></td><td><code>flex-wrap:wrap</code> — counters wrap to multiple rows; the “New part” pill drops below if needed.</td></tr>
+        <tr><td><code>.thr-newpart</code></td><td>≥44px tall, 15px label. Appends a <code>---</code> separator.</td></tr>
+        <tr><td><code>.thr-count</code></td><td>Tabular figures; <code>--over</code> = danger + bold.</td></tr>
+        <tr><td><code>.thr-badge</code> / <code>.thr-stack</code></td><td>Badge wraps; part cards are <strong>full-width</strong>, stacked with a connector. <code>.thr-part-body</code> 16px, wraps.</td></tr>
+        <tr><td>Lead media</td><td><code>.cmedia</code> thumbs scroll horizontally; the <code>.threadcue</code> sits on the lead only.</td></tr>
+        <tr><td><code>.m-foot</code></td><td>Two-tier: meta line (wraps) + action row — editing → Cancel + Save (grow); draft → 44px ⋯ + Approve (grow); published → stats + ⋯ + Open in Threads (grow).</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- checklist -->
+  <section id="scheck">
+    <h2><span class="h2n">✓</span>Checklist</h2>
+    <ul class="check">
+      <li>Thread renders on the draft card in the feed; same card as a single post with <code>---</code> parts.</li>
+      <li>Edit · single: 16px editor + normal char-meter + ≥44px “New part” pill.</li>
+      <li>Edit · thread: <code>---</code> reads literally; per-part counters wrap; pill alongside.</li>
+      <li>Edit · over 500: counter danger/bold + hint; Save + Approve/Publish blocked; never truncates.</li>
+      <li>View · draft: “Thread · N” badge + full-width stacked part cards, chained; lead tagged.</li>
+      <li>View · published: muted + stats + “Open in Threads” (grows).</li>
+      <li>Thread + media: media on the lead only + “attached to the first post” cue; follow-ups text-only.</li>
+      <li>Counters tabular; “Part N” + badge wrap; sanity-checked at 360px.</li>
+      <li>Inputs ≥16px, targets ≥44px; correct in light and dark; no hardcoded colour.</li>
+    </ul>
+  </section>
+
+</main>
+</div>
+
+<template id="__bundler_thumbnail">
+  <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><rect width="512" height="512" rx="115" fill="#171717"/><g fill="none" stroke="#ededed" stroke-width="20" stroke-linecap="round"><circle cx="170" cy="150" r="34"/><circle cx="170" cy="256" r="34"/><circle cx="170" cy="362" r="34"/><path d="M170 184v38M170 290v38"/><path d="M230 150h120M230 256h120M230 362h70"/></g></svg>
+</template>
+
+<script src="mobile/sprite.js"></script>
+<script src="mobile/mock.js"></script>
+<script src="studio-thread-build.js"></script>
+<script src="studio-thread-mobile-spec.js"></script>
+</body>
+</html>

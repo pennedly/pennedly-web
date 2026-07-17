@@ -1,0 +1,211 @@
+/* explore.css — Pennedly "Explore patterns" screen.
+   Sibling of Pattern study, but the opposite direction: the user pastes the TEXT
+   of posts they admire and Pennedly extracts the reusable writing move. Built on
+   the ink-on-paper tokens + Studio shell classes (studio.css). One quiet accent.
+   No hardcoded hex. Correct in light + dark for free. */
+
+/* topbar pill now uses the canonical .status-pill (ds/components.css §3.3). */
+
+.page-intro { display: flex; flex-direction: column; gap: 6px; }
+.page-intro h1 { font-size: var(--text-h1); font-weight: 600; letter-spacing: -0.015em; margin: 0; }
+.page-intro p { font-size: var(--text-body); color: var(--color-text-muted); margin: 0; max-width: 60ch; text-wrap: pretty; }
+
+/* ============================ INPUT (idle) ========================= */
+/* "Paste the text, not links" — a quiet, bordered notice on surface-2. */
+.paste-notice {
+  display: flex; align-items: flex-start; gap: 11px;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+}
+.paste-notice .pn-ico { color: var(--color-text-subtle); flex: 0 0 auto; margin-top: 1px; }
+.paste-notice .pn-body { min-width: 0; }
+.paste-notice .pn-t { font-size: var(--text-small); font-weight: 600; color: var(--color-text); }
+.paste-notice .pn-d { font-size: var(--text-small); color: var(--color-text-muted); line-height: 1.5; margin-top: 2px; text-wrap: pretty; }
+
+/* the paste box */
+.paste-box {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  padding: 16px 16px 12px;
+  transition: border-color var(--duration-base) var(--ease-standard),
+              box-shadow var(--duration-base) var(--ease-standard);
+}
+.paste-box:focus-within { border-color: color-mix(in srgb, var(--color-accent) 55%, var(--color-border)); box-shadow: var(--shadow-md); }
+.paste-box.paste-box--warn { border-color: color-mix(in srgb, var(--color-warning) 55%, var(--color-border)); }
+
+.paste-area {
+  width: 100%; display: block;
+  border: none; background: transparent; resize: vertical;
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: 1.62;
+  color: var(--color-text);
+  padding: 4px 2px;
+  min-height: 168px;
+  outline: none;
+}
+.paste-area::placeholder { color: var(--color-text-subtle); }
+
+.paste-foot {
+  display: flex; align-items: center; gap: 12px;
+  margin-top: 10px; padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+}
+.paste-meta { display: flex; align-items: center; gap: 10px; flex: 1 1 auto; min-width: 0; flex-wrap: wrap; }
+.sample-count {
+  display: inline-flex; align-items: center; gap: 7px; white-space: nowrap;
+  font-size: var(--text-caption); color: var(--color-text-subtle);
+  font-variant-numeric: tabular-nums;
+}
+.sample-count .sc-dot { width: 6px; height: 6px; border-radius: var(--radius-full); background: var(--color-text-subtle); }
+.sample-count--ready .sc-dot { background: var(--color-success); }
+.sample-count--ready { color: var(--color-text-muted); }
+
+/* live inline link / handle caution */
+.link-warn {
+  display: inline-flex; align-items: center; gap: 7px; min-width: 0;
+  font-size: var(--text-caption); font-weight: 500; color: var(--color-warning);
+  animation: card-in var(--duration-base) var(--ease-entrance) both;
+}
+.link-warn .lw-ico { flex: 0 0 auto; }
+.link-warn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* quiet seed chips */
+.seed-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+.seed-cap { font-size: var(--text-caption); color: var(--color-text-subtle); }
+.seed-chip {
+  font-size: var(--text-caption); color: var(--color-text-muted);
+  padding: 5px 11px; border: 1px solid var(--color-border);
+  border-radius: var(--radius-full); background: var(--color-surface-2);
+  cursor: pointer; white-space: nowrap;
+  transition: background var(--duration-fast) var(--ease-standard),
+              color var(--duration-fast) var(--ease-standard),
+              border-color var(--duration-fast) var(--ease-standard);
+}
+.seed-chip:hover { background: var(--color-surface); color: var(--color-text); border-color: color-mix(in srgb, var(--color-text) 18%, var(--color-border)); }
+
+/* ============================ ANALYZING =========================== */
+.reading-card {
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-2xl); box-shadow: var(--shadow-sm);
+  padding: 44px 40px; display: flex; flex-direction: column; align-items: center;
+}
+.reading-nib { width: 40px; height: 40px; color: var(--color-text); animation: nib-write 1.5s var(--ease-standard) infinite; }
+.reading-title { font-size: var(--text-h2); font-weight: 600; letter-spacing: -0.01em; margin-top: 18px; }
+.reading-sub { font-size: var(--text-small); color: var(--color-text-muted); margin-top: 6px; }
+.read-steps { display: flex; flex-direction: column; gap: 12px; margin-top: 28px; width: 100%; max-width: 340px; }
+.read-step { display: flex; align-items: center; gap: 11px; font-size: var(--text-small); color: var(--color-text-subtle); transition: color var(--duration-base) var(--ease-standard); }
+.read-step--active { color: var(--color-text); font-weight: 500; }
+.read-step--done { color: var(--color-text-muted); }
+.read-tick { width: 20px; height: 20px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-full); border: 1.5px solid var(--color-border); color: var(--color-text-subtle); }
+.read-step--active .read-tick { border-color: var(--color-accent); color: var(--color-accent); }
+.read-step--done .read-tick { background: var(--color-success); border-color: var(--color-success); color: var(--color-success-foreground); }
+.read-spin { width: 12px; height: 12px; border-radius: 50%; border: 2px solid currentColor; border-top-color: transparent; animation: spin 0.6s linear infinite; }
+
+/* ============================= RESULTS ============================ */
+.results-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.results-head .rh-title { font-size: var(--text-h2); font-weight: 600; letter-spacing: -0.01em; }
+.results-head .rh-cap { font-size: var(--text-small); color: var(--color-text-subtle); margin-top: 4px; }
+
+/* the one-line read on the set */
+.set-summary {
+  display: flex; align-items: flex-start; gap: 11px;
+  font-size: var(--text-h3); font-weight: 500; line-height: 1.4; letter-spacing: -0.006em;
+  color: var(--color-text); text-wrap: pretty;
+}
+.set-summary .ss-ico { color: var(--color-accent); flex: 0 0 auto; margin-top: 3px; }
+
+/* ----------------------------- pattern card ----------------------- */
+.xc-card {
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 22px 22px 18px;
+  animation: card-in var(--duration-slow) var(--ease-entrance) both;
+  transition: border-color var(--duration-base) var(--ease-standard);
+}
+.xc-card:hover { border-color: color-mix(in srgb, var(--color-text) 12%, var(--color-border)); }
+
+.xc-head { display: flex; align-items: center; gap: 10px; }
+.xc-kind {
+  display: inline-flex; align-items: center; gap: 5px; flex: 0 0 auto;
+  font-size: var(--text-caption); font-weight: 600; letter-spacing: 0.02em;
+  padding: 3px 9px; border-radius: var(--radius-full);
+  background: var(--color-surface-2); color: var(--color-text-muted); border: 1px solid var(--color-border);
+}
+.xc-head .xc-idx { margin-left: auto; font-size: var(--text-caption); font-weight: 600; color: var(--color-text-subtle); font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
+
+.xc-name { font-size: var(--text-h2); font-weight: 600; letter-spacing: -0.01em; line-height: 1.2; margin-top: 12px; color: var(--color-text); }
+.xc-technique { font-size: var(--text-body); line-height: 1.6; color: var(--color-text-muted); margin-top: 8px; max-width: 60ch; text-wrap: pretty; }
+
+.xc-why { display: flex; align-items: flex-start; gap: 9px; margin-top: 14px; }
+.xc-why .xw-ico { color: var(--color-text-subtle); flex: 0 0 auto; margin-top: 1px; }
+.xc-why .xw-text { font-size: var(--text-small); font-style: italic; color: var(--color-text-subtle); line-height: 1.5; text-wrap: pretty; }
+
+/* their line → your line transfer */
+.xc-transfer { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--color-border); display: flex; flex-direction: column; gap: 12px; }
+.xc-cap { font-size: var(--text-caption); font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-text-subtle); margin-bottom: 8px; }
+
+.xc-source {
+  display: flex; gap: 12px;
+  background: var(--color-surface-2); border: 1px solid var(--color-border);
+  border-radius: var(--radius-md); padding: 11px 14px;
+}
+.xc-source .xs-bar { width: 2px; align-self: stretch; border-radius: 2px; background: var(--color-border); flex: 0 0 auto; }
+.xc-source .xs-text { font-size: var(--text-small); line-height: 1.55; color: var(--color-text-muted); text-wrap: pretty; }
+
+/* the fresh example, rewritten in the user's voice — set apart on --color-bg */
+.xc-voice {
+  display: flex; gap: 12px;
+  background: var(--color-bg); border: 1px solid var(--color-border);
+  border-radius: var(--radius-md); padding: 13px 15px;
+}
+.xc-voice .xv-bar { width: 2px; align-self: stretch; border-radius: 2px; background: var(--color-accent); flex: 0 0 auto; }
+.xc-voice .xv-text { font-size: var(--text-body); font-style: italic; line-height: 1.55; color: var(--color-text); text-wrap: pretty; }
+
+/* suggested do-rule + add-to-voice */
+.xc-rule { display: flex; align-items: center; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+.rule-mono {
+  flex: 1 1 240px; min-width: 0;
+  display: inline-flex; align-items: center; gap: 9px;
+  font-family: var(--font-mono); font-size: var(--text-small);
+  color: var(--color-text); line-height: 1.4;
+  background: var(--color-surface-2); border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md); padding: 9px 12px;
+}
+.rule-mono .rm-do { color: var(--color-success); font-weight: 500; flex: 0 0 auto; }
+.rule-mono .rm-text { min-width: 0; text-wrap: pretty; }
+.add-voice { flex: 0 0 auto; }
+.add-voice--done {
+  display: inline-flex; align-items: center; gap: 7px; flex: 0 0 auto;
+  font-size: var(--text-small); font-weight: 600; color: var(--color-success);
+  padding: 0 6px; white-space: nowrap;
+  animation: card-in var(--duration-base) var(--ease-entrance) both;
+}
+
+/* results footer meta */
+.results-meta {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  font-size: var(--text-caption); color: var(--color-text-subtle);
+  font-variant-numeric: tabular-nums;
+  padding: 4px 2px 0;
+}
+.results-meta .rm-dot { width: 4px; height: 4px; border-radius: var(--radius-full); background: var(--color-text-subtle); }
+
+/* =============================== EMPTY ============================ */
+.explore-empty {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  padding: 60px 28px; border: 1px dashed var(--color-border); border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--color-surface) 50%, transparent);
+}
+.explore-empty .ee-mark { width: 54px; height: 54px; display: grid; place-items: center; margin-bottom: 18px; border-radius: var(--radius-lg); background: var(--color-surface-2); border: 1px solid var(--color-border); color: var(--color-text-subtle); }
+.explore-empty .ee-title { font-size: var(--text-h2); font-weight: 600; letter-spacing: -0.01em; }
+.explore-empty .ee-sub { font-size: var(--text-body); color: var(--color-text-muted); margin-top: 8px; max-width: 44ch; line-height: 1.55; text-wrap: pretty; }
+.explore-empty .btn { margin-top: 20px; }
+
+@media (max-width: 600px) {
+  .xc-name { font-size: var(--text-h3); }
+  .set-summary { font-size: var(--text-body); }
+}
