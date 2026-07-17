@@ -42,6 +42,7 @@ export function toRoutine(s: Scenario): MRoutine {
   const rmRaw = asStr(s.trigger_cfg?.requires_media).toLowerCase();
   const media: RoutineMedia = rmRaw === "image" ? "image" : rmRaw === "none" ? "none" : "any";
   const mode: RoutineMode = s.publish_mode === "auto" ? "auto" : "ask";
+  const action: RoutineAction = asStr(s.trigger_cfg?.action) === "generate_image" ? "image" : "voice";
   return {
     id: s.id,
     name: s.name,
@@ -50,7 +51,7 @@ export function toRoutine(s: Scenario): MRoutine {
     media,
     goal,
     catchall: goal === "",
-    action: "voice", // the generated-photo action isn't a backend option yet
+    action,
     replyInstruction: s.reply_instruction ?? "",
     line: goal || "",
     lastRunAt: s.last_run_at,

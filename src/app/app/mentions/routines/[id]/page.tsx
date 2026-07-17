@@ -38,14 +38,16 @@ const asStr = (v: unknown): string => (typeof v === "string" ? v : "");
 function scenarioToConfig(s: Scenario): MRConfig {
   const goal = asStr(s.trigger_cfg?.intent).trim();
   const rm = asStr(s.trigger_cfg?.requires_media).toLowerCase();
+  const image = asStr(s.trigger_cfg?.action) === "generate_image";
   return {
     name: s.name,
     goal,
     catchall: goal === "",
     media: rm === "image" ? "image" : rm === "none" ? "none" : "any",
-    action: "voice",
+    action: image ? "image" : "voice",
     mode: s.publish_mode === "auto" ? "auto" : "ask",
     inst: s.reply_instruction ?? "",
+    imagePrompt: asStr(s.trigger_cfg?.image_prompt),
   };
 }
 
@@ -53,10 +55,15 @@ function configToBody(cfg: MRConfig, enable: boolean, fallbackName: string): Sce
   const trigger: Record<string, unknown> = { kind: "on_mention" };
   if (!cfg.catchall && cfg.goal.trim()) trigger.intent = cfg.goal.trim();
   if (cfg.media !== "any") trigger.requires_media = cfg.media;
+  if (cfg.action === "image") {
+    // A generated-photo routine (Phase 4) — the backend forces publish_mode='ask'.
+    trigger.action = "generate_image";
+    if (cfg.imagePrompt.trim()) trigger.image_prompt = cfg.imagePrompt.trim();
+  }
   return {
     name: cfg.name.trim() || fallbackName,
     enabled: enable,
-    publish_mode: cfg.mode,
+    publish_mode: cfg.action === "image" ? "ask" : cfg.mode,
     trigger,
     reply_instruction: cfg.inst.trim(),
   };
@@ -67,9 +74,10 @@ const DEMO_CFG: MRConfig = {
   goal: "прислали фото и просят показать их будущего ребёнка",
   catchall: false,
   media: "image",
-  action: "voice",
+  action: "image",
   mode: "ask",
   inst: "",
+  imagePrompt: "покажи их будущего ребёнка, сохрани черты лиц, тёплый фотореализм",
 };
 const OPEN_MAP: Record<string, "goal" | "media" | "action" | "mode" | null> = {
   None: null,

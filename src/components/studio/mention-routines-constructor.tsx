@@ -43,6 +43,8 @@ export type MRConfig = {
   action: "voice" | "image";
   mode: RoutineMode;
   inst: string;
+  /** The generation prompt/style for `action: "image"` (Phase 4). */
+  imagePrompt: string;
 };
 
 const MEDIA_TXT: Record<RoutineMedia, MessageKey> = {
@@ -504,24 +506,46 @@ export function MentionRoutineConstructor({
                       onClick={() => set("action", "voice")}
                     />
                     <OptionTile
-                      on={false}
-                      disabled
+                      on={cfg.action === "image"}
                       icon={<IcWand size={17} />}
                       title={t("mrc.action.image_t")}
                       desc={t("mrc.action.image_d")}
-                      pill={
-                        <span className="mr-soonpill">
-                          <IcLock size={10} /> {t("mrc.action.soon")}
-                        </span>
+                      onClick={() =>
+                        // A generated-photo routine only makes sense on a photo
+                        // mention, and is always review-gated → force image + ask.
+                        setCfg((c) => ({ ...c, action: "image", media: "image", mode: "ask" }))
                       }
                     />
                   </div>
-                  <div className="mt-4">
-                    <label className="mb-1.5 block text-small font-medium">
-                      {t("mrc.inst.label")} <span className="text-text-subtle">· {t("mrc.inst.optional")}</span>
-                    </label>
-                    <BigInst value={cfg.inst} t={t} onChange={(v) => set("inst", v)} />
-                  </div>
+                  {cfg.action === "image" ? (
+                    <div className="mt-4">
+                      <label className="mb-1.5 block text-small font-medium">
+                        {t("mrc.imgprompt.label")}{" "}
+                        <span className="text-text-subtle">· {t("mrc.inst.optional")}</span>
+                      </label>
+                      <div className="rounded-md border border-border bg-surface p-3">
+                        <textarea
+                          value={cfg.imagePrompt}
+                          onChange={(e) => set("imagePrompt", e.target.value)}
+                          maxLength={2000}
+                          rows={2}
+                          placeholder={t("mrc.imgprompt.placeholder")}
+                          className="w-full resize-y bg-transparent text-small leading-relaxed text-text outline-none placeholder:text-text-subtle"
+                        />
+                        <div className="mt-2.5 flex items-center gap-2 border-t border-border pt-2.5">
+                          <IcWand size={13} className="shrink-0 text-text-subtle" />
+                          <span className="text-caption text-text-subtle">{t("mrc.imgprompt.hint")}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mt-4">
+                      <label className="mb-1.5 block text-small font-medium">
+                        {t("mrc.inst.label")} <span className="text-text-subtle">· {t("mrc.inst.optional")}</span>
+                      </label>
+                      <BigInst value={cfg.inst} t={t} onChange={(v) => set("inst", v)} />
+                    </div>
+                  )}
                 </Drawer>
               )}
 
@@ -541,13 +565,24 @@ export function MentionRoutineConstructor({
                       onClick={() => set("mode", "ask")}
                     />
                     <OptionTile
-                      on={cfg.mode === "auto"}
+                      on={cfg.mode === "auto" && cfg.action !== "image"}
+                      disabled={cfg.action === "image"}
                       icon={<IcBolt size={17} />}
                       title={t("mrc.mode.auto_t")}
                       desc={t("mrc.mode.auto_d")}
-                      onClick={() => set("mode", "auto")}
+                      pill={
+                        cfg.action === "image" ? (
+                          <span className="mr-soonpill">
+                            <IcLock size={10} /> {t("mrc.mode.image_locked")}
+                          </span>
+                        ) : undefined
+                      }
+                      onClick={cfg.action === "image" ? undefined : () => set("mode", "auto")}
                     />
                   </div>
+                  {cfg.action === "image" && (
+                    <Why>{t("mrc.mode.image_note")}</Why>
+                  )}
                 </Drawer>
               )}
             </div>
@@ -638,5 +673,14 @@ export function MentionRoutineConstructor({
 }
 
 export function emptyConfig(): MRConfig {
-  return { name: "", goal: "", catchall: false, media: "any", action: "voice", mode: "ask", inst: "" };
+  return {
+    name: "",
+    goal: "",
+    catchall: false,
+    media: "any",
+    action: "voice",
+    mode: "ask",
+    inst: "",
+    imagePrompt: "",
+  };
 }
