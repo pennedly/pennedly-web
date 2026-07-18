@@ -25,6 +25,7 @@ import {
   restoreMention,
   skipMention,
   translateText,
+  unapproveDraft,
 } from "@/lib/api";
 import { useSelectedAccountId } from "@/lib/account";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
@@ -89,7 +90,9 @@ export default function MentionsPage() {
   const [loaded, setLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [filteredOpen, setFilteredOpen] = useState(false);
-  const [busyId, setBusyId] = useState<MQMention["id"] | null>(null);
+  // Per-card in-flight set (NOT a single id): two different cards can act
+  // concurrently without one clearing the other's spinner or racing the refetch.
+  const [busyIds, setBusyIds] = useState<Set<MQMention["id"]>>(() => new Set());
   const [caps, setCaps] = useState({ comments: 12, mentions: 6 });
   const [toasts, setToasts] = useState<{ id: number; title: string; tone: "success" | "error" }[]>([]);
   const [tw, setTw] = useTweaks(MQ_TWEAK_DEFAULTS);
@@ -169,43 +172,61 @@ export default function MentionsPage() {
   // send (approve → publish, optionally with an inline edit). Failures surface a
   // toast (a cap/quota 429, a model refusal 422, a transient publish error) instead
   // of dying silently, and every path refetches so the card reflects the server.
-  const onAction = async (id: MQMention["id"], a: MentionAction, text?: string) => {
-    if (demoOn) return;
+  const onAction = async (id: MQMention["id"], a: MentionAction, text?: string): Promise<boolean> => {
+    if (demoOn) return false;
     const row = rows.find((x) => x.id === id);
-    if (!row) return;
+    if (!row) return false;
     const mentionId = typeof row.id === "number" ? row.id : Number(row.id);
-    setBusyId(id);
+    setBusyIds((s) => new Set(s).add(id));
+    let ok = false;
     try {
       if (a === "generate") {
         const r = await generateMentionReply(mentionId);
+        // A SKIP verdict isn't a failure, but there's no draft to review — point the
+        // owner to answer by hand rather than silently doing nothing.
         if (r.is_skip) pushToast(t("mq.toast.declined"), "error");
+        else ok = true;
       } else if (a === "skip" || a === "reject") {
         await skipMention(mentionId);
+        ok = true;
       } else if (a === "unskip") {
         await restoreMention(mentionId);
+        ok = true;
       } else if (a === "gen_image") {
-        if (!row.draftId) return;
-        await generateDraftImage(row.draftId);
-      } else if (a === "send") {
-        if (!row.draftId) return;
-        // Approve (with the inline edit, if any) then publish. A retry after a failed
-        // publish must not dead-end: the draft may already be 'approved', so re-approve
-        // 409s — swallow only that case and go straight to publish.
-        try {
-          await approveDraft(row.draftId, text ? { editedText: text } : {});
-        } catch (e) {
-          if (!(e instanceof ApiError && e.status === 409)) throw e;
+        if (row.draftId) {
+          await generateDraftImage(row.draftId);
+          ok = true;
         }
-        await publishDraft(row.draftId);
-      } else {
-        return;
+      } else if (a === "send") {
+        if (row.draftId) {
+          // Approve (with the inline edit, if any) then publish. Retry-safe: if a
+          // prior send already approved the draft, re-approve 409s — but if the user
+          // CHANGED the text since, that stale approved copy must be replaced, so
+          // unapprove and re-approve with the current text; otherwise just publish.
+          try {
+            await approveDraft(row.draftId, text !== undefined ? { editedText: text } : {});
+          } catch (e) {
+            if (!(e instanceof ApiError && e.status === 409)) throw e;
+            if (text !== undefined) {
+              await unapproveDraft(row.draftId);
+              await approveDraft(row.draftId, { editedText: text });
+            }
+          }
+          await publishDraft(row.draftId);
+          ok = true;
+        }
       }
     } catch (e) {
       pushToast(actionErrorMessage(e, t), "error");
     } finally {
       await load();
-      setBusyId(null);
+      setBusyIds((s) => {
+        const n = new Set(s);
+        n.delete(id);
+        return n;
+      });
     }
+    return ok;
   };
 
   return (
@@ -243,7 +264,7 @@ export default function MentionsPage() {
               <section className="mq-zone">
                 <ZoneHead title={t("mq.zone.queue.title")} count={queue.length} sub={t("mq.zone.queue.sub")} />
                 {queue.map((m) => (
-                  <MentionCard key={m.id} m={m} t={t} locale={locale} demo={demoOn} onAction={onAction} onTranslate={onTranslate} actionBusy={busyId === m.id} />
+                  <MentionCard key={m.id} m={m} t={t} locale={locale} demo={demoOn} onAction={onAction} onTranslate={onTranslate} actionBusy={busyIds.has(m.id)} />
                 ))}
               </section>
             )}
@@ -255,7 +276,7 @@ export default function MentionsPage() {
                   <MentionCard m={DEMO_DANGER} t={t} locale={locale} demo={demoOn} onAction={onAction} onTranslate={onTranslate} />
                 )}
                 {feed.map((m) => (
-                  <MentionCard key={m.id} m={m} t={t} locale={locale} demo={demoOn} onAction={onAction} onTranslate={onTranslate} actionBusy={busyId === m.id} />
+                  <MentionCard key={m.id} m={m} t={t} locale={locale} demo={demoOn} onAction={onAction} onTranslate={onTranslate} actionBusy={busyIds.has(m.id)} />
                 ))}
               </section>
             )}

@@ -356,7 +356,7 @@ export function MentionCard({
   t: T;
   locale: string;
   demo: boolean;
-  onAction?: (id: MQMention["id"], action: MentionAction, text?: string) => void;
+  onAction?: (id: MQMention["id"], action: MentionAction, text?: string) => void | Promise<boolean>;
   onTranslate?: (text: string) => Promise<string>;
   writeEnabled?: boolean;
   /** True while this card's generate/send/skip request is in flight. */
@@ -372,7 +372,7 @@ export function MentionCard({
   const [editText, setEditText] = useState("");
   const isTextDraft = m.status === "draft" && !m.generateImage;
 
-  function handleAct(a: MentionAction) {
+  async function handleAct(a: MentionAction) {
     if (a === "edit") {
       setEditing((v) => {
         if (!v) setEditText(m.draft ?? "");
@@ -382,9 +382,15 @@ export function MentionCard({
     }
     if (a === "send") {
       const trimmed = editText.trim();
-      const edited = editing && trimmed && trimmed !== (m.draft ?? "").trim() ? trimmed : undefined;
-      onAction?.(m.id, "send", edited);
-      setEditing(false);
+      // While the editor is open, always pass its text (even if it currently equals
+      // the original) — otherwise a retry after a failed publish that the user
+      // reverted to the original would skip the re-approve and ship the earlier,
+      // already-approved edit. Empty falls back to the generated text.
+      const edited = editing && trimmed ? trimmed : undefined;
+      const ok = await onAction?.(m.id, "send", edited);
+      // Keep the editor open (and editText) on failure so a retry doesn't lose the
+      // user's edit; collapse it only once the send actually succeeded.
+      if (ok) setEditing(false);
       return;
     }
     onAction?.(m.id, a);
