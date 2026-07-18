@@ -969,6 +969,10 @@ export type AutopilotConfig = {
   // demo path drives it from local state.
   audience_prompt?: string;
   replies_per_day: number;
+  // Separate daily cap for @mention replies (mentions have their own budget). The
+  // mention-routine Layer-3 «Дневной лимит» override is bounded by this account
+  // ceiling. Optional for older reads; defaults to the backend's 5.
+  mention_replies_per_day?: number;
   reply_frequency: string; // "asap" | "hourly" | "few_daily" | "daily"
   // Optional auto-reply quiet window, stored as whole UTC hours (the UI
   // converts to/from local time, like the post hours). Both null = no window.
@@ -1200,6 +1204,20 @@ export type ScenarioBoost = {
   target: ScenarioBoostTarget; // default {type:"all"}
 };
 
+// Layer-3 per-ROUTINE reply overrides for an on_mention routine (the mention
+// constructor's «Только для этой рутины» panel). EVERY field is optional — an
+// omitted field inherits «Правила дома» (the backend writes only the present keys to
+// action_cfg, so inheritance stays live). Distinct from ScenarioReplyPolicy, which
+// always writes audience + max_per_day.
+export type ScenarioReplyOverrides = {
+  audience?: string; // "fans" | "all_except_trolls" | "questions" | "custom"
+  audience_prompt?: string; // required when audience === "custom"
+  max_per_day?: number; // 1..500, bounded by the account mention ceiling
+  frequency?: string; // "asap" | "half_hourly" | "hourly" | "few_daily" | "daily"
+  quiet_start_hour?: number; // 0..23 — sent as a PAIR with quiet_end_hour
+  quiet_end_hour?: number; // 0..23
+};
+
 export type ScenarioCreate = {
   name: string;
   enabled?: boolean;
@@ -1209,6 +1227,7 @@ export type ScenarioCreate = {
   instruction?: string;
   reply_instruction?: string;
   reply_policy?: ScenarioReplyPolicy;
+  reply_overrides?: ScenarioReplyOverrides;
   boost?: ScenarioBoost;
   condition?: Record<string, unknown> | null;
 };
@@ -1222,6 +1241,7 @@ export type ScenarioUpdate = {
   instruction?: string;
   reply_instruction?: string;
   reply_policy?: ScenarioReplyPolicy;
+  reply_overrides?: ScenarioReplyOverrides;
   boost?: ScenarioBoost;
   condition?: Record<string, unknown> | null;
 };

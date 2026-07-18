@@ -11,6 +11,7 @@ import { useState, type ReactNode } from "react";
 
 import { buttonClasses } from "@/components/ui/button";
 import {
+  IcAlert,
   IcAt,
   IcBolt,
   IcBubble,
@@ -24,13 +25,20 @@ import {
   IcPencil,
   IcRoute,
   IcShield,
-  IcShieldHouse,
   IcSparkle,
   IcTrash,
   IcWand,
 } from "@/components/icons";
 import type { MessageKey } from "@/lib/i18n";
 import type { RoutineMedia, RoutineMode } from "@/components/studio/mention-routines";
+import {
+  EMPTY_L3,
+  Layer3Panel,
+  l3OverrideCount,
+  l3Valid,
+  type L3House,
+  type MRL3,
+} from "@/components/studio/mention-routines-layer3";
 
 type T = (k: MessageKey) => string;
 type SlotKey = "goal" | "media" | "action" | "mode" | null;
@@ -45,6 +53,8 @@ export type MRConfig = {
   inst: string;
   /** The generation prompt/style for `action: "image"` (Phase 4). */
   imagePrompt: string;
+  /** Layer-3 per-routine reply overrides (inherit «Правила дома» by default). */
+  l3: MRL3;
 };
 
 const MEDIA_TXT: Record<RoutineMedia, MessageKey> = {
@@ -341,6 +351,8 @@ export function MentionRoutineConstructor({
   onDelete,
   initialSlot = null,
   busy = false,
+  house,
+  masterOff = false,
 }: {
   initial: MRConfig;
   isNew: boolean;
@@ -351,6 +363,10 @@ export function MentionRoutineConstructor({
   onDelete?: () => void;
   initialSlot?: SlotKey;
   busy?: boolean;
+  /** The account «Правила дома» values shown as Layer-3 inherited defaults. */
+  house: L3House;
+  /** The account reply master is off → Layer-3 shows a soft "won't fire" note. */
+  masterOff?: boolean;
 }) {
   const [cfg, setCfg] = useState<MRConfig>(initial);
   const [open, setOpen] = useState<SlotKey>(initialSlot);
@@ -614,31 +630,31 @@ export function MentionRoutineConstructor({
               <Layer
                 title={t("mrc.layer3.title")}
                 pro
-                summary={t("mrc.layer3.sum")}
+                summary={
+                  l3OverrideCount(cfg.l3) === 0
+                    ? t("mrl3.sumnone")
+                    : t("mrl3.count.n").replace("{n}", String(l3OverrideCount(cfg.l3)))
+                }
                 open={layer3}
                 onToggle={() => setLayer3((v) => !v)}
                 t={t}
               >
-                <div className="flex items-start gap-3 rounded-md border border-dashed border-border bg-surface-2/60 p-3.5">
-                  <span className="mt-0.5 shrink-0 text-text-subtle">
-                    <IcShieldHouse size={16} />
-                  </span>
-                  <div>
-                    <div className="text-small font-semibold">{t("mrc.layer3.t")}</div>
-                    <div className="mt-1 text-caption leading-normal text-text-muted">{t("mrc.layer3.d")}</div>
-                    <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-text-subtle">
-                      <IcLock size={10} /> {t("mrc.layer3.soon")}
-                    </span>
-                  </div>
-                </div>
+                <Layer3Panel l3={cfg.l3} setL3={(next) => set("l3", next)} house={house} masterOff={masterOff} t={t} />
               </Layer>
             </div>
 
-            {/* foot */}
+            {/* foot — Save is blocked while a Layer-3 override is half-set (a lone
+                quiet bound / an empty custom-audience description). */}
+            {!l3Valid(cfg.l3) && (
+              <div className="ml3-invalid">
+                <IcAlert size={13} />
+                <span>{t("mrl3.savepblocked")}</span>
+              </div>
+            )}
             <div className="flex flex-col gap-2 border-t border-border pt-4 sm:flex-row sm:items-center">
               <button
                 type="button"
-                disabled={busy}
+                disabled={busy || !l3Valid(cfg.l3)}
                 onClick={() => onSave?.(cfg, false)}
                 className={buttonClasses({ variant: "secondary", size: "md" })}
               >
@@ -646,7 +662,7 @@ export function MentionRoutineConstructor({
               </button>
               <button
                 type="button"
-                disabled={busy}
+                disabled={busy || !l3Valid(cfg.l3)}
                 onClick={() => onSave?.(cfg, isNew ? true : enabled)}
                 className={buttonClasses({ variant: "primary", size: "md" })}
               >
@@ -682,5 +698,6 @@ export function emptyConfig(): MRConfig {
     mode: "ask",
     inst: "",
     imagePrompt: "",
+    l3: EMPTY_L3,
   };
 }

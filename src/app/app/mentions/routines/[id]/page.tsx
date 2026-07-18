@@ -13,11 +13,19 @@ import {
   clearTokens,
   createScenario,
   deleteScenario,
+  fetchAutopilot,
   fetchMe,
   fetchScenarios,
   getTokens,
   updateScenario,
 } from "@/lib/api";
+import {
+  audFromBackend,
+  buildReplyOverrides,
+  freqFromBackend,
+  l3FromActionCfg,
+  type L3House,
+} from "@/components/studio/mention-routines-layer3";
 import { useSelectedAccountId } from "@/lib/account";
 import { useTranslation } from "@/lib/i18n";
 import { useTesterGuard } from "@/lib/tester";
@@ -48,6 +56,7 @@ function scenarioToConfig(s: Scenario): MRConfig {
     mode: s.publish_mode === "auto" ? "auto" : "ask",
     inst: s.reply_instruction ?? "",
     imagePrompt: asStr(s.trigger_cfg?.image_prompt),
+    l3: l3FromActionCfg(s.action_cfg as Record<string, unknown> | null),
   };
 }
 
@@ -66,6 +75,10 @@ function configToBody(cfg: MRConfig, enable: boolean, fallbackName: string): Sce
     publish_mode: cfg.action === "image" ? "ask" : cfg.mode,
     trigger,
     reply_instruction: cfg.inst.trim(),
+    // Layer-3 overrides ride action_cfg; ONLY the overridden keys are sent, so an
+    // inherited knob stays absent (the worker tracks the account «Правила дома»).
+    // Always sent (even {}) so removing an override on edit clears it from action_cfg.
+    reply_overrides: buildReplyOverrides(cfg.l3),
   };
 }
 
@@ -78,7 +91,11 @@ const DEMO_CFG: MRConfig = {
   mode: "ask",
   inst: "",
   imagePrompt: "покажи их будущего ребёнка, сохрани черты лиц, тёплый фотореализм",
+  // Demo: one override (частота) so the Layer-3 panel shows the mixed inherit/own state.
+  l3: { freq: "multi", quiet: null, limit: null, aud: null, audPrompt: "" },
 };
+// The account «Правила дома» shown as inherited values in the demo.
+const DEMO_HOUSE: L3House = { freq: "hour", quietStart: 23, quietEnd: 8, limit: 25, aud: "all" };
 const OPEN_MAP: Record<string, "goal" | "media" | "action" | "mode" | null> = {
   None: null,
   Goal: "goal",
@@ -108,7 +125,28 @@ export default function MentionRoutineConstructorPage() {
   const [config, setConfig] = useState<MRConfig | null>(null);
   const [enabled, setEnabled] = useState(false);
   const [busy, setBusy] = useState(false);
+  // Account «Правила дома» values → the Layer-3 inherited defaults (null = unknown →
+  // a neutral «как в Правилах дома», never a fabricated number).
+  const [house, setHouse] = useState<L3House>({ freq: null, quietStart: null, quietEnd: null, limit: null, aud: null });
+  const [masterOff, setMasterOff] = useState(false);
   const [tw, setTw] = useTweaks(MRC_TWEAK_DEFAULTS);
+
+  useEffect(() => {
+    if (demoParam || accountId === null) return;
+    fetchAutopilot(accountId)
+      .then((ap) => {
+        setHouse({
+          freq: freqFromBackend(ap.reply_frequency),
+          quietStart: ap.reply_quiet_start_hour,
+          quietEnd: ap.reply_quiet_end_hour,
+          limit: ap.mention_replies_per_day ?? null,
+          aud: audFromBackend(ap.reply_audience),
+        });
+        // Replies won't fire when the master gate is off OR the reply mode is off.
+        setMasterOff(!ap.enabled || ap.reply_mode === "off");
+      })
+      .catch(() => {});
+  }, [demoParam, accountId]);
 
   useEffect(() => {
     if (demoParam) return;
@@ -209,6 +247,8 @@ export default function MentionRoutineConstructorPage() {
           enabled={!demoVariantNew}
           t={t}
           onBack={() => router.push(HUB)}
+          house={DEMO_HOUSE}
+          masterOff={false}
         />
         <TweaksPanel title="Routine constructor">
           <TweakSection label="Appearance" />
@@ -246,6 +286,8 @@ export default function MentionRoutineConstructorPage() {
       onBack={() => router.push(HUB)}
       onSave={onSave}
       onDelete={isNew ? undefined : onDelete}
+      house={house}
+      masterOff={masterOff}
     />
   );
 }
