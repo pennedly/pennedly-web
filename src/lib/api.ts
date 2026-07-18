@@ -1049,6 +1049,33 @@ export async function fetchMentions(
   );
 }
 
+// Owner-triggered draft of a reply to a QUEUE-only / feed @mention (the bot never
+// auto-answers those). Stamps the mention `drafted`; `is_skip` when the model
+// declined. 409 if the mention isn't awaiting a draft, 429 at the monthly quota.
+export async function generateMentionReply(
+  mentionId: number,
+): Promise<GeneratedReply> {
+  return fetchApi<GeneratedReply>("/api/generation/mention-replies", {
+    method: "POST",
+    body: JSON.stringify({ mention_id: mentionId }),
+  });
+}
+
+// Skip a mention without replying (moves it to `skipped`, rejects any pending
+// draft). Backs «Пропустить» and «Отклонить». 409 if already replied.
+export async function skipMention(
+  mentionId: number,
+): Promise<{ mention_id: number; status: string }> {
+  return fetchApi(`/api/mentions/${mentionId}/skip`, { method: "POST" });
+}
+
+// Restore a skipped mention back to `new` (clears any draft). 409 if not skipped.
+export async function restoreMention(
+  mentionId: number,
+): Promise<{ mention_id: number; status: string }> {
+  return fetchApi(`/api/mentions/${mentionId}/restore`, { method: "POST" });
+}
+
 // ── Posts ────────────────────────────────────────────────────────
 
 export async function fetchPosts(

@@ -204,18 +204,20 @@ function whyKeyFor(m: MQMention): MessageKey | null {
 function CardFoot({
   m,
   t,
-  onAction,
+  onAct,
   writeEnabled = true,
   busy = false,
+  editing = false,
 }: {
   m: MQMention;
   t: T;
-  onAction?: (id: MQMention["id"], action: MentionAction) => void;
-  // The generate/skip/send/… actions need backend not shipped yet. Off in the
-  // live read view (only Open in Threads); the demo shows the full design. The
-  // generated-photo draft flow is exempt (Phase 4, live).
+  onAct?: (action: MentionAction) => void;
+  // Actions are live for real cards; the read-only fallback (only Open in Threads)
+  // is kept for any future surface that passes writeEnabled=false.
   writeEnabled?: boolean;
   busy?: boolean;
+  /** True while this text draft is being edited inline (swaps «Изменить»→«Отмена»). */
+  editing?: boolean;
 }) {
   const group = m.group;
   const openLink = m.permalink ? (
@@ -228,7 +230,7 @@ function CardFoot({
       <IcExternal size={15} /> {group === "skip" ? t("mq.action.open_short") : t("mq.action.open")}
     </a>
   ) : null;
-  const act = (a: MentionAction) => () => onAction?.(m.id, a);
+  const act = (a: MentionAction) => () => onAct?.(a);
 
   let meta: ReactNode = null;
   let actions: ReactNode = null;
@@ -250,20 +252,20 @@ function CardFoot({
       actions = (
         <>
           {openLink}
-          <button type="button" onClick={act("generate")} className={"btn mq-grow " + buttonClasses({ variant: "primary", size: "sm" })}>
-            <IcNib size={15} /> {t("mq.action.generate_draft")}
+          <button type="button" disabled={busy} onClick={act("generate")} className={"btn mq-grow " + buttonClasses({ variant: "primary", size: "sm" })}>
+            {busy ? <Spinner size={14} /> : <IcNib size={15} />} {t("mq.action.generate_draft")}
           </button>
         </>
       );
     } else {
       actions = (
         <>
-          <button type="button" onClick={act("skip")} className={"btn " + buttonClasses({ variant: "ghost", size: "sm" })}>
+          <button type="button" disabled={busy} onClick={act("skip")} className={"btn " + buttonClasses({ variant: "ghost", size: "sm" })}>
             <IcSkip size={14} /> {t("mq.action.skip")}
           </button>
           {openLink}
-          <button type="button" onClick={act("generate")} className={"btn mq-grow " + buttonClasses({ variant: "primary", size: "sm" })}>
-            <IcNib size={15} /> {t("mq.action.generate")}
+          <button type="button" disabled={busy} onClick={act("generate")} className={"btn mq-grow " + buttonClasses({ variant: "primary", size: "sm" })}>
+            {busy ? <Spinner size={14} /> : <IcNib size={15} />} {t("mq.action.generate")}
           </button>
         </>
       );
@@ -291,14 +293,14 @@ function CardFoot({
   } else if (m.status === "draft") {
     actions = (
       <>
-        <button type="button" onClick={act("reject")} className={"btn " + buttonClasses({ variant: "ghost", size: "sm" })}>
+        <button type="button" disabled={busy} onClick={act("reject")} className={"btn " + buttonClasses({ variant: "ghost", size: "sm" })}>
           <IcSkip size={14} /> {t("mq.action.reject")}
         </button>
-        <button type="button" onClick={act("edit")} className={"btn " + buttonClasses({ variant: "secondary", size: "sm" })}>
-          <IcNib size={15} /> {t("mq.action.edit")}
+        <button type="button" disabled={busy} onClick={act("edit")} className={"btn " + buttonClasses({ variant: "secondary", size: "sm" })}>
+          {editing ? <IcUndo size={14} /> : <IcNib size={15} />} {editing ? t("mq.action.edit_cancel") : t("mq.action.edit")}
         </button>
-        <button type="button" onClick={act("send")} className={"btn mq-grow " + buttonClasses({ variant: "primary", size: "sm" })}>
-          <IcExternal size={15} /> {t("mq.action.send")}
+        <button type="button" disabled={busy} onClick={act("send")} className={"btn mq-grow " + buttonClasses({ variant: "primary", size: "sm" })}>
+          {busy ? <Spinner size={14} /> : <IcExternal size={15} />} {t("mq.action.send")}
         </button>
       </>
     );
@@ -319,7 +321,7 @@ function CardFoot({
     actions = (
       <>
         {openLink}
-        <button type="button" onClick={act("unskip")} className={"btn " + buttonClasses({ variant: "ghost", size: "sm" })}>
+        <button type="button" disabled={busy} onClick={act("unskip")} className={"btn " + buttonClasses({ variant: "ghost", size: "sm" })}>
           <IcUndo size={14} /> {t("mq.action.unskip")}
         </button>
       </>
@@ -354,14 +356,40 @@ export function MentionCard({
   t: T;
   locale: string;
   demo: boolean;
-  onAction?: (id: MQMention["id"], action: MentionAction) => void;
+  onAction?: (id: MQMention["id"], action: MentionAction, text?: string) => void;
   onTranslate?: (text: string) => Promise<string>;
   writeEnabled?: boolean;
-  /** True while this card's generate/send request is in flight (Phase 4). */
+  /** True while this card's generate/send/skip request is in flight. */
   actionBusy?: boolean;
 }) {
   const [translated, setTranslated] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Inline edit of a text draft: «Изменить» reveals a textarea; «Отправить» ships
+  // the edited text (or the untouched draft). Ephemeral until send, mirroring the
+  // comment /app/replies local-edit → approve flow (a reply draft's edit is applied
+  // at approve time, never persisted to content_drafts.edited_text).
+  const [editing, setEditing] = useState(false);
+  const [editText, setEditText] = useState("");
+  const isTextDraft = m.status === "draft" && !m.generateImage;
+
+  function handleAct(a: MentionAction) {
+    if (a === "edit") {
+      setEditing((v) => {
+        if (!v) setEditText(m.draft ?? "");
+        return !v;
+      });
+      return;
+    }
+    if (a === "send") {
+      const trimmed = editText.trim();
+      const edited = editing && trimmed && trimmed !== (m.draft ?? "").trim() ? trimmed : undefined;
+      onAction?.(m.id, "send", edited);
+      setEditing(false);
+      return;
+    }
+    onAction?.(m.id, a);
+  }
+
   const canTranslate = !!m.text && (demo ? m.translation != null : !!onTranslate);
   const shown = translated ?? m.text;
   const whyKey = whyKeyFor(m);
@@ -428,8 +456,30 @@ export function MentionCard({
       )}
 
       <MediaPreview media={m.media} t={t} />
-      <DraftThread m={m} t={t} />
-      <CardFoot m={m} t={t} onAction={onAction} writeEnabled={writeEnabled} busy={actionBusy} />
+      {editing && isTextDraft ? (
+        <div className="mq-thread">
+          <div className="mq-draft">
+            <div className="mq-draft-author">
+              <span className="av">{t("mq.draft.you").slice(0, 1)}</span>
+              <span className="nm">{t("mq.draft.you")}</span>
+              <span className="tag">
+                <IcNib size={12} /> {t("mq.draft.tag")}
+              </span>
+            </div>
+            <textarea
+              value={editText}
+              onChange={(e) => setEditText(e.target.value)}
+              rows={4}
+              aria-label={t("mq.action.edit")}
+              placeholder={t("mq.edit.placeholder")}
+              className="mt-2 w-full resize-y rounded-md border border-border bg-surface px-3 py-2 text-body text-text outline-none focus:border-accent"
+            />
+          </div>
+        </div>
+      ) : (
+        <DraftThread m={m} t={t} />
+      )}
+      <CardFoot m={m} t={t} onAct={handleAct} writeEnabled={writeEnabled} busy={actionBusy} editing={editing} />
     </article>
   );
 }

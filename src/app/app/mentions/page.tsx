@@ -19,8 +19,11 @@ import {
   fetchMentions,
   fetchMe,
   generateDraftImage,
+  generateMentionReply,
   getTokens,
   publishDraft,
+  restoreMention,
+  skipMention,
   translateText,
 } from "@/lib/api";
 import { useSelectedAccountId } from "@/lib/account";
@@ -29,6 +32,7 @@ import { useTesterGuard } from "@/lib/tester";
 import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
 import { ConnectThreadsButton } from "@/components/ConnectThreadsButton";
 import { buttonClasses } from "@/components/ui/button";
+import { Toast, ToastHost } from "@/components/ui/toast";
 import { IcAlert, IcAt, IcClock, IcReload } from "@/components/icons";
 import { TweaksPanel, TweakSection, TweakToggle, TweakRadio, useTweaks } from "@/components/tweaks/TweaksPanel";
 import {
@@ -52,6 +56,8 @@ import type { LanguageCode } from "@/lib/types";
 
 const IS_DEV = process.env.NODE_ENV === "development";
 const MQ_STATES = ["Populated", "Filtered open", "Empty", "Loading", "Error", "Reconnect"];
+
+let toastSeq = 1;
 
 type Split = { queue: MQMention[]; feed: MQMention[]; filtered: MQMention[] };
 
@@ -85,7 +91,14 @@ export default function MentionsPage() {
   const [filteredOpen, setFilteredOpen] = useState(false);
   const [busyId, setBusyId] = useState<MQMention["id"] | null>(null);
   const [caps, setCaps] = useState({ comments: 12, mentions: 6 });
+  const [toasts, setToasts] = useState<{ id: number; title: string; tone: "success" | "error" }[]>([]);
   const [tw, setTw] = useTweaks(MQ_TWEAK_DEFAULTS);
+
+  const pushToast = useCallback((title: string, tone: "success" | "error") => {
+    const id = toastSeq++;
+    setToasts((s) => [...s, { id, title, tone }]);
+    setTimeout(() => setToasts((s) => s.filter((x) => x.id !== id)), 4200);
+  }, []);
 
   useEffect(() => {
     if (demoParam) return;
@@ -151,23 +164,35 @@ export default function MentionsPage() {
   // tone. It normally lives in Filtered, so it's rendered explicitly here.
   const showDanger = demoOn && !!tw.danger && !hasError && !missingScope && loaded && rows.length > 0;
   const onTranslate = (text: string) => translateText(text, locale as LanguageCode).then((r) => r.translated_text);
-  // The LIVE generated-photo draft flow (Phase 4): generate the image, or send the
-  // reviewed draft (approve → publish). Other write actions land with their backend
-  // later; they no-op here. Demo cards carry no real draft, so demo no-ops too.
-  const onAction = async (id: MQMention["id"], a: MentionAction) => {
+  // Live queue actions. Mention-scoped: generate a reply draft, skip/reject a
+  // mention, restore a skipped one. Draft-scoped: generate the photo (Phase 4) or
+  // send (approve → publish, optionally with an inline edit). Failures surface a
+  // toast (a cap/quota 429, a model refusal 422, a transient publish error) instead
+  // of dying silently, and every path refetches so the card reflects the server.
+  const onAction = async (id: MQMention["id"], a: MentionAction, text?: string) => {
     if (demoOn) return;
     const row = rows.find((x) => x.id === id);
-    if (!row?.draftId) return;
+    if (!row) return;
+    const mentionId = typeof row.id === "number" ? row.id : Number(row.id);
     setBusyId(id);
     try {
-      if (a === "gen_image") {
+      if (a === "generate") {
+        const r = await generateMentionReply(mentionId);
+        if (r.is_skip) pushToast(t("mq.toast.declined"), "error");
+      } else if (a === "skip" || a === "reject") {
+        await skipMention(mentionId);
+      } else if (a === "unskip") {
+        await restoreMention(mentionId);
+      } else if (a === "gen_image") {
+        if (!row.draftId) return;
         await generateDraftImage(row.draftId);
       } else if (a === "send") {
-        // Approve then publish. A retry after a failed publish must not
-        // dead-end: the draft may already be 'approved', so re-approve 409s —
-        // swallow only that case and go straight to publish.
+        if (!row.draftId) return;
+        // Approve (with the inline edit, if any) then publish. A retry after a failed
+        // publish must not dead-end: the draft may already be 'approved', so re-approve
+        // 409s — swallow only that case and go straight to publish.
         try {
-          await approveDraft(row.draftId);
+          await approveDraft(row.draftId, text ? { editedText: text } : {});
         } catch (e) {
           if (!(e instanceof ApiError && e.status === 409)) throw e;
         }
@@ -175,9 +200,8 @@ export default function MentionsPage() {
       } else {
         return;
       }
-    } catch {
-      /* keep the card on failure; the send path is retry-safe and the refetch
-         below reflects the true server state (e.g. an already-sent reply) */
+    } catch (e) {
+      pushToast(actionErrorMessage(e, t), "error");
     } finally {
       await load();
       setBusyId(null);
@@ -219,7 +243,7 @@ export default function MentionsPage() {
               <section className="mq-zone">
                 <ZoneHead title={t("mq.zone.queue.title")} count={queue.length} sub={t("mq.zone.queue.sub")} />
                 {queue.map((m) => (
-                  <MentionCard key={m.id} m={m} t={t} locale={locale} demo={demoOn} writeEnabled={demoOn} onAction={onAction} onTranslate={onTranslate} actionBusy={busyId === m.id} />
+                  <MentionCard key={m.id} m={m} t={t} locale={locale} demo={demoOn} onAction={onAction} onTranslate={onTranslate} actionBusy={busyId === m.id} />
                 ))}
               </section>
             )}
@@ -228,10 +252,10 @@ export default function MentionsPage() {
               <section className="mq-zone">
                 <ZoneHead title={t("mq.zone.feed.title")} sub={t("mq.zone.feed.sub")} />
                 {showDanger && (
-                  <MentionCard m={DEMO_DANGER} t={t} locale={locale} demo={demoOn} writeEnabled={demoOn} onAction={onAction} onTranslate={onTranslate} />
+                  <MentionCard m={DEMO_DANGER} t={t} locale={locale} demo={demoOn} onAction={onAction} onTranslate={onTranslate} />
                 )}
                 {feed.map((m) => (
-                  <MentionCard key={m.id} m={m} t={t} locale={locale} demo={demoOn} writeEnabled={demoOn} onAction={onAction} onTranslate={onTranslate} actionBusy={busyId === m.id} />
+                  <MentionCard key={m.id} m={m} t={t} locale={locale} demo={demoOn} onAction={onAction} onTranslate={onTranslate} actionBusy={busyId === m.id} />
                 ))}
               </section>
             )}
@@ -262,8 +286,26 @@ export default function MentionsPage() {
           <TweakToggle label="Scam (veiled media) example" value={!!tw.danger} onChange={(v) => setTw("danger", v)} />
         </TweaksPanel>
       )}
+
+      {toasts.length > 0 && (
+        <ToastHost>
+          {toasts.map((tt) => (
+            <Toast key={tt.id} tone={tt.tone} title={tt.title} />
+          ))}
+        </ToastHost>
+      )}
     </div>
   );
+}
+
+// Map a queue-action failure to a short localized toast. A cap/quota is 429, a
+// model refusal (safety block / nothing to reply) is 422; anything else is generic.
+function actionErrorMessage(e: unknown, t: (k: MessageKey) => string): string {
+  if (e instanceof ApiError) {
+    if (e.status === 429) return t("mq.toast.limit");
+    if (e.status === 422) return t("mq.toast.declined");
+  }
+  return t("mq.toast.error");
 }
 
 function EmptyMQ({ t }: { t: (k: MessageKey) => string }) {
