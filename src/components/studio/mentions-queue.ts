@@ -82,6 +82,10 @@ export type MQMention = {
   permalink: string | null;
   media: MQMedia;
   draft?: string | null; // the generated reply (draft status)
+  /** The ask-mode draft's id + Phase-4 generate-image fields (draft status). */
+  draftId?: number | null;
+  draftMediaUrl?: string | null; // the generated image, once produced
+  generateImage?: boolean; // the routine replies with a generated photo
   skipReason?: string | null;
   repliedLabel?: string | null;
   reason?: FilteredReason | null; // filtered strip chip
@@ -142,6 +146,10 @@ export function toMQ(m: MentionSummary): MQMention {
     permalink: m.permalink,
     media: mediaKindFor(m, intent, group),
     skipReason: m.skip_reason,
+    draft: m.draft_text,
+    draftId: m.draft_id,
+    draftMediaUrl: m.draft_media_url,
+    generateImage: m.generate_image ?? false,
   };
 }
 
@@ -192,6 +200,14 @@ export const DEMO_FEED: MQMention[] = [
     intent: "praise", status: "draft", media: "text", permalink: "https://www.threads.net",
     text: "Лучший аккаунт про письмо в русскоязычном Threads, всем советую начать с поста про худшую первую строчку.",
     draft: "Спасибо, это очень приятно слышать. Тот пост про худшую первую строчку и правда снимает зажим, рад, что откликнулось.",
+  }),
+  // Phase 4 — a generate_image routine's draft awaiting «Сгенерировать фото».
+  d({
+    id: "f2b", initials: "КП", handle: "katya.p", whenIso: null, whenLabel: "12 мин назад",
+    intent: "question", status: "draft", media: "photo", permalink: "https://www.threads.net",
+    text: "@mara.lin обожаю твои работы! покажешь, каким получится наш будущий малыш? прикладываю нас с мужем 🙌",
+    draft: "Катя, спасибо, что отметили, фото чудесное. Забираю в работу и пришлю вариант в течение дня.",
+    generateImage: true,
   }),
   d({
     id: "f3", initials: "ОК", handle: "olga_k", whenIso: null, whenLabel: "8 ч назад",

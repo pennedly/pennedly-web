@@ -700,6 +700,13 @@ export type MentionSummary = {
   thumbnail_url?: string | null;
   published_at: string | null;
   created_at: string;
+  // Phase 4: the ask-mode reply draft awaiting the owner (present for a `drafted`
+  // mention) — id + text, whether its routine generates a photo, and the generated
+  // image URL once produced. `draft_id` null when there's no actionable draft.
+  draft_id?: number | null;
+  draft_text?: string | null;
+  draft_media_url?: string | null;
+  generate_image?: boolean;
 };
 
 export type MentionsList = {

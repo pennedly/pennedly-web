@@ -12,7 +12,17 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import "@/components/studio/mentions-queue.css";
-import { ApiError, clearTokens, fetchMentions, fetchMe, getTokens, translateText } from "@/lib/api";
+import {
+  ApiError,
+  approveDraft,
+  clearTokens,
+  fetchMentions,
+  fetchMe,
+  generateDraftImage,
+  getTokens,
+  publishDraft,
+  translateText,
+} from "@/lib/api";
 import { useSelectedAccountId } from "@/lib/account";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { useTesterGuard } from "@/lib/tester";
@@ -73,6 +83,7 @@ export default function MentionsPage() {
   const [loaded, setLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [filteredOpen, setFilteredOpen] = useState(false);
+  const [busyId, setBusyId] = useState<MQMention["id"] | null>(null);
   const [caps, setCaps] = useState({ comments: 12, mentions: 6 });
   const [tw, setTw] = useTweaks(MQ_TWEAK_DEFAULTS);
 
@@ -140,8 +151,29 @@ export default function MentionsPage() {
   // tone. It normally lives in Filtered, so it's rendered explicitly here.
   const showDanger = demoOn && !!tw.danger && !hasError && !missingScope && loaded && rows.length > 0;
   const onTranslate = (text: string) => translateText(text, locale as LanguageCode).then((r) => r.translated_text);
-  const onAction = (_id: MQMention["id"], _a: MentionAction) => {
-    // Write actions land with their backend next; no-op in the demo review.
+  // The LIVE generated-photo draft flow (Phase 4): generate the image, or send the
+  // reviewed draft (approve → publish). Other write actions land with their backend
+  // later; they no-op here. Demo cards carry no real draft, so demo no-ops too.
+  const onAction = async (id: MQMention["id"], a: MentionAction) => {
+    if (demoOn) return;
+    const row = rows.find((x) => x.id === id);
+    if (!row?.draftId) return;
+    setBusyId(id);
+    try {
+      if (a === "gen_image") {
+        await generateDraftImage(row.draftId);
+      } else if (a === "send") {
+        await approveDraft(row.draftId);
+        await publishDraft(row.draftId);
+      } else {
+        return;
+      }
+      await load();
+    } catch {
+      /* keep the card as-is on failure; the owner can retry */
+    } finally {
+      setBusyId(null);
+    }
   };
 
   return (
@@ -179,7 +211,7 @@ export default function MentionsPage() {
               <section className="mq-zone">
                 <ZoneHead title={t("mq.zone.queue.title")} count={queue.length} sub={t("mq.zone.queue.sub")} />
                 {queue.map((m) => (
-                  <MentionCard key={m.id} m={m} t={t} locale={locale} demo={demoOn} writeEnabled={demoOn} onAction={onAction} onTranslate={onTranslate} />
+                  <MentionCard key={m.id} m={m} t={t} locale={locale} demo={demoOn} writeEnabled={demoOn} onAction={onAction} onTranslate={onTranslate} actionBusy={busyId === m.id} />
                 ))}
               </section>
             )}
@@ -191,7 +223,7 @@ export default function MentionsPage() {
                   <MentionCard m={DEMO_DANGER} t={t} locale={locale} demo={demoOn} writeEnabled={demoOn} onAction={onAction} onTranslate={onTranslate} />
                 )}
                 {feed.map((m) => (
-                  <MentionCard key={m.id} m={m} t={t} locale={locale} demo={demoOn} writeEnabled={demoOn} onAction={onAction} onTranslate={onTranslate} />
+                  <MentionCard key={m.id} m={m} t={t} locale={locale} demo={demoOn} writeEnabled={demoOn} onAction={onAction} onTranslate={onTranslate} actionBusy={busyId === m.id} />
                 ))}
               </section>
             )}

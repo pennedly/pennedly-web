@@ -787,6 +787,21 @@ export async function rejectDraft(draftId: number): Promise<ApprovalResult> {
   });
 }
 
+// Phase 4: generate an image for an ask-mode generate_image mention draft and
+// attach it (owner-triggered from the mentions queue). Returns the attached image
+// + the account's daily image count. 422 on a safety refusal / photo-less mention,
+// 429 at the daily cap.
+export type GenerateImageResult = {
+  draft_id: number;
+  media: { url: string; alt: string | null }[];
+  images_generated_today: number;
+};
+export async function generateDraftImage(draftId: number): Promise<GenerateImageResult> {
+  return fetchApi<GenerateImageResult>(`/api/drafts/${draftId}/generate-image`, {
+    method: "POST",
+  });
+}
+
 // Persist an in-progress edit of a PENDING draft (Studio «Save») so it survives a
 // reload and re-renders instead of reverting to the LLM text. The server stores it
 // in content_drafts.edited_text (separate from the immutable LLM generated_text);

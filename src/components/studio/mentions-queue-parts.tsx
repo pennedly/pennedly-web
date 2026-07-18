@@ -20,12 +20,15 @@ import {
   IcMinus,
   IcNib,
   IcPlus,
+  IcRefresh,
   IcRepeat,
   IcShield,
   IcSkip,
   IcUndo,
   IcVideo,
+  IcWand,
 } from "@/components/icons";
+import { mediaUrl } from "@/lib/api";
 import type { MessageKey } from "@/lib/i18n";
 import {
   INTENT_ICON,
@@ -37,7 +40,7 @@ import {
 } from "@/components/studio/mentions-queue";
 
 type T = (k: MessageKey) => string;
-export type MentionAction = "skip" | "generate" | "reject" | "edit" | "send" | "unskip";
+export type MentionAction = "skip" | "generate" | "reject" | "edit" | "send" | "unskip" | "gen_image";
 
 // The design's exact intent glyph (calm line set). Paths are static constants, so
 // dangerouslySetInnerHTML is safe here.
@@ -172,7 +175,15 @@ function DraftThread({ m, t }: { m: MQMention; t: T }) {
             <IcNib size={12} /> {t("mq.draft.tag")}
           </span>
         </div>
-        <div className="mq-draft-text">{m.draft}</div>
+        {m.draft && <div className="mq-draft-text">{m.draft}</div>}
+        {/* Phase 4: the generated photo, once produced (a reply carries one image). */}
+        {m.draftMediaUrl && (
+          <img
+            src={mediaUrl(m.draftMediaUrl)}
+            alt={t("mq.draft.generated_alt")}
+            className="mt-2.5 block w-full max-w-[340px] rounded-md border border-border"
+          />
+        )}
         {m.media === "video" && (
           <div className="mq-media-note">
             <IcEyeOff size={13} /> {t("mq.media.video_note")}
@@ -195,13 +206,16 @@ function CardFoot({
   t,
   onAction,
   writeEnabled = true,
+  busy = false,
 }: {
   m: MQMention;
   t: T;
   onAction?: (id: MQMention["id"], action: MentionAction) => void;
   // The generate/skip/send/… actions need backend not shipped yet. Off in the
-  // live read view (only Open in Threads); the demo shows the full design.
+  // live read view (only Open in Threads); the demo shows the full design. The
+  // generated-photo draft flow is exempt (Phase 4, live).
   writeEnabled?: boolean;
+  busy?: boolean;
 }) {
   const group = m.group;
   const openLink = m.permalink ? (
@@ -254,6 +268,26 @@ function CardFoot({
         </>
       );
     }
+  } else if (m.status === "draft" && m.generateImage) {
+    // Phase 4 — the LIVE generated-photo flow: generate → review the image → send.
+    actions = !m.draftMediaUrl ? (
+      <>
+        {openLink}
+        <button type="button" disabled={busy} onClick={act("gen_image")} className={"btn mq-grow " + buttonClasses({ variant: "primary", size: "sm" })}>
+          {busy ? <Spinner size={14} /> : <IcWand size={15} />} {t("mq.action.gen_image")}
+        </button>
+      </>
+    ) : (
+      <>
+        <button type="button" disabled={busy} onClick={act("gen_image")} className={"btn " + buttonClasses({ variant: "secondary", size: "sm" })}>
+          <IcRefresh size={14} /> {t("mq.action.regen")}
+        </button>
+        {openLink}
+        <button type="button" disabled={busy} onClick={act("send")} className={"btn mq-grow " + buttonClasses({ variant: "primary", size: "sm" })}>
+          <IcExternal size={15} /> {t("mq.action.send")}
+        </button>
+      </>
+    );
   } else if (m.status === "draft") {
     actions = (
       <>
@@ -292,9 +326,11 @@ function CardFoot({
     );
   }
 
-  // Read-only view (backend for writes not shipped): keep the informational meta,
-  // collapse actions to just Open in Threads.
-  if (!writeEnabled) actions = openLink;
+  // Read-only view (backend for the other writes not shipped): keep the meta,
+  // collapse actions to just Open in Threads. The generated-photo draft flow IS
+  // live (Phase 4), so it stays interactive even when writeEnabled is off.
+  const liveImageDraft = m.status === "draft" && !!m.generateImage;
+  if (!writeEnabled && !liveImageDraft) actions = openLink;
 
   return (
     <div className="mq-foot">
@@ -312,6 +348,7 @@ export function MentionCard({
   onAction,
   onTranslate,
   writeEnabled = true,
+  actionBusy = false,
 }: {
   m: MQMention;
   t: T;
@@ -320,6 +357,8 @@ export function MentionCard({
   onAction?: (id: MQMention["id"], action: MentionAction) => void;
   onTranslate?: (text: string) => Promise<string>;
   writeEnabled?: boolean;
+  /** True while this card's generate/send request is in flight (Phase 4). */
+  actionBusy?: boolean;
 }) {
   const [translated, setTranslated] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -390,7 +429,7 @@ export function MentionCard({
 
       <MediaPreview media={m.media} t={t} />
       <DraftThread m={m} t={t} />
-      <CardFoot m={m} t={t} onAction={onAction} writeEnabled={writeEnabled} />
+      <CardFoot m={m} t={t} onAction={onAction} writeEnabled={writeEnabled} busy={actionBusy} />
     </article>
   );
 }
