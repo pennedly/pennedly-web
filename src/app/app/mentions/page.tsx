@@ -163,15 +163,23 @@ export default function MentionsPage() {
       if (a === "gen_image") {
         await generateDraftImage(row.draftId);
       } else if (a === "send") {
-        await approveDraft(row.draftId);
+        // Approve then publish. A retry after a failed publish must not
+        // dead-end: the draft may already be 'approved', so re-approve 409s —
+        // swallow only that case and go straight to publish.
+        try {
+          await approveDraft(row.draftId);
+        } catch (e) {
+          if (!(e instanceof ApiError && e.status === 409)) throw e;
+        }
         await publishDraft(row.draftId);
       } else {
         return;
       }
-      await load();
     } catch {
-      /* keep the card as-is on failure; the owner can retry */
+      /* keep the card on failure; the send path is retry-safe and the refetch
+         below reflects the true server state (e.g. an already-sent reply) */
     } finally {
+      await load();
       setBusyId(null);
     }
   };
