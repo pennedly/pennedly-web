@@ -241,7 +241,12 @@ export function Layer3Panel({
   const n = l3OverrideCount(l3);
 
   const freqLabel = (f: L3Freq) => t(("mrl3.freq." + f) as MessageKey);
+  // Tile labels are Title-case; the resolved «Сейчас действует» / «В Правилах дома»
+  // value slots read as a lowercase dative fragment («всем, кроме троллей»), per the
+  // design's two-label-set split. Custom has no fixed value fragment (the prompt is
+  // shown for an override; an inherited custom account audience falls back to the tile).
   const audLabel = (a: L3Aud) => t(("mrl3.aud." + a) as MessageKey);
+  const audValLabel = (a: L3Aud) => (a === "custom" ? t("mrl3.aud.custom") : t(("mrl3.audval." + a) as MessageKey));
   const houseFreq = house.freq ? freqLabel(house.freq) : null;
   const houseQuiet =
     house.quietStart != null && house.quietEnd != null
@@ -250,7 +255,7 @@ export function Layer3Panel({
         : hourToHHMM(house.quietStart) + " – " + hourToHHMM(house.quietEnd)
       : null;
   const houseLimit = house.limit != null ? t("mrl3.limitval").replace("{n}", String(house.limit)) : null;
-  const houseAud = house.aud ? audLabel(house.aud) : null;
+  const houseAud = house.aud ? audValLabel(house.aud) : null;
 
   // «Сейчас действует» values.
   const freqActive = l3.freq ? freqLabel(l3.freq) : (houseFreq ?? t("mrl3.inherited"));
@@ -268,7 +273,7 @@ export function Layer3Panel({
       ? l3AudInvalid(l3)
         ? "—"
         : l3.audPrompt.trim()
-      : audLabel(l3.aud)
+      : audValLabel(l3.aud)
     : (houseAud ?? t("mrl3.inherited"));
 
   return (
@@ -402,7 +407,13 @@ export function Layer3Panel({
               <button
                 type="button"
                 aria-label={t("mrl3.more")}
-                onClick={() => patch({ limit: Math.min(house.limit ?? L3_LIMIT_MAX, (l3.limit ?? L3_LIMIT_DEFAULT) + 1) })}
+                onClick={() => {
+                  const cur = l3.limit ?? L3_LIMIT_DEFAULT;
+                  // Cap at the account ceiling, but never SNAP DOWN when a loaded
+                  // value already exceeds it (a lowered account cap / API data) —
+                  // «+» must not decrease. The worker re-clamps to the ceiling anyway.
+                  patch({ limit: Math.min(cur + 1, Math.max(house.limit ?? L3_LIMIT_MAX, cur)) });
+                }}
               >
                 <IcPlus size={14} />
               </button>

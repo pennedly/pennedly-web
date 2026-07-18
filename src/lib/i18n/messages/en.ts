@@ -1257,6 +1257,11 @@ export const en = {
   "mrl3.aud.q_d": "Where something's clearly asked.",
   "mrl3.aud.custom": "Your own",
   "mrl3.aud.custom_d": "Describe it in words.",
+  // Lowercase value-slot fragments (read inside «Currently active: …»), separate
+  // from the Title-case tile labels above.
+  "mrl3.audval.fans": "fans only",
+  "mrl3.audval.all": "everyone but trolls",
+  "mrl3.audval.q": "questions only",
   "mrl3.aud.custom_ph": "Describe who to reply to…",
   "mrl3.aud.custom_invalid": "Describe the audience, «Your own» won't save without a description.",
   "mrl3.aud.hard": "Trolls and toxicity are always filtered out, that can't be overridden.",
