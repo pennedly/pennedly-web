@@ -19,6 +19,7 @@ import type {
   ScenarioCreate,
   ScenarioPreset,
   ScenarioPromoFields,
+  ScenarioReplyAudienceOverride,
   ScenarioReplyPolicy,
 } from "@/lib/types";
 import type { WhenMode } from "./ScenariosParts";
@@ -119,6 +120,88 @@ export const L3_FORM_DEFAULTS = {
   l3QuietFrom: "23:00",
   l3QuietTo: "08:00",
 };
+
+// ── «Аудитория ответов» — per-POST/PROMO reply-audience override (Layer 3) ─────
+// A POST or «Акция» scenario MAY answer comments UNDER its own posts with a
+// DIFFERENT audience than the account «Правила дома» reply duty. This is
+// audience-ONLY: the daily cap / cadence / quiet hours stay on the ONE account
+// reply sweep (mirrors backend `ReplyAudienceOverride`). Spread into every
+// FormState construction site so a non-post scenario carries inert fields
+// (postReplyOwn=false ⇒ compileBody emits nothing ⇒ everything inherits).
+//   • postReplyOwn    — mode: false = «Как в Правилах дома» (inherit); true = «Свои правила».
+//   • postSkipShortOn — whether «Пропускать короткие реакции» is OVERRIDDEN (else inherited).
+//   • postSkipShort   — the overridden skip-short value (used only when postSkipShortOn).
+// The «Кому отвечать» audience reuses `audience`/`audiencePrompt` (the same КОМУ
+// values), so there is no separate audience field here.
+export const POST_REPLY_FORM_DEFAULTS = {
+  postReplyOwn: false,
+  postSkipShort: false,
+  postSkipShortOn: false,
+};
+
+// Build the `reply_audience_override` a POST / «Акция» scenario rides on its
+// create/update body — or `undefined` (inherit) when mode is «Как в Правилах
+// дома». Audience-only: `audience_prompt` only for `custom` (a custom pick with
+// no text is treated as inherit, never a 422); `skip_low_value` only when the
+// user overrode the skip-short toggle (tri-state via presence). Mirrors backend
+// `ReplyAudienceOverride`; the CALLER guards it to POST/PROMO (never reply/boost).
+export function buildReplyAudienceOverride(s: FormState): ScenarioReplyAudienceOverride | undefined {
+  if (!s.postReplyOwn) return undefined;
+  const audience = s.audience || "all_except_trolls";
+  // A `custom` audience needs its free-text description (backend 422s without it);
+  // an empty one means the user hasn't written the rule yet → inherit instead.
+  if (audience === "custom" && !s.audiencePrompt.trim()) return undefined;
+  const out: ScenarioReplyAudienceOverride = { audience };
+  if (audience === "custom") out.audience_prompt = s.audiencePrompt.trim();
+  if (s.postSkipShortOn) out.skip_low_value = s.postSkipShort;
+  return out;
+}
+
+// The audience-override form fields reconstructed from a saved POST/PROMO
+// scenario's `action_cfg.reply_audience_override`. Absent / malformed ⇒ inherit
+// (postReplyOwn=false). A present override → mode «Свои правила» with the stored
+// audience; `skip_low_value` present → the skip-short toggle starts OVERRIDDEN.
+export type PostReplyAudienceFromCfg = {
+  own: boolean;
+  audience: string;
+  audiencePrompt: string;
+  skipShortOn: boolean;
+  skipShort: boolean;
+};
+export function replyAudienceOverrideFromCfg(
+  action: Record<string, unknown> | null | undefined,
+): PostReplyAudienceFromCfg {
+  const inert: PostReplyAudienceFromCfg = { own: false, audience: "all_except_trolls", audiencePrompt: "", skipShortOn: false, skipShort: false };
+  const ov = action?.reply_audience_override;
+  if (!ov || typeof ov !== "object" || Array.isArray(ov)) return inert;
+  const cfg = ov as Record<string, unknown>;
+  const rawAud = cfg.audience;
+  const audience =
+    rawAud === "fans" || rawAud === "all_except_trolls" || rawAud === "questions" || rawAud === "custom"
+      ? rawAud
+      : "all_except_trolls";
+  const audiencePrompt = audience === "custom" && typeof cfg.audience_prompt === "string" ? (cfg.audience_prompt as string) : "";
+  const skipShortOn = typeof cfg.skip_low_value === "boolean";
+  return { own: true, audience, audiencePrompt, skipShortOn, skipShort: skipShortOn ? (cfg.skip_low_value as boolean) : false };
+}
+
+// A short «кому отвечает» phrase for the «Аудитория ответов» inherit line, the
+// «Акция» preset and the list badge. Built-in enums read their shared
+// `scenarios.aud_phrase.*` key; `custom` echoes the user's description; the promo
+// preset reads its own «всем, кто откликнулся» phrase. Pure (t is passed in) so
+// both the editor card and the list card can share it without a React-import cycle.
+export function postReplyAudiencePhrase(
+  t: (k: MessageKey) => string,
+  audience: string,
+  audiencePrompt: string,
+  promoApplied: boolean,
+): string {
+  if (promoApplied) return t("postReplyAudience.badge.everyone");
+  if (audience === "fans") return t("scenarios.aud_phrase.fans");
+  if (audience === "questions") return t("scenarios.aud_phrase.questions");
+  if (audience === "custom") return audiencePrompt.trim() || t("scenarios.aud_phrase.custom");
+  return t("scenarios.aud_phrase.all");
+}
 
 // ── Layer 3 «Только для этого сценария» — per-scenario reply overrides ─────────
 // A reply-producing scenario (reply_policy «Дежурство» / on_mention «Ответ на
@@ -318,6 +401,14 @@ export type FormState = {
   l3QuietOn: boolean; // override «Тихие часы»
   l3QuietFrom: string; // overridden quiet window start, "HH:00"
   l3QuietTo: string; // overridden quiet window end, "HH:00" (==from ⇒ no quiet hours)
+  // ── «Аудитория ответов» — per-POST/PROMO reply-audience override (Layer 3) ──
+  // A POST / «Акция» scenario answering comments under ITS posts with a different
+  // audience than the account «Правила дома». Audience-only (the КОМУ audience
+  // reuses `audience`/`audiencePrompt` above). Inert on reply/boost scenarios
+  // (the card isn't shown / nothing is emitted). See POST_REPLY_FORM_DEFAULTS.
+  postReplyOwn: boolean; // false = «Как в Правилах дома» (inherit); true = «Свои правила»
+  postSkipShortOn: boolean; // «Пропускать короткие реакции» is OVERRIDDEN (else inherited)
+  postSkipShort: boolean; // the overridden skip-short value (used only when postSkipShortOn)
   // КОГДА
   when: WhenMode;
   nDays: number;
@@ -706,11 +797,19 @@ export function compileBody(s: FormState): ScenarioCreate {
     return { name, boost: buildBoost(s) };
   }
 
+  // The per-scenario reply-audience override (POST + «Акция» only). Absent when
+  // mode is «Как в Правилах дома» ⇒ the key is omitted ⇒ inherit the account
+  // audience (and omitting it on a (b)→(a) switch clears any prior override,
+  // since the editor sends the full body on every save). NEVER attached to a
+  // reply_policy / boost body (the backend 422s — they're mutually exclusive).
+  const replyAudienceOverride = buildReplyAudienceOverride(s);
+
   // 1) campaign / «Акция» → the promo helper owns the shape.
   if (s.helperOn || s.preset?.id === "promo") {
     return {
       name,
       promo: { ...s.promo, schedule: s.nDays > 0 && s.when === "every_n_days" ? "every_n_days" : "daily", n_days: s.nDays, reply_instruction: s.replyInstruction },
+      ...(replyAudienceOverride ? { reply_audience_override: replyAudienceOverride } : {}),
     };
   }
 
@@ -747,7 +846,8 @@ export function compileBody(s: FormState): ScenarioCreate {
   }
 
   // 3) free / cadence preset → raw trigger + instruction (+ optional condition +
-  // optional reply_instruction for reply-producing presets).
+  // optional reply_instruction for reply-producing presets). A plain POST
+  // scenario also carries the reply-audience override when «Свои правила» is set.
   return {
     name,
     trigger: buildTrigger(s),
@@ -755,6 +855,7 @@ export function compileBody(s: FormState): ScenarioCreate {
     reply_instruction: s.replyInstruction.trim(),
     condition: buildCondition(s),
     publish_mode: s.mode,
+    ...(replyAudienceOverride ? { reply_audience_override: replyAudienceOverride } : {}),
   };
 }
 

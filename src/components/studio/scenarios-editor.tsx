@@ -67,6 +67,7 @@ import {
   WhoBody,
 } from "./scenarios-recipe";
 import { BOOST_DEFAULT_THRESHOLD, type FormState, interpolate, MONTHS, type visibleFields } from "./scenarios-form";
+import { PostReplyAudience } from "./scenarios-post-reply-audience";
 import type { ScenarioPreview as ScenarioPreviewT, ScenarioRunNow } from "@/lib/types";
 
 type T = (k: MessageKey) => string;
@@ -673,6 +674,7 @@ export function StepEditor({
   onDeleteMobile,
   onCancelInline,
   onConfirmInline,
+  onOpenHouseRules,
   deleting,
   demoOpenSlot,
   demoModal,
@@ -735,6 +737,10 @@ export function StepEditor({
   onDeleteMobile: () => void;
   onCancelInline: () => void;
   onConfirmInline: () => void;
+  /** POST/«Акция» «Аудитория ответов» card: jump to the account «Правила дома»
+   *  panel (the account reply audience / skip-short / limits live there). Omitted
+   *  on demo/gallery, where the House-Rules links render inert. */
+  onOpenHouseRules?: () => void;
   deleting: boolean;
   /** Gallery-only seeds — open a slot drawer / modal / layer on first render so
    *  every Wave-1 state is reachable on demo data (undefined in the live page). */
@@ -1168,10 +1174,22 @@ export function StepEditor({
               >
                 <Layer3Override form={form} update={update} inherited={l3Inherited} />
               </Layer>
-            ) : (
-              // Post / boost / «Акция» produce no replies → nothing to override. The
-              // N/A card IS the whole layer (not a plaque inside a collapsible card).
+            ) : isBoost ? (
+              // Boost («Раскрутить залетевший») has no replies of its own → the N/A
+              // stub stays exactly as it was (comments go through the account duty).
               <Layer3NotApplicable />
+            ) : (
+              // POST + «Акция»: their posts DO collect comments, so this scenario can
+              // set its OWN reply audience for them (audience-only Layer 3).
+              <Layer
+                title={t("postReplyAudience.layer_title")}
+                proLabel={t("scenarios.rc.layer_pro")}
+                summary={t("postReplyAudience.layer_summary")}
+                open={layer3Open}
+                onToggle={() => setLayer3Open((o) => !o)}
+              >
+                <PostReplyAudience form={form} update={update} inherited={l3Inherited} isPromo={promoMode} onOpenHouseRules={onOpenHouseRules} />
+              </Layer>
             )}
           </div>
 

@@ -45,6 +45,7 @@ import {
   type FormState,
   interpolate,
   L3_FORM_DEFAULTS,
+  POST_REPLY_FORM_DEFAULTS,
   visibleFields,
 } from "@/components/studio/scenarios-form";
 import type { L3Inherited } from "@/components/studio/scenarios-recipe";
@@ -131,6 +132,7 @@ function FormDemo({ presetId }: { presetId: string }) {
       cta: "",
       mode: "ask",
       ...L3_FORM_DEFAULTS,
+      ...POST_REPLY_FORM_DEFAULTS,
       ...BOOST_FORM_DEFAULTS,
       fields,
     };
@@ -237,6 +239,8 @@ const GAL_L3_INHERITED: L3Inherited = {
   quietOn: true,
   quietFrom: "23:00",
   quietTo: "08:00",
+  skipLowValue: true,
+  replyOff: false,
 };
 
 // Hosts the REAL StepEditor (recipe card + large preview) wired to local state,
@@ -248,6 +252,7 @@ function StepEditorDemo({
   isExisting = true,
   enabled = true,
   override,
+  inheritedOverride,
   demoOpenSlot,
   demoModal,
   demoLayer2,
@@ -257,6 +262,7 @@ function StepEditorDemo({
   isExisting?: boolean;
   enabled?: boolean;
   override?: Partial<FormState>;
+  inheritedOverride?: Partial<L3Inherited>;
   demoOpenSlot?: import("@/components/studio/scenarios-recipe").OpenSlot;
   demoModal?: import("@/components/studio/scenarios-recipe").BigTextField;
   demoLayer2?: boolean;
@@ -314,6 +320,7 @@ function StepEditorDemo({
       cta: "",
       mode: "ask",
       ...L3_FORM_DEFAULTS,
+      ...POST_REPLY_FORM_DEFAULTS,
       ...BOOST_FORM_DEFAULTS,
       // boost preset → open the boost recipe (entry A) with the design defaults.
       ...(isBoostPreset ? { isBoost: true, boostEntry: "a" as const, boostMetric: "views" as const, boostThreshold: "5000" } : {}),
@@ -359,7 +366,7 @@ function StepEditorDemo({
       isBoost={form.isBoost}
       boostScenarioOptions={[{ id: 1, label: "Утренний вопрос" }, { id: 2, label: "Рубрика недели" }]}
       boostPostOptions={[{ id: 11, label: "Собрал всё, что знаю по теме…" }, { id: 12, label: "Маленькая победа дня" }]}
-      l3Inherited={GAL_L3_INHERITED}
+      l3Inherited={{ ...GAL_L3_INHERITED, ...inheritedOverride }}
       bakedRules={bakedRules}
       bakedOpen={false}
       onBakedToggle={() => {}}
@@ -754,8 +761,20 @@ export default function ScenariosGallery() {
         <Section title="POST · Layer 2 «Настроить точнее» open (conditions · time · content · baked rules)">
           <StepEditorDemo presetId="daily_question" demoLayer2 />
         </Section>
-        <Section title="POST · Layer 3 open · N/A note (post scenario produces no replies → nothing to override)">
+        <Section title="POST · Layer 3 open · «Аудитория ответов» · (a) inherit — «Как в Правилах дома» (default)">
           <StepEditorDemo presetId="daily_question" demoLayer3 />
+        </Section>
+        <Section title="POST · Layer 3 open · «Аудитория ответов» · (b) own — built-in «Только вопросы», short reactions inherited">
+          <StepEditorDemo presetId="daily_question" demoLayer3 override={{ postReplyOwn: true, audience: "questions", audiencePrompt: "" }} />
+        </Section>
+        <Section title="POST · Layer 3 open · «Аудитория ответов» · (b) own — «Свой вариант» custom text, skip-short overridden OFF">
+          <StepEditorDemo presetId="daily_question" demoLayer3 override={{ postReplyOwn: true, audience: "custom", audiencePrompt: "тем, кто пишет по делу и задаёт конкретные вопросы", postSkipShortOn: true, postSkipShort: false }} />
+        </Section>
+        <Section title="POST · Layer 3 open · «Аудитория ответов» · (b) own — danger warning «у аккаунта отключены ответы»">
+          <StepEditorDemo presetId="daily_question" demoLayer3 override={{ postReplyOwn: true, audience: "all_except_trolls" }} inheritedOverride={{ replyOff: true }} />
+        </Section>
+        <Section title="«Акция» (promo) · Layer 3 open · «Аудитория ответов» · preset «Отвечать всем, кто откликнулся» applied">
+          <StepEditorDemo presetId="promo" demoLayer3 override={{ postReplyOwn: true, audience: "all_except_trolls", audiencePrompt: "", postSkipShortOn: true, postSkipShort: false }} />
         </Section>
         <Section title="REPLY · «Дежурство» default (locked «каждые 15 минут» + who/tone slots + reply-thread stage)">
           <StepEditorDemo presetId="reply_duty" />

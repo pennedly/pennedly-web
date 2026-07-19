@@ -1218,6 +1218,22 @@ export type ScenarioReplyOverrides = {
   quiet_end_hour?: number; // 0..23
 };
 
+// Per-POST/PROMO-scenario reply-audience override (Layer 3, audience-ONLY —
+// «Аудитория ответов» card). Present on a POST / «Акция» create/update body ⇒
+// comments UNDER that scenario's posts are answered with THIS audience instead of
+// the account «Правила дома» audience; ABSENT ⇒ inherit the account (the key is
+// simply not sent). Mirrors backend `ReplyAudienceOverride` (api/scenarios.py):
+// only the audience is per-post — cadence / daily cap / quiet hours stay on the
+// ONE account reply sweep. Mutually exclusive with `reply_policy` / `boost` (422).
+export type ScenarioReplyAudienceOverride = {
+  audience: string; // "fans" | "all_except_trolls" | "questions" | "custom"
+  audience_prompt?: string; // REQUIRED (non-empty) when audience === "custom"
+  // TRI-STATE via presence: absent ⇒ inherit the account `reply_skip_low_value`;
+  // a bool ⇒ force it for this scenario's comments (the «отвечать всем, кто
+  // откликнулся» promo preset sends `false`).
+  skip_low_value?: boolean;
+};
+
 export type ScenarioCreate = {
   name: string;
   enabled?: boolean;
@@ -1228,6 +1244,7 @@ export type ScenarioCreate = {
   reply_instruction?: string;
   reply_policy?: ScenarioReplyPolicy;
   reply_overrides?: ScenarioReplyOverrides;
+  reply_audience_override?: ScenarioReplyAudienceOverride;
   boost?: ScenarioBoost;
   condition?: Record<string, unknown> | null;
 };
@@ -1242,6 +1259,7 @@ export type ScenarioUpdate = {
   reply_instruction?: string;
   reply_policy?: ScenarioReplyPolicy;
   reply_overrides?: ScenarioReplyOverrides;
+  reply_audience_override?: ScenarioReplyAudienceOverride;
   boost?: ScenarioBoost;
   condition?: Record<string, unknown> | null;
 };

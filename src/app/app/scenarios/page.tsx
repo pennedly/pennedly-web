@@ -87,6 +87,8 @@ import {
   type MonthDate,
   normalizeMilestoneTargets,
   perDayTimesFromCfg,
+  POST_REPLY_FORM_DEFAULTS,
+  replyAudienceOverrideFromCfg,
   replyOverridesFromCfg,
   visibleFields,
 } from "@/components/studio/scenarios-form";
@@ -240,6 +242,9 @@ function freshForm(preset: ScenarioPreset | null, t: (k: MessageKey) => string):
     // Layer 3 — a fresh scenario inherits every «Правила дома» reply setting (all
     // override toggles OFF → compileBody emits nothing extra).
     ...L3_FORM_DEFAULTS,
+    // «Аудитория ответов» — a fresh POST/PROMO scenario inherits the account reply
+    // audience (postReplyOwn=false → no override emitted).
+    ...POST_REPLY_FORM_DEFAULTS,
     // Boost defaults (inert for a non-boost preset). The boost preset flips
     // isBoost + seeds metric/threshold/target/comment from its trigger/action cfg
     // (entry A — the standalone editor with the explicit target picker).
@@ -757,6 +762,11 @@ export default function ScenariosPage() {
     const savedAudience = (s.action_cfg?.audience as string) || "all_except_trolls";
     const l3 = replyOverridesFromCfg(s.action_cfg, replyCeiling);
     const l3WhoOn = (s.action_cfg?.kind as string) === "reply_policy" && savedAudience !== replyAudience;
+    // «Аудитория ответов» — a POST/PROMO scenario's per-post reply-audience
+    // override (mutually exclusive with reply_policy, so `own` is false for a
+    // «Дежурство»). When present, the КОМУ audience is read from the override, not
+    // from action_cfg.audience (which only a reply_policy scenario carries).
+    const pra = replyAudienceOverrideFromCfg(s.action_cfg);
     const when = whenModeFromCfg(s.trigger_cfg, s.condition_cfg);
     // best-effort: match a catalog preset for the baked-rules + reply detection
     const matched = matchPreset(s, catalog);
@@ -773,8 +783,11 @@ export default function ScenariosPage() {
       // exact same instruction string (round-trip — incl. Sonya's «Акция»).
       instruction: usePromo || replyPolicy ? "" : s.instruction,
       replyInstruction: s.reply_instruction,
-      audience: (s.action_cfg?.audience as string) || "all_except_trolls",
-      audiencePrompt: "",
+      // The КОМУ audience: from the reply-audience override for a POST/PROMO
+      // scenario that set «Свои правила», else from action_cfg.audience (a
+      // reply_policy «Дежурство») / the default.
+      audience: pra.own ? pra.audience : (s.action_cfg?.audience as string) || "all_except_trolls",
+      audiencePrompt: pra.own ? pra.audiencePrompt : "",
       when,
       nDays: (s.trigger_cfg?.n as number) ?? 3,
       // every_n_days «Начиная с» — restore the saved ISO start date (absent → "").
@@ -832,6 +845,12 @@ export default function ScenariosPage() {
       l3QuietOn: l3.quietOn,
       l3QuietFrom: l3.quietFrom,
       l3QuietTo: l3.quietTo,
+      // «Аудитория ответов» — start inert, then flip to «Свои правила» + seed the
+      // skip-short override when the saved POST/PROMO scenario carries one.
+      ...POST_REPLY_FORM_DEFAULTS,
+      postReplyOwn: pra.own,
+      postSkipShortOn: pra.skipShortOn,
+      postSkipShort: pra.skipShort,
       // Boost — reconstruct from trigger_cfg/action_cfg when this is a boost
       // scenario (isBoost drives the editor into the boost recipe); inert
       // otherwise. A saved boost edits as entry "a" (the standalone editor) so the
@@ -1427,6 +1446,10 @@ export default function ScenariosPage() {
               quietOn,
               quietFrom,
               quietTo,
+              // POST/PROMO «Аудитория ответов» inherit signals: the account's
+              // skip-short value + whether replies are off (drives the warning).
+              skipLowValue: apConfig?.reply_skip_low_value ?? true,
+              replyOff: apConfig ? apConfig.reply_mode === "off" : !replyOn,
             }}
             bakedRules={bakedRules}
             bakedOpen={bakedOpen}
@@ -1450,6 +1473,12 @@ export default function ScenariosPage() {
             onDeleteMobile={() => setDeleteOpen(true)}
             onCancelInline={() => setConfirmInline(false)}
             onConfirmInline={doDelete}
+            onOpenHouseRules={() => {
+              // The account reply audience / skip-short / limits live in «Правила
+              // дома» on the list view — go back and open it.
+              setHrOpen(true);
+              backToList();
+            }}
             deleting={deleting}
           />
         ) : view === "reply-gallery" ? (

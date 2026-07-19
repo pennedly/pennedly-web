@@ -45,6 +45,7 @@ import {
   IcRepeat,
   IcReplies,
   IcShield,
+  IcShieldHouse,
   IcSliders,
   IcSparkle,
   IcSpread,
@@ -65,6 +66,7 @@ import type {
 } from "@/lib/types";
 import { CardLine, Sentence, type PublishMode } from "./scenarios-living";
 import { deriveSentence, publishModeOf } from "./scenarios-presentation";
+import { postReplyAudiencePhrase, replyAudienceOverrideFromCfg } from "./scenarios-form";
 import { Badge, InheritChip, StatusBadge } from "./Badges";
 
 type IconCmp = (p: { size?: number; className?: string }) => React.ReactNode;
@@ -711,6 +713,14 @@ export function ScenarioCard({
   const { t, locale } = useTranslation();
   const isPromo = s.template === "promo";
   const isReply = (s.action_cfg?.kind as string) === "reply_policy";
+  const isBoostKind = (s.action_cfg?.kind as string) === "boost_comment" || (s.trigger_cfg?.kind as string) === "on_post_metric";
+  // POST + «Акция» cards carry a reply-audience badge: comments under their posts
+  // are answered by the account reply duty (mode a) or this scenario's own rule
+  // (mode b — «Ответы: <аудитория>»). Reply/boost cards have their own badges.
+  const showReplyAudience = !isReply && !isBoostKind;
+  const pra = replyAudienceOverrideFromCfg(s.action_cfg);
+  const promoAppliedBadge = isPromo && pra.own && pra.audience === "all_except_trolls" && pra.skipShortOn && pra.skipShort === false;
+  const replyAudiencePhrase = postReplyAudiencePhrase(t, pra.audience, pra.audiencePrompt, promoAppliedBadge);
   const Icon = isPromo ? IcGift : isReply ? IcReplies : IcRepeat;
   const skip = s.recent_skips?.[0];
   // living sentence (caption) + who-confirms line (the «спрашивает / публикует
@@ -762,6 +772,20 @@ export function ScenarioCard({
           <Switch checked={s.enabled} onCheckedChange={(v) => onToggle(s, v)} aria-label={s.name} />
         </div>
       </div>
+
+      {/* Reply-audience strip (POST/«Акция» only) — the эталон `.pra-cardstrip`:
+          a thin full-width band under the card sentence. Mode (a) inherit =
+          neutral «как в Правилах дома»; mode (b) own = accent «Ответы: <аудитория>».
+          Breaks out of the card padding to sit edge-to-edge with a top border. */}
+      {showReplyAudience && (
+        <div className="-mx-4 mt-3.5 flex flex-wrap items-center gap-1.5 border-t border-border bg-surface-2 px-4 py-2.5 md:-mx-[18px] md:px-[18px]">
+          {pra.own ? (
+            <Badge tone="link" icon={<IcBubble />}>{t("postReplyAudience.badge.own").replace("{audience}", replyAudiencePhrase)}</Badge>
+          ) : (
+            <Badge tone="neutral" icon={<IcShieldHouse />}>{t("postReplyAudience.badge.inherit")}</Badge>
+          )}
+        </div>
+      )}
 
       {/* skip-note, else the «сохранил ≠ работает» block — an OFF scenario says so
           plainly and offers to turn it on right there. */}

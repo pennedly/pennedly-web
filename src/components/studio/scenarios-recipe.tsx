@@ -1953,6 +1953,9 @@ export type L3Inherited = {
   quietOn: boolean; // account quiet-hours on/off
   quietFrom: string; // "HH:00"
   quietTo: string; // "HH:00"
+  // Used by the POST/PROMO «Аудитория ответов» card (not by Layer3Override):
+  skipLowValue: boolean; // account `reply_skip_low_value` (the «пропускать короткие» inherit value)
+  replyOff: boolean; // account replies are OFF (reply_mode === "off") — drives the danger warning
 };
 
 // The 4-way frequency segment (the same control «Правила дома» uses — overriding the
