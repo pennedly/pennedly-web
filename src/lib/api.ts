@@ -16,6 +16,7 @@ import type {
   AdvisorData,
   AdvisorMessage,
   AdvisorResponse,
+  AppliedChangesResponse,
   ApplyActionResponse,
   ApprovalResult,
   AutopilotConfig,
@@ -597,6 +598,19 @@ export async function startThreadsConnect(
 
 export async function fetchRoleBook(accountId: number): Promise<RoleBook> {
   return fetchApi<RoleBook>(`/api/accounts/${accountId}/role-book`);
+}
+
+// The account's applied-changes history («Что Pennedly изменил за меня»), newest
+// first. Paginated via limit/offset (the UI appends pages with «Показать ещё»).
+export async function fetchAppliedChanges(
+  accountId: number,
+  opts?: { limit?: number; offset?: number },
+): Promise<AppliedChangesResponse> {
+  const params = new URLSearchParams();
+  if (opts?.limit != null) params.set("limit", String(opts.limit));
+  if (opts?.offset != null) params.set("offset", String(opts.offset));
+  const qs = params.toString();
+  return fetchApi<AppliedChangesResponse>(`/api/accounts/${accountId}/applied-changes${qs ? `?${qs}` : ""}`);
 }
 
 export async function patchRoleBook(

@@ -26,6 +26,7 @@ const RENDER_PAGES = [
   "/gallery",
   "/gallery/account",
   "/gallery/account-empty",
+  "/gallery/account-history",
   "/gallery/media",
   "/gallery/overview",
   "/gallery/advisor",

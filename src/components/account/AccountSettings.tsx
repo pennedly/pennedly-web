@@ -15,6 +15,7 @@
 // desktop shell and the mobile shell with no separate layout.
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -23,7 +24,9 @@ import { resetAccountsPresenceForSignedOutUser } from "@/lib/accounts";
 import {
   IcArchive,
   IcArrowLeft,
+  IcAudit,
   IcCheck,
+  IcChevRight,
   IcMail,
   IcStar,
   IcTrash,
@@ -386,6 +389,26 @@ function DangerCard({ t }: { t: T }) {
 }
 
 // ── the settings body (head + 4 cards) — shared desktop + mobile ─────────────
+// «История изменений» — a quiet link row into the applied-changes journal (the
+// design's `.ch-entryrow`): what Pennedly applied for you by a one-click.
+function HistoryLinkCard({ t }: { t: T }) {
+  return (
+    <Link
+      href="/app/account/history"
+      className="group flex items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3.5 shadow-sm transition-colors hover:border-accent/40"
+    >
+      <span className="grid h-[38px] w-[38px] shrink-0 place-items-center rounded-md border border-border bg-surface-2 text-text-muted transition-colors group-hover:border-accent/30 group-hover:text-accent">
+        <IcAudit size={18} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-small font-semibold text-text">{t("appliedChanges.entryTitle")}</span>
+        <span className="mt-0.5 block text-caption leading-[1.45] text-text-subtle">{t("appliedChanges.entrySub")}</span>
+      </span>
+      <IcChevRight size={18} className="shrink-0 text-text-subtle transition-colors group-hover:text-accent" />
+    </Link>
+  );
+}
+
 function SettingsBody({ me, t, noHead }: { me: Me; t: T; noHead?: boolean }) {
   return (
     <div className="acc-page">
@@ -396,6 +419,7 @@ function SettingsBody({ me, t, noHead }: { me: Me; t: T; noHead?: boolean }) {
         </div>
       )}
       <AccountCard me={me} t={t} />
+      <HistoryLinkCard t={t} />
       <LanguageCard t={t} />
       <DataCard t={t} />
       <DangerCard t={t} />

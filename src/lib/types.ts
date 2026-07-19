@@ -1658,6 +1658,32 @@ export type LintResult = {
   latency_ms: number;
 };
 
+// ── Applied-changes history («Что Pennedly изменил за меня») ─────────────────
+// The unified trail of every suggestion a Pennedly surface applied for the
+// account, newest first. Mirrors api/applied_changes.py AppliedChangeEntry.
+// `payload` is the structured truth (raw applied input + result refs) — the UI
+// translates it into human facts, never shows raw JSON. `actor`: 'user' = a
+// person clicked «Применить» (→ «вы»); 'auto' = Pennedly applied it (→ «Pennedly»).
+// `rollbackable` is always false in the read-only first release.
+export type AppliedChangeSource = "advisor_action" | "voice_lint" | "audit";
+export type AppliedChangeActor = "user" | "auto";
+
+export type AppliedChangeEntry = {
+  id: number;
+  source: AppliedChangeSource;
+  kind: string;
+  summary: string;
+  payload: Record<string, unknown>;
+  actor: AppliedChangeActor;
+  rollbackable: boolean;
+  rolled_back_at: string | null; // ISO; set once a change is rolled back (future)
+  created_at: string; // ISO
+};
+
+export type AppliedChangesResponse = {
+  entries: AppliedChangeEntry[];
+};
+
 export const SUPPORTED_LANGUAGES = [
   { code: "en", name: "English", flag: "🇬🇧" },
   { code: "ru", name: "Русский", flag: "🇷🇺" },
