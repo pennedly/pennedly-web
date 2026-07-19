@@ -1668,6 +1668,12 @@ export type LintResult = {
 export type AppliedChangeSource = "advisor_action" | "voice_lint" | "audit";
 export type AppliedChangeActor = "user" | "auto";
 
+// Why a rollback is unavailable (when rollbackable is false and not yet rolled
+// back): "superseded" = replaced by a newer change; "irreversible" = no safe
+// inverse (e.g. an already-published post); "later" = this kind's inverse isn't
+// built yet. Drives the history card's honest rollback-zone reason.
+export type AppliedChangeRollbackReason = "superseded" | "irreversible" | "later";
+
 export type AppliedChangeEntry = {
   id: number;
   source: AppliedChangeSource;
@@ -1675,13 +1681,18 @@ export type AppliedChangeEntry = {
   summary: string;
   payload: Record<string, unknown>;
   actor: AppliedChangeActor;
-  rollbackable: boolean;
-  rolled_back_at: string | null; // ISO; set once a change is rolled back (future)
+  rollbackable: boolean; // can it be undone right now (a safe, guarded inverse exists)
+  rollback_reason: AppliedChangeRollbackReason | null; // why not, when rollbackable is false
+  rolled_back_at: string | null; // ISO; set once the change has been rolled back
   created_at: string; // ISO
 };
 
 export type AppliedChangesResponse = {
   entries: AppliedChangeEntry[];
+};
+
+export type RollbackAppliedChangeResponse = {
+  entry: AppliedChangeEntry;
 };
 
 export const SUPPORTED_LANGUAGES = [

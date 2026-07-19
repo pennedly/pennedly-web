@@ -6,7 +6,21 @@
 // (404 in prod). The source-filter chips + row expand are interactive; the dark
 // toggle in the gallery chrome flips both themes.
 
+import { useState } from "react";
+
 import { AppliedChangesHistory, sampleAppliedChanges } from "@/components/account/AppliedChangesHistory";
+import type { AppliedChangeEntry } from "@/lib/types";
+
+// Stateful populated feed so the rollback flow (button → confirm → done) is
+// demoable: a fake onRollback resolves after a beat and flips the entry to done.
+function LiveFeed() {
+  const [entries, setEntries] = useState<AppliedChangeEntry[]>(() => sampleAppliedChanges());
+  const onRollback = async (entry: AppliedChangeEntry) => {
+    await new Promise((r) => setTimeout(r, 500));
+    setEntries((prev) => prev.map((e) => (e.id === entry.id ? { ...e, rollbackable: false, rolled_back_at: new Date().toISOString() } : e)));
+  };
+  return <AppliedChangesHistory entries={entries} hasMore onLoadMore={() => {}} onRollback={onRollback} />;
+}
 
 function Section({ title, note, children }: { title: string; note?: string; children: React.ReactNode }) {
   return (
@@ -21,11 +35,10 @@ function Section({ title, note, children }: { title: string; note?: string; chil
 }
 
 export default function AccountHistoryGallery() {
-  const sample = sampleAppliedChanges();
   return (
     <div className="mx-auto max-w-[900px]">
-      <Section title="feed · populated" note="mixed sources · day groups · filter chips · click a row to expand">
-        <AppliedChangesHistory entries={sample} hasMore onLoadMore={() => {}} />
+      <Section title="feed · populated" note="mixed sources · day groups · filter · expand a row for rollback (can / superseded / irreversible / later / done) + confirm dialog">
+        <LiveFeed />
       </Section>
       <Section title="empty · nothing applied yet">
         <AppliedChangesHistory entries={[]} />

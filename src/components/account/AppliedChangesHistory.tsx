@@ -34,7 +34,7 @@ import { cn } from "@/lib/cn";
 import { type MessageKey, useTranslation } from "@/lib/i18n";
 import { pluralUnit } from "@/lib/i18n/plurals";
 import type { LocaleCode } from "@/lib/i18n/locales";
-import type { AppliedChangeEntry, AppliedChangeSource } from "@/lib/types";
+import type { AppliedChangeEntry, AppliedChangeRollbackReason, AppliedChangeSource } from "@/lib/types";
 
 type Filter = "all" | AppliedChangeSource;
 
@@ -51,6 +51,7 @@ export function sampleAppliedChanges(): AppliedChangeEntry[] {
     summary: string,
     actor: "user" | "auto",
     agoMs: number,
+    rb: { rollbackable?: boolean; reason?: AppliedChangeRollbackReason | null; done?: number } = {},
   ): AppliedChangeEntry => ({
     id,
     source,
@@ -58,21 +59,22 @@ export function sampleAppliedChanges(): AppliedChangeEntry[] {
     summary,
     payload: {},
     actor,
-    rollbackable: false,
-    rolled_back_at: null,
+    rollbackable: rb.rollbackable ?? false,
+    rollback_reason: rb.reason ?? null,
+    rolled_back_at: rb.done != null ? new Date(now - rb.done).toISOString() : null,
     created_at: new Date(now - agoMs).toISOString(),
   });
   return [
-    mk(10, "advisor_action", "routine", "Посты про рыбалку", "user", 2 * H),
-    mk(9, "voice_lint", "set_intro", "Voice fix: set_intro → intro", "auto", 5 * H),
-    mk(8, "advisor_action", "auto_replies", "Включены автоответы: всем, кроме троллей", "user", 7 * H),
-    mk(7, "audit", "post_ending", "Заканчивать пост на мысли", "user", 26 * H),
-    mk(6, "advisor_action", "best_time_routine", "Вечерние посты перенёс на утро", "user", 30 * H),
-    mk(5, "voice_lint", "remove_item", "Voice fix: remove_item → hashtags", "auto", 34 * H),
-    mk(4, "advisor_action", "schedule_post", "Пост про запуск рубрики", "user", 74 * H),
-    mk(3, "audit", "posting_window", "Длинные посты на утро вторника", "auto", 78 * H),
-    mk(2, "voice_lint", "set_intro", "Voice fix: set_intro → intro", "auto", 80 * H),
-    mk(1, "advisor_action", "topics", "Темы недели: письмо и ремесло", "user", 82 * H),
+    mk(10, "voice_lint", "set_intro", "Voice fix: set_intro → intro", "auto", 5 * H, { rollbackable: true }),
+    mk(9, "audit", "post_ending", "Заканчивать пост на мысли", "user", 7 * H, { rollbackable: true }),
+    mk(8, "advisor_action", "routine", "Посты про рыбалку", "user", 2 * H, { reason: "later" }),
+    mk(7, "advisor_action", "auto_replies", "Включены автоответы: всем, кроме троллей", "user", 26 * H, { reason: "irreversible" }),
+    mk(6, "voice_lint", "remove_item", "Voice fix: remove_item → hashtags", "auto", 30 * H, { reason: "superseded" }),
+    mk(5, "audit", "voice_intro", "Обновил вступление голоса", "auto", 34 * H, { done: 12 * H }),
+    mk(4, "advisor_action", "schedule_post", "Пост про запуск рубрики", "user", 74 * H, { reason: "irreversible" }),
+    mk(3, "audit", "posting_window", "Длинные посты на утро вторника", "auto", 78 * H, { rollbackable: true }),
+    mk(2, "voice_lint", "set_intro", "Voice fix: set_intro → intro", "auto", 80 * H, { reason: "superseded" }),
+    mk(1, "advisor_action", "topics", "Темы недели: письмо и ремесло", "user", 82 * H, { reason: "later" }),
   ];
 }
 
@@ -187,25 +189,39 @@ function SourceChip({ source, t }: { source: AppliedChangeSource; t: (k: Message
   );
 }
 
-// Read-only rollback zone. v1: rollbackable is always false → the honest «откат
-// появится позже» state; a rolled-back row (future) shows the «откачено» state.
-function RollbackZone({ e, t, locale }: { e: AppliedChangeEntry; t: (k: MessageKey) => string; locale: string }) {
+// Rollback zone — three states: DONE (already rolled back), CAN (a safe inverse
+// exists → «Откатить» button opens the confirm dialog), or UNAVAILABLE (an honest
+// reason: superseded / irreversible / later). The backend decides which.
+function RollbackZone({ e, t, locale, onRollback }: { e: AppliedChangeEntry; t: (k: MessageKey) => string; locale: string; onRollback?: (e: AppliedChangeEntry) => void }) {
   const done = e.rolled_back_at;
+  const canRollback = e.rollbackable && !!onRollback;
   return (
     <div className="mt-0.5 flex flex-wrap items-center gap-2.5 border-t border-border pt-3">
       <span
         className={cn(
           "grid h-[26px] w-[26px] shrink-0 place-items-center rounded-sm border",
-          done ? "border-warning/26 bg-warning/12 text-warning" : "border-border bg-surface-2 text-text-subtle opacity-60",
+          done ? "border-warning/26 bg-warning/12 text-warning" : "border-border bg-surface-2 text-text-subtle",
+          !done && !canRollback && "opacity-60",
         )}
       >
         <IcUndo size={14} />
       </span>
-      <span className="min-w-0 flex-1 text-caption leading-[1.45] text-text-muted [&_b]:font-semibold [&_b]:text-text">
+      <span className="min-w-0 flex-1 text-caption leading-[1.45] text-text-muted [&_a]:font-semibold [&_a]:text-accent [&_b]:font-semibold [&_b]:text-text">
         {done ? (
           <>
             <b>{t("appliedChanges.rollback.doneLabel").replace("{when}", new Date(done).toLocaleDateString(localeTag(locale), { day: "numeric", month: "long" }))}</b>{" "}
             {t("appliedChanges.rollback.doneSub")}
+          </>
+        ) : canRollback ? (
+          t("appliedChanges.rollback.canLabel")
+        ) : e.rollback_reason === "superseded" ? (
+          <>
+            <b>{t("appliedChanges.rollback.unavailable")}</b> {t("appliedChanges.rollback.reason.superseded")}{" "}
+            <Link href={openHref(e)}>{t("appliedChanges.open")}</Link>
+          </>
+        ) : e.rollback_reason === "irreversible" ? (
+          <>
+            <b>{t("appliedChanges.rollback.unavailable")}</b> {t("appliedChanges.rollback.reason.irreversible")}
           </>
         ) : (
           <>
@@ -213,11 +229,49 @@ function RollbackZone({ e, t, locale }: { e: AppliedChangeEntry; t: (k: MessageK
           </>
         )}
       </span>
+      {canRollback && (
+        <Button size="sm" variant="ghost" icon={<IcUndo size={14} />} onClick={() => onRollback?.(e)} className="shrink-0">
+          {t("appliedChanges.rollback.doBtn")}
+        </Button>
+      )}
     </div>
   );
 }
 
-function Row({ e, open, onToggle, t, locale }: { e: AppliedChangeEntry; open: boolean; onToggle: () => void; t: (k: MessageKey) => string; locale: string }) {
+// The destructive confirm — «Вернуть как было?». Busy while the rollback runs.
+function RollbackConfirm({ entry, busy, error, onCancel, onConfirm, t }: { entry: AppliedChangeEntry; busy: boolean; error: boolean; onCancel: () => void; onConfirm: () => void; t: (k: MessageKey) => string }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-ink-950/50" onClick={busy ? undefined : onCancel} aria-hidden />
+      <div role="dialog" aria-modal="true" className="relative w-full max-w-[430px] rounded-xl border border-border bg-surface p-5 shadow-lg">
+        <div className="flex items-start gap-3">
+          <span className="grid h-[38px] w-[38px] shrink-0 place-items-center rounded-md border border-warning/26 bg-warning/12 text-warning">
+            <IcUndo size={18} />
+          </span>
+          <div className="min-w-0">
+            <div className="text-h3 font-semibold tracking-[-0.006em] text-text">{t("appliedChanges.confirm.title")}</div>
+            <p className="mt-2 text-small leading-[1.55] text-text-muted [&_b]:font-semibold [&_b]:text-text">
+              {t("appliedChanges.confirm.body").split("{title}")[0]}
+              <b>«{displayTitle(entry, t)}»</b>
+              {t("appliedChanges.confirm.body").split("{title}")[1] ?? ""}
+            </p>
+          </div>
+        </div>
+        {error && <p className="mt-3 text-caption text-danger">{t("appliedChanges.confirm.error")}</p>}
+        <div className="mt-5 flex justify-end gap-2.5">
+          <Button variant="ghost" onClick={onCancel} disabled={busy}>
+            {t("appliedChanges.confirm.cancel")}
+          </Button>
+          <Button variant="danger" icon={<IcUndo size={15} />} loading={busy} onClick={onConfirm}>
+            {busy ? t("appliedChanges.confirm.busy") : t("appliedChanges.confirm.do")}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Row({ e, open, onToggle, t, locale, onRollback }: { e: AppliedChangeEntry; open: boolean; onToggle: () => void; t: (k: MessageKey) => string; locale: string; onRollback?: (e: AppliedChangeEntry) => void }) {
   const reverted = !!e.rolled_back_at;
   const actorMeta = e.actor === "auto" ? t("appliedChanges.appliedByAuto") : t("appliedChanges.appliedByYou");
   return (
@@ -264,7 +318,7 @@ function Row({ e, open, onToggle, t, locale }: { e: AppliedChangeEntry; open: bo
                 <IcChevRight size={13} />
               </Link>
             </div>
-            <RollbackZone e={e} t={t} locale={locale} />
+            <RollbackZone e={e} t={t} locale={locale} onRollback={onRollback} />
           </div>
         </div>
       )}
@@ -293,6 +347,7 @@ export function AppliedChangesHistory({
   hasMore = false,
   loadingMore = false,
   onLoadMore,
+  onRollback,
   advisorHref = "/app/account/advisor",
   bare = false,
 }: {
@@ -303,12 +358,33 @@ export function AppliedChangesHistory({
   hasMore?: boolean;
   loadingMore?: boolean;
   onLoadMore?: () => void;
+  // Undo one change — resolves once applied (the page refetches / patches the
+  // entry so it re-renders as done). Rejects → the confirm shows an inline error.
+  onRollback?: (entry: AppliedChangeEntry) => Promise<void>;
   advisorHref?: string;
   bare?: boolean;
 }) {
   const { t, locale } = useTranslation();
   const [filter, setFilter] = useState<Filter>("all");
   const [openId, setOpenId] = useState<number | null>(null);
+  const [confirmEntry, setConfirmEntry] = useState<AppliedChangeEntry | null>(null);
+  const [rbBusy, setRbBusy] = useState(false);
+  const [rbError, setRbError] = useState(false);
+
+  const openRollback = onRollback ? (e: AppliedChangeEntry) => { setRbError(false); setConfirmEntry(e); } : undefined;
+  async function confirmRollback() {
+    if (!confirmEntry || !onRollback) return;
+    setRbBusy(true);
+    setRbError(false);
+    try {
+      await onRollback(confirmEntry);
+      setConfirmEntry(null);
+    } catch {
+      setRbError(true);
+    } finally {
+      setRbBusy(false);
+    }
+  }
 
   const filtered = useMemo(() => (filter === "all" ? entries : entries.filter((e) => e.source === filter)), [entries, filter]);
   const count = filtered.length;
@@ -448,7 +524,7 @@ export function AppliedChangesHistory({
               <div className="pl-0.5 font-mono text-caption font-semibold uppercase tracking-[0.06em] text-text-subtle">{g.label}</div>
               <div className="overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
                 {g.items.map((e) => (
-                  <Row key={e.id} e={e} open={openId === e.id} onToggle={() => setOpenId((v) => (v === e.id ? null : e.id))} t={t} locale={locale} />
+                  <Row key={e.id} e={e} open={openId === e.id} onToggle={() => setOpenId((v) => (v === e.id ? null : e.id))} t={t} locale={locale} onRollback={openRollback} />
                 ))}
               </div>
             </div>
@@ -474,6 +550,16 @@ export function AppliedChangesHistory({
             {t("appliedChanges.loadMore")}
           </Button>
         </div>
+      )}
+      {confirmEntry && (
+        <RollbackConfirm
+          entry={confirmEntry}
+          busy={rbBusy}
+          error={rbError}
+          onCancel={() => setConfirmEntry(null)}
+          onConfirm={confirmRollback}
+          t={t}
+        />
       )}
     </div>
   );

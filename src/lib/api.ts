@@ -17,6 +17,7 @@ import type {
   AdvisorMessage,
   AdvisorResponse,
   AppliedChangesResponse,
+  RollbackAppliedChangeResponse,
   ApplyActionResponse,
   ApprovalResult,
   AutopilotConfig,
@@ -611,6 +612,19 @@ export async function fetchAppliedChanges(
   if (opts?.offset != null) params.set("offset", String(opts.offset));
   const qs = params.toString();
   return fetchApi<AppliedChangesResponse>(`/api/accounts/${accountId}/applied-changes${qs ? `?${qs}` : ""}`);
+}
+
+// Undo one applied change («вернуть как было»). Applies the safe guarded inverse
+// server-side + stamps rolled_back_at; returns the updated entry. 409 when the
+// change isn't rollbackable / was superseded / already rolled back.
+export async function rollbackAppliedChange(
+  accountId: number,
+  changeId: number,
+): Promise<RollbackAppliedChangeResponse> {
+  return fetchApi<RollbackAppliedChangeResponse>(
+    `/api/accounts/${accountId}/applied-changes/${changeId}/rollback`,
+    { method: "POST" },
+  );
 }
 
 export async function patchRoleBook(

@@ -10,7 +10,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { AppliedChangesHistory, sampleAppliedChanges } from "@/components/account/AppliedChangesHistory";
 import { useSelectedAccountId } from "@/lib/account";
-import { fetchAppliedChanges } from "@/lib/api";
+import { fetchAppliedChanges, rollbackAppliedChange } from "@/lib/api";
 import type { AppliedChangeEntry } from "@/lib/types";
 
 const IS_DEV = process.env.NODE_ENV === "development";
@@ -71,6 +71,18 @@ export default function AccountHistoryPage() {
       .finally(() => setLoadingMore(false));
   };
 
+  // Undo one change: POST rollback → patch the entry in place with the server's
+  // updated version (now rolled_back_at). On demo there is no backend — the
+  // confirm dialog stays inert (onRollback is undefined). Throws propagate to the
+  // dialog's inline error.
+  const onRollback =
+    demoParam || accountId === null
+      ? undefined
+      : async (entry: AppliedChangeEntry) => {
+          const { entry: updated } = await rollbackAppliedChange(accountId, entry.id);
+          setEntries((prev) => prev.map((e) => (e.id === updated.id ? updated : e)));
+        };
+
   return (
     <div className="min-h-screen bg-bg text-text">
       <div className="mx-auto w-full max-w-[860px] px-4 py-6 md:px-8 md:py-9">
@@ -82,6 +94,7 @@ export default function AccountHistoryPage() {
           hasMore={hasMore}
           loadingMore={loadingMore}
           onLoadMore={onLoadMore}
+          onRollback={onRollback}
         />
       </div>
     </div>
