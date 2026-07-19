@@ -430,7 +430,8 @@ function CadenceStrip({ s }: { s: Scenario }) {
     fire = (i) => n <= 1 || i % n === 0;
   }
   // Restyled day strip (Tip-Card-Plaque .sc-days): a mono «дни» label, then the
-  // 7 weekday cells. Active days are FILLED with --color-primary; inactive are
+  // 7 weekday cells. Active days get a soft ACCENT treatment (accent border + light
+  // accent fill + accent text) — the app's selection language; inactive are
   // surface-2 with subtle text. Reply scenarios fire every day (success cue n/a
   // here — the built-in reply card carries its own «постоянно» wording).
   return (
@@ -442,10 +443,10 @@ function CadenceStrip({ s }: { s: Scenario }) {
           <span
             key={i}
             className={cn(
-              "grid h-[26px] min-w-[30px] place-items-center rounded-sm px-[5px] font-mono text-[10.5px] font-medium tracking-[0.01em] tabular-nums transition-colors",
+              "grid h-[26px] min-w-[30px] place-items-center rounded-sm border px-[5px] font-mono text-[10.5px] font-medium tracking-[0.01em] tabular-nums transition-colors",
               on
-                ? "border border-primary bg-primary font-semibold text-primary-foreground"
-                : "border border-border bg-surface-2 text-text-subtle",
+                ? "border-accent bg-accent/[0.12] font-semibold text-accent"
+                : "border-border bg-surface-2 text-text-subtle",
             )}
             title={t(wd)}
           >

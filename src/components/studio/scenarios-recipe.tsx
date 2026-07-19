@@ -786,7 +786,7 @@ export function WhenPostBody({
                     }}
                     className={cn(
                       "grid h-[34px] min-w-[38px] place-items-center rounded-sm border px-2.5 text-small font-medium transition-colors",
-                      on ? "border-primary bg-primary font-semibold text-primary-foreground" : "border-border bg-surface text-text-muted hover:border-text/16",
+                      on ? "border-accent bg-accent/[0.12] font-semibold text-accent" : "border-border bg-surface text-text-muted hover:border-text/16",
                     )}
                   >
                     {t(wd)}
