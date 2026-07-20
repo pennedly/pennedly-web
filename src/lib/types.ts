@@ -467,6 +467,22 @@ export type AdvisorResponse = {
   completion_tokens: number;
 };
 
+// One persisted question + reply from the advisor's history (GET
+// .../advisor/history) — hydrates a chat screen on load so the conversation
+// survives a navigation/new session. `reply` is the exact same shape
+// `chatAdvisor`/`chatAccountAdvisor` return, so hydration reuses the live
+// turn-building logic verbatim. v1: one ever-growing conversation per
+// account/portfolio, no conversation id / multiple threads.
+export type AdvisorHistoryEntry = {
+  question: string;
+  reply: AdvisorResponse;
+  created_at: string;
+};
+
+export type AdvisorHistoryResponse = {
+  entries: AdvisorHistoryEntry[];
+};
+
 // What POST /accounts/{id}/advisor/apply returns after applying an action.
 export type ApplyActionResponse = {
   kind: string; // routine | auto_replies | voice_rule | schedule_post | topics_list

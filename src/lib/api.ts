@@ -14,6 +14,7 @@
 import type {
   AccountsList,
   AdvisorData,
+  AdvisorHistoryResponse,
   AdvisorMessage,
   AdvisorResponse,
   AppliedChangesResponse,
@@ -469,6 +470,13 @@ export async function chatAccountAdvisor(
   });
 }
 
+// The portfolio chat's persisted history — hydrates the screen on load so
+// the conversation survives a navigation/new session. Read-only, no rate
+// limit (a cheap DB read, not an LLM call).
+export async function fetchAccountAdvisorHistory(): Promise<AdvisorHistoryResponse> {
+  return fetchApi<AdvisorHistoryResponse>(`/api/me/account/advisor/history`);
+}
+
 // Apply a one-click advisor action against a target profile (owner-scoped,
 // tester-gated). CLOSED catalog:
 //   • "routine"      → ask-mode posting scenario + arms post automation;
@@ -760,6 +768,14 @@ export async function chatAdvisor(
       tz_offset: -new Date().getTimezoneOffset(),
     }),
   });
+}
+
+// The account's persisted advisor history — hydrates the chat screen on
+// load. Read-only, no rate limit (a cheap DB read, not an LLM call).
+export async function fetchAdvisorHistory(
+  accountId: number,
+): Promise<AdvisorHistoryResponse> {
+  return fetchApi<AdvisorHistoryResponse>(`/api/accounts/${accountId}/advisor/history`);
 }
 
 export async function generatePostBatch(

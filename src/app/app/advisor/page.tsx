@@ -18,12 +18,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { ApiError, applyAdvisorAction, chatAdvisor, clearTokens, fetchMe, getTokens } from "@/lib/api";
+import { ApiError, applyAdvisorAction, chatAdvisor, clearTokens, fetchAdvisorHistory, fetchMe, getTokens } from "@/lib/api";
 import { useSelectedAccountId } from "@/lib/account";
 import { getLocale, useTranslation } from "@/lib/i18n";
 import { formatSchedule, nextOccurrence } from "@/lib/schedule";
 import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
 import { IcSparkle } from "@/components/icons";
+import { SkeletonText } from "@/components/ui";
 import { TweaksPanel, TweakSection, TweakRadio, TweakToggle, useTweaks } from "@/components/tweaks/TweaksPanel";
 import {
   AssistantReply,
@@ -38,7 +39,7 @@ import {
   type Starter,
 } from "@/components/advisor/AdvisorParts";
 import { ADVISOR_DEMO_TURNS, advisorSourceLabel } from "@/components/advisor/advisor-demo";
-import type { AdvisorMessage } from "@/lib/types";
+import type { AdvisorMessage, AdvisorResponse } from "@/lib/types";
 
 const IS_DEV = process.env.NODE_ENV === "development";
 
@@ -53,6 +54,11 @@ type Turn = {
 
 // Cycle the honest "what it's reading" thinking labels.
 const THINKING_KEYS = ["advisor.thinking_stats", "advisor.thinking_times", "advisor.thinking_writing"] as const;
+
+// The backend caps the transcript at 40 messages (2 per turn + the new
+// question); 18 prior turns → 37, safely under that even after history
+// hydration pre-loads a long conversation.
+const RECENT_TURNS_FOR_CONTEXT = 18;
 
 export default function AdvisorPage() {
   const router = useRouter();
@@ -81,6 +87,7 @@ export default function AdvisorPage() {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [input, setInput] = useState("");
   const [thinkIdx, setThinkIdx] = useState(0);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   // ── ?demo=1 Tweaks: drive each state without a backend ──
@@ -116,9 +123,15 @@ export default function AdvisorPage() {
   ];
 
   // Build the API conversation from the answered turns + the new question.
+  // Capped to the RECENT window: the backend rejects >40 messages, and once
+  // history hydration can pre-load dozens of past exchanges, the untrimmed
+  // full transcript would blow that cap on the very next question (a
+  // returning conversation would get permanently stuck on a 422). The
+  // advisor's real grounding comes from the account's own data (stats/voice/
+  // posts), not the transcript, so trimming older turns is safe.
   function buildMessages(question: string): AdvisorMessage[] {
     const msgs: AdvisorMessage[] = [];
-    for (const turn of turns) {
+    for (const turn of turns.slice(-RECENT_TURNS_FOR_CONTEXT)) {
       msgs.push({ role: "user", content: turn.user });
       if (turn.reply) msgs.push({ role: "assistant", content: turn.reply.paragraphs.join("\n\n") });
     }
@@ -126,33 +139,27 @@ export default function AdvisorPage() {
     return msgs;
   }
 
-  async function ask(question: string) {
-    const q = question.trim();
-    if (!q || accountId === null || busy) return;
-    setInput("");
-    setThinkIdx(0);
-    const messages = buildMessages(q);
-    setTurns((prev) => [...prev, { user: q, reply: null, status: "thinking" }]);
-
-    try {
-      const res = await chatAdvisor(accountId, messages);
-      const content: AdvisorReplyContent = {
-        // The model replies in prose; split blank-line-separated paragraphs.
-        paragraphs: res.reply.split(/\n{2,}/).map((s) => s.trim()).filter(Boolean),
-        sources: res.grounded_in.map((id) => advisorSourceLabel(id, t)),
-        // Structured extras from the backend: data chips echoing the cited
-        // numbers + suggestion cards (each wired to the Studio handoff).
-        chips: res.chips.map((c) => ({ tone: c.tone, icon: c.icon ?? undefined, label: c.label })),
-        suggestions: res.suggestions.map((s) => ({
-          icon: s.icon,
-          title: s.title,
-          why: s.why,
-          brief: s.brief,
-          onOpenStudio: () => openInStudio(s.brief),
-        })),
-        // Per-account chat: an action targets THIS profile (accountId is non-null
-        // here — the ask() guard returns early otherwise). No profile row.
-        actions: res.actions.map((act): AdvisorActionCardData => {
+  // Map a live (or persisted-history) backend reply into the presentational
+  // shape both the chat and the hydration effect render. `accountId` is
+  // non-null at both call sites (ask()'s guard; the hydration effect only
+  // fetches once it has one).
+  function toReplyContent(res: AdvisorResponse, accountId: number): AdvisorReplyContent {
+    return {
+      // The model replies in prose; split blank-line-separated paragraphs.
+      paragraphs: res.reply.split(/\n{2,}/).map((s) => s.trim()).filter(Boolean),
+      sources: res.grounded_in.map((id) => advisorSourceLabel(id, t)),
+      // Structured extras from the backend: data chips echoing the cited
+      // numbers + suggestion cards (each wired to the Studio handoff).
+      chips: res.chips.map((c) => ({ tone: c.tone, icon: c.icon ?? undefined, label: c.label })),
+      suggestions: res.suggestions.map((s) => ({
+        icon: s.icon,
+        title: s.title,
+        why: s.why,
+        brief: s.brief,
+        onOpenStudio: () => openInStudio(s.brief),
+      })),
+      // Per-account chat: an action targets THIS profile. No profile row.
+      actions: res.actions.map((act): AdvisorActionCardData => {
           if (act.type === "auto_replies") {
             return {
               type: "auto_replies",
@@ -322,6 +329,19 @@ export default function AdvisorPage() {
           };
         }),
       };
+  }
+
+  async function ask(question: string) {
+    const q = question.trim();
+    if (!q || accountId === null || busy) return;
+    setInput("");
+    setThinkIdx(0);
+    const messages = buildMessages(q);
+    setTurns((prev) => [...prev, { user: q, reply: null, status: "thinking" }]);
+
+    try {
+      const res = await chatAdvisor(accountId, messages);
+      const content = toReplyContent(res, accountId);
       setTurns((prev) => {
         const next = [...prev];
         next[next.length - 1] = { user: q, reply: content, status: "done" };
@@ -340,6 +360,47 @@ export default function AdvisorPage() {
       });
     }
   }
+
+  // Hydrate the persisted conversation on mount / account switch. Fail-soft:
+  // a fetch error just starts empty, never blocks the chat. Demo mode (?demo=1)
+  // never hits the network — mark loaded immediately so the Tweaks-driven
+  // states render right away.
+  useEffect(() => {
+    if (allow) {
+      setHistoryLoaded(true);
+      return;
+    }
+    if (accountId === null) {
+      // No profile selected (portfolio/brand scope, or none connected yet) —
+      // nothing to hydrate. Show the normal empty/first-run state, not a
+      // skeleton stuck forever waiting for an accountId that may never come.
+      setHistoryLoaded(true);
+      return;
+    }
+    let cancelled = false;
+    setHistoryLoaded(false);
+    fetchAdvisorHistory(accountId)
+      .then((hist) => {
+        if (cancelled) return;
+        setTurns(
+          hist.entries.map((e) => ({
+            user: e.question,
+            reply: toReplyContent(e.reply, accountId),
+            status: "done" as const,
+          })),
+        );
+      })
+      .catch(() => {
+        /* fail-soft — start with an empty thread, same as before this feature */
+      })
+      .finally(() => {
+        if (!cancelled) setHistoryLoaded(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accountId, allow]);
 
   // Retry the last (errored) turn with the same question.
   function retryLast() {
@@ -395,7 +456,11 @@ export default function AdvisorPage() {
           thread scrolls under the sticky topbar. */}
       <div className="mx-auto flex h-[calc(100dvh-3.25rem)] max-w-[720px] flex-col px-3.5 md:h-[calc(100dvh-3.75rem)] md:px-6">
         <div ref={scrollRef} className="flex-1 overflow-y-auto py-4 md:py-6">
-          {isFirstRun ? (
+          {!historyLoaded ? (
+            <div className="mx-auto max-w-[640px] pt-4">
+              <SkeletonText lines={3} />
+            </div>
+          ) : isFirstRun ? (
             <div className="mx-auto max-w-[640px]">
               <Hero />
               <p className="mx-auto mb-2.5 max-w-[640px] text-center text-caption font-semibold uppercase tracking-[0.04em] text-text-subtle">

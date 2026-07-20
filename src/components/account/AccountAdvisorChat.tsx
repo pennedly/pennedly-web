@@ -31,11 +31,18 @@ import {
 } from "@/components/advisor/AdvisorParts";
 import { advisorSourceLabel } from "@/components/advisor/advisor-demo";
 import { IcSparkle } from "@/components/icons";
+import { SkeletonText } from "@/components/ui";
 import { setSelectedAccountId, useSelectedAccountId } from "@/lib/account";
-import { ApiError, applyAdvisorAction, chatAccountAdvisor, clearTokens } from "@/lib/api";
+import {
+  ApiError,
+  applyAdvisorAction,
+  chatAccountAdvisor,
+  clearTokens,
+  fetchAccountAdvisorHistory,
+} from "@/lib/api";
 import { getLocale, useTranslation } from "@/lib/i18n";
 import { formatSchedule, nextOccurrence } from "@/lib/schedule";
-import type { AdvisorData, AdvisorMessage, MeAccountResponse } from "@/lib/types";
+import type { AdvisorData, AdvisorMessage, AdvisorResponse, MeAccountResponse } from "@/lib/types";
 
 import { ADVISOR_SEED_KEY, DynIcon, ScreenTopbar, Sidebar, useAccountNav } from "./AccountDashboard";
 import type { Plural, T } from "./AccountDashboard";
@@ -50,6 +57,11 @@ export type Turn = {
 };
 
 export type ChatDemoState = "empty" | "ready" | "thinking" | "thin" | "error";
+
+// The backend caps the transcript at 40 messages (2 per turn + the new
+// question); 18 prior turns → 37, safely under that even after history
+// hydration pre-loads a long conversation.
+const RECENT_TURNS_FOR_CONTEXT = 18;
 
 function starters(t: T): Starter[] {
   return [
@@ -259,6 +271,7 @@ function useChat(
 ) {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [input, setInput] = useState("");
+  const [historyLoaded, setHistoryLoaded] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const busy = turns.some((x) => x.status === "thinking");
   // Fallback apply target for a portfolio action with no named profile.
@@ -269,31 +282,66 @@ function useChat(
     if (el) el.scrollTop = el.scrollHeight;
   }, [turns]);
 
-  // Decision C handoff: the dashboard's ask line / «Открыть советника» / starters
-  // / recos route here, seeding the first question via sessionStorage. Read +
-  // clear it once on mount and fire the turn (clean URL, no re-ask on refresh).
-  // The page mounts BOTH the desktop and the mobile chat (one hidden by a CSS
-  // breakpoint), so only the instance that matches the ACTIVE viewport may
-  // consume the single seed — otherwise the hidden instance would eat it and the
-  // visible chat would render empty. `md` = 768px (Tailwind).
+  // Hydrate the persisted portfolio conversation on mount, THEN — Decision C
+  // handoff — the dashboard's ask line / «Открыть советника» / starters / recos
+  // route here, seeding the first question via sessionStorage. Read + clear it
+  // once history has loaded and fire it appended AFTER the hydrated turns
+  // (never before/instead — a returning conversation must not be wiped by a
+  // fresh seed). The page mounts BOTH the desktop and the mobile chat (one
+  // hidden by a CSS breakpoint); only the instance matching the ACTIVE
+  // viewport fetches + consumes the seed — the hidden twin never asks, so it
+  // just marks itself loaded without a request. `md` = 768px (Tailwind).
   useEffect(() => {
-    if (demoState) return;
-    const desktopActive = window.matchMedia("(min-width: 768px)").matches;
-    if (isMobile ? desktopActive : !desktopActive) return;
-    let seed = "";
-    try {
-      seed = sessionStorage.getItem(ADVISOR_SEED_KEY) || "";
-      if (seed) sessionStorage.removeItem(ADVISOR_SEED_KEY);
-    } catch {
-      /* storage disabled — no seed to replay */
+    if (demoState) {
+      setHistoryLoaded(true);
+      return;
     }
-    if (seed.trim()) void ask(seed, []);
+    const desktopActive = window.matchMedia("(min-width: 768px)").matches;
+    if (isMobile ? desktopActive : !desktopActive) {
+      setHistoryLoaded(true);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      let hydrated: Turn[] = [];
+      try {
+        const hist = await fetchAccountAdvisorHistory();
+        hydrated = hist.entries.map((e) => ({
+          user: e.question,
+          reply: toReplyContent(e.reply),
+          status: "done" as const,
+        }));
+      } catch {
+        /* fail-soft — start empty, same as before this feature */
+      }
+      if (cancelled) return;
+      setTurns(hydrated);
+      setHistoryLoaded(true);
+
+      let seed = "";
+      try {
+        seed = sessionStorage.getItem(ADVISOR_SEED_KEY) || "";
+        if (seed) sessionStorage.removeItem(ADVISOR_SEED_KEY);
+      } catch {
+        /* storage disabled — no seed to replay */
+      }
+      if (seed.trim()) void ask(seed, hydrated);
+    })();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Capped to the RECENT window: the backend rejects >40 messages, and once
+  // history hydration can pre-load dozens of past exchanges, the untrimmed
+  // full transcript would blow that cap on the very next question (a
+  // returning conversation would get permanently stuck on a 422). The
+  // advisor's real grounding comes from the portfolio's own data, not the
+  // transcript, so trimming older turns is safe.
   function buildMessages(question: string, base: Turn[]): AdvisorMessage[] {
     const msgs: AdvisorMessage[] = [];
-    for (const turn of base) {
+    for (const turn of base.slice(-RECENT_TURNS_FOR_CONTEXT)) {
       msgs.push({ role: "user", content: turn.user });
       if (turn.reply) msgs.push({ role: "assistant", content: turn.reply.paragraphs.join("\n\n") });
     }
@@ -311,30 +359,22 @@ function useChat(
     router.push(`/app?brief=${encodeURIComponent(brief)}`);
   }
 
-  // `base` = the turns the request is built from (defaults to the current
-  // turns; retryLast passes the already-trimmed list so the async setTurns
-  // doesn't race the stale closure and double the user message).
-  async function ask(question: string, base: Turn[] = turns) {
-    const q = question.trim();
-    if (!q || busy || demoState) return;
-    setInput("");
-    const messages = buildMessages(q, base);
-    setTurns((prev) => [...prev, { user: q, reply: null, status: "thinking" }]);
-    try {
-      const res = await chatAccountAdvisor(messages);
-      const content: AdvisorReplyContent = {
-        paragraphs: res.reply.split(/\n{2,}/).map((s) => s.trim()).filter(Boolean),
-        sources: res.grounded_in.map((id) => advisorSourceLabel(id, t)),
-        chips: res.chips.map((c) => ({ tone: c.tone, icon: c.icon ?? undefined, label: c.label })),
-        suggestions: res.suggestions.map((s) => ({
-          icon: s.icon,
-          title: s.title,
-          why: s.why,
-          brief: s.brief,
-          onOpenStudio: () => openInStudio(s.brief, s.account),
-        })),
-        actions: res.actions
-          .map((act): AdvisorActionCardData | null => {
+  // Map a live (or persisted-history) backend reply into the presentational
+  // shape both the chat and the hydration effect render.
+  function toReplyContent(res: AdvisorResponse): AdvisorReplyContent {
+    return {
+      paragraphs: res.reply.split(/\n{2,}/).map((s) => s.trim()).filter(Boolean),
+      sources: res.grounded_in.map((id) => advisorSourceLabel(id, t)),
+      chips: res.chips.map((c) => ({ tone: c.tone, icon: c.icon ?? undefined, label: c.label })),
+      suggestions: res.suggestions.map((s) => ({
+        icon: s.icon,
+        title: s.title,
+        why: s.why,
+        brief: s.brief,
+        onOpenStudio: () => openInStudio(s.brief, s.account),
+      })),
+      actions: res.actions
+        .map((act): AdvisorActionCardData | null => {
             // Portfolio chat: the apply endpoint is per-account, so pin the target.
             //  · advisor named a profile → apply to THAT exact account;
             //  · advisor named none → the currently-selected profile.
@@ -527,7 +567,21 @@ function useChat(
             };
           })
           .filter((c): c is AdvisorActionCardData => c !== null),
-      };
+    };
+  }
+
+  // `base` = the turns the request is built from (defaults to the current
+  // turns; retryLast passes the already-trimmed list so the async setTurns
+  // doesn't race the stale closure and double the user message).
+  async function ask(question: string, base: Turn[] = turns) {
+    const q = question.trim();
+    if (!q || busy || demoState) return;
+    setInput("");
+    const messages = buildMessages(q, base);
+    setTurns((prev) => [...prev, { user: q, reply: null, status: "thinking" }]);
+    try {
+      const res = await chatAccountAdvisor(messages);
+      const content = toReplyContent(res);
       setTurns((prev) => {
         const next = [...prev];
         next[next.length - 1] = { user: q, reply: content, status: "done" };
@@ -563,7 +617,7 @@ function useChat(
   else if (demoState === "thin") shown = [{ user: t("acc.adv_starter_grow"), reply: null, status: "done" }]; // ThinRow rendered below
   else if (demoState === "empty") shown = [];
 
-  return { shown, input, setInput, ask, retryLast, busy, scrollRef, openInStudio, demoState };
+  return { shown, input, setInput, ask, retryLast, busy, scrollRef, openInStudio, demoState, historyLoaded };
 }
 
 // ── shared thread body (turns / hero+starters) ───────────────────────────────
@@ -612,7 +666,7 @@ export function AccountAdvisorChat({
 }) {
   const router = useRouter();
   const nav = useAccountNav();
-  const { shown, input, setInput, ask, retryLast, busy, scrollRef } = useChat(router, t, demoState, makeAccountResolver(data), false);
+  const { shown, input, setInput, ask, retryLast, busy, scrollRef, historyLoaded } = useChat(router, t, demoState, makeAccountResolver(data), false);
   const isFirstRun = shown.length === 0;
   return (
     <div className="acc-shell">
@@ -622,7 +676,11 @@ export function AccountAdvisorChat({
         <div className="acc-chat acc-chat--page">
           <PinnedVerdict adv={adv} t={t} />
           <div ref={scrollRef} className="acc-chat-scroll">
-            {isFirstRun ? (
+            {!historyLoaded ? (
+              <div className="mx-auto max-w-[640px] pt-4">
+                <SkeletonText lines={3} />
+              </div>
+            ) : isFirstRun ? (
               <FirstRun t={t} onPick={setInput} />
             ) : (
               <div className="acc-chat-thread">{renderThread(shown, t, retryLast, demoState)}</div>
@@ -635,7 +693,7 @@ export function AccountAdvisorChat({
                 onChange={setInput}
                 onSend={() => ask(input)}
                 busy={busy}
-                disabled={!!demoState}
+                disabled={!!demoState || !historyLoaded}
                 placeholder={t("acc.adv_ask")}
                 hintText={t("acc.adv_composer_hint")}
               />
@@ -664,7 +722,7 @@ export function AccountMobileAdvisorChat({
   demoState?: ChatDemoState;
 }) {
   const router = useRouter();
-  const { shown, input, setInput, ask, retryLast, busy } = useChat(router, t, demoState, makeAccountResolver(data), true);
+  const { shown, input, setInput, ask, retryLast, busy, historyLoaded } = useChat(router, t, demoState, makeAccountResolver(data), true);
   const isFirstRun = shown.length === 0;
   const dock = (
     <div className="ma-chat-dock">
@@ -673,7 +731,7 @@ export function AccountMobileAdvisorChat({
         onChange={setInput}
         onSend={() => ask(input)}
         busy={busy}
-        disabled={!!demoState}
+        disabled={!!demoState || !historyLoaded}
         hint={false}
         placeholder={t("acc.adv_ask")}
       />
@@ -684,7 +742,15 @@ export function AccountMobileAdvisorChat({
       <div className="ma-chat-body">
         <PinnedVerdict adv={adv} t={t} mobile />
         <div className="ma-chat-thread">
-          {isFirstRun ? <FirstRun t={t} onPick={setInput} /> : renderThread(shown, t, retryLast, demoState)}
+          {!historyLoaded ? (
+            <div className="mx-auto max-w-[640px] pt-4">
+              <SkeletonText lines={3} />
+            </div>
+          ) : isFirstRun ? (
+            <FirstRun t={t} onPick={setInput} />
+          ) : (
+            renderThread(shown, t, retryLast, demoState)
+          )}
         </div>
       </div>
     </AccountMobileShell>
