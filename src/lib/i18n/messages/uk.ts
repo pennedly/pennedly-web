@@ -609,7 +609,7 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "replies.title": "Відповіді",
   "replies.heading": "Черга відповідей",
   "replies.subtitle":
-    "Коментарі під твоїми постами. Згенеруй відповідь у своєму голосі, переглянь і опублікуй.",
+    "Коментарі під твоїми постами. Згенеруй відповідь у своєму голосі, переглянь її, і нічого не публікується без твого схвалення.",
   "replies.empty":
     "Коментарів поки немає. Черга відповідей наповнюється щогодини з твоїх недавніх постів.",
   "replies.on_post": "до твого поста",
@@ -930,6 +930,8 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "feed.likes": "вподобайок",
   "feed.image_unavailable": "Зображення недоступне",
   "feed.expand": "Відкрити",
+  "feed.play_video": "Відтворити відео",
+  "feed.pause_video": "Призупинити відео",
   "feed.prev": "Назад",
   "feed.next": "Далі",
   "feed.close": "Закрити",
@@ -950,6 +952,7 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "onboarding.analyze_locked": "Для аналізу потрібно {need} дописів — у тебе {have}",
   "onboarding.connect_failed": "Не вдалося підключити цей обліковий запис. Спробуй ще раз.",
   "onboarding.connected": "Підключено",
+  "onboarding.followers_count": "{n} підписників",
   "onboarding.subtitle":
     "Pennedly пише у твоєму голосі. Визначмо його — обери, з чого почати.",
   "onboarding.connect_title": "Спершу підключи свій акаунт Threads",
@@ -1369,6 +1372,7 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "studio.media_soon": "Скоро — завантаження відео в роботі",
   "studio.media_reorder_hint": "перетягніть, щоб змінити порядок",
   "link.dismiss": "Прибрати попередній перегляд",
+  "link.unavailable": "Попередній перегляд посилання недоступний",
   "studio.cancel": "Скасувати",
   "studio.save": "Зберегти",
   "studio.publish_title": "Опублікувати у Threads?",
@@ -1559,7 +1563,13 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "replies.translated_from": "Перекладено з",
   "replies.dialog_title": "Опублікувати цю відповідь?",
   "replies.dialog_sub":
-    "Відповідь з'явиться публічно у Threads, гілкою під їхнім коментарем.",
+    "Відповідь з'явиться публічно у Threads, гілкою під коментарем {name}.",
+  "replies.media_soon": "Скоро",
+  "replies.media_gated_note":
+    "Зображення вже працює у відповідях. Відео, карусель і GIF з'являться, коли ми підтвердимо, що Threads приймає їх у відповіді.",
+  "replies.media_more": "Інші типи медіа",
+  "replies.media_carousel": "Карусель",
+  "replies.media_gif": "GIF",
   "replies.toast_approved": "Відповідь схвалено",
   "replies.toast_ready": "Готово до публікації",
   "replies.toast_published": "Відповідь опубліковано",
@@ -2084,8 +2094,7 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "acc.views": "Views",
   "acc.posts": "Posts",
   "acc.posts_unit": "wk",
-  "acc.replies": "Reply",
-  "acc.replies_short": "Replies",
+  "acc.replies": "Replies",
   "acc.stats": "Stats",
   "acc.sub_all": "total",
   "acc.sub_7d": "7 days",

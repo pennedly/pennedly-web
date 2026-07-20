@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { IcGlobe, IcX } from "@/components/icons";
+import { IcExternal, IcGlobe, IcLink, IcX } from "@/components/icons";
 import { fetchLinkPreview, mediaUrl } from "@/lib/api";
 import { useTranslation } from "@/lib/i18n";
 import type { LinkPreview } from "@/lib/types";
@@ -15,6 +15,11 @@ function hostOf(url: string): string {
   }
 }
 
+// Raw-URL text for the bare-fallback chip — same host, no protocol noise.
+function bareUrl(url: string): string {
+  return url.replace(/^https?:\/\//, "").replace(/\/$/, "");
+}
+
 /**
  * An OpenGraph link-preview card for a URL in a post/draft body. Threads' API
  * returns only the raw URL, so Pennedly builds the card from the server-fetched
@@ -22,7 +27,8 @@ function hostOf(url: string): string {
  *
  * Two modes:
  *  • auto — pass only `url`; the card fetches on mount and shows a loading
- *    skeleton, then the card, or renders nothing when no preview is available.
+ *    skeleton, then the card, or a bare domain+URL fallback when no preview
+ *    is available — the card never just disappears.
  *  • controlled — pass `preview` (a value, or `null`); the card renders that
  *    directly and never fetches. Used by the dev gallery to show states offline.
  *
@@ -50,7 +56,10 @@ export function LinkPreviewCard({
     setState("loading");
     void fetchLinkPreview(url).then((p) => {
       if (!alive) return;
-      if (p && (p.title || p.description || p.image)) {
+      // Gate on what the loaded card actually renders (title / image). A
+      // description-only result has nothing showable in the spec's card
+      // anatomy, so it falls through to the bare URL-chip fallback below.
+      if (p && (p.title || p.image)) {
         setData(p);
         setState("ready");
       } else {
@@ -64,16 +73,54 @@ export function LinkPreviewCard({
 
   if (state === "loading") {
     return (
-      <div className="mt-3 animate-pulse overflow-hidden rounded-lg border border-border bg-surface-2">
-        <div className="h-28 w-full bg-border/40" />
-        <div className="space-y-2 p-3">
+      <div className="mt-3 flex animate-pulse flex-col overflow-hidden rounded-lg border border-border bg-surface-2 md:flex-row">
+        <div className="h-28 w-full shrink-0 bg-border/40 md:h-auto md:w-32" />
+        <div className="min-w-0 flex-1 space-y-2 p-3">
           <div className="h-3 w-2/3 rounded bg-border/50" />
           <div className="h-2.5 w-1/2 rounded bg-border/40" />
         </div>
       </div>
     );
   }
-  if (state === "none" || !data) return null;
+
+  const dismissBtn = onDismiss && (
+    <button
+      type="button"
+      aria-label={t("link.dismiss")}
+      onClick={onDismiss}
+      className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full border border-border bg-surface/90 text-text-muted shadow-sm transition-colors hover:text-text"
+    >
+      <IcX size={14} />
+    </button>
+  );
+
+  // No OG data (fetch failed, or it returned nothing usable) — a bare card
+  // with just the domain + raw-URL chip, so the link never just vanishes.
+  if (state === "none" || !data) {
+    return (
+      <div className="relative mt-3">
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer nofollow"
+          className="block overflow-hidden rounded-lg border border-border bg-surface-2 transition-colors hover:border-text/15"
+        >
+          <div className="flex min-w-0 flex-col gap-2 px-3.5 py-3">
+            <div className="line-clamp-2 text-small font-semibold leading-snug text-text">{t("link.unavailable")}</div>
+            <div className="inline-flex max-w-full items-center gap-[7px] self-start rounded-sm border border-border bg-surface-2 px-[9px] py-1 font-mono text-[11.5px] text-text-muted">
+              <IcLink size={13} className="shrink-0 text-text-subtle" />
+              <span className="truncate">{bareUrl(url)}</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-caption text-text-subtle">
+              <span className="truncate">{hostOf(url)}</span>
+              <IcExternal size={12} className="ml-auto shrink-0" />
+            </div>
+          </div>
+        </a>
+        {dismissBtn}
+      </div>
+    );
+  }
 
   const host = data.site_name || hostOf(data.url);
   return (
@@ -82,45 +129,32 @@ export function LinkPreviewCard({
         href={data.url}
         target="_blank"
         rel="noopener noreferrer nofollow"
-        className="block overflow-hidden rounded-lg border border-border bg-surface-2 transition-colors hover:border-text/15"
+        className="flex flex-col overflow-hidden rounded-lg border border-border bg-surface-2 transition-colors hover:border-text/15 md:flex-row"
       >
         {data.image && (
           <img
             src={mediaUrl(data.image)}
             alt=""
-            className="block max-h-52 w-full object-cover"
+            className="block aspect-video w-full shrink-0 object-cover md:aspect-auto md:h-auto md:w-32"
             onError={(e) => {
               (e.currentTarget as HTMLImageElement).style.display = "none";
             }}
           />
         )}
-        <div className="p-3">
-          <div className="mb-1 inline-flex max-w-full items-center gap-1.5 text-caption text-text-subtle">
+        <div className="min-w-0 flex-1 p-3">
+          <div className="mb-1 flex max-w-full items-center gap-1.5 text-caption text-text-subtle">
             <IcGlobe size={12} className="shrink-0" />
             <span className="truncate">{host}</span>
+            <IcExternal size={12} className="ml-auto shrink-0" />
           </div>
           {data.title && (
             <div className="line-clamp-2 text-small font-semibold leading-snug text-text">
               {data.title}
             </div>
           )}
-          {data.description && (
-            <div className="mt-1 line-clamp-2 text-caption leading-[1.5] text-text-muted">
-              {data.description}
-            </div>
-          )}
         </div>
       </a>
-      {onDismiss && (
-        <button
-          type="button"
-          aria-label={t("link.dismiss")}
-          onClick={onDismiss}
-          className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full border border-border bg-surface/90 text-text-muted shadow-sm transition-colors hover:text-text"
-        >
-          <IcX size={14} />
-        </button>
-      )}
+      {dismissBtn}
     </div>
   );
 }

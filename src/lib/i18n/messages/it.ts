@@ -611,7 +611,7 @@ export const it: Partial<Record<MessageKey, string>> = {
   "replies.title": "Risposte",
   "replies.heading": "Coda di risposte",
   "replies.subtitle":
-    "Commenti sotto i tuoi post. Genera una risposta nella tua voce, controllala e pubblica.",
+    "Commenti sotto i tuoi post. Genera una risposta nella tua voce, controllala, e non viene pubblicato nulla senza la tua approvazione.",
   "replies.empty":
     "Ancora nessun commento. La coda delle risposte si riempie ogni ora dai tuoi post recenti.",
   "replies.on_post": "al tuo post",
@@ -932,6 +932,8 @@ export const it: Partial<Record<MessageKey, string>> = {
   "feed.likes": "mi piace",
   "feed.image_unavailable": "Immagine non disponibile",
   "feed.expand": "Ingrandisci",
+  "feed.play_video": "Riproduci video",
+  "feed.pause_video": "Metti in pausa il video",
   "feed.prev": "Precedente",
   "feed.next": "Successivo",
   "feed.close": "Chiudi",
@@ -952,6 +954,7 @@ export const it: Partial<Record<MessageKey, string>> = {
   "onboarding.analyze_locked": "Servono {need} post per analizzare — ne hai {have}",
   "onboarding.connect_failed": "Non è stato possibile collegare questo account. Riprova.",
   "onboarding.connected": "Collegato",
+  "onboarding.followers_count": "{n} follower",
   "onboarding.subtitle":
     "Pennedly scrive nella tua voce. Definiamola — scegli da dove iniziare.",
   "onboarding.connect_title": "Prima, collega il tuo account Threads",
@@ -1372,6 +1375,7 @@ export const it: Partial<Record<MessageKey, string>> = {
   "studio.media_soon": "Presto — il caricamento video è in arrivo",
   "studio.media_reorder_hint": "trascina per riordinare",
   "link.dismiss": "Rimuovi anteprima",
+  "link.unavailable": "Anteprima del link non disponibile",
   "studio.cancel": "Annulla",
   "studio.save": "Salva",
   "studio.publish_title": "Pubblicare su Threads?",
@@ -1562,7 +1566,13 @@ export const it: Partial<Record<MessageKey, string>> = {
   "replies.translated_from": "Tradotto da",
   "replies.dialog_title": "Pubblicare questa risposta?",
   "replies.dialog_sub":
-    "Viene pubblicata pubblicamente su Threads, in thread sotto il loro commento.",
+    "Viene pubblicata pubblicamente su Threads, in thread sotto il commento di {name}.",
+  "replies.media_soon": "Presto",
+  "replies.media_gated_note":
+    "L'immagine funziona già nelle risposte. Video, carosello e GIF arriveranno una volta confermato che Threads li accetta in una risposta.",
+  "replies.media_more": "Altri tipi di media",
+  "replies.media_carousel": "Carosello",
+  "replies.media_gif": "GIF",
   "replies.toast_approved": "Risposta approvata",
   "replies.toast_ready": "Pronta da pubblicare",
   "replies.toast_published": "Risposta pubblicata",
@@ -2087,8 +2097,7 @@ export const it: Partial<Record<MessageKey, string>> = {
   "acc.views": "Views",
   "acc.posts": "Posts",
   "acc.posts_unit": "wk",
-  "acc.replies": "Reply",
-  "acc.replies_short": "Replies",
+  "acc.replies": "Replies",
   "acc.stats": "Stats",
   "acc.sub_all": "total",
   "acc.sub_7d": "7 days",

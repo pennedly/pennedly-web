@@ -12,6 +12,7 @@ import { mediaUrl } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { Button, buttonClasses } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/feedback";
 import { Mono } from "@/components/ui/mono";
 import { AccountFace } from "@/components/ui/avatar";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
@@ -19,16 +20,21 @@ import {
   IcArrowLeft,
   IcArrowRight,
   IcCheck,
+  IcClock,
   IcExternal,
   IcGlobe,
   IcImage,
+  IcLayers,
+  IcMore,
   IcNib,
   IcPencil,
   IcReplies,
   IcReply,
   IcTweak,
   IcUndo,
+  IcVideo,
   IcX,
+  type IconProps,
 } from "@/components/icons";
 import {
   type ReplyComment,
@@ -66,7 +72,7 @@ export type ReplyHandlers = {
   // Attach one image to a reply draft (the backend supports an image on a
   // reply; carousel/video in replies is unverified, so it's a single image).
   onUploadImage: (file: File) => Promise<{ url: string }>;
-  onSetMedia: (c: ReplyComment, media: { url: string }[]) => Promise<void>;
+  onSetMedia: (c: ReplyComment, media: { url: string; alt?: string | null }[]) => Promise<void>;
 };
 
 // ─────────────────────────────── PostMaster ─────────────────────────────────
@@ -336,14 +342,40 @@ const CBADGE: Record<ReplyStatus, { tone: BadgeTone; key: MessageKey; dot: boole
 // ─────────────────────────────── CommentCard ────────────────────────────────
 const REPLY_IMG_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
-// One image on a reply draft (the backend caps a reply at a single image).
-// Exported so the dev /gallery route can render it in every state.
+// Video / carousel / GIF are drawn (per Replies-Media-SPEC.html §3) but gated
+// until Threads' reply endpoint is confirmed to accept them — never live.
+const GATED_MEDIA: { key: string; label: MessageKey; Icon?: (p: IconProps) => ReactNode }[] = [
+  { key: "video", label: "studio.video", Icon: IcVideo },
+  { key: "carousel", label: "replies.media_carousel", Icon: IcLayers },
+  { key: "gif", label: "replies.media_gif" },
+];
+
+// One image on a reply draft (the backend caps a reply at a single image), plus
+// the gated "more" reveal for video/carousel/GIF. Rendered as a leading cluster
+// in the action row (Replies-Media-SPEC.html ~149: ".rmedia-tools"), not a
+// separate toolbar. Exported so the dev /gallery route can render it in every state.
 export function ReplyImage({ c, h }: { c: ReplyComment; h: ReplyHandlers }) {
   const { t } = useTranslation();
-  const [media, setMedia] = useState<{ url: string }[]>(c.media ?? []);
+  const [media, setMedia] = useState<{ url: string; alt?: string | null }[]>(c.media ?? []);
   const [uploading, setUploading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [altOpen, setAltOpen] = useState(false);
+  const [gateOpen, setGateOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const current = media[0];
+
+  useEffect(() => {
+    if (!altOpen && !gateOpen) return;
+    const close = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        setAltOpen(false);
+        setGateOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [altOpen, gateOpen]);
 
   async function pick() {
     const f = fileRef.current?.files?.[0];
@@ -369,6 +401,7 @@ export function ReplyImage({ c, h }: { c: ReplyComment; h: ReplyHandlers }) {
     const prev = media;
     setMedia([]);
     setErr(null);
+    setAltOpen(false);
     try {
       await h.onSetMedia(c, []);
     } catch {
@@ -377,8 +410,19 @@ export function ReplyImage({ c, h }: { c: ReplyComment; h: ReplyHandlers }) {
     }
   }
 
+  async function saveAlt(alt: string) {
+    const next = media.map((m, i) => (i === 0 ? { ...m, alt: alt || null } : m));
+    setMedia(next);
+    setAltOpen(false);
+    try {
+      await h.onSetMedia(c, next);
+    } catch {
+      setErr(t("studio.image_failed"));
+    }
+  }
+
   return (
-    <div className="mt-2.5">
+    <div ref={wrapRef} className="relative inline-flex shrink-0 items-center gap-1.5">
       <input
         ref={fileRef}
         type="file"
@@ -386,19 +430,21 @@ export function ReplyImage({ c, h }: { c: ReplyComment; h: ReplyHandlers }) {
         onChange={pick}
         className="hidden"
       />
-      {media.length === 0 ? (
+      {!current ? (
         <button
           type="button"
           disabled={uploading}
+          aria-label={uploading ? t("studio.image_uploading") : undefined}
           onClick={() => fileRef.current?.click()}
-          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 py-1 text-caption text-text-muted transition-colors hover:bg-surface-2 hover:text-text disabled:opacity-60"
+          className="inline-flex h-8 items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 text-caption text-text-muted transition-colors hover:bg-surface-2 hover:text-text disabled:opacity-60"
         >
-          <IcImage size={14} /> {uploading ? t("studio.image_uploading") : t("studio.add_image")}
+          {uploading ? <Spinner size={13} className="text-text-muted motion-reduce:animate-none" /> : <IcImage size={14} />}
+          {!uploading && t("studio.add_image")}
         </button>
       ) : (
-        <div className="relative h-[72px] w-[72px] overflow-hidden rounded-md border border-border bg-surface-2">
+        <div className="relative h-[76px] w-[76px] overflow-hidden rounded-md border border-border bg-surface-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={mediaUrl(media[0].url)} alt="" className="h-full w-full object-cover" />
+          <img src={mediaUrl(current.url)} alt={current.alt ?? ""} className="h-full w-full object-cover" />
           <button
             type="button"
             aria-label={t("studio.remove_image")}
@@ -407,9 +453,87 @@ export function ReplyImage({ c, h }: { c: ReplyComment; h: ReplyHandlers }) {
           >
             <IcX size={12} />
           </button>
+          <button
+            type="button"
+            onClick={() => { setAltOpen((v) => !v); setGateOpen(false); }}
+            aria-label={t("studio.alt_label")}
+            className={cn(
+              "absolute bottom-1 left-1 inline-flex h-[18px] items-center gap-0.5 rounded-sm px-1 text-[9.5px] font-bold tracking-wide text-white backdrop-blur-sm",
+              current.alt ? "bg-success/90" : "bg-black/55",
+            )}
+          >
+            {current.alt && <IcCheck size={9} />} ALT
+          </button>
         </div>
       )}
-      {err && <p className="mt-1 text-caption text-danger">{err}</p>}
+
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={gateOpen}
+        aria-label={t("replies.media_more")}
+        onClick={() => { setGateOpen((v) => !v); setAltOpen(false); }}
+        className="relative grid h-8 w-8 shrink-0 place-items-center rounded-full border border-border bg-surface text-text-subtle transition-colors hover:bg-surface-2 hover:text-text"
+      >
+        <IcMore size={15} />
+        <span aria-hidden className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-accent" />
+      </button>
+
+      {altOpen && current && (
+        <div
+          className="absolute left-0 top-[calc(100%+6px)] z-20 w-[220px] rounded-md border border-accent/40 bg-surface p-2.5 shadow-lg"
+          style={{ animation: "dialog-in var(--duration-base) var(--ease-entrance) both" }}
+        >
+          <div className="mb-1 text-caption text-text-muted">
+            {t("studio.alt_label")} · {t("studio.alt_hint")}
+          </div>
+          <textarea
+            autoFocus
+            defaultValue={current.alt ?? ""}
+            onKeyDown={(e) => {
+              if ((e.metaKey || e.ctrlKey) && e.key === "Enter") (e.target as HTMLTextAreaElement).blur();
+              if (e.key === "Escape") setAltOpen(false);
+            }}
+            onBlur={(e) => saveAlt(e.target.value.trim())}
+            rows={2}
+            maxLength={1000}
+            placeholder={t("studio.alt_placeholder")}
+            className="w-full resize-y rounded-sm border border-border bg-surface-2 px-2.5 py-2 text-small text-text outline-none focus:border-accent max-md:text-[16px]"
+          />
+        </div>
+      )}
+
+      {gateOpen && (
+        <div
+          role="menu"
+          aria-label={t("replies.media_more")}
+          className="absolute left-0 top-[calc(100%+6px)] z-20 w-[260px] rounded-lg border border-border bg-surface p-1.5 shadow-lg"
+          style={{ animation: "dialog-in var(--duration-base) var(--ease-entrance) both" }}
+        >
+          {GATED_MEDIA.map((g) => (
+            <button
+              key={g.key}
+              type="button"
+              disabled
+              aria-label={`${t(g.label)}, ${t("replies.media_soon")}`}
+              className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-small text-text-subtle disabled:cursor-not-allowed"
+            >
+              {g.Icon ? <g.Icon size={15} /> : <span className="w-[15px]" aria-hidden />}
+              <span className="flex-1">{t(g.label)}</span>
+              <Badge tone="neutral">
+                <IcClock size={11} /> {t("replies.media_soon")}
+              </Badge>
+            </button>
+          ))}
+          <p className="mt-1 border-t border-border px-2.5 pt-2 text-caption leading-[1.5] text-text-subtle">
+            {t("replies.media_gated_note")}
+          </p>
+        </div>
+      )}
+
+      {err && (
+        <p className="absolute left-0 top-[calc(100%+4px)] z-20 whitespace-nowrap text-caption text-danger">{err}</p>
+      )}
     </div>
   );
 }
@@ -521,7 +645,7 @@ export function CommentCard({
 
       {/* comment body */}
       {commentBody.trim() && (
-        <p className={cn("mt-[11px] text-body leading-[1.6] text-text", status === "skipped" && "text-text-muted")}>{commentBody}</p>
+        <p className={cn("mt-[11px] max-w-[72ch] text-body leading-[1.6] text-text", status === "skipped" && "text-text-muted")}>{commentBody}</p>
       )}
       <CommentMedia media={c.commentMedia} />
       {c.lang && (
@@ -573,9 +697,8 @@ export function CommentCard({
               </>
             ) : (
               <>
-                <p className="whitespace-pre-wrap text-small leading-[1.6] text-text">{replyBody}</p>
+                <p className="max-w-[72ch] whitespace-pre-wrap text-small leading-[1.6] text-text">{replyBody}</p>
                 {c.replyLang && <TranslateRow lang={c.replyLang} on={rpTr} onToggle={() => setRpTr((v) => !v)} className="mt-2" />}
-                {(status === "draft" || status === "approved") && <ReplyImage c={c} h={h} />}
               </>
             )}
           </div>
@@ -656,6 +779,7 @@ export function CommentCard({
           {meta(c.lang ? <LangMeta lang={c.lang} /> : null)}
           {actions(
             <>
+              <ReplyImage c={c} h={h} />
               <Button size="sm" variant="ghost" className={iconBtnCls} icon={<IcTweak size={15} />} aria-label={t("replies.regenerate")} onClick={() => h.onGenerate(c)}>
                 <span className="max-md:hidden">{t("replies.regenerate")}</span>
               </Button>
@@ -676,6 +800,7 @@ export function CommentCard({
           {meta(c.lang ? <LangMeta lang={c.lang} /> : null)}
           {actions(
             <>
+              <ReplyImage c={c} h={h} />
               <Button size="sm" variant="secondary" className={iconBtnCls} icon={<IcPencil size={15} />} aria-label={t("studio.edit")} onClick={() => { setEditBuffer(c.reply ?? ""); setEditing(true); }}>
                 <span className="max-md:hidden">{t("studio.edit")}</span>
               </Button>
@@ -799,20 +924,27 @@ export function CommentSkeleton() {
 export function RepliesLoading() {
   const { t } = useTranslation();
   return (
-    <div className="grid grid-cols-[300px_1fr] items-start gap-[22px] max-md:grid-cols-1 max-md:gap-4">
-      {/* Desktop: vertical post-list skeleton. Mobile: horizontal switcher
-          skeleton (220px chips, scrolls), matching the live PostMaster. */}
-      <aside className="overflow-hidden rounded-lg border border-border bg-surface shadow-sm max-md:flex max-md:gap-2.5 max-md:overflow-x-auto max-md:rounded-none max-md:border-0 max-md:bg-transparent max-md:p-0 max-md:shadow-none [scrollbar-width:none]">
-        <div className="border-b border-border px-4 pb-[11px] pt-[13px] text-caption font-semibold uppercase tracking-[0.06em] text-text-subtle max-md:hidden">
+    <div className="flex flex-col gap-4 md:gap-5">
+      {/* Switcher skeleton — mirrors PostMaster's horizontal post-switcher (the
+          old two-column master-detail layout is gone; this screen has a single
+          column now). Not sticky, matching Replies-SPEC.html's skeleton(). */}
+      <div>
+        <div className="mb-2 text-caption font-semibold uppercase tracking-[0.06em] text-text-subtle">
           {t("replies.posts_with_comments")}
         </div>
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="space-y-2 border-b border-border px-4 py-[13px] last:border-0 max-md:w-[220px] max-md:shrink-0 max-md:space-y-2 max-md:rounded-lg max-md:border max-md:border-border max-md:py-[13px] max-md:last:border">
-            <div className="skel h-3 w-[92%] rounded" />
-            <div className="skel h-2.5 w-[50%] rounded" />
-          </div>
-        ))}
-      </aside>
+        <div className="flex gap-2.5 overflow-hidden pb-1">
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="flex w-[280px] shrink-0 flex-col gap-2 rounded-lg border border-border bg-surface px-3.5 py-3 max-md:w-[220px]"
+            >
+              <div className="skel h-3.5 w-[90%] rounded" />
+              <div className="skel h-3 w-[55%] rounded" />
+              <div className="skel mt-1 h-5 w-[42%] rounded-full" />
+            </div>
+          ))}
+        </div>
+      </div>
       <div className="flex flex-col gap-3.5">
         <CommentSkeleton />
         <CommentSkeleton />
@@ -886,7 +1018,9 @@ export function PublishReplyDialog({
           </span>
           <div className="min-w-0">
             <h2 className="text-h3 font-semibold leading-[1.3]">{t("replies.dialog_title")}</h2>
-            <p className="mt-1 text-small text-text-muted">{t("replies.dialog_sub")}</p>
+            <p className="mt-1 text-small text-text-muted">
+              {comment ? t("replies.dialog_sub").replace("{name}", comment.author.name) : t("replies.dialog_sub")}
+            </p>
           </div>
         </div>
         {comment && (

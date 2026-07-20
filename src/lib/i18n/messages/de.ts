@@ -615,7 +615,7 @@ export const de: Partial<Record<MessageKey, string>> = {
   "replies.title": "Antworten",
   "replies.heading": "Antwort-Warteschlange",
   "replies.subtitle":
-    "Kommentare unter deinen Beiträgen. Generiere eine Antwort in deiner Stimme, prüfe sie und veröffentliche.",
+    "Kommentare unter deinen Beiträgen. Generiere eine Antwort in deiner Stimme, prüfe sie, und veröffentlicht wird erst mit deiner Freigabe.",
   "replies.empty":
     "Noch keine Kommentare. Die Antwort-Warteschlange füllt sich stündlich aus deinen aktuellen Beiträgen.",
   "replies.on_post": "zu deinem Beitrag",
@@ -938,6 +938,8 @@ export const de: Partial<Record<MessageKey, string>> = {
   "feed.likes": "Likes",
   "feed.image_unavailable": "Bild nicht verfügbar",
   "feed.expand": "Vergrößern",
+  "feed.play_video": "Video abspielen",
+  "feed.pause_video": "Video pausieren",
   "feed.prev": "Zurück",
   "feed.next": "Weiter",
   "feed.close": "Schließen",
@@ -958,6 +960,7 @@ export const de: Partial<Record<MessageKey, string>> = {
   "onboarding.analyze_locked": "Zum Analysieren brauchst du {need} Beiträge — du hast {have}",
   "onboarding.connect_failed": "Dieses Konto konnte nicht verbunden werden. Bitte versuche es erneut.",
   "onboarding.connected": "Verbunden",
+  "onboarding.followers_count": "{n} Follower",
   "onboarding.subtitle":
     "Pennedly schreibt in deiner Stimme. Lass sie uns definieren — wähle, wie du starten willst.",
   "onboarding.connect_title": "Verbinde zuerst dein Threads-Konto",
@@ -1374,6 +1377,7 @@ export const de: Partial<Record<MessageKey, string>> = {
   "studio.media_soon": "Bald — Video-Upload ist unterwegs",
   "studio.media_reorder_hint": "zum Umsortieren ziehen",
   "link.dismiss": "Vorschau entfernen",
+  "link.unavailable": "Linkvorschau nicht verfügbar",
   "studio.cancel": "Abbrechen",
   "studio.save": "Speichern",
   "studio.publish_title": "Auf Threads veröffentlichen?",
@@ -1555,7 +1559,13 @@ export const de: Partial<Record<MessageKey, string>> = {
   "replies.translated_from": "Übersetzt aus",
   "replies.dialog_title": "Diese Antwort veröffentlichen?",
   "replies.dialog_sub":
-    "Sie erscheint öffentlich auf Threads, eingehängt unter ihrem Kommentar.",
+    "Sie erscheint öffentlich auf Threads, eingehängt unter {name}s Kommentar.",
+  "replies.media_soon": "Bald",
+  "replies.media_gated_note":
+    "Bilder funktionieren schon heute in Antworten. Video, Karussell und GIF kommen, sobald wir bestätigt haben, dass Threads sie in einer Antwort akzeptiert.",
+  "replies.media_more": "Weitere Medientypen",
+  "replies.media_carousel": "Karussell",
+  "replies.media_gif": "GIF",
   "replies.toast_approved": "Antwort freigegeben",
   "replies.toast_ready": "Bereit zum Veröffentlichen",
   "replies.toast_published": "Antwort veröffentlicht",
@@ -2069,8 +2079,7 @@ export const de: Partial<Record<MessageKey, string>> = {
   "acc.views": "Views",
   "acc.posts": "Posts",
   "acc.posts_unit": "wk",
-  "acc.replies": "Reply",
-  "acc.replies_short": "Replies",
+  "acc.replies": "Replies",
   "acc.stats": "Stats",
   "acc.sub_all": "total",
   "acc.sub_7d": "7 days",

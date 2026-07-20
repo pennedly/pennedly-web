@@ -235,7 +235,7 @@ export default function MediaGallery() {
         </Section>
 
         <h2 className="mb-3 mt-8 text-h3 font-semibold">Link preview</h2>
-        <Section title="full card — image + title + description + domain">
+        <Section title="full card — image + title + domain">
           <LinkPreviewCard
             url="https://example.com/article"
             preview={{
@@ -273,11 +273,8 @@ export default function MediaGallery() {
             onDismiss={() => {}}
           />
         </Section>
-        <Section title="no preview available → renders nothing">
-          <div className="text-caption text-text-subtle">
-            <LinkPreviewCard url="https://nopreview.test" preview={null} />
-            (no card — correct)
-          </div>
+        <Section title="no preview available → bare URL-chip fallback (never looks broken)">
+          <LinkPreviewCard url="https://nopreview.test" preview={null} />
         </Section>
 
         <p className="mt-10 text-caption text-text-subtle">

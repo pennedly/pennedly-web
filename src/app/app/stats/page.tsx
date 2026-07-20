@@ -421,9 +421,12 @@ export default function StatsPage() {
             <h1 className="text-h1 font-semibold tracking-[-0.015em]">{t("stats.title")}</h1>
             <p className="text-body text-text-muted">{t("stats.subtitle")}</p>
           </div>
-          {/* Always show the period selector so a no-data period (e.g. "Today"
-              before posting) never traps the user. */}
-          <RangeSeg active={period} onChange={onPeriod} />
+          {/* Hidden during loading and the first-run progressive state — First-
+              Run-SPEC.html §3.2's progressivePage() has no period row (banner →
+              cards → nudge → follower panel → spread, nothing else), since a
+              fresh account has no trend to slice by period yet. Shown once the
+              normal ready page (real trending data) renders. */}
+          {phase === "ready" && model && !isFirstRun && <RangeSeg active={period} onChange={onPeriod} />}
         </div>
 
         {/* Beta disclaimer — same Threads-API likes limitation as the Feed (SPEC §14);

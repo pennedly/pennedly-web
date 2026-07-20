@@ -67,6 +67,7 @@ import {
 import { Avatar, nameOf } from "@/components/ui/avatar";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/feedback";
+import { fmt } from "@/components/studio/FeedParts";
 import { cn } from "@/lib/cn";
 import type { ConnectedAccount, OnboardingPreview, OnboardingStatus } from "@/lib/types";
 
@@ -339,9 +340,15 @@ function ConnectStep({
           <Avatar account={account} size={42} />
           <div className="min-w-0 flex-1">
             <div className="truncate text-small font-semibold leading-tight">{nameOf(account)}</div>
-            {account.username && <div className="mt-0.5 truncate text-caption text-text-subtle">@{account.username}</div>}
+            {account.username && (
+              <div className="mt-0.5 truncate text-caption text-text-subtle">
+                @{account.username}
+                {account.followers_count != null &&
+                  ` · ${t("onboarding.followers_count").replace("{n}", fmt(account.followers_count))}`}
+              </div>
+            )}
           </div>
-          <span className="inline-flex shrink-0 items-center gap-1.5 text-caption font-semibold text-success">
+          <span className="ml-2.5 inline-flex shrink-0 items-center gap-[7px] whitespace-nowrap rounded-full border bg-surface px-[11px] py-[5px] pl-[9px] text-small text-success" style={{ borderColor: "color-mix(in srgb, var(--color-success) 30%, var(--color-border))" }}>
             <span className="h-[7px] w-[7px] rounded-full bg-success" /> {t("onboarding.connected")}
           </span>
         </div>
@@ -965,6 +972,7 @@ const DEMO_ACCOUNT = {
   username: "mara.lin",
   display_name: "Mara Lin",
   profile_picture_url: null,
+  followers_count: 8420,
   connected_at: "2026-05-01T00:00:00Z",
   disconnected_at: null,
 } as unknown as ConnectedAccount;

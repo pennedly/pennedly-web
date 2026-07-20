@@ -100,6 +100,12 @@
   --color-danger:             #b23b30;
   --color-danger-foreground:  #ffffff;
 
+  /* ---- Heatmap gradient (Stats "best times to post") — cool → warm --------- */
+  --color-heat-1:              #85B7EB;
+  --color-heat-2:              #5DCAA5;
+  --color-heat-3:              #EF9F27;
+  --color-heat-4:              #D85A30;
+
   /* ---- Radius — generous/soft, echoing the icon's ~22% rounding ------------ */
   --radius-sm:  6px;   /* chips, small inputs */
   --radius-md:  10px;  /* buttons, inputs, sm cards */
@@ -150,6 +156,11 @@
   --color-warning-foreground: #0a0a0a;
   --color-danger:             #ef8a80;
   --color-danger-foreground:  #0a0a0a;
+
+  --color-heat-1:              #9CC6F0;   /* paler/brighter for AA pop on ink */
+  --color-heat-2:              #7ED4B7;
+  --color-heat-3:              #F0B14D;
+  --color-heat-4:              #E37E5C;
 
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.5);
   --shadow-md: 0 6px 16px -4px rgb(0 0 0 / 0.6);

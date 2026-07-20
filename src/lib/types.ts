@@ -62,6 +62,9 @@ export type ConnectedAccount = {
   username: string | null;
   display_name: string | null;
   profile_picture_url: string | null;
+  // Current follower count, or null until the metrics worker has snapshotted
+  // this account (not zero — see api/me.py's _overview_metrics_bulk comment).
+  followers_count: number | null;
   connected_at: string;
   disconnected_at: string | null;
   // First-connect backfill (see SyncStatus / SyncSummary above). ISO strings or null.

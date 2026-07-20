@@ -414,6 +414,7 @@ function asAccountFace(a: OverviewAccount): ConnectedAccount {
     username: a.handle,
     display_name: a.name,
     profile_picture_url: a.avatar,
+    followers_count: a.followers,
     connected_at: "",
     disconnected_at: null,
     sync_status: null,

@@ -612,7 +612,7 @@ export const fr: Partial<Record<MessageKey, string>> = {
   "replies.title": "Réponses",
   "replies.heading": "File de réponses",
   "replies.subtitle":
-    "Commentaires sous tes posts. Génère une réponse dans ta voix, vérifie-la, puis publie.",
+    "Commentaires sous tes posts. Génère une réponse dans ta voix, vérifie-la, et rien n'est publié sans ton accord.",
   "replies.empty":
     "Aucun commentaire pour l'instant. La file de réponses se remplit chaque heure depuis tes posts récents.",
   "replies.on_post": "sur ton post",
@@ -933,6 +933,8 @@ export const fr: Partial<Record<MessageKey, string>> = {
   "feed.likes": "j'aime",
   "feed.image_unavailable": "Image indisponible",
   "feed.expand": "Agrandir",
+  "feed.play_video": "Lire la vidéo",
+  "feed.pause_video": "Mettre la vidéo en pause",
   "feed.prev": "Précédent",
   "feed.next": "Suivant",
   "feed.close": "Fermer",
@@ -953,6 +955,7 @@ export const fr: Partial<Record<MessageKey, string>> = {
   "onboarding.analyze_locked": "Il faut {need} posts pour analyser — tu en as {have}",
   "onboarding.connect_failed": "Impossible de connecter ce compte. Réessaie.",
   "onboarding.connected": "Connecté",
+  "onboarding.followers_count": "{n} abonnés",
   "onboarding.subtitle":
     "Pennedly écrit dans ta voix. Définissons-la — choisis par où commencer.",
   "onboarding.connect_title": "D'abord, connecte ton compte Threads",
@@ -1375,6 +1378,7 @@ export const fr: Partial<Record<MessageKey, string>> = {
   "studio.media_soon": "Bientôt — l'envoi de vidéo arrive",
   "studio.media_reorder_hint": "glissez pour réordonner",
   "link.dismiss": "Retirer l’aperçu",
+  "link.unavailable": "Aperçu du lien indisponible",
   "studio.cancel": "Annuler",
   "studio.save": "Enregistrer",
   "studio.publish_title": "Publier sur Threads ?",
@@ -1567,7 +1571,13 @@ export const fr: Partial<Record<MessageKey, string>> = {
   "replies.translated_from": "Traduit depuis",
   "replies.dialog_title": "Publier cette réponse ?",
   "replies.dialog_sub":
-    "Elle est publiée publiquement sur Threads, imbriquée sous leur commentaire.",
+    "Elle est publiée publiquement sur Threads, imbriquée sous le commentaire de {name}.",
+  "replies.media_soon": "Bientôt",
+  "replies.media_gated_note":
+    "L'image fonctionne déjà dans les réponses. La vidéo, le carrousel et le GIF arriveront une fois confirmé que Threads les accepte dans une réponse.",
+  "replies.media_more": "Autres types de médias",
+  "replies.media_carousel": "Carrousel",
+  "replies.media_gif": "GIF",
   "replies.toast_approved": "Réponse approuvée",
   "replies.toast_ready": "Prêt à publier",
   "replies.toast_published": "Réponse publiée",
@@ -2092,8 +2102,7 @@ export const fr: Partial<Record<MessageKey, string>> = {
   "acc.views": "Views",
   "acc.posts": "Posts",
   "acc.posts_unit": "wk",
-  "acc.replies": "Reply",
-  "acc.replies_short": "Replies",
+  "acc.replies": "Replies",
   "acc.stats": "Stats",
   "acc.sub_all": "total",
   "acc.sub_7d": "7 days",

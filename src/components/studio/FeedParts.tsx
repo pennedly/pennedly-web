@@ -255,8 +255,201 @@ function FeedMenu({
 // ─────────────────────────────── FeedCard ───────────────────────────────────
 type FeedPic = { url: string; alt?: string | null; type?: string | null; poster?: string | null };
 
+type AspectVariant = "default" | "wide" | "square" | "tall";
+const ASPECT_CLASS: Record<AspectVariant, string> = {
+  default: "aspect-[3/2]",
+  wide: "aspect-[16/9]",
+  square: "aspect-square",
+  tall: "aspect-[4/5]",
+};
+// Buckets a measured width/height into the spec's frame variants (default
+// 3:2, wide 16:9, square 1:1, tall capped 4:5). The feed's media payload
+// carries no dimensions from the backend, so this reads the real asset once
+// it loads (img.naturalWidth/Height, video.videoWidth/Height) — thresholds
+// sit at the geometric mean between each pair of canonical ratios.
+function bucketAspect(w: number, h: number): AspectVariant {
+  if (!w || !h) return "default";
+  const r = w / h;
+  if (r <= 0.9) return "tall";
+  if (r <= 1.2) return "square";
+  if (r <= 1.63) return "default";
+  return "wide";
+}
+
+function fmtDuration(s: number): string {
+  if (!Number.isFinite(s) || s < 0) return "0:00";
+  const total = Math.round(s);
+  const m = Math.floor(total / 60);
+  const sec = total % 60;
+  return `${m}:${sec < 10 ? "0" : ""}${sec}`;
+}
+
+// icons.tsx has no pause glyph yet (this fix's file scope is FeedParts.tsx /
+// LinkPreviewCard.tsx only) — inline the same filled twin-bar mark the design
+// spec defines for it, styled to match the rest of the icon set.
+function PauseGlyph({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <rect x="7.4" y="5.5" width="3.4" height="13" rx="1.1" />
+      <rect x="13.2" y="5.5" width="3.4" height="13" rx="1.1" />
+    </svg>
+  );
+}
+
+// A video item's own frame: a poster + duration chip until played, then real
+// inline playback with a scrubber — it never jumps to the lightbox. `small`
+// sizes the play badge/duration chip for a carousel slide vs. a lone video.
+// `active` is false for an off-screen carousel slide, so swiping away pauses
+// playback instead of leaving audio running behind another item.
+function VideoFrame({
+  m,
+  small,
+  active,
+  onAspect,
+  onError,
+}: {
+  m: FeedPic;
+  small: boolean;
+  active: boolean;
+  onAspect: (v: AspectVariant) => void;
+  onError: () => void;
+}) {
+  const { t } = useTranslation();
+  const ref = useRef<HTMLVideoElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const [dur, setDur] = useState(0);
+
+  useEffect(() => {
+    if (!active && playing) {
+      ref.current?.pause();
+      setPlaying(false);
+    }
+  }, [active, playing]);
+
+  return (
+    <div className="relative h-full w-full bg-black">
+      <video
+        ref={ref}
+        src={mediaUrl(m.url)}
+        poster={m.poster ? mediaUrl(m.poster) : undefined}
+        playsInline
+        preload="metadata"
+        onLoadedMetadata={(e) => {
+          const el = e.currentTarget;
+          setDur(el.duration);
+          onAspect(bucketAspect(el.videoWidth, el.videoHeight));
+        }}
+        onTimeUpdate={(e) => setElapsed(e.currentTarget.currentTime)}
+        onEnded={() => setPlaying(false)}
+        onError={onError}
+        className="h-full w-full object-cover"
+      />
+      {!playing ? (
+        <>
+          {dur > 0 && (
+            <span
+              className={cn(
+                "pointer-events-none absolute inline-flex items-center gap-[5px] rounded-full bg-black/60 px-[9px] py-1 text-caption font-semibold text-white backdrop-blur-sm",
+                small ? "bottom-2.5 left-2.5" : "bottom-2.5 right-2.5",
+              )}
+            >
+              {small && <IcPlay size={11} />} {fmtDuration(dur)}
+            </span>
+          )}
+          <button
+            type="button"
+            aria-label={t("feed.play_video")}
+            onClick={() => {
+              void ref.current?.play();
+              setPlaying(true);
+            }}
+            className={cn(
+              "absolute inset-0 m-auto grid place-items-center rounded-full border-[1.5px] border-white/55 bg-black/48 text-white backdrop-blur-sm transition-transform hover:scale-[1.04]",
+              small ? "h-[42px] w-[42px]" : "h-[58px] w-[58px]",
+            )}
+          >
+            <IcPlay size={small ? 18 : 22} className="ml-[3px]" />
+          </button>
+        </>
+      ) : (
+        <div className="absolute inset-x-0 bottom-0 flex items-center gap-[9px] bg-gradient-to-t from-black/70 to-transparent px-3 pb-[11px] pt-2.5">
+          <button
+            type="button"
+            aria-label={t("feed.pause_video")}
+            onClick={() => {
+              ref.current?.pause();
+              setPlaying(false);
+            }}
+            className="grid h-[26px] w-[26px] shrink-0 place-items-center text-white"
+          >
+            <PauseGlyph size={16} />
+          </button>
+          <span className="h-1 flex-1 overflow-hidden rounded-full bg-white/28">
+            <span className="block h-full rounded-full bg-white" style={{ width: `${dur ? (elapsed / dur) * 100 : 0}%` }} />
+          </span>
+          <span className="shrink-0 whitespace-nowrap font-mono text-[11px] tabular-nums text-white">
+            {fmtDuration(elapsed)} / {fmtDuration(dur)}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// A still image with a shimmer while it loads. `<img>`'s onLoad can fire
+// before React attaches the listener — a data-URI or a cached response can
+// resolve synchronously during mount — which would otherwise strand the
+// shimmer on screen forever over an opacity-0 image. The mount check below
+// (img.complete) catches that race.
+function ImageFrame({
+  m,
+  loaded,
+  onLoaded,
+  onAspect,
+  onError,
+}: {
+  m: FeedPic;
+  loaded: boolean;
+  onLoaded: () => void;
+  onAspect: (v: AspectVariant) => void;
+  onError: () => void;
+}) {
+  const ref = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (el && el.complete && el.naturalWidth > 0) {
+      onLoaded();
+      onAspect(bucketAspect(el.naturalWidth, el.naturalHeight));
+    }
+    // Mount-only: catches an image that finished loading before this effect
+    // could attach; the live onLoad handler below covers every other case.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <div className="relative h-full w-full">
+      {!loaded && <div className="skel absolute inset-0" />}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        ref={ref}
+        src={mediaUrl(m.url)}
+        alt={m.alt ?? ""}
+        onLoad={(e) => {
+          const el = e.currentTarget;
+          onLoaded();
+          onAspect(bucketAspect(el.naturalWidth, el.naturalHeight));
+        }}
+        onError={onError}
+        className={cn("h-full w-full object-cover", !loaded && "opacity-0")}
+      />
+    </div>
+  );
+}
+
 // Images on a published post: a single image, or a swipeable carousel. Click to
-// open the lightbox. Renders nothing for a text-only post. (Video/GIF/link/poll/
+// open the lightbox. Renders nothing for a text-only post. (GIF/link/poll/
 // quote variants from the spec are deferred until the feed carries that data.)
 // Exported so the dev /gallery route can render it in every state.
 export function FeedMedia({ media }: { media?: FeedPic[] | null }) {
@@ -264,15 +457,24 @@ export function FeedMedia({ media }: { media?: FeedPic[] | null }) {
   const [idx, setIdx] = useState(0);
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [broken, setBroken] = useState<Record<number, boolean>>({});
+  const [loaded, setLoaded] = useState<Record<number, boolean>>({});
+  const [aspect, setAspect] = useState<Record<number, AspectVariant>>({});
   if (!media || media.length === 0) return null;
   const total = media.length;
   const cur = Math.min(idx, total - 1);
+  // Carousel slides share one aspect, locked to the first item — matches the
+  // spec (per-slide aspect would jump the card's height mid-swipe).
+  const carouselAspect = ASPECT_CLASS[aspect[0] ?? "default"];
+
+  function setItemAspect(i: number, v: AspectVariant) {
+    setAspect((a) => (a[i] ? a : { ...a, [i]: v }));
+  }
 
   const frame = (i: number) => {
     const m = media[i];
     if (broken[i]) {
       return (
-        <div className="flex aspect-[3/2] w-full flex-col items-center justify-center gap-2 bg-surface-2 text-center text-text-subtle">
+        <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-surface-2 text-center text-text-subtle">
           <span className="grid h-10 w-10 place-items-center rounded-md border border-border">
             <IcImage size={20} />
           </span>
@@ -282,39 +484,22 @@ export function FeedMedia({ media }: { media?: FeedPic[] | null }) {
     }
     if (m.type === "video") {
       return (
-        <div className="relative h-full w-full bg-black">
-          {m.poster ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={mediaUrl(m.poster)}
-              alt={m.alt ?? ""}
-              onError={() => setBroken((b) => ({ ...b, [i]: true }))}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <video
-              src={mediaUrl(m.url)}
-              muted
-              playsInline
-              preload="metadata"
-              className="h-full w-full object-cover"
-            />
-          )}
-          <span className="pointer-events-none absolute inset-0 grid place-items-center">
-            <span className="grid h-12 w-12 place-items-center rounded-full bg-black/55 pl-0.5 text-white backdrop-blur-sm">
-              <IcPlay size={22} />
-            </span>
-          </span>
-        </div>
+        <VideoFrame
+          m={m}
+          small={total > 1}
+          active={i === cur}
+          onAspect={(v) => setItemAspect(i, v)}
+          onError={() => setBroken((b) => ({ ...b, [i]: true }))}
+        />
       );
     }
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={mediaUrl(m.url)}
-        alt={m.alt ?? ""}
+      <ImageFrame
+        m={m}
+        loaded={!!loaded[i]}
+        onLoaded={() => setLoaded((l) => (l[i] ? l : { ...l, [i]: true }))}
+        onAspect={(v) => setItemAspect(i, v)}
         onError={() => setBroken((b) => ({ ...b, [i]: true }))}
-        className="h-full w-full object-cover"
       />
     );
   };
@@ -322,32 +507,44 @@ export function FeedMedia({ media }: { media?: FeedPic[] | null }) {
   return (
     <div className="mt-3.5 max-md:mt-3">
       {total === 1 ? (
-        <button
-          type="button"
-          onClick={() => setLightbox(0)}
-          className="relative block w-full overflow-hidden rounded-md border border-border bg-surface-2"
-        >
-          <div className="aspect-[3/2] w-full">{frame(0)}</div>
-          <span className="pointer-events-none absolute bottom-2.5 right-2.5 inline-flex items-center gap-[5px] rounded-full bg-black/60 px-[9px] py-1 text-caption font-semibold text-white backdrop-blur-sm">
-            <IcExpand size={13} /> {t("feed.expand")}
-          </span>
-        </button>
+        media[0].type === "video" ? (
+          <div className={cn("relative w-full overflow-hidden rounded-md border border-border bg-surface-2", ASPECT_CLASS[aspect[0] ?? "default"])}>
+            {frame(0)}
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setLightbox(0)}
+            className="relative block w-full overflow-hidden rounded-md border border-border bg-surface-2"
+          >
+            <div className={cn("w-full", ASPECT_CLASS[aspect[0] ?? "default"])}>{frame(0)}</div>
+            <span className="pointer-events-none absolute bottom-2.5 right-2.5 inline-flex items-center gap-[5px] rounded-full bg-black/60 px-[9px] py-1 text-caption font-semibold text-white backdrop-blur-sm">
+              <IcExpand size={13} /> {t("feed.expand")}
+            </span>
+          </button>
+        )
       ) : (
         <div className="relative overflow-hidden rounded-md border border-border bg-surface-2">
           <div
             className="flex transition-transform duration-300 ease-out motion-reduce:transition-none"
             style={{ transform: `translateX(-${cur * 100}%)` }}
           >
-            {media.map((_, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => setLightbox(i)}
-                className="block aspect-[3/2] w-full shrink-0"
-              >
-                {frame(i)}
-              </button>
-            ))}
+            {media.map((m, i) =>
+              m.type === "video" ? (
+                <div key={i} className={cn("relative w-full shrink-0", carouselAspect)}>
+                  {frame(i)}
+                </div>
+              ) : (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setLightbox(i)}
+                  className={cn("block w-full shrink-0", carouselAspect)}
+                >
+                  {frame(i)}
+                </button>
+              ),
+            )}
           </div>
           <span className="pointer-events-none absolute right-2.5 top-2.5 rounded-full bg-black/60 px-[9px] py-1 text-caption font-semibold text-white backdrop-blur-sm">
             {cur + 1} / {total}

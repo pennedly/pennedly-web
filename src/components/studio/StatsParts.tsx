@@ -11,7 +11,7 @@ import { type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { smoothAreaPath, smoothLinePath } from "@/lib/chart";
-import { IcArrowDown, IcArrowRight, IcArrowUp, IcBubble, IcChart, IcClock, IcEye, IcHeart, IcLock, IcNib, IcSparkle } from "@/components/icons";
+import { IcArrowDown, IcArrowRight, IcArrowUp, IcBubble, IcChart, IcEye, IcHeart, IcLock, IcNib, IcSparkle } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { fmt } from "@/components/studio/FeedParts";
 import type { Gran, StatBucket, StatPeriodKey } from "@/components/studio/stats-demo";
@@ -484,116 +484,17 @@ export function TopPostsPanel({ cap, rows }: { cap: string; rows: TopPostRow[] }
   );
 }
 
-// ─────────────────────────────── BestTimesPanel ─────────────────────────────
-// "When your posts land" — average views per post grouped by local publish
-// hour and by weekday. The best slot (preferring slots with ≥2 posts, so one
-// lucky post doesn't crown an hour) is tinted accent and named in a chip.
+// `TimeSlotRow` — by-hour / by-weekday bucket shape. Its former sole consumer,
+// BestTimesPanel, was replaced by HeatmapPanel below; the type stays because
+// stats/page.tsx still types the model's byHour/byWeekday fields with it.
 export type TimeSlotRow = { slot: number; posts: number; avg: number };
-
-function bestOf(slots: TimeSlotRow[]): TimeSlotRow | null {
-  const candidates = slots.filter((s) => s.posts >= 2);
-  const pool = candidates.length ? candidates : slots.filter((s) => s.posts >= 1);
-  if (!pool.length) return null;
-  return pool.reduce((a, b) => (b.avg > a.avg ? b : a));
-}
-
-function TimeBars({
-  heading,
-  slots,
-  labelFor,
-  postsWord,
-  bestWord,
-}: {
-  heading: string;
-  slots: TimeSlotRow[];
-  labelFor: (slot: number) => string;
-  postsWord: string;
-  bestWord: string;
-}) {
-  const max = Math.max(1, ...slots.map((s) => s.avg));
-  const best = bestOf(slots);
-  const many = slots.length > 8; // many bars → fixed width + horizontal scroll on mobile
-  const cellW = many ? "max-md:w-9 max-md:shrink-0 md:min-w-0 md:flex-1" : "min-w-0 flex-1";
-  const bars = (
-    <div className={cn("flex gap-[6px]", many && "max-md:w-max")}>
-      {slots.map((s) => {
-        const isBest = best !== null && s.slot === best.slot && s.posts > 0;
-        return (
-          <div
-            key={s.slot}
-            className={cn("flex min-w-0 flex-col items-center gap-1.5", cellW)}
-            title={`${labelFor(s.slot)}: ${fmt(Math.round(s.avg))} · ${s.posts} ${postsWord}`}
-          >
-            <div className="flex h-[106px] w-full items-end">
-              <div
-                className="w-full rounded-t-[3px] transition-[height]"
-                style={{
-                  minHeight: "2px",
-                  height: s.posts ? `${Math.max(3, (s.avg / max) * 100)}%` : "2px",
-                  backgroundColor: isBest
-                    ? "var(--color-accent)"
-                    : s.posts
-                      ? "color-mix(in srgb, var(--color-text) 16%, var(--color-surface-2))"
-                      : "color-mix(in srgb, var(--color-text) 7%, var(--color-surface-2))",
-                }}
-              />
-            </div>
-            <span className={cn("w-full truncate text-center text-[10.5px] tabular-nums", isBest ? "font-semibold text-accent" : "text-text-subtle")}>
-              {labelFor(s.slot)}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-  return (
-    <div className="min-w-0">
-      <div className="mb-3.5 flex items-center justify-between gap-2">
-        <span className="text-small font-semibold text-text">{heading}</span>
-        {best && (
-          <span
-            className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-[9px] py-[3px] text-caption font-semibold text-accent"
-            style={{
-              background: "color-mix(in srgb, var(--color-accent) 12%, var(--color-surface))",
-              borderColor: "color-mix(in srgb, var(--color-accent) 28%, transparent)",
-            }}
-          >
-            <IcClock size={12} /> {bestWord} · {labelFor(best.slot)}
-          </span>
-        )}
-      </div>
-      {many ? <div className="[scrollbar-width:thin] max-md:overflow-x-auto">{bars}</div> : bars}
-    </div>
-  );
-}
-
-export function BestTimesPanel({ cap, byHour, byWeekday }: { cap: string; byHour: TimeSlotRow[]; byWeekday: TimeSlotRow[] }) {
-  const { t, locale } = useTranslation();
-  const hourLabel = (h: number) => new Date(2026, 0, 1, h).toLocaleTimeString(locale, { hour: "numeric" });
-  // Jan 2024 starts on a Monday, so day-of-month = ISO weekday 1..7.
-  const dayLabel = (d: number) => new Date(Date.UTC(2024, 0, d)).toLocaleDateString(locale, { weekday: "short", timeZone: "UTC" });
-  // Weekdays always render the full Mon..Sun shape; empty days show a stub.
-  const week: TimeSlotRow[] = Array.from({ length: 7 }, (_, i) => byWeekday.find((s) => s.slot === i + 1) ?? { slot: i + 1, posts: 0, avg: 0 });
-  return (
-    <section className="rounded-lg border border-border bg-surface px-5 pb-4 pt-[18px] shadow-sm">
-      <div className="mb-[18px]">
-        <div className="text-h3 font-semibold tracking-[-0.006em]">{t("stats.times_title")}</div>
-        <div className="mt-[3px] text-caption text-text-subtle">{cap}</div>
-      </div>
-      <div className="grid gap-6 md:grid-cols-2 md:gap-5">
-        <TimeBars heading={t("stats.by_hour")} slots={byHour} labelFor={hourLabel} postsWord={t("stats.posts_word")} bestWord={t("stats.best_chip")} />
-        <TimeBars heading={t("stats.by_weekday")} slots={week} labelFor={dayLabel} postsWord={t("stats.posts_word")} bestWord={t("stats.best_chip")} />
-      </div>
-    </section>
-  );
-}
 
 // ─────────────────────────────── Heatmap ────────────────────────────────────
 export type HeatCellRow = { weekday: number; block: number; posts: number; avg_views: number };
 
 // Cool → warm so the difference is obvious at a glance (the founder's ask):
 // low avg views = cool blue, high = warm coral. Index 0 = empty (no posts).
-const HEAT_COLORS = ["", "#85B7EB", "#5DCAA5", "#EF9F27", "#D85A30"];
+const HEAT_COLORS = ["", "var(--color-heat-1)", "var(--color-heat-2)", "var(--color-heat-3)", "var(--color-heat-4)"];
 const HEAT_BLOCK_KEYS: MessageKey[] = [
   "stats.block_morning",
   "stats.block_day",
@@ -673,28 +574,7 @@ export function HeatmapPanel({ cap, cells }: { cap: string; cells: HeatCellRow[]
   );
 }
 
-// ───────────────────────────── empty / skeleton ─────────────────────────────
-export function StatsEmpty() {
-  const { t } = useTranslation();
-  return (
-    <div className="flex flex-col items-center rounded-lg border border-dashed border-border bg-surface/50 px-7 py-16 text-center">
-      <span className="mb-[18px] grid h-[54px] w-[54px] place-items-center rounded-lg border border-border bg-surface-2 text-text-subtle">
-        <IcChart size={26} />
-      </span>
-      <h2 className="text-h2 font-semibold tracking-[-0.01em]">{t("stats.empty_title")}</h2>
-      <p className="mt-2 max-w-[44ch] text-body leading-[1.55] text-text-muted">{t("stats.empty_sub")}</p>
-      <div className="mt-[22px] flex gap-[22px] text-small text-text-subtle">
-        <span>
-          <b className="font-semibold text-text">1</b> {t("stats.empty_meta1")}
-        </span>
-        <span>
-          <b className="font-semibold text-text">3</b> {t("stats.empty_meta2")}
-        </span>
-      </div>
-    </div>
-  );
-}
-
+// ───────────────────────────────── skeleton ──────────────────────────────────
 function SkelCard({ hero = false }: { hero?: boolean }) {
   return (
     <div className={cn("rounded-lg border border-border bg-surface py-4 shadow-sm", hero ? "px-[18px] max-md:col-span-3 max-md:order-first" : "px-[18px] max-md:px-3.5")}>
