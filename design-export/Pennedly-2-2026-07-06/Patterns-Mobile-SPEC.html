@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Pennedly · Pattern study — Mobile spec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="ds/tokens.css"/>
+<link rel="stylesheet" href="ds/components.css"/>
+<link rel="stylesheet" href="mobile/pennedly-mobile.css"/>
+<link rel="stylesheet" href="mobile/frame.css"/>
+<link rel="stylesheet" href="mobile/spec.css"/>
+</head>
+<body>
+<div class="layout">
+
+<aside class="toc">
+  <div class="doc-mark">
+    <span class="nib"><svg width="18" height="18" viewBox="0 0 512 512"><g fill="#ededed"><g transform="rotate(42 256 256)"><path d="M236 150 Q236 128 256 128 Q276 128 276 150 L276 300 L256 360 L236 300 Z"/><rect x="236" y="206" width="40" height="7"/></g></g></svg></span>
+    <b>Pennedly</b>
+  </div>
+  <div class="doc-sub">Mobile spec · Pattern study</div>
+  <nav>
+    <a href="#s1"><span class="n">1</span> Screen identity</a>
+    <a href="#s2"><span class="n">2</span> The phone layout</a>
+    <a href="#s3"><span class="n">3</span> Shell: top bar + drawer</a>
+    <a href="#s4"><span class="n">4</span> Pattern card — the fix</a>
+    <a class="sub" href="#s4">— ×N · evidence · examples</a>
+    <a href="#s5"><span class="n">5</span> Strength &amp; long examples</a>
+    <a href="#s6"><span class="n">6</span> States</a>
+    <a class="sub" href="#s6">— loading · empty · error</a>
+    <a href="#s7"><span class="n">7</span> Anatomy &amp; values</a>
+    <a href="#s8"><span class="n">8</span> Web ↔ mobile</a>
+    <a href="#s9"><span class="n">9</span> Localization &amp; 360px</a>
+    <a href="#s10"><span class="n">10</span> Checklist</a>
+  </nav>
+  <div class="meta">
+    Screen: <b>Pattern study</b> <span style="color:var(--subtle)">(tester-gated)</span><br>
+    Route: <code>/app/patterns</code><br>
+    Desktop spec: <a class="link" href="Patterns-SPEC.html">Patterns-SPEC.html</a><br>
+    Phone breakpoint: <code>≤ 600px</code> · ref 390<br>
+    Layer: <code>mobile/pennedly-mobile.css</code><br>
+    System: <a class="link" href="Pennedly Design System.html#m-shell">DS · Mobile</a>
+  </div>
+</aside>
+
+<main>
+  <div class="doc-head">
+    <p class="kicker">Pennedly · Mobile spec · per-screen</p>
+    <h1 class="title">Pattern study <span>/app/patterns</span> — phone</h1>
+    <p class="lede">A self-study: Pennedly reads back through <strong>your own published posts</strong> and surfaces the patterns that correlate with more engagement — “posts that open with a question”, “short posts”, “posts about revision” — each with a <strong>×N multiplier</strong> for how much better it performs vs your baseline, the evidence, and example posts of yours. (The separate “Explore patterns” screen studies broader content — not this one.) A reading-width, read-only insight screen. Same tokens, findings and states as <a class="link" href="Patterns-SPEC.html">the desktop spec</a>; only the layout changes below 600px, on the decided shell (hamburger + drawer, no tab bar, free bottom edge). Frames are the real component layer at 390px, light and dark.</p>
+    <div class="filerow">
+      <span class="chip chip--mob">pennedly-mobile.css</span>
+      <span class="chip">patterns-app.jsx</span>
+      <span class="chip">patterns-parts.jsx</span>
+      <span class="chip">shell-parts.jsx</span>
+      <span class="chip">ds/tokens.css</span>
+    </div>
+  </div>
+
+  <div class="note good"><b>What does not change.</b> Pattern study is read-only insight, computed from the user’s own published posts; it needs a minimum amount of content before it can find patterns (hence the not-enough-data state). The ×N is derived from the engagement delta of posts with the trait, backed by the evidence comparison and real example posts. No user actions beyond reading; no patterns the backend doesn’t produce. (The earlier “Topics” chip stays dropped.) Mobile is a layout pass; the only structural change is the shared app shell.</div>
+
+  <!-- 1 -->
+  <section id="s1">
+    <h2><span class="h2n">1</span>Screen identity</h2>
+    <div class="tbl-wrap"><table><tbody>
+      <tr><th style="width:210px">Route</th><td><code>/app/patterns</code> — tester-gated (drawer row hidden for non-testers).</td></tr>
+      <tr><th>Desktop width</th><td><code>--content-reading</code> (~720px); a reading column of pattern cards.</td></tr>
+      <tr><th>Phone width</th><td>100% − 14px gutters; single column.</td></tr>
+      <tr><th>Top→bottom (phone)</th><td>Status bar → top bar (hamburger · “Pattern study” · theme) → intro framing → pattern cards (or loading / empty / error) → <em>free bottom edge</em>.</td></tr>
+      <tr><th>Read-only</th><td>Insight only — no accept/reject, no editing.</td></tr>
+    </tbody></table></div>
+  </section>
+
+  <!-- 2 -->
+  <section id="s2">
+    <h2><span class="h2n">2</span>The phone layout</h2>
+    <p class="section-note">The whole screen in context, light and dark: the “what we learned from your posts” intro, then a column of pattern cards — each with its kind tag, strength, the prominent ×N finding, the evidence comparison, and example posts. The list runs to the free bottom edge.</p>
+    <div class="stage" id="stg-layout"></div>
+  </section>
+
+  <!-- 3 -->
+  <section id="s3">
+    <h2><span class="h2n">3</span><span class="stg stg--shell">shell</span>Shell: top bar + drawer</h2>
+    <p class="section-note">The shell is shared (see <a class="link" href="Pennedly Design System.html#m-shell">DS · App shell &amp; nav</a>). Pattern-study-specific shell values:</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:200px">Slot</th><th>Pattern study value</th></tr></thead>
+      <tbody>
+        <tr><td>Hamburger</td><td>Far left, opens <code>.m-drawer</code> (active row = Pattern study).</td></tr>
+        <tr><td>Title</td><td>“Pattern study” — the longest title in the app; truncates with ellipsis before the (absent) pill.</td></tr>
+        <tr><td>Top-bar action</td><td>Theme toggle only; account in the drawer foot.</td></tr>
+        <tr><td>Column</td><td>Reading width — one column; findings and example posts wrap freely.</td></tr>
+      </tbody>
+    </table></div>
+    <div class="stage" id="stg-drawer"></div>
+  </section>
+
+  <!-- 4 -->
+  <section id="s4">
+    <h2><span class="h2n">4</span><span class="stg stg--fix">fix</span>Pattern card — the fix</h2>
+    <p class="section-note">Each pattern card carries a lot: the trait, the ×N, the lifted metric, an evidence comparison (lead vs baseline), and example posts. On desktop the evidence sits as label · bar · value on one line. That triple doesn’t fit 390px.</p>
+    <div class="fix">
+      <div class="fix-bad"><h5>Before</h5><p>The evidence row [label | bar | value] crushes: the bar shrinks to a stub and the value wraps under the label. The ×N competes with the headline for the same line.</p></div>
+      <div class="fix-good"><h5>After</h5><p>Everything stacks. The ×N stays a big, prominent number beside the wrapping headline + lifted metric. Each evidence row becomes label + value on top of a full-width track bar (lead = accent, baseline = muted). Example posts are full-width inset quotes with their metric below.</p></div>
+    </div>
+    <div class="stage" id="stg-card"></div>
+    <div class="note"><b>Rules.</b> The ×N is <code>2.15rem</code>/700 in accent — the most prominent thing on the card, never shrunk. Evidence bars are scaled to the larger of the two values; the “n=” sample sizes fold into the note line. Examples wrap freely (no clamp — reading them is the point); if a card grows very tall, the examples are the natural disclosure boundary. The lifted-metric line (“more comments”) reads in success ink.</div>
+  </section>
+
+  <!-- 5 -->
+  <section id="s5">
+    <h2><span class="h2n">5</span>Strength &amp; long examples</h2>
+    <p class="section-note">A pattern is either a <strong>strong signal</strong> (success) or <strong>worth testing</strong> (warning, fewer posts behind it). Example posts vary in length — a long one just grows the card and wraps, never truncates.</p>
+    <div class="stage" id="stg-strength"></div>
+  </section>
+
+  <!-- 6 -->
+  <section id="s6">
+    <h2><span class="h2n">6</span>States</h2>
+    <div class="statebar"><span class="st">loading</span><span class="st">ready</span><span class="st">not enough data</span><span class="st">error</span></div>
+    <p class="section-note">Loading shows skeleton cards; ready is the populated study; the empty state explains it needs more posts (with a progress bar toward the minimum); error is the shared banner with Retry.</p>
+    <div class="stage" id="stg-states"></div>
+  </section>
+
+  <!-- 7 -->
+  <section id="s7">
+    <h2><span class="h2n">7</span>Anatomy &amp; exact values</h2>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:210px">Element / class</th><th>Phone value</th></tr></thead>
+      <tbody>
+        <tr><td><code>.m-pintro</code></td><td>“what we learned from your posts” + posts-studied count.</td></tr>
+        <tr><td><code>.pattern-card</code></td><td>kind tag + strength; finding; evidence; examples.</td></tr>
+        <tr><td><code>.m-pc-stat</code></td><td>the ×N — <code>2.15rem</code>/700 accent, tabular; never shrunk.</td></tr>
+        <tr><td><code>.m-pc-metric</code></td><td>“more {metric}” in success ink.</td></tr>
+        <tr><td><code>.m-strength--strong / --emerging</code></td><td>“Strong signal” (success) / “Worth testing” (warning) · N posts.</td></tr>
+        <tr><td><code>.m-ev-row</code></td><td>label + value over a full-width track; lead = accent, base = muted.</td></tr>
+        <tr><td><code>.m-ex</code></td><td>left-rule inset; example text wraps; metric below.</td></tr>
+        <tr><td><code>.m-pe-progress</code></td><td>not-enough-data progress bar (have / need posts).</td></tr>
+        <tr><td><code>.m-content--notab</code></td><td>bottom inset = <code>26 + safe-area</code> (no tab bar).</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- 8 -->
+  <section id="s8">
+    <h2><span class="h2n">8</span>Web ↔ mobile</h2>
+    <div class="two">
+      <div class="pane web"><h4>Desktop ( &gt; 900 )</h4>
+        <ul>
+          <li>Fixed sidebar; ~720px reading column.</li>
+          <li>Evidence rows as label · bar · value on one line.</li>
+          <li>×N beside the headline; examples inset.</li>
+        </ul>
+      </div>
+      <div class="pane mob"><h4>Phone ( ≤ 600 )</h4>
+        <ul>
+          <li>No sidebar/tab bar; hamburger → drawer + account; free bottom edge.</li>
+          <li>Evidence rows stack: label+value over a full-width bar.</li>
+          <li>×N stays prominent beside the wrapping headline; examples full-width.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 -->
+  <section id="s9">
+    <h2><span class="h2n">9</span>Localization &amp; 360px</h2>
+    <p class="section-note">Headlines, kind tags, strength labels, evidence labels and the lifted-metric phrase all localize into 8 locales; DE/RU/UK run ~30–40% longer. On a phone: the ×N is locale-neutral and stays prominent; the headline wraps beside it; evidence labels wrap above their bar (the value stays on the right); example posts wrap freely; the strength badge wraps under the kind tag rather than clipping. Numbers are tabular and locale-formatted.</p>
+    <div class="note"><b>360px behavior.</b> No new breakpoint — the gutter stays 14px; cards get ~30px narrower so headlines and examples rewrap to more lines and evidence bars get a touch shorter. The ×N never shrinks. The drawer stays <code>min(82%, 312px)</code> → 82% (≈295px) at 360.</div>
+    <div class="stage" id="stg-narrow"></div>
+  </section>
+
+  <!-- 10 -->
+  <section id="s10">
+    <h2><span class="h2n">10</span>Checklist</h2>
+    <ul class="check">
+      <li>Below 600px there is no sidebar and no tab bar — one 52px top bar with a hamburger far-left; “Pattern study” truncates if needed.</li>
+      <li>Hamburger opens the left drawer (active = Pattern study) + account; bottom edge free.</li>
+      <li>Intro frames it as the user’s OWN posts; no “Topics” chip.</li>
+      <li>Each card: kind tag + strength (strong/worth-testing · N posts), a prominent ×N, the lifted metric, evidence comparison, example posts.</li>
+      <li>×N stays big and legible (accent, 2.15rem) — never shrunk to fit.</li>
+      <li>Evidence rows stack (label+value over a full-width bar; lead accent vs muted baseline).</li>
+      <li>Example posts wrap freely; a long example just grows the card — no clipping.</li>
+      <li>Loading = skeleton cards; not-enough-data shows a progress bar toward the minimum; error banner has Retry.</li>
+      <li>Read-only — no accept/reject, no editing.</li>
+      <li>Labels wrap on long locales — never clipped; sanity-checked at 360px.</li>
+      <li>Correct in light and dark; no hardcoded colour.</li>
+    </ul>
+  </section>
+
+</main>
+</div>
+
+<script src="mobile/sprite.js"></script>
+<script src="mobile/mock.js"></script>
+<script>
+(function () {
+  var M = window.MOCK;
+  function set(id, html){ var e=document.getElementById(id); if(e) e.innerHTML=html; }
+
+  var top = M.top({ title:'Pattern study', menu:true });
+
+  var pHook = M.patternCard({ kind:'Hook', strength:'strong', sample:18, stat:'2.1×', metric:'comments',
+    headline:'Posts that open with a question pull more than twice the comments.',
+    lead:{ label:'Opens with a question', display:'34 avg comments', value:34 },
+    base:{ label:'Opens with a statement', display:'16 avg comments', value:16 },
+    note:'Across 18 posts that opened on a question · n=18 vs 29 — a reliable signal.',
+    examples:[
+      { text:'what’s the worst writing advice you ever actually followed? I’ll go first.', metric:'47 comments' },
+      { text:'do you outline everything first, or just start typing and pray? asking for science.', metric:'38 comments' },
+    ] });
+  var pLength = M.patternCard({ kind:'Length', strength:'strong', sample:23, stat:'1.7×', metric:'views',
+    headline:'Your short posts under 120 characters travel almost twice as far.',
+    lead:{ label:'Under 120 characters', display:'24.6K avg views', value:24600 },
+    base:{ label:'Over 120 characters', display:'14.2K avg views', value:14200 },
+    note:'The tighter the line, the further it goes · n=23 vs 24.',
+    examples:[
+      { text:'you don’t need a bigger audience. you need 100 people who’d be genuinely bummed if you stopped.', metric:'31.8K views' },
+    ] });
+  var pTopic = M.patternCard({ kind:'Topic', strength:'strong', sample:14, stat:'1.9×', metric:'likes',
+    headline:'Posts about revision outperform posts about motivation, nearly 2 to 1.',
+    lead:{ label:'Craft & revision', display:'412 avg likes', value:412 },
+    base:{ label:'Motivation & mindset', display:'218 avg likes', value:218 },
+    note:'When you write about the work itself, people lean in · n=14 vs 19.',
+    examples:[
+      { text:'wrote 1,000 words this morning before email. cut 600. the 400 that survived are the only ones that mattered. that’s the whole job some days — deciding what doesn’t belong.', metric:'48.2K views' },
+    ] });
+  var pTiming = M.patternCard({ kind:'Timing', strength:'emerging', sample:9, stat:'1.6×', metric:'views',
+    headline:'Tuesday mornings are quietly your strongest reach window.',
+    lead:{ label:'Tue 8–10am', display:'28.1K avg views', value:28100 },
+    base:{ label:'All other slots', display:'17.3K avg views', value:17300 },
+    note:'Promising, but only 9 posts so far — worth testing before you commit.',
+    examples:[
+      { text:'consistency compounds. bursts don’t. that’s the whole strategy.', metric:'22.9K views' },
+    ] });
+
+  var body = M.patternsIntro(47, '3 days ago') + pHook + pLength + pTopic;
+
+  /* 2 — full layout */
+  set('stg-layout',
+    M.col(M.light(), M.phone({ top:top, body:body, tabs:false }), 'Pattern study in context — intro + pattern cards with ×N, evidence, examples.') +
+    M.col(M.dark(), M.phone({ dark:true, top:top, body:body, tabs:false }), 'Identical layout, dark tokens.'));
+
+  /* 3 — drawer */
+  set('stg-drawer',
+    M.col(M.light('Drawer'), M.phone({ top:top, body:body, tabs:false, overlay:M.drawer('patterns') }), 'Hamburger → left drawer; active row = Pattern study.') +
+    M.col(M.dark('Drawer · dark'), M.phone({ dark:true, top:top, body:body, tabs:false, overlay:M.drawer('patterns') }), ''));
+
+  /* 4 — card */
+  set('stg-card',
+    M.col(M.light('Hook · 2.1×'), M.comp(pHook), 'Prominent ×N; stacked evidence bars; example posts.') +
+    M.col(M.light('Length · 1.7×'), M.comp(pLength), 'A different lifted metric (views).') +
+    M.col(M.dark('Hook · dark'), M.comp(pHook, { dark:true }), ''));
+
+  /* 5 — strength + long example */
+  set('stg-strength',
+    M.col(M.light('Strong signal'), M.comp(pTopic), 'Strong signal · a long example wraps, grows the card.') +
+    M.col(M.light('Worth testing'), M.comp(pTiming), 'Emerging pattern — warning strength, fewer posts.') +
+    M.col(M.dark('Worth testing · dark'), M.comp(pTiming, { dark:true }), ''));
+
+  /* 6 — states */
+  set('stg-states',
+    M.col(M.light('Loading'), M.phone({ top:top, tabs:false, body: M.patternsSkeleton() }), 'Skeleton intro + cards.') +
+    M.col(M.light('Not enough data'), M.phone({ top:top, tabs:false, body: M.patternsEmpty(6, 15) }), 'Needs more posts — progress toward the minimum.') +
+    M.col(M.light('Error'), M.phone({ top:top, tabs:false, body: M.errorBanner('Couldn’t load your study','Something went wrong on our end.') }), 'Shared error banner with Retry.') +
+    M.col(M.dark('Not enough · dark'), M.phone({ dark:true, top:top, tabs:false, body: M.patternsEmpty(6, 15) }), ''));
+
+  /* 9 — 360 */
+  set('stg-narrow',
+    M.col(M.light('360 · study'), M.phone({ variant:'sm', top:top, body:body, tabs:false }), 'Same rules at 360 — headlines + examples rewrap; ×N never shrinks.') +
+    M.col(M.light('360 · card'), M.comp(pTopic, { sm:true }), 'Long example holds at 360px.') +
+    M.col(M.dark('360 · dark'), M.phone({ variant:'sm', dark:true, top:top, body:body, tabs:false }), ''));
+})();
+</script>
+</body>
+</html>

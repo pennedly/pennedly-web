@@ -48,7 +48,7 @@
   const T = {
     ru: {
       // shell / nav (ACCOUNT level — not the profile menu)
-      navDashboard: "Дашборд", navBrands: "Бренды", navAdvisor: "Советник",
+      navDashboard: "Дашборд", navBrands: "Бренды", navAdvisor: "Агент",
       navSettings: "Настройки аккаунта",
       switchAccount: "Сменить аккаунт", accountWord: "Аккаунт", logout: "Выйти",
       settings: "Настройки аккаунта",
@@ -68,8 +68,8 @@
       subAll: "по портфелю", sub7d: "за 7 дней", subWeek: "на неделе", subWait: "к разбору",
       importing: "импортируется",
       // advisor (account scope)
-      advTitle: "Советник аккаунта", advScope: "По всему портфелю",
-      advGrounded: "На основе", advOpen: "Открыть советника",
+      advTitle: "Агент аккаунта", advScope: "По всему портфелю",
+      advGrounded: "На основе", advOpen: "Открыть агента",
       advAsk: "Спросите о портфеле…", advReco: "Рекомендации",
       // cards section
       secProfiles: "Профили", secBrands: "Бренды",
@@ -85,6 +85,37 @@
       newWelcome: "С возвращением", newSub: "Вот ваш портфель одним взглядом.",
       // brand kinds (subtitle on a brand mark)
       brandPersonal: "Личный бренд", brandPub: "Издание", brandClient: "Клиент",
+      // ── account settings screen (/app/account/settings) ──
+      setTitle: "Настройки аккаунта",
+      setLead: "Аккаунт, язык интерфейса, тариф и ваши данные. Настройки отдельных профилей живут внутри каждого профиля.",
+      setAccountCap: "Аккаунт", setName: "Имя", setEmail: "Email", setPlan: "Тариф",
+      setNameHint: "Так вас видят в Pennedly.", setEmailHint: "Вход и уведомления.",
+      planNote: "Оплачен · продление 12 апреля", planManage: "Тариф",
+      setLangCap: "Язык интерфейса",
+      setLangHint: "Меняет язык меток и меню Pennedly. Черновики остаются на том языке, на котором вы их пишете.",
+      setDataCap: "Данные",
+      exportT: "Экспорт данных", exportS: "Заберите все посты, черновики и статистику по портфелю одним архивом.",
+      exportBtn: "Экспортировать",
+      exportPreparing: "Готовим архив…", exportPrepNote: "Пришлём ссылку на почту, когда будет готово.",
+      exportReady: "Архив готов", exportReadyNote: "Ссылка активна 24 часа.", exportDownload: "Скачать .zip",
+      dangerCap: "Опасная зона",
+      deleteT: "Удалить аккаунт", deleteS: "Навсегда удаляет аккаунт, все бренды, профили и данные. Отменить нельзя.",
+      deleteBtn: "Удалить аккаунт",
+      deleteConfirmT: "Удалить аккаунт безвозвратно?",
+      deleteConfirmS: "Будут удалены аккаунт, все бренды и профили, посты, черновики и статистика. Это необратимо.",
+      deleteTypeLab: "Для подтверждения введите", deleteTypeWord: "УДАЛИТЬ", deleteCancel: "Отмена", deleteGo: "Удалить навсегда",
+      deleting: "Удаляем аккаунт…", deletingNote: "Отзываем доступы и стираем данные.",
+      // ── portfolio advisor chat (/app/account/advisor) ──
+      advChatScope: "По всему портфелю", advPill: "На основе всего портфеля",
+      advPinnedCap: "Сводка портфеля", advAskPort: "Спросите о портфеле…", advOpenFull: "Открыть агента",
+      advTry: "Спросите, например", advReading: "Читаю статистику портфеля…",
+      advThinT: "Пока мало данных по портфелю",
+      advThinS: "Профили ещё набирают историю. Как накопится за пару недель — дам конкретику по росту; пока помогу с базовой настройкой.",
+      advErrT: "Не удалось связаться с агентом", advErrS: "Запрос отвалился по таймауту. Данные целы — это только соединение.", advRetry: "Повторить",
+      advName: "Агент Pennedly", advGroundedFull: "На основе",
+      // ── account ↔ profile navigation (#7) ──
+      navBackDash: "Дашборд аккаунта", navBackShort: "Аккаунт",
+      crumbAdvisor: "Агент", crumbSettings: "Настройки", testerGated: "Тестер",
     },
     de: {
       navDashboard: "Übersicht", navBrands: "Marken", navAdvisor: "Berater",
@@ -115,6 +146,34 @@
       addBrandS: "Profile unter einer eigenen Stimme und Auswertung bündeln.",
       newWelcome: "Willkommen zurück", newSub: "Dein Portfolio auf einen Blick.",
       brandPersonal: "Persönliche Marke", brandPub: "Publikation", brandClient: "Kunde",
+      setTitle: "Kontoeinstellungen",
+      setLead: "Konto, Anzeigesprache, Tarif und deine Daten. Einstellungen einzelner Profile liegen im jeweiligen Profil.",
+      setAccountCap: "Konto", setName: "Name", setEmail: "E-Mail", setPlan: "Tarif",
+      setNameHint: "So erscheinst du in Pennedly.", setEmailHint: "Anmeldung und Benachrichtigungen.",
+      planNote: "Bezahlt · Verlängerung 12. April", planManage: "Tarif",
+      setLangCap: "Anzeigesprache",
+      setLangHint: "Ändert Beschriftungen und Menüs von Pennedly. Deine Entwürfe bleiben in ihrer Sprache.",
+      setDataCap: "Daten",
+      exportT: "Daten exportieren", exportS: "Alle Beiträge, Entwürfe und Portfolio-Statistiken als ein Archiv.",
+      exportBtn: "Exportieren",
+      exportPreparing: "Archiv wird erstellt…", exportPrepNote: "Wir mailen den Link, sobald es fertig ist.",
+      exportReady: "Archiv bereit", exportReadyNote: "Link 24 Stunden gültig.", exportDownload: ".zip laden",
+      dangerCap: "Gefahrenzone",
+      deleteT: "Konto löschen", deleteS: "Löscht Konto, alle Marken, Profile und Daten dauerhaft. Nicht umkehrbar.",
+      deleteBtn: "Konto löschen",
+      deleteConfirmT: "Konto unwiderruflich löschen?",
+      deleteConfirmS: "Gelöscht werden Konto, alle Marken und Profile, Beiträge, Entwürfe und Statistiken. Dieser Schritt ist endgültig.",
+      deleteTypeLab: "Zum Bestätigen tippe", deleteTypeWord: "LÖSCHEN", deleteCancel: "Abbrechen", deleteGo: "Endgültig löschen",
+      deleting: "Konto wird gelöscht…", deletingNote: "Zugänge werden entzogen, Daten gelöscht.",
+      advChatScope: "Über das gesamte Portfolio", advPill: "Basiert aufs Portfolio",
+      advPinnedCap: "Portfolio-Überblick", advAskPort: "Frag zu deinem Portfolio…", advOpenFull: "Berater öffnen",
+      advTry: "Frag zum Beispiel", advReading: "Lese Portfolio-Statistiken…",
+      advThinT: "Noch wenig Portfolio-Daten",
+      advThinS: "Die Profile sammeln noch Verlauf. In ein paar Wochen wird der Rat konkret; bis dahin helfe ich beim Setup.",
+      advErrT: "Berater nicht erreichbar", advErrS: "Zeitüberschreitung. Deine Daten sind da — nur die Verbindung.", advRetry: "Erneut versuchen",
+      advName: "Pennedly Berater", advGroundedFull: "Basis",
+      navBackDash: "Konto-Übersicht", navBackShort: "Konto",
+      crumbAdvisor: "Berater", crumbSettings: "Einstellungen", testerGated: "Tester",
     },
   };
 
@@ -318,6 +377,120 @@
     },
   };
 
+  // ── interface locales (8) — code badge + native name + localized label ──
+  const LOCALE_NAMES = [
+    { code: "EN", native: "English", ru: "Английский", de: "Englisch" },
+    { code: "RU", native: "Русский", ru: "Русский", de: "Russisch" },
+    { code: "UK", native: "Українська", ru: "Украинский", de: "Ukrainisch" },
+    { code: "DE", native: "Deutsch", ru: "Немецкий", de: "Deutsch" },
+    { code: "ES", native: "Español", ru: "Испанский", de: "Spanisch" },
+    { code: "FR", native: "Français", ru: "Французский", de: "Französisch" },
+    { code: "IT", native: "Italiano", ru: "Итальянский", de: "Italienisch" },
+    { code: "PT", native: "Português", ru: "Португальский", de: "Portugiesisch" },
+  ];
+
+  // ── portfolio advisor chat — reuses the /app/advisor vocabulary (chip tones,
+  //    suggestion cards, sources line); scope = data across ALL portfolio
+  //    profiles. Hero verdict is the pinned ADVISOR[mode] summary above. ──
+  const ADVISOR_CHAT = {
+    single_brand: {
+      starters: [
+        { icon: "alert", text: { ru: "Что чинить в первую очередь?", de: "Was zuerst reparieren?" } },
+        { icon: "nib", text: { ru: "Где просел темп постинга?", de: "Wo sank das Posting-Tempo?" } },
+        { icon: "users", text: { ru: "Какой профиль растёт быстрее?", de: "Welches Profil wächst schneller?" } },
+      ],
+      turns: [
+        {
+          q: { ru: "Что требует внимания по портфелю прямо сейчас?", de: "Was braucht im Portfolio gerade Aufmerksamkeit?" },
+          paras: [
+            { ru: "Две вещи, и обе быстрые. <b>@mara.co</b> выпал из синка — 6 часов без данных, поэтому портфель считается без него. И в <b>@mara.notes</b> копятся <b>7 ответов</b>, старшему уже 3 часа.", de: "Zwei Dinge, beide schnell erledigt. <b>@mara.co</b> ist aus dem Sync gefallen — 6 Stunden ohne Daten, daher rechnet das Portfolio ohne ihn. Und bei <b>@mara.notes</b> stauen sich <b>7 Antworten</b>, die älteste seit 3 Stunden." },
+            { ru: "Начал бы с синка: данные целы, нужен только повторный коннект — и профиль вернётся в общий счёт.", de: "Ich würde mit dem Sync starten: die Daten sind da, es braucht nur eine neue Verbindung — dann zählt das Profil wieder mit." },
+          ],
+          chips: [
+            { tone: "down", icon: "alert", text: { ru: "@mara.co · сбой синка", de: "@mara.co · Sync-Fehler" } },
+            { tone: "accent", icon: "reply", text: { ru: "7 ответов · @mara.notes", de: "7 Antworten · @mara.notes" } },
+            { tone: "down", icon: null, text: { ru: "6 ч без данных", de: "6 Std. ohne Daten" } },
+          ],
+          sources: { ru: "Профили · Статистика портфеля · Ответы", de: "Profile · Portfolio-Statistik · Antworten" },
+          suggest: {
+            icon: "alert", tone: "danger",
+            t: { ru: "Почини синк @mara.co", de: "Sync von @mara.co reparieren" },
+            s: { ru: "6 ч без обновления. Повторный коннект вернёт данные в портфель.", de: "6 Std. ohne Update. Neu verbinden holt die Daten ins Portfolio zurück." },
+            primary: { ru: "Открыть @mara.co", de: "@mara.co öffnen" },
+            secondary: { ru: "Все ответы", de: "Alle Antworten" },
+          },
+        },
+        {
+          q: { ru: "Где просел темп постинга?", de: "Wo sank das Posting-Tempo?" },
+          paras: [
+            { ru: "В основном на <b>@mara.studio</b> — за неделю всего <b>2 поста</b> против обычных 5. По всему портфелю вышло <b>10 постов</b> против 14 неделей раньше, и почти вся просадка — здесь.", de: "Vor allem bei <b>@mara.studio</b> — nur <b>2 Beiträge</b> diese Woche statt der üblichen 5. Im ganzen Portfolio waren es <b>10 Beiträge</b> gegenüber 14 in der Vorwoche, und fast der ganze Rückgang liegt hier." },
+            { ru: "Остальные профили держат темп. Два коротких поста в твоём голосе обычно возвращают ритм быстрее всего.", de: "Die anderen Profile halten das Tempo. Zwei kurze Beiträge in deiner Stimme bringen den Rhythmus meist am schnellsten zurück." },
+          ],
+          chips: [
+            { tone: "down", icon: "nib", text: { ru: "@mara.studio · 2 поста", de: "@mara.studio · 2 Beiträge" } },
+            { tone: "down", icon: null, text: { ru: "портфель 10 ← 14", de: "Portfolio 10 ← 14" } },
+            { tone: "accent", icon: null, text: { ru: "остальные в норме", de: "Rest im Plan" } },
+          ],
+          sources: { ru: "Посты · Статистика портфеля", de: "Beiträge · Portfolio-Statistik" },
+          suggest: {
+            icon: "nib", tone: "accent",
+            t: { ru: "Верни 5 постов в неделю на @mara.studio", de: "@mara.studio zurück auf 5 Beiträge/Woche" },
+            s: { ru: "Профиль просел до 2 постов. Заведу черновик в твоём голосе.", de: "Auf 2 Beiträge gefallen. Ich lege einen Entwurf in deiner Stimme an." },
+            primary: { ru: "Открыть Студию", de: "Studio öffnen" },
+            secondary: { ru: "Показать статистику", de: "Statistik zeigen" },
+          },
+        },
+      ],
+    },
+    multi_brand: {
+      starters: [
+        { icon: "layers", text: { ru: "Какой бренд ведёт по росту?", de: "Welche Marke führt beim Wachstum?" } },
+        { icon: "alert", text: { ru: "Где сбои по брендам?", de: "Wo gibt es Marken-Fehler?" } },
+        { icon: "nib", text: { ru: "Что повторить на этой неделе?", de: "Was diese Woche wiederholen?" } },
+      ],
+      turns: [
+        {
+          q: { ru: "Как идут бренды в этом месяце?", de: "Wie laufen die Marken diesen Monat?" },
+          paras: [
+            { ru: "Портфель в плюсе: <b>+596 подписчиков</b> за 30 дней по трём брендам. <b>Mara Lin</b> — лучший по охвату, <b>Northwind</b> только подключил LinkedIn и ещё импортируется.", de: "Das Portfolio wächst: <b>+596 Follower</b> in 30 Tagen über drei Marken. <b>Mara Lin</b> führt bei der Reichweite, <b>Northwind</b> hat gerade LinkedIn verbunden und importiert noch." },
+            { ru: "Единственный риск — <b>Field Notes</b>: там один профиль со сбоем синка, и бренд считается без него.", de: "Das einzige Risiko ist <b>Field Notes</b>: dort hat ein Profil einen Sync-Fehler, und die Marke rechnet ohne ihn." },
+          ],
+          chips: [
+            { tone: "up", icon: "users", text: { ru: "+596 за 30 дней", de: "+596 in 30 Tagen" } },
+            { tone: "accent", icon: "layers", text: { ru: "3 бренда · 6 профилей", de: "3 Marken · 6 Profile" } },
+            { tone: "down", icon: "alert", text: { ru: "Field Notes · 1 сбой", de: "Field Notes · 1 Fehler" } },
+          ],
+          sources: { ru: "Бренды · Профили · Статистика портфеля", de: "Marken · Profile · Portfolio-Statistik" },
+          suggest: {
+            icon: "alert", tone: "danger",
+            t: { ru: "Почини синк в Field Notes", de: "Sync in Field Notes reparieren" },
+            s: { ru: "@mara.co не обновлялся 6 ч. Бренд считается без него.", de: "@mara.co 6 Std. alt. Die Marke rechnet ohne ihn." },
+            primary: { ru: "Открыть Field Notes", de: "Field Notes öffnen" },
+            secondary: { ru: "Все бренды", de: "Alle Marken" },
+          },
+        },
+        {
+          q: { ru: "Что повторить на этой неделе?", de: "Was diese Woche wiederholen?" },
+          paras: [
+            { ru: "Формат <b>Mara Lin</b>: 7 постов, лучший охват недели. Короткие «разборы ошибок» в твоём голосе тянут заметно выше среднего.", de: "Das Format von <b>Mara Lin</b>: 7 Beiträge, beste Reichweite der Woche. Kurze „Fehler-Analysen“ in deiner Stimme ziehen deutlich über den Schnitt." },
+          ],
+          chips: [
+            { tone: "up", icon: "nib", text: { ru: "Mara Lin · 7 постов", de: "Mara Lin · 7 Beiträge" } },
+            { tone: "up", icon: null, text: { ru: "лучший охват недели", de: "beste Reichweite" } },
+          ],
+          sources: { ru: "Бренды · недавние посты", de: "Marken · letzte Beiträge" },
+          suggest: {
+            icon: "nib", tone: "accent",
+            t: { ru: "Повтори формат Mara Lin", de: "Format von Mara Lin wiederholen" },
+            s: { ru: "Заведу черновик в том же голосе и ритме.", de: "Ich lege einen Entwurf im gleichen Ton und Rhythmus an." },
+            primary: { ru: "Открыть Студию", de: "Studio öffnen" },
+            secondary: { ru: "Открыть Mara Lin", de: "Mara Lin öffnen" },
+          },
+        },
+      ],
+    },
+  };
+
   // resolve a {ru,de} pair (or pass through a plain string)
   function L(x, lang) { return (x && typeof x === "object") ? (x[lang] || x.ru) : x; }
 
@@ -327,7 +500,7 @@
     { key: "nav.brands", en: "Brands", ru: "Бренды", de: "Marken" },
     { key: "nav.settings", en: "Account settings", ru: "Настройки аккаунта", de: "Kontoeinstellungen" },
     { key: "switcher.all", en: "All profiles", ru: "Все профили", de: "Alle Profile" },
-    { key: "advisor.title", en: "Account advisor", ru: "Советник аккаунта", de: "Konto-Berater" },
+    { key: "advisor.title", en: "Account advisor", ru: "Агент аккаунта", de: "Konto-Berater" },
     { key: "addBrand", en: "Add brand", ru: "Добавить бренд", de: "Marke hinzufügen" },
     { key: "sync.failed", en: "Sync failed", ru: "Сбой синка", de: "Synchronisierung fehlgeschlagen" },
     { key: "retry", en: "Retry", ru: "Повторить", de: "Erneut versuchen" },
@@ -337,6 +510,7 @@
   window.ACCT = {
     LOCALES, NETWORKS, ACCOUNT, LOGINS, T,
     PROFILES, BRANDS, TOTALS, TASKS, ADVISOR,
+    LOCALE_NAMES, ADVISOR_CHAT,
     L, I18N_LONG,
   };
 })();

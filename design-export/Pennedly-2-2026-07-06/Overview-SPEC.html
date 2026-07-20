@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pennedly · Overview (All accounts) — Спецификация (пиксель-в-пиксель)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="ds/tokens.css" />
+<link rel="stylesheet" href="ds/components.css" />
+<link rel="stylesheet" href="import-banner.css" />
+<style>
+:root{
+  --font-sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --font-mono:"Geist Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --bg:#efedea; --surface:#ffffff; --surface-2:#f6f5f2; --border:#dcd9d2;
+  --text:#171717; --muted:#565550; --subtle:#6f6e69; --accent:#2f4cc4;
+  --code-bg:#f6f5f2; --good:#2c7350; --warn:#8a5b16; --danger:#b23b30;
+  --radius:14px;
+}
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%; scroll-behavior:smooth;}
+body{margin:0; background:var(--bg); color:var(--text);
+  font-family:var(--font-sans); font-size:15px; line-height:1.62;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;}
+.layout{display:grid; grid-template-columns:300px minmax(0,1fr); gap:0; max-width:1340px; margin:0 auto;}
+
+.toc{position:sticky; top:0; align-self:start; height:100vh; overflow-y:auto;
+  padding:34px 22px 40px 32px; border-right:1px solid var(--border);}
+.toc .doc-mark{display:flex; align-items:center; gap:10px; margin-bottom:6px;}
+.toc .doc-mark .nib{width:30px; height:30px; border-radius:8px; background:var(--text); display:grid; place-items:center; flex:0 0 auto;}
+.toc .doc-mark b{font-size:16px; font-weight:600; letter-spacing:-0.01em;}
+.toc .doc-sub{font-size:12px; color:var(--subtle); letter-spacing:0.02em; margin:0 0 22px 40px; text-transform:uppercase;}
+.toc nav{display:flex; flex-direction:column; gap:1px;}
+.toc nav a{display:flex; gap:9px; padding:6px 10px; border-radius:8px; text-decoration:none;
+  color:var(--muted); font-size:13.5px; line-height:1.35; transition:background .12s, color .12s;}
+.toc nav a:hover{background:var(--surface-2); color:var(--text);}
+.toc nav a .n{font-variant-numeric:tabular-nums; color:var(--subtle); font-weight:600; flex:0 0 16px;}
+.toc nav a.sub{padding-left:30px; font-size:12.5px; color:var(--subtle);}
+.toc nav a em{font-style:normal; color:var(--accent); font-size:11px; margin-left:4px;}
+.toc .meta{margin-top:24px; padding-top:18px; border-top:1px solid var(--border); font-size:12px; color:var(--subtle); line-height:1.7;}
+.toc .meta code{font-family:var(--font-mono); font-size:11px;}
+.toc .meta b{color:var(--text);}
+.toc .meta a{color:var(--accent); text-decoration:none;}
+
+main{padding:40px 56px 120px; min-width:0;}
+.kicker{font-family:var(--font-mono); font-size:12px; letter-spacing:0.04em; color:var(--accent); text-transform:uppercase; margin:0 0 10px;}
+h1.title{font-size:34px; line-height:1.1; letter-spacing:-0.025em; font-weight:600; margin:0 0 14px; text-wrap:balance;}
+h1.title span{color:var(--subtle); font-weight:500;}
+.lede{font-size:16px; color:var(--muted); max-width:76ch; margin:0 0 14px; text-wrap:pretty;}
+.filerow{display:flex; flex-wrap:wrap; gap:6px; margin:18px 0 6px;}
+.chip{font-family:var(--font-mono); font-size:11.5px; padding:4px 9px; border-radius:9999px; background:var(--surface); border:1px solid var(--border); color:var(--muted);}
+.chip--new{border-color:color-mix(in srgb, var(--accent) 40%, var(--border)); color:var(--accent);}
+
+section{margin-top:52px; scroll-margin-top:20px;}
+h2{font-size:21px; line-height:1.25; letter-spacing:-0.012em; font-weight:600; margin:0 0 4px; padding-top:10px;}
+h2 .h2n{font-family:var(--font-mono); font-size:14px; color:var(--accent); margin-right:10px; font-weight:500;}
+.section-note{color:var(--muted); font-size:14px; max-width:82ch; margin:6px 0 18px; text-wrap:pretty;}
+h3{font-size:15.5px; font-weight:600; letter-spacing:-0.005em; margin:30px 0 10px; padding-bottom:7px; border-bottom:1px solid var(--border);}
+h3 .stg{font-family:var(--font-mono); font-size:11px; color:var(--accent); border:1px solid var(--border); border-radius:6px; padding:1px 7px; margin-right:8px; text-transform:uppercase; letter-spacing:0.04em;}
+h3 .stg--shell{color:var(--good);}
+h3 .stg--new{color:var(--accent); border-color:color-mix(in srgb, var(--accent) 40%, var(--border));}
+h4{font-size:13px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.04em; margin:22px 0 8px;}
+
+p{margin:0 0 12px; text-wrap:pretty;}
+ul,ol{margin:0 0 12px; padding-left:22px;}
+li{margin:3px 0;}
+code{font-family:var(--font-mono); font-size:0.86em; background:var(--code-bg); border:1px solid var(--border); padding:1px 5px; border-radius:5px; white-space:nowrap;}
+.tok{color:var(--accent);}
+strong{font-weight:600;}
+
+.tbl-wrap{overflow-x:auto; margin:0 0 16px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface);}
+table{width:100%; border-collapse:collapse; font-size:13px;}
+th,td{text-align:left; padding:9px 13px; border-bottom:1px solid var(--border); vertical-align:top;}
+thead th{font-size:11px; text-transform:uppercase; letter-spacing:0.04em; color:var(--subtle); font-weight:600; background:var(--surface-2);}
+tbody tr:last-child td{border-bottom:none;}
+td code, th code{white-space:nowrap;}
+td.val{font-family:var(--font-mono); font-size:12px; color:var(--text);}
+.sw{display:inline-block; width:12px; height:12px; border-radius:3px; border:1px solid rgba(0,0,0,.18); vertical-align:-1px; margin-right:6px;}
+
+.note{border:1px solid var(--border); border-left:3px solid var(--accent); background:var(--surface);
+  border-radius:10px; padding:12px 16px; margin:14px 0; font-size:13.5px; color:var(--muted);}
+.note.warn{border-left-color:var(--warn);}
+.note.danger{border-left-color:var(--danger);}
+.note.good{border-left-color:var(--good);}
+.note b{color:var(--text);}
+.pane code, .check code, .note code, .section-note code, p code, td code, th code, li code{white-space:normal; overflow-wrap:anywhere;}
+.two{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+.two h4{margin-top:0;}
+.pane{border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); padding:16px 18px; min-width:0;}
+.pane.web{border-top:3px solid var(--text);}
+.pane.mob{border-top:3px solid var(--accent);}
+
+.check{list-style:none; padding:0; margin:0 0 8px;}
+.check li{position:relative; padding:5px 0 5px 26px; border-bottom:1px dashed var(--border); font-size:13.5px;}
+.check li:last-child{border-bottom:none;}
+.check li::before{content:"☐"; position:absolute; left:2px; top:4px; color:var(--subtle); font-size:14px;}
+.tagline{display:inline-block; font-size:11px; font-family:var(--font-mono); color:var(--accent); border:1px solid var(--border); border-radius:9999px; padding:2px 8px; margin-left:6px;}
+.statebar{display:flex; flex-wrap:wrap; gap:6px; margin:2px 0 14px;}
+.statebar .st{font-family:var(--font-mono); font-size:11px; padding:3px 9px; border-radius:6px; background:var(--surface-2); border:1px solid var(--border); color:var(--muted);}
+
+/* ───────────────────── LIVE FRAMES (real DS components) ───────────────────── */
+.frames{display:flex; flex-direction:column; gap:16px; margin:16px 0 6px;}
+.frow{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+@media(max-width:1040px){ .frow{grid-template-columns:1fr;} }
+.fr{display:flex; flex-direction:column; gap:9px; min-width:0;}
+.fr-head{display:inline-flex; align-items:center; gap:7px; font-family:var(--font-mono); font-size:11px; letter-spacing:.02em; color:var(--subtle);}
+.fr-head .dh{width:8px; height:8px; border-radius:9999px; background:var(--border);}
+.fr-head .dh--dark{background:#0a0a0a; border:1px solid #3a3a3a;}
+.frame{background:var(--color-bg); border:1px solid var(--color-border); border-radius:18px; padding:20px; overflow:hidden;}
+.frame *{box-sizing:border-box;}
+.frame button{font-family:inherit;}
+
+/* skeleton shimmer */
+.skel-line{background:linear-gradient(100deg, var(--color-surface-2) 28%, color-mix(in srgb,var(--color-text) 7%, var(--color-surface-2)) 50%, var(--color-surface-2) 72%);
+  background-size:220% 100%; animation:shimmer 1.4s linear infinite; border-radius:6px;}
+@keyframes shimmer{ from{background-position:220% 0} to{background-position:-120% 0} }
+
+/* topbar mini-demo */
+.tbdemo{display:flex; align-items:center; gap:13px; height:56px; padding:0 18px; background:color-mix(in srgb,var(--color-bg) 86%, transparent); border:1px solid var(--color-border); border-radius:12px;}
+.tbdemo .tbt{font-size:var(--text-h3); font-weight:600; letter-spacing:-0.006em; color:var(--color-text);}
+.tbdemo .sp{flex:1 1 auto;}
+.tbdemo .ib{width:34px; height:34px; display:grid; place-items:center; border:1px solid var(--color-border); border-radius:10px; background:var(--color-surface); color:var(--color-text-muted);}
+
+/* ════════════════════════ OVERVIEW COMPONENT LAYER ════════════════════════ */
+/* Mirrors overview.css; rendered on live tokens → themes automatically. */
+.ov{display:flex; flex-direction:column; gap:18px;}
+
+/* combined top strip — totals across all accounts */
+.ov-strip-cap{display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:-4px;}
+.ov-strip-cap .lab{font-size:var(--text-caption); font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:var(--color-text-subtle);}
+.ov-strip-cap .imp{font-size:var(--text-caption); color:var(--color-accent); font-weight:600;}
+.ov-totals{display:grid; grid-template-columns:repeat(4,1fr); gap:14px;}
+.ov-total{background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:15px 17px;}
+.ov-total-lab{display:flex; align-items:center; gap:7px; font-size:var(--text-caption); font-weight:600; letter-spacing:.03em; text-transform:uppercase; color:var(--color-text-subtle);}
+.ov-total-lab .ic{width:24px; height:24px; border-radius:var(--radius-sm); display:grid; place-items:center; background:var(--color-surface-2); border:1px solid var(--color-border); color:var(--color-text-muted);}
+.ov-total-lab .ic svg{width:13px; height:13px;}
+.ov-total-num{font-size:var(--text-h1); font-weight:600; letter-spacing:-0.015em; line-height:1.1; font-variant-numeric:tabular-nums; margin-top:11px; color:var(--color-text);}
+.ov-total-foot{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:8px;}
+.ov-total-sub{font-size:var(--text-caption); color:var(--color-text-subtle);}
+.ov-total--attention .ov-total-num{color:var(--color-accent);}
+
+/* delta chip */
+.delta{display:inline-flex; align-items:center; gap:3px; font-size:var(--text-caption); font-weight:600; font-variant-numeric:tabular-nums; white-space:nowrap;}
+.delta svg{width:12px; height:12px;}
+.delta--up{color:var(--color-success);} .delta--down{color:var(--color-danger);} .delta--flat{color:var(--color-text-subtle);}
+
+/* per-account grid */
+.ov-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:14px;}
+@media(max-width:760px){ .ov-grid{grid-template-columns:1fr;} }
+.ov-card{position:relative; background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:16px 18px;
+  transition:border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);}
+.ov-card:hover{border-color:color-mix(in srgb,var(--color-text) 22%, var(--color-border)); box-shadow:var(--shadow-md);}
+.ov-card-head{display:flex; align-items:center; gap:12px;}
+.ov-av{width:42px; height:42px; border-radius:var(--radius-full); flex:0 0 auto; overflow:hidden; background:var(--color-surface-2); border:1px solid var(--color-border); display:grid; place-items:center;}
+.ov-av img{width:100%; height:100%; object-fit:cover;}
+.ov-av .mono{font-size:15px; font-weight:600; color:var(--color-text-muted);}
+.ov-id{min-width:0; flex:1 1 auto;}
+.ov-name{font-size:var(--text-small); font-weight:600; color:var(--color-text); line-height:1.25; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.ov-handle{font-size:var(--text-caption); color:var(--color-text-subtle); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.ov-go{width:30px; height:30px; border-radius:var(--radius-md); flex:0 0 auto; display:grid; place-items:center; border:1px solid var(--color-border); background:var(--color-surface); color:var(--color-text-muted);}
+.ov-go svg{width:16px; height:16px;}
+.ov-card:hover .ov-go{background:var(--color-surface-2); color:var(--color-text);}
+
+.ov-metrics{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:16px;}
+@media(max-width:520px){ .ov-metrics{grid-template-columns:repeat(2,1fr); gap:14px;} }
+.ov-m{display:flex; flex-direction:column; gap:3px; min-width:0;}
+.ov-m-lab{font-size:10.5px; font-weight:600; letter-spacing:.03em; text-transform:uppercase; color:var(--color-text-subtle); display:flex; align-items:center; gap:4px;}
+.ov-m-val{font-size:var(--text-h3); font-weight:600; font-variant-numeric:tabular-nums; letter-spacing:-0.006em; color:var(--color-text); line-height:1.1;}
+.ov-m-val .u{font-size:var(--text-caption); font-weight:500; color:var(--color-text-subtle);}
+.ov-m--attention .ov-m-val{color:var(--color-accent);}
+.ov-m-skel{height:19px; width:60%; margin-top:2px;}
+
+.ov-status{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:15px; padding-top:13px; border-top:1px solid var(--color-border);}
+.ov-sync{display:inline-flex; align-items:center; gap:6px; font-size:var(--text-caption); color:var(--color-text-subtle); white-space:nowrap;}
+.ov-sync-dot{width:6px; height:6px; border-radius:var(--radius-full); background:var(--color-success); flex:0 0 auto;}
+.ov-sync--error{color:var(--color-danger);} .ov-sync--error .ov-sync-dot{background:var(--color-danger);}
+.ov-quick{display:flex; gap:7px; flex-wrap:wrap; justify-content:flex-end;}
+.ov-quicklink{font-size:var(--text-caption); font-weight:600; color:var(--color-text-muted); padding:4px 9px; border-radius:var(--radius-full); border:1px solid var(--color-border); background:var(--color-surface-2); text-decoration:none; display:inline-flex; align-items:center; gap:5px; white-space:nowrap;}
+.ov-quicklink svg{width:12px; height:12px; opacity:.85;}
+.ov-quicklink:hover{background:var(--color-surface); border-color:color-mix(in srgb,var(--color-text) 20%, var(--color-border));}
+.ov-quicklink--attention{color:var(--color-accent); border-color:color-mix(in srgb,var(--color-accent) 28%, transparent); background:color-mix(in srgb,var(--color-accent) 10%, var(--color-surface));}
+
+/* importing card body (reuses import-banner.css) */
+.ov-card--importing .import-banner{box-shadow:none; margin-top:14px;}
+
+/* nudge card (single account) */
+.ov-nudge{display:flex; align-items:center; gap:15px; background:color-mix(in srgb,var(--color-accent) 6%, var(--color-surface)); border:1px dashed color-mix(in srgb,var(--color-accent) 34%, var(--color-border)); border-radius:var(--radius-lg); padding:16px 18px;}
+.ov-nudge-ico{width:40px; height:40px; flex:0 0 auto; border-radius:var(--radius-md); display:grid; place-items:center; background:color-mix(in srgb,var(--color-accent) 12%, var(--color-surface)); border:1px solid color-mix(in srgb,var(--color-accent) 24%, transparent); color:var(--color-accent);}
+.ov-nudge-body{flex:1 1 auto; min-width:0;}
+.ov-nudge-t{font-size:var(--text-small); font-weight:600; color:var(--color-text);}
+.ov-nudge-s{font-size:var(--text-caption); color:var(--color-text-muted); margin-top:2px; line-height:1.5;}
+
+/* empty / error */
+.ov-empty{display:flex; flex-direction:column; align-items:center; text-align:center; padding:56px 24px; border:1px dashed var(--color-border); border-radius:var(--radius-lg); background:color-mix(in srgb,var(--color-surface) 50%, transparent);}
+.ov-empty-mark{width:54px; height:54px; border-radius:16px; display:grid; place-items:center; margin-bottom:15px; background:color-mix(in srgb,var(--color-accent) 12%, var(--color-surface)); border:1px solid color-mix(in srgb,var(--color-accent) 24%, transparent); color:var(--color-accent);}
+.ov-empty-t{font-size:var(--text-h2); font-weight:600; letter-spacing:-0.01em; color:var(--color-text); margin-bottom:7px;}
+.ov-empty-s{font-size:var(--text-body); color:var(--color-text-muted); max-width:44ch; margin-bottom:18px; line-height:1.55;}
+.ov-error{display:flex; align-items:center; gap:13px; background:var(--color-surface); border:1px solid var(--color-border); border-left:3px solid var(--color-danger); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:14px 16px;}
+.ov-error-mark{width:36px; height:36px; flex:0 0 auto; border-radius:var(--radius-md); display:grid; place-items:center; background:color-mix(in srgb,var(--color-danger) 12%, var(--color-surface)); border:1px solid color-mix(in srgb,var(--color-danger) 28%, transparent); color:var(--color-danger);}
+.ov-error-body{flex:1 1 auto; min-width:0;}
+.ov-error-t{font-size:var(--text-small); font-weight:600; color:var(--color-text);}
+.ov-error-s{font-size:var(--text-caption); color:var(--color-text-muted); margin-top:2px;}
+
+/* account-switcher demo (entry point) */
+.ovsw{width:268px; background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-lg); box-shadow:var(--shadow-lg); padding:8px;}
+.ovsw-all{display:flex; align-items:center; gap:10px; padding:8px; border-radius:var(--radius-md); text-decoration:none; background:color-mix(in srgb,var(--color-accent) 8%, var(--color-surface)); border:1px solid color-mix(in srgb,var(--color-accent) 22%, transparent); margin-bottom:5px;}
+.ovsw-all .ovsw-ico{width:30px; height:30px; border-radius:var(--radius-md); display:grid; place-items:center; background:color-mix(in srgb,var(--color-accent) 14%, var(--color-surface)); border:1px solid color-mix(in srgb,var(--color-accent) 26%, transparent); color:var(--color-accent); flex:0 0 auto;}
+.ovsw-all .ovsw-ico svg{width:17px; height:17px;}
+.ovsw-cap{font-size:var(--text-caption); font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--color-text-subtle); padding:8px 8px 5px;}
+.ovsw-row{display:flex; align-items:center; gap:10px; padding:7px 8px; border-radius:var(--radius-md); border:none; background:transparent; width:100%; cursor:pointer; text-align:left;}
+.ovsw-row:hover{background:var(--color-surface-2);}
+.ovsw-av{width:30px; height:30px; border-radius:var(--radius-full); overflow:hidden; flex:0 0 auto; background:var(--color-surface-2); border:1px solid var(--color-border); display:grid; place-items:center;}
+.ovsw-av img{width:100%; height:100%; object-fit:cover;} .ovsw-av .mono{font-size:12px; font-weight:600; color:var(--color-text-muted);}
+.ovsw-who{flex:1 1 auto; min-width:0;}
+.ovsw-nm{font-size:var(--text-small); font-weight:600; color:var(--color-text); line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.ovsw-hd{font-size:var(--text-caption); color:var(--color-text-subtle); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.ovsw-check{color:var(--color-success); flex:0 0 auto;}
+.ovsw-chev{color:var(--color-text-subtle); flex:0 0 auto;}
+
+@media (max-width:980px){
+  .layout{grid-template-columns:1fr;}
+  .toc{position:static; height:auto; border-right:none; border-bottom:1px solid var(--border);}
+  .toc nav{display:grid; grid-template-columns:1fr 1fr; gap:1px 14px;}
+  main{padding:28px 22px 90px;}
+  .two{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<aside class="toc">
+  <div class="doc-mark">
+    <span class="nib"><svg width="18" height="18" viewBox="0 0 512 512"><g fill="#ededed"><g transform="rotate(42 256 256)"><path d="M236 150 Q236 128 256 128 Q276 128 276 150 L276 300 L256 360 L236 300 Z"/><rect x="236" y="206" width="40" height="7"/></g></g></svg></span>
+    <b>Pennedly</b>
+  </div>
+  <div class="doc-sub">Спецификация · Overview</div>
+  <nav>
+    <a href="#s1"><span class="n">1</span> Идентификация экрана</a>
+    <a href="#s2"><span class="n">2</span> Точка входа <em>All accounts</em></a>
+    <a href="#s3"><span class="n">3</span> Анатомия + живые фреймы</a>
+    <a class="sub" href="#s3-shell">— shell: topbar / sidebar</a>
+    <a class="sub" href="#s3-strip">— combined top strip</a>
+    <a class="sub" href="#s3-card">— карточка аккаунта</a>
+    <a class="sub" href="#s3-status">— статусы sync</a>
+    <a href="#s4"><span class="n">4</span> Все состояния</a>
+    <a class="sub" href="#s4-single">— один аккаунт + nudge</a>
+    <a class="sub" href="#s4-importing">— аккаунт импортируется</a>
+    <a class="sub" href="#s4-aux">— loading / empty / error</a>
+    <a href="#s5"><span class="n">5</span> Данные · контракт</a>
+    <a href="#s6"><span class="n">6</span> Раскладка · Web ↔ Mobile</a>
+    <a href="#s7"><span class="n">7</span> Локализация и 360px</a>
+    <a href="#s8"><span class="n">8</span> Чек-лист</a>
+  </nav>
+  <div class="meta">
+    Экран: <b>Overview</b> (All accounts)<br>
+    Маршрут: <code>/app/overview</code><br>
+    Вход: account switcher · <b>All accounts</b><br>
+    Тип: <b>полный app-shell</b> · <b>portfolio</b> (не single-account)<br>
+    Ширина: <code>--content-wide</code> 960<br>
+    Иконка: <code>IcOverview</code> · <code>#i-overview</code><br>
+    Mobile: <a href="Overview-Mobile-SPEC.html">Overview-Mobile-SPEC.html</a><br>
+    Источник: <code>overview-app.jsx</code>, <code>overview-parts.jsx</code>, <code>overview-data.jsx</code>, <code>overview.css</code><br>
+    Reuses: <code>import-banner.css</code>, <code>shell-parts.jsx</code><br>
+    Токены: <code>ds/tokens.css</code>, <code>ds/components.css</code>
+  </div>
+</aside>
+
+<main>
+  <div class="doc-head">
+    <p class="kicker">Pennedly · Спецификация · Документация экрана</p>
+    <h1 class="title">Overview <span>/app/overview · All accounts</span></h1>
+    <p class="lede">Приложение мультиаккаунтное, но <b>каждый экран сегодня — про один аккаунт</b>. Этот <b>rollup</b> показывает <b>все подключённые аккаунты разом</b>, чтобы человек, ведущий 3–4 аккаунта, видел общую картину без переключения по одному. Сверху — <b>combined top strip</b> с тоталами по портфелю (подписчики, 7-дневные просмотры, посты за неделю, ответы, ждущие реакции). Ниже — <b>сетка карточек</b>, по одной на аккаунт: аватар + @handle + ключевые метрики (подписчики и Δ, 7-day views, посты за неделю, комментарии, ждущие ответа) + <b>статус импорта/синка</b> (переиспользуется Phase-0 importing-state). Любая карточка — вход в полноэкранные экраны этого аккаунта. Точка входа — пункт <b>«All accounts»</b> в переключателе аккаунтов. Ниже — живые фреймы (реальные DS-компоненты, <b>светлая И тёмная</b>), анатомия, все состояния (<b>один аккаунт + nudge / много / импорт / loading / empty / error</b>), контракт данных, маппинг Web↔Mobile, локализация в 8 языков и чек-лист. Копи — на английском (исходная локаль).</p>
+    <div class="filerow">
+      <span class="chip chip--new">overview-app.jsx</span>
+      <span class="chip chip--new">overview-parts.jsx</span>
+      <span class="chip chip--new">overview-data.jsx</span>
+      <span class="chip chip--new">overview.css</span>
+      <span class="chip">import-banner.css</span>
+      <span class="chip">shell-parts.jsx</span>
+      <span class="chip">ds/tokens.css</span>
+      <span class="chip chip--new">+ IcOverview</span>
+    </div>
+  </div>
+
+  <div class="note good">
+    <b>Живые фреймы — это реальный системный слой.</b> Документ подключает <code>ds/tokens.css</code> + <code>ds/components.css</code> + <code>import-banner.css</code> и рендерит компоненты <b>как в продукте</b> на ширине <code>--content-wide</code> 960. Каждый фрейм пинит свои токены: светлый — из <code>:root</code>, тёмный — через класс <code>dark</code>. App-shell общий из Studio; в Overview контекст аккаунта — <b>«All accounts»</b> (не один аккаунт), поэтому ни один пункт sidebar не активен, а account-control внизу читает «All accounts».
+  </div>
+
+  <div class="note warn">
+    <b>Что особенного в этом экране.</b>
+    <ul style="margin:8px 0 2px;">
+      <li><b>Portfolio, не single-account.</b> Это единственный экран без активного аккаунта: контекст — «все сразу». Sidebar-навигация ведёт в <b>per-account</b> экраны активного аккаунта; Overview достаётся из переключателя.</li>
+      <li><b>Тоталы + карточки.</b> Top strip суммирует портфель (подписчики · 7d views · посты за неделю · <b>ответы к разбору</b>). Сетка — карточка на аккаунт с теми же 4 метриками на уровне аккаунта; вся карточка ведёт в его экраны, мелкие quick-links — в Stats / Replies (с счётчиком).</li>
+      <li><b>Переиспользует importing-state.</b> Свежеподключённый аккаунт показывает в своей карточке <b>тот же</b> Phase-0 «Importing your history» баннер (<code>import-banner.css</code>), а метрики — плейсхолдеры, пока данные не подъедут.</li>
+      <li><b>Грациозная деградация на 1 аккаунт.</b> С одним аккаунтом сетка — одна карточка + тёплый nudge «подключите ещё, чтобы видеть рядом». Никакого пустого «портфеля из одного».</li>
+    </ul>
+  </div>
+
+  <!-- ===================== 1 ===================== -->
+  <section id="s1">
+    <h2><span class="h2n">1</span>Идентификация экрана</h2>
+    <p class="section-note">Маршрут, назначение, ширина, раскладка сверху вниз: <code>sidebar | main(topbar + scroll(top-strip + account-grid))</code>. Read-only — карточки только ведут в per-account экраны.</p>
+    <div class="tbl-wrap"><table><tbody>
+      <tr><th style="width:210px;">Маршрут</th><td><code>/app/overview</code>. Достаётся из <b>account switcher → «All accounts»</b> (пин сверху меню) или как top-level Overview. <b>Не</b> привязан к одному аккаунту.</td></tr>
+      <tr><th>Тип</th><td><b>Полный app-shell</b> с особым контекстом: account-control = «All accounts», ни один пункт sidebar не <code>active</code>. Каркас 1:1 из Studio.</td></tr>
+      <tr><th>Назначение</th><td>Вся картина по портфелю за один взгляд: суммарные метрики сверху + карточка на аккаунт с ключевыми числами и статусом синка. Вход в любой аккаунт — в один клик.</td></tr>
+      <tr><th>Ширина контента</th><td><b>wide</b> = <code class="tok">--content-wide</code> 960. Топбар выровнен по той же ширине.</td></tr>
+      <tr><th>Топбар</th><td>Заголовок «Overview» + <code>.status-pill</code> «4 accounts · updated daily» (глиф <code>&lt;IcOverview 13&gt;</code>) + тема + Settings.</td></tr>
+      <tr><th>Секции (top→bottom)</th><td><code>.ov-totals</code> (combined top strip, 4 тайла) → <code>.ov-grid</code> (карточка на аккаунт). В single-account — карточка + <code>.ov-nudge</code>. В empty — <code>.ov-empty</code>.</td></tr>
+      <tr><th>Фазы</th><td><code>loading</code> (скелет сетки) · <code>ready</code> · <code>empty</code> (нет аккаунтов) · <code>error</code> (<code>.ov-error</code> + Retry). На уровне карточки: <code>synced</code> / <code>importing</code> / <code>sync-error</code>.</td></tr>
+      <tr><th>Локализация</th><td>End-user копи в 8 языках (en/ru/uk/de/es/fr/it/pt): заголовок, лейблы тоталов/метрик, статусы синка, nudge, empty/error копи, quick-links. Числа — формат локали; время «updated Nh ago» — относительный форматтер в TZ зрителя.</td></tr>
+    </tbody></table></div>
+  </section>
+
+  <!-- ===================== 2 ===================== -->
+  <section id="s2">
+    <h2><span class="h2n">2</span><span style="font:inherit"></span>Точка входа — «All accounts»</h2>
+    <p class="section-note">Переключатель аккаунтов (consolidated account control внизу sidebar) получает <b>пин «All accounts»</b> сверху меню — с rollup-иконкой, числом подключённых и подписью «Overview». Тап ведёт на <code>/app/overview</code>; на самом экране account-control читает «All accounts».</p>
+    <div class="frames" id="f-entry"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:230px;">Элемент / класс</th><th>Описание</th></tr></thead>
+      <tbody>
+        <tr><td><code>.acct-row--all</code></td><td>Пин-строка сверху <code>.acct-menu</code>: <code>.acct-all-ico</code> (accent-тайл, <code>&lt;IcOverview 17&gt;</code>) + «All accounts» / «N connected · Overview» + правый шеврон. Ведёт на <code>Overview.html</code>.</td></tr>
+        <tr><td>Ниже</td><td>Обычный список «Switch account» (по аккаунту) + «Connect another account» — без изменений.</td></tr>
+        <tr><td>На экране Overview</td><td>Тот же account-control внизу sidebar показывает «All accounts» как активный контекст (вместо одного аккаунта).</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- ===================== 3 ===================== -->
+  <section id="s3">
+    <h2><span class="h2n">3</span>Анатомия + живые фреймы</h2>
+    <p class="section-note">Полный rollup в контексте — светлая и тёмная темы, на ширине экрана, 4 аккаунта (один ещё импортируется). Дальше — каждый компонент по отдельности.</p>
+    <div class="frames" id="f-full"></div>
+
+    <h3 id="s3-shell"><span class="stg stg--shell">shell</span>3.1 — Топбар (общий каркас)</h3>
+    <p class="section-note">App-shell 1:1 из Studio. Отличия Overview: account-control = «All accounts», ни один пункт sidebar не активен, состав топбара ниже.</p>
+    <div class="frames" id="f-topbar"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:230px;">Элемент / класс</th><th>Описание</th></tr></thead>
+      <tbody>
+        <tr><td><code>.topbar-title</code></td><td>«Overview» — <code class="tok">--text-h3</code> 19 / w600.</td></tr>
+        <tr><td><code>.status-pill</code></td><td>«4 accounts · updated daily» — <code>&lt;IcOverview 13&gt;</code> + текст.</td></tr>
+        <tr><td><code>.icon-btn</code> ×2</td><td>Тема + Settings. 36×36.</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 id="s3-strip">3.2 — Combined top strip <code>.ov-totals</code> <span class="tagline">PortfolioTotals</span></h3>
+    <p class="section-note">Четыре тайла-тотала через портфель: <b>Total followers</b> (+Δ за месяц) · <b>7-day views</b> · <b>Posts this week</b> · <b>Replies to answer</b> (attention-тон, accent). Подпись слева «Across N accounts», справа — «+1 still importing», если кто-то синкается.</p>
+    <div class="frames" id="f-strip"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:230px;">Элемент / класс</th><th>Описание</th></tr></thead>
+      <tbody>
+        <tr><td><code>.ov-totals</code></td><td><code>grid; repeat(4,1fr); gap 14</code>. ≤760 → 2-up.</td></tr>
+        <tr><td><code>.ov-total</code></td><td><code>surface; border; radius-lg; shadow-sm; padding 15/17</code>. Лейбл (иконка-тайл + caption) + число (<code class="tok">--text-h1</code> tabular) + foot (sub + <code>&lt;Delta&gt;</code>).</td></tr>
+        <tr><td><code>.ov-total--attention</code></td><td>«Replies to answer» — число accent: сразу видно, сколько разговоров ждут по всему портфелю.</td></tr>
+        <tr><td>Тоталы</td><td>Суммируются по аккаунтам со <b>статусом synced</b>; импортирующиеся считаются отдельно («still importing»), их числа не вмешиваются в тоталы, пока не подъедут.</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 id="s3-card">3.3 — Карточка аккаунта <code>.ov-card</code> <span class="tagline">AccountCard</span></h3>
+    <p class="section-note">По карточке на аккаунт: шапка (аватар + имя + @handle + <code>.ov-go</code> шеврон), 4 ключевые метрики, строка статуса с quick-links. Вся карточка — вход в экраны этого аккаунта (клик переключает контекст и открывает его Stats); quick-links deep-link'ают в Stats и Replies (со счётчиком ожидающих).</p>
+    <div class="frames" id="f-card"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:230px;">Элемент / класс</th><th>Описание</th></tr></thead>
+      <tbody>
+        <tr><td><code>.ov-card-head</code></td><td><code>.ov-av</code> 42 (фото или monogram) + <code>.ov-id</code> (name small/w600 + handle caption/subtle) + <code>.ov-go</code> 30×30 (<code>&lt;IcArrowRight&gt;</code>).</td></tr>
+        <tr><td><code>.ov-metrics</code></td><td><code>grid; repeat(4,1fr); gap 12</code> (≤520 → 2×2). Каждая <code>.ov-m</code> = лейбл (10.5px uppercase subtle) + значение (<code class="tok">--text-h3</code> tabular) + опц. <code>&lt;Delta&gt;</code>.</td></tr>
+        <tr><td>4 метрики</td><td><b>Followers</b> (+Δ) · <b>7-day views</b> · <b>Posts this week</b> · <b>Replies to answer</b> (<code>.ov-m--attention</code>, accent при &gt;0).</td></tr>
+        <tr><td><code>.ov-status</code></td><td><code>flex; justify-between; border-top</code>. Слева <code>.ov-sync</code> («● Updated 2h ago»), справа <code>.ov-quick</code> — quick-links «Stats», «Replies 7» (<code>--attention</code> при &gt;0).</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 id="s3-status">3.4 — Статусы синка <span class="tagline">синк-индикатор</span></h3>
+    <p class="section-note">Карточка несёт состояние своего аккаунта: <b>synced</b> (тихий «● Updated Nh ago»), <b>importing</b> (Phase-0 баннер вместо метрик), <b>sync-error</b> (danger «Sync failed» + Retry).</p>
+    <div class="frames" id="f-status"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:160px;">Статус</th><th>Класс</th><th>Что в карточке</th></tr></thead>
+      <tbody>
+        <tr><td><b>synced</b></td><td><code>.ov-sync</code> (success dot)</td><td>Метрики + «● Updated 2h ago». Норма.</td></tr>
+        <tr><td><b>importing</b></td><td><code>.ov-card--importing</code> + <code>.import-banner--syncing</code></td><td>Вместо метрик — Phase-0 баннер «Importing your history» с live-счётчиками; метрики появляются по мере подъезда. Переиспользует <code>import-banner.css</code>.</td></tr>
+        <tr><td><b>sync-error</b></td><td><code>.ov-sync--error</code></td><td>«● Sync failed» (danger) + кнопка Retry. Остальные карточки не затронуты.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- ===================== 4 ===================== -->
+  <section id="s4">
+    <h2><span class="h2n">4</span>Все состояния по очереди</h2>
+    <div class="statebar"><span class="st">single + nudge</span><span class="st">many ●</span><span class="st">importing</span><span class="st">loading</span><span class="st">empty</span><span class="st">error</span></div>
+
+    <h3 id="s4-single">4.1 — Один аккаунт (грациозная деградация + nudge)</h3>
+    <p class="section-note">С одним подключённым аккаунтом портфель не имеет смысла как сетка: top strip = метрики этого аккаунта, сетка = одна карточка, плюс тёплый <code>.ov-nudge</code> «ведёте больше одного? подключите ещё». Никакого пустого «портфеля из одного».</p>
+    <div class="frames" id="f-single"></div>
+
+    <h3 id="s4-importing">4.2 — Аккаунт ещё импортируется</h3>
+    <p class="section-note">Свежеподключённый аккаунт в сетке держит Phase-0 importing-карточку; тоталы помечают «+1 still importing» и не включают его числа, пока импорт не разрешится. Остальные карточки работают как обычно.</p>
+    <div class="frames" id="f-importing"></div>
+
+    <h3 id="s4-aux">4.3 — Loading / Empty / Error</h3>
+    <p class="section-note">Loading — скелет, повторяющий раскладку (strip + сетка карточек). Empty — нет подключённых аккаунтов (edge): <code>.ov-empty</code> «Connect your first account». Error — <code>.ov-error</code> (danger-rail) «Couldn’t load your accounts» + Retry; это про загрузку <i>списка</i> аккаунтов, а сбой синка одного аккаунта живёт в его карточке.</p>
+    <div class="frames" id="f-aux"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:160px;">Состояние</th><th>Что рендерится</th></tr></thead>
+      <tbody>
+        <tr><td><b>loading</b></td><td>Скелет strip (4 тайла) + 2–4 скелет-карточки, повторяющие финальную раскладку (без reflow).</td></tr>
+        <tr><td><b>empty</b></td><td><code>.ov-empty</code>: mark <code>IcOverview</code> + «No accounts connected yet» + sub + кнопка «Connect a Threads account».</td></tr>
+        <tr><td><b>error</b></td><td><code>.ov-error</code>: danger-mark + «Couldn’t load your accounts» + «Retry». Список не загрузился целиком.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- ===================== 5 ===================== -->
+  <section id="s5">
+    <h2><span class="h2n">5</span>Данные · контракт</h2>
+    <p class="section-note">Один запрос на весь портфель. <code>GET /api/portfolio?tz_offset=</code> → массив аккаунтов + предрассчитанные тоталы.</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:170px;">Ключ</th><th>Поля</th><th>Куда идёт</th></tr></thead>
+      <tbody>
+        <tr><td><code>totals</code></td><td class="val">followers (+delta), views_7d, posts_week, replies_to_answer, accounts_count, importing_count</td><td>Combined top strip</td></tr>
+        <tr><td><code>accounts[]</code></td><td class="val">id, name, handle, avatar, followers (+delta), views_7d, posts_week, replies_to_answer, sync_status, synced_at</td><td>Карточка на аккаунт</td></tr>
+        <tr><td><code>sync_status</code></td><td class="val"><code>synced</code> · <code>importing</code> (+ import progress: posts/comments/total) · <code>error</code></td><td>Статус-строка / Phase-0 баннер</td></tr>
+      </tbody>
+    </table></div>
+    <ul>
+      <li><b>Тоталы</b> суммируют только <code>synced</code>-аккаунты; <code>importing</code> считается в <code>importing_count</code> («+N still importing»), его числа не вмешиваются.</li>
+      <li><b>Δ followers</b> — за тот же период, что и в Stats (месяц); time-метки «updated Nh ago» — относительный форматтер в TZ зрителя.</li>
+      <li><b>Карточка → аккаунт:</b> клик переключает активный аккаунт и открывает его Stats; quick-links deep-link'ают в конкретный экран (Replies с <code>?filter=needs-reply</code>).</li>
+      <li><b>Read-only:</b> Overview ничего не мутирует — только навигация + Retry синка.</li>
+    </ul>
+  </section>
+
+  <!-- ===================== 6 ===================== -->
+  <section id="s6">
+    <h2><span class="h2n">6</span>Раскладка · Web ↔ Mobile</h2>
+    <p class="section-note">Брейкпоинты: <b>880px</b> (сайдбар → icon-rail) · <b>760px</b> (<code>.ov-totals</code> и <code>.ov-grid</code> → 2-up / 1-up) · <b>600px</b> (телефонный shell). Полный телефонный проход — в <a href="Overview-Mobile-SPEC.html" style="color:var(--accent)">Overview-Mobile-SPEC.html</a>.</p>
+    <div class="two">
+      <div class="pane web"><h4>Десктоп ( &gt; 880 )</h4>
+        <ul>
+          <li>Фикс. сайдбар; колонка 960; account-control = «All accounts».</li>
+          <li>Top strip — 4 тайла в ряд; сетка карточек — 2-up.</li>
+          <li>Карточка: 4 метрики в ряд; статус-строка с quick-links справа.</li>
+        </ul>
+      </div>
+      <div class="pane mob"><h4>Телефон ( ≤ 600 )</h4>
+        <ul>
+          <li>Нет сайдбара/таб-бара; гамбургер → drawer; «All accounts» — пин сверху drawer-аккаунта/sheet.</li>
+          <li>Top strip — 2×2 тайла; сетка — карточки в столбик.</li>
+          <li>Карточка: метрики 2×2; статус-строка переносит quick-links под sync.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 7 ===================== -->
+  <section id="s7">
+    <h2><span class="h2n">7</span>Локализация и 360px</h2>
+    <p class="section-note">Вся end-user копи в 8 локалях: <b>en · ru · uk · de · es · fr · it · pt</b>. DE/RU/UK длиннее на ~30–40%. Числа — tabular, формат локали; «updated Nh ago» — относительный форматтер.</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:200px;">Строка</th><th>en</th><th>ru (длиннее)</th><th>de (длиннее)</th></tr></thead>
+      <tbody>
+        <tr><td>Заголовок</td><td>Overview</td><td>Обзор</td><td>Übersicht</td></tr>
+        <tr><td>Switcher pin</td><td>All accounts</td><td>Все аккаунты</td><td>Alle Konten</td></tr>
+        <tr><td>Strip cap</td><td>Across 4 accounts</td><td>По 4 аккаунтам</td><td>Über 4 Konten</td></tr>
+        <tr><td>Total · followers</td><td>Followers</td><td>Подписчики</td><td>Follower</td></tr>
+        <tr><td>Total · replies</td><td>Replies to answer</td><td>Ответы к разбору</td><td>Zu beantworten</td></tr>
+        <tr><td>Metric · 7-day views</td><td>7-day views</td><td>Просмотры за 7 дней</td><td>Aufrufe (7 Tage)</td></tr>
+        <tr><td>Metric · posts</td><td>Posts this week</td><td>Постов на неделе</td><td>Beiträge/Woche</td></tr>
+        <tr><td>Sync</td><td>Updated 2h ago</td><td>Обновлено 2 ч назад</td><td>Vor 2 Std. aktualisiert</td></tr>
+        <tr><td>Importing</td><td>Importing your history</td><td>Импортируем вашу историю</td><td>Verlauf wird importiert</td></tr>
+        <tr><td>Nudge</td><td>Running more than one account?</td><td>Ведёте больше одного аккаунта?</td><td>Mehr als ein Konto?</td></tr>
+        <tr><td>Empty</td><td>No accounts connected yet</td><td>Пока нет подключённых аккаунтов</td><td>Noch keine Konten verbunden</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note"><b>360px.</b> Без нового брейкпоинта: гаттеры 14px; top strip держит 2×2; карточка — метрики 2×2; имя/handle усекаются ellipsis'ом; quick-links переносятся под sync. Importing-баннер внутри карточки складывает ETA под бар (как в Phase-0).</div>
+    <div class="note good"><b>Числа и время — живой текст.</b> Тоталы и метрики — tabular; «updated Nh ago» пересчитывается клиентом в TZ зрителя; имена аккаунтов локали не меняют, но @handle всегда LTR.</div>
+  </section>
+
+  <!-- ===================== 8 ===================== -->
+  <section id="s8">
+    <h2><span class="h2n">8</span>Чек-лист реализации</h2>
+    <ul class="check">
+      <li>Точка входа: пин «All accounts» сверху account switcher (<code>.acct-row--all</code>, <code>IcOverview</code>, «N connected · Overview») → <code>/app/overview</code>.</li>
+      <li>Полный app-shell; контекст = «All accounts» (account-control), ни один пункт sidebar не активен; топбар «Overview» + pill «N accounts · updated daily».</li>
+      <li>Combined top strip: 4 тотала (Followers +Δ · 7-day views · Posts this week · Replies to answer [attention]); «Across N accounts» + «+M still importing».</li>
+      <li>Карточка на аккаунт: аватар + name + @handle + <code>.ov-go</code>; 4 метрики (Followers +Δ · 7-day views · Posts this week · Replies to answer [accent при &gt;0]); вся карточка ведёт в аккаунт.</li>
+      <li>Статус синка в карточке: synced («● Updated Nh ago») / importing (Phase-0 <code>import-banner--syncing</code> вместо метрик) / sync-error («Sync failed» + Retry).</li>
+      <li>Quick-links: «Stats» + «Replies N» (deep-link, <code>--attention</code> при &gt;0).</li>
+      <li>Тоталы суммируют только synced-аккаунты; importing считается отдельно и не вмешивается.</li>
+      <li>Состояние single-account: одна карточка + <code>.ov-nudge</code> «подключите ещё» (Connect CTA) — грациозно, без пустого портфеля.</li>
+      <li>Loading = скелет, повторяющий раскладку; empty = «No accounts connected yet» + Connect; error = <code>.ov-error</code> + Retry (про загрузку списка, не синк одного).</li>
+      <li>Корректно в светлой и тёмной теме; ни одного hardcoded-цвета.</li>
+      <li>Копи в 8 локалях без клиппинга; проверено на 360px; числа tabular, «updated Nh ago» в TZ зрителя.</li>
+    </ul>
+    <div class="note" style="margin-top:18px;">Конец спецификации. Источник: <code>overview-app.jsx</code>, <code>overview-parts.jsx</code>, <code>overview-data.jsx</code>, <code>overview.css</code> + <code>import-banner.css</code> + общий shell. Парный телефонный документ — <a href="Overview-Mobile-SPEC.html" style="color:var(--accent)">Overview-Mobile-SPEC.html</a>.</div>
+  </section>
+</main>
+</div>
+
+<script>
+(function(){
+  var A='assets/avatars/';
+  function ic(n,s){ s=s||14; var v='viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"';
+    var P={
+      overview:'<rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/>',
+      users:'<circle cx="9" cy="9" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><path d="M16 6.3a3 3 0 0 1 0 5.4M17.5 19a5.5 5.5 0 0 0-3-4.9"/>',
+      eye:'<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="2.6"/>',
+      nib:'<path d="M12 4c3 0 5 3 4.8 7-.2 3-2.2 6-4.8 8.5C9.4 17 7.4 14 7.2 11 7 7 9 4 12 4Z"/><circle cx="12" cy="10" r="1.4"/><path d="M12 12v6.5"/>',
+      bubble:'<path d="M5 5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H9l-4 3.5V6a1 1 0 0 1 1-1Z"/>',
+      reply:'<path d="M9 7 4 12l5 5M4 12h9a6 6 0 0 1 6 6v1"/>',
+      chart:'<path d="M4 19V5M4 19h16"/><path d="M8 16l3.5-4 3 2.5L19 8"/>',
+      up:'<path d="M12 19V6M6 11l6-6 6 6"/>',
+      down:'<path d="M12 5v13M6 13l6 6 6-6"/>',
+      'arrow-right':'<path d="M5 12h14M13 6l6 6-6 6"/>',
+      plus:'<path d="M12 5v14M5 12h14"/>',
+      undo:'<path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-4"/>',
+      x:'<path d="M6 6 18 18M18 6 6 18"/>',
+      check:'<path d="M4.5 12.5 9.5 17.5 19.5 6.5"/>',
+      'chev-right':'<path d="M9 6l6 6-6 6"/>',
+      settings:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>',
+      moon:'<path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/>',
+      sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"/>'
+    };
+    return '<svg width="'+s+'" height="'+s+'" '+v+'>'+(P[n]||'')+'</svg>';
+  }
+  function delta(v){ if(v==null) return '<span class="delta delta--flat">—</span>'; var down=v.charAt(0)==='-'; return '<span class="delta delta--'+(down?'down':'up')+'">'+ic(down?'down':'up',12)+v.replace(/^[-+]/,'')+'</span>'; }
+
+  /* ---- accounts data ---- */
+  var ACC = {
+    mara:  { name:'Mara Lin',   handle:'@mara.lin',   av:'mara.png',       foll:'12,438', d:'+312', views:'98K', posts:'5', rep:3, sync:'Updated 2h ago' },
+    field: { name:'Field Notes', handle:'@field.notes', av:'fieldnotes.png', foll:'4,210',  d:'+86',  views:'41K', posts:'3', rep:7, sync:'Updated 1h ago' },
+    studio:{ name:'Studio Mara', handle:'@studio.mara', av:'studio.png',     foll:'1,890',  d:'-12',  views:'12K', posts:'2', rep:0, sync:'Updated 3h ago' },
+    late:  { name:'Late Drafts', handle:'@late.drafts', mono:'LD',          importing:true }
+  };
+
+  function avatar(a){ return '<span class="ov-av">'+(a.av?'<img src="'+A+a.av+'" alt=""/>':'<span class="mono">'+a.mono+'</span>')+'</span>'; }
+  function metric(lab,icon,val,unit,extra,attention){ return '<div class="ov-m'+(attention?' ov-m--attention':'')+'"><span class="ov-m-lab">'+ic(icon,12)+lab+'</span><span class="ov-m-val">'+val+(unit?' <span class="u">'+unit+'</span>':'')+'</span>'+(extra||'')+'</div>'; }
+
+  function card(a, opts){ opts=opts||{};
+    var head='<div class="ov-card-head">'+avatar(a)+'<div class="ov-id"><div class="ov-name">'+a.name+'</div><div class="ov-handle">'+a.handle+'</div></div><span class="ov-go">'+ic('arrow-right',16)+'</span></div>';
+    if(a.importing){
+      return '<div class="ov-card ov-card--importing">'+head
+        +'<div class="import-banner import-banner--syncing"><span class="ib-mark"><span class="ib-spinner"></span></span><div class="ib-body"><div class="ib-title">Importing your history</div><div class="ib-sub"><b>42</b> posts · <b>310</b> comments so far</div><div class="ib-bar"><div class="ib-bar-fill" style="width:46%"></div></div></div><span class="ib-since">About a minute left</span></div></div>';
+    }
+    if(opts.error){
+      var metricsE='<div class="ov-metrics"><div class="ov-m"><span class="ov-m-lab">'+ic('users',12)+'Followers</span><span class="ov-m-val">'+a.foll+'</span>'+delta(a.d)+'</div>'
+        + metric('7-day views','eye','—') + metric('Posts','nib','—') + metric('To answer','bubble','—') + '</div>';
+      return '<div class="ov-card">'+head+metricsE+'<div class="ov-status"><span class="ov-sync ov-sync--error"><span class="ov-sync-dot"></span>Sync failed</span><div class="ov-quick"><button class="ov-quicklink">'+ic('undo',12)+'Retry</button></div></div></div>';
+    }
+    var metrics='<div class="ov-metrics">'
+      + '<div class="ov-m"><span class="ov-m-lab">'+ic('users',12)+'Followers</span><span class="ov-m-val">'+a.foll+'</span>'+delta(a.d)+'</div>'
+      + metric('7-day views','eye',a.views)
+      + metric('Posts','nib',a.posts,'this wk')
+      + metric('To answer','bubble',String(a.rep),null,null,a.rep>0)
+      + '</div>';
+    var quick='<div class="ov-quick"><a class="ov-quicklink">'+ic('chart',12)+'Stats</a>'
+      + '<a class="ov-quicklink'+(a.rep>0?' ov-quicklink--attention':'')+'">'+ic('reply',12)+'Replies'+(a.rep>0?' '+a.rep:'')+'</a></div>';
+    var status='<div class="ov-status"><span class="ov-sync"><span class="ov-sync-dot"></span>'+a.sync+'</span>'+quick+'</div>';
+    return '<div class="ov-card">'+head+metrics+status+'</div>';
+  }
+
+  /* ---- top strip ---- */
+  function total(lab,icon,num,foot,attention){ return '<div class="ov-total'+(attention?' ov-total--attention':'')+'"><div class="ov-total-lab"><span class="ic">'+ic(icon,13)+'</span>'+lab+'</div><div class="ov-total-num">'+num+'</div><div class="ov-total-foot">'+foot+'</div></div>'; }
+  function strip(opts){ opts=opts||{};
+    var cap='<div class="ov-strip-cap"><span class="lab">Across '+(opts.count||4)+' accounts</span>'+(opts.importing?'<span class="imp">+1 still importing</span>':'')+'</div>';
+    var totals='<div class="ov-totals">'
+      + total('Followers','users',opts.foll||'18.5K','<span class="ov-total-sub">all accounts</span>'+delta(opts.fd||'+386'))
+      + total('7-day views','eye',opts.views||'151K','<span class="ov-total-sub">across posts</span>')
+      + total('Posts this week','nib',opts.posts||'10','<span class="ov-total-sub">published</span>')
+      + total('Replies to answer','bubble',opts.rep||'10','<span class="ov-total-sub">needs a reply</span>',true)
+      + '</div>';
+    return cap+totals;
+  }
+
+  /* ---- skeleton / empty / error ---- */
+  function skelCard(){ return '<div class="ov-card"><div class="ov-card-head"><span class="ov-av"></span><div class="ov-id"><div class="skel-line" style="width:90px;height:13px"></div><div class="skel-line" style="width:70px;height:11px;margin-top:6px"></div></div><span class="ov-go"></span></div><div class="ov-metrics"><div class="skel-line" style="height:34px"></div><div class="skel-line" style="height:34px"></div><div class="skel-line" style="height:34px"></div><div class="skel-line" style="height:34px"></div></div><div class="ov-status"><div class="skel-line" style="width:110px;height:12px"></div><div class="skel-line" style="width:120px;height:22px;border-radius:999px"></div></div></div>'; }
+  function skeleton(){ var t='<div class="skel-line" style="height:96px;border-radius:14px"></div>'; return '<div class="ov"><div class="ov-totals">'+t+t+t+t+'</div><div class="ov-grid">'+skelCard()+skelCard()+'</div></div>'; }
+  function empty(){ return '<div class="ov-empty"><div class="ov-empty-mark">'+ic('overview',26)+'</div><div class="ov-empty-t">No accounts connected yet</div><div class="ov-empty-s">Connect a Threads account to start drafting, replying and tracking growth. Add more later to see them side by side here.</div><button class="btn btn--primary">'+ic('plus',16)+'Connect a Threads account</button></div>'; }
+  function errorBanner(){ return '<div class="ov-error"><span class="ov-error-mark">'+ic('x',18)+'</span><div class="ov-error-body"><div class="ov-error-t">Couldn’t load your accounts</div><div class="ov-error-s">Something went wrong reaching Threads. Your work is safe — try again in a moment.</div></div><button class="btn btn--secondary btn--sm">'+ic('undo',15)+'Retry</button></div>'; }
+  function nudge(){ return '<div class="ov-nudge"><span class="ov-nudge-ico">'+ic('plus',20)+'</span><div class="ov-nudge-body"><div class="ov-nudge-t">Running more than one account?</div><div class="ov-nudge-s">Connect another Threads account to see followers, views and replies for all of them side by side.</div></div><button class="btn btn--secondary btn--sm">'+ic('plus',15)+'Connect account</button></div>'; }
+
+  /* ---- compositions ---- */
+  function full(){ return '<div class="ov">'+strip({count:4,importing:true})+'<div class="ov-grid">'+card(ACC.mara)+card(ACC.field)+card(ACC.studio)+card(ACC.late)+'</div></div>'; }
+  function single(){ return '<div class="ov">'+strip({count:1,foll:'12.4K',fd:'+312',views:'98K',posts:'5',rep:'3'})+'<div class="ov-grid" style="grid-template-columns:1fr">'+card(ACC.mara)+'</div>'+nudge()+'</div>'; }
+
+  /* ---- entry-point switcher demo ---- */
+  function switcher(){
+    var rows=[['mara',true],['field',false],['studio',false]].map(function(x){ var a=ACC[x[0]];
+      return '<button class="ovsw-row"><span class="ovsw-av">'+(a.av?'<img src="'+A+a.av+'" alt=""/>':'<span class="mono">'+a.mono+'</span>')+'</span><span class="ovsw-who"><span class="ovsw-nm">'+a.name+'</span><span class="ovsw-hd">'+a.handle+'</span></span>'+(x[1]?'<span class="ovsw-check">'+ic('check',16)+'</span>':'')+'</button>'; }).join('');
+    return '<div class="ovsw"><a class="ovsw-all"><span class="ovsw-ico">'+ic('overview',17)+'</span><span class="ovsw-who"><span class="ovsw-nm">All accounts</span><span class="ovsw-hd">4 connected · Overview</span></span><span class="ovsw-chev">'+ic('chev-right',15)+'</span></a><div class="ovsw-cap">Switch account</div>'+rows+'<button class="ovsw-row"><span class="ovsw-av" style="border-style:dashed">'+ic('plus',15)+'</span><span class="ovsw-who"><span class="ovsw-nm">Connect another account</span></span></button></div>'; }
+
+  /* ---- topbar demo ---- */
+  function topbar(dark){ return '<div class="tbdemo"><span class="tbt">Overview</span><span class="status-pill">'+ic('overview',13)+'4 accounts · updated daily</span><span class="sp"></span><span class="ib">'+ic(dark?'sun':'moon',16)+'</span><span class="ib">'+ic('settings',16)+'</span></div>'; }
+
+  /* ---- frame helpers ---- */
+  function head(label,dark){ return '<div class="fr-head"><span class="dh'+(dark?' dh--dark':'')+'"></span>'+label+'</div>'; }
+  function frame(inner,dark,pad){ return '<div class="frame'+(dark?' dark':'')+'"'+(pad?' style="padding:'+pad+'"':'')+'>'+inner+'</div>'; }
+  function col(label,inner,dark,pad){ return '<div class="fr">'+head(label,dark)+frame(inner,dark,pad)+'</div>'; }
+  function set(id,html){ var e=document.getElementById(id); if(e) e.innerHTML=html; }
+
+  /* ---- render ---- */
+  set('f-entry', '<div class="frow">'+col('Light · switcher open',switcher(),false,'24px')+col('Dark · switcher open',switcher(),true,'24px')+'</div>');
+  set('f-full', col('Light · 4 accounts (one importing)', full(), false) + col('Dark · 4 accounts', full(), true));
+  set('f-topbar', '<div class="frow">'+col('Light',topbar(false),false)+col('Dark',topbar(true),true)+'</div>');
+  set('f-strip', col('Light', strip({count:4,importing:true}), false) + col('Dark', strip({count:4}), true));
+  set('f-card', '<div class="frow">'+col('Light · synced',card(ACC.mara),false)+col('Dark · attention (7 to answer)',card(ACC.field),true)+'</div>');
+  set('f-status', col('Light · synced / importing', '<div class="ov-grid" style="grid-template-columns:1fr">'+card(ACC.studio)+card(ACC.late)+'</div>', false) + col('Dark · sync-error', '<div class="ov-grid" style="grid-template-columns:1fr">'+card(ACC.field,{error:true})+'</div>', true));
+  set('f-single', col('Light · single account + nudge', single(), false) + col('Dark · single', single(), true));
+  set('f-importing', '<div class="frow">'+col('Light',card(ACC.late),false)+col('Dark',card(ACC.late),true)+'</div>');
+  set('f-aux', col('Loading (mirrors layout)', skeleton(), false) + col('Empty', empty(), true) );
+  set('f-aux', document.getElementById('f-aux').innerHTML + col('Error (list load)', errorBanner(), false, '24px') + col('Dark · error', errorBanner(), true, '24px'));
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+/* studio-schedule.css — the NEW Studio-side scheduling touchpoints. The dialog
+   controls (`.sched-seg`, `.sched-fields`, `.sched-hint`), the scheduled
+   `.draft-badge`, the Studio `.draft-tab` and the mobile `.msched-*` are already
+   shipped in calendar.css (the Calendar spec's Studio-integration section); this
+   layer adds ONLY what's new:
+     · the card-level ENTRY POINT (the main ask) — a split "Publish ▾" button;
+     · the scheduled card's "Goes out …" foot + Calendar link;
+     · faux date/time pickers + a danger hint variant for the spec frames.
+   No hardcoded colour — every value is a token (light/dark free). */
+
+.avatar-img {
+  border-radius: var(--radius-full); object-fit: cover; display: block; flex: 0 0 auto;
+  background: var(--color-surface-2);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-text) 8%, transparent);
+}
+
+/* ===================== faux date / time pickers (spec) =================== */
+.sched-pick {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  cursor: pointer; height: 40px;
+}
+.sched-pick > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sched-pick svg { color: var(--color-text-subtle); flex: 0 0 auto; }
+.sched-pick--empty > span { color: var(--color-text-subtle); }
+.mob .sched-pick { height: 46px; font-size: 16px; }
+
+/* danger variant of the schedule hint (too soon / invalid) */
+.sched-hint--bad { color: var(--color-danger); }
+.sched-hint--bad svg { color: var(--color-danger); }
+.mob .msched-hint--bad { color: var(--color-danger); }
+
+/* the seg's mode icons inherit currentColor; keep them aligned */
+.sched-seg button svg, .mob .msched-seg button svg { flex: 0 0 auto; }
+
+/* ===================== SCHEDULED card — foot + link ===================== */
+/* status dot for the new "Scheduled" filter tab (accent) */
+.fdot.dot-scheduled { background: var(--color-accent); }
+.mob .fdot.dot-scheduled, .mob .m-filter .dot-scheduled { background: var(--color-accent); }
+
+/* "Goes out …" meta on a scheduled card's foot */
+.sched-goesout {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: var(--text-caption); color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums; text-wrap: pretty;
+}
+.sched-goesout svg { color: var(--color-accent); flex: 0 0 auto; }
+.sched-goesout b { color: var(--color-text); font-weight: 600; }
+
+/* "Manage on Calendar →" link (reuses the accent-link idiom) */
+.sched-manage {
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+  font-size: var(--text-small); font-weight: 600; color: var(--color-accent);
+  background: transparent; border: none; cursor: pointer; text-decoration: none;
+  padding: 6px 4px;
+}
+.sched-manage:hover { color: color-mix(in srgb, var(--color-accent) 80%, var(--color-text)); }
+.sched-manage svg { flex: 0 0 auto; }
+.mob .sched-manage { min-height: 44px; }
+
+/* a small "managed on Calendar" caption header inside the ⋯ menu */
+.sched-menu-cap {
+  display: block; padding: 6px 10px 8px; margin-bottom: 2px;
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--text-caption); font-weight: 600; letter-spacing: 0.04em;
+  text-transform: uppercase; color: var(--color-text-subtle);
+}
+.card-menu-item .cmi-ext { margin-left: auto; color: var(--color-text-subtle); flex: 0 0 auto; }

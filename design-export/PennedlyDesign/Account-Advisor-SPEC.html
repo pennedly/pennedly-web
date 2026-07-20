@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pennedly · Агент по портфелю (чат) — Спецификация</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="ds/tokens.css" />
+<link rel="stylesheet" href="ds/components.css" />
+<link rel="stylesheet" href="account.css?v=20260703a" />
+<link rel="stylesheet" href="account-screens.css?v=20260703a" />
+<style>
+:root{
+  --font-sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --font-mono:"Geist Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --bg:#efedea; --surface:#ffffff; --surface-2:#f6f5f2; --border:#dcd9d2;
+  --text:#171717; --muted:#565550; --subtle:#6f6e69; --accent:#2f4cc4;
+  --code-bg:#f6f5f2; --good:#2c7350; --warn:#8a5b16; --danger:#b23b30;
+  --radius:14px;
+}
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%; scroll-behavior:smooth;}
+body{margin:0; background:var(--bg); color:var(--text);
+  font-family:var(--font-sans); font-size:15px; line-height:1.62;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;}
+.layout{display:grid; grid-template-columns:300px minmax(0,1fr); gap:0; max-width:1400px; margin:0 auto;}
+
+.toc{position:sticky; top:0; align-self:start; height:100vh; overflow-y:auto;
+  padding:34px 22px 40px 32px; border-right:1px solid var(--border);}
+.toc .doc-mark{display:flex; align-items:center; gap:10px; margin-bottom:6px;}
+.toc .doc-mark .nib{width:30px; height:30px; border-radius:8px; background:var(--text); display:grid; place-items:center; flex:0 0 auto;}
+.toc .doc-mark b{font-size:16px; font-weight:600; letter-spacing:-0.01em;}
+.toc .doc-sub{font-size:12px; color:var(--subtle); letter-spacing:0.02em; margin:0 0 22px 40px; text-transform:uppercase;}
+.toc nav{display:flex; flex-direction:column; gap:1px;}
+.toc nav a{display:flex; gap:9px; padding:6px 10px; border-radius:8px; text-decoration:none;
+  color:var(--muted); font-size:13.5px; line-height:1.35; transition:background .12s, color .12s;}
+.toc nav a:hover{background:var(--surface-2); color:var(--text);}
+.toc nav a .n{font-variant-numeric:tabular-nums; color:var(--subtle); font-weight:600; flex:0 0 16px;}
+.toc nav a em{font-style:normal; color:var(--accent); font-size:11px; margin-left:4px;}
+.toc .meta{margin-top:24px; padding-top:18px; border-top:1px solid var(--border); font-size:12px; color:var(--subtle); line-height:1.7;}
+.toc .meta code{font-family:var(--font-mono); font-size:11px;}
+.toc .meta b{color:var(--text);}
+.toc .meta a{color:var(--accent); text-decoration:none;}
+
+main{padding:40px 56px 120px; min-width:0;}
+.kicker{font-family:var(--font-mono); font-size:12px; letter-spacing:0.04em; color:var(--accent); text-transform:uppercase; margin:0 0 10px;}
+h1.title{font-size:34px; line-height:1.1; letter-spacing:-0.025em; font-weight:600; margin:0 0 14px; text-wrap:balance;}
+h1.title span{color:var(--subtle); font-weight:500;}
+.lede{font-size:16px; color:var(--muted); max-width:80ch; margin:0 0 14px; text-wrap:pretty;}
+.filerow{display:flex; flex-wrap:wrap; gap:6px; margin:18px 0 6px;}
+.chip{font-family:var(--font-mono); font-size:11.5px; padding:4px 9px; border-radius:9999px; background:var(--surface); border:1px solid var(--border); color:var(--muted);}
+.chip--new{border-color:color-mix(in srgb, var(--accent) 40%, var(--border)); color:var(--accent);}
+
+section{margin-top:52px; scroll-margin-top:20px;}
+h2{font-size:21px; line-height:1.25; letter-spacing:-0.012em; font-weight:600; margin:0 0 4px; padding-top:10px;}
+h2 .h2n{font-family:var(--font-mono); font-size:14px; color:var(--accent); margin-right:10px; font-weight:500;}
+.section-note{color:var(--muted); font-size:14px; max-width:84ch; margin:6px 0 18px; text-wrap:pretty;}
+h3{font-size:15.5px; font-weight:600; letter-spacing:-0.005em; margin:30px 0 10px; padding-bottom:7px; border-bottom:1px solid var(--border);}
+h3 .stg{font-family:var(--font-mono); font-size:11px; color:var(--accent); border:1px solid var(--border); border-radius:6px; padding:1px 7px; margin-right:8px; text-transform:uppercase; letter-spacing:0.04em;}
+h3 .stg--new{color:var(--accent); border-color:color-mix(in srgb, var(--accent) 40%, var(--border));}
+
+p{margin:0 0 12px; text-wrap:pretty;}
+ul,ol{margin:0 0 12px; padding-left:22px;}
+li{margin:3px 0;}
+code{font-family:var(--font-mono); font-size:0.86em; background:var(--code-bg); border:1px solid var(--border); padding:1px 5px; border-radius:5px; white-space:nowrap;}
+.tok{color:var(--accent);}
+strong{font-weight:600;}
+a.link{color:var(--accent); text-decoration:underline; text-underline-offset:2px;}
+
+.tbl-wrap{overflow-x:auto; margin:0 0 16px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface);}
+table{width:100%; border-collapse:collapse; font-size:13px;}
+th,td{text-align:left; padding:9px 13px; border-bottom:1px solid var(--border); vertical-align:top;}
+thead th{font-size:11px; text-transform:uppercase; letter-spacing:0.04em; color:var(--subtle); font-weight:600; background:var(--surface-2);}
+tbody tr:last-child td{border-bottom:none;}
+td code, th code{white-space:nowrap;}
+td.val{font-family:var(--font-mono); font-size:12px; color:var(--text);}
+.sw{display:inline-block; width:12px; height:12px; border-radius:3px; border:1px solid rgba(0,0,0,.18); vertical-align:-1px; margin-right:6px;}
+.pane code, .check code, .note code, .section-note code, p code, td code, th code, li code{white-space:normal; overflow-wrap:anywhere;}
+
+.note{border:1px solid var(--border); border-left:3px solid var(--accent); background:var(--surface);
+  border-radius:10px; padding:12px 16px; margin:14px 0; font-size:13.5px; color:var(--muted);}
+.note.warn{border-left-color:var(--warn);}
+.note.danger{border-left-color:var(--danger);}
+.note.good{border-left-color:var(--good);}
+.note b{color:var(--text);}
+.two{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+.two h4{margin-top:0; font-size:13px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.04em;}
+.pane{border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); padding:16px 18px; min-width:0;}
+.pane.web{border-top:3px solid var(--text);}
+.pane.mob{border-top:3px solid var(--accent);}
+
+.check{list-style:none; padding:0; margin:0 0 8px;}
+.check li{position:relative; padding:5px 0 5px 26px; border-bottom:1px dashed var(--border); font-size:13.5px;}
+.check li:last-child{border-bottom:none;}
+.check li::before{content:"☐"; position:absolute; left:2px; top:4px; color:var(--subtle); font-size:14px;}
+.statebar{display:flex; flex-wrap:wrap; gap:6px; margin:2px 0 14px;}
+.statebar .st{font-family:var(--font-mono); font-size:11px; padding:3px 9px; border-radius:6px; background:var(--surface-2); border:1px solid var(--border); color:var(--muted);}
+
+/* LIVE FRAMES */
+.frames{display:flex; flex-direction:column; gap:16px; margin:16px 0 6px;}
+.frow{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+@media(max-width:1040px){ .frow{grid-template-columns:1fr;} }
+.fr{display:flex; flex-direction:column; gap:9px; min-width:0;}
+.fr-head{display:inline-flex; align-items:center; gap:7px; font-family:var(--font-mono); font-size:11px; letter-spacing:.02em; color:var(--subtle);}
+.fr-head .dh{width:8px; height:8px; border-radius:9999px; background:var(--border);}
+.fr-head .dh--dark{background:#0a0a0a; border:1px solid #3a3a3a;}
+.frame{background:var(--color-bg); border:1px solid var(--color-border); border-radius:18px; padding:20px; overflow:hidden;}
+.frame *{box-sizing:border-box;}
+.frame button{font-family:inherit;}
+.frame--pad14{padding:14px;}
+.frame--pad0{padding:0;}
+
+@media (max-width:980px){
+  .layout{grid-template-columns:1fr;}
+  .toc{position:static; height:auto; border-right:none; border-bottom:1px solid var(--border);}
+  .toc nav{display:grid; grid-template-columns:1fr 1fr; gap:1px 14px;}
+  main{padding:28px 22px 90px;}
+  .two{grid-template-columns:1fr;}
+}
+  a{color:var(--accent);}
+  a:hover{color:color-mix(in srgb,var(--accent) 80%,var(--text));}
+  /* deep-screen chrome (chat body is unchanged; only the header is new) */
+  .acc-adv-deep{display:flex; flex-direction:column; gap:12px; background:var(--color-bg); border-radius:var(--radius-lg);}
+  .acc-adv-deephead{border-bottom:none; padding:2px 2px 0;}
+  .acc-adv-deephead .acc-back{font-weight:600;}
+  .adv-seedtag{display:flex; align-items:center; gap:6px; justify-content:flex-end; max-width:620px; margin:0 auto -12px;
+    font-family:var(--font-mono); font-size:11px; letter-spacing:.02em; color:var(--color-accent);}
+  .adv-seedtag svg{opacity:.85;}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<aside class="toc">
+  <div class="doc-mark">
+    <span class="nib"><svg width="18" height="18" viewBox="0 0 512 512"><g fill="#ededed"><g transform="rotate(42 256 256)"><path d="M236 150 Q236 128 256 128 Q276 128 276 150 L276 300 L256 360 L236 300 Z"/><rect x="236" y="206" width="40" height="7"/></g></g></svg></span>
+    <b>Pennedly</b>
+  </div>
+  <div class="doc-sub">Спецификация · Агент (чат) · V3</div>
+  <nav>
+    <a href="#s1"><span class="n">1</span> Идентификация экрана</a>
+    <a href="#s2"><span class="n">2</span> Полный экран <em>live</em></a>
+    <a href="#s3"><span class="n">3</span> Шапка-возврат <em>new</em></a>
+    <a href="#s4"><span class="n">4</span> Открывается засеянным <em>seed</em></a>
+    <a href="#s5"><span class="n">5</span> Закреплённый вердикт <em>hero</em></a>
+    <a href="#s6"><span class="n">6</span> Анатомия ответа</a>
+    <a href="#s7"><span class="n">7</span> Все состояния</a>
+    <a href="#s8"><span class="n">8</span> Маршрутизация <em>решение C</em></a>
+    <a href="#s9"><span class="n">9</span> Локализация · Web↔Mobile</a>
+    <a href="#s10"><span class="n">10</span> Чек-лист</a>
+  </nav>
+  <div class="meta">
+    Экран: <b>Агент по портфелю (чат)</b><br>
+    Маршрут: <code>/app/account/advisor</code> · <b>«глубокий»</b><br>
+    Вход: <b>только с дашборда</b> (не из меню)<br>
+    Возврат: <b>«← Дашборд аккаунта»</b><br>
+    Открытие: <b>с засеянным первым вопросом</b><br>
+    Scope: <b>весь портфель</b> · tester-gated<br>
+    Дашборд: <a href="Account-Dashboard-SPEC.html">Account-Dashboard-SPEC.html</a><br>
+    Mobile: <a href="Account-Advisor-Mobile-SPEC.html">Account-Advisor-Mobile-SPEC.html</a><br>
+    Карточка-действие: <a href="Advisor-Action-Card-SPEC.html">Advisor-Action-Card-SPEC.html</a><br>
+    История изменений: <a href="Applied-Changes-SPEC.html">Applied-Changes-SPEC.html</a><br>
+    Источник: <code>account-screens.js</code> (чат без изменений)
+  </div>
+</aside>
+
+<main>
+  <div class="doc-head">
+    <p class="kicker">Pennedly · Спецификация · «Глубокий» экран · tester-gated</p>
+    <h1 class="title">Агент по портфелю — чат <span>/app/account/advisor · вход только с дашборда</span></h1>
+    <p class="lede">Разговорный <b>чат-агент</b> уровня аккаунта: многоходовой диалог, привязанные data-чипы, строка «На основе:» и карточки-подсказки с «Открыть в Студии». По <b>решению C</b> дашборд стал домом агента, поэтому <b>отдельного пункта меню «Агент» больше нет</b> — в этот чат попадают <b>только с дашборда</b>: со строки «Спросите совет по портфелю…», с вопроса-стартера или с кнопки «Открыть агента». Экран открывается <b>с засеянным первым вопросом</b> и даёт чёткий возврат <b>«← Дашборд аккаунта»</b>. Сам чат <b>не переделан</b> — тот же компонент и вокабуляр (<code>account-screens.js</code>, <code>.adv-*</code>); новое здесь — только шапка-возврат и засев вопроса.</p>
+    <div class="filerow">
+      <span class="chip chip--new">+ шапка «← Дашборд»</span>
+      <span class="chip chip--new">+ засев вопроса</span>
+      <span class="chip chip--gone">− пункт меню «Агент»</span>
+      <span class="chip">чат без редизайна</span>
+      <span class="chip">account-screens.css</span>
+    </div>
+  </div>
+
+  <div class="note good">
+    <b>Тот же чат — только вход и возврат другие.</b> Тело диалога (закреплённый вердикт, реплики, проза, <code>.adv-chip--up/down/accent</code>, «На основе:», карточки-подсказки, композер) — <b>без изменений</b>, бэкенд-контракт совпадает с профильным агентом. Изменились две вещи: (1) убрана «Агент»-сайдбар-навигация — экран открывается как <b>«глубокий»</b> с шапкой-возвратом; (2) он <b>открывается засеянным</b> первым вопросом, пришедшим с дашборда.
+  </div>
+
+  <div class="note warn">
+    <b>Никакого пустого first-run «из меню».</b> Раньше в чат можно было зайти пунктом меню и увидеть пустой hero. Теперь входа из меню нет: попасть сюда можно <b>только</b> с дашборда, а значит первый вопрос <b>всегда засеян</b> — экран открывается уже в диалоге (вопрос + генерация/ответ), а не с чистого листа.
+  </div>
+
+  <!-- 1 -->
+  <section id="s1">
+    <h2><span class="h2n">1</span>Идентификация экрана</h2>
+    <p class="section-note">«Глубокий» чат уровня аккаунта. Сверху вниз: <code>шапка-возврат («← Дашборд аккаунта» + pill «На основе всего портфеля») → закреплённый вердикт → лента диалога → композер</code>. Без сайдбара аккаунта — это сфокусированный экран, не пункт навигации.</p>
+    <div class="tbl-wrap"><table><tbody>
+      <tr><th style="width:210px;">Маршрут</th><td><code>/app/account/advisor</code>. <b>Вход только с дашборда</b>: строка «Спросите совет…», вопрос-стартер (в тонком состоянии) или кнопка «Открыть агента» в шапке героя. <b>Tester-gated.</b></td></tr>
+      <tr><th>Тип</th><td><b>«Глубокий» экран.</b> Тот же компонент чата, что профильный <a href="Advisor-SPEC.html">/app/advisor</a>, scope = весь портфель. <b>Не</b> в сайдбаре — пункта меню «Агент» нет (решение C).</td></tr>
+      <tr><th>Возврат</th><td><b>«← Дашборд аккаунта»</b> — явная шапка-возврат, консистентная с V3. Дашборд = взгляд, этот чат = разговор.</td></tr>
+      <tr><th>Открытие</th><td><b>С засеянным первым вопросом.</b> Отправка со строки дашборда / клик по стартеру / кнопка героя приводят сюда, подставив вопрос — экран открывается уже в диалоге.</td></tr>
+      <tr><th>Ширина</th><td><b>reading</b> — лента центрирована (620 max), композер прилеплен снизу, вердикт закреплён сверху.</td></tr>
+      <tr><th>Фазы</th><td><code>ready</code> (засеяно → ответ) · <code>thinking</code> (генерация первого ответа) · <code>thin</code> (тонкие данные — честно) · <code>error</code> (inline + Retry).</td></tr>
+    </tbody></table></div>
+  </section>
+
+  <!-- 2 -->
+  <section id="s2">
+    <h2><span class="h2n">2</span><span class="stg">live</span>Полный экран в контексте</h2>
+    <p class="section-note">Весь экран: шапка-возврат «← Дашборд аккаунта», закреплённый вердикт, диалог, открытый <b>засеянным вопросом</b> (помечен «Засеяно с дашборда»), и композер. Свет + тьма.</p>
+    <div class="frames" id="f-screen"></div>
+  </section>
+
+  <!-- 3 -->
+  <section id="s3">
+    <h2><span class="h2n">3</span><span class="stg">new</span>Шапка-возврат «← Дашборд аккаунта»</h2>
+    <p class="section-note">Единственный новый элемент хрома. Слева — кнопка возврата с маркой аккаунта и подписью «Дашборд аккаунта»; справа — pill «На основе всего портфеля» и переключатель темы. Консистентно с V3 (те же токены, форма марки, скругления).</p>
+    <div class="frames" id="f-back"></div>
+  </section>
+
+  <!-- 4 -->
+  <section id="s4">
+    <h2><span class="h2n">4</span><span class="stg">seed</span>Открывается засеянным вопросом</h2>
+    <p class="section-note">Три входа с дашборда засевают первый вопрос — экран открывается уже в диалоге (вопрос + генерация ответа), а не с пустого листа.</p>
+    <div class="flow">
+      <div class="flow-node"><div class="lab">Дашборд · ask</div><b>«Спросите совет…»</b><p>Отправка строки уводит сюда, подставив текст пользователя как первый вопрос.</p></div>
+      <div class="flow-node"><div class="lab">Дашборд · стартер</div><b>Вопрос-стартер</b><p>В тонком состоянии (204) клик по стартеру засевает его текст.</p></div>
+      <div class="flow-node"><div class="lab">Дашборд · кнопка</div><b>«Открыть агента»</b><p>Кнопка в шапке героя открывает чат (с последним вердиктом закреплённым сверху).</p></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node accent"><div class="lab">Чат</div><b>Открыт засеянным</b><p>Первый вопрос уже в ленте, агент генерирует ответ. Возврат «← Дашборд аккаунта».</p></div>
+    </div>
+    <div class="frames" id="f-seeded"></div>
+  </section>
+
+  <!-- 5 -->
+  <section id="s5">
+    <h2><span class="h2n">5</span><span class="stg">hero</span>Закреплённый вердикт</h2>
+    <p class="section-note">Портфельная сводка, что <b>не скроллится</b>: <b>тот же компонент и источник вердикта</b>, что герой дашборда — в проде обе точки читают один ответ <code>/api/me/account/advisor</code>, поэтому вывод согласован. Caption «Сводка портфеля» + scope, вердикт и привязанные чипы. <span style="color:var(--subtle)">(В этом SPEC чат показан на своём портфельном сценарии, поэтому пример-вердикт может отличаться от примера на дашборде — в бою источник один.)</span></p>
+    <div class="frames" id="f-pinned"></div>
+  </section>
+
+  <!-- 6 -->
+  <section id="s6">
+    <h2><span class="h2n">6</span>Анатомия ответа</h2>
+    <p class="section-note">Реплика пользователя (accent-пузырь справа) → ответ ассистента: марка + <b>проза</b>, <b>data-чипы</b>, строка <b>«На основе:»</b> и <b>карточка-подсказка</b> с «Открыть в Студии». Вокабуляр 1:1 с профильным чатом — не переделан.</p>
+    <div class="note"><b>Где ответ применяет изменение</b> (рутина, автоответы, правило голоса, пост, расписание) — агент прикладывает <b>карточку-действие</b> <code>.adv-act</code>: единый корпус, превью «что изменится», одна кнопка «Применить», плюс строка профиля (какой профиль затронет). Полная спецификация: <a href="Advisor-Action-Card-SPEC.html">Advisor-Action-Card-SPEC.html</a>.</div>
+    <div class="frames" id="f-turn"></div>
+  </section>
+
+  <!-- 7 -->
+  <section id="s7">
+    <h2><span class="h2n">7</span>Все состояния</h2>
+    <div class="statebar"><span class="st st--on">засеяно → ответ</span><span class="st">генерация</span><span class="st">тонкие данные</span><span class="st">error</span></div>
+    <p class="section-note">Вердикт закреплён во всех состояниях; первый вопрос всегда засеян. <b>ready</b> — засеянный вопрос + ответ; <b>генерация</b> — «Читаю статистику портфеля…»; <b>тонкие данные</b> — честное «пока мало данных», без выдуманных чипов; <b>error</b> — inline-строка + Retry. Пустого «first-run из меню» больше нет.</p>
+    <div class="frames" id="f-states"></div>
+  </section>
+
+  <!-- 8 -->
+  <section id="s8">
+    <h2><span class="h2n">8</span><span class="stg">решение C</span>Маршрутизация</h2>
+    <p class="section-note">Продуктовое решение, вшитое в дизайн. Дашборд — дом агента; отдельного пункта меню нет; сложный разговор получает своё сфокусированное место.</p>
+    <div class="tbl-wrap"><table><tbody>
+      <tr><th style="width:210px;">Пункт меню «Агент»</th><td><b>Убран</b> из сайдбара и мобильного бара (см. <a href="Account-Dashboard-SPEC.html">дашборд §5, §18</a>). Меню: Дашборд · [Бренды при 2+] · Настройки.</td></tr>
+      <tr><th>Вход в чат</th><td><b>Только с дашборда:</b> ask-строка · вопрос-стартер · кнопка «Открыть агента». Каждый засевает первый вопрос.</td></tr>
+      <tr><th>Возврат</th><td>Шапка «← Дашборд аккаунта» — явный выход обратно на дашборд.</td></tr>
+      <tr><th>Разделение</th><td>Дашборд = <b>взгляд</b> (вердикт + тоталы + каналы); чат = <b>разговор</b> (многоходовой). Не смешиваются в один экран.</td></tr>
+    </tbody></table></div>
+    <div class="note good"><b>Итог.</b> В навигации нет избыточного раздела, но глубокий разговор получает сфокусированный экран с ясным возвратом. Многоходовой чат не встраивается в дашборд.</div>
+  </section>
+
+  <!-- 9 -->
+  <section id="s9">
+    <h2><span class="h2n">9</span>Локализация · Web ↔ Mobile</h2>
+    <p class="section-note">Вся копи в 8 локалях (en·ru·uk·de·es·fr·it·pt); ru — ревью, de — эталон длины. Числа в чипах tabular; @никнеймы LTR. Немецкая длина держит шапку-возврат и композер.</p>
+    <div class="frames" id="f-german"></div>
+    <div class="two" style="margin-top:14px;">
+      <div class="pane web"><h4>Десктоп</h4><ul><li>Сфокусированный экран, колонка 720; шапка-возврат сверху; вердикт закреплён; лента центрирована (620), композер снизу.</li></ul></div>
+      <div class="pane mob"><h4>Телефон</h4><ul><li>Шапка-возврат компактно; вердикт закреплён; чипы скроллятся вбок; композер-док. Полный проход — <a href="Account-Advisor-Mobile-SPEC.html">Account-Advisor-Mobile-SPEC.html</a>.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- 10 -->
+  <section id="s10">
+    <h2><span class="h2n">10</span>Чек-лист</h2>
+    <ul class="check">
+      <li><b>Вход только с дашборда:</b> ask-строка · стартер · «Открыть агента». Пункта меню «Агент» нет (решение C).</li>
+      <li><b>Открывается засеянным</b> первым вопросом — экран уже в диалоге, без пустого «first-run из меню».</li>
+      <li><b>Возврат «← Дашборд аккаунта»</b> — явная шапка, консистентная с V3.</li>
+      <li><b>Чат не переделан:</b> закреплённый вердикт + реплики + проза + <code>.adv-chip--*</code> + «На основе:» + карточки-подсказки «Открыть в Студии»; бэкенд-контракт совпадает.</li>
+      <li>Data-чипы привязаны к реальным сигналам портфеля; никаких выдуманных чисел; тонкие данные — честно.</li>
+      <li>Состояния: засеяно→ответ · генерация · тонкие-данные · error (inline + Retry). Вердикт закреплён везде.</li>
+      <li>Светлая + тёмная на токенах; 8 локалей без клиппинга (эталон de).</li>
+    </ul>
+    <div class="note" style="margin-top:18px;">Конец спецификации. Парные документы: <a href="Account-Dashboard-SPEC.html">дашборд (дом агента)</a> · <a href="Account-Advisor-Mobile-SPEC.html">чат (моб.)</a>.</div>
+  </section>
+</main>
+</div>
+
+<script src="account-data.js?v=20260703a"></script>
+<script src="account-desktop.js?v=20260703a"></script>
+<script src="account-screens.js?v=20260703a"></script>
+<script src="account/advisor-spec.js?v=20260703a"></script>
+</body>
+</html>

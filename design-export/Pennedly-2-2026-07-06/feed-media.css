@@ -1,0 +1,400 @@
+/* feed-media.css — EXTENDS the My Feed post card with a rendered media block.
+   The block sits BETWEEN the post text and the metrics row, inside card padding,
+   full card width. ONE set of classes serves BOTH layers:
+     · web  — inside `.feed-card`        (feed.css / studio.css)
+     · phone — inside `.mob .m-card`      (mobile/pennedly-mobile.css)
+   Sizing is relative (width:100%, aspect-ratio), so the same markup fits the
+   ~552px web column and the 390px phone alike. No hardcoded brand colour —
+   every value is a token, so light/dark flip for free. Scrim chips over imagery
+   are intentionally white-on-dark (they float on photos, not on the surface).
+
+   A post has exactly ONE media block; text-only posts render none. */
+
+/* ============================ BLOCK WRAPPER =========================== */
+.media { margin-top: 14px; }
+/* a touch tighter on the phone, matching the m-card rhythm */
+.mob .m-card-body + .media,
+.mob .reply-ctx + .media,
+.mob .translate-bar + .media { margin-top: 12px; }
+
+/* ====================== STRIPED IMAGE PLACEHOLDER ===================== */
+/* Spec stand-in for real media — a faint diagonal hatch + a mono caption that
+   names what the slot holds (dimensions / kind). Real posts drop a photo here. */
+.ph {
+  position: relative; width: 100%; display: grid; place-items: center;
+  background:
+    repeating-linear-gradient(135deg,
+      color-mix(in srgb, var(--color-text) 5%, var(--color-surface-2)) 0 11px,
+      var(--color-surface-2) 11px 22px);
+}
+.ph-tag {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.02em;
+  color: var(--color-text-subtle);
+  background: color-mix(in srgb, var(--color-surface) 80%, transparent);
+  border: 1px solid var(--color-border); border-radius: var(--radius-full);
+  padding: 4px 11px; backdrop-filter: blur(2px);
+}
+.ph-tag svg { color: var(--color-text-subtle); flex: 0 0 auto; }
+
+/* =========================== MEDIA FRAME ============================= */
+/* rectangular media: image, video, gif, carousel. */
+.media-frame {
+  position: relative; overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+}
+.media-frame .ph { aspect-ratio: 3 / 2; }          /* default landscape */
+.media-frame--wide .ph { aspect-ratio: 16 / 9; }
+.media-frame--square .ph { aspect-ratio: 1 / 1; }
+.media-frame--tall .ph { aspect-ratio: 4 / 5; }    /* capped portrait */
+
+/* ------------------------------ chips -------------------------------- */
+/* float over imagery → fixed white-on-scrim, theme-independent (by design). */
+.media-chip {
+  position: absolute; z-index: 3;
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: var(--font-sans); font-size: var(--text-caption);
+  font-weight: 600; line-height: 1; color: #fff;
+  background: color-mix(in srgb, #0a0a0a 60%, transparent);
+  border-radius: var(--radius-full); padding: 4px 9px;
+  backdrop-filter: blur(3px);
+}
+.media-chip svg { color: #fff; flex: 0 0 auto; }
+.media-chip--tr { top: 10px; right: 10px; }
+.media-chip--br { bottom: 10px; right: 10px; }
+.media-chip--bl { bottom: 10px; left: 10px; }
+.media-chip--tl { top: 10px; left: 10px; }
+.media-chip--gif { letter-spacing: 0.04em; }
+
+/* expand affordance (single image → lightbox) */
+.media-expand {
+  cursor: pointer; border: none;
+  transition: background var(--duration-fast) var(--ease-standard);
+}
+.media-expand:hover { background: color-mix(in srgb, #0a0a0a 74%, transparent); }
+
+/* centered play badge (video / video carousel item) */
+.media-play {
+  position: absolute; inset: 0; margin: auto; z-index: 3;
+  width: 58px; height: 58px; border-radius: var(--radius-full);
+  display: grid; place-items: center;
+  color: #fff; background: color-mix(in srgb, #0a0a0a 48%, transparent);
+  border: 1.5px solid color-mix(in srgb, #ffffff 55%, transparent);
+  backdrop-filter: blur(2px); cursor: pointer;
+  transition: transform var(--duration-fast) var(--ease-standard),
+              background var(--duration-fast) var(--ease-standard);
+}
+.media-play:hover { transform: scale(1.04); background: color-mix(in srgb, #0a0a0a 58%, transparent); }
+.media-play svg { margin-left: 3px; }              /* optical centering of the triangle */
+.media-play--sm { width: 42px; height: 42px; }
+
+/* inline video scrubber (playing state) */
+.media-scrub {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 3;
+  display: flex; align-items: center; gap: 9px;
+  padding: 10px 12px 11px;
+  background: linear-gradient(to top, color-mix(in srgb, #0a0a0a 70%, transparent), transparent);
+}
+.media-scrub-btn {
+  flex: 0 0 auto; width: 26px; height: 26px; border: none; cursor: pointer;
+  display: grid; place-items: center; color: #fff; background: transparent;
+}
+.media-scrub-track {
+  flex: 1 1 auto; height: 4px; border-radius: var(--radius-full);
+  background: color-mix(in srgb, #ffffff 28%, transparent); overflow: hidden;
+}
+.media-scrub-fill { height: 100%; background: #fff; border-radius: var(--radius-full); }
+.media-scrub-time {
+  flex: 0 0 auto; font-family: var(--font-mono); font-size: 11px;
+  color: #fff; font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+
+/* ------------------------ failed / processing ------------------------ */
+/* muted flat placeholder (NOT striped) — degrades quietly, never broken. */
+.media-fallback {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 8px; text-align: center;
+  background: var(--color-surface-2); color: var(--color-text-subtle);
+}
+.media-frame .media-fallback { aspect-ratio: 3 / 2; }
+.media-frame--wide .media-fallback { aspect-ratio: 16 / 9; }
+.media-fallback-mark {
+  width: 40px; height: 40px; display: grid; place-items: center;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-text) 6%, var(--color-surface));
+  border: 1px solid var(--color-border); color: var(--color-text-subtle);
+}
+.media-fallback-t { font-size: var(--text-small); font-weight: 600; color: var(--color-text-muted); }
+.media-fallback-s { font-size: var(--text-caption); color: var(--color-text-subtle); max-width: 30ch; line-height: 1.45; }
+
+/* ----------------------------- skeleton ------------------------------ */
+.media-skel { background: var(--color-surface-2); position: relative; overflow: hidden; }
+.media-frame .media-skel { aspect-ratio: 3 / 2; }
+.media-skel::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--color-text) 7%, var(--color-surface-2)) 50%,
+    transparent 100%);
+  background-size: 220% 100%;
+  animation: media-shimmer 1.4s linear infinite;
+}
+@keyframes media-shimmer { from { background-position: 220% 0; } to { background-position: -120% 0; } }
+@media (prefers-reduced-motion: reduce) { .media-skel::after { animation: none; } }
+
+/* =============================== CAROUSEL ============================= */
+.media-carousel { position: relative; }
+.media-carousel .media-track { display: flex; width: 100%; transition: transform var(--duration-base) var(--ease-standard); }
+.media-carousel .media-slide { flex: 0 0 100%; position: relative; }
+.media-carousel .media-slide .ph { aspect-ratio: 3 / 2; border-radius: 0; }
+.media-arrow {
+  position: absolute; top: 50%; transform: translateY(-50%); z-index: 4;
+  width: 32px; height: 32px; border-radius: var(--radius-full);
+  display: grid; place-items: center; cursor: pointer; border: none;
+  color: #fff; background: color-mix(in srgb, #0a0a0a 50%, transparent);
+  backdrop-filter: blur(3px);
+  transition: background var(--duration-fast) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard);
+}
+.media-arrow:hover { background: color-mix(in srgb, #0a0a0a 64%, transparent); }
+.media-arrow--l { left: 10px; }
+.media-arrow--r { right: 10px; }
+.media-arrow[disabled] { opacity: 0.34; cursor: default; }
+.media-dots {
+  position: absolute; bottom: 11px; left: 50%; transform: translateX(-50%); z-index: 4;
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 9px; border-radius: var(--radius-full);
+  background: color-mix(in srgb, #0a0a0a 42%, transparent); backdrop-filter: blur(3px);
+}
+.media-dot { width: 6px; height: 6px; border-radius: var(--radius-full); background: color-mix(in srgb, #fff 50%, transparent); }
+.media-dot--on { background: #fff; }
+
+/* ============================ AUDIO PLAYER =========================== */
+/* display-only — Pennedly never composes audio; external posts can carry it.
+   One line tall: play/pause · waveform progress · elapsed / total. */
+.media-audio {
+  display: flex; align-items: center; gap: 12px;
+  margin-top: 14px; padding: 9px 12px;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+.mob .m-card-body + .media-audio { margin-top: 12px; }
+.media-audio-btn {
+  flex: 0 0 auto; width: 34px; height: 34px; border: none; cursor: pointer;
+  border-radius: var(--radius-full); display: grid; place-items: center;
+  background: var(--color-text); color: var(--color-bg);
+  transition: opacity var(--duration-fast) var(--ease-standard);
+}
+.media-audio-btn:hover { opacity: 0.88; }
+.media-audio-wave { flex: 1 1 auto; display: flex; align-items: center; gap: 2px; height: 26px; min-width: 0; }
+.media-audio-wave .wbar { flex: 1 1 0; border-radius: var(--radius-full); background: var(--color-border); }
+.media-audio-wave .wbar--on { background: var(--color-accent); }
+.media-audio-time {
+  flex: 0 0 auto; font-family: var(--font-mono); font-size: var(--text-caption);
+  color: var(--color-text-subtle); font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+
+/* ============================= LINK CARD ============================= */
+.media-link {
+  display: flex; margin-top: 14px; text-decoration: none; color: inherit;
+  border: 1px solid var(--color-border); border-radius: var(--radius-md);
+  overflow: hidden; background: var(--color-surface);
+  transition: border-color var(--duration-fast) var(--ease-standard);
+}
+.mob .m-card-body + .media-link { margin-top: 12px; }
+.media-link:hover { border-color: color-mix(in srgb, var(--color-text) 16%, var(--color-border)); }
+.media-link-thumb { flex: 0 0 128px; align-self: stretch; position: relative; }
+.media-link-thumb .ph { height: 100%; min-height: 100px; }
+.media-link-body { flex: 1 1 auto; min-width: 0; padding: 12px 12px 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+.media-link-title {
+  font-size: var(--text-small); font-weight: 600; line-height: 1.4; color: var(--color-text);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.media-link-dom {
+  display: flex; align-items: center; gap: 6px; margin-top: auto;
+  font-size: var(--text-caption); color: var(--color-text-subtle);
+}
+.media-link-dom .dom-globe { flex: 0 0 auto; color: var(--color-text-subtle); }
+.media-link-dom .dom-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.media-link-dom .dom-ext { margin-left: auto; flex: 0 0 auto; color: var(--color-text-subtle); }
+/* phone: thumbnail stacks on top */
+.mob .media-link { flex-direction: column; }
+.mob .media-link-thumb { flex: 0 0 auto; width: 100%; }
+.mob .media-link-thumb .ph { aspect-ratio: 16 / 9; min-height: 0; }
+/* unavailable fallback — no thumb, a tidy domain + raw URL chip (never broken) */
+.media-link--bare .media-link-body { padding: 12px 14px; gap: 8px; }
+.media-link-urlchip {
+  display: inline-flex; align-items: center; gap: 7px; align-self: flex-start; max-width: 100%;
+  font-family: var(--font-mono); font-size: 11.5px; color: var(--color-text-muted);
+  background: var(--color-surface-2); border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm); padding: 4px 9px;
+}
+.media-link-urlchip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.media-link-urlchip svg { flex: 0 0 auto; color: var(--color-text-subtle); }
+
+/* link skeleton */
+.media-link-body .skel-line { height: 12px; }
+
+/* =============================== POLL =============================== */
+.media-poll { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+.mob .m-card-body + .media-poll { margin-top: 12px; }
+.poll-opt {
+  position: relative; overflow: hidden;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 10px 13px; border: 1px solid var(--color-border);
+  border-radius: var(--radius-md); background: var(--color-surface);
+}
+.poll-fill {
+  position: absolute; left: 0; top: 0; bottom: 0; z-index: 0;
+  background: color-mix(in srgb, var(--color-accent) 13%, var(--color-surface));
+  border-right: 1px solid color-mix(in srgb, var(--color-accent) 28%, transparent);
+}
+.poll-label, .poll-pct { position: relative; z-index: 1; }
+.poll-label {
+  font-size: var(--text-small); font-weight: 500; color: var(--color-text);
+  display: inline-flex; align-items: center; gap: 7px; min-width: 0;
+}
+.poll-label .poll-check { color: var(--color-success); flex: 0 0 auto; }
+.poll-label span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.poll-pct { font-size: var(--text-small); font-weight: 600; font-variant-numeric: tabular-nums; color: var(--color-text-muted); flex: 0 0 auto; }
+.poll-foot {
+  display: flex; align-items: center; gap: 8px; margin-top: 2px;
+  font-size: var(--text-caption); color: var(--color-text-subtle);
+}
+.poll-foot .sep { opacity: 0.6; }
+/* closed: winner emphasised, others recede */
+.poll-opt--win { border-color: color-mix(in srgb, var(--color-success) 34%, transparent); }
+.poll-opt--win .poll-fill {
+  background: color-mix(in srgb, var(--color-success) 16%, var(--color-surface));
+  border-right-color: color-mix(in srgb, var(--color-success) 34%, transparent);
+}
+.poll-opt--win .poll-pct { color: var(--color-success); }
+.poll-opt--lost { opacity: 0.78; }
+.poll-opt--lost .poll-fill { background: color-mix(in srgb, var(--color-text) 6%, var(--color-surface)); border-right-color: var(--color-border); }
+
+/* ========================== QUOTE / REPOST ========================== */
+/* an inset mini-card of the quoted post — indented, bordered, reads as nested. */
+.media-quote {
+  margin-top: 14px; padding: 12px 14px;
+  border: 1px solid var(--color-border); border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-text) 2.5%, var(--color-surface));
+}
+.mob .m-card-body + .media-quote { margin-top: 12px; }
+.media-quote-head { display: flex; align-items: center; gap: 8px; }
+.media-quote-head .avatar { width: 22px; height: 22px; }
+.media-quote-handle { font-size: var(--text-caption); font-weight: 600; color: var(--color-text); }
+.media-quote-sub { font-size: var(--text-caption); color: var(--color-text-subtle); display: inline-flex; align-items: center; gap: 6px; }
+.media-quote-sub .sep { opacity: 0.6; }
+.media-quote-body { display: flex; align-items: flex-start; gap: 12px; margin-top: 7px; }
+.media-quote-text {
+  flex: 1 1 auto; min-width: 0;
+  font-size: var(--text-small); line-height: 1.5; color: var(--color-text-muted);
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.media-quote-thumb {
+  flex: 0 0 58px; width: 58px; height: 58px; border-radius: var(--radius-sm);
+  overflow: hidden; border: 1px solid var(--color-border); position: relative;
+}
+.media-quote-thumb .ph { height: 100%; }
+.media-quote-thumb .ph-tag { display: none; }      /* too small for a label */
+/* quote skeleton + unavailable */
+.media-quote--skel .skel-line { height: 11px; }
+.media-quote--gone {
+  display: flex; align-items: center; gap: 11px;
+  color: var(--color-text-subtle);
+}
+.media-quote--gone .media-quote-mark {
+  flex: 0 0 auto; width: 34px; height: 34px; display: grid; place-items: center;
+  border-radius: var(--radius-md); border: 1px solid var(--color-border);
+  background: var(--color-surface-2); color: var(--color-text-subtle);
+}
+.media-quote--gone .qg-t { font-size: var(--text-small); font-weight: 600; color: var(--color-text-muted); }
+.media-quote--gone .qg-s { font-size: var(--text-caption); color: var(--color-text-subtle); margin-top: 1px; }
+
+/* ============================== LIGHTBOX ============================ */
+/* tap-to-expand viewer. Rendered as an overlay inside its positioned host
+   (the web frame `.wf` or the phone `.device-screen`). */
+.media-lightbox {
+  position: absolute; inset: 0; z-index: 50;
+  display: flex; flex-direction: column;
+  background: color-mix(in srgb, #0a0a0a 90%, transparent);
+  backdrop-filter: blur(4px);
+}
+.lb-bar {
+  flex: 0 0 auto; display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px; color: #fff;
+}
+.lb-count { font-family: var(--font-mono); font-size: 12px; color: color-mix(in srgb, #fff 78%, transparent); }
+.lb-spacer { flex: 1 1 auto; }
+.lb-act {
+  display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
+  font-family: var(--font-sans); font-size: var(--text-small); font-weight: 500; color: #fff;
+  background: color-mix(in srgb, #fff 14%, transparent); border: 1px solid color-mix(in srgb, #fff 22%, transparent);
+  border-radius: var(--radius-full); padding: 6px 13px;
+}
+.lb-act:hover { background: color-mix(in srgb, #fff 22%, transparent); }
+.lb-icon {
+  width: 34px; height: 34px; flex: 0 0 auto; border-radius: var(--radius-full);
+  display: grid; place-items: center; cursor: pointer; color: #fff;
+  background: color-mix(in srgb, #fff 12%, transparent); border: none;
+}
+.lb-icon:hover { background: color-mix(in srgb, #fff 22%, transparent); }
+.lb-stage { flex: 1 1 auto; position: relative; display: grid; place-items: center; padding: 8px 16px; min-height: 0; }
+.lb-img {
+  max-width: 100%; max-height: 100%; border-radius: var(--radius-md); overflow: hidden;
+  border: 1px solid color-mix(in srgb, #fff 14%, transparent); width: 100%;
+}
+.lb-img .ph { aspect-ratio: 3 / 2; }
+.lb-img .ph-tag { background: color-mix(in srgb, #0a0a0a 55%, transparent); color: #fff; border-color: color-mix(in srgb, #fff 22%, transparent); }
+.lb-img .ph-tag svg { color: #fff; }
+.lb-nav {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 40px; height: 40px; border-radius: var(--radius-full); border: none; cursor: pointer;
+  display: grid; place-items: center; color: #fff; background: color-mix(in srgb, #fff 14%, transparent);
+}
+.lb-nav--l { left: 18px; }
+.lb-nav--r { right: 18px; }
+.lb-cap {
+  flex: 0 0 auto; padding: 12px 18px 18px; color: color-mix(in srgb, #fff 72%, transparent);
+  font-size: var(--text-small); line-height: 1.5; text-align: center; text-wrap: pretty;
+}
+
+/* ====================== ALT-TEXT SLOT (a11y) ======================== */
+/* every media frame carries an alt-text slot; in the spec we surface it as a
+   small mono ribbon so reviewers can see it's wired. Real cards keep it on the
+   img `alt` / `aria-label` and hide this ribbon. */
+.media-alt {
+  display: inline-flex; align-items: center; gap: 6px; margin-top: 7px;
+  font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.02em;
+  color: var(--color-text-subtle);
+}
+.media-alt b { color: var(--color-text-muted); font-weight: 600; }
+
+/* ===================== WEB PREVIEW FRAME (.wf) ====================== */
+/* the doc chrome is light-only; each web card sits in its own token-pinned
+   frame so it shows the real product surface and flips to dark independently
+   (`.wf.dark` triggers ds/tokens.css `.dark`). Mirrors frame.css `.device-screen`
+   for the desktop column instead of a phone. */
+.wf {
+  position: relative; flex: 0 0 auto;
+  width: 600px; max-width: 100%;
+  padding: 22px; border-radius: 22px; overflow: hidden;
+  background: var(--color-bg);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-text) 9%, transparent),
+              0 18px 40px -22px rgba(10, 10, 12, 0.35);
+}
+.wf .feed { display: flex; flex-direction: column; gap: 14px; }
+
+/* web post-card avatar (avoids a shell.css dependency; phone uses .mob .avatar-img) */
+.feed-card .avatar-img {
+  border-radius: var(--radius-full); object-fit: cover; display: block;
+  flex: 0 0 auto; background: var(--color-surface-2);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-text) 8%, transparent);
+}
+/* quote mini-avatar (both layers) */
+.media-quote-head .avatar-img {
+  width: 22px; height: 22px; border-radius: var(--radius-full);
+  object-fit: cover; display: block; flex: 0 0 auto; background: var(--color-surface-2);
+}

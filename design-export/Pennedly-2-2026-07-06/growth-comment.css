@@ -1,0 +1,183 @@
+/* growth-comment.css — Pennedly · НОВЫЙ тип сценария «КОММЕНТАРИЙ-ДОБАВКА ПРИ РОСТЕ ПОСТА».
+   Когда один из твоих постов переходит порог активности (комментарии / лайки /
+   просмотры — на выбор), Pennedly один раз добавляет к ЭТОМУ ЖЕ посту заранее
+   заготовленный комментарий-ответ (обычно ссылка / призыв / дополнение).
+
+   РЕАКТИВНЫЙ сценарий: без расписания, проверка периодическая (~15 мин), один
+   раз на пост, под наблюдением — посты за последние ~48 часов.
+
+   Надстройка поверх recipe-editor.css — переиспользует .recipe / .rc-drawer /
+   .rc-slot / .aud-tile / .rc-step / .mockreply / .mr-bot. Здесь — только
+   немногие новые классы, которых нет в базовой модели. Только токены. */
+
+/* тихий хвост фразы — «один раз на пост · реактивно», под прозой */
+.recipe-tail {
+  display: inline-flex; align-items: center; gap: 7px; flex-wrap: wrap;
+  margin: 0 24px 4px; padding: 7px 11px; border-radius: var(--radius-full);
+  font-size: var(--text-caption); color: var(--color-text-subtle);
+  background: var(--color-surface-2); border: 1px solid var(--color-border);
+}
+.recipe-tail svg { flex: 0 0 auto; opacity: 0.8; }
+.recipe-tail b { color: var(--color-text-muted); font-weight: 600; }
+
+/* ── выбор метрики: те же плитки, что и «Кому отвечать», + крупная иконка ── */
+.gc-metric-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; }
+@media (max-width: 520px) { .gc-metric-grid { grid-template-columns: 1fr; } }
+
+/* выбранная плитка-метрика подсвечивает свою иконку акцентом (aud-tile уже даёт рамку) */
+.aud-tile .at-metricnum { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--color-text); }
+
+/* ── строки порога для режима «любая из метрик» ── */
+.gc-metric-rows {
+  display: flex; flex-direction: column; gap: 9px; margin-top: 11px;
+  padding: 13px; border-radius: var(--radius-md);
+  background: var(--color-surface); border: 1px solid var(--color-border);
+}
+.gc-metric-row { display: flex; align-items: center; gap: 11px; }
+.gc-metric-row .gmr-ico {
+  width: 28px; height: 28px; flex: 0 0 auto; display: grid; place-items: center;
+  border-radius: var(--radius-sm); background: var(--color-surface-2);
+  border: 1px solid var(--color-border); color: var(--color-text-muted);
+}
+.gc-metric-row .gmr-name { font-size: var(--text-small); font-weight: 600; color: var(--color-text); flex: 0 0 92px; }
+.gc-metric-row .gmr-ctl { display: inline-flex; align-items: center; gap: 9px; font-size: var(--text-small); color: var(--color-text-muted); }
+.gc-metric-row--off { opacity: 0.55; }
+.gc-metric-row--off .gmr-ico { color: var(--color-text-subtle); }
+.gc-anyhead { font-size: var(--text-caption); color: var(--color-text-subtle); line-height: 1.45; }
+.gc-anyhead b { color: var(--color-text-muted); font-weight: 600; }
+
+/* ── порог: степпер + крупное значение метрики (одиночный режим) ── */
+.gc-thresh { display: flex; align-items: center; gap: 11px; flex-wrap: wrap; }
+.gc-thresh .gt-word { font-size: var(--text-small); color: var(--color-text-muted); }
+.gc-thresh .gt-quick { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+.gc-thresh .gt-chip {
+  font-family: var(--font-mono); font-size: 11px; padding: 4px 10px;
+  border-radius: var(--radius-full); cursor: pointer; font-variant-numeric: tabular-nums;
+  background: var(--color-surface); border: 1px dashed var(--color-border); color: var(--color-text-subtle);
+}
+.gc-thresh .gt-chip:hover { border-color: color-mix(in srgb, var(--color-accent) 40%, var(--color-border)); color: var(--color-accent); }
+.gc-thresh .gt-chip--on { border-style: solid; border-color: var(--color-accent); color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 7%, var(--color-surface)); }
+
+/* ── предпросмотр: пост перешёл порог → добавлен наш комментарий ── */
+.gc-crossed {
+  display: flex; align-items: center; gap: 7px; margin: 0 0 4px;
+  font-size: var(--text-caption); font-weight: 600; color: var(--color-success);
+}
+.gc-crossed svg { flex: 0 0 auto; }
+
+/* ссылка/призыв внутри текста комментария — спокойно акцентом, без подчёркивания-кнопки */
+.gc-link { color: var(--color-accent); font-weight: 600; word-break: break-word; }
+
+/* плашка «добавлено Pennedly» — переиспользует .mrb-tag, но добавляем мегафон-оттенок */
+.mr-bot .mrb-tag.mrb-tag--added { color: var(--color-accent); }
+
+/* в предпросмотре наш комментарий — это ОТВЕТ к своему же посту: чуть отступим ветку */
+.gc-selfcomment .mr-k { color: var(--color-text-subtle); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   РАСШИРЕНИЕ · ЦЕЛЬ + ТРИ ТОЧКИ ВХОДА
+   Под капотом — ОДНА сущность (правило-бустер с целью). Конфиг
+   (метрика/порог/текст/режим) идентичен везде; меняется только ЦЕЛЬ:
+   A — явный пикер цели в редакторе-рецепте · B — прицеп в Студии (цель = этот
+   пост) · C — прицеп в редакторе сценария (цель = посты этого сценария).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── выбор цели «за чем следит» — те же плитки aud-tile + контекстный под-контрол ── */
+.gc-goal-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; }
+@media (max-width: 520px) { .gc-goal-grid { grid-template-columns: 1fr; } }
+.gc-goal-sub {
+  margin-top: 11px; padding: 13px; border-radius: var(--radius-md);
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  display: flex; flex-direction: column; gap: 10px;
+}
+.gc-goal-sub .ggs-k { font-size: var(--text-caption); color: var(--color-text-subtle); line-height: 1.45; }
+.gc-goal-sub .ggs-k b { color: var(--color-text-muted); font-weight: 600; }
+.gc-goal-sub .ggs-row { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+/* мини-превью выбранного поста (цель = конкретный пост) */
+.gc-postpick {
+  display: flex; gap: 11px; padding: 11px 13px; border-radius: var(--radius-md);
+  background: var(--color-surface-2); border: 1px solid var(--color-border); align-items: flex-start;
+}
+.gc-postpick .gp-snip { font-size: var(--text-small); color: var(--color-text); line-height: 1.5; flex: 1 1 auto; min-width: 0; }
+.gc-postpick .gp-when { font-size: var(--text-caption); color: var(--color-text-subtle); margin-top: 3px; }
+.gc-postpick .gp-change { flex: 0 0 auto; align-self: center; }
+
+/* ── ЛОКНУТАЯ плашка цели (B/C задают цель неявно из контекста) ── */
+.gc-target-chip {
+  display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px 7px 10px;
+  border-radius: var(--radius-full); font-size: var(--text-caption); color: var(--color-text-muted);
+  background: color-mix(in srgb, var(--color-accent) 7%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--color-accent) 26%, var(--color-border));
+}
+.gc-target-chip svg { flex: 0 0 auto; color: var(--color-accent); }
+.gc-target-chip b { color: var(--color-text); font-weight: 600; }
+.gc-target-chip .tc-lock { margin-left: 2px; color: var(--color-text-subtle); display: inline-flex; }
+
+/* ── ПРИЦЕП-ПАНЕЛЬ бустера (точки входа B и C) ── */
+.gc-panel {
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow: hidden;
+}
+.gc-panel--on { border-color: color-mix(in srgb, var(--color-accent) 32%, var(--color-border)); }
+.gcp-head {
+  display: flex; align-items: center; gap: 12px; padding: 14px 16px; width: 100%;
+  background: transparent; border: none; cursor: pointer; text-align: left; font-family: inherit;
+}
+.gc-panel.is-open .gcp-head { border-bottom: 1px solid var(--color-border); }
+.gcph-ico {
+  width: 34px; height: 34px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--color-accent) 26%, transparent); color: var(--color-accent);
+}
+.gcph-tt { flex: 1 1 auto; min-width: 0; }
+.gcph-t { font-size: 15px; font-weight: 600; letter-spacing: -0.004em; display: flex; align-items: center; gap: 9px; flex-wrap: wrap; color: var(--color-text); }
+.gcph-new { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-accent); border: 1px solid color-mix(in srgb, var(--color-accent) 30%, var(--color-border)); border-radius: var(--radius-full); padding: 1px 7px; }
+.gcph-sum { font-size: var(--text-caption); color: var(--color-text-subtle); margin-top: 3px; line-height: 1.45; text-wrap: pretty; }
+.gcph-sum b { color: var(--color-text-muted); font-weight: 600; }
+.gcph-right { flex: 0 0 auto; display: flex; align-items: center; gap: 12px; }
+.gcph-chev { color: var(--color-text-subtle); display: inline-flex; transition: transform var(--duration-base) var(--ease-standard); }
+.gc-panel.is-open .gcph-chev { transform: rotate(90deg); }
+.gcp-body { padding: 4px 16px 18px; display: flex; flex-direction: column; gap: 16px; }
+.gcp-body--off { opacity: 0.5; pointer-events: none; }
+
+/* свёрнутая сводка-фраза прицепа (читается как предложение) */
+.gcp-phrase { font-size: 15px; line-height: 1.6; color: var(--color-text-muted); margin: 0; text-wrap: pretty; }
+.gcp-phrase b { color: var(--color-text); font-weight: 600; }
+.gcp-phrase .gcp-q { color: var(--color-accent); font-weight: 600; }
+
+/* ── ОБЩИЙ КОНФИГ-БЛОК (идентичен в A/B/C) — подгруппы с подписями ── */
+.gc-cfg { display: flex; flex-direction: column; gap: 16px; }
+.gc-cfg-group { display: flex; flex-direction: column; gap: 10px; }
+.gc-cfg-k { font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-text-subtle); display: flex; align-items: center; gap: 7px; }
+.gc-cfg-k svg { color: var(--color-text-subtle); flex: 0 0 auto; }
+.gc-cfg--shared { border: 1px dashed color-mix(in srgb, var(--color-accent) 32%, var(--color-border)); border-radius: var(--radius-md); padding: 15px; background: color-mix(in srgb, var(--color-accent) 3%, var(--color-surface)); }
+.gc-cfg-banner { display: flex; align-items: center; gap: 7px; font-size: var(--text-caption); color: var(--color-accent); font-weight: 600; margin: 0 0 13px; }
+.gc-cfg-banner svg { flex: 0 0 auto; }
+
+/* ── СТУДИЯ · композер поста (контекст точки входа B) ── */
+.gc-composer { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-xl); box-shadow: var(--shadow-sm); overflow: hidden; }
+.gcc-top { display: flex; align-items: center; gap: 11px; padding: 16px 18px 0; }
+.gcc-who { display: flex; flex-direction: column; min-width: 0; }
+.gcc-who .gw-n { font-size: var(--text-small); font-weight: 600; color: var(--color-text); }
+.gcc-who .gw-h { font-size: var(--text-caption); color: var(--color-text-subtle); }
+.gcc-pill { margin-left: auto; flex: 0 0 auto; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-muted); border: 1px solid var(--color-border); border-radius: var(--radius-full); padding: 3px 9px; }
+.gcc-body { padding: 13px 18px 16px; font-size: 16px; line-height: 1.6; color: var(--color-text); text-wrap: pretty; }
+.gcc-toolbar { display: flex; align-items: center; gap: 11px; padding: 13px 18px; border-top: 1px solid var(--color-border); background: var(--color-surface-2); flex-wrap: wrap; }
+.gcc-cc { font-size: var(--text-caption); color: var(--color-text-subtle); font-variant-numeric: tabular-nums; }
+.gcc-toolbar .tb-spacer { flex: 1 1 auto; }
+
+/* секция бустера, привинченная к композеру/редактору — отступ сверху */
+.gc-attach { margin-top: 13px; }
+
+/* ── РЕДАКТОР СЦЕНАРИЯ · лёгкие строки шагов (контекст точки входа C) ── */
+.gc-steprow { display: flex; align-items: center; gap: 12px; padding: 13px 15px; border-radius: var(--radius-md); background: var(--color-surface); border: 1px solid var(--color-border); }
+.gc-steprow .gsr-n { width: 26px; height: 26px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-full); font-family: var(--font-mono); font-size: 12px; font-weight: 600; background: var(--color-surface-2); border: 1px solid var(--color-border); color: var(--color-text-muted); }
+.gc-steprow .gsr-b { flex: 1 1 auto; min-width: 0; }
+.gc-steprow .gsr-t { font-size: var(--text-small); font-weight: 600; color: var(--color-text); }
+.gc-steprow .gsr-v { font-size: var(--text-caption); color: var(--color-text-subtle); margin-top: 1px; line-height: 1.4; }
+.gc-steprow .gsr-done { flex: 0 0 auto; color: var(--color-success); display: inline-flex; }
+.gc-steps { display: flex; flex-direction: column; gap: 10px; }
+
+/* «прицеп» представляется новым шагом — слегка акцентная рамка */
+.gc-steprow--booster { border-color: color-mix(in srgb, var(--color-accent) 26%, var(--color-border)); background: color-mix(in srgb, var(--color-accent) 4%, var(--color-surface)); }
+.gc-steprow--booster .gsr-n { background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface)); border-color: color-mix(in srgb, var(--color-accent) 28%, transparent); color: var(--color-accent); }

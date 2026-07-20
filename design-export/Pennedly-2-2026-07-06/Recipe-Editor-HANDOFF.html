@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pennedly · Редактор сценария — спецификация для разработки</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="ds/tokens.css" />
+<style>
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{margin:0; background:var(--color-bg); color:var(--color-text);
+    font-family:var(--font-sans); font-size:15px; line-height:1.6;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;}
+  .wrap{max-width:1000px; margin:0 auto; padding:52px 44px 130px;}
+
+  .kicker{font-family:var(--font-mono); font-size:12px; letter-spacing:0.05em; color:var(--color-accent); text-transform:uppercase; margin:0 0 12px;}
+  h1{font-size:34px; line-height:1.08; letter-spacing:-0.025em; font-weight:600; margin:0 0 14px; text-wrap:balance;}
+  h1 span{color:var(--color-text-subtle); font-weight:500;}
+  .lede{font-size:16px; color:var(--color-text-muted); max-width:80ch; margin:0 0 10px; text-wrap:pretty;}
+  .lede b{color:var(--color-text); font-weight:600;}
+
+  .files{display:flex; flex-wrap:wrap; gap:7px; margin:18px 0 8px;}
+  .file{font-family:var(--font-mono); font-size:12px; padding:5px 11px; border-radius:8px; background:var(--color-surface); border:1px solid var(--color-border); color:var(--color-text-muted);}
+  .file b{color:var(--color-text); font-weight:600;}
+
+  h2{font-size:23px; font-weight:600; letter-spacing:-0.015em; margin:0; padding-top:20px; border-top:2px solid var(--color-text);}
+  section{margin-top:54px; scroll-margin-top:20px;}
+  .s-sub{font-size:14.5px; color:var(--color-text-muted); margin:10px 0 18px; max-width:84ch; text-wrap:pretty;}
+  .s-sub b{color:var(--color-text); font-weight:600;}
+  h3{font-size:16px; font-weight:600; margin:26px 0 10px; letter-spacing:-0.006em; display:flex; align-items:center; gap:9px;}
+  h3 .tag{font-family:var(--font-mono); font-size:11px; font-weight:500; color:var(--color-accent); border:1px solid color-mix(in srgb,var(--color-accent) 28%,var(--color-border)); border-radius:9999px; padding:2px 9px; letter-spacing:.02em;}
+
+  table{width:100%; border-collapse:collapse; margin:6px 0 8px; font-size:13.5px;}
+  th{text-align:left; font-size:11px; font-family:var(--font-mono); letter-spacing:.04em; text-transform:uppercase; color:var(--color-text-subtle); font-weight:600; padding:9px 12px; border-bottom:1px solid var(--color-border); background:var(--color-surface-2);}
+  td{padding:9px 12px; border-bottom:1px solid var(--color-border); vertical-align:top; line-height:1.5; color:var(--color-text-muted);}
+  td:first-child{color:var(--color-text); font-weight:500; white-space:nowrap;}
+  td b{color:var(--color-text); font-weight:600;}
+  table{border:1px solid var(--color-border); border-radius:12px; overflow:hidden;}
+  code,.m{font-family:var(--font-mono); font-size:0.92em; color:var(--color-text); background:var(--color-surface); border:1px solid var(--color-border); border-radius:5px; padding:1px 5px; white-space:nowrap;}
+  td code,td .m{background:var(--color-surface-2);}
+
+  .change{display:grid; grid-template-columns:30px 1fr; gap:14px; padding:15px 0; border-bottom:1px solid var(--color-border);}
+  .change:last-child{border-bottom:none;}
+  .change .cn{width:30px; height:30px; display:grid; place-items:center; border-radius:9999px; font-family:var(--font-mono); font-size:13px; font-weight:600; background:color-mix(in srgb,var(--color-accent) 12%,var(--color-surface)); border:1px solid color-mix(in srgb,var(--color-accent) 28%,transparent); color:var(--color-accent);}
+  .change.c0 .cn{background:color-mix(in srgb,var(--color-success) 12%,var(--color-surface)); border-color:color-mix(in srgb,var(--color-success) 28%,transparent); color:var(--color-success);}
+  .change .ct{font-size:15.5px; font-weight:600; margin:3px 0 4px;}
+  .change .cd{font-size:13.5px; color:var(--color-text-muted); line-height:1.55; text-wrap:pretty;}
+  .change .cd b{color:var(--color-text); font-weight:600;}
+  .change .cd .why{color:var(--color-text-subtle);}
+
+  .swatches{display:flex; flex-wrap:wrap; gap:10px; margin:6px 0 4px;}
+  .sw{display:flex; align-items:center; gap:9px; font-size:12.5px; color:var(--color-text-muted); border:1px solid var(--color-border); border-radius:10px; padding:8px 12px 8px 9px; background:var(--color-surface);}
+  .sw .chip{width:22px; height:22px; border-radius:6px; flex:0 0 auto; border:1px solid color-mix(in srgb,var(--color-text) 12%,transparent);}
+  .sw b{color:var(--color-text); font-weight:600;}
+  .sw .hex{font-family:var(--font-mono); font-size:11px; color:var(--color-text-subtle);}
+
+  .note{display:flex; gap:11px; align-items:flex-start; padding:14px 16px; border-radius:12px; background:color-mix(in srgb,var(--color-accent) 5%,var(--color-surface)); border:1px solid color-mix(in srgb,var(--color-accent) 22%,var(--color-border)); margin:14px 0; font-size:13.5px; color:var(--color-text-muted); line-height:1.55;}
+  .note b{color:var(--color-text); font-weight:600;}
+  .note .ni{flex:0 0 auto; width:22px; height:22px; display:grid; place-items:center; border-radius:6px; background:color-mix(in srgb,var(--color-accent) 14%,var(--color-surface)); color:var(--color-accent); font-family:var(--font-mono); font-weight:600; font-size:13px;}
+
+  @media(max-width:760px){
+    .wrap{padding:32px 18px 90px;}
+    h1{font-size:27px;}
+    table{font-size:12.5px;}
+    td,th{padding:8px 9px;}
+  }
+  @media print{
+    body{background:#fff;}
+    section{break-inside:avoid;}
+    table{break-inside:avoid;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="kicker">Pennedly · Автопилот · Редактор сценария · спецификация для разработки</p>
+  <h1>Редактор сценария <span>— модель «Карточка-рецепт» · спека и история изменений</span></h1>
+  <p class="lede">Один экран: сценарий = читаемая фраза с редактируемыми слотами; тап по слоту разворачивает редактор блока <b>на месте</b> (inline-drawer); справа — живой предпросмотр, «следующие 3 запуска» и «Прогнать сейчас». Ниже — <b>все изменения с момента первого дизайна</b> и <b>точные размеры, отступы, цвета и токены</b> для разработчика.</p>
+
+  <div class="files">
+    <span class="file">экран: <b>Scenario-Editor-Recipe-SPEC.html</b></span>
+    <span class="file">стили: <b>recipe-editor.css</b></span>
+    <span class="file">рендер: <b>recipe-editor.js</b></span>
+    <span class="file">данные: <b>scenarios-redesign-data.js</b> (window.SR)</span>
+    <span class="file">база: <b>ds/tokens.css · ds/components.css · scenarios.css · scenarios-redesign.css</b></span>
+  </div>
+  <div class="note"><span class="ni">i</span><span>Слой строится <b>только на семантических токенах</b> дизайн-системы (никаких хардкод-hex). Светлая и тёмная темы — автоматически. Все значения ниже даны как токен + пиксельный эквивалент.</span></div>
+
+  <!-- ════════ CHANGELOG ════════ -->
+  <section id="changelog">
+    <h2>1 · Что менялось — история по твоим правкам</h2>
+    <p class="s-sub">По порядку, от первоначального дизайна до текущего состояния.</p>
+
+    <div class="change c0">
+      <span class="cn">0</span>
+      <div>
+        <div class="ct">Первоначальный дизайн — модель «Карточка-рецепт»</div>
+        <div class="cd">Уход от пошагового редактора (6 шагов) к одной фразе-рецепту. <b>Двухколоночник</b> (рецепт слева, живое превью справа), <b>inline-drawer</b> на каждый слот, <b>3 слоя глубины</b> (Суть / Настроить точнее / Только для этого сценария). Поддержка <b>пост</b> и <b>ответ</b>, состояния (новый / правка / из шаблона), тёмная тема.</div>
+      </div>
+    </div>
+    <div class="change">
+      <span class="cn">1</span>
+      <div>
+        <div class="ct">Фраза стала обычным предложением</div>
+        <div class="cd">Убраны мета-метки «КОГДА / ЕСЛИ» внутри текста и принудительный перенос строки. Фраза читается слитно. <b>Условие «только если…»</b> вынесено отдельной тихой строкой под фразой (<code>.recipe-cond</code>). <span class="why">Причина: деление текста метками выглядело рвано.</span></div>
+      </div>
+    </div>
+    <div class="change">
+      <span class="cn">2</span>
+      <div>
+        <div class="ct">Убраны голубые фоны-выделения слотов</div>
+        <div class="cd">Слоты больше не залиты цветным блоком — просто текст. <span class="why">Причина: блоки-подсветки выглядели тяжело.</span></div>
+      </div>
+    </div>
+    <div class="change">
+      <span class="cn">3</span>
+      <div>
+        <div class="ct">Длинный текст → отдельное окно ввода</div>
+        <div class="cd">Все свободные поля (инструкция, тон ответа, своя аудитория) — не тесная <code>textarea</code>, а <b>триггер</b> (<code>.bigtext</code>) с кнопкой «Открыть в отдельном окне». Тап открывает <b>полноразмерное модальное окно</b> (<code>.bt-dialog</code>) с большим полем, подсказкой и «Сохранить». <span class="why">Причина: в маленьких полях неудобно вводить много текста.</span></div>
+      </div>
+    </div>
+    <div class="change">
+      <span class="cn">4</span>
+      <div>
+        <div class="ct">Оформление слотов: без подсветок и подчёркиваний-блоков</div>
+        <div class="cd">Перебрали стили (5 → ещё 3 → ещё 3 варианта). <b>Финал: вариант v9</b> — тёмный полужирный текст + <b>серый пунктир-точки</b> снизу; активный (раскрытый) слот синеет. Сверху — <b>строка-подсказка</b> «Нажми на подчёркнутые слова…». <span class="why">Все 11 вариантов сохранены в CSS как <code>.recipe--v1…v11</code> для будущего выбора.</span></div>
+      </div>
+    </div>
+    <div class="change">
+      <span class="cn">5</span>
+      <div>
+        <div class="ct">Имя аккаунта — свой цвет</div>
+        <div class="cd"><code>@handle</code> теперь <b>фиолетовый</b> (<code>--mention</code>), отдельной палитрой, чтобы не путался с редактируемым синим. <span class="why">Не кликабелен — это контекст, а не слот.</span></div>
+      </div>
+    </div>
+    <div class="change">
+      <span class="cn">6</span>
+      <div>
+        <div class="ct">Слоты переносятся по строкам</div>
+        <div class="cd">Слот сменил тег <code>&lt;button&gt;</code> (inline-block) на <code>&lt;span role="button"&gt;</code> (<code>display:inline</code>). Длинный слот теперь <b>разрывается по словам на 2–3 строки</b>, а не прыгает блоком на следующую строку. <span class="why">Причина: рваное выравнивание фразы.</span></div>
+      </div>
+    </div>
+    <div class="change">
+      <span class="cn">7</span>
+      <div>
+        <div class="ct">Гибкий планировщик «Когда»</div>
+        <div class="cd">Слот «Когда» раскрывает полный планировщик с <b>7 режимами частоты</b>: каждый день · раз в N дней · по дням недели (с опцией <b>разное время в разные дни</b>) · раз в месяц (числа месяца + «последний день») · раз в год (даты-годовщины) · период дат (разовая акция с окном) · по событию (реактивный). Везде — точное время (любой час), <b>несколько слотов в день</b>, разброс минут и честные подписи про лимиты площадки.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ LAYOUT ════════ -->
+  <section id="layout">
+    <h2>2 · Каркас и сетка</h2>
+    <table>
+      <thead><tr><th>Элемент</th><th>Класс</th><th>Размеры · отступы</th></tr></thead>
+      <tbody>
+        <tr><td>Корень редактора</td><td><code>.rce</code></td><td>max-width <b>1000px</b>; <code>position:relative</code> (якорь для модального окна)</td></tr>
+        <tr><td>Двухколоночник</td><td><code>.rce-grid</code></td><td><code>grid-template-columns: minmax(0,1fr) <b>392px</b></code>; gap <b>30px</b>; align-items start</td></tr>
+        <tr><td>↳ мобильный</td><td>@media ≤900px</td><td>1 колонка; gap <b>22px</b></td></tr>
+        <tr><td>Левая колонка</td><td><code>.rce-main</code></td><td>flex column; gap <b>16px</b></td></tr>
+        <tr><td>Правая колонка</td><td><code>.rce-aside</code></td><td><code>position:sticky; top:18px</code>; flex column gap <b>13px</b>; ≤900px — static</td></tr>
+        <tr><td>Статус-строка</td><td><code>.rce-status</code></td><td>flex; gap 12px; статус-бейдж прижат вправо (<code>margin-left:auto</code>)</td></tr>
+      </tbody>
+    </table>
+    <div class="note"><span class="ni">i</span><span>Заголовок/шапка редактора (<code>.ed-topbar</code>, <code>.ed-title</code>, <code>.sc-bigstatus</code>) и кнопки (<code>.btn</code>, <code>.sc-actionbar</code>) — общие из <code>scenarios.css</code> / <code>ds/components.css</code>, без изменений.</span></div>
+  </section>
+
+  <!-- ════════ RECIPE CARD ════════ -->
+  <section id="recipe">
+    <h2>3 · Карточка-рецепт</h2>
+    <table>
+      <thead><tr><th>Элемент</th><th>Класс</th><th>Размеры · отступы</th><th>Цвет · токен</th></tr></thead>
+      <tbody>
+        <tr><td>Карточка</td><td><code>.recipe</code></td><td>border 1px; radius <code>--radius-xl</code> <b>20px</b>; <code>--shadow-sm</code>; overflow hidden</td><td>bg <code>--color-surface</code></td></tr>
+        <tr><td>Шапка-надпись</td><td><code>.recipe-eyebrow</code></td><td>padding <b>14px 22px</b>; border-bottom 1px; gap 8px; шрифт <b>11px</b>/600, uppercase, tracking .06em</td><td>bg <code>--color-surface-2</code>; текст <code>--text-subtle</code></td></tr>
+        <tr><td>↳ бейдж вида</td><td><code>.re-kind</code></td><td>mono <b>10px</b>; padding 2px 9px 2px 7px; radius-full; прижат вправо</td><td><code>--text-muted</code>; иконка accent</td></tr>
+        <tr><td>Подсказка сверху</td><td><code>.recipe-hint</code></td><td>padding <b>11px 24px 0</b>; gap 8px; шрифт <b>13px</b></td><td><code>--text-subtle</code>; иконка accent</td></tr>
+        <tr><td>Текст фразы</td><td><code>.recipe-prose</code></td><td>шрифт <b>21px</b> / line-height <b>1.75</b> / weight 400; padding <b>22px 24px 12px</b>; <code>text-wrap:pretty</code></td><td><code>--color-text</code></td></tr>
+        <tr><td>Строка условия</td><td><code>.recipe-cond</code></td><td>padding <b>0 24px 20px</b>; шрифт <b>15px</b> / 1.6</td><td><code>--text-muted</code></td></tr>
+      </tbody>
+    </table>
+
+    <h3>Слоты <span class="tag">канон = v9</span></h3>
+    <table>
+      <thead><tr><th>Состояние</th><th>Класс</th><th>Оформление</th></tr></thead>
+      <tbody>
+        <tr><td>Тег</td><td><code>&lt;span class="rc-slot" role="button" tabindex="0"&gt;</code></td><td><code>display:inline</code> (переносится по словам); padding 0 1px; cursor pointer; focus-visible — outline 2px accent</td></tr>
+        <tr><td>Покой (v9)</td><td><code>.recipe--v9 .rc-slot</code></td><td>цвет <code>--color-text</code>; weight <b>600</b>; <b>точечное подчёркивание</b>: dotted, color = mix(<code>--text-subtle</code> 75%), offset <b>4px</b>, толщина <b>1.5px</b></td></tr>
+        <tr><td>Наведение</td><td><code>:hover</code></td><td>цвет <code>--color-accent</code>; пунктир accent</td></tr>
+        <tr><td>Раскрыт (активен)</td><td><code>.is-open</code></td><td>цвет <code>--color-accent</code>; без чужого solid-подчёркивания</td></tr>
+        <tr><td>Заблокирован</td><td><code>.rc-slot--lock</code></td><td>не кликабелен; <code>--text-muted</code>; weight 400 (в вариантах); иконка-замок</td></tr>
+        <tr><td>Пустое условие</td><td><code>.rc-slot--add</code></td><td>«+ добавить условие»; в v9 — текст-ссылка <code>--text-subtle</code> 600</td></tr>
+        <tr><td>Имя аккаунта</td><td><code>.recipe-prose .who</code></td><td>weight 600; цвет <code>--mention</code> = <code>oklch(0.52 0.14 295)</code> · тёмная <code>oklch(0.80 0.12 295)</code>; <code>white-space:nowrap</code></td></tr>
+      </tbody>
+    </table>
+    <div class="note"><span class="ni">i</span><span>В CSS лежат <b>все 11 вариантов</b> оформления слота (<code>.recipe--v1…v11</code>): синие ссылки, серый полужирный, контраст веса, hover-only, каретка «⌄», карандаш «✎», hover-пилюля, точки, обводка-пунктир. Активный по умолчанию — <b>v9</b> (задаётся в <code>recipe-editor.js</code>: <code>variant=9</code>, подсказка включена). Сменить = поменять одну строку.</span></div>
+  </section>
+
+  <!-- ════════ DRAWER ════════ -->
+  <section id="drawer">
+    <h2>4 · Inline-drawer (редактор слота на месте)</h2>
+    <table>
+      <thead><tr><th>Элемент</th><th>Класс</th><th>Размеры · отступы</th></tr></thead>
+      <tbody>
+        <tr><td>Контейнер</td><td><code>.rc-drawer</code></td><td>border-top 1px; bg <code>--color-surface-2</code>; анимация появления <code>--duration-base</code> / <code>--ease-entrance</code>, translateY −4px → 0</td></tr>
+        <tr><td>Шапка</td><td><code>.rcd-head</code></td><td>padding <b>14px 22px 0</b>; gap 10px</td></tr>
+        <tr><td>↳ иконка</td><td><code>.rcdh-ico</code></td><td><b>28×28</b>; radius-sm (6px); accent-тинт 11% + border 24%</td></tr>
+        <tr><td>↳ кнопка «Готово»</td><td><code>.rcdh-done</code></td><td>bg <code>--color-primary</code>; padding 6px 14px; radius-sm; шрифт small/600</td></tr>
+        <tr><td>Тело</td><td><code>.rcd-body</code></td><td>padding <b>14px 22px 20px</b>; flex column; gap <b>15px</b></td></tr>
+        <tr><td>Микро-польза «зачем»</td><td><code>.rc-why</code></td><td>шрифт caption (12px); <code>--text-subtle</code>; иконка info</td></tr>
+        <tr><td>Подпись лимита</td><td><code>.rc-hard</code></td><td>padding 8px 11px; radius-sm; border; bg surface; иконка-замок</td></tr>
+        <tr><td>Метка наследования</td><td><code>.rc-inherit</code> + <code>.ri-badge</code></td><td>mono 9.5px; «из Правил дома → переопределить»; accent</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ════════ WHEN ════════ -->
+  <section id="when">
+    <h2>5 · Планировщик «Когда» — 7 режимов</h2>
+    <p class="s-sub">Сверху — выбор режима (<code>.seg.seg--wrap</code>), ниже — его контролы (<code>.when-modebody</code>, gap 15px). Сводка режима пишется в слот фразы (<code>WHEN_SUMMARY</code> в JS).</p>
+    <table>
+      <thead><tr><th>Режим</th><th>Ключ</th><th>Контролы</th></tr></thead>
+      <tbody>
+        <tr><td>Каждый день</td><td><code>daily</code></td><td>время + разброс + слоты</td></tr>
+        <tr><td>Раз в N дней</td><td><code>everyN</code></td><td>степпер интервала <code>.rc-step</code> + дата старта + время</td></tr>
+        <tr><td>По дням недели</td><td><code>weekly</code></td><td>пилюли дней <code>.wk-pills</code> (мульти) + тумблер <b>«разное время в разные дни»</b> → <code>.daytime-list</code></td></tr>
+        <tr><td>Раз в месяц</td><td><code>monthly</code></td><td>сетка чисел <code>.dom-grid</code> 1–31 + «последний день» + время</td></tr>
+        <tr><td>Раз в год</td><td><code>yearly</code></td><td>список дат <code>.year-dates</code> (число + месяц), «+ добавить дату»</td></tr>
+        <tr><td>Период дат</td><td><code>period</code></td><td>диапазон <code>.rc-daterange</code> + счётчик <code>.count-badge</code> + под-ритм + время</td></tr>
+        <tr><td>По событию</td><td><code>event</code></td><td>селект триггера + порог (степпер); <b>без расписания</b> — реактивный</td></tr>
+      </tbody>
+    </table>
+    <h3>Размеры контролов</h3>
+    <table>
+      <thead><tr><th>Контрол</th><th>Класс</th><th>Размеры</th></tr></thead>
+      <tbody>
+        <tr><td>Пилюля дня недели</td><td><code>.wk-pill</code></td><td>min-width <b>38px</b>; height <b>34px</b>; padding 0 9px; radius-sm; <code>--on</code> = bg <code>--color-primary</code></td></tr>
+        <tr><td>Ячейка числа месяца</td><td><code>.dom-grid .wk-pill</code></td><td>grid 7 колонок; gap 5px; ячейка height <b>32px</b>, padding 0</td></tr>
+        <tr><td>Строка «время по дню»</td><td><code>.daytime-row</code></td><td>gap 12px; padding 9px 0; border-top; ярлык дня width <b>40px</b></td></tr>
+        <tr><td>Чип времени</td><td><code>.rc-slotchip</code></td><td>radius-full; padding 6px 8px 6px 11px; small/600; кнопка-× <b>18×18</b></td></tr>
+        <tr><td>«+ Ещё время»</td><td><code>.rc-slotadd</code></td><td>dashed accent; radius-full; padding 6px 12px</td></tr>
+        <tr><td>Разброс (джиттер)</td><td><code>.rc-range</code></td><td>трек height <b>5px</b>, radius-full; ползунок <b>17×17</b>, border 2px accent; диапазон <b>0–120 мин</b></td></tr>
+        <tr><td>Степпер</td><td><code>.rc-step</code></td><td>кнопки <b>30×32</b>; значение min-width 42px / height 32px</td></tr>
+        <tr><td>Диапазон дат</td><td><code>.rc-daterange</code> .field</td><td>поля даты max-width <b>172px</b></td></tr>
+        <tr><td>Счётчик дней</td><td><code>.count-badge</code></td><td>mono 11px; radius-full; padding 3px 10px; bg surface-2</td></tr>
+        <tr><td>Тумблер-строка</td><td><code>.rc-toggle-row</code></td><td>padding 11px 13px; border; radius-md; switch из DS</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ════════ IF / WHO / HOW ════════ -->
+  <section id="blocks">
+    <h2>6 · Условия · Кому · Как публиковать</h2>
+    <h3>Условия «только если» <span class="tag">конструктор</span></h3>
+    <table>
+      <thead><tr><th>Элемент</th><th>Класс</th><th>Размеры</th></tr></thead>
+      <tbody>
+        <tr><td>Строка условия</td><td><code>.cond-row</code></td><td>padding 11px 13px; radius-md; border; иконка 26×26; ×-кнопка 26×26 (hover → danger)</td></tr>
+        <tr><td>«+ Добавить условие»</td><td><code>.cond-add</code></td><td>dashed accent; padding 9px 14px; radius-md</td></tr>
+        <tr><td>Меню условий</td><td><code>.cond-menu</code></td><td>padding 6px; radius-md; <code>--shadow-md</code>; пункт padding 9px 11px</td></tr>
+      </tbody>
+    </table>
+    <p class="s-sub">Доступные условия: по будням · если сегодня ещё не постил · только для подписчиков · если в тексте есть дата · кулдаун (N ч/дн) · лимит срабатываний.</p>
+
+    <h3>Кому отвечать <span class="tag">галерея аудитории</span></h3>
+    <table>
+      <thead><tr><th>Элемент</th><th>Класс</th><th>Размеры</th></tr></thead>
+      <tbody>
+        <tr><td>Сетка</td><td><code>.aud-grid</code></td><td>2 колонки; gap 9px; ≤520px — 1 колонка</td></tr>
+        <tr><td>Плитка</td><td><code>.aud-tile</code></td><td>padding 12px 13px; radius-md; border; <code>--on</code> = border accent + ring 1px + тинт 6%</td></tr>
+        <tr><td>Свой вариант</td><td><code>.aud-custom</code></td><td>раскрывает поле длинного текста <code>.bigtext</code> (см. §7)</td></tr>
+      </tbody>
+    </table>
+    <p class="s-sub">Опции: только фанатам · все, кроме троллей (дефолт) · только вопросы · свой вариант. Тролли/спам отсекаются «Правилами дома» — помечено <code>.rc-inherit</code>.</p>
+
+    <h3>Как публиковать <span class="tag">внутри редактора</span></h3>
+    <p class="s-sub">Режим «Спроси меня» (дефолт) ↔ «Автоматически» через <code>.sc-modepick</code> / <code>.sc-mode</code> (из <code>scenarios-redesign.css</code>); padding ячейки <b>12px 14px</b>. Раньше решалось в отдельном окне включения — теперь здесь.</p>
+  </section>
+
+  <!-- ════════ BIG TEXT WINDOW ════════ -->
+  <section id="bigtext">
+    <h2>7 · Окно ввода длинного текста</h2>
+    <table>
+      <thead><tr><th>Элемент</th><th>Класс</th><th>Размеры · отступы</th></tr></thead>
+      <tbody>
+        <tr><td>Триггер</td><td><code>.bigtext</code></td><td>border 1px; radius-md; значение padding 11px 13px, min-height <b>52px</b>; футер padding 8px 11px 8px 13px (bg surface-2)</td></tr>
+        <tr><td>«Открыть в окне»</td><td><code>.bigtext-expand</code></td><td>accent; caption/600; иконка expand</td></tr>
+        <tr><td>Подложка</td><td><code>.bt-overlay</code> / <code>.bt-scrim</code></td><td><code>position:absolute; inset:0; z-index:10</code>; padding 48px 24px; скрим <code>--color-ink-950</code> 48% + blur 1.5px</td></tr>
+        <tr><td>Окно</td><td><code>.bt-dialog</code></td><td>max-width <b>580px</b>; radius-xl; <code>--shadow-lg</code>; анимация bt-in</td></tr>
+        <tr><td>Шапка окна</td><td><code>.bt-dh</code></td><td>padding 15px 18px; border-bottom; иконка 30×30; ×-кнопка 30×30</td></tr>
+        <tr><td>Поле ввода</td><td><code>.bt-area</code></td><td>min-height <b>280px</b>; шрифт <b>15.5px</b>/1.6; padding 14px 15px; radius-md; focus — ring 2px accent</td></tr>
+        <tr><td>Тело · футер</td><td><code>.bt-db</code> / <code>.bt-df</code></td><td>тело padding 18px gap 13px; футер padding 14px 18px (bg surface-2) + счётчик символов</td></tr>
+      </tbody>
+    </table>
+    <p class="s-sub">Применяется к трём свободным полям: <b>инструкция</b> (что писать), <b>тон ответа</b> (как звучит), <b>своя аудитория</b>.</p>
+  </section>
+
+  <!-- ════════ LAYERS + ASIDE ════════ -->
+  <section id="layers-aside">
+    <h2>8 · Слои глубины и правый предпросмотр</h2>
+    <h3>Слои глубины</h3>
+    <table>
+      <thead><tr><th>Элемент</th><th>Класс</th><th>Размеры</th></tr></thead>
+      <tbody>
+        <tr><td>Список слоёв</td><td><code>.rce-layers</code></td><td>flex column; gap 12px</td></tr>
+        <tr><td>Слой (аккордеон)</td><td><code>.rce-layer</code></td><td>border; radius-lg (14px); shadow-sm; open → border accent-тинт</td></tr>
+        <tr><td>Шапка слоя</td><td><code>.rl-head</code></td><td>padding 15px 18px; gap 12px; шеврон поворот 90° при open; заголовок 15px/600</td></tr>
+        <tr><td>Тело слоя</td><td><code>.rl-body</code></td><td>padding 4px 18px 19px; gap 20px; группа <code>.rl-group</code> gap 11px</td></tr>
+        <tr><td>Заглушка (Слой 3)</td><td><code>.rce-stub</code></td><td>dashed border; radius-md; padding 14px 16px; иконка 30×30; бейдж «скоро»</td></tr>
+      </tbody>
+    </table>
+    <p class="s-sub"><b>Слой 1 «Суть»</b> = сама карточка-рецепт (всегда видна). <b>Слой 2 «Настроить точнее»</b> и <b>Слой 3 «Только для этого сценария»</b> (для продвинутых, заглушка) — свёрнутые аккордеоны.</p>
+
+    <h3>Правая колонка — живой предпросмотр</h3>
+    <table>
+      <thead><tr><th>Элемент</th><th>Класс</th><th>Размеры</th></tr></thead>
+      <tbody>
+        <tr><td>Сцена превью</td><td><code>.rce-stage</code></td><td>radius-2xl (28px); <code>--shadow-lg</code>; бар padding 12px 17px (bg surface-2) + «live»-точка success</td></tr>
+        <tr><td>Мок-пост / ответ</td><td><code>.mockpost</code> / <code>.mockreply</code></td><td>пост padding 18px 20px, текст 15px/1.65; ответ padding 16px 20px</td></tr>
+        <tr><td>Честная строка</td><td><code>.rce-invoice</code></td><td>padding 11px 17px (bg surface-2); caption; «в твоём голосе · на основе N постов»</td></tr>
+        <tr><td>Следующие 3 запуска</td><td><code>.rce-runs</code></td><td>radius-lg; padding 14px 16px; строка padding 9px 0 border-top; «когда» min-width 116px tabular</td></tr>
+        <tr><td>«Прогнать сейчас»</td><td><code>.rce-runnow</code></td><td>кнопка secondary sm + примечание «только черновик, никогда не публикует»</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ════════ TOKENS ════════ -->
+  <section id="tokens">
+    <h2>9 · Токены (из ds/tokens.css)</h2>
+    <h3>Цвета — светлая тема</h3>
+    <div class="swatches">
+      <span class="sw"><span class="chip" style="background:#2f4cc4"></span><b>accent</b> <span class="hex">#2f4cc4</span></span>
+      <span class="sw"><span class="chip" style="background:oklch(0.52 0.14 295)"></span><b>mention</b> <span class="hex">oklch .52/.14/295</span></span>
+      <span class="sw"><span class="chip" style="background:#171717"></span><b>text</b> <span class="hex">#171717</span></span>
+      <span class="sw"><span class="chip" style="background:#565550"></span><b>text-muted</b> <span class="hex">#565550</span></span>
+      <span class="sw"><span class="chip" style="background:#6f6e69"></span><b>text-subtle</b> <span class="hex">#6f6e69</span></span>
+      <span class="sw"><span class="chip" style="background:#ffffff"></span><b>surface</b> <span class="hex">#ffffff</span></span>
+      <span class="sw"><span class="chip" style="background:#f6f5f2"></span><b>surface-2</b> <span class="hex">#f6f5f2</span></span>
+      <span class="sw"><span class="chip" style="background:#efedea"></span><b>bg</b> <span class="hex">#efedea</span></span>
+      <span class="sw"><span class="chip" style="background:#dcd9d2"></span><b>border</b> <span class="hex">#dcd9d2</span></span>
+      <span class="sw"><span class="chip" style="background:#2c7350"></span><b>success</b> <span class="hex">#2c7350</span></span>
+      <span class="sw"><span class="chip" style="background:#8a5b16"></span><b>warning</b> <span class="hex">#8a5b16</span></span>
+      <span class="sw"><span class="chip" style="background:#b23b30"></span><b>danger</b> <span class="hex">#b23b30</span></span>
+    </div>
+    <h3>Радиусы · тени · тип · моушн</h3>
+    <table>
+      <thead><tr><th>Группа</th><th>Токены</th></tr></thead>
+      <tbody>
+        <tr><td>Радиусы</td><td><code>--radius-sm 6</code> · <code>md 10</code> · <code>lg 14</code> · <code>xl 20</code> · <code>2xl 28</code> · <code>full 9999</code> (px)</td></tr>
+        <tr><td>Тени</td><td><code>--shadow-sm</code> (карточки) · <code>--shadow-md</code> (меню) · <code>--shadow-lg</code> (превью, модал)</td></tr>
+        <tr><td>Тип</td><td>фраза <b>21px</b>/1.75 · h3 19px · body <b>15px</b> · small <b>13px</b> · caption <b>12px</b>; шрифты <code>Geist</code> / <code>Geist Mono</code></td></tr>
+        <tr><td>Моушн</td><td><code>--duration-fast 120</code> · <code>base 180</code> · <code>slow 240</code> (ms) · <code>--ease-standard</code> · <code>--ease-entrance</code></td></tr>
+      </tbody>
+    </table>
+    <div class="note"><span class="ni">i</span><span>Тёмная тема: те же классы, значения берутся из <code>.dark</code> в <code>ds/tokens.css</code>. Единственное локальное переопределение — <code>--mention</code> (фиолетовый светлее в тёмной). Никаких других тёмных правок не нужно.</span></div>
+  </section>
+
+  <!-- ════════ HARD LIMITS ════════ -->
+  <section id="limits">
+    <h2>10 · Честные границы (для бэкенда)</h2>
+    <table>
+      <thead><tr><th>Правило</th><th>Как подано в UI</th></tr></thead>
+      <tbody>
+        <tr><td>Только пост + ответ</td><td>других видов действий нет; в UI не показываются</td></tr>
+        <tr><td>Ответы — опрос раз в 15 мин</td><td>слот «Когда» у ответа <b>заблокирован</b> (<code>.rc-slot--lock</code>), честная строка про задержку</td></tr>
+        <tr><td>Постинг по целым часам</td><td>подпись <code>.rc-hard</code>: точную минуту внутри часа задаёт разброс</td></tr>
+        <tr><td>Частота/тихие часы/потолок</td><td>наследуются из «Правил дома», помечены <code>.rc-inherit</code>; переопределение — Слой 3 (заглушка)</td></tr>
+        <tr><td>«Прогнать сейчас»</td><td>создаёт <b>только черновик</b>, даже у несохранённого; никогда не публикует</td></tr>
+        <tr><td>Текст-only контент</td><td>без каруселей/видео/виджет-опросов — честно подписано</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+</div>
+</body>
+</html>

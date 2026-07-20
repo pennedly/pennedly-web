@@ -1,0 +1,183 @@
+/* studio-ideas.css — EXTENDS the Studio composer with the "Ideas" hook-brainstorm
+   panel. The accent "✨ Ideas" pill leads the existing action-row chips; tapping it
+   opens an inline panel BELOW the action row (its own border-top divider), above the
+   draft list — matching the shipped placement. Tapping an idea REPLACES the editor
+   text with its hook (seeds the brief) and closes the panel. Ideas are ephemeral +
+   free — there is no saved-ideas library, no quota/cost UI.
+
+   ONE set of classes serves web + phone; `.mob` only nudges sizing / tap targets.
+   No hardcoded brand colour — every value is a token, so light/dark flip for free. */
+
+/* ----- generic avatar (web composer-top has no shell dependency here) ----- */
+.avatar-img {
+  border-radius: var(--radius-full); object-fit: cover; display: block; flex: 0 0 auto;
+  background: var(--color-surface-2);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-text) 8%, transparent);
+}
+
+/* ============================ THE IDEAS CHIP ============================== */
+/* Leads the action-row chips. Distinguished from the neutral suggestion chips
+   ONLY by an accent tint + lead position — the composer itself is not restyled.
+   Specificity is doubled (.chip.chip--ideas) so it beats `.mob .chip`. */
+.chip.chip--ideas {
+  color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 9%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--color-accent) 30%, var(--color-border));
+}
+.chip.chip--ideas .chip-ico { color: var(--color-accent); }
+.chip.chip--ideas:hover {
+  color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 15%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--color-accent) 46%, var(--color-border));
+}
+.chip.chip--ideas:hover .chip-ico { color: var(--color-accent); }
+/* pressed / open — the panel is showing; the sparkle pulses */
+.chip.chip--ideas.is-active {
+  background: color-mix(in srgb, var(--color-accent) 17%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--color-accent) 56%, var(--color-border));
+}
+.chip.chip--ideas.is-active .chip-ico { animation: ideas-pulse 1.5s var(--ease-standard) infinite; }
+/* disabled — no connected account / no active voice */
+.chip.chip--ideas.chip--ideas-disabled {
+  opacity: 0.5; cursor: not-allowed;
+  color: var(--color-text-subtle);
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}
+.chip.chip--ideas.chip--ideas-disabled .chip-ico { color: var(--color-text-subtle); animation: none; }
+/* short hint shown beside a disabled chip; wraps gracefully on long locales */
+.ideas-chip-hint {
+  display: inline-flex; align-items: center; align-self: center;
+  font-size: var(--text-caption); color: var(--color-text-subtle); line-height: 1.3;
+  padding: 0 2px; text-wrap: pretty; max-width: 32ch;
+}
+/* in the phone's horizontally-scrolling chip row the hint stays one line and
+   scrolls into view (matching the chip idiom) instead of wrapping. */
+.mob .m-chiprow .ideas-chip-hint { flex: 0 0 auto; white-space: nowrap; max-width: none; }
+
+/* ============================== THE PANEL ================================ */
+/* Inline region appended inside the composer card, under the action row. */
+.ideas-panel {
+  margin-top: 14px; padding-top: 14px;
+  border-top: 1px solid var(--color-border);
+  animation: ideas-in var(--duration-base) var(--ease-entrance) both;
+}
+.mob .ideas-panel { margin-top: 12px; padding-top: 12px; }
+@keyframes ideas-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .ideas-panel { animation: none; } }
+
+/* header: caption left, refresh + close right */
+.ideas-head { display: flex; align-items: center; gap: 10px; margin-bottom: 11px; }
+.ideas-cap {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: var(--text-caption); font-weight: 600;
+  letter-spacing: 0.07em; text-transform: uppercase; color: var(--color-text-subtle);
+}
+.ideas-cap svg { color: var(--color-accent); flex: 0 0 auto; }
+.ideas-head-acts { margin-left: auto; display: flex; align-items: center; gap: 2px; flex: 0 0 auto; }
+.ideas-iconbtn {
+  width: 30px; height: 30px; flex: 0 0 auto;
+  display: grid; place-items: center;
+  border-radius: var(--radius-md); border: 1px solid transparent;
+  background: transparent; color: var(--color-text-subtle); cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-standard),
+              color var(--duration-fast) var(--ease-standard);
+}
+.ideas-iconbtn:hover { background: var(--color-surface-2); color: var(--color-text); }
+.ideas-iconbtn svg { flex: 0 0 auto; }
+.mob .ideas-iconbtn { width: 44px; height: 44px; }
+
+/* ----------------------------- the idea list ----------------------------- */
+/* On web the list caps its height and scrolls internally, so the panel never
+   dominates the feed even with the full ~8 ideas. On phone the whole screen
+   scrolls, so the list grows naturally. */
+.ideas-list { display: flex; flex-direction: column; gap: 8px; max-height: 348px; overflow-y: auto; }
+.ideas-list::-webkit-scrollbar { width: 8px; }
+.ideas-list::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: var(--radius-full); }
+.mob .ideas-list { max-height: none; overflow: visible; }
+
+.idea-card {
+  display: flex; align-items: flex-start; gap: 12px; width: 100%;
+  text-align: left; font-family: var(--font-sans);
+  padding: 11px 13px; border: 1px solid var(--color-border);
+  border-radius: var(--radius-md); background: var(--color-surface); cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease-standard),
+              background var(--duration-fast) var(--ease-standard);
+}
+.idea-card:hover, .idea-card:focus-visible, .idea-card.is-hover {
+  outline: none;
+  border-color: color-mix(in srgb, var(--color-accent) 55%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent) 5%, var(--color-surface));
+}
+.idea-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.idea-hook { font-size: var(--text-body); font-weight: 600; line-height: 1.45; color: var(--color-text); text-wrap: pretty; }
+.idea-angle { font-size: var(--text-small); color: var(--color-text-muted); line-height: 1.45; text-wrap: pretty; }
+.mob .idea-card { padding: 12px 13px; }
+.mob .idea-hook { font-size: 15px; }
+.mob .idea-angle { font-size: 13px; }
+
+/* "Use" affordance — communicates the seed-upward (replace) idiom. Hover-reveal
+   on web; always visible on touch. */
+.idea-use {
+  flex: 0 0 auto; align-self: center;
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: var(--text-caption); font-weight: 600; color: var(--color-accent);
+  padding: 4px 9px 4px 7px; border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--color-accent) 26%, var(--color-border));
+  opacity: 0; transition: opacity var(--duration-fast) var(--ease-standard);
+}
+.idea-card:hover .idea-use, .idea-card:focus-visible .idea-use, .idea-card.is-hover .idea-use { opacity: 1; }
+.mob .idea-use { opacity: 1; }
+.idea-use svg { flex: 0 0 auto; }
+
+/* --------------------------- loading sub-state --------------------------- */
+.ideas-loading { display: flex; align-items: center; gap: 9px; padding: 2px 0 13px; }
+.ideas-loading .spark { color: var(--color-accent); display: grid; place-items: center; flex: 0 0 auto;
+  animation: ideas-pulse 1.5s var(--ease-standard) infinite; }
+.ideas-loading-text { font-size: var(--text-small); color: var(--color-text-muted); }
+.ideas-skel-list { display: flex; flex-direction: column; gap: 8px; }
+.ideas-skel-card {
+  height: 60px; border-radius: var(--radius-md); border: 1px solid var(--color-border);
+  background: linear-gradient(90deg,
+    var(--color-surface-2) 0%,
+    color-mix(in srgb, var(--color-text) 6%, var(--color-surface-2)) 50%,
+    var(--color-surface-2) 100%);
+  background-size: 220% 100%; animation: ideas-shimmer 1.4s linear infinite;
+}
+.mob .ideas-skel-card { height: 66px; }
+
+/* ---------------------------- error sub-state ---------------------------- */
+.ideas-error { display: flex; align-items: center; gap: 10px; padding: 4px 0 6px; flex-wrap: wrap; }
+.ideas-error .ie-ico { color: var(--color-text-subtle); flex: 0 0 auto; display: grid; place-items: center; }
+.ideas-error-text { font-size: var(--text-small); color: var(--color-text-muted); }
+.ideas-retry {
+  margin-left: auto; display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--font-sans); font-size: var(--text-small); font-weight: 600;
+  color: var(--color-accent); background: transparent; border: none; cursor: pointer;
+  padding: 6px 4px;
+}
+.ideas-retry:hover { color: color-mix(in srgb, var(--color-accent) 80%, var(--color-text)); }
+.ideas-retry svg { flex: 0 0 auto; }
+.mob .ideas-retry { min-height: 44px; }
+
+/* ---------------------------- empty sub-state ---------------------------- */
+.ideas-empty { padding: 2px 0 6px; }
+.ideas-empty-t { font-size: var(--text-small); font-weight: 600; color: var(--color-text); }
+.ideas-empty-s { font-size: var(--text-caption); color: var(--color-text-subtle); margin-top: 4px; line-height: 1.5; max-width: 52ch; text-wrap: pretty; }
+
+/* ------------------------- after-pick seed note -------------------------- */
+.ideas-seeded-note {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-top: 11px; font-size: var(--text-caption); color: var(--color-accent);
+}
+.ideas-seeded-note svg { flex: 0 0 auto; }
+
+/* ------------------------------- keyframes ------------------------------- */
+@keyframes ideas-shimmer { from { background-position: 220% 0; } to { background-position: -120% 0; } }
+@keyframes ideas-pulse { 0%, 100% { opacity: 0.5; transform: scale(0.88); } 50% { opacity: 1; transform: scale(1.06); } }
+@media (prefers-reduced-motion: reduce) {
+  .ideas-loading .spark,
+  .chip.chip--ideas.is-active .chip-ico { animation: none; }
+  .ideas-skel-card { animation: none; }
+}

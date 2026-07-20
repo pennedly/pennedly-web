@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pennedly · Importing your history & first-run analytics — Spec (pixel-perfect)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="ds/tokens.css" />
+<link rel="stylesheet" href="ds/components.css" />
+<link rel="stylesheet" href="stats.css" />
+<link rel="stylesheet" href="stats-followers.css" />
+<link rel="stylesheet" href="import-banner.css" />
+<link rel="stylesheet" href="stats-firstrun.css" />
+<style>
+:root{
+  --font-sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --font-mono:"Geist Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --bg:#efedea; --surface:#ffffff; --surface-2:#f6f5f2; --border:#dcd9d2;
+  --text:#171717; --muted:#565550; --subtle:#6f6e69; --accent:#2f4cc4;
+  --code-bg:#f6f5f2; --good:#2c7350; --warn:#8a5b16; --danger:#b23b30;
+  --radius:14px;
+}
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%; scroll-behavior:smooth;}
+body{margin:0; background:var(--bg); color:var(--text);
+  font-family:var(--font-sans); font-size:15px; line-height:1.62;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;}
+.layout{display:grid; grid-template-columns:300px minmax(0,1fr); gap:0; max-width:1340px; margin:0 auto;}
+
+.toc{position:sticky; top:0; align-self:start; height:100vh; overflow-y:auto;
+  padding:34px 22px 40px 32px; border-right:1px solid var(--border);}
+.toc .doc-mark{display:flex; align-items:center; gap:10px; margin-bottom:6px;}
+.toc .doc-mark .nib{width:30px; height:30px; border-radius:8px; background:var(--text); display:grid; place-items:center; flex:0 0 auto;}
+.toc .doc-mark b{font-size:16px; font-weight:600; letter-spacing:-0.01em;}
+.toc .doc-sub{font-size:12px; color:var(--subtle); letter-spacing:0.02em; margin:0 0 22px 40px; text-transform:uppercase;}
+.toc nav{display:flex; flex-direction:column; gap:1px;}
+.toc nav a{display:flex; gap:9px; padding:6px 10px; border-radius:8px; text-decoration:none;
+  color:var(--muted); font-size:13.5px; line-height:1.35; transition:background .12s, color .12s;}
+.toc nav a:hover{background:var(--surface-2); color:var(--text);}
+.toc nav a .n{font-variant-numeric:tabular-nums; color:var(--subtle); font-weight:600; flex:0 0 16px;}
+.toc nav a.sub{padding-left:30px; font-size:12.5px; color:var(--subtle);}
+.toc .meta{margin-top:24px; padding-top:18px; border-top:1px solid var(--border); font-size:12px; color:var(--subtle); line-height:1.7;}
+.toc .meta code{font-family:var(--font-mono); font-size:11px;}
+.toc .meta b{color:var(--text);}
+.toc .meta a{color:var(--accent); text-decoration:none;}
+
+main{padding:40px 56px 120px; min-width:0;}
+.kicker{font-family:var(--font-mono); font-size:12px; letter-spacing:0.04em; color:var(--accent); text-transform:uppercase; margin:0 0 10px;}
+h1.title{font-size:34px; line-height:1.1; letter-spacing:-0.025em; font-weight:600; margin:0 0 14px; text-wrap:balance;}
+h1.title span{color:var(--subtle); font-weight:500;}
+.lede{font-size:16px; color:var(--muted); max-width:78ch; margin:0 0 14px; text-wrap:pretty;}
+.filerow{display:flex; flex-wrap:wrap; gap:6px; margin:18px 0 6px;}
+.chip{font-family:var(--font-mono); font-size:11.5px; padding:4px 9px; border-radius:9999px; background:var(--surface); border:1px solid var(--border); color:var(--muted);}
+.chip--new{border-color:color-mix(in srgb, var(--accent) 40%, var(--border)); color:var(--accent);}
+
+section{margin-top:52px; scroll-margin-top:20px;}
+h2{font-size:21px; line-height:1.25; letter-spacing:-0.012em; font-weight:600; margin:0 0 4px; padding-top:10px;}
+h2 .h2n{font-family:var(--font-mono); font-size:14px; color:var(--accent); margin-right:10px; font-weight:500;}
+.section-note{color:var(--muted); font-size:14px; max-width:84ch; margin:6px 0 18px; text-wrap:pretty;}
+h3{font-size:15.5px; font-weight:600; letter-spacing:-0.005em; margin:30px 0 10px; padding-bottom:7px; border-bottom:1px solid var(--border);}
+h3 .stg{font-family:var(--font-mono); font-size:11px; color:var(--accent); border:1px solid var(--border); border-radius:6px; padding:1px 7px; margin-right:8px; text-transform:uppercase; letter-spacing:0.04em;}
+h3 .stg--shell{color:var(--good);}
+h3 .stg--new{color:var(--accent); border-color:color-mix(in srgb, var(--accent) 40%, var(--border));}
+h4{font-size:13px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.04em; margin:22px 0 8px;}
+
+p{margin:0 0 12px; text-wrap:pretty;}
+ul,ol{margin:0 0 12px; padding-left:22px;}
+li{margin:3px 0;}
+code{font-family:var(--font-mono); font-size:0.86em; background:var(--code-bg); border:1px solid var(--border); padding:1px 5px; border-radius:5px; white-space:nowrap;}
+.tok{color:var(--accent);}
+strong{font-weight:600;}
+a.link{color:var(--accent); text-decoration:underline; text-underline-offset:2px; text-decoration-color:color-mix(in srgb,var(--accent) 40%,transparent);}
+
+.tbl-wrap{overflow-x:auto; margin:0 0 16px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface);}
+table{width:100%; border-collapse:collapse; font-size:13px;}
+th,td{text-align:left; padding:9px 13px; border-bottom:1px solid var(--border); vertical-align:top;}
+thead th{font-size:11px; text-transform:uppercase; letter-spacing:0.04em; color:var(--subtle); font-weight:600; background:var(--surface-2);}
+tbody tr:last-child td{border-bottom:none;}
+td code, th code{white-space:nowrap;}
+td.val{font-family:var(--font-mono); font-size:12px; color:var(--text);}
+td .mono2{font-family:var(--font-mono); font-size:11.5px; color:var(--subtle);}
+
+.note{border:1px solid var(--border); border-left:3px solid var(--accent); background:var(--surface);
+  border-radius:10px; padding:12px 16px; margin:14px 0; font-size:13.5px; color:var(--muted);}
+.note.warn{border-left-color:var(--warn);}
+.note.danger{border-left-color:var(--danger);}
+.note.good{border-left-color:var(--good);}
+.note b{color:var(--text);}
+.pane code, .check code, .note code, .section-note code, p code, td code, th code, li code{white-space:normal; overflow-wrap:anywhere;}
+.two{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+.two h4{margin-top:0;}
+.pane{border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); padding:16px 18px; min-width:0;}
+.pane.web{border-top:3px solid var(--text);}
+.pane.mob{border-top:3px solid var(--accent);}
+.pane ul{margin:0; padding-left:20px;}
+
+.check{list-style:none; padding:0; margin:0 0 8px;}
+.check li{position:relative; padding:5px 0 5px 26px; border-bottom:1px dashed var(--border); font-size:13.5px;}
+.check li:last-child{border-bottom:none;}
+.check li::before{content:"☐"; position:absolute; left:2px; top:4px; color:var(--subtle); font-size:14px;}
+.tagline{display:inline-block; font-size:11px; font-family:var(--font-mono); color:var(--accent); border:1px solid var(--border); border-radius:9999px; padding:2px 8px; margin-left:6px;}
+.statebar{display:flex; flex-wrap:wrap; gap:6px; margin:2px 0 14px;}
+.statebar .st{font-family:var(--font-mono); font-size:11px; padding:3px 9px; border-radius:6px; background:var(--surface-2); border:1px solid var(--border); color:var(--muted);}
+
+/* flow-model strip */
+.modelstrip{display:flex; flex-wrap:wrap; gap:10px; margin:18px 0 4px;}
+.modelstep{display:flex; flex-direction:column; gap:3px; flex:1 1 200px; min-width:180px; padding:13px 15px; border:1px solid var(--border); border-radius:12px; background:var(--surface);}
+.modelstep .ms-k{font-family:var(--font-mono); font-size:11px; letter-spacing:0.05em; text-transform:uppercase; color:var(--accent);}
+.modelstep .ms-t{font-size:14px; font-weight:600;}
+.modelstep .ms-d{font-size:12.5px; color:var(--subtle); line-height:1.45;}
+
+/* ───────────────────── LIVE FRAMES (real DS components) ───────────────────── */
+.frames{display:flex; flex-direction:column; gap:16px; margin:16px 0 6px;}
+.frow{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+@media(max-width:1040px){ .frow{grid-template-columns:1fr;} }
+.fr{display:flex; flex-direction:column; gap:9px; min-width:0;}
+.fr-head{display:inline-flex; align-items:center; gap:7px; font-family:var(--font-mono); font-size:11px; letter-spacing:.02em; color:var(--subtle);}
+.fr-head .dh{width:8px; height:8px; border-radius:9999px; background:var(--border);}
+.fr-head .dh--dark{background:#0a0a0a; border:1px solid #3a3a3a;}
+.frame{background:var(--color-bg); border:1px solid var(--color-border); border-radius:18px; padding:22px; overflow:hidden;}
+.frame *{box-sizing:border-box;}
+.frame a{text-decoration:none;}
+.frstack{display:flex; flex-direction:column; gap:16px;}
+
+/* topbar mini-demo */
+.tbdemo{display:flex; align-items:center; gap:13px; height:56px; padding:0 18px; background:color-mix(in srgb,var(--color-bg) 86%, transparent); border:1px solid var(--color-border); border-radius:12px;}
+.tbdemo .tbt{font-size:var(--text-h3); font-weight:600; letter-spacing:-0.006em; color:var(--color-text);}
+.tbdemo .sp{flex:1 1 auto;}
+.tbdemo .ib{width:34px; height:34px; display:grid; place-items:center; border:1px solid var(--color-border); border-radius:10px; background:var(--color-surface); color:var(--color-text-muted);}
+
+@media (max-width:980px){
+  .layout{grid-template-columns:1fr;}
+  .toc{position:static; height:auto; border-right:none; border-bottom:1px solid var(--border);}
+  .toc nav{display:grid; grid-template-columns:1fr 1fr; gap:1px 14px;}
+  main{padding:28px 22px 90px;}
+  .two{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<aside class="toc">
+  <div class="doc-mark">
+    <span class="nib"><svg width="18" height="18" viewBox="0 0 512 512"><g fill="#ededed"><g transform="rotate(42 256 256)"><path d="M236 150 Q236 128 256 128 Q276 128 276 150 L276 300 L256 360 L236 300 Z"/><rect x="236" y="206" width="40" height="7"/></g></g></svg></span>
+    <b>Pennedly</b>
+  </div>
+  <div class="doc-sub">Spec · First-run &amp; import</div>
+  <nav>
+    <a href="#s1"><span class="n">1</span> What this covers</a>
+    <a href="#s2"><span class="n">2</span> Import banner + skeleton</a>
+    <a class="sub" href="#s2-anatomy">— anatomy</a>
+    <a class="sub" href="#s2-states">— states</a>
+    <a class="sub" href="#s2-context">— in context (skeleton)</a>
+    <a href="#s3"><span class="n">3</span> Stats first-run / progressive</a>
+    <a class="sub" href="#s3-ba">— before / after</a>
+    <a class="sub" href="#s3-page">— the progressive page</a>
+    <a class="sub" href="#s3-var">— zero &amp; done variants</a>
+    <a href="#s4"><span class="n">4</span> Honest empty-states</a>
+    <a class="sub" href="#s4-follow">— follower growth (&lt;2 days)</a>
+    <a class="sub" href="#s4-lock">— follower count locked</a>
+    <a class="sub" href="#s4-calc">— viral tiers · Calculating</a>
+    <a href="#s5"><span class="n">5</span> Copy &amp; localization</a>
+    <a href="#s6"><span class="n">6</span> Checklist</a>
+  </nav>
+  <div class="meta">
+    Feature: <b>Freshly-connected account</b><br>
+    Appears on: <b>Dashboard · Stats · Replies</b><br>
+    Banner: full content-width, top of column<br>
+    Tone: <b>warm, non-apologetic</b> — the platform is working, history is loading<br>
+    New layers: <code>import-banner.css</code>, <code>stats-firstrun.css</code><br>
+    Reuses: <code>stats.css</code>, <code>stats-followers.css</code><br>
+    Tokens: <code>ds/tokens.css</code>, <code>ds/components.css</code><br>
+    Related: <a href="Stats-SPEC.html">Stats-SPEC.html</a>
+  </div>
+</aside>
+
+<main>
+  <div class="doc-head">
+    <p class="kicker">Pennedly · Spec · First-run &amp; import states</p>
+    <h1 class="title">Importing your history <span>· first-run analytics</span></h1>
+    <p class="lede">When someone connects a Threads account, Pennedly backfills their posts, per-post metrics and comments in the background — seconds to a few minutes. Today there's no sign of it, and Stats collapses to a single <b>“come back in two weeks”</b> card when there are zero posts yet. This spec fixes both: a reusable <b>“Importing your history”</b> banner + skeleton that shows live progress across Dashboard, Stats and Replies; a <b>progressive Stats</b> page that always shows the four real summary cards (even small or zero) plus a warm nudge instead of an empty wall; and <b>honest empty-states</b> for the few metrics Threads genuinely can't backfill. All end-user copy is English (source locale); it localizes to the 8 app locales afterward. Frames below are <b>live</b> — real DS components, light <b>and</b> dark, at screen width.</p>
+    <div class="modelstrip">
+      <div class="modelstep"><span class="ms-k">connect</span><span class="ms-t">Account linked</span><span class="ms-d">User finishes OAuth; backfill job is queued.</span></div>
+      <div class="modelstep"><span class="ms-k">importing</span><span class="ms-t">Data lands live</span><span class="ms-d">Banner + skeleton; counts climb as posts/comments arrive.</span></div>
+      <div class="modelstep"><span class="ms-k">partial</span><span class="ms-t">Most history in</span><span class="ms-d">Quiet “imported most of your history” note; screen is usable.</span></div>
+      <div class="modelstep"><span class="ms-k">resolved</span><span class="ms-t">Normal screen</span><span class="ms-d">Banner removed; honest empty-states cover the un-backfillable bits.</span></div>
+    </div>
+    <div class="filerow">
+      <span class="chip chip--new">+ import-banner.css</span>
+      <span class="chip chip--new">+ stats-firstrun.css</span>
+      <span class="chip">firstrun-spec.js</span>
+      <span class="chip">stats.css</span>
+      <span class="chip">stats-followers.css</span>
+      <span class="chip">ds/tokens.css</span>
+      <span class="chip">ds/components.css</span>
+    </div>
+  </div>
+
+  <div class="note good">
+    <b>Live frames are the real system layer.</b> This doc links <code>ds/tokens.css</code> + <code>ds/components.css</code> + <code>stats.css</code> + <code>stats-followers.css</code> + the two new layers and renders components <b>exactly as the product does</b>. Each frame pins its own tokens: light from <code>:root</code>, dark via the <code>dark</code> class — so both themes sit side by side without touching the doc page. Nothing is hardcoded; every colour is a semantic token.
+  </div>
+
+  <div class="note">
+    <b>The core principle.</b> A freshly-connected account must <b>never read as empty or broken</b>. We always show what's real (even tiny numbers), we say plainly what's still loading, and for the handful of metrics Threads can't give us yet, we explain why in one warm sentence rather than hiding the panel or apologizing.
+  </div>
+
+  <!-- ===================== 1 ===================== -->
+  <section id="s1">
+    <h2><span class="h2n">1</span>What this covers</h2>
+    <p class="section-note">Three deliverables, one feature: the first few minutes of a connected account. The banner is shared; the progressive page and honest empty-states live on Stats (the follower honest-states also apply anywhere the follower panel renders).</p>
+    <div class="tbl-wrap"><table><tbody>
+      <tr><th style="width:210px;">Deliverable</th><td><b>1 ·</b> reusable <b>“Importing your history”</b> banner + skeleton · <b>2 ·</b> <b>progressive Stats</b> first-run page · <b>3 ·</b> <b>honest empty-states</b> for un-backfillable metrics.</td></tr>
+      <tr><th>Where the banner shows</th><td><b>Dashboard</b>, <b>Stats</b> and <b>Replies</b> — top of the content column, full content width — while a just-connected account is still syncing. Removed the moment the import resolves.</td></tr>
+      <tr><th>Why a backfill exists</th><td>On connect we pull the account's posts, per-post metrics and comments from Threads in the background. It's fast (seconds–minutes) but not instant, so the screens need a truthful “loading” story rather than looking broken.</td></tr>
+      <tr><th>What Threads <b>can't</b> backfill</th><td><b>Follower history</b> (the API gives only today's count → growth starts from today); <b>follower analytics below ~100 followers</b> (gated by Threads); <b>viral-tier classification</b> until there are enough posts to form a baseline (shown as “Calculating…”).</td></tr>
+      <tr><th>Tone</th><td><b>Warm, non-apologetic.</b> “The platform is working, your history is just loading.” No error styling, no “sorry”, no dead-ends.</td></tr>
+      <tr><th>Accessibility</th><td>Banner progress sub is an <code>aria-live="polite"</code> region so the climbing counts are announced. Skeletons are <code>aria-hidden</code>. Spinner + sweep respect <code>prefers-reduced-motion</code>.</td></tr>
+    </tbody></table></div>
+
+    <h3><span class="stg stg--shell">shell</span>1.1 — Topbar (unchanged)</h3>
+    <p class="section-note">The app-shell is reused 1:1; nothing here changes it. Shown for orientation — the banner sits in the scroll body just below this bar.</p>
+    <div class="frames" id="f-topbar"></div>
+  </section>
+
+  <!-- ===================== 2 ===================== -->
+  <section id="s2">
+    <h2><span class="h2n">2</span>Import banner + skeleton <span class="tagline">import-banner.css</span></h2>
+    <p class="section-note">A calm, full-width banner that announces the background import and shows live progress as data lands. Built from tokens only; light and dark below.</p>
+
+    <h3 id="s2-anatomy">2.1 — Anatomy <code>.import-banner</code></h3>
+    <div class="frames" id="f-banner"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:230px;">Element / class</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>.import-banner</code></td><td><code>flex; align-items:center; gap 14; padding 13/16; surface; border; radius-lg; shadow-sm</code> + a 3px left rail. <code>--syncing</code> → accent rail; <code>--partial</code> → success rail.</td></tr>
+        <tr><td><code>.ib-mark</code></td><td>36×36 (radius-md, surface-2, border). Holds <code>.ib-spinner</code> while syncing (accent ring, <code>spin .7s</code>) or a check glyph once partial.</td></tr>
+        <tr><td><code>.ib-title</code></td><td>“Importing your history” — <code class="tok">--text-small</code> / w600 / text.</td></tr>
+        <tr><td><code>.ib-sub</code> <span class="mono2">aria-live</span></td><td>Live progress — “<b>42</b> posts · <b>310</b> comments so far”. <code>--text-caption</code> / muted / <b>tabular-nums</b> so the climbing numbers don't jitter. Bold numerals only.</td></tr>
+        <tr><td><code>.ib-bar</code> / <code>.ib-bar-fill</code></td><td>4px track (max 360, radius-full, surface-2, border). Fill = accent, width animates. <code>.ib-bar--indeterminate</code> → a 36% chunk sweeps (<code>ib-sweep 1.3s</code>) before a total is known.</td></tr>
+        <tr><td><code>.ib-since</code></td><td>Trailing ETA (“About a minute left”) — caption / subtle. Wraps under the bar on the phone.</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 id="s2-states">2.2 — States</h3>
+    <div class="statebar"><span class="st">Just started (indeterminate)</span><span class="st">Importing (live counts)</span><span class="st">Imported most (partial)</span><span class="st">Resolved (removed)</span></div>
+    <p class="section-note">The banner walks left → right as the job runs. <b>Just started</b>: counts unknown, indeterminate sweep. <b>Importing</b>: live post/comment counts + a determinate bar. <b>Imported most</b>: a quieter success-rail note for a partial import (older posts still trickling in) — bar drops away, the counts carry the message. <b>Resolved</b>: the banner unmounts and the normal screen shows (no placeholder left behind).</p>
+    <div class="frames" id="f-banner-states"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:160px;">State</th><th>Trigger</th><th>What renders</th></tr></thead>
+      <tbody>
+        <tr><td><b>Just started</b></td><td class="val">job queued, no counts yet</td><td>Spinner + “Pulling your posts, metrics and comments from Threads…” + indeterminate sweep.</td></tr>
+        <tr><td><b>Importing</b></td><td class="val">counts streaming in</td><td>Spinner + “<b>N</b> posts · <b>M</b> comments so far” + determinate bar (imported ÷ total).</td></tr>
+        <tr><td><b>Imported most</b></td><td class="val">≥ ~95% done, tail remaining</td><td><code>--partial</code>: check glyph, success rail, “Imported most of your history” + “A few older posts are still finishing up.” No bar.</td></tr>
+        <tr><td><b>Resolved</b></td><td class="val">import complete</td><td>Banner removed entirely; the normal screen renders. Optional one-shot success toast (“History imported”).</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note"><b>Determinate vs indeterminate.</b> The bar fills proportionally only once the import job reports a known post total. Before that it sweeps — honest about not-yet-knowing rather than faking a percentage.</div>
+
+    <h3 id="s2-context">2.3 — In context: banner + skeleton</h3>
+    <p class="section-note">The <b>skeleton</b> is the reusable other half: while the first rows of data are still landing, each screen renders a placeholder that mirrors its destination layout 1:1, with the banner pinned on top. Real content swaps in row-by-row with no jump. Below — Stats and Replies, both mid-sync.</p>
+    <div class="frames" id="f-ctx-stats"></div>
+    <div class="frames" id="f-ctx-replies"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:160px;">Screen</th><th>Skeleton mirrors</th></tr></thead>
+      <tbody>
+        <tr><td><b>Dashboard</b></td><td class="val">Overview tiles + recent-activity rows (same grid as the live overview).</td></tr>
+        <tr><td><b>Stats</b></td><td class="val">4 <code>.stat-card</code> placeholders + a tall trend-panel placeholder (the destination grid).</td></tr>
+        <tr><td><b>Replies</b></td><td class="val">Comment rows — avatar circle + two/three text lines per row.</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note good"><b>Progressive, not blocking.</b> As soon as <i>any</i> real data has landed, screens prefer showing it (with the banner still on top) over a full skeleton. The skeleton is only for the brief window before the first rows arrive.</div>
+  </section>
+
+  <!-- ===================== 3 ===================== -->
+  <section id="s3">
+    <h2><span class="h2n">3</span>Stats first-run / progressive <span class="tagline">stats-firstrun.css</span></h2>
+    <p class="section-note">The all-or-nothing “come back in two weeks” wall is gone. We always render the four real summary cards — at whatever they are, even small or zero — and put a warm nudge below them. The page is alive from the first post.</p>
+
+    <h3 id="s3-ba">3.1 — Before / after</h3>
+    <div class="frames" id="f-beforeafter"></div>
+    <div class="note warn"><b>What's replaced.</b> The old <code>.stats-empty</code> wall (“Not enough data yet… at least two weeks of activity”) hid the whole page behind a single card and read as broken. The progressive page keeps the real numbers visible and explains the rest inline.</div>
+
+    <h3 id="s3-page">3.2 — The progressive page</h3>
+    <p class="section-note">Top to bottom: import banner (while syncing) → 4 real summary cards → warm nudge → follower panel (honest state) → performance spread (calculating). Deltas read <b>“no prior period”</b> on a fresh account — there's no equal-length window behind it yet, which is the truth, not an error.</p>
+    <div class="frames" id="f-progressive"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:230px;">Element / class</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>.stats-grid</code> / <code>.stat-card</code> ×4</td><td>Unchanged from Stats — Posts · Views · Likes · Comments, each number <code class="tok">--text-h1</code>. First-run sub-lines read “since you connected” / “N avg / post”; delta = “no prior period”.</td></tr>
+        <tr><td><code>.stats-nudge</code></td><td>The calm replacement for the wall: <code>flex; gap 14; surface-2; border; radius-lg; padding 16/18</code>. Mark (38×38) + title + sub (≤64ch). Two messages — see below.</td></tr>
+        <tr><td><code>.sn-title</code> / <code>.sn-sub</code></td><td>While syncing: “<b>Your history is importing</b>” + “These numbers are real and growing as we pull the rest…”. Once done but small: “<b>You're all set up</b>” + a first-step prompt + an “Open the Studio” button.</td></tr>
+        <tr><td>Follower panel</td><td><code>.fchart-collect</code> honest state (§4) — never the flat 0-based line.</td></tr>
+        <tr><td>Performance spread</td><td><code>.distrow--calc</code> “Calculating…” until a baseline exists (§4).</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 id="s3-var">3.3 — Zero &amp; import-done variants</h3>
+    <p class="section-note">Even with <b>zero posts</b>, the page is honest, not broken — cards read 0 with “no posts yet”, and the nudge carries the story. Once the import finishes on a genuinely small account, the nudge switches to a first-step prompt rather than nagging about a waiting period.</p>
+    <div class="frames" id="f-progressive-var"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:200px;">Variant</th><th>Nudge</th></tr></thead>
+      <tbody>
+        <tr><td><b>Importing</b></td><td class="val">“Your history is importing” — numbers are real and growing; nothing is missing.</td></tr>
+        <tr><td><b>Zero posts yet</b></td><td class="val">Same importing nudge; cards show 0 with “no posts yet”. No wall, no error.</td></tr>
+        <tr><td><b>Done · small account</b></td><td class="val">“You're all set up” + first-step prompt + “Open the Studio”. No two-week countdown.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- ===================== 4 ===================== -->
+  <section id="s4">
+    <h2><span class="h2n">4</span>Honest empty-states <span class="tagline">things Threads can't backfill</span></h2>
+    <p class="section-note">A few metrics can't be pulled from history — so we say so, warmly and specifically, instead of hiding the panel or faking data. Each reuses the existing <code>.fchart-collect</code> / spread chrome so it reads as calm, not as an error.</p>
+
+    <h3 id="s4-follow"><span class="stg stg--new">NEW</span>4.1 — Follower growth · &lt; 2 days of data</h3>
+    <p class="section-note">Threads gives only <i>today's</i> follower count, not its history — so there's no line to draw yet. The header still shows the current count (it's real); the plot area carries the explanation. Left frame below; the locked case is §4.2.</p>
+    <div class="frames" id="f-followers"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:200px;">State</th><th>Copy</th></tr></thead>
+      <tbody>
+        <tr><td><b>Collecting</b> (&lt;2 days)</td><td><b>Title:</b> “Growth starts tracking today”. <b>Sub:</b> “Threads only gives your current follower count, not its history — so we start plotting your growth from today. Check back tomorrow for the first move.” Header shows the real count + “growth from today”.</td></tr>
+        <tr><td><b>Tracking</b> (≥2 days)</td><td>The normal min–max line (shown for contrast below). The block is independent of the period selector — always full history since connect.</td></tr>
+      </tbody>
+    </table></div>
+    <div class="frames" id="f-followers-ok"></div>
+
+    <h3 id="s4-lock"><span class="stg stg--new">NEW</span>4.2 — Follower count not available yet</h3>
+    <p class="section-note">Threads only shares follower analytics once an account passes about 100 followers. Below that we can't show the count at all — so we name the threshold and reassure that the rest of the page still works. (Shown as the right frame in §4.1 above.)</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:200px;">Element</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td><code>.fchart-collect--locked</code></td><td>Same calm dashed chrome as collecting, with a <b>lock</b> glyph. Header count shows “—” (genuinely unavailable).</td></tr>
+        <tr><td>Copy</td><td><b>Title:</b> “Follower insights unlock at ~100 followers”. <b>Sub:</b> “Threads only shares follower analytics once an account passes about 100 followers. You're at <b>64</b> — almost there, and everything else on this page works in the meantime.”</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 id="s4-calc"><span class="stg stg--new">NEW</span>4.3 — Viral tiers · Calculating…</h3>
+    <p class="section-note">Viral tiers classify each post against your own baseline (× your average). On a fresh account there aren't enough posts to form that baseline yet — so the panel keeps its tier scale visible but shows a calm <b>“Calculating…”</b> in place of counts, rather than a misleading all-zeros chart.</p>
+    <div class="frames" id="f-spread-calc"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:230px;">Element / class</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>.calc-pill</code></td><td>Panel-header pill: “Calculating” + three pulsing dots (<code>dot-pulse</code>, no spinner). Subtle colour — quiet, not urgent.</td></tr>
+        <tr><td><code>.distrow--calc</code></td><td>Each tier keeps its dot + name + sub (the scale stays legible). The count/percent and the proportion bar are replaced by a calm shimmer (<code>.sfr-skel</code>) until the baseline is ready.</td></tr>
+        <tr><td>Resolves to</td><td>The normal <code>.distlist</code> with real counts + bars once there are enough posts (~5+) to compare against.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- ===================== 5 ===================== -->
+  <section id="s5">
+    <h2><span class="h2n">5</span>Copy &amp; localization</h2>
+    <p class="section-note">All copy here is the English source locale; it expands into the 8 app locales (en · ru · uk · de · es · fr · it · pt) afterward. RU/DE run ~30–40% longer — every container wraps and never clips. Numbers are tabular and locale-formatted; the banner counts and follower count are live values, not strings.</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:230px;">String</th><th>English (source)</th></tr></thead>
+      <tbody>
+        <tr><td class="grp" colspan="2">Import banner</td></tr>
+        <tr><td>Title</td><td class="val">Importing your history</td></tr>
+        <tr><td>Sub · early</td><td class="val">Pulling your posts, metrics and comments from Threads…</td></tr>
+        <tr><td>Sub · live</td><td class="val">{posts} posts · {comments} comments so far</td></tr>
+        <tr><td>ETA</td><td class="val">About a minute left</td></tr>
+        <tr><td>Partial title</td><td class="val">Imported most of your history</td></tr>
+        <tr><td>Partial sub</td><td class="val">{posts} posts · {comments} comments are in. A few older posts are still finishing up.</td></tr>
+        <tr><td class="grp" colspan="2">Stats nudge</td></tr>
+        <tr><td>Importing</td><td class="val">Your history is importing — These numbers are real and growing as we pull the rest of your posts and comments from Threads. Nothing is missing.</td></tr>
+        <tr><td>Done · small</td><td class="val">You're all set up — Keep publishing from the Studio and the trend line, best times and viral spread fill in here as you go — no waiting period.</td></tr>
+        <tr><td class="grp" colspan="2">Honest empty-states</td></tr>
+        <tr><td>Follower · collecting</td><td class="val">Growth starts tracking today — Threads only gives your current follower count, not its history, so we start plotting your growth from today.</td></tr>
+        <tr><td>Follower · locked</td><td class="val">Follower insights unlock at ~100 followers — Threads only shares follower analytics once an account passes about 100 followers.</td></tr>
+        <tr><td>Viral tiers</td><td class="val">Calculating…</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note"><b>Non-apologetic, always.</b> No “Sorry”, no “Oops”, no error tints. Verbs are active and present (“importing”, “starts tracking”, “unlock”). The frame is “the platform is working” — never “something went wrong”.</div>
+  </section>
+
+  <!-- ===================== 6 ===================== -->
+  <section id="s6">
+    <h2><span class="h2n">6</span>Implementation checklist</h2>
+    <ul class="check">
+      <li><b>Import banner</b> reusable across Dashboard / Stats / Replies; top of content column, full width; removed on resolve.</li>
+      <li>States: just-started (indeterminate sweep) · importing (live counts + determinate bar) · imported-most (success rail + check, no bar) · resolved (unmounts).</li>
+      <li>Progress sub is <code>aria-live="polite"</code>, tabular-nums; spinner + sweep respect <code>prefers-reduced-motion</code>; skeletons <code>aria-hidden</code>.</li>
+      <li><b>Skeleton</b> mirrors each destination layout 1:1; real data swaps in row-by-row with no jump; prefers partial real content over full skeleton once anything lands.</li>
+      <li><b>Stats progressive</b>: always render the 4 real summary cards (small or zero); <b>no</b> “come back in two weeks” wall; <code>.stats-nudge</code> below with importing / first-step copy; deltas “no prior period” on a fresh account.</li>
+      <li><b>Follower growth &lt;2 days</b>: “Growth starts tracking today”; header shows the real current count; never a flat 0-based line.</li>
+      <li><b>Follower count locked</b>: “Follower insights unlock at ~100 followers”; lock glyph; count shows “—”; rest of page unaffected.</li>
+      <li><b>Viral tiers</b>: “Calculating…” pill + per-row shimmer while the baseline forms; resolves to real counts/bars at ~5+ posts.</li>
+      <li>Tone warm + non-apologetic everywhere; no error styling on any first-run state.</li>
+      <li>Correct in light and dark; only semantic tokens (no hardcoded colour); copy survives all 8 locales without clipping.</li>
+    </ul>
+    <div class="note" style="margin-top:18px;">End of spec. New layers: <code>import-banner.css</code>, <code>stats-firstrun.css</code>. Built on <code>stats.css</code> + <code>stats-followers.css</code> + the shared shell. Related screen doc — <a class="link" href="Stats-SPEC.html">Stats-SPEC.html</a>.</div>
+  </section>
+</main>
+</div>
+
+<script src="firstrun-spec.js"></script>
+</body>
+</html>
