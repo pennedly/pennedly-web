@@ -7,6 +7,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 # Read SPEC.md first
 
 The canonical reference for the whole Pennedly project (web + backend +
-infra + flows) lives at `../pennedly-backend/SPEC.md`. Read it before
-making non-trivial changes to the web app, and update its frontend
-sections (§6, §7, §13, §14) in the same commit when you ship a feature.
+infra + flows) lives at `../pennedly-docs/SPEC.md`. Read the relevant
+section via its table of contents, not the whole file, before making
+non-trivial changes to the web app, and update its frontend sections
+(§6, §7, §13, §14) in the same commit when you ship a feature.
