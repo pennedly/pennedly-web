@@ -66,7 +66,18 @@ import {
   WhenReplyBody,
   WhoBody,
 } from "./scenarios-recipe";
-import { BOOST_DEFAULT_THRESHOLD, type FormState, interpolate, MONTHS, type visibleFields } from "./scenarios-form";
+import {
+  BOOST_DEFAULT_THRESHOLD,
+  type FormState,
+  interpolate,
+  MONTHS,
+  monthlyDaysPhrase,
+  timesPhrase,
+  weekdaysPhrase,
+  whenPhrase,
+  yearlyFirstDatePhrase,
+  type visibleFields,
+} from "./scenarios-form";
 import { PostReplyAudience } from "./scenarios-post-reply-audience";
 import type { ScenarioPreview as ScenarioPreviewT, ScenarioRunNow } from "@/lib/types";
 
@@ -104,87 +115,6 @@ function audPhrase(t: T, a: string): string {
   if (a === "questions") return t("scenarios.aud_phrase.questions");
   if (a === "custom") return t("scenarios.aud_phrase.custom");
   return t("scenarios.aud_phrase.all");
-}
-
-// «9:00, 14:00 и 19:00» — the scenario's post times as a human phrase. One slot
-// reads as the single time («9:00»); 2+ slots are listed, the last joined by «и».
-// Reads `form.hours` (the multi-slot list) when it holds 2+, else `form.hour`.
-function timesPhrase(t: T, form: FormState): string {
-  const list = [...new Set(form.hours.filter((h) => h >= 0 && h <= 23))].sort((a, b) => a - b);
-  if (list.length < 2) return form.hour;
-  const labels = list.map((h) => `${h}:00`);
-  return `${labels.slice(0, -1).join(", ")} ${t("common.and")} ${labels[labels.length - 1]}`;
-}
-
-// ── КОГДА → a short human phrase for the sentence slot ──
-function whenPhrase(t: T, form: FormState): string {
-  const time = timesPhrase(t, form);
-  switch (form.when) {
-    case "every_n_days":
-      return t("scenarios.rc.sent.every_n").replace("{n}", String(form.nDays)).replace("{time}", time);
-    case "weekly":
-      return t("scenarios.rc.sent.weekly").replace("{days}", weekdaysPhrase(t, form)).replace("{time}", time);
-    case "monthly":
-      return t("scenarios.rc.sent.monthly").replace("{days}", monthlyDaysPhrase(t, form)).replace("{time}", time);
-    case "yearly":
-      return t("scenarios.rc.sent.yearly").replace("{date}", yearlyFirstDatePhrase(t, form));
-    case "date_range":
-      return t("scenarios.rc.sent.period").replace("{time}", time);
-    case "event":
-      return form.eventKind === "on_follower_milestone" ? t("scenarios.rc.sent.event_followers") : t("scenarios.rc.sent.event_views");
-    case "daily":
-    default:
-      return t("scenarios.rc.sent.daily").replace("{time}", time);
-  }
-}
-
-// «1, 15 и 31» — the selected days-of-month, plus «последний» when «Последний
-// день месяца» is on. Empty selection falls back to «последний» / a dash.
-function monthlyDaysPhrase(t: T, form: FormState): string {
-  const parts = [...form.monthlyDays].sort((a, b) => a - b).map(String);
-  if (form.monthlyLastDay) parts.push(t("scenarios.rc.sent.monthly_last"));
-  if (parts.length === 0) return "—";
-  if (parts.length === 1) return parts[0];
-  return `${parts.slice(0, -1).join(", ")} ${t("common.and")} ${parts[parts.length - 1]}`;
-}
-// «1 января» — the first yearly anchor in «day месяц» genitive form (the design's
-// summary uses the first date; the drawer lists them all).
-function yearlyFirstDatePhrase(t: T, form: FormState): string {
-  const first = form.yearlyDates[0];
-  if (!first) return "—";
-  return `${first.day} ${t(MONTHS[first.month] ?? MONTHS[0])}`;
-}
-const WD_FULL: MessageKey[] = [
-  "scenarios.rc.wdfull.mon",
-  "scenarios.rc.wdfull.tue",
-  "scenarios.rc.wdfull.wed",
-  "scenarios.rc.wdfull.thu",
-  "scenarios.rc.wdfull.fri",
-  "scenarios.rc.wdfull.sat",
-  "scenarios.rc.wdfull.sun",
-];
-// Short Пн…Вс labels for the multi-weekday summary phrase.
-const WD_SHORT: MessageKey[] = [
-  "scenarios.wd.mon",
-  "scenarios.wd.tue",
-  "scenarios.wd.wed",
-  "scenarios.wd.thu",
-  "scenarios.wd.fri",
-  "scenarios.wd.sat",
-  "scenarios.wd.sun",
-];
-// «по будням» / «по выходным» / «Пн, Ср и Пт» — the selected weekdays as a short
-// human phrase for the sentence + run rows. Mon–Fri and Sat–Sun get the natural
-// «будням»/«выходным» wording; any other set lists the short day labels.
-function weekdaysPhrase(t: T, form: FormState): string {
-  const days = [...new Set(form.weekdays)].filter((d) => d >= 0 && d <= 6).sort((a, b) => a - b);
-  if (days.length === 0) return t(WD_FULL[0]);
-  if (days.length === 5 && days.every((d, i) => d === i)) return t("scenarios.rc.sent.weekdays_workdays");
-  if (days.length === 2 && days[0] === 5 && days[1] === 6) return t("scenarios.rc.sent.weekdays_weekend");
-  if (days.length === 7) return t("scenarios.rc.sent.weekdays_all");
-  const labels = days.map((d) => t(WD_SHORT[d] ?? WD_SHORT[0]));
-  if (labels.length === 1) return labels[0];
-  return `${labels.slice(0, -1).join(", ")} ${t("common.and")} ${labels[labels.length - 1]}`;
 }
 
 // ════════════════════════════════════════════════════════════════════════════

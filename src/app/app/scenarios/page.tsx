@@ -80,17 +80,25 @@ import {
   buildAttachedBoostBody,
   compileBody,
   type FormState,
+  hoursFromCfg,
   interpolate,
   isBoostScenario,
   L3_FORM_DEFAULTS,
   MILESTONE_DEFAULT_TARGETS,
+  milestoneTargetsFromCfg,
   type MonthDate,
+  monthlyDaysFromCfg,
   normalizeMilestoneTargets,
   perDayTimesFromCfg,
   POST_REPLY_FORM_DEFAULTS,
   replyAudienceOverrideFromCfg,
   replyOverridesFromCfg,
+  scenarioHour,
+  scenarioHours,
+  scenarioJitter,
   visibleFields,
+  weekdaysFromCfg,
+  yearlyDatesFromCfg,
 } from "@/components/studio/scenarios-form";
 import type { L3Inherited } from "@/components/studio/scenarios-recipe";
 import {
@@ -1657,90 +1665,6 @@ function scenarioToCreateBody(s: Scenario): Parameters<typeof createScenario>[1]
 
 // Read a saved scenario's schedule hour (0–23): prefer the backend's lifted
 // top-level `hour`, fall back to `trigger_cfg.hour`, else null.
-function scenarioHour(s: Scenario): number | null {
-  if (typeof s.hour === "number") return s.hour;
-  const h = s.trigger_cfg?.hour;
-  return typeof h === "number" && Number.isInteger(h) && h >= 0 && h <= 23 ? h : null;
-}
-function scenarioJitter(s: Scenario): number | null {
-  if (typeof s.jitter_minutes === "number") return s.jitter_minutes;
-  const j = s.trigger_cfg?.jitter_minutes;
-  return typeof j === "number" && Number.isInteger(j) && j >= 0 && j <= 120 ? j : null;
-}
-
-// Read whole hours 0–23 from a `hours` field on a trigger_cfg (W2 multi-slot),
-// deduped + sorted. Returns null when absent/empty (→ caller falls back to the
-// single `hour`). Shared by `scenarioHours` (saved scenarios) + `hoursFromCfg`.
-function parseHoursField(raw: unknown): number[] | null {
-  if (!Array.isArray(raw)) return null;
-  const hours = (raw as unknown[]).filter((h): h is number => Number.isInteger(h) && (h as number) >= 0 && (h as number) <= 23);
-  const uniq = [...new Set(hours)].sort((a, b) => a - b);
-  return uniq.length > 0 ? uniq : null;
-}
-// «несколько раз в день» — the saved scenario's multi-slot hour list (W2). The
-// backend lifts `hours` onto trigger_cfg; null when single-time (→ one `hour`).
-function scenarioHours(s: Scenario): number[] | null {
-  return parseHoursField(s.trigger_cfg?.hours);
-}
-// Same, but for a preset's trigger_cfg: prefer a multi-slot `hours`, else seed a
-// single-element list from the preset's `hour`. Null when neither is present.
-function hoursFromCfg(cfg: Record<string, unknown> | null | undefined): number[] | null {
-  if (!cfg) return null;
-  const multi = parseHoursField(cfg.hours);
-  if (multi) return multi;
-  const h = cfg.hour;
-  return typeof h === "number" && Number.isInteger(h) && h >= 0 && h <= 23 ? [h] : null;
-}
-
-// «По дням недели» — pull the selected weekdays (0=Mon..6=Sun) from a `weekly`
-// trigger_cfg. Wave 2 writes a `weekdays` array; a Wave-1 scenario saved a single
-// `weekday`, so we seed `[weekday]` from it (back-compat read). Returns null when
-// the cfg carries neither (→ caller uses the design default Mon–Fri).
-function weekdaysFromCfg(cfg: Record<string, unknown> | null | undefined): number[] | null {
-  if (!cfg) return null;
-  if (Array.isArray(cfg.weekdays)) {
-    const days = (cfg.weekdays as unknown[]).filter((d): d is number => Number.isInteger(d) && (d as number) >= 0 && (d as number) <= 6);
-    const uniq = [...new Set(days)].sort((a, b) => a - b);
-    return uniq.length > 0 ? uniq : null;
-  }
-  // back-compat: a single saved `weekday` → seed the multi-select with just it.
-  if (Number.isInteger(cfg.weekday) && (cfg.weekday as number) >= 0 && (cfg.weekday as number) <= 6) {
-    return [cfg.weekday as number];
-  }
-  return null;
-}
-
-// «Раз в месяц» — pull the day list from a `monthly` trigger_cfg (1–31), or null
-// when the cfg isn't a monthly trigger (→ caller uses the design default).
-function monthlyDaysFromCfg(cfg: Record<string, unknown> | null | undefined): number[] | null {
-  if (!cfg || cfg.kind !== "monthly" || !Array.isArray(cfg.days)) return null;
-  return (cfg.days as unknown[]).filter((d): d is number => Number.isInteger(d) && (d as number) >= 1 && (d as number) <= 31);
-}
-// «Круглое число подписчиков» — pull the milestone ladder from an
-// `on_follower_milestone` trigger_cfg. Returns null when the cfg carries no (or
-// no valid) `targets` (→ caller seeds the design-default ladder).
-function milestoneTargetsFromCfg(cfg: Record<string, unknown> | null | undefined): number[] | null {
-  if (!cfg) return null;
-  const targets = normalizeMilestoneTargets(cfg.targets);
-  return targets.length > 0 ? targets : null;
-}
-// «Раз в год» — pull the (day, month) anchors from a `yearly` trigger_cfg. The
-// cfg stores months 1-based; the form is 0-based, so we shift back here.
-function yearlyDatesFromCfg(cfg: Record<string, unknown> | null | undefined): MonthDate[] | null {
-  if (!cfg || cfg.kind !== "yearly" || !Array.isArray(cfg.dates)) return null;
-  const out: MonthDate[] = [];
-  for (const raw of cfg.dates as unknown[]) {
-    if (!raw || typeof raw !== "object") continue;
-    const r = raw as { day?: unknown; month?: unknown };
-    const day = Number(r.day);
-    const month = Number(r.month);
-    if (Number.isInteger(day) && day >= 1 && Number.isInteger(month) && month >= 1 && month <= 12) {
-      out.push({ day, month: month - 1 });
-    }
-  }
-  return out.length > 0 ? out : null;
-}
-
 // «Сработает: завтра в 9:00 первым постом» — a human "when it fires" line.
 function humanWhenFires(form: FormState, t: (k: MessageKey) => string): string {
   switch (form.when) {

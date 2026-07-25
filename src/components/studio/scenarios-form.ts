@@ -14,6 +14,7 @@ import type { MessageKey } from "@/lib/i18n";
 import type {
   PresetField,
   PublishMode,
+  Scenario,
   ScenarioBoost,
   ScenarioBoostTarget,
   ScenarioCreate,
@@ -22,8 +23,29 @@ import type {
   ScenarioReplyAudienceOverride,
   ScenarioReplyPolicy,
 } from "@/lib/types";
-import type { WhenMode } from "./ScenariosParts";
 import { type BackendReplyFreq, type ReplyFreq, freqFromBackend, freqToBackend } from "./HouseRules";
+
+// The КОГДА modes a scenario can be scheduled on.
+// Wave 3 (decision б reversed): `monthly` / `yearly` un-hidden.
+export type WhenMode = "daily" | "every_n_days" | "weekly" | "monthly" | "yearly" | "date_range" | "event";
+
+// Derive the active КОГДА mode from a preset's / scenario's trigger_cfg +
+// condition_cfg. A date-window guard (active_from/active_to) reads as date_range.
+export function whenModeFromCfg(
+  trigger: Record<string, unknown> | null | undefined,
+  condition: Record<string, unknown> | null | undefined,
+): WhenMode {
+  const kind = (trigger?.kind as string) || "";
+  if (kind === "every_n_days") return "every_n_days";
+  if (kind === "weekly") return "weekly";
+  if (kind === "monthly") return "monthly";
+  if (kind === "yearly") return "yearly";
+  // boost (on_post_metric) is reactive too — read it as an event so a list view
+  // never mislabels it as a daily cadence (the boost editor owns its real UI).
+  if (kind === "on_metric_threshold" || kind === "on_follower_milestone" || kind === "on_new_comment" || kind === "on_post_metric") return "event";
+  if (condition && ("active_from" in condition || "active_to" in condition)) return "date_range";
+  return "daily";
+}
 
 // «Recipe» content shaping — the КАК-длинно/тема/призыв choices fold into the
 // generation instruction (Wave 1: no new backend fields, decision §6.2).
@@ -324,6 +346,221 @@ export function perDayTimesFromCfg(raw: unknown): Record<number, number[]> | nul
     out[wd] = normalizeHours((v as unknown[]).filter((h): h is number => typeof h === "number"));
   }
   return Object.keys(out).length > 0 ? out : null;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  SCHEDULE — reading it off a saved scenario, and saying it out loud
+// ════════════════════════════════════════════════════════════════════════════
+// One home for both, because they used to live apart: the readers sat private in
+// the hub page (editor hydration) and the phrasing sat private in the editor, so
+// the ROUTINE CARD had neither and fell back to the preset's demo values —
+// «Every Tuesday at 12:00» on a routine set to Monday 8:00. Card and editor now
+// speak the same sentence off the same source.
+
+// Read whole hours 0–23 from an `hours` field, deduped + sorted. Null when
+// absent/empty (→ caller falls back to the single `hour`).
+function parseHoursField(raw: unknown): number[] | null {
+  if (!Array.isArray(raw)) return null;
+  const hours = (raw as unknown[]).filter((h): h is number => Number.isInteger(h) && (h as number) >= 0 && (h as number) <= 23);
+  const uniq = [...new Set(hours)].sort((a, b) => a - b);
+  return uniq.length > 0 ? uniq : null;
+}
+
+// The saved scenario's single scheduled hour — the backend surfaces it top-level,
+// sourced from trigger_cfg. Null when the scenario has no explicit hour.
+export function scenarioHour(s: Scenario): number | null {
+  if (typeof s.hour === "number") return s.hour;
+  const h = s.trigger_cfg?.hour;
+  return typeof h === "number" && Number.isInteger(h) && h >= 0 && h <= 23 ? h : null;
+}
+
+// «Разброс минут» (0–120) — same permissive read as the hour. Null when absent.
+export function scenarioJitter(s: Scenario): number | null {
+  if (typeof s.jitter_minutes === "number") return s.jitter_minutes;
+  const j = s.trigger_cfg?.jitter_minutes;
+  return typeof j === "number" && Number.isInteger(j) && j >= 0 && j <= 120 ? j : null;
+}
+
+// «Несколько раз в день» — the saved scenario's multi-slot hour list (W2). Null
+// when single-time (→ one `hour`).
+export function scenarioHours(s: Scenario): number[] | null {
+  return parseHoursField(s.trigger_cfg?.hours);
+}
+
+// Same, but for a preset's trigger_cfg: prefer a multi-slot `hours`, else seed a
+// single-element list from the preset's `hour`. Null when neither is present.
+export function hoursFromCfg(cfg: Record<string, unknown> | null | undefined): number[] | null {
+  if (!cfg) return null;
+  const multi = parseHoursField(cfg.hours);
+  if (multi) return multi;
+  const h = cfg.hour;
+  return typeof h === "number" && Number.isInteger(h) && h >= 0 && h <= 23 ? [h] : null;
+}
+
+// «По дням недели» — the selected weekdays (0=Mon..6=Sun) of a `weekly` trigger.
+// Wave 2 writes a `weekdays` array; a Wave-1 scenario saved a single `weekday`,
+// so we seed `[weekday]` from it. Null when the cfg carries neither.
+export function weekdaysFromCfg(cfg: Record<string, unknown> | null | undefined): number[] | null {
+  if (!cfg) return null;
+  if (Array.isArray(cfg.weekdays)) {
+    const days = (cfg.weekdays as unknown[]).filter((d): d is number => Number.isInteger(d) && (d as number) >= 0 && (d as number) <= 6);
+    const uniq = [...new Set(days)].sort((a, b) => a - b);
+    return uniq.length > 0 ? uniq : null;
+  }
+  // back-compat: a single saved `weekday` → seed the multi-select with just it.
+  if (Number.isInteger(cfg.weekday) && (cfg.weekday as number) >= 0 && (cfg.weekday as number) <= 6) {
+    return [cfg.weekday as number];
+  }
+  return null;
+}
+
+// «Раз в месяц» — the day list (1–31) of a `monthly` trigger; null otherwise.
+export function monthlyDaysFromCfg(cfg: Record<string, unknown> | null | undefined): number[] | null {
+  if (!cfg || cfg.kind !== "monthly" || !Array.isArray(cfg.days)) return null;
+  return (cfg.days as unknown[]).filter((d): d is number => Number.isInteger(d) && (d as number) >= 1 && (d as number) <= 31);
+}
+
+// «Круглое число подписчиков» — the milestone ladder of an `on_follower_milestone`
+// trigger. Null when the cfg carries no valid `targets` (→ the default ladder).
+export function milestoneTargetsFromCfg(cfg: Record<string, unknown> | null | undefined): number[] | null {
+  if (!cfg) return null;
+  const targets = normalizeMilestoneTargets(cfg.targets);
+  return targets.length > 0 ? targets : null;
+}
+
+// «Раз в год» — the (day, month) anchors of a `yearly` trigger. The cfg stores
+// months 1-based; the form is 0-based, so we shift back here.
+export function yearlyDatesFromCfg(cfg: Record<string, unknown> | null | undefined): MonthDate[] | null {
+  if (!cfg || cfg.kind !== "yearly" || !Array.isArray(cfg.dates)) return null;
+  const out: MonthDate[] = [];
+  for (const raw of cfg.dates as unknown[]) {
+    if (!raw || typeof raw !== "object") continue;
+    const r = raw as { day?: unknown; month?: unknown };
+    const day = Number(r.day);
+    const month = Number(r.month);
+    if (Number.isInteger(day) && day >= 1 && Number.isInteger(month) && month >= 1 && month <= 12) {
+      out.push({ day, month: month - 1 });
+    }
+  }
+  return out.length > 0 ? out : null;
+}
+
+// ── the schedule, as a human phrase ──
+type T = (k: MessageKey) => string;
+
+// Everything `whenPhrase` needs. `FormState` satisfies it structurally, and
+// `scheduleOfScenario` builds it from a saved scenario.
+export type SchedulePhraseInput = {
+  when: WhenMode;
+  nDays: number;
+  weekdays: number[];
+  monthlyDays: number[];
+  monthlyLastDay: boolean;
+  yearlyDates: MonthDate[];
+  hours: number[];
+  hour: string;
+  eventKind: RecipeEvent;
+};
+
+const WD_FULL: MessageKey[] = [
+  "scenarios.rc.wdfull.mon",
+  "scenarios.rc.wdfull.tue",
+  "scenarios.rc.wdfull.wed",
+  "scenarios.rc.wdfull.thu",
+  "scenarios.rc.wdfull.fri",
+  "scenarios.rc.wdfull.sat",
+  "scenarios.rc.wdfull.sun",
+];
+// Short Пн…Вс labels for the multi-weekday summary phrase.
+const WD_SHORT: MessageKey[] = [
+  "scenarios.wd.mon",
+  "scenarios.wd.tue",
+  "scenarios.wd.wed",
+  "scenarios.wd.thu",
+  "scenarios.wd.fri",
+  "scenarios.wd.sat",
+  "scenarios.wd.sun",
+];
+
+// «9:00, 14:00 и 19:00» — the scenario's post times as a human phrase. One slot
+// reads as the single time («9:00»); 2+ slots are listed, the last joined by «и».
+export function timesPhrase(t: T, form: SchedulePhraseInput): string {
+  const list = [...new Set(form.hours.filter((h) => h >= 0 && h <= 23))].sort((a, b) => a - b);
+  if (list.length < 2) return form.hour;
+  const labels = list.map((h) => `${h}:00`);
+  return `${labels.slice(0, -1).join(", ")} ${t("common.and")} ${labels[labels.length - 1]}`;
+}
+
+// «по будням» / «по выходным» / «Пн, Ср и Пт» — the selected weekdays as a short
+// human phrase. Mon–Fri and Sat–Sun get the natural wording; any other set lists
+// the short day labels.
+export function weekdaysPhrase(t: T, form: SchedulePhraseInput): string {
+  const days = [...new Set(form.weekdays)].filter((d) => d >= 0 && d <= 6).sort((a, b) => a - b);
+  if (days.length === 0) return t(WD_FULL[0]);
+  if (days.length === 5 && days.every((d, i) => d === i)) return t("scenarios.rc.sent.weekdays_workdays");
+  if (days.length === 2 && days[0] === 5 && days[1] === 6) return t("scenarios.rc.sent.weekdays_weekend");
+  if (days.length === 7) return t("scenarios.rc.sent.weekdays_all");
+  const labels = days.map((d) => t(WD_SHORT[d] ?? WD_SHORT[0]));
+  if (labels.length === 1) return labels[0];
+  return `${labels.slice(0, -1).join(", ")} ${t("common.and")} ${labels[labels.length - 1]}`;
+}
+
+// «1, 15 и 31» — the selected days-of-month, plus «последний» when «Последний
+// день месяца» is on. Empty selection falls back to «последний» / a dash.
+export function monthlyDaysPhrase(t: T, form: SchedulePhraseInput): string {
+  const parts = [...form.monthlyDays].sort((a, b) => a - b).map(String);
+  if (form.monthlyLastDay) parts.push(t("scenarios.rc.sent.monthly_last"));
+  if (parts.length === 0) return "—";
+  if (parts.length === 1) return parts[0];
+  return `${parts.slice(0, -1).join(", ")} ${t("common.and")} ${parts[parts.length - 1]}`;
+}
+
+// «1 января» — the first yearly anchor in «day месяц» genitive form (the design's
+// summary uses the first date; the drawer lists them all).
+export function yearlyFirstDatePhrase(t: T, form: SchedulePhraseInput): string {
+  const first = form.yearlyDates[0];
+  if (!first) return "—";
+  return `${first.day} ${t(MONTHS[first.month] ?? MONTHS[0])}`;
+}
+
+// ── КОГДА → a short human phrase for the sentence slot ──
+export function whenPhrase(t: T, form: SchedulePhraseInput): string {
+  const time = timesPhrase(t, form);
+  switch (form.when) {
+    case "every_n_days":
+      return t("scenarios.rc.sent.every_n").replace("{n}", String(form.nDays)).replace("{time}", time);
+    case "weekly":
+      return t("scenarios.rc.sent.weekly").replace("{days}", weekdaysPhrase(t, form)).replace("{time}", time);
+    case "monthly":
+      return t("scenarios.rc.sent.monthly").replace("{days}", monthlyDaysPhrase(t, form)).replace("{time}", time);
+    case "yearly":
+      return t("scenarios.rc.sent.yearly").replace("{date}", yearlyFirstDatePhrase(t, form));
+    case "date_range":
+      return t("scenarios.rc.sent.period").replace("{time}", time);
+    case "event":
+      return form.eventKind === "on_follower_milestone" ? t("scenarios.rc.sent.event_followers") : t("scenarios.rc.sent.event_views");
+    case "daily":
+    default:
+      return t("scenarios.rc.sent.daily").replace("{time}", time);
+  }
+}
+
+// A SAVED scenario's schedule, in the shape `whenPhrase` reads. Same defaults the
+// editor hydrates with (Mon–Fri for a weekly with no days, 9:00 with no hour), so
+// the card's sentence and the editor's sentence can't drift apart.
+export function scheduleOfScenario(s: Scenario): SchedulePhraseInput {
+  const hours = scenarioHours(s) ?? [scenarioHour(s) ?? 9];
+  return {
+    when: whenModeFromCfg(s.trigger_cfg, s.condition_cfg),
+    nDays: typeof s.trigger_cfg?.n === "number" ? (s.trigger_cfg.n as number) : 3,
+    weekdays: weekdaysFromCfg(s.trigger_cfg) ?? [0, 1, 2, 3, 4],
+    monthlyDays: monthlyDaysFromCfg(s.trigger_cfg) ?? [1, 15, 31],
+    monthlyLastDay: (s.trigger_cfg?.last_day as boolean) === true,
+    yearlyDates: yearlyDatesFromCfg(s.trigger_cfg) ?? [],
+    hours,
+    hour: `${hours[0]}:00`,
+    eventKind: (s.trigger_cfg?.kind as string) === "on_follower_milestone" ? "on_follower_milestone" : "on_metric_threshold",
+  };
 }
 
 // A scenario is a boost when its trigger is the reactive `on_post_metric` kind

@@ -4,10 +4,26 @@
 // (creator Алекс · @alex.makes) for ?demo=1 + /gallery review. No backend.
 
 import { v, who, type SentenceSlots, type PublishMode } from "./scenarios-living";
+import { MONTHS, scheduleOfScenario, whenPhrase } from "./scenarios-form";
 import type { MessageKey } from "@/lib/i18n/messages/en";
 import type { Scenario } from "@/lib/types";
 
 type T = (k: MessageKey) => string;
+
+// The «когда» slot: the routine's REAL schedule when we have a saved scenario to
+// read it off, else the preset's own default clock (gallery preview, where the
+// author hasn't picked a time yet). Before this, every preset-born card showed
+// the default — a Monday 8:00 rubric announced itself as «каждый вторник в 12:00».
+function whenSlot(t: T, f: Record<string, string> | undefined, fallbackHour: string) {
+  return v(f?.when || t("scenarios.rc.sent.daily").replace("{time}", fallbackHour));
+}
+
+// The schedule phrase opens the sentence, but a few of the editor's phrasings are
+// written to sit mid-sentence («раз в год, 1 января»), so lift the first letter.
+function scheduleSentenceOpener(t: T, s: Scenario): string {
+  const phrase = whenPhrase(t, scheduleOfScenario(s));
+  return phrase.charAt(0).toUpperCase() + phrase.slice(1);
+}
 
 // ── what the presentation layer knows about each preset ──
 export type PresetPresentation = {
@@ -38,21 +54,25 @@ export const PRESENTATION: Record<string, PresetPresentation> = {
     replies: false,
     sentenceKey: "scenarios.sentence.daily_question",
     skel: { whenKey: "scenarios.skel.daily_question.when", onlyifKey: null, whatdoKey: "scenarios.skel.daily_question.whatdo" },
-    slots: (_t, handle, f) => ({ time: v(f?.time || "9:00"), who: who(handle) }),
+    slots: (t, handle, f) => ({ when: whenSlot(t, f, "9:00"), who: who(handle) }),
   },
   rubric: {
     kind: "post",
     replies: false,
     sentenceKey: "scenarios.sentence.rubric",
     skel: { whenKey: "scenarios.skel.rubric.when", onlyifKey: null, whatdoKey: "scenarios.skel.rubric.whatdo" },
-    slots: (t, handle, f) => ({ time: v(f?.time || "12:00"), name: v(f?.name || t("scenarios.demo.rubric_name")), who: who(handle) }),
+    // No {name}: the column's title lives inside the baked instruction, so there
+    // is nothing to read it off a saved scenario — the sentence says «your column».
+    slots: (t, handle, f) => ({ when: whenSlot(t, f, "12:00"), who: who(handle) }),
   },
   safety_net: {
     kind: "post",
     replies: false,
     sentenceKey: "scenarios.sentence.safety_net",
     skel: { whenKey: "scenarios.skel.safety_net.when", onlyifKey: "scenarios.skel.safety_net.onlyif", whatdoKey: "scenarios.skel.safety_net.whatdo" },
-    slots: (_t, handle, f) => ({ time: v(f?.time || "19:00"), who: who(handle) }),
+    // {time} is the deadline from condition_cfg.not_before; the fallback matches
+    // the backend preset's own default ("18:00") so an unset one doesn't lie.
+    slots: (_t, handle, f) => ({ time: v(f?.time || "18:00"), who: who(handle) }),
   },
   reply_duty: {
     kind: "reply",
@@ -87,14 +107,16 @@ export const PRESENTATION: Record<string, PresetPresentation> = {
     replies: false,
     sentenceKey: "scenarios.sentence.poll",
     skel: { whenKey: "scenarios.skel.poll.when", onlyifKey: null, whatdoKey: "scenarios.skel.poll.whatdo" },
-    slots: (_t, handle, f) => ({ time: v(f?.time || "18:00"), who: who(handle) }),
+    slots: (t, handle, f) => ({ when: whenSlot(t, f, "18:00"), who: who(handle) }),
   },
   seasonal: {
     kind: "post",
     replies: false,
     sentenceKey: "scenarios.sentence.seasonal",
     skel: { whenKey: "scenarios.skel.seasonal.when", onlyifKey: null, whatdoKey: "scenarios.skel.seasonal.whatdo" },
-    slots: (t, handle, f) => ({ period: v(f?.period || t("scenarios.demo.season_period")), topic: v(f?.topic || t("scenarios.demo.season_topic")), who: who(handle) }),
+    // No {topic}: like the rubric's title, the season's theme is baked into the
+    // instruction. {period} comes from the date guard that bounds the window.
+    slots: (t, handle, f) => ({ period: v(f?.period || t("scenarios.demo.season_period")), who: who(handle) }),
   },
   promo: {
     kind: "reply",
@@ -117,13 +139,13 @@ export function deriveSentence(t: T, s: Scenario, handle: string): DerivedSenten
   // 1) origin preset known → speak in its exact words
   if (s.preset_id && PRESENTATION[s.preset_id]) {
     const p = PRESENTATION[s.preset_id];
-    return { template: t(p.sentenceKey), slots: p.slots(t, handle, fieldsFromScenario(s)), kind: p.kind };
+    return { template: t(p.sentenceKey), slots: p.slots(t, handle, fieldsFromScenario(t, s)), kind: p.kind };
   }
   // 2) shape-based families
   const trig = (s.trigger_cfg?.kind as string) || "";
   const isReply = (s.action_cfg?.kind as string) === "reply_policy";
   if (s.template === "promo") {
-    return { template: t("scenarios.sentence.promo"), slots: PRESENTATION.promo.slots(t, handle, fieldsFromScenario(s)), kind: "reply" };
+    return { template: t("scenarios.sentence.promo"), slots: PRESENTATION.promo.slots(t, handle, fieldsFromScenario(t, s)), kind: "reply" };
   }
   // on_mention is ALSO a reply_policy action, so it must be matched BEFORE the
   // generic reply branch below (otherwise it would read as «Дежурство»).
@@ -131,16 +153,23 @@ export function deriveSentence(t: T, s: Scenario, handle: string): DerivedSenten
     return { template: t("scenarios.sentence.on_mention"), slots: PRESENTATION.on_mention.slots(t, handle), kind: "reply" };
   }
   if (isReply || trig === "on_new_comment") {
-    return { template: t("scenarios.sentence.reply_duty"), slots: PRESENTATION.reply_duty.slots(t, handle, fieldsFromScenario(s)), kind: "reply" };
+    return { template: t("scenarios.sentence.reply_duty"), slots: PRESENTATION.reply_duty.slots(t, handle, fieldsFromScenario(t, s)), kind: "reply" };
   }
   if (trig === "on_metric_threshold") {
-    return { template: t("scenarios.sentence.amplify_viral"), slots: PRESENTATION.amplify_viral.slots(t, handle, fieldsFromScenario(s)), kind: "post" };
+    return { template: t("scenarios.sentence.amplify_viral"), slots: PRESENTATION.amplify_viral.slots(t, handle, fieldsFromScenario(t, s)), kind: "post" };
   }
   if (trig === "on_follower_milestone") {
     return { template: t("scenarios.sentence.milestone_thanks"), slots: PRESENTATION.milestone_thanks.slots(t, handle), kind: "post" };
   }
-  // generic posts
-  if (trig === "weekly") return { template: t("scenarios.sentence.generic_weekly"), slots: { who: who(handle) }, kind: "post" };
+  // generic posts — a weekly one says WHICH days and at what time, same phrase
+  // the editor shows, instead of a bare «every week».
+  if (trig === "weekly") {
+    return {
+      template: t("scenarios.sentence.generic_weekly"),
+      slots: { when: v(scheduleSentenceOpener(t, s)), who: who(handle) },
+      kind: "post",
+    };
+  }
   if (trig === "every_n_days") {
     const n = String(s.trigger_cfg?.n ?? 3);
     return { template: t("scenarios.sentence.generic_every_n"), slots: { n: v(n), who: who(handle) }, kind: "post" };
@@ -180,14 +209,37 @@ function dailyPostHours(cfg: Scenario["trigger_cfg"]): number[] {
   return [...out].sort((a, b) => a - b);
 }
 
-// Pull slot-override fields out of a scenario's stored config.
-function fieldsFromScenario(s: Scenario): Record<string, string> {
+// «1 июля» — an ISO date in the design's «day месяц» form; "" when unparseable.
+function datePhrase(t: T, iso: unknown): string {
+  if (typeof iso !== "string") return "";
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!m) return "";
+  const month = Number(m[2]) - 1;
+  if (month < 0 || month > 11) return "";
+  return `${Number(m[3])} ${t(MONTHS[month])}`;
+}
+
+// Pull slot-override fields out of a scenario's stored config. Everything here is
+// READ FROM THE SCENARIO — a slot with no source stays absent so the sentence
+// falls back to the preset's own wording rather than inventing a value.
+function fieldsFromScenario(t: T, s: Scenario): Record<string, string> {
   const f: Record<string, string> = {};
   const aud = s.action_cfg?.audience as string | undefined;
   if (aud) f.audience = aud;
   const thr = s.trigger_cfg?.threshold_views as number | undefined;
   if (typeof thr === "number") f.threshold = `${thr.toLocaleString("ru-RU")}`;
   if (s.template === "promo" && s.structured?.ask) f.ask = s.structured.ask;
+  // The real schedule, phrased exactly as the editor phrases it.
+  f.when = scheduleSentenceOpener(t, s);
+  // «Если сегодня не постил» keeps its own clock: the deadline lives in
+  // condition_cfg.not_before ("HH:MM"), not in the trigger's hour.
+  const notBefore = s.condition_cfg?.not_before;
+  if (typeof notBefore === "string" && notBefore) f.time = notBefore;
+  // «Сезонное» — the active window, from the date guard that defines it.
+  const from = datePhrase(t, s.condition_cfg?.active_from);
+  const to = datePhrase(t, s.condition_cfg?.active_to);
+  if (from && to) f.period = `${from} — ${to}`;
+  else if (from || to) f.period = from || to;
   return f;
 }
 

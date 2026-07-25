@@ -66,7 +66,7 @@ import type {
 } from "@/lib/types";
 import { CardLine, Sentence, type PublishMode } from "./scenarios-living";
 import { deriveSentence, publishModeOf } from "./scenarios-presentation";
-import { postReplyAudiencePhrase, replyAudienceOverrideFromCfg } from "./scenarios-form";
+import { postReplyAudiencePhrase, replyAudienceOverrideFromCfg, weekdaysFromCfg, type WhenMode, whenModeFromCfg } from "./scenarios-form";
 import { Badge, InheritChip, StatusBadge } from "./Badges";
 
 type IconCmp = (p: { size?: number; className?: string }) => React.ReactNode;
@@ -178,25 +178,10 @@ const PLAQUE_PRESETS = new Set(["reply_duty", "promo", "on_mention"]);
 
 // ── KOGDA (schedule) modes ──
 // Wave 3 (decision б reversed): `monthly` / `yearly` un-hidden.
-export type WhenMode = "daily" | "every_n_days" | "weekly" | "monthly" | "yearly" | "date_range" | "event";
-
-// Derive the active КОГДА mode from a preset's / scenario's trigger_cfg +
-// condition_cfg. A date-window guard (active_from/active_to) reads as date_range.
-export function whenModeFromCfg(
-  trigger: Record<string, unknown> | null | undefined,
-  condition: Record<string, unknown> | null | undefined,
-): WhenMode {
-  const kind = (trigger?.kind as string) || "";
-  if (kind === "every_n_days") return "every_n_days";
-  if (kind === "weekly") return "weekly";
-  if (kind === "monthly") return "monthly";
-  if (kind === "yearly") return "yearly";
-  // boost (on_post_metric) is reactive too — read it as an event so a list view
-  // never mislabels it as a daily cadence (the boost editor owns its real UI).
-  if (kind === "on_metric_threshold" || kind === "on_follower_milestone" || kind === "on_new_comment" || kind === "on_post_metric") return "event";
-  if (condition && ("active_from" in condition || "active_to" in condition)) return "date_range";
-  return "daily";
-}
+// Both moved to scenarios-form.ts (the pure schedule layer) so the routine card
+// can read a schedule without pulling in this component module; re-exported here
+// because every caller already imports them from ScenariosParts.
+export { type WhenMode, whenModeFromCfg } from "./scenarios-form";
 
 // Which event a reactive preset listens to (read-only КОГДА row copy + threshold
 // field presence).
@@ -423,8 +408,10 @@ function CadenceStrip({ s }: { s: Scenario }) {
   // which days fire (0=Mon..6=Sun)
   let fire = (i: number) => true; // daily
   if (mode === "weekly") {
-    const wd = Number(s.trigger_cfg?.weekday ?? 0);
-    fire = (i) => i === wd;
+    // Wave 2 stores a `weekdays` list; a Wave-1 scenario a single `weekday`.
+    // Reading only the latter lit up Monday on a Mon/Wed/Fri routine.
+    const days = new Set(weekdaysFromCfg(s.trigger_cfg) ?? [0]);
+    fire = (i) => days.has(i);
   } else if (mode === "every_n_days") {
     const n = Number(s.trigger_cfg?.n ?? 1);
     fire = (i) => n <= 1 || i % n === 0;

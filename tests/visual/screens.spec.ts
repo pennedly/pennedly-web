@@ -920,7 +920,9 @@ const SCENARIOS = {
       name: "Column: what I cut this week",
       template: null,
       enabled: true,
-      trigger_cfg: { kind: "weekly", weekday: 0, hour: 8 },
+      // Multi-day + multi-slot on purpose: the card's schedule line has to read
+      // the real weekdays/hours, not the preset's default clock.
+      trigger_cfg: { kind: "weekly", weekdays: [0, 2, 4], hours: [8, 18] },
       condition_cfg: { once_per_day: true },
       action_cfg: { kind: "post" },
       structured: null,
