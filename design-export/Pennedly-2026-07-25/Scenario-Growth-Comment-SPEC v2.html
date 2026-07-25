@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pennedly · Бустер «Комментарий при росте» — цель + три точки входа</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="ds/tokens.css" />
+<link rel="stylesheet" href="ds/components.css" />
+<link rel="stylesheet" href="scenarios.css" />
+<link rel="stylesheet" href="scenarios-redesign.css" />
+<link rel="stylesheet" href="scenario-editor.css" />
+<link rel="stylesheet" href="recipe-editor.css" />
+<link rel="stylesheet" href="growth-comment.css" />
+<style>
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{margin:0; background:var(--color-bg); color:var(--color-text);
+    font-family:var(--font-sans); font-size:15px; line-height:1.6;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;}
+  .wrap{max-width:1180px; margin:0 auto; padding:48px 40px 130px;}
+
+  .kicker{font-family:var(--font-mono); font-size:12px; letter-spacing:0.05em; color:var(--color-accent); text-transform:uppercase; margin:0 0 12px;}
+  .doc-title{font-size:34px; line-height:1.08; letter-spacing:-0.025em; font-weight:600; margin:0 0 14px; text-wrap:balance;}
+  .doc-title span{color:var(--color-text-subtle); font-weight:500;}
+  .doc-lede{font-size:16px; color:var(--color-text-muted); max-width:84ch; margin:0 0 22px; text-wrap:pretty;}
+  .doc-lede b{color:var(--color-text); font-weight:600;}
+
+  .chips{display:flex; flex-wrap:wrap; gap:7px; margin:0 0 30px;}
+  .chip{font-family:var(--font-mono); font-size:11.5px; padding:5px 11px; border-radius:9999px; background:var(--color-surface); border:1px solid var(--color-border); color:var(--color-text-muted); display:inline-flex; align-items:center; gap:6px;}
+  .chip b{color:var(--color-text); font-weight:600;}
+
+  /* one-entity diagram */
+  .entity{display:grid; grid-template-columns:1fr; gap:14px; margin:0 0 14px; border:1px solid var(--color-border); border-radius:var(--radius-lg); background:var(--color-surface); box-shadow:var(--shadow-sm); padding:20px 22px;}
+  .entity .e-k{font-family:var(--font-mono); font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:var(--color-text-subtle); margin:0;}
+  .entity-row{display:grid; grid-template-columns:repeat(3,1fr); gap:12px;}
+  @media(max-width:760px){ .entity-row{grid-template-columns:1fr;} }
+  .e-card{border:1px solid var(--color-border); border-radius:var(--radius-md); background:var(--color-surface-2); padding:14px 15px;}
+  .e-card .ec-t{font-size:14px; font-weight:600; display:flex; align-items:center; gap:8px; color:var(--color-text);}
+  .e-card .ec-t .ec-b{font-family:var(--font-mono); font-size:11px; color:var(--color-accent); border:1px solid color-mix(in srgb,var(--color-accent) 30%,var(--color-border)); border-radius:9999px; padding:1px 7px;}
+  .e-card .ec-d{font-size:13px; color:var(--color-text-muted); margin-top:5px; line-height:1.5;}
+  .e-card .ec-goal{font-size:12px; color:var(--color-text-subtle); margin-top:8px; display:flex; align-items:center; gap:6px;}
+  .e-card .ec-goal b{color:var(--color-text); font-weight:600;}
+  .e-foot{font-size:13px; color:var(--color-text-muted); display:flex; align-items:flex-start; gap:8px; line-height:1.55;}
+  .e-foot svg{flex:0 0 auto; margin-top:2px; color:var(--color-accent);}
+  .e-foot b{color:var(--color-text); font-weight:600;}
+
+  section.block{margin-top:62px; scroll-margin-top:20px;}
+  .block-head{border-top:2px solid var(--color-text); padding-top:18px; margin-bottom:14px;}
+  .block-name{display:flex; align-items:baseline; gap:13px; flex-wrap:wrap; margin:0 0 7px;}
+  .block-name .bn-n{font-family:var(--font-mono); font-size:20px; font-weight:500; color:var(--color-accent); letter-spacing:-0.01em;}
+  .block-name h2{font-size:24px; font-weight:600; letter-spacing:-0.015em; margin:0;}
+  .block-idea{font-size:15px; color:var(--color-text-muted); max-width:86ch; margin:0; text-wrap:pretty;}
+  .block-idea b{color:var(--color-text); font-weight:600;}
+
+  .fr{display:flex; flex-direction:column; gap:10px; margin-top:22px;}
+  .fr-head{display:inline-flex; align-items:center; gap:8px; font-family:var(--font-mono); font-size:11.5px; letter-spacing:.02em; color:var(--color-text-subtle);}
+  .fr-head .dh{width:8px; height:8px; border-radius:9999px; background:var(--color-border);}
+  .fr-head .dh--dark{background:#0a0a0a; border:1px solid #3a3a3a;}
+  .fr-head b{color:var(--color-text-muted); font-weight:600;}
+  .frame{background:var(--color-bg); color:var(--color-text); border:1px solid var(--color-border); border-radius:18px; padding:30px 32px; overflow:hidden;}
+  .frame.dark{background:#0a0a0a; border-color:#2b2a27;}
+  .frame *{box-sizing:border-box;}
+  @media(max-width:760px){ .frame{padding:20px 16px;} }
+
+  .story{display:grid; grid-template-columns:1fr; gap:14px; margin-top:22px;}
+  .story-step{display:flex; flex-direction:column; gap:9px;}
+  .story-cap{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .story-cap .sc-num{width:26px; height:26px; flex:0 0 auto; display:grid; place-items:center; border-radius:9999px; font-family:var(--font-mono); font-size:13px; font-weight:600; background:color-mix(in srgb,var(--color-accent) 12%,var(--color-surface)); border:1px solid color-mix(in srgb,var(--color-accent) 28%,transparent); color:var(--color-accent);}
+  .story-cap .sc-t{font-size:14px; font-weight:600;}
+  .story-cap .sc-d{font-size:13px; color:var(--color-text-muted);}
+  .story-arrow{display:flex; align-items:center; justify-content:center; color:var(--color-text-subtle); margin:-2px 0;}
+
+  .pairgrid{display:grid; grid-template-columns:1fr; gap:26px; margin-top:22px;}
+  .states-grid{display:grid; grid-template-columns:1fr; gap:26px; margin-top:22px;}
+
+  @media(max-width:760px){
+    .wrap{padding:30px 18px 90px;}
+    .doc-title{font-size:27px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="kicker">Pennedly · Автопилот · бустер «Комментарий при росте» — расширение</p>
+  <h1 class="doc-title">Цель + три точки входа <span>— один бустер, привязанный к разной области постов</span></h1>
+  <p class="doc-lede">Бустер делает то же, что и раньше: когда пост набирает порог (<b>N комментариев / лайков / просмотров</b>), Pennedly один раз добавляет к нему <b>заранее написанный комментарий</b> (обычно ссылку или призыв). Новое — <b>ЦЕЛЬ</b>: за какими постами бустер следит. Под капотом это <b>одна сущность</b> (правило-бустер с целью); три точки входа просто задают цель по-разному — в одной явным пикером, в двух других неявно из контекста.</p>
+
+  <div class="chips">
+    <span class="chip">одна сущность · <b>правило-бустер с целью</b></span>
+    <span class="chip">конфиг идентичен: <b>метрика · порог · текст · режим</b></span>
+    <span class="chip">меняется только <b>ЦЕЛЬ</b></span>
+    <span class="chip">цель: <b>все / сценарий / пост / условие</b></span>
+    <span class="chip">web-desktop · <b>~960px</b> · двухколоночник</span>
+  </div>
+
+  <div class="entity">
+    <p class="e-k">Одна сущность · три точки входа</p>
+    <div class="entity-row">
+      <div class="e-card"><div class="ec-t">Отдельный бустер <span class="ec-b">A</span></div><div class="ec-d">Редактор-рецепт «Автопилота». Фраза со слотами + явный пикер цели.</div><div class="ec-goal">⌖ цель: <b>любой выбор</b> (пикер)</div></div>
+      <div class="e-card"><div class="ec-t">Прицеп в Студии <span class="ec-b">B</span></div><div class="ec-d">При публикации поста — секция «Бустер для этого поста».</div><div class="ec-goal">⌖ цель: <b>этот пост</b> (неявно)</div></div>
+      <div class="e-card"><div class="ec-t">Прицеп в сценарии <span class="ec-b">C</span></div><div class="ec-d">В редакторе сценария-поста — секция «Бустер».</div><div class="ec-goal">⌖ цель: <b>посты сценария</b> (неявно)</div></div>
+    </div>
+    <div class="e-foot"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.6 5.4L19 10l-5.4 1.6L12 17l-1.6-5.4L5 10l5.4-1.6L12 3Z"/></svg><span><b>Один и тот же блок конфигурации</b> (метрика+порог · текст комментария · режим публикации) во всех трёх точках входа — отличается только то, <b>за какими постами</b> бустер следит.</span></div>
+  </div>
+
+  <!-- ═══════════ A · GOAL SLOT ═══════════ -->
+  <section class="block" id="a-goal">
+    <div class="block-head">
+      <div class="block-name"><span class="bn-n">A</span><h2>Отдельный бустер · слот «цель» раскрыт</h2></div>
+      <p class="block-idea">Доработка прошлого дизайна: к фразе-рецепту добавлен слот <b>«за чем следит»</b>. Зачин теперь — «<b>Бустер следит за [целью]</b>. Когда такой пост наберёт [порог]…». Пикер цели — те же плитки, что и выбор метрики, плюс контекстный под-контрол (выбор сценария / выбор поста / слово+период).</p>
+    </div>
+    <div class="fr"><div class="fr-head"><span class="dh"></span>Цель «Ко всем моим постам» (по умолчанию)</div>
+      <div data-gc='{"openSlot":"target","target":"all"}'></div></div>
+  </section>
+
+  <section class="block" id="a-goal-modes">
+    <div class="block-head">
+      <div class="block-name"><span class="bn-n">A · цель</span><h2>Все варианты цели</h2></div>
+      <p class="block-idea">Четыре области наблюдения. <b>Сценарий</b> и <b>пост</b> добавляют под-контрол (выбор сценария / превью выбранного поста); <b>условие</b> — слово-тег в тексте и/или окно дат.</p>
+    </div>
+    <div class="fr"><div class="fr-head"><span class="dh"></span>К постам конкретного сценария + выбор сценария</div>
+      <div data-gc-card='{"openSlot":"target","target":"scenario"}'></div></div>
+    <div class="fr"><div class="fr-head"><span class="dh"></span>К конкретному посту + превью выбранного поста</div>
+      <div data-gc-card='{"openSlot":"target","target":"post"}'></div></div>
+    <div class="fr"><div class="fr-head"><span class="dh"></span>По условию · слово/тег + период дат</div>
+      <div data-gc-card='{"openSlot":"target","target":"condition"}'></div></div>
+  </section>
+
+  <section class="block" id="a-config">
+    <div class="block-head">
+      <div class="block-name"><span class="bn-n">A · конфиг</span><h2>Метрика+порог и текст (как было)</h2></div>
+      <p class="block-idea">Конфиг бустера не изменился — слот метрики+порога и слот текста (через модалку длинного текста) работают как прежде. Цель от них независима.</p>
+    </div>
+    <div class="fr"><div class="fr-head"><span class="dh"></span>Слот метрики+порога раскрыт · цель = сценарий</div>
+      <div data-gc-card='{"openSlot":"trigger","target":"scenario","metric":"comments","threshold":50}'></div></div>
+    <div class="fr"><div class="fr-head"><span class="dh"></span>Слот текста раскрыт · модалка длинного текста</div>
+      <div data-gc='{"openSlot":"text","target":"all","modal":"comment"}'></div></div>
+  </section>
+
+  <!-- ═══════════ B · STUDIO ═══════════ -->
+  <section class="block" id="b-studio">
+    <div class="block-head">
+      <div class="block-name"><span class="bn-n">B</span><h2>Прицеп в Студии · «Бустер для этого поста»</h2></div>
+      <p class="block-idea">При публикации/планировании поста под композером — секция бустера. Цель задана неявно (<b>этот пост</b>) и показана локнутой плашкой «Цель: этот пост». Свёрнуто — переключатель + строка-сводка; развёрнуто — тот же общий конфиг.</p>
+    </div>
+    <div class="fr"><div class="fr-head"><span class="dh"></span>Секция свёрнута · переключатель + сводка одной строкой</div>
+      <div data-gc='{"entry":"studio","boosterOpen":false,"metric":"views","threshold":5000}'></div></div>
+    <div class="fr"><div class="fr-head"><span class="dh"></span>Секция развёрнута · локнутая цель + общий конфиг</div>
+      <div data-gc='{"entry":"studio","boosterOpen":true,"metric":"views","threshold":5000}'></div></div>
+  </section>
+
+  <!-- ═══════════ C · SCENARIO ═══════════ -->
+  <section class="block" id="c-scenario">
+    <div class="block-head">
+      <div class="block-name"><span class="bn-n">C</span><h2>Прицеп в редакторе сценария · «Бустер»</h2></div>
+      <p class="block-idea">В редакторе сценария-поста бустер — отдельный раздел после шагов. Цель задана неявно (<b>посты этого сценария</b>): «для постов этого сценария: когда наберут [N] → добавь [текст]». Свёрнуто/развёрнуто, тот же общий конфиг.</p>
+    </div>
+    <div class="fr"><div class="fr-head"><span class="dh"></span>Раздел свёрнут · в дорожке шагов сценария</div>
+      <div data-gc='{"entry":"scenario","boosterOpen":false,"metric":"comments","threshold":50}'></div></div>
+    <div class="fr"><div class="fr-head"><span class="dh"></span>Раздел развёрнут · локнутая цель «посты сценария» + конфиг</div>
+      <div data-gc='{"entry":"scenario","boosterOpen":true,"metric":"comments","threshold":50}'></div></div>
+  </section>
+
+  <!-- ═══════════ IDENTICAL CONFIG ═══════════ -->
+  <section class="block" id="identical">
+    <div class="block-head">
+      <div class="block-name"><span class="bn-n">=</span><h2>Конфиг идентичен · меняется только цель</h2></div>
+      <p class="block-idea">Тот же блок «метрика+порог · текст · режим» рендерится одним кодом во всех трёх точках входа. Ниже — он же, как его видят B и C: единственное отличие в шапке — <b>локнутая плашка цели</b>.</p>
+    </div>
+    <div class="pairgrid">
+      <div class="fr"><div class="fr-head"><span class="dh"></span>Общий конфиг в контексте «этот пост» (из B)</div>
+        <div data-gc-panel='{"target":"post","title":"Бустер для этого поста","sub":"Цель: этот пост","phrase":"Когда <b>этот пост</b> наберёт порог — добавить заготовленный комментарий. Один раз.","metric":"views","threshold":5000}'></div></div>
+      <div class="fr"><div class="fr-head"><span class="dh"></span>Тот же конфиг в контексте «посты сценария» (из C)</div>
+        <div data-gc-panel='{"target":"scenario","title":"Бустер","sub":"Цель: посты сценария","phrase":"Для <b>постов этого сценария</b>: когда наберут порог — добавь заготовленный комментарий.","metric":"views","threshold":5000}'></div></div>
+    </div>
+  </section>
+
+  <!-- ═══════════ STORYBOARD ═══════════ -->
+  <section class="block" id="storyboard">
+    <div class="block-head">
+      <div class="block-name"><span class="bn-n">↻</span><h2>Раскадровка · слот цели → драйвер → готово</h2></div>
+      <p class="block-idea">Та же петля «увидел → поменял → проверил» на новом слоте цели в точке входа A.</p>
+    </div>
+    <div class="story">
+      <div class="story-step">
+        <div class="story-cap"><span class="sc-num">1</span><span class="sc-t">Свёрнуто</span><span class="sc-d">— слот цели читается словами: «любой мой пост».</span></div>
+        <div data-gc-card='{"target":"all"}'></div>
+      </div>
+      <div class="story-arrow"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg></div>
+      <div class="story-step">
+        <div class="story-cap"><span class="sc-num">2</span><span class="sc-t">Тап по слоту цели</span><span class="sc-d">— драйвер раскрылся: все / сценарий / пост / условие.</span></div>
+        <div data-gc-card='{"openSlot":"target","target":"scenario"}'></div>
+      </div>
+      <div class="story-arrow"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg></div>
+      <div class="story-step">
+        <div class="story-cap"><span class="sc-num">3</span><span class="sc-t">«Готово»</span><span class="sc-d">— свернулось, фраза читается с новой целью.</span></div>
+        <div data-gc-card='{"target":"scenario"}'></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ DARK ═══════════ -->
+  <section class="block" id="dark">
+    <div class="block-head">
+      <div class="block-name"><span class="bn-n">★</span><h2>Тёмная тема</h2></div>
+      <p class="block-idea">Только семантические токены — все три точки входа корректны в тёмной теме.</p>
+    </div>
+    <div class="states-grid">
+      <div class="fr"><div class="fr-head"><span class="dh dh--dark"></span>A · слот цели раскрыт (условие)</div>
+        <div data-gc='{"openSlot":"target","target":"condition","dark":true}'></div></div>
+      <div class="fr"><div class="fr-head"><span class="dh dh--dark"></span>B · Студия · бустер развёрнут</div>
+        <div data-gc='{"entry":"studio","boosterOpen":true,"metric":"views","threshold":5000,"dark":true}'></div></div>
+      <div class="fr"><div class="fr-head"><span class="dh dh--dark"></span>C · сценарий · бустер развёрнут</div>
+        <div data-gc='{"entry":"scenario","boosterOpen":true,"metric":"comments","threshold":50,"dark":true}'></div></div>
+    </div>
+  </section>
+
+</div>
+
+<script src="scenarios-redesign-data.js"></script>
+<script src="growth-comment.js"></script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+/* account-screens-mobile.css — PHONE additions for the account-level screens.
+   Settings reuses the desktop .acc-* card components directly (they are
+   container-query responsive: language grid → 1 col, action rows wrap). This
+   file only adds the phone chat chrome: the pinned portfolio verdict (sticky at
+   the top of the scroll) and the docked composer. Message vocabulary is the
+   shared .adv-* (account-screens.css). Built on ds/tokens.css. */
+
+/* pinned portfolio-summary verdict — sticky, always visible while the thread scrolls */
+.ma-chat-pinned { position: sticky; top: 6px; z-index: 5; background: color-mix(in srgb, var(--color-accent) 6%, var(--color-surface)); border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 12px 13px; margin-bottom: 16px; min-width: 0; }
+.ma-chat-pinned-cap { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.ma-chat-pinned-mark { width: 24px; height: 24px; border-radius: var(--radius-sm); flex: 0 0 auto; display: grid; place-items: center; background: color-mix(in srgb, var(--color-accent) 14%, var(--color-surface)); border: 1px solid color-mix(in srgb, var(--color-accent) 26%, transparent); color: var(--color-accent); }
+.ma-chat-pinned-caplab { font-size: var(--text-caption); font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--color-text-subtle); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.ma-chat-pinned-scope { margin-left: auto; flex: 0 0 auto; font-size: var(--text-caption); color: var(--color-text-subtle); white-space: nowrap; }
+.ma-chat-pinned-verdict { font-size: var(--text-small); font-weight: 600; color: var(--color-text); line-height: 1.4; margin-top: 9px; text-wrap: pretty; }
+.ma-chat-pinned-chips { display: flex; gap: 7px; margin: 10px -13px 0; padding: 0 13px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.ma-chat-pinned-chips::-webkit-scrollbar { display: none; }
+.ma-chat-pinned-chips .adv-chip { flex: 0 0 auto; }
+
+/* thread — leaves room for the docked composer */
+.ma-chat-thread { display: flex; flex-direction: column; gap: 20px; padding-bottom: 82px; }
+.ma-chat-thread .adv-userbubble { max-width: 85%; }
+.ma-chat-thread .adv-suggest-act { }
+
+/* first-run hero on phone */
+.ma-chat-thread .adv-hero { padding-top: 8px; }
+
+/* docked composer (passed as the phone `overlay`) */
+.mob .ma-chat-dock { position: absolute; left: 10px; right: 10px; bottom: calc(10px + var(--safe-bottom, 0px)); z-index: 30; }
+.ma-chat-dock .adv-composer { box-shadow: var(--shadow-lg); }
+.ma-chat-dock .adv-clue { display: none; }
+
+/* settings: tighten the desktop cards a touch for the phone */
+.mob .acc-pagehead { margin-bottom: 0; }
+.mob .acc-page { gap: 14px; }

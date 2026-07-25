@@ -1,0 +1,111 @@
+/* mobile/frame.css — device bezel + spec "stage" used to embed live phone
+   mockups inside the documentation. Hardware chrome only; everything INSIDE
+   the screen is the real product layer (pennedly-mobile.css) on real tokens. */
+
+/* a horizontal rail of phones; wraps on narrow docs */
+.stage {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px 22px;
+  align-items: flex-start;
+  margin: 18px 0 6px;
+}
+.stage--scroll {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 14px;
+  scroll-snap-type: x proximity;
+}
+.stage--scroll > .devcol { scroll-snap-align: start; }
+
+/* one phone + its caption */
+.devcol { display: flex; flex-direction: column; gap: 10px; flex: 0 0 auto; }
+.devcap {
+  font-size: 12.5px; line-height: 1.45; color: var(--muted, #565550);
+  max-width: 320px; text-wrap: pretty;
+}
+.devcap b { color: var(--text, #171717); font-weight: 600; }
+.devcap .dc-tag {
+  display: inline-block; font-family: var(--font-mono); font-size: 10.5px;
+  color: var(--accent, #2f4cc4); border: 1px solid var(--border, #dcd9d2);
+  border-radius: 9999px; padding: 1px 8px; margin-right: 6px; vertical-align: 1px;
+}
+
+/* ---------------------------------- bezel --------------------------------- */
+.device {
+  /* hardware is always dark, regardless of UI theme inside */
+  --bezel: #0c0c0d;
+  --screen-w: 390px;
+  width: var(--screen-w);
+  flex: 0 0 auto;
+  background: var(--bezel);
+  border-radius: 44px;
+  padding: 11px;
+  box-shadow:
+    0 0 0 2px #2a2a2c,
+    0 1px 0 3px #050506,
+    0 26px 50px -20px rgba(10,10,12,.55),
+    0 8px 20px -12px rgba(10,10,12,.4);
+}
+.device--lg { --screen-w: 414px; }
+.device--sm { --screen-w: 360px; }
+
+/* the actual viewport — clips content; the product `.mob` mounts inside.
+   Tokens are PINNED here (light by default, dark via `.dark`) so each phone
+   keeps its own theme even when the host doc toggles `.dark` on <html>. */
+.device-screen {
+  --color-bg:#efedea; --color-surface:#ffffff; --color-surface-2:#f6f5f2; --color-border:#dcd9d2;
+  --color-text:#171717; --color-text-muted:#565550; --color-text-subtle:#6f6e69;
+  --color-primary:#171717; --color-primary-foreground:#ededed;
+  --color-accent:#2f4cc4; --color-accent-foreground:#ffffff;
+  --color-success:#2c7350; --color-success-foreground:#ffffff;
+  --color-warning:#8a5b16; --color-warning-foreground:#ffffff;
+  --color-danger:#b23b30; --color-danger-foreground:#ffffff;
+  --color-ink-400:#a2a19c; --color-ink-950:#0a0a0a;
+  --shadow-sm:0 1px 2px 0 rgb(23 23 23 / 0.06);
+  --shadow-md:0 4px 12px -2px rgb(23 23 23 / 0.08), 0 2px 6px -3px rgb(23 23 23 / 0.06);
+  --shadow-lg:0 16px 40px -12px rgb(23 23 23 / 0.16), 0 6px 14px -8px rgb(23 23 23 / 0.08);
+  position: relative;
+  width: 100%;
+  height: 690px;
+  border-radius: 34px;
+  overflow: hidden;
+  background: var(--color-bg);
+  isolation: isolate;
+}
+.device-screen.dark {
+  --color-bg:#0a0a0a; --color-surface:#171717; --color-surface-2:#201f1d; --color-border:#2b2a27;
+  --color-text:#ededed; --color-text-muted:#a2a19c; --color-text-subtle:#898882;
+  --color-primary:#ededed; --color-primary-foreground:#171717;
+  --color-accent:#9aacff; --color-accent-foreground:#0a0a0a;
+  --color-success:#5fbf8d; --color-success-foreground:#0a0a0a;
+  --color-warning:#d8a754; --color-warning-foreground:#0a0a0a;
+  --color-danger:#ef8a80; --color-danger-foreground:#0a0a0a;
+  --color-ink-400:#7b7a74; --color-ink-950:#000000;
+  --shadow-sm:0 1px 2px 0 rgb(0 0 0 / 0.5);
+  --shadow-md:0 6px 16px -4px rgb(0 0 0 / 0.6);
+  --shadow-lg:0 20px 48px -16px rgb(0 0 0 / 0.7);
+}
+.device--short .device-screen { height: 540px; }
+.device--tall .device-screen { height: 760px; }
+/* fit-to-content frame, for isolating a single component or a sheet */
+.device--auto .device-screen { height: auto; }
+/* in an auto frame the product root flows normally instead of filling a screen */
+.device--auto .mob { position: relative; inset: auto; height: auto; display: block; padding: 14px; background: var(--color-bg); }
+
+/* dynamic-island pill floats over the screen */
+.device-island {
+  position: absolute; top: 9px; left: 50%; transform: translateX(-50%);
+  width: 92px; height: 26px; border-radius: 9999px;
+  background: #0c0c0d; z-index: 60; pointer-events: none;
+}
+.device--auto .device-island { display: none; }
+
+/* a soft label strip above a phone, e.g. "Light" / "Dark" */
+.devhead {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: .02em;
+  color: var(--subtle, #6f6e69);
+}
+.devhead .dh-dot { width: 8px; height: 8px; border-radius: 9999px; background: var(--border, #dcd9d2); }
+.devhead .dh-dot--dark { background: #0a0a0a; border: 1px solid #3a3a3a; }

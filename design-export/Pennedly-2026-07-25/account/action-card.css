@@ -1,0 +1,205 @@
+/* account/action-card.css — the ADVISOR ACTION CARD component.
+
+   ONE reusable card body ("apply-in-one-click"), typed content. Lives INSIDE the
+   advisor chat flow (never a modal) and is weightier than the plain ".adv-suggest"
+   hand-off hints — accent LEFT edge + accent icon tile — because it applies a REAL
+   platform change. Every colour is a semantic token → both themes; every
+   single-line element ellipsis-truncates and never wraps (proven at 390 / 320).
+
+   Loads AFTER account-screens.css (reuses the .adv-* chat vocabulary). Used by the
+   portfolio advisor (/app/account/advisor — shows the profile row) and the profile
+   advisor (/app/advisor — hides it). Mirrors advisor.css in product. */
+
+/* thread scaffold (advisor.css parity — account-screens.css only ships .acc-chat-thread) */
+.adv-thread { display: flex; flex-direction: column; gap: 22px; max-width: 640px; margin: 0 auto; }
+
+/* ─────────────────────────── the card ─────────────────────────── */
+.adv-act {
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-accent);           /* accent edge = weight */
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+  padding: 14px 16px 15px;
+}
+.adv-act * { box-sizing: border-box; }
+/* several actions in one reply stack cleanly, each self-contained */
+.adv-act-stack { display: flex; flex-direction: column; gap: 10px; }
+
+/* header: type icon + type-chip + action title */
+.adv-act-head { display: flex; align-items: flex-start; gap: 11px; min-width: 0; }
+.adv-act-ico {
+  width: 32px; height: 32px; border-radius: 9px; flex: 0 0 auto;
+  display: grid; place-items: center;
+  background: color-mix(in srgb, var(--color-accent) 13%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--color-accent) 24%, transparent);
+  color: var(--color-accent);
+}
+.adv-act-headtext { min-width: 0; flex: 1 1 auto; }
+.adv-act-kind {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: var(--text-caption); font-weight: 600; line-height: 1;
+  letter-spacing: 0.02em; white-space: nowrap;
+  padding: 3px 8px; border-radius: var(--radius-full);
+  background: var(--color-surface-2); color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+}
+.adv-act-title {
+  display: block; margin-top: 6px;
+  font-size: var(--text-body); font-weight: 600; letter-spacing: -0.006em;
+  color: var(--color-text); line-height: 1.3;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;   /* Rule 1 */
+}
+
+/* preview: 1–4 "what changes" lines (icon + short fact) */
+.adv-act-preview { margin-top: 12px; }
+.adv-act-line { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.adv-act-line + .adv-act-line { margin-top: 6px; }
+.adv-act-lineico { flex: 0 0 auto; color: var(--color-text-subtle); display: inline-flex; }
+.adv-act-linetxt {
+  min-width: 0; font-size: var(--text-small); color: var(--color-text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;   /* Rule 1 */
+}
+.adv-act-linetxt b { font-weight: 600; }
+
+/* preview: a queued draft (schedule_post) — the post text, clamped to 3 lines */
+.adv-act-draft {
+  margin-top: 2px; padding: 10px 12px; border-radius: var(--radius-md);
+  background: var(--color-surface-2); border: 1px solid var(--color-border);
+  border-left: 2px solid color-mix(in srgb, var(--color-accent) 55%, var(--color-border));
+  font-size: var(--text-small); line-height: 1.5; color: var(--color-text);
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden;
+}
+.adv-act-preview .adv-act-draft + .adv-act-line { margin-top: 9px; }
+
+/* preview: compact before → after pair (cadence, voice_rule) */
+.adv-act-change { display: flex; align-items: stretch; gap: 8px; }
+.adv-act-ba {
+  flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 2px;
+  padding: 7px 11px; border-radius: var(--radius-md); border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+}
+.adv-act-ba .lab { font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-subtle); white-space: nowrap; }
+.adv-act-ba .val { font-size: var(--text-small); font-weight: 600; color: var(--color-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.adv-act-ba--after { background: color-mix(in srgb, var(--color-accent) 9%, var(--color-surface)); border-color: color-mix(in srgb, var(--color-accent) 26%, transparent); }
+.adv-act-ba--after .val { color: var(--color-accent); }
+.adv-act-arrow { flex: 0 0 auto; align-self: center; color: var(--color-text-subtle); display: inline-flex; }
+
+/* grounded line — quiet, sparked, only when the action is data-backed */
+.adv-act-grounded {
+  display: flex; align-items: center; gap: 6px; margin-top: 10px;
+  font-size: var(--text-caption); color: var(--color-text-subtle); min-width: 0;
+}
+.adv-act-grounded svg { flex: 0 0 auto; color: var(--color-accent); opacity: 0.85; }
+.adv-act-grounded .src { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* soft warning — honest side-effect note, not an error */
+.adv-act-warn {
+  display: flex; align-items: flex-start; gap: 6px; margin-top: 8px;
+  font-size: var(--text-caption); line-height: 1.45; color: var(--color-warning); text-wrap: pretty;
+}
+.adv-act-warn svg { flex: 0 0 auto; margin-top: 1px; }
+
+/* mode plaque — noticeable but calm. review (draft) vs config (immediate·undo) */
+.adv-act-mode {
+  display: flex; align-items: flex-start; gap: 8px; margin-top: 12px;
+  padding: 8px 11px; border-radius: var(--radius-md);
+  font-size: var(--text-caption); line-height: 1.4; text-wrap: pretty;
+}
+.adv-act-mode svg { flex: 0 0 auto; margin-top: 1px; }
+.adv-act-mode--review {
+  background: color-mix(in srgb, var(--color-accent) 8%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--color-accent) 22%, transparent);
+  color: color-mix(in srgb, var(--color-accent) 74%, var(--color-text));
+}
+.adv-act-mode--config {
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+.adv-act-mode b { font-weight: 600; }
+
+/* profile row — PORTFOLIO advisor only (which profile the change touches) */
+.adv-act-profile {
+  display: flex; align-items: center; gap: 9px; margin-top: 12px;
+  padding-top: 12px; border-top: 1px solid var(--color-border); min-width: 0;
+}
+.adv-act-av {
+  position: relative; flex: 0 0 auto; width: 26px; height: 26px; border-radius: var(--radius-full);
+  background: var(--color-surface-2); border: 1px solid var(--color-border);
+  display: grid; place-items: center; overflow: visible;
+}
+.adv-act-av img { width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
+.adv-act-av .mono { font-size: 10px; font-weight: 600; color: var(--color-text-muted); }
+/* network badge — neutral letterform mark (matches .acc-net), never a third-party logo */
+.adv-act-net {
+  position: absolute; right: -3px; bottom: -3px; min-width: 13px; height: 13px; padding: 0 2px;
+  border-radius: 5px; display: grid; place-items: center;
+  font-family: var(--font-mono); font-size: 8px; font-weight: 600; line-height: 1;
+  background: var(--color-surface); color: var(--color-text);
+  box-shadow: 0 0 0 2px var(--color-surface), inset 0 0 0 1px var(--color-border);
+}
+.adv-act-net--linkedin { color: var(--color-accent); }
+.adv-act-handle { flex: 0 0 auto; font-size: var(--text-small); font-weight: 600; color: var(--color-text); white-space: nowrap; }
+.adv-act-affect { min-width: 0; font-size: var(--text-caption); color: var(--color-text-subtle); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.adv-act-affect::before { content: "·"; margin-right: 6px; }
+
+/* actions — verb primary + Configure + quiet Cancel */
+.adv-act-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 14px; }
+.adv-act-actions .btn { flex: 0 0 auto; }
+
+/* inline error line — card stays "proposed"; primary becomes Retry */
+.adv-act-errline {
+  display: flex; align-items: center; gap: 7px; margin-top: 12px;
+  padding: 9px 12px; border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-danger) 8%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--color-danger) 28%, var(--color-border));
+  color: var(--color-danger); font-size: var(--text-caption); line-height: 1.4; text-wrap: pretty;
+}
+.adv-act-errline svg { flex: 0 0 auto; }
+
+/* applying — card locked, layout stable, only the primary is busy */
+.adv-act.is-applying { pointer-events: none; }
+.adv-act.is-applying .adv-act-actions .btn--secondary,
+.adv-act.is-applying .adv-act-actions .btn--ghost { opacity: 0.4; }
+.adv-act.is-applying .adv-act-preview,
+.adv-act.is-applying .adv-act-mode,
+.adv-act.is-applying .adv-act-grounded,
+.adv-act.is-applying .adv-act-profile { opacity: 0.55; }
+
+/* ─────────────── applied (success) — collapses to a quiet row ─────────────── */
+.adv-act-done {
+  display: flex; align-items: center; gap: 11px;
+  padding: 12px 15px; border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-success);
+  background: color-mix(in srgb, var(--color-success) 6%, var(--color-surface));
+  min-width: 0;
+}
+.adv-act-done-ico {
+  width: 26px; height: 26px; border-radius: var(--radius-full); flex: 0 0 auto;
+  display: grid; place-items: center;
+  background: color-mix(in srgb, var(--color-success) 16%, var(--color-surface));
+  color: var(--color-success);
+}
+.adv-act-done-txt { flex: 1 1 auto; min-width: 0; font-size: var(--text-small); color: var(--color-text); line-height: 1.4; text-wrap: pretty; }
+.adv-act-done-txt b { font-weight: 600; }
+.adv-act-done-link {
+  flex: 0 0 auto; display: inline-flex; align-items: center; gap: 5px;
+  font-size: var(--text-small); font-weight: 600; color: var(--color-accent);
+  text-decoration: none; white-space: nowrap; cursor: pointer;
+}
+.adv-act-done-link:hover { text-decoration: underline; text-underline-offset: 2px; }
+.adv-act-done-link svg { width: 14px; height: 14px; }
+
+/* ─────────────── mobile modifier — ≥44px hit targets, primary first ─────────────── */
+.adv-act--mobile .adv-act-actions { gap: 8px; }
+.adv-act--mobile .adv-act-actions .btn { min-height: 44px; height: auto; padding-inline: 15px; border-radius: var(--radius-md); }
+.adv-act--mobile .adv-act-apply { flex: 1 1 auto; order: -1; }        /* primary spans + comes first */
+.adv-act--mobile .adv-act-done { align-items: flex-start; flex-direction: column; gap: 9px; }
+.adv-act--mobile .adv-act-done-main { display: flex; align-items: center; gap: 11px; }
+.adv-act--mobile .adv-act-done-link { align-self: stretch; justify-content: center; min-height: 44px; border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+
+/* ── mobile chat surface inside a phone bezel (doc-only wrapper) ── */
+.ac-mchat { background: var(--color-bg); padding: 16px 13px 22px; min-height: 220px; }
+.ac-mchat .adv-thread { gap: 16px; max-width: none; }

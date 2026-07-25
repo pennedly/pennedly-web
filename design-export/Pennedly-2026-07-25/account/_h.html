@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../ds/tokens.css"/><link rel="stylesheet" href="../ds/components.css"/>
+<link rel="stylesheet" href="../import-banner.css"/>
+<link rel="stylesheet" href="atoms.css"/><link rel="stylesheet" href="shell.css"/><link rel="stylesheet" href="v3.css"/>
+<style>body{margin:0;background:var(--color-bg);font-family:var(--font-sans);padding:22px;}.stage{margin-bottom:22px;}.stage.dark{background:#000;padding:16px;border-radius:12px;}</style>
+</head><body>
+<div class="stage" id="s"></div>
+<script src="vk.js"></script><script src="shell.js"></script><script src="v3.js"></script>
+<script>
+function render(scn,opts){opts=opts||{};var ctx={r:VK.resolve(scn),lang:opts.lang||"ru",device:opts.device||"desktop",dark:!!opts.dark,chrome:null,opts:{expand:opts.expand}};if(opts.advisor)ctx.r.advisor=opts.advisor;var s=document.getElementById("s");s.className="stage"+(opts.dark?" dark":"");s.innerHTML=VSHELL.render(V3.render(ctx),ctx);}
+var q=new URLSearchParams(location.search);render(q.get("s")||"two_brands",{lang:q.get("lang")||"ru",device:q.get("dev")||"desktop",dark:q.get("dark")==="1",expand:q.get("expand")||undefined,advisor:q.get("adv")||undefined});
+</script></body></html>

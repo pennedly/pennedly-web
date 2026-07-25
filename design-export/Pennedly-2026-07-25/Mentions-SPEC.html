@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mentions — State Spec · Pennedly</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+/* ============================ DOC CHROME ============================ */
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{margin:0; background:#e7e4df; color:#1c1b19; font-family:"Geist",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; -webkit-font-smoothing:antialiased;}
+.doc-head{max-width:1240px; margin:0 auto; padding:46px 40px 8px;}
+.doc-kicker{font-family:"Geist Mono",monospace; font-size:12px; letter-spacing:0.08em; text-transform:uppercase; color:#2f4cc4; margin:0 0 12px;}
+.doc-title{font-size:38px; line-height:1.05; letter-spacing:-0.025em; font-weight:600; margin:0 0 14px;}
+.doc-lede{font-size:16px; line-height:1.6; color:#56544f; max-width:80ch; margin:0 0 8px;}
+.doc-lede b{color:#1c1b19; font-weight:600;}
+.doc-meta{display:flex; flex-wrap:wrap; gap:7px; margin:22px 0 4px;}
+.doc-meta .m{font-family:"Geist Mono",monospace; font-size:11.5px; padding:4px 10px; border-radius:9999px; background:#fff; border:1px solid #d4d1ca; color:#56544f;}
+.legend{max-width:1240px; margin:18px auto 0; padding:0 40px; display:flex; flex-wrap:wrap; gap:18px; font-size:12.5px; color:#56544f;}
+.legend .lk{display:inline-flex; align-items:center; gap:7px;}
+.legend .dot{width:10px; height:10px; border-radius:3px; border:1px solid rgba(0,0,0,.15);}
+
+.state-sec{max-width:1240px; margin:8px auto 0; padding:42px 40px 8px;}
+.state-sec + .state-sec, .state-sec.divide{border-top:1px solid #d4d1ca; margin-top:22px;}
+.sec-num{font-family:"Geist Mono",monospace; font-size:13px; color:#2f4cc4; font-weight:500;}
+.sec-title{font-size:25px; line-height:1.2; letter-spacing:-0.015em; font-weight:600; margin:6px 0 8px;}
+.sec-title.sub{font-size:19px;}
+.sec-desc{font-size:14.5px; line-height:1.6; color:#56544f; max-width:82ch; margin:0 0 6px;}
+.sec-desc code{font-family:"Geist Mono",monospace; font-size:0.86em; background:#dedbd4; padding:1px 5px; border-radius:5px;}
+.sec-notes{margin:10px 0 0; padding:0; list-style:none; display:flex; flex-direction:column; gap:5px;}
+.sec-notes li{position:relative; padding-left:20px; font-size:13px; line-height:1.55; color:#56544f; max-width:86ch;}
+.sec-notes li::before{content:"›"; position:absolute; left:4px; top:0; color:#2f4cc4; font-weight:700;}
+.sec-notes li b{color:#1c1b19; font-weight:600;}
+.sec-notes code{font-family:"Geist Mono",monospace; font-size:0.85em; background:#dedbd4; padding:1px 5px; border-radius:5px;}
+.note-card{max-width:1240px; margin:12px auto 0; padding:0 40px;}
+.note-card .nc{border:1px solid #d8c9a6; background:#f7f1e1; border-radius:12px; padding:13px 16px; font-size:13.5px; line-height:1.55; color:#5b5232;}
+.note-card .nc b{color:#3f3a22;}
+.note-card .nc code{font-family:"Geist Mono",monospace; font-size:0.86em; background:#ece3c8; padding:1px 5px; border-radius:5px;}
+
+.gallery{max-width:1240px; margin:0 auto; padding:22px 40px 12px; display:flex; flex-wrap:wrap; gap:32px 34px; align-items:flex-start;}
+.vp{margin:0;}
+.vp figcaption{display:flex; align-items:center; gap:9px; margin:0 0 10px; font-size:12px; color:#56544f; flex-wrap:wrap;}
+.vp figcaption .tg{font-family:"Geist Mono",monospace; font-size:10.5px; letter-spacing:0.03em; text-transform:uppercase; padding:3px 8px; border-radius:6px; border:1px solid #d4d1ca; background:#fff;}
+.vp figcaption .tg--web{color:#1c1b19;}
+.vp figcaption .tg--mob{color:#2f4cc4; border-color:#c2c8ef; background:#eef0fb;}
+.vp figcaption .tg--light{color:#7b6a2a; border-color:#e3dcc4; background:#f7f2e4;}
+.vp figcaption .tg--dark{color:#cfcfe6; border-color:#3a3a52; background:#26263a;}
+.vp figcaption .lbl{font-weight:500; color:#1c1b19;}
+
+.screen{border-radius:16px; overflow:hidden; position:relative; box-shadow:0 18px 50px -20px rgba(20,18,15,.5), 0 4px 12px -6px rgba(20,18,15,.25);}
+.screen.web{width:1120px;}
+.screen.mob{width:392px; border-radius:30px; box-shadow:0 18px 50px -18px rgba(20,18,15,.55), 0 0 0 9px #15140f, 0 0 0 10px #2a2925;}
+@media (max-width:1200px){ .screen.web{width:100%; max-width:1000px;} }
+.screen, .screen *{box-sizing:border-box;}
+
+/* =============== PENNEDLY TOKENS (scoped per .screen) =============== */
+.screen{
+  --font-sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --font-mono:"Geist Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --color-ink-50:#f9f8f6; --color-ink-100:#ededed; --color-ink-200:#ddddda; --color-ink-300:#c8c7c3;
+  --color-ink-400:#a2a19c; --color-ink-500:#7b7a74; --color-ink-600:#565550; --color-ink-700:#3c3b37;
+  --color-ink-800:#262521; --color-ink-900:#171717; --color-ink-950:#0a0a0a;
+  --color-bg:#efedea; --color-surface:#ffffff; --color-surface-2:#f6f5f2; --color-border:#dcd9d2;
+  --color-text:#171717; --color-text-muted:#565550; --color-text-subtle:#6f6e69;
+  --color-primary:#171717; --color-primary-foreground:#ededed;
+  --color-accent:#2f4cc4; --color-accent-foreground:#ffffff;
+  --color-success:#2c7350; --color-success-foreground:#ffffff;
+  --color-warning:#8a5b16; --color-warning-foreground:#ffffff;
+  --color-danger:#b23b30; --color-danger-foreground:#ffffff;
+  --radius-sm:6px; --radius-md:10px; --radius-lg:14px; --radius-xl:20px; --radius-2xl:28px; --radius-full:9999px;
+  --shadow-sm:0 1px 2px 0 rgb(23 23 23 / 0.06);
+  --shadow-md:0 4px 12px -2px rgb(23 23 23 / 0.08), 0 2px 6px -3px rgb(23 23 23 / 0.06);
+  --shadow-lg:0 16px 40px -12px rgb(23 23 23 / 0.16), 0 6px 14px -8px rgb(23 23 23 / 0.08);
+  --text-display:3rem; --text-h1:2rem; --text-h2:1.5rem; --text-h3:1.1875rem;
+  --text-body:0.9375rem; --text-small:0.8125rem; --text-caption:0.75rem;
+  --content-reading:720px; --content-wide:960px;
+  --ease-standard:cubic-bezier(0.2,0.7,0.3,1); --ease-entrance:cubic-bezier(0.16,1,0.3,1);
+  --duration-fast:120ms; --duration-base:180ms; --duration-slow:240ms;
+  font-family:var(--font-sans);
+}
+.screen.pd-dark{
+  --color-bg:#0a0a0a; --color-surface:#171717; --color-surface-2:#201f1d; --color-border:#2b2a27;
+  --color-text:#ededed; --color-text-muted:#a2a19c; --color-text-subtle:#898882;
+  --color-primary:#ededed; --color-primary-foreground:#171717;
+  --color-accent:#9aacff; --color-accent-foreground:#0a0a0a;
+  --color-success:#5fbf8d; --color-success-foreground:#0a0a0a;
+  --color-warning:#d8a754; --color-warning-foreground:#0a0a0a;
+  --color-danger:#ef8a80; --color-danger-foreground:#0a0a0a;
+  --shadow-sm:0 1px 2px 0 rgb(0 0 0 / 0.5);
+  --shadow-md:0 6px 16px -4px rgb(0 0 0 / 0.6);
+  --shadow-lg:0 20px 48px -16px rgb(0 0 0 / 0.7);
+}
+
+/* ===================== SHELL ===================== */
+.screen .app{display:flex; height:100%; background:var(--color-bg); color:var(--color-text); font-family:var(--font-sans); line-height:1.5;}
+.screen .sidebar{flex:0 0 248px; display:flex; flex-direction:column; gap:4px; padding:16px 14px; border-right:1px solid var(--color-border); background:var(--color-bg);}
+.screen .brand{display:flex; align-items:center; gap:11px; padding:8px 8px 16px;}
+.screen .brand-mark{width:34px; height:34px; flex:0 0 auto; border-radius:var(--radius-md); box-shadow:var(--shadow-sm); display:grid; place-items:center; background:var(--color-text); color:var(--color-bg);}
+.screen .brand-name{font-size:var(--text-h3); font-weight:600; letter-spacing:-0.01em; line-height:1;}
+.screen .brand-sub{font-size:var(--text-caption); color:var(--color-text-subtle); margin-top:3px;}
+.screen .nav{display:flex; flex-direction:column; gap:2px;}
+.screen .nav-cap{font-size:var(--text-caption); font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--color-text-subtle); padding:14px 12px 6px;}
+.screen .nav-item{display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:var(--radius-md); font-size:var(--text-small); font-weight:500; color:var(--color-text-muted); border:1px solid transparent; position:relative; cursor:pointer; text-decoration:none;}
+.screen .nav-item:hover{background:var(--color-surface-2); color:var(--color-text);}
+.screen .nav-item--active{background:var(--color-surface-2); color:var(--color-text); font-weight:600;}
+.screen .nav-item .nav-ico{width:16px; height:16px; flex:0 0 auto; opacity:0.85;}
+.screen .nav-item .nav-label{white-space:nowrap;}
+.screen .nav-item .nav-badge{margin-left:auto; font-size:var(--text-caption); font-weight:600; color:var(--color-text-subtle); background:var(--color-surface-2); border:1px solid var(--color-border); border-radius:var(--radius-full); min-width:20px; height:18px; padding:0 6px; display:inline-flex; align-items:center; justify-content:center;}
+.screen .nav-item--active .nav-badge{color:var(--color-text);}
+.screen .sidebar-foot{margin-top:auto; padding-top:10px; position:relative;}
+.screen .account{display:flex; align-items:center; gap:10px; width:100%; padding:8px; border-radius:var(--radius-md); border:1px solid transparent; background:transparent; color:var(--color-text); cursor:pointer; text-align:left;}
+.screen .account:hover{background:var(--color-surface-2);}
+.screen .account .who{min-width:0;}
+.screen .account .who .nm{font-size:var(--text-small); font-weight:600; line-height:1.2;}
+.screen .account .who .hd{font-size:var(--text-caption); color:var(--color-text-subtle); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.screen .account .chev{margin-left:auto; color:var(--color-text-subtle); flex:0 0 auto;}
+.screen .avatar{position:relative; flex:0 0 auto; border-radius:var(--radius-full); overflow:hidden; display:grid; place-items:center; user-select:none; box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--color-text) 8%, transparent);}
+.screen .avatar-mono{width:100%; height:100%; display:grid; place-items:center; background:var(--color-surface-2); color:var(--color-text-muted); font-weight:600; letter-spacing:0.01em;}
+.screen .account .avatar-mono{background:var(--color-text); color:var(--color-bg);}
+.screen .main{flex:1 1 auto; min-width:0; display:flex; flex-direction:column;}
+.screen .topbar{flex:0 0 auto; display:flex; align-items:center; gap:16px; height:60px; padding:0 24px; border-bottom:1px solid var(--color-border); background:color-mix(in srgb, var(--color-bg) 86%, transparent); position:sticky; top:0; z-index:10;}
+.screen .topbar:has(> .topbar-inner){padding-inline:0;}
+.screen .topbar-inner{width:100%; max-width:var(--content-reading); margin-inline:auto; padding-inline:24px; display:flex; align-items:center; gap:16px;}
+.screen .topbar-inner.topbar--wide{max-width:var(--content-wide);}
+.screen .topbar-title{font-size:var(--text-h3); font-weight:600; letter-spacing:-0.006em;}
+.screen .topbar-spacer{flex:1 1 auto;}
+.screen .topbar-actions{display:flex; align-items:center; gap:8px;}
+.screen .icon-btn{width:36px; height:36px; flex:0 0 auto; display:grid; place-items:center; border-radius:var(--radius-md); border:1px solid var(--color-border); background:var(--color-surface); color:var(--color-text-muted); cursor:pointer; text-decoration:none;}
+.screen .icon-btn:hover{background:var(--color-surface-2); color:var(--color-text);}
+.screen .scroll{flex:1 1 auto; overflow:hidden;}
+.screen .content{max-width:var(--content-reading); margin:0 auto; padding:28px 24px 40px; display:flex; flex-direction:column; gap:20px;}
+.screen .content--wide{max-width:var(--content-wide);}
+.screen .feed{display:flex; flex-direction:column; gap:12px;}
+.screen .status-pill{display:inline-flex; align-items:center; gap:7px; white-space:nowrap; font-size:var(--text-small); color:var(--color-text-muted); padding:5px 11px 5px 10px; border:1px solid var(--color-border); border-radius:var(--radius-full); background:var(--color-surface);}
+
+/* buttons */
+.screen .btn{display:inline-flex; align-items:center; justify-content:center; gap:7px; font-family:var(--font-sans); font-weight:500; font-size:var(--text-small); white-space:nowrap; cursor:pointer; user-select:none; border:1px solid transparent; border-radius:var(--radius-md); height:40px; padding-inline:16px; text-decoration:none;}
+.screen .btn--sm{height:32px; padding-inline:12px; border-radius:var(--radius-sm); font-size:var(--text-caption);}
+.screen .btn--secondary{background:var(--color-surface); color:var(--color-text); border-color:var(--color-border);}
+.screen .btn--secondary:hover{background:var(--color-surface-2);}
+
+/* ===================== MENTIONS.CSS (scoped) ===================== */
+.screen .page-intro{display:flex; flex-direction:column; gap:4px;}
+.screen .page-intro h1{font-size:var(--text-h1); font-weight:600; letter-spacing:-0.015em; margin:0;}
+.screen .page-intro p{font-size:var(--text-body); color:var(--color-text-muted); margin:0; max-width:64ch; text-wrap:pretty;}
+
+.screen .ment-card{position:relative; background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:15px 18px 13px; transition:border-color var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard);}
+.screen .ment-card:hover{border-color:color-mix(in srgb, var(--color-text) 14%, var(--color-border));}
+.screen .ment-head{display:flex; align-items:center; gap:11px;}
+.screen .ment-id{min-width:0; flex:1 1 auto;}
+.screen .ment-name{font-size:var(--text-small); font-weight:600; line-height:1.25; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.screen .ment-sub{display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-size:var(--text-caption); color:var(--color-text-subtle); margin-top:2px;}
+.screen .ment-sub > span{white-space:nowrap;}
+.screen .ment-sub .sep{opacity:0.6;}
+.screen .ment-open-ico{flex:0 0 auto; width:32px; height:32px; display:grid; place-items:center; border-radius:var(--radius-md); border:1px solid transparent; background:transparent; color:var(--color-text-subtle); transition:background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);}
+.screen .ment-open-ico:hover{background:var(--color-surface-2); color:var(--color-text);}
+.screen .ment-text{font-size:var(--text-body); line-height:1.6; color:var(--color-text); margin:12px 0 0; text-wrap:pretty;}
+.screen .at-mention{color:var(--color-accent); font-weight:500;}
+.screen .ment-foot{display:flex; align-items:center; gap:10px; margin-top:13px; padding-top:12px; border-top:1px solid var(--color-border);}
+.screen .ment-foot-spacer{flex:1 1 auto;}
+.screen .translate-row{display:flex; align-items:center; gap:8px; flex:1 1 auto; min-width:0; flex-wrap:wrap;}
+.screen .translate-btn{display:inline-flex; align-items:center; gap:6px; font-size:var(--text-caption); font-weight:500; color:var(--color-accent); background:none; border:none; cursor:pointer; padding:2px 0;}
+.screen .translate-btn:hover{text-decoration:underline; text-underline-offset:2px;}
+.screen .translate-note{display:inline-flex; align-items:center; gap:6px; font-size:var(--text-caption); color:var(--color-text-subtle);}
+
+/* empty + error + skeleton (shared studio classes) */
+.screen .empty{display:flex; flex-direction:column; align-items:center; text-align:center; padding:64px 28px; background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm);}
+.screen .empty-mark{width:54px; height:54px; display:grid; place-items:center; border-radius:var(--radius-lg); background:var(--color-surface-2); border:1px solid var(--color-border); color:var(--color-text-subtle); margin-bottom:18px;}
+.screen .empty-title{font-size:var(--text-h2); font-weight:600; letter-spacing:-0.01em;}
+.screen .empty-sub{font-size:var(--text-body); color:var(--color-text-muted); margin-top:8px; max-width:46ch; line-height:1.55; text-wrap:pretty;}
+.screen .error-banner{display:flex; align-items:flex-start; gap:13px; padding:18px 20px; background:color-mix(in srgb, var(--color-danger) 7%, var(--color-surface)); border:1px solid color-mix(in srgb, var(--color-danger) 28%, var(--color-border)); border-radius:var(--radius-lg);}
+.screen .error-banner .eb-ico{color:var(--color-danger); flex:0 0 auto; margin-top:1px;}
+.screen .error-banner .eb-body{flex:1 1 auto; min-width:0;}
+.screen .error-banner .eb-title{font-size:var(--text-small); font-weight:600;}
+.screen .error-banner .eb-sub{font-size:var(--text-caption); color:var(--color-text-muted); margin-top:3px; line-height:1.5;}
+.screen .error-banner .btn{flex:0 0 auto;}
+.screen .skel-line{border-radius:var(--radius-sm); background:linear-gradient(90deg, var(--color-surface-2) 0%, color-mix(in srgb, var(--color-text) 7%, var(--color-surface-2)) 50%, var(--color-surface-2) 100%); background-size:220% 100%; animation:shimmer 1.4s linear infinite;}
+@keyframes shimmer{from{background-position:200% 0;}to{background-position:-200% 0;}}
+
+/* mobile frame overrides */
+.screen.mob .sidebar{flex-basis:72px; padding:16px 10px;}
+.screen.mob .brand-name,.screen.mob .brand-sub,.screen.mob .nav-cap,
+.screen.mob .nav-item .nav-label,.screen.mob .nav-item .nav-badge,
+.screen.mob .account .who,.screen.mob .account .chev{display:none;}
+.screen.mob .brand{justify-content:center; padding:8px 0 16px;}
+.screen.mob .nav-item{justify-content:center; padding:10px;}
+.screen.mob .account{justify-content:center;}
+.screen.mob .content{padding:18px 14px 40px;}
+.screen.mob .topbar-inner{padding-inline:14px;}
+.screen.mob .ment-foot{flex-wrap:wrap;}
+.screen.mob .ment-foot .btn{flex:0 0 auto;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script id="builder">
+/* ===================== icons ===================== */
+function ic(d,s){s=s||16;return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+d+'</svg>';}
+var ICONS={
+ studio:'<path d="M4 20l1-4L16 5a2 2 0 0 1 3 3L8 19z"/><path d="M14 7l3 3"/>',
+ feed:'<rect x="4" y="5" width="16" height="4.5" rx="1.4"/><rect x="4" y="14.5" width="16" height="4.5" rx="1.4"/>',
+ replies:'<path d="M5 6.5h14v8.5H10l-4 3.5v-3.5H5z"/>',
+ at:'<circle cx="12" cy="12" r="3.4"/><path d="M15.4 12v1.6a2.4 2.4 0 0 0 4.1 1.4A8 8 0 1 0 15 19.4"/>',
+ chart:'<path d="M5 19V5"/><path d="M5 19h14"/><rect x="8" y="11" width="2.6" height="5"/><rect x="13" y="7.5" width="2.6" height="8.5"/>',
+ audit:'<rect x="6" y="4" width="12" height="16" rx="2"/><path d="M9 9h6M9 12.5h6M9 16h3.5"/>',
+ study:'<path d="M5 5.5A1.5 1.5 0 0 1 6.5 4H18v13H6.5A1.5 1.5 0 0 0 5 18.5z"/><path d="M5 18.5A1.5 1.5 0 0 1 6.5 17H18v3H6.5A1.5 1.5 0 0 1 5 18.5z"/>',
+ compass:'<circle cx="12" cy="12" r="8.2"/><path d="M15.4 8.6l-2 4.8-4.8 2 2-4.8z"/>',
+ voice:'<rect x="9" y="3.5" width="6" height="11" rx="3"/><path d="M6 11.5a6 6 0 0 0 12 0M12 17.5V20M9 20h6"/>',
+ sliders:'<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',
+ autopilot:'<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>',
+ moon:'<path d="M20 14.5A8 8 0 1 1 9.5 4 6.3 6.3 0 0 0 20 14.5z"/>',
+ sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M2 12h2M20 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/>',
+ settings:'<circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l1.8-1.3-1.8-3.1-2.1.8a7 7 0 0 0-2-1.2l-.3-2.2H8.5l-.3 2.2a7 7 0 0 0-2 1.2l-2.1-.8L2.3 9.5l1.8 1.3A7 7 0 0 0 4 12a7 7 0 0 0 .1 1.2l-1.8 1.3 1.8 3.1 2.1-.8a7 7 0 0 0 2 1.2l.3 2.2h3.2l.3-2.2a7 7 0 0 0 2-1.2l2.1.8 1.8-3.1-1.8-1.3A7 7 0 0 0 19 12z"/>',
+ nib:'<path d="M12 3.5 7 8.5l3 9 2 2 2-2 3-9z"/><circle cx="12" cy="11" r="1.2"/>',
+ chevD:'<path d="M6 9.5 12 15l6-5.5"/>',
+ clock:'<circle cx="12" cy="12" r="8.2"/><path d="M12 7.5V12l3 2"/>',
+ globe:'<circle cx="12" cy="12" r="8.2"/><path d="M4 12h16M12 3.8c2.2 2.3 2.2 13.9 0 16.4M12 3.8c-2.2 2.3-2.2 13.9 0 16.4"/>',
+ external:'<path d="M8 6h10v10M18 6 7 17"/>',
+ alert:'<path d="M12 4.5 21 19.5H3L12 4.5Z"/><path d="M12 10.5v4M12 17.4v.1"/>',
+ refresh:'<path d="M20 7a8 8 0 0 0-14.3-2M4 5v4h4"/><path d="M4 17a8 8 0 0 0 14.3 2M20 19v-4h-4"/>'
+};
+function I(n,s){return ic(ICONS[n]||'',s);}
+
+/* ===================== data (verbatim, em-dashes as punctuation stripped) ===================== */
+var MENTIONS=[
+ {id:'m1',when:'6d',initials:'WR',name:'The Writing Room',handle:'@writingroom',
+  text:"just read @mara.lin's thread on cutting 600 words before breakfast and had to sit down for a minute. the best writing advice is always the most uncomfortable one."},
+ {id:'m2',when:'6d',initials:'DP',name:'Devon Pierce',handle:'@devon_makes',
+  text:"if you're not following @mara.lin you're missing the most honest writing account on here. start with her \u201Cworst first line on purpose\u201D post and thank me later."},
+ {id:'m3',when:'6d',initials:'LW',name:'Lottie Wren',handle:'@lottie.writes',lang:'Spanish',
+  text:"@mara.lin \u00BFc\u00F3mo te mantienes constante sin quemarte? lo pregunto por m\u00ED, espec\u00EDficamente, hoy \uD83D\uDE05",
+  translated:"@mara.lin how do you stay consistent without burning out? asking for me, specifically, today \uD83D\uDE05"},
+ {id:'m4',when:'7d',initials:'DC',name:'The Draft Club',handle:'@the_draft_club',
+  text:"added @mara.lin to this week's roundup of writers worth reading. her \u201Cship three decent things a week for a year\u201D line lives in my head rent-free."},
+ {id:'m5',when:'7d',initials:'KS',name:'Kenji Sato',handle:'@kenji.dev',lang:'German',
+  text:"Der Thread von @mara.lin \u00FCber das K\u00FCrzen von Texten ist absolute Pflichtlekt\u00FCre f\u00FCr alle, die online schreiben.",
+  translated:"@mara.lin's thread on cutting text down is absolute essential reading for anyone who writes online."},
+ {id:'m6',when:'8d',initials:'PE',name:'Paul Esi',handle:'@paulwrites',
+  text:"stealing @mara.lin's \u201Cwrite the worst possible first line on purpose\u201D for my workshop tomorrow. credited, obviously. it unlocks every nervous writer in the room."},
+ {id:'m7',when:'9d',initials:'AB',name:'Ana Brandt',handle:'@ana.writes',lang:'French',
+  text:"la fa\u00E7on dont @mara.lin parle de la constance plut\u00F4t que de l'intensit\u00E9 a discr\u00E8tement recadr\u00E9 toute mon ann\u00E9e. merci d'\u00E9crire en public, l\u00E0 o\u00F9 le reste d'entre nous peut apprendre.",
+  translated:"the way @mara.lin talks about consistency over intensity quietly reframed my whole year. thank you for writing in public, where the rest of us can learn from it."},
+ {id:'m8',when:'10d',initials:'CG',name:'Creator Growth',handle:'@creatorgrowth_io',
+  text:"\uD83D\uDD25 @mara.lin and 50+ top creators are scaling their reach with THIS one tool. tap the link in our bio to 10x your engagement today \uD83D\uDE80"}
+];
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function highlight(text){
+ return text.split(/(@[\w.]+)/g).map(function(part){
+  return /^@[\w.]+$/.test(part)?'<span class="at-mention">'+esc(part)+'</span>':esc(part);
+ }).join('');
+}
+
+/* ===================== shell ===================== */
+var NAV=[
+ {cap:'Workspace',items:[['studio','Studio',4],['feed','My Feed',0],['replies','Replies',3],['at','Mentions',0]]},
+ {cap:'Insight',items:[['chart','Stats',0],['audit','Audits',1],['study','Pattern study',0],['compass','Explore patterns',0]]},
+ {cap:'Voice & automation',items:[['voice','Voice',0],['sliders','Style rules',0],['autopilot','Autopilot',0]]}
+];
+function sidebar(){
+ var groups=NAV.map(function(g){
+  var items=g.items.map(function(it){
+   var icon=it[0],label=it[1],badge=it[2];
+   var active=label==='Mentions'?' nav-item--active':'';
+   var cur=label==='Mentions'?' aria-current="page"':'';
+   var bdg=badge?'<span class="nav-badge">'+badge+'</span>':'';
+   return '<a class="nav-item'+active+'"'+cur+'><span class="nav-ico">'+I(icon,16)+'</span><span class="nav-label">'+label+'</span>'+bdg+'</a>';
+  }).join('');
+  return '<div class="nav-cap">'+g.cap+'</div>'+items;
+ }).join('');
+ return '<aside class="sidebar"><div class="brand"><span class="brand-mark">'+I('nib',19)+'</span><div><div class="brand-name">Pennedly</div><div class="brand-sub">Drafting partner</div></div></div><nav class="nav">'+groups+'</nav><div class="sidebar-foot"><button class="account"><span class="avatar" style="width:32px;height:32px;"><span class="avatar-mono" style="font-size:13px;">ML</span></span><div class="who"><div class="nm">Mara Lin</div><div class="hd">@mara.lin</div></div><span class="chev">'+I('chevD',15)+'</span></button></div></aside>';
+}
+function topbar(dark){
+ return '<header class="topbar"><div class="topbar-inner topbar--wide"><span class="topbar-title">Mentions</span><span class="status-pill">'+I('clock',13)+'Updated hourly</span><span class="topbar-spacer"></span><div class="topbar-actions"><button class="icon-btn" aria-label="Toggle theme">'+(dark?I('sun',17):I('moon',16))+'</button><button class="icon-btn" aria-label="Settings">'+I('settings',17)+'</button></div></div></header>';
+}
+function app(body,dark){
+ return '<div class="app">'+sidebar()+'<div class="main">'+topbar(dark)+'<div class="scroll"><div class="content content--wide">'+pageIntro()+body+'</div></div></div></div>';
+}
+function pageIntro(){
+ return '<div class="page-intro"><h1>Mentions</h1><p>Posts across Threads that @-mention you, a calm place to keep an eye on the conversation. Pennedly checks for new ones about once an hour.</p></div>';
+}
+
+/* ===================== mention card ===================== */
+function avatar(initials){
+ return '<span class="avatar" style="width:40px;height:40px;"><span class="avatar-mono" style="font-size:14px;">'+esc(initials)+'</span></span>';
+}
+function mentionCard(m,opts){
+ opts=opts||{};
+ var translated=opts.translated&&m.lang;
+ var showText=translated?m.translated:m.text;
+ var head='<div class="ment-head">'+avatar(m.initials)+'<div class="ment-id"><div class="ment-name">'+esc(m.name)+'</div><div class="ment-sub"><span>'+esc(m.handle)+'</span><span class="sep">\u00B7</span><span>'+esc(m.when)+'</span></div></div><a class="ment-open-ico" aria-label="Open on Threads">'+I('external',16)+'</a></div>';
+ var text='<p class="ment-text">'+highlight(showText)+'</p>';
+ var footLeft;
+ if(m.lang){
+  if(translated){
+   footLeft='<div class="translate-row"><span class="translate-note">'+I('globe',13)+'Translated from '+esc(m.lang)+'</span><button class="translate-btn">Show original</button></div>';
+  } else {
+   footLeft='<div class="translate-row"><button class="translate-btn">'+I('globe',13)+'Translate from '+esc(m.lang)+'</button></div>';
+  }
+ } else {
+  footLeft='<span class="ment-foot-spacer"></span>';
+ }
+ var foot='<div class="ment-foot">'+footLeft+'<a class="btn btn--secondary btn--sm">'+I('external',15)+' Open in Threads</a></div>';
+ return '<article class="ment-card">'+head+text+foot+'</article>';
+}
+function emptyState(){
+ return '<div class="empty"><div class="empty-mark">'+I('at',24)+'</div><div class="empty-title">No mentions yet</div><div class="empty-sub">When someone @-mentions you on Threads, it\u2019ll show up here. Pennedly checks for new mentions about once an hour.</div></div>';
+}
+function errorBanner(){
+ return '<div class="error-banner">'+I('alert',18)+'<div class="eb-body"><div class="eb-title">Couldn\u2019t load your mentions</div><div class="eb-sub">Something went wrong reaching Threads. Pennedly will try again on the next hourly check, or retry now.</div></div><button class="btn btn--secondary btn--sm">'+I('refresh',14)+' Retry</button></div>';
+}
+function skeletonCard(){
+ return '<div class="ment-card" aria-hidden="true"><div class="ment-head"><div class="skel-line" style="width:40px;height:40px;border-radius:999px;"></div><div style="flex:1"><div class="skel-line" style="width:150px;height:12px;margin-bottom:6px;"></div><div class="skel-line" style="width:90px;height:9px;"></div></div></div><div style="margin-top:14px;display:flex;flex-direction:column;gap:9px;"><div class="skel-line" style="width:95%;height:11px;"></div><div class="skel-line" style="width:64%;height:11px;"></div></div></div>';
+}
+
+/* ===================== bodies ===================== */
+function feed(cards){ return '<div class="feed">'+cards+'</div>'; }
+function bodyPopulated(){
+ return feed(MENTIONS.map(function(m){return mentionCard(m);}).join(''));
+}
+function bodyTranslated(){
+ // m3 (Spanish) flipped to its translation; the rest normal
+ return feed(MENTIONS.map(function(m){return mentionCard(m,{translated:m.id==='m3'});}).join(''));
+}
+function bodyEmpty(){ return emptyState(); }
+function bodyLoading(){
+ var c='';for(var i=0;i<5;i++)c+=skeletonCard();
+ return feed(c);
+}
+function bodyError(){ return errorBanner(); }
+
+/* ===================== frames ===================== */
+function frame(device,theme,label,body){
+ var dark=theme==='dark';
+ var screen='<div class="screen '+device+' pd-'+theme+'">'+app(body,dark)+'</div>';
+ return '<figure class="vp"><figcaption><span class="tg tg--'+(device==='web'?'web':'mob')+'">'+(device==='web'?'Web · 1120':'Mobile · 392')+'</span><span class="tg tg--'+theme+'">'+(dark?'Dark':'Light')+'</span><span class="lbl">'+label+'</span></figcaption>'+screen+'</figure>';
+}
+function sectionHead(num,title,desc,notes,sub){
+ var noteList=(notes||[]).map(function(n){return '<li>'+n+'</li>';}).join('');
+ return '<section class="state-sec'+(sub?'':' divide')+'"><div class="sec-num">'+num+'</div><h2 class="sec-title'+(sub?' sub':'')+'">'+title+'</h2><p class="sec-desc">'+desc+'</p>'+(noteList?'<ul class="sec-notes">'+noteList+'</ul>':'')+'</section>';
+}
+function noteCard(t){return '<div class="note-card"><div class="nc">'+t+'</div></div>';}
+function gallery(f){return '<div class="gallery">'+f+'</div>';}
+
+/* ===================== build ===================== */
+var H='';
+H+='<header class="doc-head">'
+ +'<p class="doc-kicker">Pennedly · State spec · build contract</p>'
+ +'<h1 class="doc-title">Mentions · read-only monitoring feed, every state rendered</h1>'
+ +'<p class="doc-lede">Full-fidelity render of <b>Mentions</b> (<code>/app/mentions</code>), a read-only monitoring feed of posts elsewhere on Threads that @-mention the account, newest first, refreshed about once an hour by the backend. The <b>only</b> actions on a mention are translate and open on Threads, there is no save, archive, filter, or mark-as-seen (those have no backend, so they are not drawn). Every frame uses the real PennedlyDesign tokens, the shared shell, and the real copy from <code>mentions-data.jsx</code> (Mara Lin). Content is the <b>wide 960</b> width. Each state is labeled for <b>web + mobile</b> in <b>light + dark</b>. Em-dashes used as punctuation are stripped from copy.</p>'
+ +'<div class="doc-meta"><span class="m">route /app/mentions</span><span class="m">sidebar: Mentions (@)</span><span class="m">width --content-wide 960</span><span class="m">read-only</span><span class="m">8 mentions · 3 translatable</span><span class="m">tweaks: dark · state</span></div>'
+ +'</header>'
+ +'<div class="legend"><span class="lk"><span class="dot" style="background:#2f4cc4;"></span>@handle / translate accent</span><span class="lk"><span class="dot" style="background:#6f6e69;"></span>handle · time · meta</span><span class="lk"><span class="dot" style="background:#b23b30;"></span>error</span><span class="lk"><span class="dot" style="background:#dcd9d2;"></span>card border</span></div>';
+
+H+=noteCard('<b>Two honest notes from the real code:</b> (1) The card leads with the <b>@handle and a monogram initial</b>. The backend gives the handle, text, permalink, and time; a display name and avatar image are not always available, so every avatar here is rendered as its initials monogram (a real image loads only when the API provides one). (2) This is a <b>pure read surface</b>, the feed is unfiltered and honest, which is why the obviously spammy growth-bot mention (<code>@creatorgrowth_io</code>) is shown exactly as it arrives, not hidden.');
+
+// STATE 1 — populated
+H+=sectionHead('State 1','Default, populated feed',
+ 'The live feed: eight mention cards, newest first. Each card is an author row (monogram avatar + name + handle + a \u00B7 + relative time, with an open-on-Threads icon top right), the mention text with every @-handle accented ink-blue, and a foot row (translate control on the left for foreign-language mentions, an Open in Threads secondary button on the right). A healthy mix of normal English mentions, the three foreign-language ones (Spanish, German, French) carrying their Translate affordance, and the spammy growth-bot mention.',
+ ['Topbar pill is <code>Updated hourly</code> with a clock icon (the backend refreshes about hourly).',
+  'Foreign mentions m3 (Spanish), m5 (German), m7 (French) show \u201CTranslate from {language}\u201D; normal mentions show only the Open in Threads button (foot spacer on the left).',
+  'm8 (@creatorgrowth_io) is the unfiltered spam mention, present and honest, never auto-hidden.']);
+H+=gallery(
+ frame('web','light','Populated feed',bodyPopulated())
+ +frame('web','dark','Populated feed',bodyPopulated())
+ +frame('mob','light','Populated · mobile',bodyPopulated())
+ +frame('mob','dark','Populated · mobile',bodyPopulated())
+);
+
+// STATE 2 — translated
+H+=sectionHead('State 2','A foreign-language mention translated',
+ 'The Spanish mention from Lottie Wren flipped to its translation. The foot now reads <b>Translated from Spanish</b> (globe + subtle note) with a <b>Show original</b> toggle, and the card text has swapped to the English translation in place. Translation is on-demand through the shared translate, surfaced per card only for non-English mentions, and toggles back to the original.',
+ ['Only the targeted card changes; the rest of the feed is untouched.',
+  'Translation is a disposable reading layer; toggling Show original swaps the text back to the source language.']);
+H+=gallery(
+ frame('web','light','Translated · Spanish to English',bodyTranslated())
+ +frame('web','dark','Translated · Spanish to English',bodyTranslated())
+ +frame('mob','light','Translated · mobile',bodyTranslated())
+);
+
+// STATE 3 — empty
+H+=sectionHead('State 3','Empty',
+ 'No mentions yet: a centered @ mark, \u201CNo mentions yet,\u201D and a calm sub explaining the hourly check. The page header stays; only the feed is replaced by the empty card.',
+ null);
+H+=gallery(
+ frame('web','light','Empty',bodyEmpty())
+ +frame('web','dark','Empty',bodyEmpty())
+ +frame('mob','light','Empty · mobile',bodyEmpty())
+);
+
+// STATE 4 — loading
+H+=sectionHead('State 4','Loading skeleton',
+ 'The brief boot state (about 850ms, or the state=Loading tweak): five shimmer mention-card placeholders (avatar circle + two name lines + two text lines) before the data resolves.',
+ null);
+H+=gallery(
+ frame('web','light','Loading skeleton',bodyLoading())
+ +frame('web','dark','Loading skeleton',bodyLoading())
+ +frame('mob','light','Loading · mobile',bodyLoading())
+);
+
+// Extra — error
+H+=sectionHead('Extra','Error state',
+ 'Not in the four core states but real in the code (the state=Error tweak): a shared ErrorBanner with a danger-toned mark, \u201CCouldn\u2019t load your mentions,\u201D and a Retry button. Shown for completeness.',
+ null,true);
+H+=gallery(
+ frame('web','light','Error banner',bodyError())
+ +frame('web','dark','Error banner',bodyError())
+);
+
+document.getElementById('root').innerHTML=H;
+</script>
+</body>
+</html>

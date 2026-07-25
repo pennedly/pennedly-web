@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pennedly · Studio + App-Shell — Спецификация (пиксель-в-пиксель)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --font-sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --font-mono:"Geist Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --bg:#efedea; --surface:#ffffff; --surface-2:#f6f5f2; --border:#dcd9d2;
+  --text:#171717; --muted:#565550; --subtle:#6f6e69; --accent:#2f4cc4;
+  --code-bg:#f6f5f2; --good:#2c7350; --warn:#8a5b16; --danger:#b23b30;
+  --radius:14px;
+}
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%; scroll-behavior:smooth;}
+body{margin:0; background:var(--bg); color:var(--text);
+  font-family:var(--font-sans); font-size:15px; line-height:1.62;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;}
+.layout{display:grid; grid-template-columns:300px minmax(0,1fr); gap:0; max-width:1320px; margin:0 auto;}
+
+.toc{position:sticky; top:0; align-self:start; height:100vh; overflow-y:auto;
+  padding:34px 22px 40px 32px; border-right:1px solid var(--border);}
+.toc .doc-mark{display:flex; align-items:center; gap:10px; margin-bottom:6px;}
+.toc .doc-mark .nib{width:30px; height:30px; border-radius:8px; background:var(--text); display:grid; place-items:center; flex:0 0 auto;}
+.toc .doc-mark b{font-size:16px; font-weight:600; letter-spacing:-0.01em;}
+.toc .doc-sub{font-size:12px; color:var(--subtle); letter-spacing:0.02em; margin:0 0 22px 40px; text-transform:uppercase;}
+.toc nav{display:flex; flex-direction:column; gap:1px;}
+.toc nav a{display:flex; gap:9px; padding:6px 10px; border-radius:8px; text-decoration:none;
+  color:var(--muted); font-size:13.5px; line-height:1.35; transition:background .12s, color .12s;}
+.toc nav a:hover{background:var(--surface-2); color:var(--text);}
+.toc nav a .n{font-variant-numeric:tabular-nums; color:var(--subtle); font-weight:600; flex:0 0 16px;}
+.toc nav a.sub{padding-left:30px; font-size:12.5px; color:var(--subtle);}
+.toc .meta{margin-top:24px; padding-top:18px; border-top:1px solid var(--border); font-size:12px; color:var(--subtle); line-height:1.7;}
+.toc .meta code{font-family:var(--font-mono); font-size:11px;}
+
+main{padding:40px 56px 120px; min-width:0;}
+.kicker{font-family:var(--font-mono); font-size:12px; letter-spacing:0.04em; color:var(--accent); text-transform:uppercase; margin:0 0 10px;}
+h1.title{font-size:34px; line-height:1.1; letter-spacing:-0.025em; font-weight:600; margin:0 0 14px; text-wrap:balance;}
+.lede{font-size:16px; color:var(--muted); max-width:74ch; margin:0 0 14px; text-wrap:pretty;}
+.filerow{display:flex; flex-wrap:wrap; gap:6px; margin:18px 0 6px;}
+.chip{font-family:var(--font-mono); font-size:11.5px; padding:4px 9px; border-radius:9999px; background:var(--surface); border:1px solid var(--border); color:var(--muted);}
+
+section{margin-top:48px; scroll-margin-top:20px;}
+h2{font-size:21px; line-height:1.25; letter-spacing:-0.012em; font-weight:600; margin:0 0 4px; padding-top:10px;}
+h2 .h2n{font-family:var(--font-mono); font-size:14px; color:var(--accent); margin-right:10px; font-weight:500;}
+.section-note{color:var(--muted); font-size:14px; max-width:80ch; margin:6px 0 18px; text-wrap:pretty;}
+h3{font-size:15.5px; font-weight:600; letter-spacing:-0.005em; margin:28px 0 10px; padding-bottom:7px; border-bottom:1px solid var(--border);}
+h3 .stg{font-family:var(--font-mono); font-size:11px; color:var(--accent); border:1px solid var(--border); border-radius:6px; padding:1px 7px; margin-right:8px; text-transform:uppercase; letter-spacing:0.04em;}
+h3 .stg--shell{color:var(--good);}
+h4{font-size:13px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.04em; margin:20px 0 8px;}
+
+p{margin:0 0 12px; text-wrap:pretty;}
+ul,ol{margin:0 0 12px; padding-left:22px;}
+li{margin:3px 0;}
+code{font-family:var(--font-mono); font-size:0.86em; background:var(--code-bg); border:1px solid var(--border); padding:1px 5px; border-radius:5px; white-space:nowrap;}
+.tok{color:var(--accent);}
+strong{font-weight:600;}
+
+.tbl-wrap{overflow-x:auto; margin:0 0 16px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface);}
+table{width:100%; border-collapse:collapse; font-size:13px;}
+th,td{text-align:left; padding:9px 13px; border-bottom:1px solid var(--border); vertical-align:top;}
+thead th{font-size:11px; text-transform:uppercase; letter-spacing:0.04em; color:var(--subtle); font-weight:600; background:var(--surface-2);}
+tbody tr:last-child td{border-bottom:none;}
+td code, th code{white-space:nowrap;}
+td.val{font-family:var(--font-mono); font-size:12px; color:var(--text);}
+.sw{display:inline-block; width:12px; height:12px; border-radius:3px; border:1px solid rgba(0,0,0,.18); vertical-align:-1px; margin-right:6px;}
+td .mono2{font-family:var(--font-mono); font-size:11.5px; color:var(--subtle);}
+.grp td{background:var(--surface-2); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.04em; color:var(--subtle);}
+
+.note{border:1px solid var(--border); border-left:3px solid var(--accent); background:var(--surface);
+  border-radius:10px; padding:12px 16px; margin:14px 0; font-size:13.5px; color:var(--muted);}
+.note.warn{border-left-color:var(--warn);}
+.note.danger{border-left-color:var(--danger);}
+.note.good{border-left-color:var(--good);}
+.note b{color:var(--text);}
+.two{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+.two h4{margin-top:0;}
+.pane{border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); padding:16px 18px; min-width:0;}
+.pane code, .check code, .note code, .section-note code, p code, td code, th code, li code{white-space:normal; overflow-wrap:anywhere;}
+.pane.web{border-top:3px solid var(--text);}
+.pane.mob{border-top:3px solid var(--accent);}
+
+.check{list-style:none; padding:0; margin:0 0 8px;}
+.check li{position:relative; padding:5px 0 5px 26px; border-bottom:1px dashed var(--border); font-size:13.5px;}
+.check li:last-child{border-bottom:none;}
+.check li::before{content:"☐"; position:absolute; left:2px; top:4px; color:var(--subtle); font-size:14px;}
+.tagline{display:inline-block; font-size:11px; font-family:var(--font-mono); color:var(--accent); border:1px solid var(--border); border-radius:9999px; padding:2px 8px; margin-left:6px;}
+.statebar{display:flex; flex-wrap:wrap; gap:6px; margin:2px 0 14px;}
+.statebar .st{font-family:var(--font-mono); font-size:11px; padding:3px 9px; border-radius:6px; background:var(--surface-2); border:1px solid var(--border); color:var(--muted);}
+
+@media (max-width:980px){
+  .layout{grid-template-columns:1fr;}
+  .toc{position:static; height:auto; border-right:none; border-bottom:1px solid var(--border);}
+  .toc nav{display:grid; grid-template-columns:1fr 1fr; gap:1px 14px;}
+  main{padding:28px 22px 90px;}
+  .two{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<aside class="toc">
+  <div class="doc-mark">
+    <span class="nib"><svg width="18" height="18" viewBox="0 0 512 512"><g fill="#ededed"><g transform="rotate(42 256 256)"><path d="M236 150 Q236 128 256 128 Q276 128 276 150 L276 300 L256 360 L236 300 Z"/><rect x="236" y="206" width="40" height="7"/></g></g></svg></span>
+    <b>Pennedly</b>
+  </div>
+  <div class="doc-sub">Спецификация · Studio + App-Shell</div>
+  <nav>
+    <a href="#s1"><span class="n">1</span> Идентификация экрана</a>
+    <a href="#s2"><span class="n">2</span> Анатомия</a>
+    <a class="sub" href="#s2-app">— .app (корень)</a>
+    <a class="sub" href="#s2-sidebar">— .sidebar (shell)</a>
+    <a class="sub" href="#s2-account">— .account + .acct-menu (shell)</a>
+    <a class="sub" href="#s2-topbar">— .topbar (shell)</a>
+    <a class="sub" href="#s2-content">— .main / .scroll / .content--wide</a>
+    <a class="sub" href="#s2-composer">— .composer</a>
+    <a class="sub" href="#s2-filter">— .filterbar</a>
+    <a class="sub" href="#s2-feed">— .feed + helpers</a>
+    <a class="sub" href="#s2-draft">— .draft (DraftCard)</a>
+    <a class="sub" href="#s2-cardmenu">— ⋯ CardMenu</a>
+    <a class="sub" href="#s2-dialog">— PublishDialog</a>
+    <a class="sub" href="#s2-toast">— Toasts</a>
+    <a class="sub" href="#s2-firstrun">— FirstRun</a>
+    <a href="#s3"><span class="n">3</span> Раскладка и адаптив</a>
+    <a href="#s4"><span class="n">4</span> Все состояния</a>
+    <a class="sub" href="#s4-shell">— shell: аккаунт-меню</a>
+    <a class="sub" href="#s4-composer">— composer «Строка»</a>
+    <a class="sub" href="#s4-tabs">— табы-фильтры</a>
+    <a class="sub" href="#s4-feed">— feed 5 состояний</a>
+    <a class="sub" href="#s4-card">— карточка ×9 под-состояний</a>
+    <a class="sub" href="#s4-menu">— ⋯-меню root/translate</a>
+    <a class="sub" href="#s4-dialog">— диалог + тосты</a>
+    <a class="sub" href="#s4-interact">— интерактив каждого элемента</a>
+    <a class="sub" href="#s4-anim">— анимации</a>
+    <a href="#s5"><span class="n">5</span> Точные значения</a>
+    <a href="#s6"><span class="n">6</span> Твики для проверки</a>
+    <a href="#s7"><span class="n">7</span> Чек-лист</a>
+    <a href="#tokens"><span class="n">＊</span> Справочник токенов</a>
+  </nav>
+  <div class="meta">
+    Экран: <b style="color:var(--text)">Studio</b> + <b style="color:var(--text)">App-Shell</b><br>
+    Маршрут: <code>/app</code><br>
+    Тип: <b style="color:var(--text)">полный app-shell</b> (sidebar = да)<br>
+    Ширина: <code>--content-wide</code> 960<br>
+    Studio: <code>studio-app.jsx</code>, <code>studio-parts.jsx</code>, <code>studio-data.jsx</code>, <code>studio-icons.jsx</code>, <code>studio.css</code><br>
+    Shell: <code>shell-parts.jsx</code>, <code>shell-data.jsx</code>, <code>shell.css</code><br>
+    Токены: <code>ds/tokens.css</code>, <code>globals.css</code>, <code>ds/components.css</code>
+  </div>
+</aside>
+
+<main>
+  <div class="doc-head">
+    <p class="kicker">Pennedly · Спецификация · Шаблон документации экрана</p>
+    <h1 class="title">Studio&nbsp;<span style="color:var(--subtle); font-weight:500;">/app</span> — пиксель-в-пиксель</h1>
+    <p class="lede">Дотошная спецификация самого большого экрана приложения — <b>Studio</b> — и общего <b>app-shell</b>, который Studio задаёт ПЕРВЫМ и который потом переиспользуют все остальные экраны (<code>&lt;window.Sidebar&gt;</code> + топбар + переключатель аккаунтов). Брифуешь тему → Pennedly пишет N черновиков в твоём голосе → ты ревьюишь, твикаешь, апрувишь и публикуешь в Threads. Ниже задокументированы АБСОЛЮТНО все состояния по очереди: shell (аккаунт-меню откр/закр), composer «Строка» (collapsed/open/seeded/ideas: loading·results·empty·error/busy), табы, лента (normal/loading/empty/error/generating), карточка во всех статусах и под-режимах (draft/ready/published/rejected + editing/tweaking/revising/translated/reply), ⋯-меню (root/translate), диалог публикации, тосты с Undo, first-run hero, density, тема и адаптив web↔mobile. Все значения взяты из реального дизайна, без «примерно».</p>
+    <div class="filerow">
+      <span class="chip">studio-app.jsx</span>
+      <span class="chip">studio-parts.jsx</span>
+      <span class="chip">studio-data.jsx</span>
+      <span class="chip">studio-icons.jsx</span>
+      <span class="chip">studio.css</span>
+      <span class="chip">shell-parts.jsx</span>
+      <span class="chip">shell-data.jsx</span>
+      <span class="chip">shell.css</span>
+      <span class="chip">ds/tokens.css</span>
+      <span class="chip">ds/components.css</span>
+    </div>
+  </div>
+
+  <div class="note good">
+    <b>App-shell — общий, задаётся здесь.</b> Studio первым собирает каркас: <code>.app</code> = <code>display:flex; height:100%</code> с двумя колонками — <code>&lt;window.Sidebar active="studio"/&gt;</code> слева (фикс. <b>248px</b>) и <code>.main</code> справа (топбар + скролл-область). Sidebar, AccountMenu, Avatar и ErrorBanner живут в <code>shell-parts.jsx</code> / <code>shell.css</code> / <code>shell-data.jsx</code> и рендерятся ОДИНАКОВО на всех экранах. Поэтому §2 и §4 документируют shell так же дотошно, как и сам Studio.
+  </div>
+
+  <div class="note">
+    <b>Состояния одним взглядом.</b> Экран управляется шестью твиками (<code>studio-app.jsx → TWEAK_DEFAULTS</code>): <code>account</code> (Active / First-run), <code>state</code> (Normal / Loading / Empty / Error), <code>drafts</code> (1–4, для generate), <code>ideas</code> (Results / Empty / Error — исход палитры идей), <code>dark</code>, <code>density</code> (Comfortable / Compact). <code>account="First-run"</code> заменяет весь composer+feed на приветственный hero и переводит voice-пилюлю в warning. Сгенерированные черновики падают <b>сразу в ленту</b> (таб Drafts) — НИКАКОЙ отдельной preview-карточки «last generated». Публикация — только через confirm-диалог.
+  </div>
+
+  <!-- ===================== 1 ===================== -->
+  <section id="s1">
+    <h2><span class="h2n">1</span>Идентификация экрана</h2>
+    <p class="section-note">Маршрут, назначение, ширина wide-колонки, условие first-run, раскладка сверху вниз: <code>sidebar | main(topbar + scroll(content))</code>.</p>
+    <div class="tbl-wrap"><table><tbody>
+      <tr><th style="width:210px;">Маршрут</th><td><code>/app</code> (<code>Studio.html</code>) — главный рабочий экран после онбординга. Dev-вход из Login ведёт прямо сюда.</td></tr>
+      <tr><th>Тип</th><td><b>Полный app-shell</b>: рендерится <code>&lt;window.Sidebar active="studio"/&gt;</code>. Это первый экран, который СОБИРАЕТ shell; все остальные экраны переиспользуют его 1:1.</td></tr>
+      <tr><th>Назначение</th><td>Бриф (тема / хот-тейк / ссылка) → Pennedly пишет N черновиков постов и ответов в голосе пользователя → ревью, твик, апрув, публикация в Threads. Лимит текста <b>500</b> символов.</td></tr>
+      <tr><th>Корневой контейнер</th><td><code>.app</code> → <code>display:flex; height:100%; overflow:hidden; background:var(--color-bg)</code>. Атрибут <code>data-density="comfortable|compact"</code>.</td></tr>
+      <tr><th>Ширина контента</th><td><b>wide</b> = <code class="tok">--content-wide</code> 960px. Колонка <code>.content--wide</code> центрируется; топбар выровнен по той же ширине через <code>.topbar-inner.topbar--wide</code> (§3.1/3.2 системного слоя).</td></tr>
+      <tr><th>Топбар</th><td>Заголовок «Studio» + voice-пилюля <code>.status-pill</code> (success «Voice active» / warning «Voice not set up») + действия (тема, Settings).</td></tr>
+      <tr><th>Условие first-run</th><td><code>t.account === "First-run"</code> (= голос не настроен). Тогда вместо composer+ленты показывается hero <code>&lt;FirstRun&gt;</code>, а voice-пилюля = warning. <code>account="Active"</code> → обычный режим, пилюля success.</td></tr>
+      <tr><th>Секции (top→bottom)</th><td>First-run hero <b>ИЛИ</b> [Composer → FilterTabs → Feed]. Внутри Feed по твику <code>state</code>: normal / loading (3 скелетона) / empty (per-tab) / error (ErrorBanner). Generate добавляет N скелетонов сверху в табе Drafts.</td></tr>
+      <tr><th>Локализация</th><td>Весь end-user текст локализуется. 8 UI-локалей (<code>UI_LANGS</code>, shell-data): EN (original) · ES · DE · FR · IT · PT · RU · UK. Перевод тела карточки — инлайн, через ⋯ → Translate.</td></tr>
+    </tbody></table></div>
+    <h4>Раскладка сверху вниз</h4>
+    <ol>
+      <li><b><code>.app</code></b> — горизонтальный flex во всю высоту. Два прямых ребёнка: <code>&lt;Sidebar&gt;</code> и <code>.main</code>.</li>
+      <li><b><code>.sidebar</code></b> (shell) — <code>flex:0 0 248px</code>, колонка: бренд → nav-группы → <code>.sidebar-foot</code> (AccountMenu, прижат вниз через <code>margin-top:auto</code>).</li>
+      <li><b><code>.main</code></b> — <code>flex:1 1 auto; min-width:0; flex-direction:column</code>. Внутри: <code>&lt;Topbar&gt;</code> (sticky, 60px) и <code>.scroll</code> (<code>flex:1; overflow-y:auto</code>).</li>
+      <li><b><code>.scroll &gt; .content.content--wide</code></b> — <code>max-width:960; margin:0 auto; padding:28px 24px 96px; flex-column; gap:20px</code>. Здесь живут Composer / FilterTabs / Feed (или FirstRun).</li>
+      <li><b>Оверлеи поверх <code>.app</code></b> — <code>&lt;PublishDialog&gt;</code> (по требованию), <code>&lt;Toasts&gt;</code> (фикс. снизу-центр), <code>&lt;TweaksPanel&gt;</code>.</li>
+    </ol>
+  </section>
+
+  <!-- ===================== 2 ===================== -->
+  <section id="s2">
+    <h2><span class="h2n">2</span>Анатомия</h2>
+    <p class="section-note">Пронумерованный список каждой секции и элемента с именем/классом ровно как в коде. <span style="color:var(--good); font-weight:600;">Зелёным</span> помечены элементы общего <b>shell</b> (shell-parts/shell.css), остальное — Studio (studio-parts/studio-app/studio.css).</p>
+
+    <h3 id="s2-app">2.1 — Корень <code>.app</code> + <code>.main</code></h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:46px;">№</th><th style="width:230px;">Элемент / класс</th><th>Описание</th></tr></thead>
+      <tbody>
+        <tr><td>0.1</td><td><code>.app</code></td><td><code>display:flex; height:100%; overflow:hidden; bg --color-bg; color --color-text</code>. Атрибут <code>data-density="comfortable"|"compact"</code> (из твика Density).</td></tr>
+        <tr><td>0.2</td><td><code>.main</code></td><td><code>flex:1 1 auto; min-width:0; display:flex; flex-direction:column</code>. Содержит топбар + скролл.</td></tr>
+        <tr><td>0.3</td><td><code>.scroll</code></td><td><code>flex:1 1 auto; overflow-y:auto; overflow-x:hidden</code>. Единственная вертикально-прокручиваемая область.</td></tr>
+        <tr><td>0.4</td><td><code>.content.content--wide</code></td><td><code>max-width:var(--content-wide) 960; margin:0 auto; padding:28px 24px 96px; flex-direction:column; gap:20px</code>.</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 id="s2-sidebar"><span class="stg stg--shell">shell</span>2.2 — Sidebar <code>.sidebar</code> <span class="tagline">shell-parts.jsx</span></h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:46px;">№</th><th style="width:230px;">Элемент / класс</th><th>Описание</th></tr></thead>
+      <tbody>
+        <tr><td>2.1</td><td><code>aside.sidebar</code></td><td><code>flex:0 0 248px; flex-direction:column; gap:4px; padding:16px 14px; border-right:1px solid border; bg --color-bg</code>.</td></tr>
+        <tr><td>2.2</td><td><code>.brand</code></td><td><code>flex; align-items:center; gap:11px; padding:8px 8px 16px</code>. Содержит логотип + название.</td></tr>
+        <tr><td>2.3</td><td><code>.brand-mark</code> <span class="mono2">(Logo size=34 radius=10)</span></td><td>34×34, <code>radius-md 10; shadow-sm; display:block</code>. Каноничная марка-перо.</td></tr>
+        <tr><td>2.4</td><td><code>.brand-name</code> / <code>.brand-sub</code></td><td>«Pennedly» → <code class="tok">--text-h3</code> 19px / w600 / −0.01em / lh1. «Drafting partner» → <code class="tok">--text-caption</code> 12px / subtle / <code>margin-top:3px</code>.</td></tr>
+        <tr><td>2.5</td><td><code>nav.nav</code></td><td><code>flex-direction:column; gap:2px</code>. Рендерит <code>SHELL_NAV</code> — 3 группы.</td></tr>
+        <tr><td>2.6</td><td><code>.nav-cap</code> ×3</td><td>Заголовок группы: <code class="tok">--text-caption</code> 12px / w600 / 0.06em / uppercase / subtle; <code>padding:14px 12px 6px</code>. Тексты: «Workspace», «Insight», «Voice &amp; automation».</td></tr>
+        <tr><td>2.7</td><td><code>a.nav-item</code></td><td>(<code>ds/components.css</code>) <code>flex; gap:10px; padding:8px 12px; radius-md; --text-small 13px / w500 / muted; border:1px transparent</code>. <code>&lt;Icon 16&gt;</code> + <code>.nav-label</code> (+опц. <code>.nav-badge</code>).</td></tr>
+        <tr><td>2.8</td><td><code>.nav-item--active</code></td><td><code>bg surface-2; color text; font-weight:600</code>. Здесь активен <code>studio</code>, <code>aria-current="page"</code>.</td></tr>
+        <tr><td>2.9</td><td><code>.nav-badge</code></td><td><code>margin-left:auto; --text-caption / w600; bg surface-2; border; radius-full; min-width:20px; height:18px; padding:0 6px</code>. У активного → <code>color:text</code>. Значения: Studio=4, Replies=3, Audits=1.</td></tr>
+        <tr><td>2.10</td><td><code>.sidebar-foot</code></td><td><code>margin-top:auto; padding-top:10px; position:relative</code>. Содержит <code>&lt;AccountMenu&gt;</code> (§2.3).</td></tr>
+      </tbody>
+    </table></div>
+    <p class="section-note">Полный <code>SHELL_NAV</code> (shell-data): <b>Workspace</b> — Studio (badge 4), My Feed, Replies (badge 3, tester), Mentions (tester); <b>Insight</b> — Stats, Audits (badge 1), Pattern study, Explore patterns; <b>Voice &amp; automation</b> — Voice, Style rules, Autopilot (tester). <code>tester:true</code> = видно только тестерам.</p>
+
+    <h3 id="s2-account"><span class="stg stg--shell">shell</span>2.3 — AccountMenu <code>.account</code> + <code>.acct-menu</code> <span class="tagline">меню ВВЕРХ</span></h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:46px;">№</th><th style="width:230px;">Элемент / класс</th><th>Описание</th></tr></thead>
+      <tbody>
+        <tr><td>3.1</td><td><code>button.account</code></td><td>Триггер: <code>flex; gap:10px; width:100%; padding:8px; radius-md; border:1px transparent; bg transparent</code>. <code>aria-haspopup="menu"; aria-expanded</code>. Hover → <code>bg surface-2</code>.</td></tr>
+        <tr><td>3.2</td><td><code>&lt;Avatar size=32&gt;</code></td><td>Фото активного аккаунта (<code>.avatar-img</code>) или моно-фолбэк (<code>.avatar-mono</code>, инициалы). По умолчанию активен <b>Mara Lin · @mara.lin</b>.</td></tr>
+        <tr><td>3.3</td><td><code>.who .nm / .hd</code></td><td>Имя → <code class="tok">--text-small</code> 13px / w600 / lh1.2. Handle → <code class="tok">--text-caption</code> 12px / subtle / ellipsis.</td></tr>
+        <tr><td>3.4</td><td><code>.chev</code> <span class="mono2">(IcChevDown 15)</span></td><td><code>margin-left:auto; color:subtle</code>. При <code>aria-expanded="true"</code> → <code>rotate(180deg)</code> (transition base/standard).</td></tr>
+        <tr><td>3.5</td><td><code>.acct-scrim</code></td><td>Клик-ловушка при открытом меню: <code>position:fixed; inset:0; z-index:35</code>. Клик → закрыть.</td></tr>
+        <tr><td>3.6</td><td><code>.acct-menu</code></td><td>Поповер ВВЕРХ: <code>position:absolute; left:6px; right:6px; bottom:calc(100% + 8px); z-index:40; bg surface; border; radius-lg 14; shadow-lg; padding:6px; flex-column; gap:2px</code>. Анимация <code>dialog-in</code>.</td></tr>
+        <tr><td>3.7</td><td><code>.acct-cap</code></td><td>«Switch account» — <code class="tok">--text-caption</code> / w600 / 0.06em / uppercase / subtle; <code>padding:8px 10px 4px</code>.</td></tr>
+        <tr><td>3.8</td><td><code>button.acct-row</code> ×3</td><td><code>flex; gap:10px; padding:7px 8px; radius-md</code>. <code>&lt;Avatar 30&gt;</code> + <code>.who</code> (nm/hd) + <code>.acct-check</code> (<code>IcCheck 16</code>, color success) у активного / <code>.acct-check--off</code> (16px распорка) у остальных. <code>role="menuitemradio"</code>.</td></tr>
+        <tr><td>3.9</td><td><code>.acct-link</code> «Connect another account»</td><td><code>flex; gap:10px; padding:8px 10px; radius-md; --text-small / w500</code>. <code>&lt;IcPlus 17&gt;</code> в <code>.al-ico</code> (subtle).</td></tr>
+        <tr><td>3.10</td><td><code>.acct-sep</code></td><td>Разделитель: <code>height:1px; bg border; margin:6px 4px</code>.</td></tr>
+        <tr><td>3.11</td><td><code>.acct-id</code></td><td>Идентичность Pennedly-пользователя (отдельно от Threads-аккаунтов): <code>.ai-em</code> e-mail (<code>--text-small / w600 / text</code>) + <code>.ai-plan</code> (caption / subtle) с <code>.ai-dot</code> 6×6 accent. Значения: <b>mara@pennedly.com</b> · <b>Creator plan</b>.</td></tr>
+        <tr><td>3.12</td><td><code>a.acct-link</code> «Settings»</td><td><code>&lt;IcSettings 17&gt;</code> + ссылка на <code>Settings.html</code>.</td></tr>
+        <tr><td>3.13</td><td><code>button.acct-link--danger</code> «Log out»</td><td><code>color:danger</code>; <code>&lt;IcLogout 17&gt;</code> (danger). Hover → <code>bg mix(danger 12%, surface)</code>.</td></tr>
+      </tbody>
+    </table></div>
+    <p class="section-note"><code>SHELL_ACCOUNTS</code>: Mara Lin · @mara.lin (active) · Field Notes · @field.notes · Studio Mara · @studio.mara. Аватары — реальные фото из <code>assets/avatars/</code>, моно-инициалы только как фолбэк.</p>
+
+    <h3 id="s2-topbar"><span class="stg stg--shell">shell</span>2.4 — Topbar <code>.topbar.topbar--wide</code> <span class="tagline">studio-parts.jsx</span></h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:46px;">№</th><th style="width:230px;">Элемент / класс</th><th>Описание</th></tr></thead>
+      <tbody>
+        <tr><td>4.1</td><td><code>header.topbar</code></td><td><code>flex:0 0 auto; align-items:center; gap:16px; height:60px; border-bottom:1px solid border; bg color-mix(in srgb, --color-bg 86%, transparent); backdrop-filter:saturate(1.1) blur(8px); position:sticky; top:0; z-index:10</code>. Через <code>:has(&gt;.topbar-inner)</code> внешний <code>padding-inline</code> схлопывается в 0.</td></tr>
+        <tr><td>4.2</td><td><code>.topbar-inner.topbar--wide</code></td><td><code>width:100%; max-width:var(--content-wide) 960; margin-inline:auto; padding-inline:24px; flex; align-items:center; gap:16px</code>. Так заголовок выровнен по той же wide-ширине, что и контент.</td></tr>
+        <tr><td>4.3</td><td><code>.topbar-title</code></td><td>«Studio» — <code class="tok">--text-h3</code> 19px / w600 / −0.006em.</td></tr>
+        <tr><td>4.4</td><td><code>.status-pill</code></td><td>Voice-state. <code>--success</code> → «Voice active» (зелёная) при <code>voiceReady</code>; <code>--warning</code> → «Voice not set up» (янтарная) при first-run. <code>inline-flex; gap:7px; padding:5px 11px 5px 9px; radius-full; border; bg surface</code> + <code>.pill-dot</code> 7×7.</td></tr>
+        <tr><td>4.5</td><td><code>.topbar-spacer</code></td><td><code>flex:1 1 auto</code> — отталкивает действия вправо.</td></tr>
+        <tr><td>4.6</td><td><code>.topbar-actions</code></td><td><code>flex; gap:8px</code>. Две <code>.icon-btn</code>.</td></tr>
+        <tr><td>4.7</td><td><code>button.icon-btn</code> (тема)</td><td>36×36; <code>grid; place-items:center; radius-md; border:1px border; bg surface; color muted</code>. Иконка <code>&lt;IcSun 17&gt;</code> (в тёмной) / <code>&lt;IcMoon 16&gt;</code> (в светлой). <code>onClick</code> → твик dark.</td></tr>
+        <tr><td>4.8</td><td><code>button.icon-btn</code> (Settings)</td><td>То же; <code>&lt;IcSettings 17&gt;</code>. Hover обеих → <code>bg surface-2; color text</code>.</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 id="s2-composer">2.5 — Composer «Строка» <code>.composer</code></h3>
+    <p class="section-note"><b>«Строка»</b> — единый канонический композер. Свёрнут = строка-пилюля (<code>.composer-bar</code>); по фокусу/тексту раскрывается полка (<code>.composer-shelf</code>: чипы + сегмент 1–4 + Generate); ✨ (<code>.composer-spark</code>) подменяет полку палитрой идей (<code>--ideas</code>: loading → results → empty/error). Выбор идеи сидит бриф. <kbd>⌘/Ctrl+Enter</kbd> генерирует. Busy превращает весь блок в статус-строку. Класс-контракт сохранён: <code>.composer-input</code> — фокус-цель (studio-app <code>focusComposer</code> / EmptyState CTA).</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:230px;">Элемент / класс</th><th>Описание</th></tr></thead>
+      <tbody>
+        <tr><td><code>.composer</code> (+<code>.is-active</code>)</td><td><code>display:flex; flex-direction:column</code>. Обёртка. <code>.is-active</code> (фокус / есть текст / открыты идеи) → бар получает accent-рамку + shadow-md.</td></tr>
+        <tr><td colspan="2" style="background:var(--surface-2); font-weight:600;">Строка-бар:</td></tr>
+        <tr><td><code>.composer-bar</code> (+<code>.is-open</code>)</td><td><code>flex; align-items:center; gap:12px; min-height:60px; padding:10px 12px 10px 14px; bg surface; border:1px border; radius-2xl 28; shadow-sm</code>. <code>.is-open</code> → <code>align-items:flex-start; radius-xl 20</code> (переход radius/тень/рамка base/standard).</td></tr>
+        <tr><td><code>&lt;Avatar 38&gt;</code></td><td>Аватар пользователя, <code>flex:0 0 auto</code>. В открытом баре — <code>margin-top:3px</code>.</td></tr>
+        <tr><td><code>textarea.composer-input</code></td><td><code>flex:1; border:none; bg:transparent; resize:none; font-sans; --text-h3 19px; line-height:1.5; padding:4px 0 3px; min-height:28px; outline:none</code>. Авто-высота до <b>160px</b>. Placeholder «What do you want to write about? A topic, a hot take, a link…». <kbd>⌘/Ctrl+Enter</kbd> → Generate. (19px ≥ 16 → нет iOS-зума.)</td></tr>
+        <tr><td><code>kbd.composer-kbd</code></td><td>«⌘↵» — <code>font-mono 11px; subtle; border; radius 6; padding:3px 7px; align-self:center</code> (в открытом → flex-start, margin-top 6). <b>Скрыт на тач-экранах</b> (<code>@media (pointer:coarse)</code>) — без клавиатуры смысла нет.</td></tr>
+        <tr><td><code>button.composer-spark</code> (+<code>.is-on</code>)</td><td>✨-переключатель палитры идей. <code>40×40; radius-full; border 1px mix(accent 28%, border); bg mix(accent 9%, surface); color accent</code>. <code>.is-on</code> → <code>bg mix(accent 17%), border mix(accent 56%)</code> + иконка пульсирует (<code>ideas-pulse 1.5s</code>; reduced-motion → none). <code>aria-expanded</code>. На мобайле → 44×44.</td></tr>
+        <tr><td colspan="2" style="background:var(--surface-2); font-weight:600;">Полка (обычная) — <code>.composer-shelf</code>, раскрывается под баром:</td></tr>
+        <tr><td><code>.composer-shelf</code></td><td><code>margin-top:8px; bg surface; border; radius-lg 14; shadow-sm; padding:10px 12px; flex-direction:column; gap:10px; animation composer-shelf-in base/entrance</code> (reduced-motion → none).</td></tr>
+        <tr><td><code>.chips</code> + <code>button.chip</code></td><td>Скролл-ряд, <code>flex-wrap:nowrap; gap:7px; overflow-x:auto; mask-image</code> — правый фейд. Ведёт <code>.chip.chip--ideas</code> (accent-тинт, ✨ Ideas → brainstorm); далее 4 пресет-<code>.chip</code> (<code>inline-flex; gap:6px; --text-small/w500/muted; padding:6px 11px; border; radius-full</code> + <code>&lt;IcSparkle 13&gt;</code>), клик → подставляет текст. Тексты: «A lesson from this week», «React to a trend», «Reply to recent mentions», «An unpopular opinion».</td></tr>
+        <tr><td><code>.composer-shelf-tools</code></td><td><code>flex; align-items:center; gap:10px</code>. Ряд инструментов.</td></tr>
+        <tr><td><code>.composer-shelf-lbl</code></td><td>«Drafts» — <code>--text-caption/w600/0.06em/uppercase/subtle; white-space:nowrap</code>.</td></tr>
+        <tr><td><code>.count-seg</code> + <code>b</code> ×4</td><td>Сегмент 1–4 в один тап: <code>inline-flex; gap:2px; bg surface-2; border; radius-full; padding:2px</code>. <code>b</code> = 28×28, <code>radius-full; tabular-nums</code>; <code>b.on</code> = <code>bg --color-primary; color --color-primary-foreground; w600</code>. <code>role="radiogroup"</code>.</td></tr>
+        <tr><td><code>.composer-spacer</code></td><td><code>flex:1 1 auto</code> — отталкивает Generate вправо.</td></tr>
+        <tr><td><code>button.btn.btn--primary</code> «Generate»</td><td><code>&lt;IcNib 16&gt;</code> + «Generate». <code>disabled</code> при пустом брифе (<code>!value.trim()</code>).</td></tr>
+        <tr><td colspan="2" style="background:var(--surface-2); font-weight:600;">Палитра идей — <code>.composer-shelf.composer-shelf--ideas</code> (подменяет полку по ✨):</td></tr>
+        <tr><td><code>.ideas-head</code></td><td><code>flex; align-items:center; gap:10px; margin-bottom:11px</code>. <code>.ideas-cap</code> (<code>&lt;IcSparkle 12&gt;</code> + «Ideas in your voice», caption/w600/0.07em/uppercase/subtle) + <code>.ideas-head-acts</code> (margin-left auto).</td></tr>
+        <tr><td><code>.ideas-iconbtn</code> ×1–2</td><td>30×30 (мобайл 44×44), <code>radius-md; color subtle</code>; hover → surface-2. «⟳ More ideas» (<code>IcTweak 16</code>) — <b>только для results</b>; «✕ Close» (<code>IcX 16</code>) — всегда.</td></tr>
+        <tr><td><code>.ideas-loading</code> + скелетоны</td><td>loading: <code>.ideas-loading</code> (пульсирующий <code>.spark</code> <code>IcSparkle 17</code> + <code>.ideas-loading-text</code> «Brainstorming ideas in your voice…») + <code>.ideas-skel-list</code> = 3× <code>.ideas-skel-card</code> (60px, shimmer 1.4s).</td></tr>
+        <tr><td><code>.ideas-list</code> + <code>.idea-card</code></td><td>results: <code>flex-column; gap:8px; max-height:348px; overflow-y:auto</code> (мобайл 56vh). Карточка: <code>flex; align-items:flex-start; gap:12px; padding:11px 13px; border; radius-md; bg surface</code>; hover/focus → accent-рамка + tint. Внутри <code>.idea-text</code> (<code>.idea-hook</code> body/w600 + <code>.idea-angle</code> small/muted) + <code>.idea-use</code>.</td></tr>
+        <tr><td><code>.idea-use</code></td><td>«Use» (<code>IcArrowUp 14</code>) — <code>inline-flex; caption/w600/accent; padding:4px 9px 4px 7px; radius-full; bg mix(accent 10%); border mix(accent 26%)</code>. На вебе — <b>opacity 0, проявляется по hover/focus карточки</b>; на тач/мобайле — <b>всегда виден</b>. Клик по карточке → <code>pickIdea</code>: заменяет текст брифа хуком, закрывает палитру, фокус в инпут.</td></tr>
+        <tr><td><code>.ideas-empty</code> <span class="tagline">пусто</span></td><td>empty (0 идей, без фейк-карточек): <code>.ideas-empty-t</code> «No fresh ideas this time» (small/w600) + <code>.ideas-empty-s</code> (caption/subtle) + <code>.ideas-empty-acts</code> = <code>.ideas-retry</code> «Try again» (перезапуск brainstorm) + <code>.ideas-ghostbtn</code> «Close».</td></tr>
+        <tr><td><code>.ideas-error</code> <span class="tagline">ошибка</span></td><td>error (503 / сбой): <code>flex; gap:10px; flex-wrap; padding:10px 12px; bg mix(danger 8%, surface); border mix(danger 30%, border); radius-md</code> — тон danger. <code>.ie-ico</code> (<code>IcAlert 17</code>, danger) + <code>.ideas-error-text</code> «Couldn’t reach the idea service. Your brief is safe.» + <code>.ideas-retry</code> «Try again» (margin-left auto). Палитра <b>не схлопывается сама</b>.</td></tr>
+        <tr><td><code>.ideas-seeded-note</code></td><td>После выбора идеи — в ряду инструментов полки: <code>inline-flex; gap:6px; --text-caption; color accent; white-space:nowrap</code> + <code>&lt;IcSparkle 13&gt;</code> «Seeded from an idea». Сбрасывается при правке текста.</td></tr>
+        <tr><td colspan="2" style="background:var(--surface-2); font-weight:600;">Busy-вид (генерация) — заменяет весь composer:</td></tr>
+        <tr><td><code>.composer.composer--busy</code></td><td><code>border 1px mix(accent 45%, border); bg surface; radius-2xl 28; shadow-sm; padding:15px 16px</code>.</td></tr>
+        <tr><td><code>.drafting</code> + <code>.nib</code></td><td><code>flex; align-items:center; gap:12px; padding:6px 2px</code>. <code>.nib</code> 22×22 (<code>IcNib 22</code>), color text, <b>каноничная</b> <code>nib-write 1.5s</code>.</td></tr>
+        <tr><td><code>.drafting-text</code> + <code>.dots</code></td><td>«Drafting <b>{count}</b> posts in your voice» (--text-h3, count в <code>&lt;b&gt;</code> w600) + 3 точки <code>.dots i</code> 4×4 subtle, <code>dot-pulse 1.2s</code>, delay 0.18/0.36s.</td></tr>
+        <tr><td colspan="2" style="background:var(--surface-2); font-weight:600;">First-run превью (под hero):</td></tr>
+        <tr><td><code>.composer--disabled.fr-disabled-composer</code></td><td>Декоративная «Строка» (только <code>.composer-bar</code>, без полки): <code>filter:grayscale(1)/saturate(0.6); opacity:0.55; pointer-events:none; user-select:none</code>. Текст «Set up your voice to start drafting…», аватар + ✨ + ⌘↵ (десатурированы). Живёт под first-run hero.</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 id="s2-filter">2.6 — Табы-фильтры <code>.filterbar</code></h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:230px;">Элемент / класс</th><th>Описание</th></tr></thead>
+      <tbody>
+        <tr><td><code>.filterbar</code></td><td><code>flex; gap:4px; padding:4px; bg surface-2; border; radius-md; position:sticky; top:12px; z-index:5</code>. <code>role="tablist"</code>.</td></tr>
+        <tr><td><code>button.filter</code> ×4</td><td><code>flex:1 1 0; inline-flex; justify-content:center; gap:8px; height:36px; padding:0 10px; --text-small / w500 / muted; border:1px transparent; radius-sm</code>. <code>role="tab"</code>. Содержит <code>.fdot</code> + <code>.flabel</code> + <code>.fcount</code>.</td></tr>
+        <tr><td><code>.filter--active</code></td><td><code>bg surface; color text; font-weight:600; border-color border; box-shadow shadow-sm</code>.</td></tr>
+        <tr><td><code>.fdot.dot-{key}</code></td><td>7×7 точка статуса: draft → <code class="tok">--color-ink-400</code> #a2a19c; ready → accent; published → success; rejected → danger.</td></tr>
+        <tr><td><code>.fcount</code></td><td><code class="tok">--text-caption</code> / w600 / subtle / tabular-nums. У активного таба → <code>color:text-muted</code>. Считается из числа карточек в каждом статусе.</td></tr>
+      </tbody>
+    </table></div>
+    <p class="section-note">Порядок и тексты (<code>filters</code> в studio-app): <b>Ready to publish</b> (key <code>ready</code>, <b>дефолтный активный</b>) · <b>Drafts</b> (<code>draft</code>) · <b>Published</b> (<code>published</code>) · <b>Rejected</b> (<code>rejected</code>). Мобайл ≤560 → <code>.flabel</code> скрыт, остаются точка + счётчик.</p>
+
+    <h3 id="s2-feed">2.7 — Лента <code>.feed</code> + служебные блоки</h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:230px;">Элемент / класс</th><th>Описание</th></tr></thead>
+      <tbody>
+        <tr><td><code>.feed</code></td><td><code>flex-direction:column; gap:14px</code> (compact → gap:10px). Рендерит ОДНО из: skeleton×3 (loading) / ErrorBanner (error) / EmptyState (пусто) / карточки. При generating+таб Drafts — N скелетонов сверху.</td></tr>
+        <tr><td><code>.draft.skeleton</code> <span class="mono2">(SkeletonCard)</span></td><td>Та же оболочка <code>.draft</code>, <code>pointer-events:none</code>. Внутри <code>.skel-line</code> с <code>shimmer 1.4s linear infinite</code>: аватар-круг 34, две строки шапки, три строки тела (96% / 100% / 62%).</td></tr>
+        <tr><td><code>.empty</code> <span class="mono2">(EmptyState)</span></td><td><code>flex-column; align-items:center; text-align:center; padding:56px 24px; border:1px dashed border; radius-lg; bg mix(surface 50%, transparent)</code>. <code>.empty-mark</code> 52×52 (IcNib 24) + <code>.empty-title</code> (h3/w600) + <code>.empty-sub</code> (small/muted/max38ch) + опц. <code>.btn--secondary</code> CTA в composer.</td></tr>
+        <tr><td><code>&lt;ErrorBanner&gt;</code> <span class="mono2 stg stg--shell" style="border:none;padding:0;">shell</span></td><td><code>.error-banner</code>: <code>flex; gap:14px; padding:16px 18px; bg mix(danger 9%, surface); border 1px mix(danger 32%, border); radius-lg; animation card-in</code>. <code>.eb-mark</code> 34×34 круг (IcX 18, danger) + <code>.eb-title</code> (small/w600) + <code>.eb-sub</code> (caption/muted) + <code>.btn--secondary.btn--sm</code> «Retry» (IcUndo 15).</td></tr>
+      </tbody>
+    </table></div>
+    <p class="section-note">Per-tab empty-копи (<code>EMPTY</code>): draft → «No drafts waiting» + CTA «Write something»; ready → «Nothing ready to publish»; published → «Nothing published yet»; rejected → «No rejected drafts». Loading всегда = ровно 3 скелетона; error-заголовок Studio = «Couldn’t load your drafts», Retry → возвращает state в Normal.</p>
+
+    <h3 id="s2-draft">2.8 — Карточка черновика <code>.draft</code> <span class="tagline">DraftCard</span></h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:230px;">Элемент / класс</th><th>Описание</th></tr></thead>
+      <tbody>
+        <tr><td><code>article.draft</code></td><td>База: <code>bg surface; border:1px border; radius-lg 14; shadow-sm; padding:16px 18px 14px; animation card-in var(--duration-slow) var(--ease-entrance) both</code>. Hover → <code>border mix(text 14%, border)</code>. Класс-модификаторы по статусу + <code>--leaving</code>.</td></tr>
+        <tr><td><code>.draft-head</code></td><td><code>flex; align-items:center; gap:11px</code>. <code>&lt;Avatar 38&gt;</code> + <code>.draft-id</code> (имя/сабтайтл) + <code>&lt;StatusBadge&gt;</code>.</td></tr>
+        <tr><td><code>.draft-name</code> / <code>.draft-sub</code></td><td>Имя → <code>--text-small / w600 / lh1.25</code>. Саб → <code>--text-caption / subtle</code>, <code>flex; gap:6px; flex-wrap</code>: handle · (если reply: <code>&lt;IcReply 12&gt;</code> «replying to {who}») · время. <code>.sep</code> opacity 0.6.</td></tr>
+        <tr><td><code>&lt;StatusBadge&gt;</code></td><td>Пилюля статуса с <code>.pill-dot</code>: <b>Draft</b> = <code>badge--neutral</code> (точка ink-400); <b>Ready</b> = кастом (bg mix(accent 13%,surface), color accent, border mix(accent 30%)); <b>Published</b> = <code>badge--good</code> (success); <b>Rejected</b> = <code>badge--bad</code> (danger).</td></tr>
+        <tr><td><code>.reply-ctx</code></td><td>Контекст ответа (только kind=reply): <code>flex; gap:9px; margin-top:12px; padding:10px 12px; bg surface-2; border; radius-md</code>. <code>.rc-bar</code> 2px полоса + <code>.rc-who</code> (caption/w600/muted) + <code>.rc-txt</code> (small/muted/lh1.5).</td></tr>
+        <tr><td><code>p.draft-body</code></td><td>Тело: <code>--text-body 15px; line-height:1.62; color text; margin-top:12px; white-space:pre-wrap; text-wrap:pretty</code>. У published → <code>color:text-muted</code>. Compact → <code>--text-small; margin-top:9px</code>.</td></tr>
+        <tr><td><code>textarea.edit-area</code> <span class="mono2">(editing)</span></td><td><code>width:100%; margin-top:10px; font-sans; --text-body; lh1.62; border:1px accent; radius-md; padding:11px 12px; resize:vertical; box-shadow:0 0 0 3px mix(accent 18%, transparent)</code>. Авто-высота. Ниже — <code>&lt;CharMeter&gt;</code>.</td></tr>
+        <tr><td><code>.charmeter</code> <span class="mono2">(CharMeter)</span></td><td><code>flex; gap:10px; margin-top:10px</code>. <code>.track</code> (h4, radius-full, bg surface-2, border) + <code>.fill</code> (subtle) + <code>.cc</code> «{len} / 500» (caption/tabular). <code>.warn</code> при len&gt;440 → fill/cc warning; <code>.over</code> при len&gt;500 → danger (cc w600).</td></tr>
+        <tr><td><code>.translate-bar</code> <span class="mono2">(translated)</span></td><td>Под переведённым телом: <code>inline-flex; gap:8px; margin-top:9px; padding:5px 11px; --text-caption / subtle; bg surface-2; border; radius-full</code>. <code>&lt;IcGlobe 13&gt;</code> + «Translated to {native}» + <code>.tb-dot</code> + <code>.tb-orig</code> «Show original» (accent/w600).</td></tr>
+        <tr><td><code>.revised-note</code></td><td>«Revised just now»: <code>inline-flex; gap:5px; --text-caption; color accent; margin-top:10px</code> + <code>&lt;IcSparkle 13&gt;</code>. (В revising — тот же класс с «Revising in your voice…» + IcTweak.)</td></tr>
+        <tr><td><code>.tweakbar</code> <span class="mono2">(tweaking)</span></td><td><code>flex; gap:8px; margin-top:12px; padding:8px 8px 8px 12px; bg surface-2; border:1px mix(accent 40%, border); radius-md; animation card-in</code>. <code>&lt;IcTweak 16&gt;</code> (accent) + input «What should change? e.g. make it punchier…» + <code>.btn--primary.btn--sm</code> (IcSend 15, disabled при пустом).</td></tr>
+        <tr><td><code>.tweak-suggest</code> + <code>.ts</code> ×4</td><td><code>flex; flex-wrap; gap:6px; margin-top:9px</code>. Чип-подсказка: <code>--text-caption / muted; padding:4px 9px; border; radius-full; bg surface</code>. Тексты: «Make it punchier», «Make it shorter», «End on a question», «Warmer tone».</td></tr>
+        <tr><td><code>.draft-foot</code></td><td><code>flex; align-items:center; gap:10px; margin-top:14px; padding-top:13px; border-top:1px solid border</code>. Содержимое РАЗНОЕ по статусу (см. §2.8.1). Мобайл ≤560 → wrap. Compact → margin-top:11px; padding-top:10px.</td></tr>
+        <tr><td><code>.draft-meta</code></td><td><code>flex; gap:10px; flex:1</code>. <code>.cc-inline</code> «N / 500» (caption/tabular/subtle) + <code>.meta-sep</code> (3×3 точка) + <code>.voice-tag</code>.</td></tr>
+        <tr><td><code>.voice-tag</code></td><td><code>inline-flex; gap:5px; --text-caption / subtle</code>. Скрыт ≤720px. draft → IcSparkle «In your voice»; ready → IcCheck «Ready to publish».</td></tr>
+        <tr><td><code>.draft-actions</code></td><td><code>flex; gap:8px; flex:0 0 auto</code>. = <code>&lt;CardMenu&gt;</code> + ОДНА primary-кнопка <code>.btn--sm</code>.</td></tr>
+        <tr><td><code>.draft-stats</code> <span class="mono2">(published)</span></td><td><code>flex; gap:16px; flex:1</code>. Три <code>.stat</code> (small/muted/tabular): <code>&lt;IcHeart 15&gt;</code> лайки · <code>&lt;IcBubble 15&gt;</code> ответы · <code>&lt;IcRepost 15&gt;</code> репосты.</td></tr>
+      </tbody>
+    </table></div>
+    <h4 id="s2-foot">2.8.1 — Футер по статусу (ровно одна primary + всё вторичное в ⋯)</h4>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:90px;">Статус</th><th>Лево (meta)</th><th>⋯-меню (вторичное)</th><th>Primary</th></tr></thead>
+      <tbody>
+        <tr><td><b>draft</b></td><td>«N / 500» · <span class="mono2">In your voice</span></td><td>Reject draft <span style="color:var(--danger)">(danger)</span> · Tweak in your voice · Edit · <b>Translate</b></td><td class="val">Approve (IcCheck)</td></tr>
+        <tr><td><b>ready</b></td><td>«N / 500» · <span class="mono2">Ready to publish</span></td><td>Send back to drafts · Edit · <b>Translate</b></td><td class="val">Publish to Threads (IcStudio)</td></tr>
+        <tr><td><b>published</b></td><td>статы: лайки/ответы/репосты</td><td>только <b>Translate</b></td><td class="val">Open in Threads (IcExternal, ↗ threads.net)</td></tr>
+        <tr><td><b>rejected</b></td><td>«Passed on · won't be published»</td><td>Restore to drafts · <b>Translate</b></td><td class="val">— (нет primary)</td></tr>
+        <tr><td><b>editing</b></td><td>«Editing»</td><td>—</td><td class="val">Cancel (ghost) + Save (disabled при пустом / &gt;500)</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 id="s2-cardmenu">2.9 — ⋯-меню <code>.card-menu</code> <span class="tagline">CardMenu</span></h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:230px;">Элемент / класс</th><th>Описание</th></tr></thead>
+      <tbody>
+        <tr><td><code>.card-menu-anchor</code></td><td><code>position:relative</code>. Триггер = <code>.icon-btn</code> 34×34 (override) c <code>&lt;IcMore 17&gt;</code>, <code>aria-haspopup="menu"; aria-expanded</code>.</td></tr>
+        <tr><td><code>.card-menu</code></td><td><code>position:absolute; right:0; bottom:calc(100% + 8px); z-index:20; min-width:200px; padding:6px; bg surface; border; radius-lg 14; shadow-lg; flex-column; gap:2px; max-height:360px; overflow-y:auto; animation dialog-in</code>. (Раскрывается ВВЕРХ.)</td></tr>
+        <tr><td><code>.card-menu-item</code></td><td><code>flex; gap:10px; width:100%; padding:8px 10px; radius-md; border:1px transparent; --text-small / w500 / text</code>. Hover → <code>bg surface-2</code>. <code>.cmi-ico</code> (15, subtle) + <code>.cmi-label</code>.</td></tr>
+        <tr><td><code>.card-menu-item--danger</code></td><td><code>color:danger</code> (и иконка danger); hover → <code>bg mix(danger 10%, transparent)</code>. Только «Reject draft».</td></tr>
+        <tr><td><code>Translate</code> (root)</td><td><code>.card-menu-item</code> с <code>&lt;IcGlobe 15&gt;</code> + «Translate» + <code>.cmi-caret</code> (IcChevDown 13, rotate −90°). Открывает sub-режим.</td></tr>
+        <tr><td><code>«Show original»</code></td><td>Появляется в root, только если тело уже переведено (currentLang ≠ null). <code>&lt;IcUndo 15&gt;</code>.</td></tr>
+        <tr><td><code>.card-menu-back</code></td><td>«Translate to» — <code>border-bottom:1px border; --text-caption / w600 / 0.04em / uppercase / subtle</code> + <code>&lt;IcArrowLeft 14&gt;</code>. Возврат в root.</td></tr>
+        <tr><td><code>.cmi-lang</code> ×8 (translate)</td><td>На пункт: <code>.cmi-lname</code> (англ. название) + <code>.cmi-native</code> (native, caption/subtle), у выбранного — <code>.cmi-check</code> (IcCheck 14, success) и <code>.card-menu-item--on</code> (bg surface-2). <code>role="menuitemradio"</code>. «English» помечен как «Original».</td></tr>
+      </tbody>
+    </table></div>
+    <p class="section-note">8 локалей (<code>UI_LANGS</code>): English (Original) · Spanish/Español · German/Deutsch · French/Français · Italian/Italiano · Portuguese/Português · Russian/Русский · Ukrainian/Українська. Закрытие меню — <code>mousedown</code> вне якоря.</p>
+
+    <h3 id="s2-dialog">2.10 — Диалог публикации <code>.overlay</code> + <code>.dialog</code> <span class="tagline">PublishDialog</span></h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:230px;">Элемент / класс</th><th>Описание</th></tr></thead>
+      <tbody>
+        <tr><td><code>.overlay</code></td><td><code>position:absolute; inset:0; display:grid; place-items:center; padding:24px; bg mix(ink-950 55%, transparent); backdrop-filter:blur(3px); z-index:30</code>. Клик по фону (target === currentTarget) → Cancel.</td></tr>
+        <tr><td><code>.dialog</code></td><td><code>width:100%; max-width:420px; bg surface; border; radius-2xl 28; shadow-lg; padding:24px; animation dialog-in</code>. <code>role="dialog"; aria-modal="true"</code>. Escape → Cancel.</td></tr>
+        <tr><td><code>.dialog-head</code></td><td><code>flex; gap:12px</code>. <code>.dialog-mark</code> 38×38 (radius-md, bg surface-2, border, IcStudio 18) + заголовок.</td></tr>
+        <tr><td><code>.dialog-title</code> / <code>.dialog-sub</code></td><td>«Publish to Threads?» (h3/w600/lh1.3) + «This posts immediately and publicly. You can still delete it from Threads afterwards.» (small/muted).</td></tr>
+        <tr><td><code>.pub-account</code></td><td><code>flex; gap:10px; margin-top:4px; padding:10px 12px; bg surface-2; border; radius-md</code>. <code>&lt;Avatar 30&gt;</code> + <code>.pa-t</code> (<b>имя</b> + <span>handle subtle</span>).</td></tr>
+        <tr><td><code>.pub-preview</code></td><td>Превью текста: <code>margin-top:14px; padding:14px; bg surface-2; border; radius-md; --text-body; lh1.6; white-space:pre-wrap; max-height:220px; overflow-y:auto</code>. Ниже — <code>&lt;CharMeter&gt;</code> (с баром).</td></tr>
+        <tr><td><code>.dialog-actions</code></td><td><code>flex; justify-content:flex-end; gap:10px; margin-top:22px</code>. <code>.btn--ghost</code> «Cancel» + <code>.btn--primary</code> «Publish now» (IcCheck 16). При over (&gt;500) → «Too long to publish», <code>disabled</code>.</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 id="s2-toast">2.11 — Тосты <code>.toast-host</code> <span class="tagline">Toasts</span></h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:230px;">Элемент / класс</th><th>Описание</th></tr></thead>
+      <tbody>
+        <tr><td><code>.toast-host</code></td><td><code>position:fixed; bottom:20px; left:50%; transform:translateX(-50%); flex-direction:column; gap:10px; z-index:60</code>. Стек снизу-центр.</td></tr>
+        <tr><td><code>.toast</code></td><td><code>flex; align-items:flex-start; gap:12px; bg surface; border; radius-lg; shadow-lg; padding:14px 16px; min-width:280px; animation toast-in var(--duration-slow) var(--ease-entrance)</code>.</td></tr>
+        <tr><td><code>.toast-mark</code></td><td>8×8 точка, <code>margin-top:6px</code>: success → success, error → danger.</td></tr>
+        <tr><td><code>.toast-title</code> / <code>.toast-sub</code></td><td>Заголовок (small/w600) + опц. саб (caption/muted/margin-top:2px).</td></tr>
+        <tr><td><code>button.toast-undo</code></td><td>«Undo» — <code>margin-left:8px; --text-small / w600; color accent</code>. Откатывает патч статуса.</td></tr>
+      </tbody>
+    </table></div>
+    <p class="section-note">Авто-скрытие <b>4800ms</b>. Тосты: Approve → «Approved» / «Moved to Ready to publish» + Undo; Reject → «Draft rejected» / «Moved to Rejected» + Undo; Restore → «Restored to drafts»; Edit → «Edit saved»; Publish → «Published to Threads» / {handle}.</p>
+
+    <h3 id="s2-firstrun">2.12 — First-run hero <code>.firstrun</code> <span class="tagline">FirstRun</span></h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:230px;">Элемент / класс</th><th>Описание</th></tr></thead>
+      <tbody>
+        <tr><td><code>.firstrun</code></td><td><code>position:relative; bg surface; border; radius-xl 20; shadow-sm; padding:28px 28px 26px; overflow:hidden</code>. Замещает composer+feed, когда голос не настроен.</td></tr>
+        <tr><td><code>.fr-mark</code> <span class="mono2">(Logo 46)</span></td><td>46×46; radius-md; shadow-sm.</td></tr>
+        <tr><td><code>.fr-eyebrow</code> / <code>h2</code> / <code>p</code></td><td>«Welcome to Pennedly» (caption/w600/0.06em/uppercase/accent) → «First, let's capture your voice.» (<code class="tok">--text-h2</code> 24/w600) → лид (body/muted/max52ch).</td></tr>
+        <tr><td><code>.fr-steps</code> + <code>.fr-step</code> ×3</td><td><code>flex-column; gap:2px; margin:20px 0 22px</code>. Шаг: <code>flex; gap:12px; padding:11px 0; border-top:1px border</code> (первый без). <code>.fr-num</code> 24×24 круг (caption/w600, bg surface-2) + <code>.fs-t</code> (small/w600) + <code>.fs-d</code> (small/muted).</td></tr>
+        <tr><td><code>.fr-actions</code></td><td><code>flex; gap:12px</code>. <code>.btn--primary</code> «Set up your voice» (IcVoice 16) + «~2 minutes» (subtle).</td></tr>
+        <tr><td><code>.fr-disabled-composer</code></td><td>Декоративный неактивный composer: <code>opacity:0.55; pointer-events:none; filter:saturate(0.6)</code>, текст «Set up your voice to start drafting…».</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- ===================== 3 ===================== -->
+  <section id="s3">
+    <h2><span class="h2n">3</span>Раскладка и адаптив</h2>
+    <p class="section-note">Веб vs мобайл по каждому управляющему параметру. Брейкпоинты <code>studio.css</code>: <b>880px</b> (сайдбар → icon-rail), <b>720px</b> (voice-tag в карточке), <b>560px</b> (контент-паддинг, табы, полка «Строки», draft-foot, topbar-inner); плюс <code>@media (pointer:coarse)</code> прячет ⌘↵. Между ними wide-колонка просто ужимается за счёт <code>max-width</code> + паддингов.</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:180px;">Параметр</th><th>Веб (&gt; 880px)</th><th>Планшет 560–880</th><th>Мобайл (≤ 560px)</th></tr></thead>
+      <tbody>
+        <tr><td><code>.sidebar</code></td><td class="val">flex-basis 248px; padding 16/14; полные лейблы</td><td class="val">basis 72px; padding 16/10; <b>icon-rail</b></td><td class="val">basis 72px; icon-rail</td></tr>
+        <tr><td>скрыто в rail</td><td class="val">—</td><td class="val">brand-name/-sub, nav-cap, nav-label, nav-badge, account who+chev → display:none; бренд/nav/account центрируются</td><td class="val">то же</td></tr>
+        <tr><td><code>.acct-menu</code></td><td class="val">left 6 / right 6 (по ширине foot)</td><td class="val">left 8; right auto; <b>width 248</b></td><td class="val">left 8; width 248</td></tr>
+        <tr><td><code>.content</code> ширина</td><td class="val">max-width 960 (wide); center</td><td class="val">960, ужимается паддингом</td><td class="val">100% − паддинг</td></tr>
+        <tr><td><code>.content</code> паддинг</td><td class="val">28px 24px 96px</td><td class="val">28px 24px 96px</td><td class="val">18px 14px 88px</td></tr>
+        <tr><td><code>.topbar-inner</code> паддинг</td><td class="val">padding-inline 24</td><td class="val">24</td><td class="val">14</td></tr>
+        <tr><td><code>.topbar</code> высота</td><td class="val">60px (sticky)</td><td class="val">60px</td><td class="val">60px</td></tr>
+        <tr><td>таб <code>.filter</code></td><td class="val">точка + лейбл + счётчик</td><td class="val">точка + лейбл + счётчик</td><td class="val"><code>.flabel</code> скрыт → точка + счётчик</td></tr>
+        <tr><td><code>.composer-bar</code></td><td class="val">avatar + input + ⌘↵ + ✨ в ряд</td><td class="val">то же</td><td class="val">то же; ⌘↵ скрыт (coarse pointer), ✨ 44×44</td></tr>
+        <tr><td>полка tools</td><td class="val">DRAFTS · 1·2·3·4 · Generate в ряд</td><td class="val">в ряд</td><td class="val">wrap: DRAFTS·1·2·3·4 (ряд 1), seeded (свой ряд), Generate во всю ширину (свой ряд); чипы — скролл-ряд с фейдом</td></tr>
+        <tr><td>карточка <code>.voice-tag</code></td><td class="val">видна</td><td class="val">скрыта (≤720)</td><td class="val">скрыта</td></tr>
+        <tr><td><code>.draft-foot</code></td><td class="val">одна строка</td><td class="val">одна строка</td><td class="val">flex-wrap (meta + actions переносятся)</td></tr>
+        <tr><td>⋯ <code>.card-menu</code></td><td class="val">min-width 200; вверх; right:0</td><td class="val">то же</td><td class="val">то же (вписывается в карточку)</td></tr>
+        <tr><td><code>PublishDialog</code></td><td class="val">max-width 420; центр overlay; padding 24</td><td class="val">то же</td><td class="val">overlay padding 24 → диалог ужимается до 100%−48</td></tr>
+        <tr><td><code>Toasts</code></td><td class="val">снизу-центр; min-width 280</td><td class="val">то же</td><td class="val">то же; ужимается по вьюпорту</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note good"><b>Выравнивание топбара ↔ контента.</b> Оба используют ОДНУ wide-ширину 960: контент через <code>.content--wide</code>, топбар через <code>.topbar-inner.topbar--wide</code>. <code>.topbar:has(&gt;.topbar-inner){padding-inline:0}</code> отдаёт паддинг внутреннему ряду, чтобы левый край «Studio» совпадал с левым краем composer. Проверяй на каждой точке перелома.</div>
+
+    <h3>3.1 — Density (сквозной)</h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:180px;">Что</th><th>Comfortable (default)</th><th>Compact <code>[data-density="compact"]</code></th></tr></thead>
+      <tbody>
+        <tr><td><code>.draft</code> padding</td><td class="val">16px 18px 14px</td><td class="val">13px 16px 11px</td></tr>
+        <tr><td><code>.draft-body</code></td><td class="val">--text-body 15px; margin-top 12</td><td class="val">--text-small 13px; margin-top 9</td></tr>
+        <tr><td><code>.feed</code> gap</td><td class="val">14px</td><td class="val">10px</td></tr>
+        <tr><td><code>.draft-foot</code></td><td class="val">margin-top 14; padding-top 13</td><td class="val">margin-top 11; padding-top 10</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- ===================== 4 ===================== -->
+  <section id="s4">
+    <h2><span class="h2n">4</span>Все состояния — по очереди</h2>
+    <p class="section-note">Каждое состояние shell, composer, табов, ленты, карточки, ⋯-меню, диалога, тостов, first-run, density и темы + интерактив каждого кликабельного элемента. Ничего не пропущено.</p>
+
+    <h3 id="s4-shell"><span class="stg stg--shell">shell</span>Аккаунт-меню: закрыто / открыто</h3>
+    <div class="statebar"><span class="st">account: closed</span><span class="st">account: open (scrim + меню вверх)</span><span class="st">switch row hover</span><span class="st">active row (галочка)</span><span class="st">danger: Log out</span></div>
+    <ul>
+      <li><b>closed</b> — только <code>.account</code>: Avatar 32 + имя/handle + <code>.chev</code> (rotate 0°). <code>aria-expanded="false"</code>. Hover → bg surface-2.</li>
+      <li><b>open</b> — <code>aria-expanded="true"</code>: chev rotate 180°; рендерится <code>.acct-scrim</code> (z35) и <code>.acct-menu</code> ВВЕРХ (z40, anim dialog-in). Структура: «Switch account» cap → 3 <code>.acct-row</code> (у активного — IcCheck success, у прочих — распорка) → «Connect another account» → <code>.acct-sep</code> → <code>.acct-id</code> (mara@pennedly.com · Creator plan) → «Settings» → «Log out» (danger).</li>
+      <li><b>закрытие</b> — клик по <code>.acct-scrim</code> или по любому пункту.</li>
+    </ul>
+
+    <h3 id="s4-composer">Composer «Строка»: все состояния</h3>
+    <div class="statebar"><span class="st">collapsed</span><span class="st">open · пусто</span><span class="st">open · текст</span><span class="st">seeded</span><span class="st">ideas · loading</span><span class="st">ideas · results</span><span class="st">ideas · empty</span><span class="st">ideas · error</span><span class="st">busy</span><span class="st">first-run превью</span></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:150px;">Состояние</th><th>Что показано</th></tr></thead>
+      <tbody>
+        <tr><td><b>collapsed</b></td><td>Только <code>.composer-bar</code> (пилюля): аватар + инпут (placeholder) + ⌘↵ + ✨. Полки нет. Не <code>.is-active</code>.</td></tr>
+        <tr><td><b>open · пусто</b></td><td>Фокус (или есть текст) → <code>.is-active</code>, бар <code>.is-open</code> (accent-рамка + shadow-md), под ним <code>.composer-shelf</code>: чипы + tools. Generate <code>disabled</code>.</td></tr>
+        <tr><td><b>open · текст</b></td><td>Есть непробельный текст → Generate активна; <kbd>⌘/Ctrl+Enter</kbd> тоже генерирует.</td></tr>
+        <tr><td><b>seeded</b></td><td>После выбора идеи: бриф заполнен хуком, в ряду инструментов — <code>.ideas-seeded-note</code> «Seeded from an idea». Сбрасывается при правке.</td></tr>
+        <tr><td><b>ideas · loading</b></td><td>✨ нажат (<code>.is-on</code>, пульс) → полка = <code>--ideas</code>: заголовок + <code>.ideas-loading</code> + 3 скелетона. Через ~850ms → результат.</td></tr>
+        <tr><td><b>ideas · results</b></td><td><code>.ideas-list</code> хук+angle карточек (Use по hover на вебе / всегда на тач). ⟳ «More ideas» перегенерирует; ✕ закрывает.</td></tr>
+        <tr><td><b>ideas · empty</b></td><td>0 идей: честная строка «No fresh ideas this time» + «Try again» / «Close». Без фейк-карточек.</td></tr>
+        <tr><td><b>ideas · error</b></td><td>Сбой (503): инлайн-ошибка в тоне danger (<code>.ideas-error</code>) + «Try again». Палитра НЕ схлопывается сама; ✕ в шапке всё ещё закрывает.</td></tr>
+        <tr><td><b>busy</b></td><td>После Generate — <code>.composer--busy</code> + <code>.drafting</code>: nib-write + «Drafting {N} posts in your voice» + 3 dot-pulse. Параллельно фильтр → Drafts, сверху ленты N скелетонов; через 1600ms — N черновиков, composer очищается.</td></tr>
+        <tr><td><b>first-run превью</b></td><td>При <code>account="First-run"</code> — под hero декоративная «Строка» (<code>.composer--disabled</code>): desaturated, <code>pointer-events:none</code>, «Set up your voice to start drafting…».</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note"><b>Обзор идей — ephemeral.</b> Идеи бесплатны и одноразовы: нет сохранённой библиотеки, квоты или стоимости. Реальные триггеры под-состояний: results = brainstorm вернул хуки, empty = 0 хуков, error = запрос упал. Для ревью все три гоняются твиком <code>ideas</code> (Results / Empty / Error).</div>
+
+    <h3 id="s4-tabs">Табы-фильтры</h3>
+    <div class="statebar"><span class="st">active: Ready to publish (default)</span><span class="st">inactive</span><span class="st">hover</span><span class="st">каждый со счётчиком</span></div>
+    <p>Активный таб (по умолчанию <b>Ready to publish</b>): bg surface, w600, shadow-sm, граница border. Неактивные — прозрачные, muted; hover → color text. Точка <code>.fdot</code> окрашена по статусу; <code>.fcount</code> — счётчик (у активного — muted, иначе subtle).</p>
+
+    <h3 id="s4-feed">Лента: 5 состояний</h3>
+    <div class="statebar"><span class="st">normal</span><span class="st">loading (3 skeleton)</span><span class="st">empty (per-tab + CTA)</span><span class="st">error (banner + Retry)</span><span class="st">generating (N skeleton сверху в Drafts)</span></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:120px;">Состояние</th><th>Триггер</th><th>Что показано</th></tr></thead>
+      <tbody>
+        <tr><td><b>normal</b></td><td><code>state="Normal"</code></td><td>Карточки активного таба. Если карточек 0 в этом табе — empty (не error).</td></tr>
+        <tr><td><b>loading</b></td><td><code>state="Loading"</code></td><td>Ровно <b>3</b> <code>&lt;SkeletonCard&gt;</code> с shimmer. Composer и табы остаются.</td></tr>
+        <tr><td><b>empty</b></td><td>в табе 0 карточек, не generating</td><td><code>&lt;EmptyState status={filter}&gt;</code> — иконка + per-tab title/sub; у draft ещё CTA «Write something» → фокус в composer.</td></tr>
+        <tr><td><b>error</b></td><td><code>state="Error"</code></td><td><code>&lt;ErrorBanner&gt;</code> «Couldn’t load your drafts» + подзаголовок + «Retry» (→ state Normal).</td></tr>
+        <tr><td><b>generating</b></td><td>после Generate, таб=Drafts</td><td><b>N</b> скелетонов сверху (N = твик drafts / селект), под ними — существующие черновики. По завершении скелетоны заменяются реальными карточками.</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 id="s4-card">Карточка: 9 под-состояний</h3>
+    <div class="statebar"><span class="st">draft</span><span class="st">ready</span><span class="st">published</span><span class="st">rejected</span><span class="st">reply (любой статус)</span><span class="st">editing</span><span class="st">tweaking</span><span class="st">revising</span><span class="st">translated</span><span class="st">leaving (переход)</span></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:110px;">Под-состояние</th><th>Бейдж / тело</th><th>Футер</th></tr></thead>
+      <tbody>
+        <tr><td><b>draft</b></td><td>Badge «Draft» (neutral, точка ink-400); обычное тело.</td><td>«N/500» · In your voice | ⋯(Reject danger / Tweak / Edit / Translate) + <b>Approve</b>.</td></tr>
+        <tr><td><b>ready</b></td><td>Badge «Ready» (accent).</td><td>«N/500» · Ready to publish | ⋯(Send back / Edit / Translate) + <b>Publish to Threads</b>.</td></tr>
+        <tr><td><b>published</b></td><td>Badge «Published» (good); карточка bg surface-2, тело muted.</td><td>статы лайки/ответы/репосты | ⋯(только Translate) + <b>Open in Threads</b> ↗.</td></tr>
+        <tr><td><b>rejected</b></td><td>Badge «Rejected» (bad); карточка opacity 0.72.</td><td>«Passed on · won't be published» | ⋯(Restore + Translate). Нет primary.</td></tr>
+        <tr><td><b>reply</b></td><td>В сабтайтле «replying to {who}»; блок <code>.reply-ctx</code> с автором+текстом исходника.</td><td>как у базового статуса.</td></tr>
+        <tr><td><b>editing</b></td><td><code>.edit-area</code> (accent-рамка + ring) + CharMeter.</td><td>«Editing» | Cancel (ghost) + <b>Save</b> (disabled при пустом / &gt;500).</td></tr>
+        <tr><td><b>tweaking</b></td><td>Тело + <code>.tweakbar</code> (инпут «What should change?…» + Send) + 4 чипа-подсказки.</td><td>футер базового статуса (виден под tweakbar).</td></tr>
+        <tr><td><b>revising</b></td><td>Скелетон 3 строки (92/100/48%) + «Revising in your voice…» (IcTweak). Футер скрыт.</td><td>— (через 1400ms тело заменяется ревизией + «Revised just now»).</td></tr>
+        <tr><td><b>translated</b></td><td>Тело = перевод; под ним <code>.translate-bar</code> «Translated to {native} · Show original».</td><td>как у базового статуса; в ⋯ появляется «Show original».</td></tr>
+        <tr><td><b>leaving</b></td><td>При смене статуса — <code>.draft--leaving</code>: opacity 0, translateY(−6) scale(0.99), 250ms, затем коммит патча.</td><td>—</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note"><b>Метка «Revised just now».</b> После применённого твика тело перезаписывается, появляется <code>.revised-note</code> (accent, IcSparkle) и время становится «Revised just now». Ровно ОДНА primary-кнопка на карточке всегда; всё остальное — в ⋯.</div>
+
+    <h3 id="s4-menu">⋯-меню: root / translate</h3>
+    <div class="statebar"><span class="st">closed</span><span class="st">open · root</span><span class="st">open · translate (8 локалей)</span><span class="st">item hover</span><span class="st">danger item</span><span class="st">selected (галочка)</span></div>
+    <ul>
+      <li><b>closed</b> — только <code>.icon-btn</code> 34×34 (IcMore). <code>aria-expanded="false"</code>.</li>
+      <li><b>open · root</b> — <code>.card-menu</code> вверх (anim dialog-in): пункты статуса (Reject danger / Tweak / Edit / Send back / Restore — зависят от статуса) + «Show original» (если переведено) + «Translate» (с caret).</li>
+      <li><b>open · translate</b> — <code>.card-menu-back</code> «Translate to» + 8 <code>.cmi-lang</code>; выбранная локаль = <code>--on</code> + IcCheck (success). English = «Original».</li>
+      <li><b>закрытие</b> — mousedown вне якоря; выбор пункта закрывает и сбрасывает mode в root.</li>
+    </ul>
+
+    <h3 id="s4-dialog">Диалог публикации + тосты + undo</h3>
+    <ul>
+      <li><b>PublishDialog</b> — открывается ТОЛЬКО по «Publish to Threads». overlay (blur) + dialog: head, аккаунт-строка, превью текста, CharMeter, Cancel / Publish now. Закрытие: Cancel, клик по фону, Escape. Confirm → карточка уходит (leaving) → статус published + тост «Published to Threads».</li>
+      <li><b>Тосты + Undo</b> — Approve/Reject дают тост с <b>Undo</b> (откат патча статуса). Publish/Restore/Edit — тост без отката (кроме что Publish без undo). Стек снизу-центр, авто-скрытие 4800ms, анимация toast-in.</li>
+    </ul>
+
+    <h3 id="s4-interact">Интерактив каждого элемента</h3>
+    <p class="section-note">normal / hover / focus / active / disabled для всех кликабельных и вводимых элементов.</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:160px;">Элемент</th><th>hover</th><th>focus</th><th>active</th><th>disabled</th></tr></thead>
+      <tbody>
+        <tr><td><code>.btn--primary</code></td><td class="val">bg mix(primary 88%, bg)</td><td class="val">наследует .btn</td><td class="val">translateY(0.5px)</td><td class="val">opacity 0.5; not-allowed</td></tr>
+        <tr><td><code>.btn--secondary</code></td><td class="val">bg surface-2</td><td class="val">—</td><td class="val">translateY(0.5px)</td><td class="val">opacity 0.5</td></tr>
+        <tr><td><code>.btn--ghost</code> (Cancel)</td><td class="val">bg surface-2; color text</td><td class="val">—</td><td class="val">translateY(0.5px)</td><td class="val">—</td></tr>
+        <tr><td><code>.icon-btn</code> (тема/Settings/⋯)</td><td class="val">bg surface-2; color text</td><td class="val">—</td><td class="val">—</td><td class="val">—</td></tr>
+        <tr><td><code>.nav-item</code></td><td class="val">bg surface-2; color text</td><td class="val">(tabIndex 0) — outline UA</td><td class="val">—</td><td class="val">—</td></tr>
+        <tr><td><code>.account</code></td><td class="val">bg surface-2</td><td class="val">—</td><td class="val">chev rotate 180° (open)</td><td class="val">—</td></tr>
+        <tr><td><code>.acct-row</code></td><td class="val">bg surface-2</td><td class="val">—</td><td class="val">—</td><td class="val">—</td></tr>
+        <tr><td><code>.acct-link--danger</code></td><td class="val">bg mix(danger 12%, surface)</td><td class="val">—</td><td class="val">—</td><td class="val">—</td></tr>
+        <tr><td><code>.filter</code></td><td class="val">color text</td><td class="val">—</td><td class="val">active → bg surface + shadow-sm</td><td class="val">—</td></tr>
+        <tr><td><code>.chip</code> (composer)</td><td class="val">bg surface-2; color text; border mix(text 18%)</td><td class="val">—</td><td class="val">—</td><td class="val">—</td></tr>
+        <tr><td><code>.composer-input</code></td><td class="val">—</td><td class="val">фокус → <code>.composer.is-active</code> (accent border + shadow-md на баре)</td><td class="val">—</td><td class="val">—</td></tr>
+        <tr><td><code>.edit-area</code></td><td class="val">—</td><td class="val">accent border + ring 3px mix(accent 18%) (постоянно)</td><td class="val">—</td><td class="val">—</td></tr>
+        <tr><td><code>.composer-spark</code></td><td class="val">bg mix(accent 16%)</td><td class="val">—</td><td class="val">.is-on → mix(accent 17%) + пульс</td><td class="val">—</td></tr>
+        <tr><td><code>.count-seg b</code></td><td class="val">color text</td><td class="val">—</td><td class="val">.on → bg primary</td><td class="val">—</td></tr>
+        <tr><td><code>.idea-card</code></td><td class="val">accent border + tint; Use → opacity 1</td><td class="val">focus = hover</td><td class="val">—</td><td class="val">—</td></tr>
+        <tr><td><code>.card-menu-item</code></td><td class="val">bg surface-2 (danger → mix(danger 10%))</td><td class="val">—</td><td class="val">—</td><td class="val">—</td></tr>
+        <tr><td><code>.ts</code> / <code>.tb-orig</code></td><td class="val">ts: bg surface-2; tb-orig: color mix(accent 80%, text)</td><td class="val">—</td><td class="val">—</td><td class="val">—</td></tr>
+        <tr><td><code>.toast-undo</code></td><td class="val">(accent, без отд. hover)</td><td class="val">—</td><td class="val">—</td><td class="val">—</td></tr>
+        <tr><td>Save / tweak Send</td><td class="val">primary hover</td><td class="val">—</td><td class="val">translateY(0.5px)</td><td class="val">opacity 0.5 при пустом/&gt;500</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 id="s4-anim">Анимации</h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:150px;">Имя</th><th style="width:200px;">Применяется к</th><th>Параметры</th></tr></thead>
+      <tbody>
+        <tr><td><code>nib-write</code></td><td><code>.drafting .nib</code></td><td class="val"><b>каноничная</b> (ds/components.css): translateX/rotate; <b>1.5s var(--ease-standard) infinite</b></td></tr>
+        <tr><td><code>dot-pulse</code></td><td><code>.dots i</code> ×3</td><td class="val">opacity 0.25↔1; <b>1.2s var(--ease-standard) infinite</b>; delay 0 / 0.18s / 0.36s</td></tr>
+        <tr><td><code>shimmer</code></td><td><code>.skel-line</code></td><td class="val">background-position 220%→−120%; <b>1.4s linear infinite</b></td></tr>
+        <tr><td><code>card-in</code></td><td><code>.draft</code>, <code>.tweakbar</code>, <code>.error-banner</code></td><td class="val">translateY(10px)→none; <b>--duration-slow 240ms / --ease-entrance</b> (Studio override — transform-only, opacity всегда 1)</td></tr>
+        <tr><td><code>dialog-in</code></td><td><code>.card-menu</code>, <code>.acct-menu</code></td><td class="val">Studio override: translateY(10px) scale(0.985)→none; <b>--duration-base 180ms / --ease-entrance</b></td></tr>
+        <tr><td><code>dialog-in</code> (DS)</td><td><code>.dialog</code> (PublishDialog)</td><td class="val">opacity+translateY(8) scale(0.98)→none; <b>--duration-slow 240ms</b></td></tr>
+        <tr><td><code>toast-in</code></td><td><code>.toast</code></td><td class="val">translateY(14px)→none; <b>--duration-slow 240ms / --ease-entrance</b></td></tr>
+        <tr><td>leave</td><td><code>.draft--leaving</code></td><td class="val">opacity 0 + translateY(−6) scale(0.99); transition --duration-slow / --ease-standard; коммит через 250ms</td></tr>
+        <tr><td><code>spin</code></td><td><code>.btn .spinner</code></td><td class="val">rotate 360°; <b>0.6s linear infinite</b></td></tr>
+        <tr><td>chev / caret rotate</td><td>account chev; cmi-caret</td><td class="val">transform; --duration-base / --ease-standard</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note good"><b>Каноничные кейфреймы.</b> nib-write / dot-pulse / card-in / shimmer берутся из <code>ds/components.css</code> (или переопределяются в <code>studio.css</code> на transform-only, чтобы resting opacity = 1 и контент никогда не был невидимым в печати/PDF/reduced-motion). Локальные <code>nibwrite</code>/<code>dotpulse</code> — лишь legacy-алиасы для немигрированных экранов; в Studio используются дефисные имена.</div>
+  </section>
+
+  <!-- ===================== 5 ===================== -->
+  <section id="s5">
+    <h2><span class="h2n">5</span>Точные значения</h2>
+    <p class="section-note">Для каждого элемента — бокс (px), типографика (px + токен <code class="tok">--text-*</code>), цвет (токен + hex для light), радиус/тень/граница, переходы. Hex — для светлой темы; в тёмной значения тех же токенов меняются (см. §Справочник).</p>
+
+    <h3>5.1 — Shell-контейнеры</h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:150px;">Элемент</th><th>Бокс</th><th>Фон / граница / тень / радиус</th></tr></thead>
+      <tbody>
+        <tr><td><code>.app</code></td><td class="val">flex; height 100%; overflow hidden</td><td class="val">bg <span class="tok">--color-bg</span> #efedea</td></tr>
+        <tr><td><code>.sidebar</code></td><td class="val">flex 0 0 248px; pad 16/14; gap 4</td><td class="val">bg <span class="tok">--color-bg</span>; border-right 1px <span class="tok">--color-border</span> #dcd9d2</td></tr>
+        <tr><td><code>.topbar</code></td><td class="val">h 60; sticky top 0; z 10</td><td class="val">bg mix(--color-bg 86%, transparent); blur 8 + saturate 1.1; border-bottom 1px border</td></tr>
+        <tr><td><code>.topbar-inner--wide</code></td><td class="val">max-width 960; pad-inline 24; gap 16</td><td class="val">—</td></tr>
+        <tr><td><code>.content--wide</code></td><td class="val">max-width 960; pad 28/24/96; gap 20</td><td class="val">—</td></tr>
+        <tr><td><code>.acct-menu</code></td><td class="val">left/right 6; bottom 100%+8; z 40; pad 6</td><td class="val">bg surface #fff; 1px border; <span class="tok">--shadow-lg</span>; radius-lg 14</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>5.2 — Типографика</h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:160px;">Элемент</th><th>Размер · токен</th><th>Вес / трекинг / lh</th><th>Цвет</th></tr></thead>
+      <tbody>
+        <tr><td><code>.brand-name</code></td><td class="val">19px · --text-h3</td><td class="val">600 / −0.01em / 1</td><td class="val"><span class="tok">--color-text</span> #171717</td></tr>
+        <tr><td><code>.topbar-title</code></td><td class="val">19px · --text-h3</td><td class="val">600 / −0.006em</td><td class="val"><span class="tok">--color-text</span></td></tr>
+        <tr><td><code>.nav-item</code></td><td class="val">13px · --text-small</td><td class="val">500 (active 600)</td><td class="val">muted #565550 (active text)</td></tr>
+        <tr><td><code>.composer-input</code></td><td class="val">19px · --text-h3</td><td class="val">400 / 1.5</td><td class="val"><span class="tok">--color-text</span></td></tr>
+        <tr><td><code>.drafting-text</code></td><td class="val">19px · --text-h3</td><td class="val">b = 600</td><td class="val"><span class="tok">--color-text</span></td></tr>
+        <tr><td><code>.filter</code></td><td class="val">13px · --text-small</td><td class="val">500 (active 600)</td><td class="val">muted (active text)</td></tr>
+        <tr><td><code>.draft-name</code></td><td class="val">13px · --text-small</td><td class="val">600 / 1.25</td><td class="val"><span class="tok">--color-text</span></td></tr>
+        <tr><td><code>.draft-sub</code></td><td class="val">12px · --text-caption</td><td class="val">400</td><td class="val"><span class="tok">--color-text-subtle</span> #6f6e69</td></tr>
+        <tr><td><code>.draft-body</code></td><td class="val">15px · --text-body</td><td class="val">400 / 1.62</td><td class="val">text (published → muted)</td></tr>
+        <tr><td><code>.cc-inline / .cc / .fcount</code></td><td class="val">12px · --text-caption</td><td class="val">tabular-nums</td><td class="val">subtle (warn→warning, over→danger)</td></tr>
+        <tr><td><code>.badge</code> (StatusBadge)</td><td class="val">12px · --text-caption</td><td class="val">500 / 1</td><td class="val">по статусу (см. 5.4)</td></tr>
+        <tr><td><code>.dialog-title</code></td><td class="val">19px · --text-h3</td><td class="val">600 / 1.3</td><td class="val"><span class="tok">--color-text</span></td></tr>
+        <tr><td><code>.firstrun h2</code></td><td class="val">24px · --text-h2</td><td class="val">600 / −0.01em</td><td class="val"><span class="tok">--color-text</span></td></tr>
+        <tr><td><code>.toast-title</code></td><td class="val">13px · --text-small</td><td class="val">600</td><td class="val"><span class="tok">--color-text</span></td></tr>
+        <tr><td><code>.nav-cap / .acct-cap / .fr-eyebrow</code></td><td class="val">12px · --text-caption</td><td class="val">600 / 0.06em / uppercase</td><td class="val">subtle (eyebrow → accent)</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>5.3 — Кнопки, поля, иконки</h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:160px;">Элемент</th><th>Бокс</th><th>Цвет (normal)</th><th>Радиус</th></tr></thead>
+      <tbody>
+        <tr><td><code>.btn</code> (md, default)</td><td class="val">h 40; pad-x 16; gap 8; 13px</td><td class="val">по варианту</td><td class="val">radius-md 10</td></tr>
+        <tr><td><code>.btn--sm</code> (карточки)</td><td class="val">h 32; pad-x 12</td><td class="val">по варианту</td><td class="val">radius-sm 6</td></tr>
+        <tr><td><code>.btn--primary</code></td><td class="val">—</td><td class="val">bg <span class="tok">--color-primary</span> #171717; color #ededed</td><td class="val">—</td></tr>
+        <tr><td><code>.btn--secondary</code></td><td class="val">—</td><td class="val">bg surface; color text; 1px border</td><td class="val">—</td></tr>
+        <tr><td><code>.btn--ghost</code></td><td class="val">—</td><td class="val">transparent; color muted</td><td class="val">—</td></tr>
+        <tr><td><code>.icon-btn</code></td><td class="val">36×36 (⋯ → 34×34)</td><td class="val">bg surface; 1px border; color muted</td><td class="val">radius-md 10</td></tr>
+        <tr><td><code>.count-seg</code> b (1–4)</td><td class="val">b 28×28 (мобайл 42×40)</td><td class="val">bg surface-2; b.on = primary/primary-fg</td><td class="val">radius-full</td></tr>
+        <tr><td><code>.edit-area</code></td><td class="val">w 100%; pad 11/12; авто-h</td><td class="val">bg surface; 1px <span class="tok">--color-accent</span> + ring 3px mix(accent 18%)</td><td class="val">radius-md 10</td></tr>
+        <tr><td>Avatar в карточке/composer</td><td class="val">38×38 (head/composer); 32 (account); 30 (rows/dialog)</td><td class="val">radius-full; фото или моно (bg text / color bg)</td><td class="val">radius-full</td></tr>
+        <tr><td>Иконки nav / меню</td><td class="val">16 (nav), 15 (cmi/stat), 13–14 (sub), 17 (icon-btn/acct-link), 22 (nib)</td><td class="val">currentColor / subtle</td><td class="val">—</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>5.4 — Цвета статусов и спец-mix</h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:200px;">Где</th><th>Значение</th></tr></thead>
+      <tbody>
+        <tr class="grp"><td colspan="2">Точки статуса (.fdot / StatusBadge)</td></tr>
+        <tr><td><span class="sw" style="background:#a2a19c;"></span>draft</td><td class="val"><span class="tok">--color-ink-400</span> #a2a19c</td></tr>
+        <tr><td><span class="sw" style="background:#2f4cc4;"></span>ready</td><td class="val"><span class="tok">--color-accent</span> #2f4cc4</td></tr>
+        <tr><td><span class="sw" style="background:#2c7350;"></span>published</td><td class="val"><span class="tok">--color-success</span> #2c7350</td></tr>
+        <tr><td><span class="sw" style="background:#b23b30;"></span>rejected</td><td class="val"><span class="tok">--color-danger</span> #b23b30</td></tr>
+        <tr class="grp"><td colspan="2">Бейджи (fill / text / border)</td></tr>
+        <tr><td>Ready badge</td><td class="val">bg mix(accent 13%, surface); color accent; border mix(accent 30%, transparent)</td></tr>
+        <tr><td>Published (badge--good)</td><td class="val">bg mix(success 14%, surface); color success; border mix(success 28%, transparent)</td></tr>
+        <tr><td>Rejected (badge--bad)</td><td class="val">bg mix(danger 14%, surface); color danger; border mix(danger 28%, transparent)</td></tr>
+        <tr><td>Draft (badge--neutral)</td><td class="val">bg mix(text 7%, surface); color muted; border border</td></tr>
+        <tr class="grp"><td colspan="2">Прочие mix</td></tr>
+        <tr><td>composer :focus-within border</td><td class="val">mix(accent 55%, border) + shadow-md</td></tr>
+        <tr><td>composer--busy border</td><td class="val">mix(accent 45%, border)</td></tr>
+        <tr><td>tweakbar border</td><td class="val">mix(accent 40%, border)</td></tr>
+        <tr><td>edit-area / focus ring</td><td class="val">0 0 0 3px mix(accent 18%, transparent)</td></tr>
+        <tr><td>.field:focus ring</td><td class="val">0 0 0 3px mix(accent 22%, transparent)</td></tr>
+        <tr><td>.draft:hover border</td><td class="val">mix(text 14%, border)</td></tr>
+        <tr><td>.chip:hover border</td><td class="val">mix(text 18%, border)</td></tr>
+        <tr><td>error-banner</td><td class="val">bg mix(danger 9%, surface); border mix(danger 32%, border); eb-mark bg mix(danger 16%, surface)</td></tr>
+        <tr><td>overlay фон</td><td class="val">mix(ink-950 55%, transparent) + blur 3</td></tr>
+        <tr><td>.btn--primary:hover</td><td class="val">mix(primary 88%, bg)</td></tr>
+        <tr><td>::selection</td><td class="val">mix(accent 22%, transparent)</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>5.5 — Ключевые отступы</h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:230px;">Между чем</th><th>Значение</th></tr></thead>
+      <tbody>
+        <tr><td>.content gap (секции)</td><td class="val">20px</td></tr>
+        <tr><td>.feed gap (карточки)</td><td class="val">14px (compact 10)</td></tr>
+        <tr><td>.draft padding</td><td class="val">16px 18px 14px (compact 13/16/11)</td></tr>
+        <tr><td>.draft-head gap</td><td class="val">11px</td></tr>
+        <tr><td>.draft-body margin-top</td><td class="val">12px (compact 9)</td></tr>
+        <tr><td>.draft-foot</td><td class="val">margin-top 14; padding-top 13; gap 10 (compact 11/10)</td></tr>
+        <tr><td>.composer-bar</td><td class="val">min-height 60; padding 10/12/10/14; gap 12</td></tr>
+        <tr><td>.composer-shelf</td><td class="val">margin-top 8; padding 10/12; gap 10</td></tr>
+        <tr><td>.filterbar</td><td class="val">padding 4; gap 4; sticky top 12</td></tr>
+        <tr><td>.reply-ctx</td><td class="val">margin-top 12; padding 10 12; gap 9</td></tr>
+        <tr><td>.tweakbar</td><td class="val">margin-top 12; padding 8/8/8/12; gap 8</td></tr>
+        <tr><td>.dialog-actions</td><td class="val">margin-top 22; gap 10</td></tr>
+        <tr><td>.toast-host</td><td class="val">bottom 20; gap 10</td></tr>
+        <tr><td>.fr-steps</td><td class="val">margin 20 0 22; gap 2; шаг padding 11 0</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- ===================== 6 ===================== -->
+  <section id="s6">
+    <h2><span class="h2n">6</span>Твики для проверки</h2>
+    <p class="section-note">Ровно как в дизайне (<code>studio-app.jsx → TweaksPanel</code>): шесть контролов проходят через ВСЕ состояния. <code>TWEAK_DEFAULTS</code> = account Active · dark false · density Comfortable · drafts 3 · ideas Results · state Normal.</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:60px;">Секция</th><th style="width:170px;">Контрол</th><th>Значения</th><th>Что проверяет</th></tr></thead>
+      <tbody>
+        <tr><td>Account</td><td><code>TweakRadio</code> «Account»</td><td class="val">Active · First-run</td><td>обычный режим ↔ first-run hero + warning-пилюля</td></tr>
+        <tr><td>Feed state</td><td><code>TweakRadio</code> «Feed»</td><td class="val">Normal · Loading · Empty · Error</td><td>4 состояния ленты (skeleton / empty / banner)</td></tr>
+        <tr><td>Composer</td><td><code>TweakRadio</code> «Drafts / generate»</td><td class="val">1 · 2 · 3 · 4</td><td>сколько скелетонов/черновиков создаёт Generate</td></tr>
+        <tr><td>Composer</td><td><code>TweakRadio</code> «Ideas result»</td><td class="val">Results · Empty · Error</td><td>исход палитры идей: список / пусто / ошибка (danger)</td></tr>
+        <tr><td>Appearance</td><td><code>TweakToggle</code> «Dark mode»</td><td class="val">off · on</td><td>тема (класс <code>.dark</code> на &lt;html&gt;)</td></tr>
+        <tr><td>Appearance</td><td><code>TweakRadio</code> «Density»</td><td class="val">Comfortable · Compact</td><td>плотность карточек/ленты (<code>data-density</code>)</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note"><b>Состояния вне твиков</b> (триггерятся интеракцией): composer busy (Generate) · generating-скелетоны · палитра идей (открывается по ✨; исход задаётся твиком <code>ideas</code>) · карточка editing/tweaking/revising/translated · ⋯-меню root/translate · PublishDialog · тосты+undo · аккаунт-меню. Их нужно пройти кликами — твики покрывают только сквозные оси.</div>
+  </section>
+
+  <!-- ===================== 7 ===================== -->
+  <section id="s7">
+    <h2><span class="h2n">7</span>Чек-лист</h2>
+    <p class="section-note">«Убедись, что X = ровно Y». Пройди по каждому состоянию и по сквозным проверкам.</p>
+
+    <h4>Shell</h4>
+    <ul class="check">
+      <li>Sidebar = <code>flex 0 0 248px</code>; на ≤880px схлопывается в <b>72px</b> icon-rail (лейблы/беджи/who+chev скрыты).</li>
+      <li>AccountMenu открывается ВВЕРХ (<code>bottom:calc(100%+8px)</code>); при открытии есть <code>.acct-scrim</code>; chev = rotate 180°.</li>
+      <li>В меню: активный аккаунт с IcCheck (success); «Connect another account»; разделитель; <code>mara@pennedly.com</code> · «Creator plan»; «Settings»; «Log out» (danger).</li>
+      <li>Топбар-заголовок и левый край контента выровнены по wide-ширине <b>960</b>.</li>
+      <li>Voice-пилюля = success «Voice active» (Active) / warning «Voice not set up» (First-run).</li>
+    </ul>
+
+    <h4>Composer / табы</h4>
+    <ul class="check">
+      <li>«Строка»: свёрнутый бар (аватар · инпут · ⌘↵ · ✨) раскрывает полку по фокусу; ✨ → палитра идей (не отдельный экран).</li>
+      <li>Полка: чипы — скролл-ряд с фейдом; ряд tools = DRAFTS · сегмент 1·2·3·4 · Generate; <code>b.on</code> = primary.</li>
+      <li>Палитра идей: loading (3 скелетона) → results (Use по hover/тач) + <b>empty</b> (без фейк-карточек) и <b>error</b> (тон danger, не схлопывается), у обоих «Try again».</li>
+      <li>Мобайл ≤560: полка не переполняется (DRAFTS·1·2·3·4 ряд 1, Generate во всю ширину, seeded свой ряд); ⌘↵ скрыт на тач; ✨/сегмент/idea-карточки ≥44px; инпут ≥16px.</li>
+      <li>Generate <code>disabled</code> при пустом брифе; активна при непробельном тексте.</li>
+      <li>Busy = каноничный <b>nib-write 1.5s</b> + «Drafting {N} posts…» + 3 dot-pulse; НИКАКОЙ preview-карточки.</li>
+      <li>Generate переключает на таб <b>Drafts</b> и кладёт N скелетонов сверху; через 1600ms — N карточек в начале ленты.</li>
+      <li>Лимит = ровно <b>500</b>; CharMeter warn при &gt;440, over при &gt;500.</li>
+      <li>Табы по порядку: Ready to publish (default) · Drafts · Published · Rejected, каждый со счётчиком; активный = bg surface + shadow-sm.</li>
+    </ul>
+
+    <h4>Лента / карточка</h4>
+    <ul class="check">
+      <li>Loading = ровно <b>3</b> скелетона; Empty = per-tab title/sub (+ CTA у draft); Error = ErrorBanner + Retry.</li>
+      <li>Ровно ОДНА primary-кнопка на карточку; ВСЕ вторичные действия — в ⋯-меню.</li>
+      <li>draft → Approve; ready → Publish to Threads; published → Open in Threads ↗; rejected → нет primary; editing → Cancel+Save.</li>
+      <li>Reply-карточка показывает <code>.reply-ctx</code> с автором и текстом исходника + «replying to {who}».</li>
+      <li>Translate инлайн: тело меняется, появляется <code>.translate-bar</code> «Translated to {native} · Show original».</li>
+      <li>Save <code>disabled</code> при пустом тексте или &gt;500; «Revised just now» появляется после твика.</li>
+      <li>Status-переход = leave-анимация 250ms, затем коммит; rejected карточка opacity 0.72; published bg surface-2.</li>
+    </ul>
+
+    <h4>⋯-меню / диалог / тосты</h4>
+    <ul class="check">
+      <li>⋯ раскрывается ВВЕРХ; root → пункты статуса + Translate (caret); translate → back + 8 локалей с галочкой у выбранной; danger-пункт = Reject.</li>
+      <li>Публикация ТОЛЬКО через PublishDialog (confirm); Escape / клик по фону / Cancel закрывают; «Too long to publish» при &gt;500.</li>
+      <li>Тосты Approve/Reject содержат <b>Undo</b>; авто-скрытие <b>4800ms</b>; стек снизу-центр.</li>
+    </ul>
+
+    <h4>Сквозные</h4>
+    <ul class="check">
+      <li>Все цвета = токены (нет хардкод-hex в studio.css/shell.css); тёмная тема флипает бесплатно через <code>.dark</code>.</li>
+      <li>Density Comfortable/Compact меняет padding/размер тела/gap карточек.</li>
+      <li>Адаптив корректен на каждой точке: 880 (rail), 720 (voice-tag), 560 (контент/табы/footer/topbar).</li>
+      <li>Анимации каноничные (nib-write / dot-pulse / shimmer / card-in / dialog-in / toast-in); resting opacity = 1.</li>
+      <li>FirstRun (account=First-run) заменяет composer+feed на hero; voice-пилюля = warning.</li>
+    </ul>
+  </section>
+
+  <!-- ===================== TOKENS ===================== -->
+  <section id="tokens">
+    <h2><span class="h2n">＊</span>Справочник токенов</h2>
+    <p class="section-note">Семантические токены из <code>ds/tokens.css</code> (зеркало <code>globals.css @theme</code>). Hex слева — light, справа — dark.</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:230px;">Токен</th><th>Light</th><th>Dark</th></tr></thead>
+      <tbody>
+        <tr class="grp"><td colspan="3">Цвет — поверхности</td></tr>
+        <tr><td><code>--color-bg</code></td><td class="val"><span class="sw" style="background:#efedea;"></span>#efedea</td><td class="val"><span class="sw" style="background:#0a0a0a;"></span>#0a0a0a</td></tr>
+        <tr><td><code>--color-surface</code></td><td class="val"><span class="sw" style="background:#ffffff;"></span>#ffffff</td><td class="val"><span class="sw" style="background:#171717;"></span>#171717</td></tr>
+        <tr><td><code>--color-surface-2</code></td><td class="val"><span class="sw" style="background:#f6f5f2;"></span>#f6f5f2</td><td class="val"><span class="sw" style="background:#201f1d;"></span>#201f1d</td></tr>
+        <tr><td><code>--color-border</code></td><td class="val"><span class="sw" style="background:#dcd9d2;"></span>#dcd9d2</td><td class="val"><span class="sw" style="background:#2b2a27;"></span>#2b2a27</td></tr>
+        <tr class="grp"><td colspan="3">Цвет — текст</td></tr>
+        <tr><td><code>--color-text</code></td><td class="val"><span class="sw" style="background:#171717;"></span>#171717</td><td class="val"><span class="sw" style="background:#ededed;"></span>#ededed</td></tr>
+        <tr><td><code>--color-text-muted</code></td><td class="val"><span class="sw" style="background:#565550;"></span>#565550</td><td class="val"><span class="sw" style="background:#a2a19c;"></span>#a2a19c</td></tr>
+        <tr><td><code>--color-text-subtle</code></td><td class="val"><span class="sw" style="background:#6f6e69;"></span>#6f6e69</td><td class="val"><span class="sw" style="background:#898882;"></span>#898882</td></tr>
+        <tr class="grp"><td colspan="3">Цвет — акценты / статусы</td></tr>
+        <tr><td><code>--color-primary</code></td><td class="val"><span class="sw" style="background:#171717;"></span>#171717</td><td class="val"><span class="sw" style="background:#ededed;"></span>#ededed</td></tr>
+        <tr><td><code>--color-accent</code></td><td class="val"><span class="sw" style="background:#2f4cc4;"></span>#2f4cc4</td><td class="val"><span class="sw" style="background:#9aacff;"></span>#9aacff</td></tr>
+        <tr><td><code>--color-success</code></td><td class="val"><span class="sw" style="background:#2c7350;"></span>#2c7350</td><td class="val"><span class="sw" style="background:#5fbf8d;"></span>#5fbf8d</td></tr>
+        <tr><td><code>--color-warning</code></td><td class="val"><span class="sw" style="background:#8a5b16;"></span>#8a5b16</td><td class="val"><span class="sw" style="background:#d8a754;"></span>#d8a754</td></tr>
+        <tr><td><code>--color-danger</code></td><td class="val"><span class="sw" style="background:#b23b30;"></span>#b23b30</td><td class="val"><span class="sw" style="background:#ef8a80;"></span>#ef8a80</td></tr>
+        <tr><td><code>--color-ink-400</code></td><td class="val"><span class="sw" style="background:#a2a19c;"></span>#a2a19c</td><td class="val">(draft-точка)</td></tr>
+        <tr class="grp"><td colspan="3">Радиус · тень</td></tr>
+        <tr><td><code>--radius-sm/md/lg/xl/2xl</code></td><td class="val" colspan="2">6 · 10 · 14 · 20 · 28 (full 9999)</td></tr>
+        <tr><td><code>--shadow-sm</code></td><td class="val" colspan="2">0 1px 2px rgb(23 23 23 / .06)</td></tr>
+        <tr><td><code>--shadow-md</code></td><td class="val" colspan="2">0 4px 12px −2px /.08 + 0 2px 6px −3px /.06</td></tr>
+        <tr><td><code>--shadow-lg</code></td><td class="val" colspan="2">0 16px 40px −12px /.16 + 0 6px 14px −8px /.08</td></tr>
+        <tr class="grp"><td colspan="3">Типографика (size · lh · tracking)</td></tr>
+        <tr><td><code>--text-h2</code></td><td class="val" colspan="2">1.5rem 24px · 1.2 · −0.01em</td></tr>
+        <tr><td><code>--text-h3</code></td><td class="val" colspan="2">1.1875rem 19px · 1.3 · −0.006em</td></tr>
+        <tr><td><code>--text-body</code></td><td class="val" colspan="2">0.9375rem 15px · 1.6</td></tr>
+        <tr><td><code>--text-small</code></td><td class="val" colspan="2">0.8125rem 13px · 1.5</td></tr>
+        <tr><td><code>--text-caption</code></td><td class="val" colspan="2">0.75rem 12px · 1.4 · 0.02em</td></tr>
+        <tr class="grp"><td colspan="3">Слой · motion</td></tr>
+        <tr><td><code>--content-reading / --content-wide</code></td><td class="val" colspan="2">720px / <b>960px</b> (Studio = wide)</td></tr>
+        <tr><td><code>--ease-standard</code></td><td class="val" colspan="2">cubic-bezier(0.2, 0.7, 0.3, 1)</td></tr>
+        <tr><td><code>--ease-entrance</code></td><td class="val" colspan="2">cubic-bezier(0.16, 1, 0.3, 1)</td></tr>
+        <tr><td><code>--duration-fast/base/slow</code></td><td class="val" colspan="2">120ms / 180ms / 240ms</td></tr>
+        <tr class="grp"><td colspan="3">Шрифты</td></tr>
+        <tr><td><code>--font-sans</code></td><td class="val" colspan="2">"Geist", ui-sans-serif, system-ui, …</td></tr>
+        <tr><td><code>--font-mono</code></td><td class="val" colspan="2">"Geist Mono", ui-monospace, …</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note" style="margin-top:18px;">Конец спецификации. Источник: <code>studio-app.jsx</code>, <code>studio-parts.jsx</code>, <code>studio-data.jsx</code>, <code>studio-icons.jsx</code>, <code>studio.css</code>, <code>shell-parts.jsx</code>, <code>shell-data.jsx</code>, <code>shell.css</code>, <code>ds/tokens.css</code>, <code>ds/components.css</code>.</div>
+  </section>
+
+</main>
+</div>
+</body>
+</html>
