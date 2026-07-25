@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pennedly · Рутина упоминаний — Слой 3 «Только для этой рутины» (спецификация)</title>
+<meta name="description" content="Слой 3 конструктора рутины упоминаний: точечное переопределение «Правил дома» — частота, тихие часы, дневной лимит, аудитория. Наследование по умолчанию, «своё значение» opt-in. Десктоп." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../../ds/tokens.css" />
+<link rel="stylesheet" href="../../ds/components.css" />
+<link rel="stylesheet" href="../../scenarios.css" />
+<link rel="stylesheet" href="../../scenarios-redesign.css" />
+<link rel="stylesheet" href="../../scenario-editor.css" />
+<link rel="stylesheet" href="../../recipe-editor.css" />
+<link rel="stylesheet" href="../../autopilot.css" />
+<link rel="stylesheet" href="../../autopilot-publishmode.css" />
+<link rel="stylesheet" href="../../mention-routines.css" />
+<style>
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%; scroll-behavior:smooth;}
+  body{margin:0; background:var(--color-bg); color:var(--color-text); font-family:var(--font-sans); font-size:15px; line-height:1.6; -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;}
+  .wrap{max-width:1200px; margin:0 auto; padding:46px 40px 130px;}
+
+  .kicker{font-family:var(--font-mono); font-size:12px; letter-spacing:0.05em; color:var(--color-accent); text-transform:uppercase; margin:0 0 12px;}
+  .doc-title{font-size:34px; line-height:1.08; letter-spacing:-0.025em; font-weight:600; margin:0 0 14px; text-wrap:balance;}
+  .doc-title span{color:var(--color-text-subtle); font-weight:500;}
+  .doc-lede{font-size:16px; color:var(--color-text-muted); max-width:82ch; margin:0 0 22px; text-wrap:pretty;}
+  .doc-lede b{color:var(--color-text); font-weight:600;}
+  .doc-lede a{color:var(--color-accent);}
+
+  .chips{display:flex; flex-wrap:wrap; gap:7px; margin:0 0 26px;}
+  .chip{font-family:var(--font-mono); font-size:11.5px; padding:5px 11px; border-radius:9999px; background:var(--color-surface); border:1px solid var(--color-border); color:var(--color-text-muted); display:inline-flex; align-items:center; gap:6px;}
+  .chip b{color:var(--color-text); font-weight:600;}
+  .chip--new{border-color:color-mix(in srgb, var(--color-accent) 40%, var(--color-border)); color:var(--color-accent);}
+  .chip--warn{border-color:color-mix(in srgb, var(--color-warning) 44%, var(--color-border)); color:var(--color-warning);}
+
+  /* the model strip: 4 knobs */
+  .model{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:0 0 6px;}
+  @media(max-width:820px){ .model{grid-template-columns:1fr 1fr;} }
+  .mcell{display:flex; flex-direction:column; gap:5px; padding:15px 16px; border:1px solid var(--color-border); border-radius:var(--radius-lg); background:var(--color-surface); box-shadow:var(--shadow-sm);}
+  .mcell .mc-n{font-family:var(--font-mono); font-size:11px; letter-spacing:0.05em; text-transform:uppercase; color:var(--color-accent);}
+  .mcell .mc-t{font-size:15px; font-weight:600; letter-spacing:-0.008em;}
+  .mcell .mc-d{font-size:12.5px; color:var(--color-text-muted); line-height:1.5; text-wrap:pretty;}
+  .mcell--last .mc-n{color:var(--color-text-subtle);}
+
+  section.block{margin-top:60px; scroll-margin-top:20px;}
+  .block-head{border-top:2px solid var(--color-text); padding-top:18px; margin-bottom:14px;}
+  .block-name{display:flex; align-items:baseline; gap:13px; flex-wrap:wrap; margin:0 0 7px;}
+  .block-name .bn-n{font-family:var(--font-mono); font-size:20px; font-weight:500; color:var(--color-accent); letter-spacing:-0.01em;}
+  .block-name h2{font-size:24px; font-weight:600; letter-spacing:-0.015em; margin:0;}
+  .block-idea{font-size:15px; color:var(--color-text-muted); max-width:86ch; margin:0; text-wrap:pretty;}
+  .block-idea b{color:var(--color-text); font-weight:600;}
+
+  h3{font-size:15.5px; font-weight:600; letter-spacing:-0.005em; margin:34px 0 12px; padding-bottom:7px; border-bottom:1px solid var(--color-border);}
+  h3 .stg{font-family:var(--font-mono); font-size:11px; color:var(--color-accent); border:1px solid color-mix(in srgb,var(--color-accent) 40%,var(--color-border)); border-radius:6px; padding:1px 7px; margin-right:8px; text-transform:uppercase; letter-spacing:0.04em;}
+  h3 .stg--warn{color:var(--color-warning); border-color:color-mix(in srgb,var(--color-warning) 44%,var(--color-border));}
+
+  /* frames */
+  .fr{display:flex; flex-direction:column; gap:10px; margin-top:22px;}
+  .fr-head{display:inline-flex; align-items:center; gap:8px; font-family:var(--font-mono); font-size:11.5px; letter-spacing:.02em; color:var(--color-text-subtle);}
+  .fr-head .dh{width:8px; height:8px; border-radius:9999px; background:var(--color-border);}
+  .fr-head .dh--dark{background:#0a0a0a; border:1px solid #3a3a3a;}
+  .fr-head b{color:var(--color-text-muted); font-weight:600;}
+  .frame{background:var(--color-bg); color:var(--color-text); border:1px solid var(--color-border); border-radius:18px; padding:30px 32px; overflow:hidden;}
+  .frame.dark{background:#0a0a0a; border-color:#2b2a27;}
+  .frame *{box-sizing:border-box;}
+  @media(max-width:760px){ .frame{padding:20px 16px;} }
+  .frow{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
+  @media(max-width:900px){ .frow{grid-template-columns:1fr;} }
+  .frow .fr{margin-top:0;}
+
+  p{margin:0 0 12px; text-wrap:pretty;}
+  code{font-family:var(--font-mono); font-size:0.86em; background:var(--color-surface-2); border:1px solid var(--color-border); padding:1px 5px; border-radius:5px;}
+  a.link{color:var(--color-accent); text-decoration:underline; text-underline-offset:2px; text-decoration-color:color-mix(in srgb,var(--color-accent) 40%,transparent);}
+  a{color:var(--color-accent);} a:hover{color:color-mix(in srgb,var(--color-accent) 78%,var(--color-text));}
+
+  .note{border:1px solid var(--color-border); border-left:3px solid var(--color-accent); background:var(--color-surface); border-radius:10px; padding:12px 16px; margin:16px 0; font-size:13.5px; color:var(--color-text-muted); line-height:1.55;}
+  .note.warn{border-left-color:var(--color-warning);} .note.good{border-left-color:var(--color-success);}
+  .note b{color:var(--color-text);}
+  .note code{white-space:normal;}
+
+  .tbl{overflow-x:auto; margin:12px 0 16px; border:1px solid var(--color-border); border-radius:var(--radius-lg); background:var(--color-surface);}
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  th,td{text-align:left; padding:10px 14px; border-bottom:1px solid var(--color-border); vertical-align:top;}
+  thead th{font-size:11px; text-transform:uppercase; letter-spacing:0.04em; color:var(--color-text-subtle); font-weight:600; background:var(--color-surface-2);}
+  tbody tr:last-child td{border-bottom:none;}
+  td b{color:var(--color-text);} td code{white-space:nowrap;}
+  .grp td{background:var(--color-surface-2); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.04em; color:var(--color-text-subtle);}
+
+  .check{list-style:none; padding:0; margin:0;}
+  .check li{position:relative; padding:7px 0 7px 28px; border-bottom:1px dashed var(--color-border); font-size:13.5px; line-height:1.55;}
+  .check li:last-child{border-bottom:none;}
+  .check li::before{content:"\2610"; position:absolute; left:2px; top:6px; color:var(--color-text-subtle); font-size:15px;}
+  .check b{color:var(--color-text);}
+  .statebar{display:flex; flex-wrap:wrap; gap:6px; margin:2px 0 16px;}
+  .statebar .st{font-family:var(--font-mono); font-size:11px; padding:3px 9px; border-radius:6px; background:var(--color-surface-2); border:1px solid var(--color-border); color:var(--color-text-muted);}
+  .foot-meta{margin-top:26px; padding-top:18px; border-top:1px solid var(--color-border); font-size:12.5px; color:var(--color-text-subtle); line-height:1.7;}
+  .foot-meta code{font-size:11px;}
+
+  @media(max-width:760px){ .wrap{padding:30px 18px 90px;} .doc-title{font-size:27px;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="kicker">Pennedly · Автопилот · рутина упоминаний · слой 3</p>
+  <h1 class="doc-title">Только для этой рутины <span>— переопределить «Правила дома» точечно</span></h1>
+  <p class="doc-lede">Третий слой конструктора рутины упоминаний. Раньше здесь стояла заглушка «Скоро»; теперь — рабочая панель <b>переопределений</b>. У рутины («на все вопросы с фото отвечать») может быть <b>своя частота, тихие часы или дневной лимит</b>, отличные от общих <a class="link" href="../autopilot/Autopilot-Unified-SPEC.html">«Правил дома»</a>. Модель: <b>наследовать по умолчанию, переопределять по одному полю</b>. Свежая рутина наследует всё. Семантику зеркалим со <a class="link" href="../../components/Layer3-Scenario-Override-SPEC.html">Слоя 3 сценариев</a>, но рисуем в языке конструктора упоминаний (<code>mr-*</code> · рецепт-карточка + inline-драверы), не в виде редактора сценариев. Живёт в раскрывающемся слое <b>«Только для этой рутины»</b> внизу конструктора; шапка слоя, чип «для продвинутых» и сворачивание — прежние, меняется только тело.</p>
+
+  <div class="chips">
+    <span class="chip">4 настройки · <b>уже исполняются бэкендом</b></span>
+    <span class="chip chip--new">наследовать ↔ своё значение</span>
+    <span class="chip">частота · тихие часы · лимит · аудитория</span>
+    <span class="chip chip--warn">тихие часы — пара границ</span>
+    <span class="chip chip--warn">свой вариант — описание обязательно</span>
+    <span class="chip">аудитория — последней, второстепенно</span>
+    <span class="chip">без новых полей бэкенда</span>
+  </div>
+
+  <div class="model">
+    <div class="mcell"><span class="mc-n">01 · частота</span><span class="mc-t">Как часто отвечать</span><span class="mc-d">сразу · каждые 30 мин · раз в час · несколько раз в день · раз в день. Тот же набор, что у ответов в «Правилах дома».</span></div>
+    <div class="mcell"><span class="mc-n">02 · тихие часы</span><span class="mc-t">Окно тишины</span><span class="mc-d">Пара границ в вашем локальном времени. Обе или ни одной; «без тихих часов» = отвечать круглосуточно.</span></div>
+    <div class="mcell"><span class="mc-n">03 · лимит</span><span class="mc-t">Дневной лимит ответов</span><span class="mc-d">Степпер, ограничен сверху дневным потолком аккаунта. Наследует потолок «Правил дома».</span></div>
+    <div class="mcell mcell--last"><span class="mc-n">04 · аудитория</span><span class="mc-t">Кому отвечать</span><span class="mc-d">Фильтр поверх цели. Фанатам · все кроме троллей · вопросы · свой вариант. Самый низкий приоритет — последней.</span></div>
+  </div>
+
+  <!-- ═══════════ 01 · В КОНТЕКСТЕ КОНСТРУКТОРА ═══════════ -->
+  <section class="block" id="context" data-screen-label="01 · Слой 3 в конструкторе">
+    <div class="block-head">
+      <div class="block-name"><span class="bn-n">01</span><h2>Слой 3 — в контексте конструктора</h2></div>
+      <p class="block-idea">Тело слоя раскрыто внизу рецепт-карточки. Шапка «Только для этой рутины» + чип <b>«для продвинутых»</b> остаются; ниже — лид с наследованием, счётчик «своих» и список из 4 пунктов. Здесь переопределена <b>частота</b> — её строка помечена акцентной кромкой и бейджем «своё», остальные три спокойно наследуют «Правила дома».</p>
+    </div>
+    <div class="fr"><div class="fr-head"><span class="dh"></span>Light · конструктор · слой 3 раскрыт · частота своя, остальное наследуется</div>
+      <div data-mr='{"name":"Разбор по фото","goalShort":"прикладывают фото работы и просят разбор","media":"image","mode":"auto","hint":false,"layer3":true,"l3over":["freq"],"l3freq":"day"}'></div></div>
+    <div class="fr"><div class="fr-head"><span class="dh dh--dark"></span>Dark · то же</div>
+      <div data-mr='{"name":"Разбор по фото","goalShort":"прикладывают фото работы и просят разбор","media":"image","mode":"auto","hint":false,"layer3":true,"l3over":["freq"],"l3freq":"day","dark":true}'></div></div>
+  </section>
+
+  <!-- ═══════════ 02 · ДЕФОЛТ · ВСЁ НАСЛЕДУЕТСЯ ═══════════ -->
+  <section class="block" id="inherit" data-screen-label="02 · Всё наследуется">
+    <div class="block-head">
+      <div class="block-name"><span class="bn-n">02</span><h2>Дефолт · всё как в «Правилах дома»</h2></div>
+      <p class="block-idea">Состояние покоя свежей рутины: <b>0 переопределений</b>. Четыре спокойные строки-наследники, у каждой — бейдж «как в Правилах дома», строка «Сейчас действует» с реальным значением аккаунта и кнопка <b>«Своё значение»</b>. Счётчик слоя — «всё как в Правилах дома». Никакого акцента, никакой тревоги.</p>
+    </div>
+    <div class="frow">
+      <div class="fr"><div class="fr-head"><span class="dh"></span>Light · 0 своих · четыре наследника</div><div data-mr-l3='{"l3over":[]}'></div></div>
+      <div class="fr"><div class="fr-head"><span class="dh dh--dark"></span>Dark · то же</div><div data-mr-l3='{"l3over":[],"dark":true}'></div></div>
+    </div>
+    <div class="note good"><b>Значения — настоящие.</b> «Сейчас действует» и «В Правилах дома» показывают то, что аккаунт держит на самом деле (ответы <code>раз в час</code>, тихо <code>23:00–08:00</code>, потолок <code>25/день</code>, <code>всем, кроме троллей</code>). Если значение неизвестно при рендере — показываем нейтральное «как в Правилах дома» без выдуманного числа.</div>
+  </section>
+
+  <!-- ═══════════ 03 · ЧАСТОТА · СВОЁ ЗНАЧЕНИЕ ═══════════ -->
+  <section class="block" id="freq" data-screen-label="03 · Частота — своё значение">
+    <div class="block-head">
+      <div class="block-name"><span class="bn-n">03</span><h2>Частота · «своё значение» раскрыто</h2></div>
+      <p class="block-idea">«Своё значение» → строка раскрывает контрол: сегмент <b>сразу / каждые 30 мин / раз в час / несколько раз в день / раз в день</b> (тот же набор, что у ответов «Правил дома»). Строка помечена как расходящаяся; под контролом — «В Правилах дома: раз в час · открыть» и ссылка «Как в Правилах дома», чтобы вернуться к наследованию.</p>
+    </div>
+    <div class="frow">
+      <div class="fr"><div class="fr-head"><span class="dh"></span>Light · частота = «несколько раз в день»</div><div data-mr-l3='{"l3over":["freq"],"l3freq":"multi"}'></div></div>
+      <div class="fr"><div class="fr-head"><span class="dh dh--dark"></span>Dark · то же</div><div data-mr-l3='{"l3over":["freq"],"l3freq":"multi","dark":true}'></div></div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 04 · ТИХИЕ ЧАСЫ · ПАРА И ПОЛОВИНА ═══════════ -->
+  <section class="block" id="quiet" data-screen-label="04 · Тихие часы — пара">
+    <div class="block-head">
+      <div class="block-name"><span class="bn-n">04</span><h2>Тихие часы · пара границ (и половина = невалидно)</h2></div>
+      <p class="block-idea">Окно тишины задаётся <b>парой</b> «с … до …» в локальном времени. Слева — валидная пара (обе границы). Справа — <b>невалидное</b> состояние правки: стоит только одна граница; строка подсвечена предупреждением, инлайн-требование объясняет парность, и <b>сохранить рутину нельзя</b>, пока окно неполное. Отдельно — «без тихих часов» (отвечать круглосуточно).</p>
+    </div>
+    <div class="frow">
+      <div class="fr"><div class="fr-head"><span class="dh"></span>Light · валидная пара · 22:00 – 09:00</div><div data-mr-l3='{"l3over":["quiet"],"l3quietStart":"22:00","l3quietEnd":"09:00"}'></div></div>
+      <div class="fr"><div class="fr-head"><span class="dh"></span>Light · невалидно · задана только одна граница</div><div data-mr-l3='{"l3over":["quiet"],"l3quietHalf":true}'></div></div>
+    </div>
+    <div class="fr"><div class="fr-head"><span class="dh dh--dark"></span>Dark · «без тихих часов» (круглосуточно)</div><div data-mr-l3='{"l3over":["quiet"],"l3quietOff":true,"dark":true}'></div></div>
+    <div class="note warn"><b>Половина окна — не сохраняем.</b> <code>quiet_start_hour</code> и <code>quiet_end_hour</code> задаются вместе: обе границы или ни одной. Одна без другой — невалидно; требование показываем инлайн, кнопка сохранения рутины блокируется (правку не блокируем — только сохранение).</div>
+  </section>
+
+  <!-- ═══════════ 05 · ЛИМИТ ═══════════ -->
+  <section class="block" id="limit" data-screen-label="05 · Дневной лимит">
+    <div class="block-head">
+      <div class="block-name"><span class="bn-n">05</span><h2>Дневной лимит ответов</h2></div>
+      <p class="block-idea">Степпер числа ответов в день, ограниченный сверху <b>дневным потолком аккаунта</b> (рутина не поднимется выше). Наследует потолок «Правил дома». Дойдя до лимита, рутина доберёт остаток завтра.</p>
+    </div>
+    <div class="frow">
+      <div class="fr"><div class="fr-head"><span class="dh"></span>Light · лимит = 10 в день</div><div data-mr-l3='{"l3over":["limit"],"l3limit":10}'></div></div>
+      <div class="fr"><div class="fr-head"><span class="dh dh--dark"></span>Dark · лимит = 10 в день</div><div data-mr-l3='{"l3over":["limit"],"l3limit":10,"dark":true}'></div></div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 06 · АУДИТОРИЯ · СВОЙ ВАРИАНТ ═══════════ -->
+  <section class="block" id="aud" data-screen-label="06 · Кому отвечать">
+    <div class="block-head">
+      <div class="block-name"><span class="bn-n">06</span><h2>Кому отвечать · «свой вариант» (и пустой = невалидно)</h2></div>
+      <p class="block-idea">Самый низкоприоритетный пункт — <b>последним и визуально второстепенным</b> (цель рутины уже задаёт таргетинг). Галерея «Кому отвечать» переиспускает язык редактора сценариев: <b>фанатам · все, кроме троллей · вопросы · свой вариант</b>. «Свой вариант» раскрывает поле описания. Пустое описание — <b>невалидно</b>: показываем требование, сохранить нельзя. Тролли отсекаются всегда — переопределить нельзя.</p>
+    </div>
+    <div class="frow">
+      <div class="fr"><div class="fr-head"><span class="dh"></span>Light · «свой вариант» · описание заполнено</div><div data-mr-l3='{"l3over":["aud"],"l3aud":"custom","l3audPrompt":"тем, кто пишет по делу и задаёт конкретные вопросы про работу"}'></div></div>
+      <div class="fr"><div class="fr-head"><span class="dh"></span>Light · «свой вариант» · описание пустое (невалидно)</div><div data-mr-l3='{"l3over":["aud"],"l3aud":"custom"}'></div></div>
+    </div>
+    <div class="fr"><div class="fr-head"><span class="dh dh--dark"></span>Dark · пресет «только вопросы»</div><div data-mr-l3='{"l3over":["aud"],"l3aud":"q","dark":true}'></div></div>
+  </section>
+
+  <!-- ═══════════ 07 · НЕСКОЛЬКО СВОИХ + СБРОС ═══════════ -->
+  <section class="block" id="mixed" data-screen-label="07 · Несколько своих">
+    <div class="block-head">
+      <div class="block-name"><span class="bn-n">07</span><h2>Несколько «своих» + «Вернуть всё»</h2></div>
+      <p class="block-idea">Три из четырёх пунктов переопределены — их строки помечены, остальное наследуется. Счётчик слоя показывает <b>«3 настройки свои»</b>; внизу появляется <b>«Вернуть всё к Правилам дома»</b> — одним нажатием вернуть рутину к чистому наследованию.</p>
+    </div>
+    <div class="fr"><div class="fr-head"><span class="dh"></span>Light · частота + лимит + аудитория — свои; тихие часы наследуются</div>
+      <div data-mr-l3='{"l3over":["freq","limit","aud"],"l3freq":"30","l3limit":12,"l3aud":"q"}'></div></div>
+    <div class="fr"><div class="fr-head"><span class="dh dh--dark"></span>Dark · все четыре свои</div>
+      <div data-mr-l3='{"l3over":["freq","quiet","limit","aud"],"l3freq":"now","l3quietStart":"00:00","l3quietEnd":"08:00","l3limit":6,"l3aud":"fans","dark":true}'></div></div>
+  </section>
+
+  <!-- ═══════════ 08 · СВЁРНУТАЯ СВОДКА ═══════════ -->
+  <section class="block" id="summary" data-screen-label="08 · Свёрнутая сводка слоя">
+    <div class="block-head">
+      <div class="block-name"><span class="bn-n">08</span><h2>Свёрнутый слой · сводка в двух формах</h2></div>
+      <p class="block-idea">Свёрнутое состояние слоя отражает переопределения в строке-сводке: <b>«Всё как в Правилах дома»</b>, когда ничего не тронуто, или <b>«N настроек своих»</b>, когда что-то расходится. Шапка, чип «для продвинутых» и шеврон — прежние.</p>
+    </div>
+    <div class="frow">
+      <div class="fr"><div class="fr-head"><span class="dh"></span>Light · свёрнут · всё наследуется</div><div data-mr-l3='{"collapsed":true,"l3over":[]}'></div></div>
+      <div class="fr"><div class="fr-head"><span class="dh"></span>Light · свёрнут · 2 настройки свои</div><div data-mr-l3='{"collapsed":true,"l3over":["freq","quiet"]}'></div></div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 09 · МАСТЕР ОТВЕТОВ ВЫКЛЮЧЕН ═══════════ -->
+  <section class="block" id="master" data-screen-label="09 · Мастер ответов выключен">
+    <div class="block-head">
+      <div class="block-name"><span class="bn-n">09</span><h2>Контекст · автопилот ответов выключен</h2></div>
+      <p class="block-idea">Если на аккаунте выключен мастер ответов, переопределения всё равно <b>сохраняются</b>, но не сработают. Достаточно <b>мягкой заметки</b> вверху панели — правку не блокируем, тревожный янтарь не нагнетаем.</p>
+    </div>
+    <div class="fr"><div class="fr-head"><span class="dh"></span>Light · мягкая заметка «сохранится, но не сработает» + переопределённая частота</div>
+      <div data-mr-l3='{"masterOff":true,"l3over":["freq"],"l3freq":"hour"}'></div></div>
+  </section>
+
+  <!-- ═══════════ 10 · ПРАВДА О ДАННЫХ ═══════════ -->
+  <section class="block" id="truth" data-screen-label="10 · Правда о данных">
+    <div class="block-head">
+      <div class="block-name"><span class="bn-n">10</span><h2>Правда о данных · без новых полей</h2></div>
+      <p class="block-idea">Все четыре переопределения — это уже существующие поля <code>on_mention</code>-рутины; бэкенд их <b>исполняет сегодня</b> (проверено в воркере). UI лишь даёт их редактировать. Новых полей нет.</p>
+    </div>
+    <div class="tbl"><table>
+      <thead><tr><th style="width:210px;">Поле</th><th>Что это · наследование · контрол</th></tr></thead>
+      <tbody>
+        <tr><td><code>reply_frequency</code></td><td><b>Как часто отвечать.</b> Сегмент: сразу · каждые 30 мин · раз в час · несколько раз в день · раз в день. Наследует частоту ответов аккаунта.</td></tr>
+        <tr><td><code>quiet_start_hour</code><br><code>quiet_end_hour</code></td><td><b>Тихие часы.</b> Пара в локальном времени аккаунта — обе границы или ни одной; <code>start == end</code> = «без тихих часов». Наследует окно аккаунта. Половина окна невалидна — сохранение блокируется.</td></tr>
+        <tr><td><code>max_per_day</code></td><td><b>Дневной лимит ответов.</b> Степпер, верхняя граница = дневной потолок аккаунта. Наследует потолок «Правил дома».</td></tr>
+        <tr><td><code>audience</code><br><code>audience_prompt</code></td><td><b>Кому отвечать.</b> fans · not_trolls · questions · custom(+<code>audience_prompt</code>). «Свой вариант» требует описание. Наследует аудиторию аккаунта. Тролли отсекаются всегда. Самый низкий приоритет — последним.</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note"><b>Панель — только per-routine.</b> Отсюда нельзя править сами «Правила дома» (они живут на <code>/app/scenarios</code>). Кнопки «Открыть Правила дома» и «В Правилах дома: …» — навигация к аккаунтным дефолтам, не редактирование здесь.</div>
+  </section>
+
+  <!-- ═══════════ 11 · ТЕЛЕФОН ═══════════ -->
+  <section class="block" id="phone" data-screen-label="11 · Телефон">
+    <div class="block-head">
+      <div class="block-name"><span class="bn-n">11</span><h2>Телефон</h2></div>
+      <p class="block-idea">Панель — одна колонка: строки на всю ширину, сегмент частоты и галерея аудитории тянутся, поля тихих часов и степпер — крупные. Полный телефонный проход — в парной спеке.</p>
+    </div>
+    <p><a class="link" href="Mention-Routine-Layer3-Mobile-SPEC.html">→ Mention-Routine-Layer3-Mobile-SPEC.html</a></p>
+  </section>
+
+  <!-- ═══════════ 12 · ЧЕК-ЛИСТ ═══════════ -->
+  <section class="block" id="check" data-screen-label="12 · Чек-лист">
+    <div class="block-head">
+      <div class="block-name"><span class="bn-n">12</span><h2>Чек-лист реализации</h2></div>
+    </div>
+    <div class="statebar"><span class="st">всё наследуется</span><span class="st">частота·своё</span><span class="st">тихие часы·пара</span><span class="st">тихие часы·половина·невалидно</span><span class="st">без тихих часов</span><span class="st">лимит</span><span class="st">аудитория·свой вариант</span><span class="st">аудитория·пусто·невалидно</span><span class="st">N своих + сброс</span><span class="st">свёрнуто·сводка ×2</span><span class="st">мастер выкл</span><span class="st">светлая+тёмная</span></div>
+    <ul class="check">
+      <li><b>Модель наследования:</b> каждая из 4 настроек по умолчанию наследует «Правила дома»; «Своё значение» — opt-in по одному полю; «Как в Правилах дома» возвращает к наследованию. Свежая рутина наследует всё.</li>
+      <li><b>Расхождение читается сразу:</b> у «своей» строки акцентная левая кромка + бейдж «своё»; у наследника — спокойный бейдж «как в Правилах дома» и никакого акцента.</li>
+      <li><b>Четыре пункта в порядке:</b> частота → тихие часы → лимит → <b>аудитория (последней, второстепенной)</b>.</li>
+      <li><b>Частота</b> — сегмент из 5 значений, тот же набор, что у ответов «Правил дома».</li>
+      <li><b>Тихие часы</b> — пара границ в локальном времени; обе или ни одной; «без тихих часов» (<code>start == end</code>); половина = невалидно, сохранение блокируется.</li>
+      <li><b>Дневной лимит</b> — степпер, ограничен дневным потолком аккаунта.</li>
+      <li><b>Кому отвечать</b> — фанатам / все кроме троллей / вопросы / свой вариант (описание обязательно); тролли отсекаются всегда; язык пресетов совпадает с редактором сценариев.</li>
+      <li><b>Наследуемые значения — настоящие</b> («Правила дома»); при неизвестном значении — нейтральное «как в Правилах дома» без выдуманного числа.</li>
+      <li><b>Свёрнутая сводка:</b> «Всё как в Правилах дома» / «N настроек своих». Шапка + чип «для продвинутых» + сворачивание не тронуты.</li>
+      <li><b>Мастер ответов выключен</b> — мягкая заметка, правку не блокирует.</li>
+      <li>Язык <code>mr-*</code> (рецепт-карточка + inline-драверы), не редактор сценариев; переиспользованы <code>.seg</code> / <code>.rc-step</code> / <code>.aud-grid</code> / <code>.bigtext</code> / <code>.field</code>; обе темы, только токены; без новых полей бэкенда.</li>
+    </ul>
+    <div class="foot-meta">
+      Экран: <b>Рутина упоминаний → Слой 3 «Только для этой рутины»</b> · маршрут <code>/app/autopilot</code><br>
+      Общая правда рендера: <code>mention-routines-build.js</code> (<code>layer3Body</code> / <code>buildLayer3Card</code>) + <code>mention-routines.css</code> (<code>.mr-l3 / .ml3-*</code>)<br>
+      Зеркалит семантику: <code>layer3-override.js</code> · <a class="link" href="../../components/Layer3-Scenario-Override-SPEC.html">Layer3-Scenario-Override-SPEC</a><br>
+      Парные спеки: <a class="link" href="../mentions-routines/Mention-Routines-SPEC.html">Mention-Routines-SPEC</a> · <a class="link" href="Mention-Routine-Layer3-Mobile-SPEC.html">Mention-Routine-Layer3-Mobile-SPEC</a>
+    </div>
+  </section>
+
+</div>
+<script src="../../mention-routines-build.js"></script>
+</body>
+</html>

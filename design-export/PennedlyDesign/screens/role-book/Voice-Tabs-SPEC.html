@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Voice · tabs (Voice + Anti-robot) — State Spec · Pennedly</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+/* ============================ DOC CHROME ============================ */
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{margin:0; background:#e7e4df; color:#1c1b19;
+  font-family:"Geist",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;}
+.doc-head{max-width:1200px; margin:0 auto; padding:46px 40px 8px;}
+.doc-kicker{font-family:"Geist Mono",monospace; font-size:12px; letter-spacing:0.08em; text-transform:uppercase; color:#2f4cc4; margin:0 0 12px;}
+.doc-title{font-size:38px; line-height:1.05; letter-spacing:-0.025em; font-weight:600; margin:0 0 14px;}
+.doc-lede{font-size:16px; line-height:1.6; color:#56544f; max-width:80ch; margin:0 0 8px;}
+.doc-lede b{color:#1c1b19; font-weight:600;}
+.doc-lede code{font-family:"Geist Mono",monospace; font-size:0.86em; background:#dedbd4; padding:1px 5px; border-radius:5px;}
+.doc-meta{display:flex; flex-wrap:wrap; gap:7px; margin:22px 0 4px;}
+.doc-meta .m{font-family:"Geist Mono",monospace; font-size:11.5px; padding:4px 10px; border-radius:9999px; background:#fff; border:1px solid #d4d1ca; color:#56544f;}
+.legend{max-width:1200px; margin:18px auto 0; padding:0 40px; display:flex; flex-wrap:wrap; gap:18px; font-size:12.5px; color:#56544f;}
+.legend .lk{display:inline-flex; align-items:center; gap:7px;}
+.legend .dot{width:10px; height:10px; border-radius:3px; border:1px solid rgba(0,0,0,.15);}
+.note-card{max-width:1200px; margin:14px auto 0; padding:0 40px;}
+.note-card .nc{border:1px solid #d8c9a6; background:#f7f1e1; border-radius:12px; padding:13px 16px; font-size:13.5px; line-height:1.55; color:#5b5232;}
+.note-card .nc b{color:#3f3a22;}
+.note-card .nc code{font-family:"Geist Mono",monospace; font-size:0.86em; background:#ece3c8; padding:1px 5px; border-radius:5px;}
+
+.state-sec{max-width:1200px; margin:8px auto 0; padding:42px 40px 8px;}
+.state-sec + .state-sec, .state-sec.divide{border-top:1px solid #d4d1ca; margin-top:22px;}
+.sec-num{font-family:"Geist Mono",monospace; font-size:13px; color:#2f4cc4; font-weight:500;}
+.sec-title{font-size:25px; line-height:1.2; letter-spacing:-0.015em; font-weight:600; margin:6px 0 8px;}
+.sec-title.sub{font-size:19px;}
+.sec-desc{font-size:14.5px; line-height:1.6; color:#56544f; max-width:82ch; margin:0 0 6px;}
+.sec-desc code{font-family:"Geist Mono",monospace; font-size:0.86em; background:#dedbd4; padding:1px 5px; border-radius:5px;}
+.sec-notes{margin:10px 0 0; padding:0; list-style:none; display:flex; flex-direction:column; gap:5px;}
+.sec-notes li{position:relative; padding-left:20px; font-size:13px; line-height:1.55; color:#56544f; max-width:86ch;}
+.sec-notes li::before{content:"\203A"; position:absolute; left:4px; top:0; color:#2f4cc4; font-weight:700;}
+.sec-notes li b{color:#1c1b19; font-weight:600;}
+.sec-notes code{font-family:"Geist Mono",monospace; font-size:0.85em; background:#dedbd4; padding:1px 5px; border-radius:5px;}
+
+.gallery{max-width:1200px; margin:0 auto; padding:22px 40px 12px; display:flex; flex-wrap:wrap; gap:32px 34px; align-items:flex-start;}
+.vp{margin:0;}
+.vp figcaption{display:flex; align-items:center; gap:9px; margin:0 0 10px; font-size:12px; color:#56544f; flex-wrap:wrap;}
+.vp figcaption .tg{font-family:"Geist Mono",monospace; font-size:10.5px; letter-spacing:0.03em; text-transform:uppercase; padding:3px 8px; border-radius:6px; border:1px solid #d4d1ca; background:#fff;}
+.vp figcaption .tg--web{color:#1c1b19;}
+.vp figcaption .tg--mob{color:#2f4cc4; border-color:#c2c8ef; background:#eef0fb;}
+.vp figcaption .tg--light{color:#7b6a2a; border-color:#e3dcc4; background:#f7f2e4;}
+.vp figcaption .tg--dark{color:#cfcfe6; border-color:#3a3a52; background:#26263a;}
+.vp figcaption .lbl{font-weight:500; color:#1c1b19;}
+
+.screen{border-radius:16px; overflow:hidden; position:relative; box-shadow:0 18px 50px -20px rgba(20,18,15,.5), 0 4px 12px -6px rgba(20,18,15,.25);}
+.screen.web{width:1060px;}
+.screen.mob{width:392px; border-radius:30px; box-shadow:0 18px 50px -18px rgba(20,18,15,.55), 0 0 0 9px #15140f, 0 0 0 10px #2a2925;}
+@media (max-width:1160px){ .screen.web{width:100%; max-width:940px;} }
+.screen, .screen *{box-sizing:border-box;}
+
+/* =============== PENNEDLY TOKENS (scoped per .screen) =============== */
+.screen{
+  --font-sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --font-mono:"Geist Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --color-ink-50:#f9f8f6; --color-ink-100:#ededed; --color-ink-200:#ddddda; --color-ink-300:#c8c7c3;
+  --color-ink-400:#a2a19c; --color-ink-500:#7b7a74; --color-ink-600:#565550; --color-ink-700:#3c3b37;
+  --color-ink-800:#262521; --color-ink-900:#171717; --color-ink-950:#0a0a0a;
+  --color-bg:#efedea; --color-surface:#ffffff; --color-surface-2:#f6f5f2; --color-border:#dcd9d2;
+  --color-text:#171717; --color-text-muted:#565550; --color-text-subtle:#6f6e69;
+  --color-primary:#171717; --color-primary-foreground:#ededed;
+  --color-accent:#2f4cc4; --color-accent-foreground:#ffffff;
+  --color-success:#2c7350; --color-success-foreground:#ffffff;
+  --color-warning:#8a5b16; --color-warning-foreground:#ffffff;
+  --color-danger:#b23b30; --color-danger-foreground:#ffffff;
+  --radius-sm:6px; --radius-md:10px; --radius-lg:14px; --radius-xl:20px; --radius-2xl:28px; --radius-full:9999px;
+  --shadow-sm:0 1px 2px 0 rgb(23 23 23 / 0.06);
+  --shadow-md:0 4px 12px -2px rgb(23 23 23 / 0.08), 0 2px 6px -3px rgb(23 23 23 / 0.06);
+  --shadow-lg:0 16px 40px -12px rgb(23 23 23 / 0.16), 0 6px 14px -8px rgb(23 23 23 / 0.08);
+  --text-display:3rem; --text-h1:2rem; --text-h2:1.5rem; --text-h3:1.1875rem;
+  --text-body:0.9375rem; --text-small:0.8125rem; --text-caption:0.75rem;
+  --content-reading:720px; --content-wide:960px;
+  --ease-standard:cubic-bezier(0.2,0.7,0.3,1); --ease-entrance:cubic-bezier(0.16,1,0.3,1);
+  --duration-fast:120ms; --duration-base:180ms; --duration-slow:240ms;
+  font-family:var(--font-sans);
+}
+.screen.pd-dark{
+  --color-bg:#0a0a0a; --color-surface:#171717; --color-surface-2:#201f1d; --color-border:#2b2a27;
+  --color-text:#ededed; --color-text-muted:#a2a19c; --color-text-subtle:#898882;
+  --color-primary:#ededed; --color-primary-foreground:#171717;
+  --color-accent:#9aacff; --color-accent-foreground:#0a0a0a;
+  --color-success:#5fbf8d; --color-success-foreground:#0a0a0a;
+  --color-warning:#d8a754; --color-warning-foreground:#0a0a0a;
+  --color-danger:#ef8a80; --color-danger-foreground:#0a0a0a;
+  --shadow-sm:0 1px 2px 0 rgb(0 0 0 / 0.5);
+  --shadow-md:0 6px 16px -4px rgb(0 0 0 / 0.6);
+  --shadow-lg:0 20px 48px -16px rgb(0 0 0 / 0.7);
+}
+
+/* ===================== SHELL (studio.css subset) ===================== */
+.screen .app{display:flex; height:100%; background:var(--color-bg); color:var(--color-text); font-family:var(--font-sans); line-height:1.5;}
+.screen .sidebar{flex:0 0 248px; display:flex; flex-direction:column; gap:4px; padding:16px 14px; border-right:1px solid var(--color-border); background:var(--color-bg);}
+.screen .brand{display:flex; align-items:center; gap:11px; padding:8px 8px 16px;}
+.screen .brand-mark{width:34px; height:34px; flex:0 0 auto; border-radius:var(--radius-md); box-shadow:var(--shadow-sm); display:grid; place-items:center; background:var(--color-text); color:var(--color-bg);}
+.screen .brand-name{font-size:var(--text-h3); font-weight:600; letter-spacing:-0.01em; line-height:1;}
+.screen .brand-sub{font-size:var(--text-caption); color:var(--color-text-subtle); margin-top:3px;}
+.screen .nav{display:flex; flex-direction:column; gap:2px;}
+.screen .nav-cap{font-size:var(--text-caption); font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--color-text-subtle); padding:14px 12px 6px;}
+.screen .nav-item{display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:var(--radius-md); font-size:var(--text-small); font-weight:500; color:var(--color-text-muted); border:1px solid transparent; position:relative; cursor:pointer; text-decoration:none;}
+.screen .nav-item:hover{background:var(--color-surface-2); color:var(--color-text);}
+.screen .nav-item--active{background:var(--color-surface-2); color:var(--color-text); font-weight:600;}
+.screen .nav-item .nav-ico{width:16px; height:16px; flex:0 0 auto; opacity:0.85;}
+.screen .nav-item .nav-label{white-space:nowrap;}
+.screen .nav-item .nav-badge{margin-left:auto; font-size:var(--text-caption); font-weight:600; color:var(--color-text-subtle); background:var(--color-surface-2); border:1px solid var(--color-border); border-radius:var(--radius-full); min-width:20px; height:18px; padding:0 6px; display:inline-flex; align-items:center; justify-content:center;}
+.screen .nav-item--active .nav-badge{color:var(--color-text);}
+.screen .sidebar-foot{margin-top:auto; padding-top:10px; position:relative;}
+.screen .account{display:flex; align-items:center; gap:10px; width:100%; padding:8px; border-radius:var(--radius-md); border:1px solid transparent; background:transparent; color:var(--color-text); cursor:pointer; text-align:left;}
+.screen .account:hover{background:var(--color-surface-2);}
+.screen .account .who{min-width:0;}
+.screen .account .who .nm{font-size:var(--text-small); font-weight:600; line-height:1.2;}
+.screen .account .who .hd{font-size:var(--text-caption); color:var(--color-text-subtle); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.screen .account .chev{margin-left:auto; color:var(--color-text-subtle); flex:0 0 auto;}
+.screen .avatar{position:relative; flex:0 0 auto; border-radius:var(--radius-full); overflow:hidden; display:grid; place-items:center; user-select:none; box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--color-text) 8%, transparent);}
+.screen .avatar-mono{width:100%; height:100%; display:grid; place-items:center; background:var(--color-text); color:var(--color-bg); font-weight:600; letter-spacing:0.01em;}
+.screen .main{flex:1 1 auto; min-width:0; display:flex; flex-direction:column;}
+.screen .topbar{flex:0 0 auto; display:flex; align-items:center; gap:16px; height:60px; padding:0 24px; border-bottom:1px solid var(--color-border); background:color-mix(in srgb, var(--color-bg) 86%, transparent); position:sticky; top:0; z-index:10;}
+.screen .topbar:has(> .topbar-inner){padding-inline:0;}
+.screen .topbar-inner{width:100%; max-width:var(--content-reading); margin-inline:auto; padding-inline:24px; display:flex; align-items:center; gap:16px;}
+.screen .topbar-title{font-size:var(--text-h3); font-weight:600; letter-spacing:-0.006em;}
+.screen .topbar-spacer{flex:1 1 auto;}
+.screen .topbar-actions{display:flex; align-items:center; gap:8px;}
+.screen .icon-btn{width:36px; height:36px; flex:0 0 auto; display:grid; place-items:center; border-radius:var(--radius-md); border:1px solid var(--color-border); background:var(--color-surface); color:var(--color-text-muted); cursor:pointer; text-decoration:none;}
+.screen .icon-btn:hover{background:var(--color-surface-2); color:var(--color-text);}
+.screen .scroll{flex:1 1 auto; overflow:hidden;}
+.screen .content{max-width:var(--content-reading); margin:0 auto; padding:24px 24px 40px; display:flex; flex-direction:column; gap:20px;}
+
+/* buttons / pills */
+.screen .btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; font-family:var(--font-sans); font-weight:500; font-size:var(--text-small); white-space:nowrap; cursor:pointer; user-select:none; border:1px solid transparent; border-radius:var(--radius-md); height:40px; padding-inline:16px; text-decoration:none;}
+.screen .btn--sm{height:32px; padding-inline:12px; border-radius:var(--radius-sm);}
+.screen .btn--lg{height:46px; padding-inline:22px; font-size:var(--text-body); border-radius:var(--radius-lg);}
+.screen .btn--primary{background:var(--color-primary); color:var(--color-primary-foreground);}
+.screen .btn--secondary{background:var(--color-surface); color:var(--color-text); border-color:var(--color-border);}
+.screen .btn--secondary:hover{background:var(--color-surface-2);}
+.screen .btn--ghost{background:transparent; color:var(--color-text-muted);}
+.screen .btn--ghost:hover{background:var(--color-surface-2); color:var(--color-text);}
+.screen .btn:disabled{opacity:0.5; cursor:not-allowed;}
+.screen .status-pill{display:inline-flex; align-items:center; gap:7px; white-space:nowrap; font-size:var(--text-small); color:var(--color-text-muted); padding:5px 11px 5px 9px; border:1px solid var(--color-border); border-radius:var(--radius-full); background:var(--color-surface);}
+.screen .pill-dot{width:6px; height:6px; border-radius:var(--radius-full); background:var(--color-text-subtle);}
+.screen .status-pill--success{color:var(--color-success); border-color:color-mix(in srgb, var(--color-success) 30%, var(--color-border));}
+.screen .status-pill--success .pill-dot{background:var(--color-success);}
+
+/* ===================== TAB SWITCHER (new) ===================== */
+.screen .vtabs-wrap{display:flex; flex-direction:column; gap:0;}
+.screen .vtabs{display:flex; gap:6px; border-bottom:1px solid var(--color-border);}
+.screen .vtab{display:inline-flex; align-items:center; gap:8px; padding:11px 6px 12px; margin-bottom:-1px; font-family:var(--font-sans); font-size:var(--text-small); font-weight:600; color:var(--color-text-subtle); background:none; border:none; border-bottom:2px solid transparent; cursor:pointer; letter-spacing:-0.003em;}
+.screen .vtab .vtab-ico{opacity:0.8; flex:0 0 auto;}
+.screen .vtab:hover{color:var(--color-text);}
+.screen .vtab.is-active{color:var(--color-text); border-bottom-color:var(--color-primary);}
+.screen .vtab.is-active .vtab-ico{opacity:1;}
+.screen .vtab .vtab-count{font-size:var(--text-caption); font-weight:600; color:var(--color-text-subtle); background:var(--color-surface-2); border:1px solid var(--color-border); border-radius:var(--radius-full); min-width:20px; height:18px; padding:0 6px; display:inline-flex; align-items:center; justify-content:center; font-variant-numeric:tabular-nums;}
+.screen .vtab.is-active .vtab-count{color:var(--color-text);}
+.screen .tabsub{display:flex; align-items:center; gap:9px; padding:13px 2px 0; font-size:var(--text-small); color:var(--color-text-muted); line-height:1.5;}
+.screen .tabsub .ts-ico{color:var(--color-text-subtle); flex:0 0 auto;}
+.screen .tabsub b{color:var(--color-text); font-weight:600;}
+
+/* ===================== VOICE.CSS (read-state subset, scoped) ===================== */
+.screen .vhero{position:relative; overflow:hidden; background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-xl); box-shadow:var(--shadow-sm); padding:24px 24px 22px;}
+.screen .vhero-eyebrow{display:inline-flex; align-items:center; gap:7px; font-size:var(--text-caption); font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--color-text-subtle);}
+.screen .vhero-eyebrow svg{color:var(--color-text-muted);}
+.screen .vhero-row{display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-top:12px;}
+.screen .vhero-title{font-size:var(--text-h1); font-weight:600; letter-spacing:-0.015em; margin:0;}
+.screen .vhero-title em{font-style:normal; color:var(--color-text-muted);}
+.screen .vhero-meta{display:flex; align-items:center; flex-wrap:wrap; gap:8px 14px; margin-top:12px;}
+.screen .vmeta{display:inline-flex; align-items:center; gap:7px; font-size:var(--text-small); color:var(--color-text-muted); white-space:nowrap;}
+.screen .vmeta b{font-weight:600; color:var(--color-text); font-variant-numeric:tabular-nums;}
+.screen .vmeta .sep{width:3px; height:3px; border-radius:50%; background:var(--color-ink-400);}
+.screen .vhero-actions{display:flex; align-items:center; gap:10px; margin-top:20px; flex-wrap:wrap;}
+.screen .langmenu{position:relative; flex:0 0 auto;}
+.screen .lm-btn{display:inline-flex; align-items:center; gap:7px; height:34px; padding:0 10px; font-family:var(--font-sans); font-size:var(--text-small); font-weight:500; color:var(--color-text-muted); background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-md); cursor:pointer;}
+.screen .lm-btn:hover{background:var(--color-surface-2); color:var(--color-text);}
+.screen .lm-cur{white-space:nowrap;}
+
+.screen .vsec{background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); overflow:hidden;}
+.screen .vsec-head{display:flex; align-items:center; gap:12px; padding:16px 18px;}
+.screen .vsec-mark{flex:0 0 auto; width:34px; height:34px; border-radius:var(--radius-md); display:grid; place-items:center; background:var(--color-surface-2); border:1px solid var(--color-border); color:var(--color-text-muted);}
+.screen .vsec-ttl{flex:1 1 auto; min-width:0;}
+.screen .vsec-ttl .h{font-size:var(--text-h3); font-weight:600; line-height:1.2; display:flex; align-items:center; gap:8px;}
+.screen .vsec-ttl .h .count{font-size:var(--text-caption); font-weight:600; color:var(--color-text-subtle); background:var(--color-surface-2); border:1px solid var(--color-border); border-radius:var(--radius-full); min-width:20px; height:18px; padding:0 6px; display:inline-flex; align-items:center; justify-content:center;}
+.screen .vsec-ttl .d{font-size:var(--text-caption); color:var(--color-text-subtle); margin-top:2px;}
+.screen .vsec-edit{flex:0 0 auto; display:inline-flex; align-items:center; gap:6px; font-size:var(--text-small); font-weight:500; color:var(--color-text-muted); background:transparent; border:1px solid transparent; border-radius:var(--radius-md); height:32px; padding:0 10px; cursor:pointer;}
+.screen .vsec-edit:hover{background:var(--color-surface-2); color:var(--color-text);}
+.screen .vsec-body{padding:0 18px 18px;}
+.screen .vsec--do .vsec-mark{background:color-mix(in srgb, var(--color-success) 13%, var(--color-surface)); color:var(--color-success); border-color:color-mix(in srgb, var(--color-success) 26%, transparent);}
+.screen .vsec--dont .vsec-mark{background:color-mix(in srgb, var(--color-danger) 13%, var(--color-surface)); color:var(--color-danger); border-color:color-mix(in srgb, var(--color-danger) 26%, transparent);}
+.screen .vsec--exclude{border-color:color-mix(in srgb, var(--color-danger) 30%, var(--color-border));}
+.screen .vsec--exclude .vsec-mark{background:color-mix(in srgb, var(--color-danger) 13%, var(--color-surface)); color:var(--color-danger); border-color:color-mix(in srgb, var(--color-danger) 26%, transparent);}
+.screen .intro-text{font-size:var(--text-body); line-height:1.68; color:var(--color-text); margin:0; text-wrap:pretty;}
+.screen .themes{display:flex; flex-direction:column; gap:8px;}
+.screen .theme-row{display:grid; grid-template-columns:auto 1fr; gap:4px 12px; padding:12px 14px; background:var(--color-surface-2); border:1px solid var(--color-border); border-radius:var(--radius-md);}
+.screen .theme-row .th-label{font-size:var(--text-small); font-weight:600; color:var(--color-text); display:inline-flex; align-items:center; gap:8px; align-self:center;}
+.screen .theme-row .th-bullet{width:6px; height:6px; border-radius:2px; background:var(--color-text); flex:0 0 auto; transform:rotate(45deg);}
+.screen .theme-row .th-note{grid-column:2; font-size:var(--text-small); color:var(--color-text-muted); line-height:1.5;}
+.screen .theme-row--x{background:color-mix(in srgb, var(--color-danger) 6%, var(--color-surface-2)); border-color:color-mix(in srgb, var(--color-danger) 22%, var(--color-border));}
+.screen .theme-row--x .th-bullet{background:var(--color-danger); border-radius:var(--radius-full); transform:none;}
+.screen .traits{display:flex; flex-direction:column; gap:7px;}
+.screen .trait-row{display:flex; align-items:flex-start; gap:11px; padding:11px 13px; background:var(--color-surface-2); border:1px solid var(--color-border); border-radius:var(--radius-md);}
+.screen .trait-kind{flex:0 0 auto; margin-top:1px; font-size:var(--text-caption); font-weight:600; letter-spacing:0.02em; color:var(--color-text-muted); background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-sm); padding:2px 8px; min-width:84px; text-align:center;}
+.screen .trait-text{font-size:var(--text-small); color:var(--color-text); line-height:1.55; padding-top:2px;}
+.screen .vrules{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:7px;}
+.screen .vrule{display:flex; align-items:flex-start; gap:11px; padding:11px 13px; background:var(--color-surface-2); border:1px solid var(--color-border); border-radius:var(--radius-md);}
+.screen .vrule-tick{flex:0 0 auto; width:22px; height:22px; border-radius:var(--radius-full); display:grid; place-items:center;}
+.screen .vrule--yes .vrule-tick{color:var(--color-success); background:color-mix(in srgb, var(--color-success) 14%, var(--color-surface));}
+.screen .vrule--no .vrule-tick{color:var(--color-danger); background:color-mix(in srgb, var(--color-danger) 14%, var(--color-surface));}
+.screen .vrule-text{font-size:var(--text-small); color:var(--color-text); line-height:1.55; padding-top:2px;}
+.screen .examples{display:flex; flex-direction:column; gap:12px;}
+.screen .ex{position:relative; padding:14px 16px 14px 18px; background:var(--color-surface-2); border:1px solid var(--color-border); border-radius:var(--radius-md);}
+.screen .ex::before{content:""; position:absolute; left:0; top:12px; bottom:12px; width:3px; border-radius:3px; background:var(--color-ink-300);}
+.screen .ex-meta{display:flex; align-items:center; gap:8px; font-size:var(--text-caption); color:var(--color-text-subtle); margin-bottom:8px;}
+.screen .ex-meta .ex-kind{font-weight:600; color:var(--color-text-muted);}
+.screen .ex-meta .ex-dot{width:3px; height:3px; border-radius:50%; background:var(--color-ink-400);}
+.screen .ex-text{font-size:var(--text-body); line-height:1.62; color:var(--color-text); text-wrap:pretty;}
+.screen .vempty{display:flex; flex-direction:column; align-items:center; text-align:center; padding:60px 28px; background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-xl); box-shadow:var(--shadow-sm);}
+.screen .vempty .ve-mark{width:60px; height:60px; display:grid; place-items:center; border-radius:var(--radius-lg); background:var(--color-surface-2); border:1px solid var(--color-border); color:var(--color-text-muted); margin-bottom:20px;}
+.screen .vempty .ve-title{font-size:var(--text-h2); font-weight:600; letter-spacing:-0.01em;}
+.screen .vempty .ve-sub{font-size:var(--text-body); color:var(--color-text-muted); margin-top:10px; max-width:48ch; line-height:1.6; text-wrap:pretty;}
+.screen .vempty .btn{margin-top:24px;}
+.screen .vempty .ve-note{font-size:var(--text-caption); color:var(--color-text-subtle); margin-top:14px;}
+
+/* ===================== STYLERULES.CSS (scoped, .rule* renamed .trule*) ===================== */
+.screen .sec{background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); overflow:hidden;}
+.screen .sec-head{display:flex; align-items:center; gap:12px; padding:16px 18px;}
+.screen .sec-mark{flex:0 0 auto; width:34px; height:34px; border-radius:var(--radius-md); display:grid; place-items:center; background:var(--color-surface-2); border:1px solid var(--color-border); color:var(--color-text-muted);}
+.screen .sec-ttl{flex:1 1 auto; min-width:0;}
+.screen .sec-ttl .h{font-size:var(--text-h3); font-weight:600; line-height:1.2; display:flex; align-items:center; gap:8px;}
+.screen .sec-ttl .h .count{font-size:var(--text-caption); font-weight:600; color:var(--color-text-subtle); background:var(--color-surface-2); border:1px solid var(--color-border); border-radius:var(--radius-full); min-width:20px; height:18px; padding:0 7px; display:inline-flex; align-items:center; justify-content:center; font-variant-numeric:tabular-nums;}
+.screen .sec-ttl .d{font-size:var(--text-caption); color:var(--color-text-subtle); margin-top:3px;}
+.screen .cat-groups{display:flex; flex-direction:column;}
+.screen .cat-group{border-top:1px solid var(--color-border);}
+.screen .cat-head{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 18px 8px; background:var(--color-surface-2);}
+.screen .cat-head .cat-name{font-size:var(--text-caption); font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--color-text-subtle);}
+.screen .cat-head .cat-count{font-size:var(--text-caption); color:var(--color-text-subtle); font-variant-numeric:tabular-nums;}
+.screen .trules{display:flex; flex-direction:column;}
+.screen .trule{display:flex; align-items:flex-start; gap:14px; padding:15px 18px; border-top:1px solid var(--color-border); transition:background var(--duration-fast) var(--ease-standard);}
+.screen .trule:first-child{border-top:none;}
+.screen .trule:hover{background:var(--color-surface-2);}
+.screen .trule-toggle{flex:0 0 auto; margin-top:1px;}
+.screen .trule-body{flex:1 1 auto; min-width:0;}
+.screen .trule-top{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+.screen .trule-title{font-size:var(--text-small); font-weight:600; color:var(--color-text); letter-spacing:-0.003em;}
+.screen .trule-desc{font-size:var(--text-small); color:var(--color-text-muted); line-height:1.5; margin-top:4px; text-wrap:pretty;}
+.screen .trule.is-off .trule-title{color:var(--color-text-subtle);}
+.screen .trule.is-off .trule-desc{color:var(--color-text-subtle);}
+.screen .kind-chip{flex:0 0 auto; font-size:var(--text-caption); font-weight:600; letter-spacing:0.02em; color:var(--color-text-muted); background:var(--color-surface-2); border:1px solid var(--color-border); border-radius:var(--radius-sm); padding:2px 8px; white-space:nowrap;}
+.screen .trule.is-off .kind-chip{opacity:0.7;}
+.screen .stripper{margin-top:10px; padding:11px 13px; background:color-mix(in srgb, var(--color-accent) 6%, var(--color-surface)); border:1px solid color-mix(in srgb, var(--color-accent) 24%, var(--color-border)); border-radius:var(--radius-md);}
+.screen .stripper--off{background:var(--color-surface-2); border-color:var(--color-border); opacity:0.7;}
+.screen .strip-note{display:flex; align-items:flex-start; gap:8px; font-size:var(--text-caption); color:var(--color-text-muted); line-height:1.5;}
+.screen .strip-note .sn-ico{color:var(--color-accent); flex:0 0 auto; margin-top:1px;}
+.screen .stripper--off .strip-note .sn-ico{color:var(--color-text-subtle);}
+.screen .strip-demo{display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-top:9px;}
+.screen .strip-demo code{font-family:var(--font-mono); font-size:var(--text-caption); line-height:1.4; background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-sm); padding:4px 8px; color:var(--color-text);}
+.screen .strip-demo .sd-from{color:var(--color-text-subtle); text-decoration:line-through; text-decoration-color:color-mix(in srgb, var(--color-danger) 60%, transparent);}
+.screen .stripper--off .strip-demo .sd-from{text-decoration:none;}
+.screen .strip-demo .sd-arrow{color:var(--color-text-subtle); font-size:var(--text-small);}
+.screen .strip-demo .sd-to{color:var(--color-text); border-color:color-mix(in srgb, var(--color-accent) 30%, var(--color-border));}
+.screen .stripper--off .strip-demo .sd-to{color:var(--color-text-subtle); border-color:var(--color-border);}
+.screen .switch{position:relative; width:40px; height:23px; flex:0 0 auto; cursor:pointer; display:inline-block;}
+.screen .switch .track{position:absolute; inset:0; border-radius:var(--radius-full); background:var(--color-ink-300); transition:background var(--duration-base) var(--ease-standard);}
+.screen.pd-dark .switch .track{background:var(--color-ink-700);}
+.screen .switch .knob{position:absolute; top:3px; left:3px; width:17px; height:17px; border-radius:var(--radius-full); background:#fff; box-shadow:var(--shadow-sm); transition:transform var(--duration-base) var(--ease-standard);}
+.screen .switch.on .track{background:var(--color-primary);}
+.screen .switch.on .knob{transform:translateX(17px); background:var(--color-primary-foreground);}
+.screen .ff-list{display:flex; flex-direction:column;}
+.screen .ff-row{display:flex; align-items:flex-start; gap:12px; padding:14px 18px; border-top:1px solid var(--color-border);}
+.screen .ff-row:first-child{border-top:none;}
+.screen .ff-row:hover{background:var(--color-surface-2);}
+.screen .ff-toggle{flex:0 0 auto; margin-top:1px;}
+.screen .ff-main{flex:1 1 auto; min-width:0;}
+.screen .ff-text{font-size:var(--text-small); color:var(--color-text); line-height:1.55; text-wrap:pretty;}
+.screen .ff-row.is-off .ff-text{color:var(--color-text-subtle);}
+.screen .ff-row > .kind-chip{flex:0 0 auto; align-self:flex-start; margin-top:1px;}
+.screen .ff-actions{flex:0 0 auto; display:flex; align-items:center; gap:4px;}
+.screen .ff-icon{width:30px; height:30px; display:grid; place-items:center; border-radius:var(--radius-sm); border:1px solid transparent; background:transparent; color:var(--color-text-subtle); cursor:pointer;}
+.screen .ff-icon:hover{background:var(--color-surface); color:var(--color-text); border-color:var(--color-border);}
+.screen .ff-icon.danger:hover{background:color-mix(in srgb, var(--color-danger) 12%, transparent); color:var(--color-danger); border-color:color-mix(in srgb, var(--color-danger) 30%, transparent);}
+.screen .ff-add{display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:14px 18px; border-top:1px solid var(--color-border); background:var(--color-surface-2);}
+.screen .ff-add .add-field{flex:1 1 240px; min-width:0; height:40px; padding:0 13px; font-family:var(--font-sans); font-size:var(--text-small); color:var(--color-text); background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-md); outline:none;}
+.screen .ff-add .add-field::placeholder{color:var(--color-text-subtle);}
+.screen .kind-seg{display:inline-flex; flex:0 0 auto; padding:3px; gap:2px; background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-md);}
+.screen .kseg{height:32px; padding:0 12px; font-family:var(--font-sans); font-size:var(--text-small); font-weight:500; color:var(--color-text-muted); background:transparent; border:1px solid transparent; border-radius:var(--radius-sm); cursor:pointer; white-space:nowrap;}
+.screen .kseg:hover{color:var(--color-text);}
+.screen .kseg--active{background:var(--color-text); color:var(--color-bg); font-weight:600;}
+
+/* ===================== mobile frame overrides ===================== */
+.screen.mob .sidebar{flex-basis:72px; padding:16px 10px;}
+.screen.mob .brand-name,.screen.mob .brand-sub,.screen.mob .nav-cap,
+.screen.mob .nav-item .nav-label,.screen.mob .nav-item .nav-badge,
+.screen.mob .account .who,.screen.mob .account .chev{display:none;}
+.screen.mob .brand{justify-content:center; padding:8px 0 16px;}
+.screen.mob .nav-item{justify-content:center; padding:10px;}
+.screen.mob .account{justify-content:center;}
+.screen.mob .content{padding:16px 14px 40px;}
+.screen.mob .topbar-inner{padding-inline:14px;}
+.screen.mob .vhero-row{flex-direction:column;}
+.screen.mob .vhero-actions{width:100%;}
+.screen.mob .vhero-actions .btn{flex:1 1 auto;}
+.screen.mob .trait-kind{min-width:0;}
+/* tabs go full-width and stay on one row on narrow screens */
+.screen.mob .vtabs{gap:0;}
+.screen.mob .vtab{flex:1 1 0; justify-content:center; padding:11px 4px 12px;}
+.screen.mob .ff-add .add-field{flex-basis:100%;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script id="builder">
+/* ===================== icons (merged) ===================== */
+function ic(d,s){s=s||16;return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+d+'</svg>';}
+var ICONS={
+ studio:'<path d="M4 20l1-4L16 5a2 2 0 0 1 3 3L8 19z"/><path d="M14 7l3 3"/>',
+ feed:'<rect x="4" y="5" width="16" height="4.5" rx="1.4"/><rect x="4" y="14.5" width="16" height="4.5" rx="1.4"/>',
+ replies:'<path d="M5 6.5h14v8.5H10l-4 3.5v-3.5H5z"/>',
+ at:'<circle cx="12" cy="12" r="3.4"/><path d="M15.4 12v1.6a2.4 2.4 0 0 0 4.1 1.4A8 8 0 1 0 15 19.4"/>',
+ chart:'<path d="M5 19V5"/><path d="M5 19h14"/><rect x="8" y="11" width="2.6" height="5"/><rect x="13" y="7.5" width="2.6" height="8.5"/>',
+ audit:'<rect x="6" y="4" width="12" height="16" rx="2"/><path d="M9 9h6M9 12.5h6M9 16h3.5"/>',
+ study:'<path d="M5 5.5A1.5 1.5 0 0 1 6.5 4H18v13H6.5A1.5 1.5 0 0 0 5 18.5z"/><path d="M5 18.5A1.5 1.5 0 0 1 6.5 17H18v3H6.5A1.5 1.5 0 0 1 5 18.5z"/>',
+ compass:'<circle cx="12" cy="12" r="8.2"/><path d="M15.4 8.6l-2 4.8-4.8 2 2-4.8z"/>',
+ voice:'<rect x="9" y="3.5" width="6" height="11" rx="3"/><path d="M6 11.5a6 6 0 0 0 12 0M12 17.5V20M9 20h6"/>',
+ autopilot:'<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>',
+ sliders:'<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',
+ filter:'<path d="M4 5h16l-6 7v5l-4 2v-7L4 5Z"/>',
+ penline:'<path d="M4 20h16"/><path d="M5 16h2L16 7a1.6 1.6 0 0 0-2.3-2.3L5 13.5V16Z"/>',
+ moon:'<path d="M20 14.5A8 8 0 1 1 9.5 4 6.3 6.3 0 0 0 20 14.5z"/>',
+ sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M2 12h2M20 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/>',
+ settings:'<circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l1.8-1.3-1.8-3.1-2.1.8a7 7 0 0 0-2-1.2l-.3-2.2H8.5l-.3 2.2a7 7 0 0 0-2 1.2l-2.1-.8L2.3 9.5l1.8 1.3A7 7 0 0 0 4 12a7 7 0 0 0 .1 1.2l-1.8 1.3 1.8 3.1 2.1-.8a7 7 0 0 0 2 1.2l.3 2.2h3.2l.3-2.2a7 7 0 0 0 2-1.2l2.1.8 1.8-3.1-1.8-1.3A7 7 0 0 0 19 12z"/>',
+ globe:'<circle cx="12" cy="12" r="8.2"/><path d="M4 12h16M12 3.8c2.2 2.3 2.2 13.9 0 16.4M12 3.8c-2.2 2.3-2.2 13.9 0 16.4"/>',
+ nib:'<path d="M12 3.5 7 8.5l3 9 2 2 2-2 3-9z"/><circle cx="12" cy="11" r="1.2"/>',
+ chevD:'<path d="M6 9.5 12 15l6-5.5"/>',
+ check:'<path d="M5 12.5 10 17.5 19 7"/>',
+ x:'<path d="M6 6l12 12M18 6 6 18"/>',
+ plus:'<path d="M12 5v14M5 12h14"/>',
+ trash:'<path d="M5 7h14M10 7V5h4v2M6.5 7l.7 12a1.6 1.6 0 0 0 1.6 1.5h6.4a1.6 1.6 0 0 0 1.6-1.5L18.5 7"/>',
+ pencil:'<path d="M4 20l1-3.5L15 6.5a1.8 1.8 0 0 1 2.6 2.5L7.5 19z"/>',
+ refresh:'<path d="M20 7a8 8 0 0 0-14.3-2M4 5v4h4"/><path d="M4 17a8 8 0 0 0 14.3 2M20 19v-4h-4"/>',
+ scan:'<path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M7.5 12h9"/>',
+ alert:'<path d="M12 4.5 21 19.5H3L12 4.5Z"/><path d="M12 10.5v4M12 17.4v.1"/>',
+ tags:'<path d="M4 10.5V5.5A1.5 1.5 0 0 1 5.5 4h5l8 8a1.5 1.5 0 0 1 0 2.1l-4.4 4.4a1.5 1.5 0 0 1-2.1 0l-8-8Z"/><circle cx="8" cy="8" r="1.2" fill="currentColor" stroke="none"/>',
+ list:'<path d="M5 7.5l1.5 1.5L9 6M5 16.5l1.5 1.5L9 14M12.5 8h6.5M12.5 16h6.5"/>',
+ quote:'<path d="M9.5 7C7 7.6 5.5 9.7 5.5 12.4V17h4.7v-4.7H8.3c0-1.7 .7-2.9 2.2-3.5L9.5 7ZM18.5 7c-2.5 .6-4 2.7-4 5.4V17h4.7v-4.7h-2.4c0-1.7 .7-2.9 2.2-3.5L18.5 7Z" fill="currentColor" stroke="none"/>',
+ robot:'<rect x="5" y="8" width="14" height="11" rx="2.4"/><path d="M12 4.5V8M8.5 4.5h7"/><circle cx="9.3" cy="13" r="1.1" fill="currentColor" stroke="none"/><circle cx="14.7" cy="13" r="1.1" fill="currentColor" stroke="none"/><path d="M9.5 16.2h5"/><path d="M3 12v3M21 12v3"/>'
+};
+function I(n,s){return ic(ICONS[n]||'',s);}
+
+/* ===================== copy helpers ===================== */
+function cleanV(s){return String(s).replace(/\s\u2014\s/g,', ').replace(/\u2014/g,', ');}
+function escV(s){return cleanV(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function escS(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+/* ===================== VOICE data (verbatim from voice-data.jsx, Mara Lin) ===================== */
+var INTRO="Mara writes like she's leaving a voice note for one friend who also makes things on the internet, warm, but never gushing. She earns every claim with a small, specific moment from her own week, then gets out of the way. Plain words over clever ones. Short paragraphs. The occasional dry joke, usually at her own expense.";
+var TI=[
+ {label:'The craft of writing',note:'Finding a voice, cutting words, the gap between polished and honest.'},
+ {label:'Building in public',note:"Cadence over bursts, the unglamorous middle, showing work before it's finished."},
+ {label:'Creative courage',note:'Publishing before you feel ready, and the quiet cost of waiting to be good.'},
+ {label:'Audience, honestly',note:'Writing for the right hundred people instead of chasing reach.'},
+ {label:'Anti-hype',note:'Calling out performative advice and engagement theatre.'}
+];
+var TX=[
+ {label:'Personal life & family',note:'Keep the people in my life off the timeline.'},
+ {label:'The daily outrage cycle',note:'No reacting to the news or piling onto drama.'},
+ {label:'Income & follower counts',note:'No revenue screenshots, no growth-flexing.'},
+ {label:"Other people's launches",note:"Don't comment on competitors or subtweet."}
+];
+var CH=[
+ {label:'Warmth',text:'Warm but never gushing, like a voice note to one friend who also makes things.'},
+ {label:'Evidence',text:'Earns every claim with a small, specific moment from the week.'},
+ {label:'Restraint',text:'Plain words over clever ones; gets out of the way once the point lands.'},
+ {label:'Humor',text:'Dry, occasional, usually at her own expense.'},
+ {label:'Rhythm',text:'Short paragraphs. One idea per post.'}
+];
+var DO=[
+ {text:'Open with the concrete, a specific moment before any lesson.'},
+ {text:'End on a turn: a small reversal, or a question that lingers.'},
+ {text:'Keep posts to one idea, three sentences at most.'},
+ {text:'Sentence case for posts; lowercase, conversational replies.'}
+];
+var DN=[
+ {text:'Never use \u201Cleverage,\u201D \u201Cunlock,\u201D or \u201Cgame-changer.\u201D'},
+ {text:'No hashtags, no emoji, no \u201Cthread \uD83E\uDDF5\u201D theatrics.'},
+ {text:"Don't chase reach or mention follower counts."},
+ {text:"No engagement-bait questions you don't actually care about."}
+];
+var EX=[
+ {context:'Post',stat:'412 likes',text:'Wrote 1,000 words this morning before I opened email. Cut 600 of them. The 400 that survived are the only ones that were ever going to matter.'},
+ {context:'Post',stat:'980 likes',text:"You don't need a bigger audience. You need a hundred people who'd be genuinely bummed if you stopped."},
+ {context:'Reply',stat:'138 likes',text:'Start before you feel ready. I open a doc and write the worst possible first line on purpose, it kills the pressure to be good, and the real sentence usually shows up by line three.'}
+];
+
+/* ===================== ANTI-ROBOT data (verbatim from stylerules-data.jsx) ===================== */
+var CATEGORIES=["Punctuation","Diction","Structure","Cadence","Formatting","Tone"];
+var BUILTIN=[
+ {id:'b1',category:'Punctuation',title:'Human punctuation',
+  desc:'Avoid the runaway em-dash, the loudest tell of all, and the guillemets («») some models leave behind. Reach for commas, full stops, or parentheses instead.',
+  on:true,stripper:true,
+  note:'Its switch also runs a deterministic typographic pass after every draft (no model involved): em-dashes (—) become commas, guillemets («») become straight quotes.',
+  demo:{from:'It works \u2014 mostly \u2014 and reads «human».',to:'It works, mostly, and reads "human".'}},
+ {id:'b2',category:'Structure',title:'Cut \u201Cit\u2019s not just X, it\u2019s Y\u201D',desc:'Kill the not-just-but reversal and other templated contrasts that read as filler.',on:true},
+ {id:'b3',category:'Cadence',title:'Break the rule of three',desc:'Avoid the reflexive three-part list, \u201Cclear, concise, and compelling.\u201D One sharp word beats three tidy ones.',on:true},
+ {id:'b4',category:'Diction',title:'Ban hype adjectives',desc:'No \u201Cpowerful,\u201D \u201Cseamless,\u201D \u201Crobust,\u201D or \u201Cgame-changing.\u201D Name the concrete thing instead.',on:true},
+ {id:'b5',category:'Structure',title:'Delete the windup',desc:'Strip throat-clearing openers like \u201Cin today\u2019s fast-paced world\u201D or \u201Clet\u2019s dive in.\u201D Start on the point.',on:true},
+ {id:'b6',category:'Diction',title:'Avoid \u201Cdelve,\u201D \u201Cleverage,\u201D \u201Cutilize\u201D',desc:'Replace the LLM-favourite verbs with the plain ones a person would actually type.',on:true},
+ {id:'b7',category:'Structure',title:'Drop the bow-tie ending',desc:'No \u201Cat the end of the day\u2026\u201D summary that just restates the post. End on the last real idea.',on:true},
+ {id:'b8',category:'Formatting',title:'No emoji bullets',desc:'Don\u2019t open lines with \u2728, \uD83D\uDE80, or \u2705. Let the words carry the structure.',on:true,applies:'post'},
+ {id:'b9',category:'Cadence',title:'Vary sentence length',desc:'Mix short lines with long ones. Uniform medium-length sentences are the rhythm of a machine.',on:true},
+ {id:'b10',category:'Tone',title:'Keep contractions',desc:'Use don\u2019t, it\u2019s, you\u2019re. Fully expanded forms read stiff and synthetic.',on:true},
+ {id:'b11',category:'Tone',title:'No hedging filler',desc:'Cut \u201CI think,\u201D \u201Carguably,\u201D \u201Cit could be said that.\u201D Commit to the sentence.',on:false},
+ {id:'b12',category:'Formatting',title:'No hashtag stacks',desc:'Never append #writing #content #threads. One hashtag, and only if it truly earns its place.',on:false,applies:'post'}
+];
+var FREEFORM=[
+ {id:'f1',text:'Never open a reply with \u201CGreat question!\u201D or \u201CLove this.\u201D',kind:'reply',enabled:true},
+ {id:'f2',text:'Keep replies to two sentences unless someone clearly wants more.',kind:'reply',enabled:true},
+ {id:'f3',text:'Quote a specific detail from the post I\u2019m replying to, never a generic platitude.',kind:'reply',enabled:true},
+ {id:'f4',text:'Open a post on a concrete moment from my week, not a definition.',kind:'post',enabled:true}
+];
+
+/* ===================== shell ===================== */
+/* NB: the standalone "Style rules" nav item is REMOVED — it now lives as a tab inside Voice. */
+var NAV=[
+ {cap:'Workspace',items:[['studio','Studio',4],['feed','My Feed',0],['replies','Replies',3],['at','Mentions',0]]},
+ {cap:'Insight',items:[['chart','Stats',0],['audit','Audits',1],['study','Pattern study',0],['compass','Explore patterns',0]]},
+ {cap:'Voice & automation',items:[['voice','Voice',0],['autopilot','Autopilot',0]]}
+];
+function sidebar(){
+ var groups=NAV.map(function(g){
+  var items=g.items.map(function(it){
+   var icon=it[0],label=it[1],badge=it[2];
+   var active=label==='Voice'?' nav-item--active':'';
+   var cur=label==='Voice'?' aria-current="page"':'';
+   var bdg=badge?'<span class="nav-badge">'+badge+'</span>':'';
+   return '<a class="nav-item'+active+'"'+cur+'><span class="nav-ico">'+I(icon,16)+'</span><span class="nav-label">'+label+'</span>'+bdg+'</a>';
+  }).join('');
+  return '<div class="nav-cap">'+g.cap+'</div>'+items;
+ }).join('');
+ return '<aside class="sidebar"><div class="brand"><span class="brand-mark">'+I('nib',19)+'</span><div><div class="brand-name">Pennedly</div><div class="brand-sub">Drafting partner</div></div></div><nav class="nav">'+groups+'</nav><div class="sidebar-foot"><button class="account"><span class="avatar" style="width:32px;height:32px;"><span class="avatar-mono" style="font-size:13px;">ML</span></span><div class="who"><div class="nm">Mara Lin</div><div class="hd">@mara.lin</div></div><span class="chev">'+I('chevD',15)+'</span></button></div></aside>';
+}
+function topbar(pillHtml,dark){
+ return '<header class="topbar"><div class="topbar-inner"><span class="topbar-title">Voice</span>'+pillHtml+'<span class="topbar-spacer"></span><div class="topbar-actions"><button class="icon-btn" aria-label="Toggle theme">'+(dark?I('sun',17):I('moon',16))+'</button><a class="icon-btn" aria-label="Settings">'+I('settings',17)+'</a></div></div></header>';
+}
+function app(body,pillHtml,dark){
+ return '<div class="app">'+sidebar()+'<div class="main">'+topbar(pillHtml,dark)+'<div class="scroll"><div class="content">'+body+'</div></div></div></div>';
+}
+
+/* ===================== TAB SWITCHER ===================== */
+/* i18n keys: voice.tabs.voice, voice.tabs.antiRobot (+ .count). EN fallback rendered. */
+function tabbar(active){
+ var voiceOn=active==='voice';
+ var antiCount=BUILTIN.filter(function(r){return r.on;}).length+FREEFORM.filter(function(r){return r.enabled;}).length;
+ var antiTotal=BUILTIN.length+FREEFORM.length;
+ return '<div class="vtabs-wrap"><div class="vtabs" role="tablist">'
+  +'<button class="vtab'+(voiceOn?' is-active':'')+'" role="tab" aria-selected="'+(voiceOn?'true':'false')+'">'+I('voice',15)+'<span class="vtab-ico" style="display:none"></span>Voice</button>'
+  +'<button class="vtab'+(!voiceOn?' is-active':'')+'" role="tab" aria-selected="'+(!voiceOn?'true':'false')+'">'+I('robot',16)+'Anti-robot <span class="vtab-count">'+antiCount+'/'+antiTotal+'</span></button>'
+  +'</div></div>';
+}
+
+/* ===================== VOICE panel pieces ===================== */
+function vhero(opts){
+ opts=opts||{};
+ var langBtn='<div class="langmenu"><button class="lm-btn">'+I('globe',16)+'<span class="lm-cur">Original</span>'+I('chevD',14)+'</button></div>';
+ return '<div class="vhero">'
+  +'<span class="vhero-eyebrow">'+I('voice',14)+' Account voice</span>'
+  +'<div class="vhero-row"><h1 class="vhero-title">How <em>Mara Lin</em> sounds</h1>'+langBtn+'</div>'
+  +'<div class="vhero-meta"><span class="vmeta">Extracted from <b>312</b> posts</span><span class="sep"></span><span class="vmeta">Updated <b>'+(opts.updated||'3 days ago')+'</b></span></div>'
+  +'<div class="vhero-actions"><button class="btn btn--secondary">'+I('scan',16)+' Check voice</button><button class="btn btn--secondary">'+I('refresh',16)+' Re-extract</button></div>'
+ +'</div>';
+}
+function vsecHead(icon,title,desc,count,tone){
+ var cnt=count!=null?'<span class="count">'+count+'</span>':'';
+ return '<div class="vsec-head"><span class="vsec-mark">'+icon+'</span><div class="vsec-ttl"><div class="h">'+escV(title)+cnt+'</div><div class="d">'+escV(desc)+'</div></div><button class="vsec-edit">'+I('pencil',15)+' Edit</button></div>';
+}
+function vsecIntro(){
+ return '<section class="vsec">'+vsecHead(I('voice',17),'In a sentence','The through-line a draft should always hit',null)+'<div class="vsec-body"><p class="intro-text">'+escV(INTRO)+'</p></div></section>';
+}
+function vsecThemes(items,exclude){
+ var icon=exclude?I('alert',17):I('tags',17);
+ var title=exclude?"Won't write about":'Themes to write about';
+ var desc=exclude?'Topics Pennedly should steer every draft away from':'The subjects this account returns to';
+ var tone=exclude?' vsec--exclude':'';
+ var body='<div class="themes">'+items.map(function(t){
+  return '<div class="theme-row'+(exclude?' theme-row--x':'')+'"><span class="th-label"><span class="th-bullet"></span>'+escV(t.label)+'</span><span class="th-note">'+escV(t.note)+'</span></div>';
+ }).join('')+'</div>';
+ return '<section class="vsec'+tone+'">'+vsecHead(icon,title,desc,items.length)+'<div class="vsec-body">'+body+'</div></section>';
+}
+function vsecChars(items){
+ var body='<div class="traits">'+items.map(function(t){
+  return '<div class="trait-row"><span class="trait-kind">'+escV(t.label)+'</span><span class="trait-text">'+escV(t.text)+'</span></div>';
+ }).join('')+'</div>';
+ return '<section class="vsec">'+vsecHead(I('list',17),'Voice characteristics','How a draft should feel to read',items.length)+'<div class="vsec-body">'+body+'</div></section>';
+}
+function vsecRules(items,negative){
+ var icon=negative?I('x',17):I('check',17);
+ var title=negative?"Don't":'Do';
+ var desc=negative?'Hard rules a draft must never break':'Hard rules a draft must always follow';
+ var tone=negative?' vsec--dont':' vsec--do';
+ var body='<ul class="vrules">'+items.map(function(r){
+  return '<li class="vrule '+(negative?'vrule--no':'vrule--yes')+'"><span class="vrule-tick">'+(negative?I('x',13):I('check',13))+'</span><span class="vrule-text">'+escV(r.text)+'</span></li>';
+ }).join('')+'</ul>';
+ return '<section class="vsec'+tone+'">'+vsecHead(icon,title,desc,items.length)+'<div class="vsec-body">'+body+'</div></section>';
+}
+function vsecExamples(items){
+ var body='<div class="examples">'+items.map(function(x){
+  return '<div class="ex"><div class="ex-meta"><span class="ex-kind">'+escV(x.context)+'</span><span class="ex-dot"></span><span>'+escV(x.stat)+'</span></div><div class="ex-text">'+escV(x.text)+'</div></div>';
+ }).join('')+'</div>';
+ return '<section class="vsec">'+vsecHead(I('quote',17),'Example posts','Real posts that show the voice in motion',items.length)+'<div class="vsec-body">'+body+'</div></section>';
+}
+function vEmpty(){
+ return '<div class="vempty"><span class="ve-mark">'+I('voice',28)+'</span><div class="ve-title">Pennedly hasn\u2019t learned your voice yet</div><div class="ve-sub">Once you\u2019ve published a handful of posts, Pennedly can read them back and draft a starting voice, themes, characteristics, and rules you can edit. Nothing is shared until you say so.</div><button class="btn btn--primary btn--lg">'+I('refresh',18)+' Extract my voice</button><div class="ve-note">You can rewrite or re-extract any part of it afterward.</div></div>';
+}
+
+/* ===================== ANTI-ROBOT panel pieces ===================== */
+function sw(on){return '<span class="switch'+(on?' on':'')+'"><span class="track"></span><span class="knob"></span></span>';}
+function kindChip(kind,only){
+ if(!kind||kind==='all')return '';
+ var base=kind==='post'?'Posts':'Replies';
+ return '<span class="kind-chip">'+(only?base+' only':base)+'</span>';
+}
+function stripper(r){
+ var off=!r.on;
+ var toCode=r.on?r.demo.to:r.demo.from;
+ return '<div class="stripper'+(off?' stripper--off':'')+'"><div class="strip-note">'+I('sliders',13)+'<span>'+escS(r.note)+'</span></div><div class="strip-demo"><code class="sd-from">'+escS(r.demo.from)+'</code><span class="sd-arrow">\u2192</span><code class="sd-to">'+escS(toCode)+'</code></div></div>';
+}
+function builtinRow(r){
+ return '<div class="trule'+(r.on?'':' is-off')+'"><div class="trule-toggle">'+sw(r.on)+'</div><div class="trule-body"><div class="trule-top"><span class="trule-title">'+escS(r.title)+'</span>'+kindChip(r.applies,true)+'</div><div class="trule-desc">'+escS(r.desc)+'</div>'+(r.stripper?stripper(r):'')+'</div></div>';
+}
+function builtinSection(rules){
+ var onCount=rules.filter(function(r){return r.on;}).length;
+ var groups=CATEGORIES.map(function(cat){
+  var items=rules.filter(function(r){return r.category===cat;});
+  if(!items.length)return '';
+  var cOn=items.filter(function(r){return r.on;}).length;
+  return '<div class="cat-group"><div class="cat-head"><span class="cat-name">'+cat+'</span><span class="cat-count">'+cOn+'/'+items.length+'</span></div><div class="trules">'+items.map(builtinRow).join('')+'</div></div>';
+ }).join('');
+ return '<section class="sec"><div class="sec-head"><span class="sec-mark">'+I('filter',17)+'</span><div class="sec-ttl"><div class="h">Anti-AI-tells <span class="count">'+onCount+'/'+rules.length+'</span></div><div class="d">A fixed catalog of fixes that keep drafts from sounding generated</div></div></div><div class="cat-groups">'+groups+'</div></section>';
+}
+function freeformRow(r){
+ return '<div class="ff-row'+(r.enabled?'':' is-off')+'"><div class="ff-toggle">'+sw(r.enabled)+'</div><div class="ff-main"><span class="ff-text">'+escS(r.text)+'</span></div>'+kindChip(r.kind)+'<span class="ff-actions"><button class="ff-icon" aria-label="Edit">'+I('pencil',15)+'</button><button class="ff-icon danger" aria-label="Remove">'+I('trash',15)+'</button></span></div>';
+}
+function addRule(){
+ var kinds=[['all','Both'],['post','Posts'],['reply','Replies']];
+ var seg=kinds.map(function(k,i){return '<button class="kseg'+(i===0?' kseg--active':'')+'">'+k[1]+'</button>';}).join('');
+ return '<div class="ff-add"><input class="add-field" placeholder="Add a rule in your own words…"><div class="kind-seg">'+seg+'</div><button class="btn btn--primary" disabled>'+I('plus',16)+' Add</button></div>';
+}
+function freeformSection(rules){
+ var onCount=rules.filter(function(r){return r.enabled;}).length;
+ var head='<div class="sec-head"><span class="sec-mark">'+I('penline',17)+'</span><div class="sec-ttl"><div class="h">Your rules <span class="count">'+onCount+'/'+rules.length+'</span></div><div class="d">Anything else Pennedly should always do, in your words</div></div></div>';
+ return '<section class="sec">'+head+'<div class="ff-list">'+rules.map(freeformRow).join('')+'</div>'+addRule()+'</section>';
+}
+
+/* ===================== panels ===================== */
+function panelVoice(){
+ return tabbar('voice')
+  +vhero({updated:'3 days ago'})
+  +vsecIntro()
+  +vsecThemes(TI,false)
+  +vsecThemes(TX,true)
+  +vsecChars(CH)
+  +vsecRules(DO,false)
+  +vsecRules(DN,true)
+  +vsecExamples(EX);
+}
+function panelVoiceEmpty(){
+ return tabbar('voice')+vEmpty();
+}
+function panelAnti(){
+ return tabbar('antirobot')
+  +'<div class="tabsub">'+I('robot',16)+'<span>Switches that keep posts and replies from <b>reading like AI</b>. Set once, they run on every draft.</span></div>'
+  +freeformSection(FREEFORM)
+  +builtinSection(BUILTIN);
+}
+
+/* ===================== pills ===================== */
+var PILL_VOICE='<span class="status-pill status-pill--success"><span class="pill-dot"></span>In sync</span>';
+var PILL_VOICE_EMPTY='<span class="status-pill"><span class="pill-dot"></span>Not extracted yet</span>';
+function pillAnti(){var n=BUILTIN.filter(function(r){return r.on;}).length+FREEFORM.filter(function(r){return r.enabled;}).length;var t=BUILTIN.length+FREEFORM.length;return '<span class="status-pill"><span class="pill-dot"></span>'+n+' of '+t+' on</span>';}
+
+/* ===================== frames + doc ===================== */
+function frame(device,theme,label,body,pillHtml){
+ var dark=theme==='dark';
+ var screen='<div class="screen '+device+' pd-'+theme+'">'+app(body,pillHtml,dark)+'</div>';
+ return '<figure class="vp"><figcaption><span class="tg tg--'+(device==='web'?'web':'mob')+'">'+(device==='web'?'Web · 1060':'Mobile · 392')+'</span><span class="tg tg--'+theme+'">'+(dark?'Dark':'Light')+'</span><span class="lbl">'+label+'</span></figcaption>'+screen+'</figure>';
+}
+function sectionHead(num,title,desc,notes,sub){
+ var noteList=(notes||[]).map(function(n){return '<li>'+n+'</li>';}).join('');
+ return '<section class="state-sec'+(sub?'':' divide')+'"><div class="sec-num">'+num+'</div><h2 class="sec-title'+(sub?' sub':'')+'">'+title+'</h2><p class="sec-desc">'+desc+'</p>'+(noteList?'<ul class="sec-notes">'+noteList+'</ul>':'')+'</section>';
+}
+function noteCard(t){return '<div class="note-card"><div class="nc">'+t+'</div></div>';}
+function gallery(f){return '<div class="gallery">'+f+'</div>';}
+
+/* ===================== build ===================== */
+var H='';
+H+='<header class="doc-head">'
+ +'<p class="doc-kicker">Pennedly · State spec · build contract</p>'
+ +'<h1 class="doc-title">Voice · two tabs, Voice + Anti-robot</h1>'
+ +'<p class="doc-lede">FE-only consolidation. The two adjacent menu items in <b>Voice &amp; automation</b>, <b>Voice</b> (<code>/app/role-book</code>) and <b>Style</b> (<code>/app/style-rules</code>), become <b>one screen with a tab switcher</b> under the screen title. Tab&nbsp;1 <b>Voice</b> is the existing voice-DNA editor, unchanged, wrapped in a tab. Tab&nbsp;2 <b>Anti-robot</b> is the former Style screen, the anti-AI-tell toggles, ported 1:1. The standalone <b>Style</b> menu item is removed. Both back-end APIs already exist, no data changes. The hero with provenance and the empty <b>Extract my voice</b> state belong <b>only to tab&nbsp;1</b>; the Anti-robot tab opens straight on its toggle list with a one-line subtitle. Real PennedlyDesign tokens, the shared shell, real copy. Reading width <b>720px</b>. Labeled for <b>web + mobile</b> in <b>light + dark</b>.</p>'
+ +'<div class="doc-meta"><span class="m">route /app/role-book</span><span class="m">tabs: Voice · Anti-robot</span><span class="m">FE-only</span><span class="m">sidebar: \u2212 Style item</span><span class="m">width 720</span><span class="m">i18n: 8 locales, EN fallback</span></div>'
+ +'</header>'
+ +'<div class="legend"><span class="lk"><span class="dot" style="background:#171717;"></span>active tab / switch on</span><span class="lk"><span class="dot" style="background:#c8c7c3;"></span>inactive tab / switch off</span><span class="lk"><span class="dot" style="background:#2c7350;"></span>do / in sync</span><span class="lk"><span class="dot" style="background:#b23b30;"></span>don\u2019t / exclude</span><span class="lk"><span class="dot" style="background:#2f4cc4;"></span>accent / stripper</span></div>';
+
+H+=noteCard('<b>Scope.</b> This spec adds the <b>tab wrapper</b> and ports the toggle list, it does not redraw the voice editor. Tab&nbsp;1\u2019s internal sub-states (per-section translate / lint &ldquo;Check voice&rdquo; / re-extract) are <b>unchanged</b> and live exactly as today in <code>Voice-SPEC.html</code>. Tab&nbsp;2\u2019s toggle logic is <b>unchanged</b> and lives in <code>Style-Rules-SPEC.html</code>. Only the container changes.');
+
+// STATE 1 — Voice tab, populated
+H+=sectionHead('State 1','Tab \u201CVoice\u201D active \u00b7 populated editor',
+ 'The default landing. The screen title <code>Voice</code> sits in the topbar; directly under it, in the 720 content column, the <b>tab switcher</b>: <b>Voice</b> active (ink underline), <b>Anti-robot</b> inactive with its on/off count chip. Below the tabs, the existing voice-DNA editor exactly as today, the provenance hero (<code>Extracted from 312 posts · Updated 3 days ago</code>, no score) then the seven sections: In a sentence, Themes to write about, Won\u2019t write about (red exclude zone), Voice characteristics, Do, Don\u2019t, Example posts. Topbar pill <code>In sync</code>.',
+ ['The hero and its Check / Re-extract actions belong to this tab only.',
+  'Nothing inside the editor moved, it is wrapped in the tab panel and otherwise byte-for-byte the role-book screen.',
+  'The Voice nav item in the sidebar stays active across both tabs, it is one screen now.']);
+H+=gallery(
+ frame('web','light','Voice tab · populated',panelVoice(),PILL_VOICE)
+ +frame('web','dark','Voice tab · populated',panelVoice(),PILL_VOICE)
+ +frame('mob','light','Voice tab · mobile',panelVoice(),PILL_VOICE)
+ +frame('mob','dark','Voice tab · mobile',panelVoice(),PILL_VOICE)
+);
+
+// STATE 2 — Voice tab, empty
+H+=sectionHead('State 2','Tab \u201CVoice\u201D active \u00b7 empty \u201CExtract my voice\u201D',
+ 'First-run, no voice learned yet. The tab switcher is still present and Voice is active, but the panel shows the empty state, the calm message and the <b>Extract my voice</b> CTA, instead of the hero + sections. This empty/first-run state is specific to the Voice tab, the Anti-robot tab is never empty (its built-in catalog always exists).',
+ ['Switching to Anti-robot from here still shows the full toggle list, the two tabs are independent.',
+  'Topbar pill reads <code>Not extracted yet</code> rather than In sync.']);
+H+=gallery(
+ frame('web','light','Voice tab · empty state',panelVoiceEmpty(),PILL_VOICE_EMPTY)
+ +frame('web','dark','Voice tab · empty state',panelVoiceEmpty(),PILL_VOICE_EMPTY)
+ +frame('mob','light','Voice tab · empty · mobile',panelVoiceEmpty(),PILL_VOICE_EMPTY)
+);
+
+// STATE 3 — Anti-robot tab
+H+=sectionHead('State 3','Tab \u201CAnti-robot\u201D active \u00b7 the toggle list',
+ 'The same screen, Anti-robot tab selected (ink underline moves to it; Voice goes inactive). <b>No hero here</b>, just a one-line subtitle then the ported Style screen: <b>Your rules</b> (freeform, switch + text + Posts/Replies chip + edit/delete) with the add composer, then <b>Anti-AI-tells</b>, the fixed catalog grouped by the six categories, each toggle a switch + title + description, applicability chips on posts-only rules, and the <b>Human punctuation</b> card with its deterministic-pass note and live before/after demo. Topbar pill <code>14 of 16 on</code>.',
+ ['Ported 1:1, two built-ins ship OFF (No hedging filler, No hashtag stacks) and read in their dimmed off styling.',
+  'Human punctuation is ON, so its switch also drives the typographic stripper, em-dashes to commas, guillemets to straight quotes, shown struck-through \u2192 cleaned.',
+  'The subtitle is the only new copy on this tab; everything else is the existing screen.']);
+H+=gallery(
+ frame('web','light','Anti-robot tab · toggles',panelAnti(),pillAnti())
+ +frame('web','dark','Anti-robot tab · toggles',panelAnti(),pillAnti())
+ +frame('mob','light','Anti-robot tab · mobile',panelAnti(),pillAnti())
+ +frame('mob','dark','Anti-robot tab · mobile',panelAnti(),pillAnti())
+);
+
+// STATE 4 — switching reads
+H+=sectionHead('State 4','Switching \u00b7 how the active tab reads',
+ 'The two tab positions side by side so the active/inactive treatment is unambiguous: the active tab is ink-colored with a 2px ink underline flush to the divider; the inactive tab is muted with no underline and (for Anti-robot) keeps its count chip in both states. Same container, only the panel below swaps, the sticky topbar, sidebar, and reading column never move.',
+ ['Switching tabs does not change the URL\u2019s screen (still <code>/app/role-book</code>); it is in-page state, deep-linkable via a tab query/hash if desired.',
+  'The underline is the single active affordance; color alone is not relied on (weight + underline carry it for contrast).']);
+H+=gallery(
+ frame('web','light','Voice active',panelVoice(),PILL_VOICE)
+ +frame('web','light','Anti-robot active',panelAnti(),pillAnti())
+);
+
+// STATE 5 — mobile full-width tabs
+H+=sectionHead('State 5','Mobile (375) \u00b7 tab switcher + both tabs full width',
+ 'On the phone the rail collapses to icons and the two tabs <b>split the full width</b> (each flex:1, centered) so they never wrap or truncate, the Anti-robot label keeps its count chip. Both panels render full-width below: the Voice editor stacks its hero actions, the Anti-robot toggles keep switches at the leading edge with the add composer field going full width.',
+ ['Tabs stay on one row at 375, the label set is short enough (Voice / Anti-robot) to fit two equal halves.',
+  'Touch targets: each tab is the full half-width and \u226544px tall including padding.']);
+H+=gallery(
+ frame('mob','light','Voice tab · full-width tabs',panelVoice(),PILL_VOICE)
+ +frame('mob','dark','Anti-robot tab · full-width tabs',panelAnti(),pillAnti())
+);
+
+// i18n
+H+=sectionHead('i18n','New strings (8 locales, EN fallback)',
+ 'Only the tab wrapper introduces copy; the rest reuses existing Voice and Style keys. Below: the new keys with the EN fallback and the example RU values requested.',
+ null,true);
+H+=noteCard('<code>voice.tabs.voice</code> &rarr; EN \u201CVoice\u201D \u00b7 RU \u201C\u0413\u043e\u043b\u043e\u0441\u201D<br>'
+ +'<code>voice.tabs.antiRobot</code> &rarr; EN \u201CAnti-robot\u201D \u00b7 RU \u201C\u0410\u043d\u0442\u0438-\u0440\u043e\u0431\u043e\u0442\u201D<br>'
+ +'<code>voice.tabs.antiRobot.subtitle</code> &rarr; EN \u201CSwitches that keep posts and replies from reading like AI.\u201D \u00b7 RU \u201C\u0427\u0442\u043e\u0431\u044b \u043f\u043e\u0441\u0442\u044b \u0438 \u043e\u0442\u0432\u0435\u0442\u044b \u043d\u0435 \u0437\u0432\u0443\u0447\u0430\u043b\u0438 \u043a\u0430\u043a \u0418\u0418.\u201D<br>'
+ +'<b>Note:</b> the screen title stays <code>nav.voice</code>; the active sidebar item is unchanged. The removed <code>nav.styleRules</code> key can be retired once shipped.');
+
+document.getElementById('root').innerHTML=H;
+</script>
+</body>
+</html>

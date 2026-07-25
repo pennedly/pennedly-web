@@ -1,0 +1,177 @@
+/* reply-media.css — EXTENDS the Replies answer box with a COMPACT media
+   affordance. A reply is a quick, contextual answer, so this is deliberately
+   lighter than the post composer: a single "Add image" chip integrated into the
+   existing action row (no second toolbar), one thumbnail rendered inside the
+   reply block (above the send action so it never pushes the comment context
+   off-screen), and the richer types (video / carousel / GIF) shown GATED —
+   visibly "pending API verification", never as working. No audio. One image is
+   the only live reply media. Token-only; light/dark for free. Scrim chips over
+   imagery are white-on-dark by design. */
+
+/* ============================ ACTION-ROW CHIP ====================== */
+/* leading media tools, inserted at the START of .cmt-foot — same row as the
+   existing actions (Regenerate / Edit / Approve / Send), not a new toolbar. */
+.rmedia-tools { display: flex; align-items: center; gap: 7px; flex: 0 0 auto; }
+.rmedia-chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 32px; padding: 0 12px 0 10px; cursor: pointer;
+  font-family: var(--font-sans); font-size: var(--text-small); font-weight: 500;
+  color: var(--color-text-muted); white-space: nowrap;
+  background: transparent; border: 1px solid transparent; border-radius: var(--radius-sm);
+  transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+}
+.rmedia-chip:hover { background: var(--color-surface-2); color: var(--color-text); }
+.rmedia-chip .rc-ico { color: var(--color-text-subtle); flex: 0 0 auto; }
+.rmedia-chip:hover .rc-ico { color: var(--color-text-muted); }
+.rmedia-chip[disabled] { opacity: 0.45; cursor: not-allowed; background: transparent; color: var(--color-text-subtle); }
+/* the gated "More" trigger reads as the same family, with a soft accent dot */
+.rmedia-more { position: relative; }
+.rmedia-more .rm-soon {
+  width: 6px; height: 6px; border-radius: var(--radius-full);
+  background: var(--color-accent); margin-left: 1px; flex: 0 0 auto;
+}
+
+/* small "Soon" tag used on gated rows/chips */
+.soon-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10.5px; font-weight: 600; letter-spacing: 0.02em; line-height: 1;
+  padding: 3px 7px; border-radius: var(--radius-full);
+  color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--color-accent) 28%, transparent);
+}
+.soon-tag svg { flex: 0 0 auto; }
+
+/* ===================== ATTACHED MEDIA (in reply block) ============= */
+/* the thumbnail lives inside .reply-block, after the reply text/edit — so it
+   sits ABOVE the footer send action and never hides the comment. Compact. */
+.rmedia { margin-top: 11px; display: flex; align-items: flex-start; gap: 10px; }
+.rmedia-thumb {
+  position: relative; flex: 0 0 auto;
+  width: 76px; height: 76px; border-radius: var(--radius-md);
+  overflow: hidden; border: 1px solid var(--color-border); background: var(--color-surface);
+}
+.mob .rmedia-thumb { width: 88px; height: 88px; }
+.rmedia-ph {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  background:
+    repeating-linear-gradient(135deg,
+      color-mix(in srgb, var(--color-text) 6%, var(--color-surface-2)) 0 9px,
+      var(--color-surface-2) 9px 18px);
+}
+.rmedia-x {
+  position: absolute; top: 5px; right: 5px; z-index: 3;
+  width: 24px; height: 24px; border-radius: var(--radius-full); border: none; cursor: pointer;
+  display: grid; place-items: center; color: #fff;
+  background: color-mix(in srgb, #0a0a0a 60%, transparent); backdrop-filter: blur(2px);
+}
+.mob .rmedia-x { width: 30px; height: 30px; }
+.rmedia-x:hover { background: color-mix(in srgb, #0a0a0a 74%, transparent); }
+.rmedia-alt {
+  position: absolute; left: 5px; bottom: 5px; z-index: 3;
+  display: inline-flex; align-items: center; gap: 4px;
+  height: 21px; padding: 0 7px; border-radius: var(--radius-sm); border: none; cursor: pointer;
+  font-family: var(--font-sans); font-size: 10px; font-weight: 700; letter-spacing: 0.03em; color: #fff;
+  background: color-mix(in srgb, #0a0a0a 60%, transparent); backdrop-filter: blur(2px);
+}
+.rmedia-alt:hover { background: color-mix(in srgb, #0a0a0a 74%, transparent); }
+.rmedia-alt--set { background: color-mix(in srgb, var(--color-success) 88%, #000); }
+.rmedia-alt svg { flex: 0 0 auto; }
+/* uploading ring */
+.rmedia-up { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; background: color-mix(in srgb, #0a0a0a 42%, transparent); }
+.rmedia-pct { position: absolute; font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: #fff; }
+/* error thumb + caption */
+.rmedia-thumb--error { border-color: color-mix(in srgb, var(--color-danger) 55%, transparent); }
+.rmedia-errmark { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; color: var(--color-danger); background: color-mix(in srgb, var(--color-danger) 12%, var(--color-surface)); }
+/* a short hint/caption beside the thumb */
+.rmedia-side { min-width: 0; display: flex; flex-direction: column; gap: 5px; padding-top: 2px; }
+.rmedia-cap { font-size: var(--text-caption); color: var(--color-text-subtle); line-height: 1.45; }
+.rmedia-cap b { color: var(--color-text-muted); font-weight: 600; }
+.rmedia-err { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-caption); color: var(--color-danger); line-height: 1.4; }
+.rmedia-err svg { flex: 0 0 auto; margin-top: 1px; }
+.rmedia-retry { align-self: flex-start; font-family: var(--font-sans); font-size: var(--text-caption); font-weight: 600; color: var(--color-accent); background: none; border: none; cursor: pointer; padding: 0; }
+
+/* ===================== GATED MEDIA (not live yet) ================== */
+/* popover revealed by "More" — the intended end-state, clearly not enabled. */
+.rmedia-gate {
+  width: 248px; padding: 7px; border-radius: var(--radius-lg);
+  background: var(--color-surface); border: 1px solid var(--color-border); box-shadow: var(--shadow-lg);
+}
+.rmedia-gate-cap {
+  display: block; padding: 6px 9px 7px; font-size: var(--text-caption); font-weight: 600;
+  letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-subtle);
+}
+.rmedia-grow {
+  display: flex; align-items: center; gap: 9px; width: 100%;
+  padding: 8px 9px; border-radius: var(--radius-md); border: none; background: transparent;
+  font-family: var(--font-sans); font-size: var(--text-small); color: var(--color-text-subtle);
+  cursor: not-allowed; text-align: left;
+}
+.rmedia-grow .rg-ico { color: var(--color-text-subtle); flex: 0 0 auto; opacity: 0.8; }
+.rmedia-grow .rg-label { flex: 1 1 auto; }
+.rmedia-gate-note {
+  display: flex; gap: 8px; margin: 5px 3px 2px; padding: 9px 10px;
+  border-radius: var(--radius-md); background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  font-size: var(--text-caption); color: var(--color-text-muted); line-height: 1.5;
+}
+.rmedia-gate-note svg { flex: 0 0 auto; color: var(--color-accent); margin-top: 1px; }
+.rmedia-gate-note b { color: var(--color-text); font-weight: 600; }
+/* inline alternative: disabled chips in the row + a one-line note under it */
+.rmedia-gchips { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+.rmedia-gchip {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 30px; padding: 0 9px; border-radius: var(--radius-full);
+  font-family: var(--font-sans); font-size: var(--text-caption); font-weight: 500;
+  color: var(--color-text-subtle); background: var(--color-surface);
+  border: 1px dashed var(--color-border); cursor: not-allowed; white-space: nowrap;
+}
+.rmedia-gchip svg { flex: 0 0 auto; opacity: 0.7; }
+.rmedia-gnote {
+  display: inline-flex; align-items: center; gap: 7px; margin-top: 2px;
+  font-size: var(--text-caption); color: var(--color-text-subtle); line-height: 1.45;
+}
+.rmedia-gnote svg { flex: 0 0 auto; color: var(--color-accent); }
+
+/* ========================== ALT-TEXT POPOVER ====================== */
+.rmedia-altsheet { width: 100%; max-width: 380px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); padding: 16px; }
+.rmedia-altsheet-head { display: flex; align-items: flex-start; gap: 11px; margin-bottom: 12px; }
+.rmedia-altsheet-thumb { flex: 0 0 48px; width: 48px; height: 48px; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--color-border); position: relative; }
+.rmedia-altsheet-t { font-size: var(--text-small); font-weight: 600; }
+.rmedia-altsheet-s { font-size: var(--text-caption); color: var(--color-text-subtle); margin-top: 2px; line-height: 1.45; }
+.rmedia-altsheet-ta { width: 100%; min-height: 72px; resize: vertical; font-family: var(--font-sans); font-size: 15px; line-height: 1.55; color: var(--color-text); background: var(--color-surface); border: 1px solid var(--color-accent); border-radius: var(--radius-md); padding: 9px 11px; outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 16%, transparent); }
+.mob .rmedia-altsheet-ta { font-size: 16px; }
+.rmedia-altsheet-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 11px; }
+.rmedia-altsheet-count { font-family: var(--font-mono); font-size: var(--text-caption); color: var(--color-text-subtle); }
+
+/* ===================== MOBILE FOOT ICON (image) =================== */
+/* on phone the action row uses 44px icon buttons; the image affordance matches. */
+.mob .rmedia-footbtn { position: relative; }
+.mob .rmedia-footbtn .rm-soon {
+  position: absolute; top: 7px; right: 7px; width: 7px; height: 7px;
+  border-radius: var(--radius-full); background: var(--color-accent);
+  border: 1.5px solid var(--color-surface);
+}
+/* the GIPHY-style / picker sheet reuses .m-sheet from pennedly-mobile.css */
+.mob .rmedia-pickrow { display: flex; flex-direction: column; gap: 10px; }
+.mob .rmedia-pickbtn {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px;
+  padding: 12px 14px; border-radius: var(--radius-md); border: 1px solid var(--color-border);
+  background: var(--color-surface); color: var(--color-text); cursor: pointer; text-align: left;
+}
+.mob .rmedia-pickbtn .rp-ico { flex: 0 0 auto; width: 38px; height: 38px; display: grid; place-items: center; border-radius: var(--radius-md); background: var(--color-surface-2); border: 1px solid var(--color-border); color: var(--color-text-muted); }
+.mob .rmedia-pickbtn .rp-t { font-size: 15px; font-weight: 600; }
+.mob .rmedia-pickbtn .rp-s { font-size: var(--text-caption); color: var(--color-text-subtle); margin-top: 1px; }
+.mob .rmedia-pickbtn--gated { cursor: not-allowed; }
+.mob .rmedia-pickbtn--gated .rp-t, .mob .rmedia-pickbtn--gated .rp-s { color: var(--color-text-subtle); }
+.mob .rmedia-pickbtn--gated .rp-ico { opacity: 0.7; }
+.mob .rmedia-pickbtn .rp-soon { margin-left: auto; flex: 0 0 auto; }
+
+/* ========================= REPLY WEB FRAME ======================== */
+.rf { position: relative; flex: 0 0 auto; width: 600px; max-width: 100%; padding: 22px; border-radius: 22px; overflow: hidden; background: var(--color-bg); box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-text) 9%, transparent), 0 18px 40px -22px rgba(10, 10, 12, 0.35); }
+.rf .feed { display: flex; flex-direction: column; gap: 14px; }
+.rf .compose-overlay, .device-screen .compose-overlay { position: absolute; inset: 0; z-index: 40; display: grid; place-items: center; padding: 20px; background: color-mix(in srgb, var(--color-ink-950) 55%, transparent); backdrop-filter: blur(3px); }
+/* popover anchored variant (not a full overlay) for the gate menu demo */
+.rf .gate-pop { position: absolute; z-index: 30; }
+/* web card avatar (avoids a shell.css dependency; phone uses .mob .avatar-img) */
+.cmt-card .avatar-img, .reply-author .avatar-img { border-radius: var(--radius-full); object-fit: cover; display: block; flex: 0 0 auto; background: var(--color-surface-2); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-text) 8%, transparent); }
