@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pennedly · Подсказка-совет — 4 направления</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../ds/tokens.css" />
+<link rel="stylesheet" href="../ds/components.css" />
+<link rel="stylesheet" href="../scenarios.css" />
+<link rel="stylesheet" href="../scenarios-redesign.css" />
+<style>
+:root{
+  --font-sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --font-mono:"Geist Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --bg:#efedea; --surface:#ffffff; --surface-2:#f6f5f2; --border:#dcd9d2;
+  --text:#171717; --muted:#565550; --subtle:#6f6e69; --accent:#2f4cc4;
+  --good:#2c7350; --warn:#8a5b16; --danger:#b23b30; --radius:14px;
+}
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%; scroll-behavior:smooth;}
+body{margin:0; background:var(--bg); color:var(--text);
+  font-family:var(--font-sans); font-size:15px; line-height:1.62;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;}
+main{max-width:1140px; margin:0 auto; padding:48px 40px 130px; min-width:0;}
+
+.kicker{font-family:var(--font-mono); font-size:12px; letter-spacing:0.04em; color:var(--accent); text-transform:uppercase; margin:0 0 12px;}
+h1.title{font-size:34px; line-height:1.1; letter-spacing:-0.025em; font-weight:600; margin:0 0 16px; text-wrap:balance;}
+h1.title span{color:var(--subtle); font-weight:500;}
+.lede{font-size:16px; color:var(--muted); max-width:78ch; margin:0 0 14px; text-wrap:pretty;}
+.lede b{color:var(--text); font-weight:600;}
+
+.problem{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:22px 0 6px;}
+.pcell{padding:14px 17px; border:1px solid var(--border); border-radius:12px; background:var(--surface);}
+.pcell .pk{font-family:var(--font-mono); font-size:11px; letter-spacing:0.05em; text-transform:uppercase; margin:0 0 6px;}
+.pcell.bad .pk{color:var(--danger);}
+.pcell.aim .pk{color:var(--good);}
+.pcell p{margin:0; font-size:13.5px; color:var(--muted); line-height:1.55;}
+.pcell p b{color:var(--text); font-weight:600;}
+
+section{margin-top:56px; scroll-margin-top:20px;}
+.dir-head{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; margin:0 0 4px;}
+.dir-head .dn{font-family:var(--font-mono); font-size:15px; color:var(--accent); font-weight:600;}
+.dir-head h2{font-size:22px; line-height:1.2; letter-spacing:-0.012em; font-weight:600; margin:0;}
+.dir-head .tagline{font-size:11px; font-family:var(--font-mono); color:var(--subtle); border:1px solid var(--border); border-radius:9999px; padding:2px 9px;}
+.dir-note{color:var(--muted); font-size:14px; max-width:88ch; margin:8px 0 20px; text-wrap:pretty;}
+.dir-note b{color:var(--text); font-weight:600;}
+
+.frames{display:flex; flex-direction:column; gap:18px;}
+.fr-head{display:inline-flex; align-items:center; gap:8px; font-family:var(--font-mono); font-size:11px; letter-spacing:.02em; color:var(--subtle); margin-bottom:9px;}
+.fr-head b{color:var(--muted); font-weight:600;}
+.fr-head .dh{width:8px; height:8px; border-radius:9999px; background:var(--border);}
+.fr-head .dh--dark{background:#0a0a0a; border:1px solid #3a3a3a;}
+.frame{background:var(--color-bg); color:var(--color-text); border:1px solid var(--color-border); border-radius:18px; padding:26px 28px; overflow:hidden;}
+.frame.dark{background:#0a0a0a; border-color:#2b2a27;}
+.frame *{box-sizing:border-box;}
+.darkgrid{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
+@media(max-width:920px){ .darkgrid{grid-template-columns:1fr;} }
+
+/* the routine-list environment (mirrors Autopilot home) */
+.env{max-width:960px; margin:0 auto; display:flex; flex-direction:column; gap:13px;}
+.routine-head{display:flex; align-items:baseline; justify-content:space-between; gap:14px; flex-wrap:wrap; margin-bottom:2px;}
+.routine-head .rl-t{font-size:var(--text-h3); font-weight:600; letter-spacing:-0.006em;}
+.routine-head .rl-s{font-size:var(--text-small); color:var(--color-text-subtle);}
+.sc-plaque--warn{color:var(--color-warning); background:color-mix(in srgb,var(--color-warning) 8%,var(--color-surface)); border-color:color-mix(in srgb,var(--color-warning) 26%,var(--color-border));}
+
+/* ════════ DIRECTION 1 · тонкая строка-«лампочка» ════════ */
+.tip-strip{display:flex; align-items:center; gap:13px; padding:10px 13px; border-radius:var(--radius-md);
+  background:var(--color-surface-2); border:1px solid var(--color-border);}
+.tip-strip .ts-bulb{flex:0 0 auto; color:var(--color-warning); display:grid; place-items:center;}
+.tip-strip .ts-tag{flex:0 0 auto; font-family:var(--font-mono); font-size:10px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase;
+  color:var(--color-text-subtle); border:1px solid var(--color-border); border-radius:var(--radius-full); padding:2px 8px; background:var(--color-surface);}
+.tip-strip .ts-text{flex:1 1 auto; min-width:0; font-size:var(--text-small); color:var(--color-text-muted); line-height:1.5; text-wrap:pretty;}
+.tip-strip .ts-text b{color:var(--color-text); font-weight:600;}
+.tip-strip .ts-act{flex:0 0 auto; background:transparent; border:none; cursor:pointer; font-family:inherit; font-size:var(--text-small); font-weight:600; color:var(--color-accent);
+  display:inline-flex; align-items:center; gap:6px; padding:5px 9px; border-radius:var(--radius-sm);}
+.tip-strip .ts-act:hover{background:color-mix(in srgb,var(--color-accent) 9%,transparent);}
+.tip-strip .ts-x{flex:0 0 auto; width:26px; height:26px; display:grid; place-items:center; border-radius:var(--radius-sm);
+  background:transparent; border:none; cursor:pointer; color:var(--color-text-subtle);}
+.tip-strip .ts-x:hover{background:var(--color-surface); color:var(--color-text);}
+
+/* ════════ DIRECTION 2 · коуч Pennedly с аватаром ════════ */
+.tip-coach{position:relative; display:flex; gap:14px; padding:16px 18px; border-radius:var(--radius-lg);
+  background:color-mix(in srgb,var(--color-accent) 5%,var(--color-surface)); border:1px solid color-mix(in srgb,var(--color-accent) 22%,var(--color-border)); box-shadow:var(--shadow-sm);}
+.tip-coach .tc-av{flex:0 0 auto; width:40px; height:40px; border-radius:var(--radius-full);
+  background:color-mix(in srgb,var(--color-accent) 16%,var(--color-surface)); border:1px solid color-mix(in srgb,var(--color-accent) 30%,transparent);
+  display:grid; place-items:center; color:var(--color-accent);}
+.tip-coach .tc-body{flex:1 1 auto; min-width:0;}
+.tip-coach .tc-name{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+.tip-coach .tc-name b{font-size:var(--text-small); font-weight:600; color:var(--color-text);}
+.tip-coach .tc-role{font-size:var(--text-caption); color:var(--color-text-subtle);}
+.tip-coach .tc-msg{margin-top:5px; font-size:var(--text-small); color:var(--color-text); line-height:1.55; text-wrap:pretty;}
+.tip-coach .tc-msg b{font-weight:600;}
+.tip-coach .tc-actions{display:flex; align-items:center; gap:9px; margin-top:12px; flex-wrap:wrap;}
+.tip-coach .tc-x{position:absolute; top:12px; right:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:var(--radius-sm);
+  background:transparent; border:none; cursor:pointer; color:var(--color-text-subtle);}
+.tip-coach .tc-x:hover{background:color-mix(in srgb,var(--color-accent) 10%,transparent); color:var(--color-text);}
+
+/* ════════ DIRECTION 3 · контекстная плашка на карточке ════════ */
+.rgroup{display:flex; flex-direction:column;}
+.rgroup .sc-card{border-bottom-left-radius:0; border-bottom-right-radius:0; border-bottom:1px dashed color-mix(in srgb,var(--color-warning) 34%,var(--color-border));}
+.rgroup .sc-card.sc-card--on{box-shadow:none;}
+.tip-attach{display:flex; align-items:center; gap:12px; padding:11px 16px 12px;
+  border:1px solid color-mix(in srgb,var(--color-warning) 30%,var(--color-border)); border-top:none;
+  border-bottom-left-radius:var(--radius-lg); border-bottom-right-radius:var(--radius-lg);
+  background:color-mix(in srgb,var(--color-warning) 9%,var(--color-surface));}
+.tip-attach .ta-bulb{flex:0 0 auto; width:28px; height:28px; display:grid; place-items:center; border-radius:var(--radius-md);
+  background:color-mix(in srgb,var(--color-warning) 15%,var(--color-surface)); color:var(--color-warning);}
+.tip-attach .ta-body{flex:1 1 auto; min-width:0;}
+.tip-attach .ta-t{font-size:var(--text-small); font-weight:600; color:var(--color-text);}
+.tip-attach .ta-d{font-size:var(--text-caption); color:var(--color-text-muted); line-height:1.5; margin-top:1px; text-wrap:pretty;}
+.tip-attach .ta-d b{color:var(--color-text); font-weight:600;}
+.tip-attach .ta-act{flex:0 0 auto;}
+.tip-attach .ta-x{flex:0 0 auto; width:26px; height:26px; display:grid; place-items:center; border-radius:var(--radius-sm);
+  background:transparent; border:none; cursor:pointer; color:var(--color-text-subtle);}
+.tip-attach .ta-x:hover{background:color-mix(in srgb,var(--color-warning) 14%,transparent); color:var(--color-text);}
+
+/* ════════ DIRECTION 4 · чип в шапке + поповер ════════ */
+.routine-head .rl-right{display:flex; align-items:center; gap:11px;}
+.tips-chip{display:inline-flex; align-items:center; gap:7px; font-family:inherit; font-size:var(--text-small); font-weight:600; cursor:pointer;
+  padding:6px 12px 6px 10px; border-radius:var(--radius-full);
+  background:color-mix(in srgb,var(--color-warning) 11%,var(--color-surface)); color:var(--color-warning); border:1px solid color-mix(in srgb,var(--color-warning) 30%,var(--color-border));}
+.tips-chip:hover{background:color-mix(in srgb,var(--color-warning) 16%,var(--color-surface));}
+.tips-chip .chip-n{font-variant-numeric:tabular-nums;}
+.tips-pop{border:1px solid var(--color-border); border-radius:var(--radius-lg); background:var(--color-surface); box-shadow:var(--shadow-md); overflow:hidden;}
+.tips-pop .tp-head{display:flex; align-items:center; gap:9px; padding:12px 16px; border-bottom:1px solid var(--color-border); background:var(--color-surface-2);}
+.tips-pop .tp-head .tph-ico{color:var(--color-warning); display:grid; place-items:center;}
+.tips-pop .tp-head .tph-t{font-size:var(--text-small); font-weight:600; flex:1 1 auto;}
+.tips-pop .tp-head .tph-s{font-size:var(--text-caption); color:var(--color-text-subtle);}
+.tips-row{display:flex; align-items:flex-start; gap:12px; padding:13px 16px; border-top:1px solid var(--color-border);}
+.tips-row:first-of-type{border-top:none;}
+.tips-row .tr-body{flex:1 1 auto; min-width:0;}
+.tips-row .tr-t{font-size:var(--text-small); font-weight:600; color:var(--color-text);}
+.tips-row .tr-d{font-size:var(--text-caption); color:var(--color-text-muted); line-height:1.5; margin-top:2px; text-wrap:pretty;}
+.tips-row .tr-d b{color:var(--color-text); font-weight:600;}
+.tips-row .tr-actions{display:flex; align-items:center; gap:8px; margin-top:9px;}
+.tips-row .tr-x{flex:0 0 auto; width:26px; height:26px; display:grid; place-items:center; border-radius:var(--radius-sm); background:transparent; border:none; cursor:pointer; color:var(--color-text-subtle);}
+.tips-row .tr-x:hover{background:var(--color-surface-2); color:var(--color-text);}
+
+/* small soft action button used across tips */
+.btn--soft{background:color-mix(in srgb,var(--color-accent) 10%,var(--color-surface)); color:var(--color-accent); border-color:color-mix(in srgb,var(--color-accent) 26%,var(--color-border));}
+.btn--soft:hover{background:color-mix(in srgb,var(--color-accent) 16%,var(--color-surface));}
+
+@media(max-width:680px){
+  main{padding:32px 18px 90px;}
+  .problem{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<main>
+  <p class="kicker">Pennedly · Автопилот · /app/scenarios → «Твои рутины»</p>
+  <h1 class="title">Подсказка-совет <span>— 4 направления переиспользуемого слота</span></h1>
+  <p class="lede"><b>Задача:</b> сделать так, чтобы совет от Pennedly мгновенно читался как дружеская подсказка и явно отличался от карточек-рутин рядом. Текст — простой и человеческий, без жаргона. Слот общий: сегодня два случая, позже добавятся другие.</p>
+
+  <div class="problem">
+    <div class="pcell bad"><p class="pk">Было — проблема</p><p>Совет выглядел как ещё одна рутина: та же бордюр-карточка, иконка в скруглённом квадрате, текст с жаргоном («≤2×/нед», «метят в утро»). Не читается как совет.</p></div>
+    <div class="pcell aim"><p class="pk">Цель</p><p>Своя анатомия, не перекрашенная карточка. Понятный заголовок + 1 строка по-человечески. Можно закрыть (✕ / «понятно») и есть мягкий инлайн-экшен.</p></div>
+  </div>
+
+  <!-- ========== DIRECTION 1 ========== -->
+  <section>
+    <div class="dir-head"><span class="dn">01</span><h2>Тонкая строка-«лампочка»</h2><span class="tagline">низкий приоритет · закрываемая</span></div>
+    <p class="dir-note">Совсем не карточка: тонкая утопленная строка над списком. Маленькая лампочка, пометка <b>«Совет»</b>, одна человеческая фраза, мягкий инлайн-экшен и ✕. Низкий вес — не спорит с рутинами, его легко смахнуть.</p>
+    <div class="frames" id="d1"></div>
+  </section>
+
+  <!-- ========== DIRECTION 2 ========== -->
+  <section>
+    <div class="dir-head"><span class="dn">02</span><h2>Коуч Pennedly с аватаром</h2><span class="tagline">единое лицо советов</span></div>
+    <p class="dir-note">Совет произносит <b>Коуч Pennedly</b> — та же персона, что и в еженедельном разборе. Круглый аватар с пером, подпись, разговорная интонация. Не настройка, а живой человек, который подсказал — поэтому ни тумблера, ни статуса.</p>
+    <div class="frames" id="d2"></div>
+  </section>
+
+  <!-- ========== DIRECTION 3 ========== -->
+  <section>
+    <div class="dir-head"><span class="dn">03</span><h2>Контекстная плашка на карточке</h2><span class="tagline">прицеплена к виновнику</span></div>
+    <p class="dir-note">Не отдельный баннер сверху, а мини-плашка, <b>пришитая снизу к той рутине</b>, на которую жалуется. Связана пунктиром и тёплым тоном предупреждения — сразу видно, о ком речь. В случае B плашка висит под второй рутиной и называет обе.</p>
+    <div class="frames" id="d3"></div>
+  </section>
+
+  <!-- ========== DIRECTION 4 ========== -->
+  <section>
+    <div class="dir-head"><span class="dn">04</span><h2>Чип в шапке → раскрывающийся список</h2><span class="tagline">список чистый</span></div>
+    <p class="dir-note">Неожиданный ход: советы <b>вынесены из списка</b> в шапку секции — чип «Совет · N» рядом с «Твои рутины». Клик раскрывает аккуратную панель Коуча со всеми советами. Список рутин остаётся идеально чистым, а советы собраны в одном месте и масштабируются.</p>
+    <div class="frames" id="d4"></div>
+  </section>
+
+  <!-- ========== DARK PROOF ========== -->
+  <section>
+    <div class="dir-head"><span class="dn">★</span><h2>Тёмная тема</h2><span class="tagline">только семантические токены</span></div>
+    <p class="dir-note">Все четыре направления на семантических токенах — корректны в тёмной теме без правок.</p>
+    <div class="darkgrid" id="ddark"></div>
+  </section>
+</main>
+
+<script>
+(function(){
+  function ic(n,s){ s=s||14; var v='viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"';
+    var P={
+      clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+      bubble:'<path d="M21 12a8 8 0 0 1-11.5 7.2L4 20l1-5A8 8 0 1 1 21 12Z"/>',
+      eye:'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',
+      lock:'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+      gift:'<rect x="3" y="9" width="18" height="12" rx="1.5"/><path d="M3 13h18M12 9v12M12 9S10.5 4 8 5s.5 4 4 4Zm0 0s1.5-5 4-4-.5 4-4 4Z"/>',
+      sparkle:'<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8Z"/>',
+      bulb:'<path d="M9.5 18h5M10.5 21h3"/><path d="M12 3a6 6 0 0 0-3.8 10.6c.7.6 1.1 1.1 1.2 2.1l.1.3h5l.1-.3c.1-1 .5-1.5 1.2-2.1A6 6 0 0 0 12 3Z"/>',
+      x:'<path d="M6 6l12 12M18 6 6 18"/>',
+      spread:'<path d="M5 9 2 12l3 3M19 9l3 3-3 3M9 12h6"/>',
+      up:'<path d="M12 19V5M5 12l7-7 7 7"/>',
+      chev:'<path d="M9 6l6 6-6 6"/>',
+      nib:'<path d="M12 3l4 9-4 9-4-9Z"/><path d="M12 12v9"/><circle cx="12" cy="10" r="1.4"/>'
+    };
+    return '<svg width="'+s+'" height="'+s+'" '+v+'>'+(P[n]||'')+'</svg>';
+  }
+  function sw(on){ return '<label class="switch"><input type="checkbox"'+(on?' checked':'')+' aria-label="toggle"><span class="track"></span><span class="knob"></span></label>'; }
+
+  /* ---- real routine card (mirrors Autopilot home) ---- */
+  function rcard(o){
+    var statusTxt=o.on?'Активен':'Выключен';
+    var plaque=o.replies?' <span class="sc-plaque">'+ic('bubble',11)+' отвечает людям</span>':'';
+    var gated=o.gated?' <span class="sc-plaque sc-plaque--warn">'+ic('lock',11)+' осторожно</span>':'';
+    var ask=(o.on&&o.ask)?'<span class="sc-runcount">'+ic('eye',12)+' спрашивает перед публикацией</span>':'';
+    return '<div class="sc-card'+(o.on?' sc-card--on':' sc-card--off')+'">'
+      +'<div class="sc-card-head"><span class="sc-card-icon">'+ic(o.ico,20)+'</span>'
+      +'<div class="sc-card-titles"><div class="sc-card-name">'+o.name+plaque+gated+'</div>'
+      +'<div class="sc-cardline">'+o.line+'</div></div>'
+      +'<div class="sc-card-toggle"><span class="sc-card-state">'+statusTxt+'</span>'+sw(o.on)+'</div></div>'
+      +'<div class="sc-card-foot"><div class="sc-runs">'
+        +'<div class="sc-run"><span class="sr-k">след. запуск</span><span class="sr-v'+(o.on?'':' muted')+'">'+(o.on?o.next:'выключен')+'</span></div>'
+        +'<div class="sc-run"><span class="sr-k">последний</span><span class="sr-v'+(o.last?'':' muted')+'">'+(o.last||'ещё не было')+'</span></div>'+ask
+      +'</div>'
+      +'<div class="sc-card-actions"><a class="btn btn--ghost btn--sm" href="#">Активность</a><a class="btn btn--secondary btn--sm" href="#">Открыть</a></div>'
+      +'</div></div>';
+  }
+
+  var CARDS={
+    promo:{ico:'gift', name:'Акция', on:true, gated:true, line:'Просит подписку в обмен на бонус-разбор. Сейчас идёт <span class="v">каждый день</span>.', next:'сегодня 18:00', last:'вчера 18:00'},
+    morning:{ico:'clock', name:'Утренний вопрос', on:true, ask:true, line:'Каждый будний день около <span class="v">8:00</span> публикует пост-вопрос в твоём голосе.', next:'завтра ~8:00', last:'сегодня 8:07'},
+    quote:{ico:'sparkle', name:'Цитата дня', on:true, line:'Каждое утро около <span class="v">8:30</span> публикует короткую цитату по теме дня.', next:'завтра ~8:30', last:'сегодня 8:33'},
+    reply:{ico:'bubble', name:'Отвечать на комментарии', on:true, ask:true, replies:true, line:'Отвечает на комментарии <span class="v">по-доброму</span>, в твоём голосе.', next:'постоянно', last:'12 мин назад'}
+  };
+
+  function head(label,dark){ return '<div class="fr-head"><span class="dh'+(dark?' dh--dark':'')+'"></span>'+label+'</div>'; }
+  function frame(inner,dark){ return '<div class="frame'+(dark?' dark':'')+'">'+inner+'</div>'; }
+  function envHead(count,right){ return '<div class="routine-head"><span class="rl-t">Твои рутины</span>'+(right||'<span class="rl-s">'+count+'</span>')+'</div>'; }
+  function set(id,html){ var e=document.getElementById(id); if(e) e.innerHTML=html; }
+
+  /* ============ TIP RENDERERS ============ */
+  // D1 — strip
+  function d1strip(text,actLabel,actIco){
+    return '<div class="tip-strip"><span class="ts-bulb">'+ic('bulb',17)+'</span>'
+      +'<span class="ts-tag">Совет</span>'
+      +'<span class="ts-text">'+text+'</span>'
+      +'<button class="ts-act">'+ic(actIco,14)+' '+actLabel+'</button>'
+      +'<button class="ts-x" aria-label="Скрыть">'+ic('x',15)+'</button></div>';
+  }
+  // D2 — coach callout
+  function d2coach(msg,actLabel,actIco){
+    return '<div class="tip-coach"><span class="tc-av">'+ic('nib',20)+'</span>'
+      +'<div class="tc-body"><div class="tc-name"><b>Коуч Pennedly</b><span class="tc-role">· присматривает за рутинами</span></div>'
+      +'<div class="tc-msg">'+msg+'</div>'
+      +'<div class="tc-actions"><button class="btn btn--soft btn--sm">'+ic(actIco,14)+' '+actLabel+'</button>'
+      +'<button class="btn btn--ghost btn--sm">Понятно</button></div></div>'
+      +'<button class="tc-x" aria-label="Скрыть">'+ic('x',15)+'</button></div>';
+  }
+  // D3 — attached plaque (returns the wrapped card+plaque)
+  function d3attach(cardHtml,title,desc,actLabel,actIco){
+    return '<div class="rgroup">'+cardHtml
+      +'<div class="tip-attach"><span class="ta-bulb">'+ic('bulb',15)+'</span>'
+      +'<div class="ta-body"><div class="ta-t">'+title+'</div><div class="ta-d">'+desc+'</div></div>'
+      +'<button class="btn btn--soft btn--sm ta-act">'+ic(actIco,14)+' '+actLabel+'</button>'
+      +'<button class="ta-x" aria-label="Скрыть">'+ic('x',15)+'</button></div></div>';
+  }
+  // D4 — popover row
+  function d4row(title,desc,actLabel,actIco){
+    return '<div class="tips-row"><div class="tr-body"><div class="tr-t">'+title+'</div><div class="tr-d">'+desc+'</div>'
+      +'<div class="tr-actions"><button class="btn btn--soft btn--sm">'+ic(actIco,14)+' '+actLabel+'</button><button class="btn btn--ghost btn--sm">Скрыть</button></div></div>'
+      +'<button class="tr-x" aria-label="Скрыть">'+ic('x',15)+'</button></div>';
+  }
+  function d4pop(rows){
+    return '<div class="tips-pop"><div class="tp-head"><span class="tph-ico">'+ic('nib',16)+'</span><span class="tph-t">Советы Коуча</span><span class="tph-s">подсказки, не действия</span></div>'+rows+'</div>';
+  }
+
+  /* ============ MOUNT ============ */
+  // D1
+  set('d1',
+    head('Светлая · <b>Случай A — акция каждый день</b>')+frame('<div class="env">'+envHead('3 активны')
+      +d1strip('<b>Акция</b> выходит каждый день — так она примелькается. Реже бьёт сильнее: 1–2 раза в неделю.','Сделать реже','spread')
+      +rcard(CARDS.promo)+rcard(CARDS.morning)+'</div>')
+    +'<div style="height:2px"></div>'
+    +head('Светлая · <b>Случай B — посты на одно утро</b>')+frame('<div class="env">'+envHead('3 активны')
+      +d1strip('<b>Утренний вопрос</b> и <b>Цитата дня</b> метят на одно утро — при лимите 1 пост в день выйдет только один.','Разнести','spread')
+      +rcard(CARDS.morning)+rcard(CARDS.quote)+'</div>'));
+
+  // D2
+  set('d2',
+    head('Светлая · <b>Случай A — акция каждый день</b>')+frame('<div class="env">'+envHead('3 активны')
+      +d2coach('Заметил: «Акция» крутится каждый день. Промо сильнее, когда оно редкое — давай оставим <b>1–2 раза в неделю</b>, чтобы не приедалось.','Сделать реже','spread')
+      +rcard(CARDS.promo)+rcard(CARDS.reply)+'</div>')
+    +'<div style="height:2px"></div>'
+    +head('Светлая · <b>Случай B — посты на одно утро</b>')+frame('<div class="env">'+envHead('3 активны')
+      +d2coach('Смотри: «Утренний вопрос» и «Цитата дня» оба метят на раннее утро, а лимит — 1 пост в день. Выйдет только первый. <b>Разнесём по времени?</b>','Разнести по времени','spread')
+      +rcard(CARDS.morning)+rcard(CARDS.quote)+'</div>'));
+
+  // D3
+  set('d3',
+    head('Светлая · <b>Случай A — плашка под «Акцией»</b>')+frame('<div class="env">'+envHead('3 активны')
+      +d3attach(rcard(CARDS.promo),'Слишком часто для акции','Каждый день — и предложение приедается. <b>1–2 раза в неделю</b> заходят заметно лучше.','Сделать реже','spread')
+      +rcard(CARDS.morning)+'</div>')
+    +'<div style="height:2px"></div>'
+    +head('Светлая · <b>Случай B — плашка под «Цитатой дня»</b>')+frame('<div class="env">'+envHead('3 активны')
+      +rcard(CARDS.morning)
+      +d3attach(rcard(CARDS.quote),'Столпились на одно утро','<b>«Цитата дня»</b> метит на то же утро, что и «Утренний вопрос». Лимит 1 пост в день — выйдет один.','Разнести по времени','spread')
+      +'</div>'));
+
+  // D4
+  set('d4',
+    head('Светлая · <b>Случай A + B вместе — поповер раскрыт</b>')+frame('<div class="env">'
+      +envHead('3 активны','<div class="rl-right"><button class="tips-chip">'+ic('bulb',14)+' Совет <span class="chip-n">· 2</span></button></div>')
+      +d4pop(
+        d4row('Акция каждый день — это часто','Промо приедается, если оно ежедневное. Поставь <b>1–2 раза в неделю</b>.','Сделать реже','spread')
+        +d4row('Два поста метят на одно утро','«Утренний вопрос» и «Цитата дня» хотят выйти первыми — при лимите 1/день выйдет один.','Разнести по времени','spread'))
+      +rcard(CARDS.morning)+rcard(CARDS.quote)+'</div>'));
+
+  // DARK proof — one case each
+  set('ddark',
+    head('01 · строка-лампочка',true)+frame('<div class="env">'+envHead('3 активны')
+      +d1strip('<b>Акция</b> выходит каждый день — реже бьёт сильнее: 1–2 раза в неделю.','Сделать реже','spread')
+      +rcard(CARDS.promo)+'</div>',true)
+    +head('02 · коуч Pennedly',true)+frame('<div class="env">'+envHead('3 активны')
+      +d2coach('«Утренний вопрос» и «Цитата дня» метят на одно утро — выйдет только первый. <b>Разнесём?</b>','Разнести по времени','spread')
+      +rcard(CARDS.quote)+'</div>',true)
+    +head('03 · плашка на карточке',true)+frame('<div class="env">'+envHead('3 активны')
+      +d3attach(rcard(CARDS.promo),'Слишком часто для акции','Каждый день предложение приедается. <b>1–2 раза в неделю</b> — лучше.','Сделать реже','spread')+'</div>',true)
+    +head('04 · чип + поповер',true)+frame('<div class="env">'
+      +envHead('3 активны','<div class="rl-right"><button class="tips-chip">'+ic('bulb',14)+' Совет <span class="chip-n">· 2</span></button></div>')
+      +d4pop(d4row('Два поста на одно утро','«Утренний вопрос» и «Цитата дня» — выйдет один.','Разнести','spread'))
+      +rcard(CARDS.morning)+'</div>',true));
+})();
+</script>
+</body>
+</html>

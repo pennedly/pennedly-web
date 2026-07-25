@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Style rules — State Spec · Pennedly</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+/* ============================ DOC CHROME ============================ */
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{margin:0; background:#e7e4df; color:#1c1b19;
+  font-family:"Geist",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;}
+.doc-head{max-width:1200px; margin:0 auto; padding:46px 40px 8px;}
+.doc-kicker{font-family:"Geist Mono",monospace; font-size:12px; letter-spacing:0.08em; text-transform:uppercase; color:#2f4cc4; margin:0 0 12px;}
+.doc-title{font-size:38px; line-height:1.05; letter-spacing:-0.025em; font-weight:600; margin:0 0 14px;}
+.doc-lede{font-size:16px; line-height:1.6; color:#56544f; max-width:80ch; margin:0 0 8px;}
+.doc-lede b{color:#1c1b19; font-weight:600;}
+.doc-meta{display:flex; flex-wrap:wrap; gap:7px; margin:22px 0 4px;}
+.doc-meta .m{font-family:"Geist Mono",monospace; font-size:11.5px; padding:4px 10px; border-radius:9999px; background:#fff; border:1px solid #d4d1ca; color:#56544f;}
+.legend{max-width:1200px; margin:18px auto 0; padding:0 40px; display:flex; flex-wrap:wrap; gap:18px; font-size:12.5px; color:#56544f;}
+.legend .lk{display:inline-flex; align-items:center; gap:7px;}
+.legend .dot{width:10px; height:10px; border-radius:3px; border:1px solid rgba(0,0,0,.15);}
+
+.state-sec{max-width:1200px; margin:8px auto 0; padding:42px 40px 8px;}
+.state-sec + .state-sec, .state-sec.divide{border-top:1px solid #d4d1ca; margin-top:22px;}
+.sec-num{font-family:"Geist Mono",monospace; font-size:13px; color:#2f4cc4; font-weight:500;}
+.sec-title{font-size:25px; line-height:1.2; letter-spacing:-0.015em; font-weight:600; margin:6px 0 8px;}
+.sec-title.sub{font-size:19px;}
+.sec-desc{font-size:14.5px; line-height:1.6; color:#56544f; max-width:82ch; margin:0 0 6px;}
+.sec-desc code{font-family:"Geist Mono",monospace; font-size:0.86em; background:#dedbd4; padding:1px 5px; border-radius:5px;}
+.sec-notes{margin:10px 0 0; padding:0; list-style:none; display:flex; flex-direction:column; gap:5px;}
+.sec-notes li{position:relative; padding-left:20px; font-size:13px; line-height:1.55; color:#56544f; max-width:86ch;}
+.sec-notes li::before{content:"›"; position:absolute; left:4px; top:0; color:#2f4cc4; font-weight:700;}
+.sec-notes li b{color:#1c1b19; font-weight:600;}
+.sec-notes code{font-family:"Geist Mono",monospace; font-size:0.85em; background:#dedbd4; padding:1px 5px; border-radius:5px;}
+.note-card{max-width:1200px; margin:12px auto 0; padding:0 40px;}
+.note-card .nc{border:1px solid #d8c9a6; background:#f7f1e1; border-radius:12px; padding:13px 16px; font-size:13.5px; line-height:1.55; color:#5b5232;}
+.note-card .nc b{color:#3f3a22;}
+
+.gallery{max-width:1200px; margin:0 auto; padding:22px 40px 12px; display:flex; flex-wrap:wrap; gap:32px 34px; align-items:flex-start;}
+.vp{margin:0;}
+.vp figcaption{display:flex; align-items:center; gap:9px; margin:0 0 10px; font-size:12px; color:#56544f; flex-wrap:wrap;}
+.vp figcaption .tg{font-family:"Geist Mono",monospace; font-size:10.5px; letter-spacing:0.03em; text-transform:uppercase; padding:3px 8px; border-radius:6px; border:1px solid #d4d1ca; background:#fff;}
+.vp figcaption .tg--web{color:#1c1b19;}
+.vp figcaption .tg--mob{color:#2f4cc4; border-color:#c2c8ef; background:#eef0fb;}
+.vp figcaption .tg--light{color:#7b6a2a; border-color:#e3dcc4; background:#f7f2e4;}
+.vp figcaption .tg--dark{color:#cfcfe6; border-color:#3a3a52; background:#26263a;}
+.vp figcaption .lbl{font-weight:500; color:#1c1b19;}
+
+.screen{border-radius:16px; overflow:hidden; position:relative; box-shadow:0 18px 50px -20px rgba(20,18,15,.5), 0 4px 12px -6px rgba(20,18,15,.25);}
+.screen.web{width:1060px;}
+.screen.mob{width:392px; border-radius:30px; box-shadow:0 18px 50px -18px rgba(20,18,15,.55), 0 0 0 9px #15140f, 0 0 0 10px #2a2925;}
+@media (max-width:1160px){ .screen.web{width:100%; max-width:940px;} }
+.screen, .screen *{box-sizing:border-box;}
+
+/* =============== PENNEDLY TOKENS (scoped per .screen) =============== */
+.screen{
+  --font-sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --font-mono:"Geist Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --color-ink-50:#f9f8f6; --color-ink-100:#ededed; --color-ink-200:#ddddda; --color-ink-300:#c8c7c3;
+  --color-ink-400:#a2a19c; --color-ink-500:#7b7a74; --color-ink-600:#565550; --color-ink-700:#3c3b37;
+  --color-ink-800:#262521; --color-ink-900:#171717; --color-ink-950:#0a0a0a;
+  --color-bg:#efedea; --color-surface:#ffffff; --color-surface-2:#f6f5f2; --color-border:#dcd9d2;
+  --color-text:#171717; --color-text-muted:#565550; --color-text-subtle:#6f6e69;
+  --color-primary:#171717; --color-primary-foreground:#ededed;
+  --color-accent:#2f4cc4; --color-accent-foreground:#ffffff;
+  --color-success:#2c7350; --color-success-foreground:#ffffff;
+  --color-warning:#8a5b16; --color-warning-foreground:#ffffff;
+  --color-danger:#b23b30; --color-danger-foreground:#ffffff;
+  --radius-sm:6px; --radius-md:10px; --radius-lg:14px; --radius-xl:20px; --radius-2xl:28px; --radius-full:9999px;
+  --shadow-sm:0 1px 2px 0 rgb(23 23 23 / 0.06);
+  --shadow-md:0 4px 12px -2px rgb(23 23 23 / 0.08), 0 2px 6px -3px rgb(23 23 23 / 0.06);
+  --shadow-lg:0 16px 40px -12px rgb(23 23 23 / 0.16), 0 6px 14px -8px rgb(23 23 23 / 0.08);
+  --text-display:3rem; --text-h1:2rem; --text-h2:1.5rem; --text-h3:1.1875rem;
+  --text-body:0.9375rem; --text-small:0.8125rem; --text-caption:0.75rem;
+  --content-reading:720px; --content-wide:960px;
+  --ease-standard:cubic-bezier(0.2,0.7,0.3,1); --ease-entrance:cubic-bezier(0.16,1,0.3,1);
+  --duration-fast:120ms; --duration-base:180ms; --duration-slow:240ms;
+  font-family:var(--font-sans);
+}
+.screen.pd-dark{
+  --color-bg:#0a0a0a; --color-surface:#171717; --color-surface-2:#201f1d; --color-border:#2b2a27;
+  --color-text:#ededed; --color-text-muted:#a2a19c; --color-text-subtle:#898882;
+  --color-primary:#ededed; --color-primary-foreground:#171717;
+  --color-accent:#9aacff; --color-accent-foreground:#0a0a0a;
+  --color-success:#5fbf8d; --color-success-foreground:#0a0a0a;
+  --color-warning:#d8a754; --color-warning-foreground:#0a0a0a;
+  --color-danger:#ef8a80; --color-danger-foreground:#0a0a0a;
+  --shadow-sm:0 1px 2px 0 rgb(0 0 0 / 0.5);
+  --shadow-md:0 6px 16px -4px rgb(0 0 0 / 0.6);
+  --shadow-lg:0 20px 48px -16px rgb(0 0 0 / 0.7);
+}
+
+/* ===================== SHELL (studio.css subset) ===================== */
+.screen .app{display:flex; height:100%; background:var(--color-bg); color:var(--color-text); font-family:var(--font-sans); line-height:1.5;}
+.screen .sidebar{flex:0 0 248px; display:flex; flex-direction:column; gap:4px; padding:16px 14px; border-right:1px solid var(--color-border); background:var(--color-bg);}
+.screen .brand{display:flex; align-items:center; gap:11px; padding:8px 8px 16px;}
+.screen .brand-mark{width:34px; height:34px; flex:0 0 auto; border-radius:var(--radius-md); box-shadow:var(--shadow-sm); display:grid; place-items:center; background:var(--color-text); color:var(--color-bg);}
+.screen .brand-name{font-size:var(--text-h3); font-weight:600; letter-spacing:-0.01em; line-height:1;}
+.screen .brand-sub{font-size:var(--text-caption); color:var(--color-text-subtle); margin-top:3px;}
+.screen .nav{display:flex; flex-direction:column; gap:2px;}
+.screen .nav-cap{font-size:var(--text-caption); font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--color-text-subtle); padding:14px 12px 6px;}
+.screen .nav-item{display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:var(--radius-md); font-size:var(--text-small); font-weight:500; color:var(--color-text-muted); border:1px solid transparent; position:relative; cursor:pointer; text-decoration:none;}
+.screen .nav-item:hover{background:var(--color-surface-2); color:var(--color-text);}
+.screen .nav-item--active{background:var(--color-surface-2); color:var(--color-text); font-weight:600;}
+.screen .nav-item .nav-ico{width:16px; height:16px; flex:0 0 auto; opacity:0.85;}
+.screen .nav-item .nav-label{white-space:nowrap;}
+.screen .nav-item .nav-badge{margin-left:auto; font-size:var(--text-caption); font-weight:600; color:var(--color-text-subtle); background:var(--color-surface-2); border:1px solid var(--color-border); border-radius:var(--radius-full); min-width:20px; height:18px; padding:0 6px; display:inline-flex; align-items:center; justify-content:center;}
+.screen .nav-item--active .nav-badge{color:var(--color-text);}
+.screen .sidebar-foot{margin-top:auto; padding-top:10px; position:relative;}
+.screen .account{display:flex; align-items:center; gap:10px; width:100%; padding:8px; border-radius:var(--radius-md); border:1px solid transparent; background:transparent; color:var(--color-text); cursor:pointer; text-align:left;}
+.screen .account:hover{background:var(--color-surface-2);}
+.screen .account .who{min-width:0;}
+.screen .account .who .nm{font-size:var(--text-small); font-weight:600; line-height:1.2;}
+.screen .account .who .hd{font-size:var(--text-caption); color:var(--color-text-subtle); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.screen .account .chev{margin-left:auto; color:var(--color-text-subtle); flex:0 0 auto;}
+.screen .avatar{position:relative; flex:0 0 auto; border-radius:var(--radius-full); overflow:hidden; display:grid; place-items:center; user-select:none; box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--color-text) 8%, transparent);}
+.screen .avatar-mono{width:100%; height:100%; display:grid; place-items:center; background:var(--color-text); color:var(--color-bg); font-weight:600; letter-spacing:0.01em;}
+.screen .main{flex:1 1 auto; min-width:0; display:flex; flex-direction:column;}
+.screen .topbar{flex:0 0 auto; display:flex; align-items:center; gap:16px; height:60px; padding:0 24px; border-bottom:1px solid var(--color-border); background:color-mix(in srgb, var(--color-bg) 86%, transparent); position:sticky; top:0; z-index:10;}
+.screen .topbar:has(> .topbar-inner){padding-inline:0;}
+.screen .topbar-inner{width:100%; max-width:var(--content-reading); margin-inline:auto; padding-inline:24px; display:flex; align-items:center; gap:16px;}
+.screen .topbar-title{font-size:var(--text-h3); font-weight:600; letter-spacing:-0.006em;}
+.screen .topbar-spacer{flex:1 1 auto;}
+.screen .topbar-actions{display:flex; align-items:center; gap:8px;}
+.screen .icon-btn{width:36px; height:36px; flex:0 0 auto; display:grid; place-items:center; border-radius:var(--radius-md); border:1px solid var(--color-border); background:var(--color-surface); color:var(--color-text-muted); cursor:pointer; text-decoration:none;}
+.screen .icon-btn:hover{background:var(--color-surface-2); color:var(--color-text);}
+.screen .scroll{flex:1 1 auto; overflow:hidden;}
+.screen .content{max-width:var(--content-reading); margin:0 auto; padding:28px 24px 40px; display:flex; flex-direction:column; gap:20px;}
+.screen .status-pill{display:inline-flex; align-items:center; gap:7px; white-space:nowrap; font-size:var(--text-small); color:var(--color-text-muted); padding:5px 11px 5px 9px; border:1px solid var(--color-border); border-radius:var(--radius-full); background:var(--color-surface);}
+.screen .pill-dot{width:6px; height:6px; border-radius:var(--radius-full); background:var(--color-text-subtle);}
+
+/* buttons */
+.screen .btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; font-family:var(--font-sans); font-weight:500; font-size:var(--text-small); white-space:nowrap; cursor:pointer; user-select:none; border:1px solid transparent; border-radius:var(--radius-md); height:40px; padding-inline:16px; text-decoration:none;}
+.screen .btn--sm{height:32px; padding-inline:11px; border-radius:var(--radius-sm);}
+.screen .btn--primary{background:var(--color-primary); color:var(--color-primary-foreground);}
+.screen .btn--secondary{background:var(--color-surface); color:var(--color-text); border-color:var(--color-border);}
+.screen .btn--ghost{background:transparent; color:var(--color-text-muted);}
+.screen .btn--ghost:hover{background:var(--color-surface-2); color:var(--color-text);}
+.screen .btn--danger{background:var(--color-danger); color:var(--color-danger-foreground);}
+.screen .btn:disabled{opacity:0.5; cursor:not-allowed;}
+
+/* toasts */
+.screen .toast-host{position:absolute; bottom:20px; left:50%; transform:translateX(-50%); display:flex; flex-direction:column; gap:10px; z-index:60;}
+.screen .toast{display:flex; align-items:flex-start; gap:12px; background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-lg); box-shadow:var(--shadow-lg); padding:14px 16px; min-width:300px;}
+.screen .toast .toast-mark{width:8px; height:8px; border-radius:var(--radius-full); margin-top:6px; flex:0 0 auto;}
+.screen .toast--success .toast-mark{background:var(--color-success);}
+.screen .toast .toast-body{min-width:0;}
+.screen .toast .toast-title{font-size:var(--text-small); font-weight:600;}
+.screen .toast .toast-sub{font-size:var(--text-caption); color:var(--color-text-muted); margin-top:2px;}
+.screen .toast .toast-undo{margin-left:8px; font-size:var(--text-small); font-weight:600; color:var(--color-accent); background:none; border:none; cursor:pointer; padding:2px 4px;}
+
+/* ===================== STYLERULES.CSS (scoped) ===================== */
+.screen .intro{display:flex; flex-direction:column;}
+.screen .intro-eyebrow{display:inline-flex; align-items:center; gap:7px; font-size:var(--text-caption); font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--color-text-subtle);}
+.screen .intro-eyebrow .ie-ico{color:var(--color-text-muted);}
+.screen .intro-title{font-size:var(--text-h1); font-weight:600; letter-spacing:-0.015em; margin:12px 0 0;}
+.screen .intro-lead{font-size:var(--text-body); color:var(--color-text-muted); margin:10px 0 0; max-width:60ch; line-height:1.6; text-wrap:pretty;}
+.screen .intro-stats{display:flex; align-items:center; flex-wrap:wrap; gap:8px 14px; margin-top:16px;}
+.screen .istat{display:inline-flex; align-items:center; gap:7px; font-size:var(--text-small); color:var(--color-text-muted); white-space:nowrap;}
+.screen .istat b{font-weight:600; color:var(--color-text); font-variant-numeric:tabular-nums;}
+.screen .istat .sep{width:3px; height:3px; border-radius:50%; background:var(--color-ink-400);}
+
+.screen .sec{background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); overflow:hidden;}
+.screen .sec-head{display:flex; align-items:center; gap:12px; padding:16px 18px;}
+.screen .sec-mark{flex:0 0 auto; width:34px; height:34px; border-radius:var(--radius-md); display:grid; place-items:center; background:var(--color-surface-2); border:1px solid var(--color-border); color:var(--color-text-muted);}
+.screen .sec-ttl{flex:1 1 auto; min-width:0;}
+.screen .sec-ttl .h{font-size:var(--text-h3); font-weight:600; line-height:1.2; display:flex; align-items:center; gap:8px;}
+.screen .sec-ttl .h .count{font-size:var(--text-caption); font-weight:600; color:var(--color-text-subtle); background:var(--color-surface-2); border:1px solid var(--color-border); border-radius:var(--radius-full); min-width:20px; height:18px; padding:0 7px; display:inline-flex; align-items:center; justify-content:center; font-variant-numeric:tabular-nums;}
+.screen .sec-ttl .d{font-size:var(--text-caption); color:var(--color-text-subtle); margin-top:3px;}
+
+.screen .cat-groups{display:flex; flex-direction:column;}
+.screen .cat-group{border-top:1px solid var(--color-border);}
+.screen .cat-head{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 18px 8px; background:var(--color-surface-2);}
+.screen .cat-head .cat-name{font-size:var(--text-caption); font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--color-text-subtle);}
+.screen .cat-head .cat-count{font-size:var(--text-caption); color:var(--color-text-subtle); font-variant-numeric:tabular-nums;}
+
+.screen .rules{display:flex; flex-direction:column;}
+.screen .rule{display:flex; align-items:flex-start; gap:14px; padding:15px 18px; border-top:1px solid var(--color-border); transition:background var(--duration-fast) var(--ease-standard);}
+.screen .rule:first-child{border-top:none;}
+.screen .rule:hover{background:var(--color-surface-2);}
+.screen .rule-toggle{flex:0 0 auto; margin-top:1px;}
+.screen .rule-body{flex:1 1 auto; min-width:0;}
+.screen .rule-top{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+.screen .rule-title{font-size:var(--text-small); font-weight:600; color:var(--color-text); letter-spacing:-0.003em;}
+.screen .rule-desc{font-size:var(--text-small); color:var(--color-text-muted); line-height:1.5; margin-top:4px; text-wrap:pretty;}
+.screen .rule.is-off .rule-title{color:var(--color-text-subtle);}
+.screen .rule.is-off .rule-desc{color:var(--color-text-subtle);}
+.screen .kind-chip{flex:0 0 auto; font-size:var(--text-caption); font-weight:600; letter-spacing:0.02em; color:var(--color-text-muted); background:var(--color-surface-2); border:1px solid var(--color-border); border-radius:var(--radius-sm); padding:2px 8px; white-space:nowrap;}
+.screen .rule.is-off .kind-chip{opacity:0.7;}
+
+.screen .stripper{margin-top:10px; padding:11px 13px; background:color-mix(in srgb, var(--color-accent) 6%, var(--color-surface)); border:1px solid color-mix(in srgb, var(--color-accent) 24%, var(--color-border)); border-radius:var(--radius-md);}
+.screen .stripper--off{background:var(--color-surface-2); border-color:var(--color-border); opacity:0.7;}
+.screen .strip-note{display:flex; align-items:flex-start; gap:8px; font-size:var(--text-caption); color:var(--color-text-muted); line-height:1.5;}
+.screen .strip-note .sn-ico{color:var(--color-accent); flex:0 0 auto; margin-top:1px;}
+.screen .stripper--off .strip-note .sn-ico{color:var(--color-text-subtle);}
+.screen .strip-demo{display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-top:9px;}
+.screen .strip-demo code{font-family:var(--font-mono); font-size:var(--text-caption); line-height:1.4; background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-sm); padding:4px 8px; color:var(--color-text);}
+.screen .strip-demo .sd-from{color:var(--color-text-subtle); text-decoration:line-through; text-decoration-color:color-mix(in srgb, var(--color-danger) 60%, transparent);}
+.screen .stripper--off .strip-demo .sd-from{text-decoration:none;}
+.screen .strip-demo .sd-arrow{color:var(--color-text-subtle); font-size:var(--text-small);}
+.screen .strip-demo .sd-to{color:var(--color-text); border-color:color-mix(in srgb, var(--color-accent) 30%, var(--color-border));}
+.screen .stripper--off .strip-demo .sd-to{color:var(--color-text-subtle); border-color:var(--color-border);}
+
+.screen .switch{position:relative; width:40px; height:23px; flex:0 0 auto; cursor:pointer; display:inline-block;}
+.screen .switch .track{position:absolute; inset:0; border-radius:var(--radius-full); background:var(--color-ink-300); transition:background var(--duration-base) var(--ease-standard);}
+.screen.pd-dark .switch .track{background:var(--color-ink-700);}
+.screen .switch .knob{position:absolute; top:3px; left:3px; width:17px; height:17px; border-radius:var(--radius-full); background:#fff; box-shadow:var(--shadow-sm); transition:transform var(--duration-base) var(--ease-standard);}
+.screen .switch.on .track{background:var(--color-primary);}
+.screen .switch.on .knob{transform:translateX(17px); background:var(--color-primary-foreground);}
+
+.screen .ff-list{display:flex; flex-direction:column;}
+.screen .ff-row{display:flex; align-items:flex-start; gap:12px; padding:14px 18px; border-top:1px solid var(--color-border);}
+.screen .ff-row:first-child{border-top:none;}
+.screen .ff-row:hover{background:var(--color-surface-2);}
+.screen .ff-row--leaving{opacity:0.45; transform:translateX(-8px);}
+.screen .ff-toggle{flex:0 0 auto; margin-top:1px;}
+.screen .ff-main{flex:1 1 auto; min-width:0;}
+.screen .ff-text{font-size:var(--text-small); color:var(--color-text); line-height:1.55; text-wrap:pretty;}
+.screen .ff-row.is-off .ff-text{color:var(--color-text-subtle);}
+.screen .ff-row > .kind-chip{flex:0 0 auto; align-self:flex-start; margin-top:1px;}
+.screen .ff-actions{flex:0 0 auto; display:flex; align-items:center; gap:4px;}
+.screen .ff-icon{width:30px; height:30px; display:grid; place-items:center; border-radius:var(--radius-sm); border:1px solid transparent; background:transparent; color:var(--color-text-subtle); cursor:pointer;}
+.screen .ff-icon:hover{background:var(--color-surface); color:var(--color-text); border-color:var(--color-border);}
+.screen .ff-icon.danger:hover{background:color-mix(in srgb, var(--color-danger) 12%, transparent); color:var(--color-danger); border-color:color-mix(in srgb, var(--color-danger) 30%, transparent);}
+.screen .ff-confirm{flex:0 0 auto; display:flex; align-items:center; gap:8px;}
+.screen .ff-confirm .ffc-q{font-size:var(--text-small); font-weight:600; color:var(--color-danger); white-space:nowrap;}
+.screen .ff-edit{flex:1 1 auto; display:flex; align-items:center; gap:8px;}
+.screen .ff-input{flex:1 1 auto; width:100%; font-family:var(--font-sans); font-size:var(--text-small); color:var(--color-text); background:var(--color-surface); border:1px solid var(--color-accent); border-radius:var(--radius-md); padding:9px 11px; outline:none; line-height:1.5; box-shadow:0 0 0 3px color-mix(in srgb, var(--color-accent) 16%, transparent);}
+
+.screen .ff-add{display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:14px 18px; border-top:1px solid var(--color-border); background:var(--color-surface-2);}
+.screen .ff-add--solo{border-top:none;}
+.screen .ff-add .add-field{flex:1 1 240px; min-width:0; height:40px; padding:0 13px; font-family:var(--font-sans); font-size:var(--text-small); color:var(--color-text); background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-md); outline:none;}
+.screen .ff-add .add-field::placeholder{color:var(--color-text-subtle);}
+.screen .ff-add .add-field.is-focus{border-color:var(--color-accent); box-shadow:0 0 0 3px color-mix(in srgb, var(--color-accent) 18%, transparent);}
+.screen .kind-seg{display:inline-flex; flex:0 0 auto; padding:3px; gap:2px; background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-md);}
+.screen .kseg{height:32px; padding:0 12px; font-family:var(--font-sans); font-size:var(--text-small); font-weight:500; color:var(--color-text-muted); background:transparent; border:1px solid transparent; border-radius:var(--radius-sm); cursor:pointer; white-space:nowrap;}
+.screen .kseg:hover{color:var(--color-text);}
+.screen .kseg--active{background:var(--color-text); color:var(--color-bg); font-weight:600;}
+
+.screen .ff-empty{padding:30px 22px 8px; display:flex; flex-direction:column; align-items:center; text-align:center;}
+.screen .ff-empty .fe-mark{width:48px; height:48px; display:grid; place-items:center; border-radius:var(--radius-lg); background:var(--color-surface-2); border:1px solid var(--color-border); color:var(--color-text-subtle); margin-bottom:14px;}
+.screen .ff-empty .fe-title{font-size:var(--text-h3); font-weight:600;}
+.screen .ff-empty .fe-sub{font-size:var(--text-small); color:var(--color-text-muted); margin-top:6px; max-width:44ch; line-height:1.55;}
+.screen .ff-hints{display:flex; flex-wrap:wrap; gap:7px; justify-content:center; margin-top:16px;}
+.screen .ff-hint{font-size:var(--text-caption); color:var(--color-text-muted); background:var(--color-surface); border:1px dashed var(--color-border); border-radius:var(--radius-full); padding:6px 12px; cursor:pointer;}
+.screen .ff-hint:hover{background:var(--color-surface-2); color:var(--color-text); border-color:color-mix(in srgb, var(--color-text) 20%, var(--color-border));}
+.screen .ff-empty-add{width:100%; padding:20px 22px 4px;}
+
+.screen .skel{pointer-events:none;}
+.screen .skel-line, .screen .skel-block{border-radius:var(--radius-md); background:linear-gradient(90deg, var(--color-surface-2) 0%, color-mix(in srgb, var(--color-text) 7%, var(--color-surface-2)) 50%, var(--color-surface-2) 100%); background-size:220% 100%; animation:shimmer 1.4s linear infinite;}
+.screen .skel-line{border-radius:var(--radius-sm);}
+.screen .skel-rule{display:flex; align-items:flex-start; gap:14px; padding:15px 18px; border-top:1px solid var(--color-border);}
+.screen .skel-rule:first-child{border-top:none;}
+@keyframes shimmer{from{background-position:200% 0;}to{background-position:-200% 0;}}
+
+/* density compact */
+.screen .app[data-density="compact"] .content{gap:14px;}
+.screen .app[data-density="compact"] .rule{padding:11px 16px;}
+.screen .app[data-density="compact"] .rule-desc{display:none;}
+.screen .app[data-density="compact"] .stripper{display:none;}
+.screen .app[data-density="compact"] .ff-row{padding:10px 16px;}
+.screen .app[data-density="compact"] .sec-head{padding:13px 16px;}
+
+/* mobile frame overrides */
+.screen.mob .sidebar{flex-basis:72px; padding:16px 10px;}
+.screen.mob .brand-name,.screen.mob .brand-sub,.screen.mob .nav-cap,
+.screen.mob .nav-item .nav-label,.screen.mob .nav-item .nav-badge,
+.screen.mob .account .who,.screen.mob .account .chev{display:none;}
+.screen.mob .brand{justify-content:center; padding:8px 0 16px;}
+.screen.mob .nav-item{justify-content:center; padding:10px;}
+.screen.mob .account{justify-content:center;}
+.screen.mob .content{padding:18px 14px 40px;}
+.screen.mob .topbar-inner{padding-inline:14px;}
+.screen.mob .ff-add .add-field{flex-basis:100%;}
+.screen.mob .ff-actions{opacity:1;}
+.screen.mob .intro-title{font-size:var(--text-h2);}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script id="builder">
+/* ===================== icons ===================== */
+function ic(d,s){s=s||16;return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+d+'</svg>';}
+var ICONS={
+ studio:'<path d="M4 20l1-4L16 5a2 2 0 0 1 3 3L8 19z"/><path d="M14 7l3 3"/>',
+ feed:'<rect x="4" y="5" width="16" height="4.5" rx="1.4"/><rect x="4" y="14.5" width="16" height="4.5" rx="1.4"/>',
+ replies:'<path d="M5 6.5h14v8.5H10l-4 3.5v-3.5H5z"/>',
+ at:'<circle cx="12" cy="12" r="3.4"/><path d="M15.4 12v1.6a2.4 2.4 0 0 0 4.1 1.4A8 8 0 1 0 15 19.4"/>',
+ chart:'<path d="M5 19V5"/><path d="M5 19h14"/><rect x="8" y="11" width="2.6" height="5"/><rect x="13" y="7.5" width="2.6" height="8.5"/>',
+ audit:'<rect x="6" y="4" width="12" height="16" rx="2"/><path d="M9 9h6M9 12.5h6M9 16h3.5"/>',
+ study:'<path d="M5 5.5A1.5 1.5 0 0 1 6.5 4H18v13H6.5A1.5 1.5 0 0 0 5 18.5z"/><path d="M5 18.5A1.5 1.5 0 0 1 6.5 17H18v3H6.5A1.5 1.5 0 0 1 5 18.5z"/>',
+ compass:'<circle cx="12" cy="12" r="8.2"/><path d="M15.4 8.6l-2 4.8-4.8 2 2-4.8z"/>',
+ voice:'<rect x="9" y="3.5" width="6" height="11" rx="3"/><path d="M6 11.5a6 6 0 0 0 12 0M12 17.5V20M9 20h6"/>',
+ sliders:'<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',
+ autopilot:'<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>',
+ moon:'<path d="M20 14.5A8 8 0 1 1 9.5 4 6.3 6.3 0 0 0 20 14.5z"/>',
+ sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M2 12h2M20 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/>',
+ settings:'<circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l1.8-1.3-1.8-3.1-2.1.8a7 7 0 0 0-2-1.2l-.3-2.2H8.5l-.3 2.2a7 7 0 0 0-2 1.2l-2.1-.8L2.3 9.5l1.8 1.3A7 7 0 0 0 4 12a7 7 0 0 0 .1 1.2l-1.8 1.3 1.8 3.1 2.1-.8a7 7 0 0 0 2 1.2l.3 2.2h3.2l.3-2.2a7 7 0 0 0 2-1.2l2.1.8 1.8-3.1-1.8-1.3A7 7 0 0 0 19 12z"/>',
+ nib:'<path d="M12 3.5 7 8.5l3 9 2 2 2-2 3-9z"/><circle cx="12" cy="11" r="1.2"/>',
+ chevD:'<path d="M6 9.5 12 15l6-5.5"/>',
+ check:'<path d="M5 12.5 10 17.5 19 7"/>',
+ plus:'<path d="M12 5v14M5 12h14"/>',
+ trash:'<path d="M5 7h14M10 7V5h4v2M6.5 7l.7 12a1.6 1.6 0 0 0 1.6 1.5h6.4a1.6 1.6 0 0 0 1.6-1.5L18.5 7"/>',
+ pencil:'<path d="M4 20l1-3.5L15 6.5a1.8 1.8 0 0 1 2.6 2.5L7.5 19z"/>',
+ filter:'<path d="M4 5h16l-6 7v5l-4 2v-7L4 5Z"/>',
+ penline:'<path d="M4 20h16"/><path d="M5 16h2L16 7a1.6 1.6 0 0 0-2.3-2.3L5 13.5V16Z"/>'
+};
+function I(n,s){return ic(ICONS[n]||'',s);}
+
+/* ===================== data (verbatim from stylerules-data.jsx) ===================== */
+var CATEGORIES=["Punctuation","Diction","Structure","Cadence","Formatting","Tone"];
+var BUILTIN=[
+ {id:'b1',category:'Punctuation',title:'Human punctuation',
+  desc:'Avoid the runaway em-dash, the loudest tell of all, and the guillemets («») some models leave behind. Reach for commas, full stops, or parentheses instead.',
+  on:true,stripper:true,
+  note:'Its switch also runs a deterministic typographic pass after every draft (no model involved): em-dashes (—) become commas, guillemets («») become straight quotes.',
+  demo:{from:'It works \u2014 mostly \u2014 and reads «human».',to:'It works, mostly, and reads "human".'}},
+ {id:'b2',category:'Structure',title:'Cut \u201Cit\u2019s not just X, it\u2019s Y\u201D',desc:'Kill the not-just-but reversal and other templated contrasts that read as filler.',on:true},
+ {id:'b3',category:'Cadence',title:'Break the rule of three',desc:'Avoid the reflexive three-part list, \u201Cclear, concise, and compelling.\u201D One sharp word beats three tidy ones.',on:true},
+ {id:'b4',category:'Diction',title:'Ban hype adjectives',desc:'No \u201Cpowerful,\u201D \u201Cseamless,\u201D \u201Crobust,\u201D or \u201Cgame-changing.\u201D Name the concrete thing instead.',on:true},
+ {id:'b5',category:'Structure',title:'Delete the windup',desc:'Strip throat-clearing openers like \u201Cin today\u2019s fast-paced world\u201D or \u201Clet\u2019s dive in.\u201D Start on the point.',on:true},
+ {id:'b6',category:'Diction',title:'Avoid \u201Cdelve,\u201D \u201Cleverage,\u201D \u201Cutilize\u201D',desc:'Replace the LLM-favourite verbs with the plain ones a person would actually type.',on:true},
+ {id:'b7',category:'Structure',title:'Drop the bow-tie ending',desc:'No \u201Cat the end of the day\u2026\u201D summary that just restates the post. End on the last real idea.',on:true},
+ {id:'b8',category:'Formatting',title:'No emoji bullets',desc:'Don\u2019t open lines with \u2728, \uD83D\uDE80, or \u2705. Let the words carry the structure.',on:true,applies:'post'},
+ {id:'b9',category:'Cadence',title:'Vary sentence length',desc:'Mix short lines with long ones. Uniform medium-length sentences are the rhythm of a machine.',on:true},
+ {id:'b10',category:'Tone',title:'Keep contractions',desc:'Use don\u2019t, it\u2019s, you\u2019re. Fully expanded forms read stiff and synthetic.',on:true},
+ {id:'b11',category:'Tone',title:'No hedging filler',desc:'Cut \u201CI think,\u201D \u201Carguably,\u201D \u201Cit could be said that.\u201D Commit to the sentence.',on:false},
+ {id:'b12',category:'Formatting',title:'No hashtag stacks',desc:'Never append #writing #content #threads. One hashtag, and only if it truly earns its place.',on:false,applies:'post'}
+];
+var FREEFORM=[
+ {id:'f1',text:'Never open a reply with \u201CGreat question!\u201D or \u201CLove this.\u201D',kind:'reply',enabled:true},
+ {id:'f2',text:'Keep replies to two sentences unless someone clearly wants more.',kind:'reply',enabled:true},
+ {id:'f3',text:'Quote a specific detail from the post I\u2019m replying to, never a generic platitude.',kind:'reply',enabled:true},
+ {id:'f4',text:'Open a post on a concrete moment from my week, not a definition.',kind:'post',enabled:true}
+];
+var HINTS=['Spell out numbers under ten','No exclamation marks in replies','Mention a book only when it\u2019s genuinely relevant'];
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+/* ===================== shell ===================== */
+var NAV=[
+ {cap:'Workspace',items:[['studio','Studio',4],['feed','My Feed',0],['replies','Replies',3],['at','Mentions',0]]},
+ {cap:'Insight',items:[['chart','Stats',0],['audit','Audits',1],['study','Pattern study',0],['compass','Explore patterns',0]]},
+ {cap:'Voice & automation',items:[['voice','Voice',0],['stylerules','Style rules',0],['autopilot','Autopilot',0]]}
+];
+function sidebar(){
+ var groups=NAV.map(function(g){
+  var items=g.items.map(function(it){
+   var icon=it[0],label=it[1],badge=it[2];
+   var active=label==='Style rules'?' nav-item--active':'';
+   var cur=label==='Style rules'?' aria-current="page"':'';
+   var bdg=badge?'<span class="nav-badge">'+badge+'</span>':'';
+   return '<a class="nav-item'+active+'"'+cur+'><span class="nav-ico">'+I(icon,16)+'</span><span class="nav-label">'+label+'</span>'+bdg+'</a>';
+  }).join('');
+  return '<div class="nav-cap">'+g.cap+'</div>'+items;
+ }).join('');
+ return '<aside class="sidebar"><div class="brand"><span class="brand-mark">'+I('nib',19)+'</span><div><div class="brand-name">Pennedly</div><div class="brand-sub">Drafting partner</div></div></div><nav class="nav">'+groups+'</nav><div class="sidebar-foot"><button class="account"><span class="avatar" style="width:32px;height:32px;"><span class="avatar-mono" style="font-size:13px;">ML</span></span><div class="who"><div class="nm">Mara Lin</div><div class="hd">@mara.lin</div></div><span class="chev">'+I('chevD',15)+'</span></button></div></aside>';
+}
+function topbar(activeCount,total,dark){
+ return '<header class="topbar"><div class="topbar-inner"><span class="topbar-title">Style &amp; reply rules</span><span class="status-pill"><span class="pill-dot"></span>'+activeCount+' of '+total+' on</span><span class="topbar-spacer"></span><div class="topbar-actions"><button class="icon-btn" aria-label="Toggle theme">'+(dark?I('sun',17):I('moon',16))+'</button><a class="icon-btn" aria-label="Settings">'+I('settings',17)+'</a></div></div></header>';
+}
+function app(body,activeCount,total,dark,density){
+ return '<div class="app" data-density="'+(density||'comfortable')+'">'+sidebar()+'<div class="main">'+topbar(activeCount,total,dark)+'<div class="scroll"><div class="content">'+body+'</div></div></div></div>';
+}
+
+/* ===================== pieces ===================== */
+function sw(on){return '<span class="switch'+(on?' on':'')+'"><span class="track"></span><span class="knob"></span></span>';}
+function kindChip(kind,only){
+ if(!kind||kind==='all')return '';
+ var base=kind==='post'?'Posts':'Replies';
+ return '<span class="kind-chip">'+(only?base+' only':base)+'</span>';
+}
+function intro(builtinOn,builtinTotal,freeformCount){
+ return '<div class="intro"><span class="intro-eyebrow">'+I('sliders',14)+' Generation rules</span><h1 class="intro-title">The rules behind every draft</h1><p class="intro-lead">Every post and reply Pennedly writes runs through these. Add your own rules in plain words, then switch on the built-in fixes that strip the tells of machine writing.</p><div class="intro-stats"><span class="istat"><b>'+freeformCount+'</b> of your own</span><span class="sep"></span><span class="istat"><b>'+builtinOn+'</b> of '+builtinTotal+' built-in active</span></div></div>';
+}
+function stripper(r){
+ var off=!r.on;
+ var toCode=r.on?r.demo.to:r.demo.from;
+ return '<div class="stripper'+(off?' stripper--off':'')+'"><div class="strip-note">'+I('sliders',13)+'<span>'+esc(r.note)+'</span></div><div class="strip-demo"><code class="sd-from">'+esc(r.demo.from)+'</code><span class="sd-arrow">\u2192</span><code class="sd-to">'+esc(toCode)+'</code></div></div>';
+}
+function builtinRow(r){
+ return '<div class="rule'+(r.on?'':' is-off')+'"><div class="rule-toggle">'+sw(r.on)+'</div><div class="rule-body"><div class="rule-top"><span class="rule-title">'+esc(r.title)+'</span>'+kindChip(r.applies,true)+'</div><div class="rule-desc">'+esc(r.desc)+'</div>'+(r.stripper?stripper(r):'')+'</div></div>';
+}
+function builtinSection(rules){
+ var onCount=rules.filter(function(r){return r.on;}).length;
+ var groups=CATEGORIES.map(function(cat){
+  var items=rules.filter(function(r){return r.category===cat;});
+  if(!items.length)return '';
+  var cOn=items.filter(function(r){return r.on;}).length;
+  return '<div class="cat-group"><div class="cat-head"><span class="cat-name">'+cat+'</span><span class="cat-count">'+cOn+'/'+items.length+'</span></div><div class="rules">'+items.map(builtinRow).join('')+'</div></div>';
+ }).join('');
+ return '<section class="sec"><div class="sec-head"><span class="sec-mark">'+I('filter',17)+'</span><div class="sec-ttl"><div class="h">Anti-AI-tells <span class="count">'+onCount+'/'+rules.length+'</span></div><div class="d">A fixed catalog of fixes that keep drafts from sounding generated</div></div></div><div class="cat-groups">'+groups+'</div></section>';
+}
+function freeformRow(r,opts){
+ opts=opts||{};
+ if(opts.editing){
+  return '<div class="ff-row"><div class="ff-toggle">'+sw(r.enabled)+'</div><div class="ff-edit"><input class="ff-input" value="'+esc(r.text)+'"><button class="btn btn--primary btn--sm">'+I('check',15)+'</button><button class="btn btn--ghost btn--sm">Cancel</button></div></div>';
+ }
+ var actions;
+ if(opts.confirming){
+  actions='<span class="ff-confirm"><span class="ffc-q">Delete?</span><button class="btn btn--danger btn--sm">Delete</button><button class="btn btn--ghost btn--sm">Cancel</button></span>';
+ } else {
+  actions='<span class="ff-actions"><button class="ff-icon" aria-label="Edit">'+I('pencil',15)+'</button><button class="ff-icon danger" aria-label="Remove">'+I('trash',15)+'</button></span>';
+ }
+ return '<div class="ff-row'+(r.enabled?'':' is-off')+(opts.leaving?' ff-row--leaving':'')+'"><div class="ff-toggle">'+sw(r.enabled)+'</div><div class="ff-main"><span class="ff-text">'+esc(r.text)+'</span></div>'+kindChip(r.kind)+actions+'</div>';
+}
+function addRule(opts){
+ opts=opts||{};
+ var kinds=[['all','Both'],['post','Posts'],['reply','Replies']];
+ var seg=kinds.map(function(k){return '<button class="kseg'+((opts.kind||'all')===k[0]?' kseg--active':'')+'">'+k[1]+'</button>';}).join('');
+ var val=opts.value||'';
+ var ph=val?'':'Add a rule in your own words…';
+ var fieldClass='add-field'+(opts.focus?' is-focus':'');
+ var field=val?'<input class="'+fieldClass+'" value="'+esc(val)+'">':'<input class="'+fieldClass+'" placeholder="'+ph+'">';
+ return '<div class="ff-add'+(opts.solo?' ff-add--solo':'')+'">'+field+'<div class="kind-seg">'+seg+'</div><button class="btn btn--primary"'+(val?'':' disabled')+'>'+I('plus',16)+' Add</button></div>';
+}
+function freeformSection(rules,opts){
+ opts=opts||{};
+ var onCount=rules.filter(function(r){return r.enabled;}).length;
+ var head='<div class="sec-head"><span class="sec-mark">'+I('penline',17)+'</span><div class="sec-ttl"><div class="h">Your rules'+(rules.length?' <span class="count">'+onCount+'/'+rules.length+'</span>':'')+'</div><div class="d">Anything else Pennedly should always do, in your words</div></div></div>';
+ if(!rules.length){
+  var hints=HINTS.map(function(h){return '<button class="ff-hint">'+esc(h)+'</button>';}).join('');
+  return '<section class="sec">'+head+'<div class="ff-empty"><span class="fe-mark">'+I('penline',22)+'</span><div class="fe-title">No rules of your own yet</div><div class="fe-sub">Add a habit Pennedly should always follow. Short and specific works best, and you can scope each one to posts or replies.</div><div class="ff-hints">'+hints+'</div></div><div class="ff-empty-add">'+addRule({solo:true,focus:opts.addFocus,value:opts.addValue})+'</div></section>';
+ }
+ var rows=rules.map(function(r,i){
+  var o={};
+  if(opts.editingId===r.id)o.editing=true;
+  if(opts.confirmingId===r.id)o.confirming=true;
+  if(opts.leavingId===r.id)o.leaving=true;
+  return freeformRow(r,o);
+ }).join('');
+ return '<section class="sec">'+head+'<div class="ff-list">'+rows+'</div>'+addRule({value:opts.addValue,focus:opts.addFocus})+'</section>';
+}
+function skeleton(){
+ var rules='';
+ for(var i=0;i<5;i++){rules+='<div class="skel-rule"><div class="skel-block" style="width:40px;height:23px;border-radius:999px;"></div><div style="flex:1"><div class="skel-line" style="width:160px;height:12px;margin-bottom:8px;"></div><div class="skel-line" style="width:70%;height:10px;"></div></div></div>';}
+ return '<div class="intro skel"><div class="skel-line" style="width:130px;height:10px;"></div><div class="skel-line" style="width:320px;height:26px;margin-top:14px;"></div><div class="skel-line" style="width:80%;height:12px;margin-top:14px;"></div><div class="skel-line" style="width:220px;height:11px;margin-top:14px;"></div></div><section class="sec skel"><div class="sec-head"><div class="skel-block" style="width:34px;height:34px;"></div><div style="flex:1"><div class="skel-line" style="width:150px;height:14px;margin-bottom:7px;"></div><div class="skel-line" style="width:230px;height:9px;"></div></div></div><div>'+rules+'</div></section>';
+}
+function toast(title,sub,undo){
+ return '<div class="toast-host"><div class="toast toast--success"><span class="toast-mark"></span><div class="toast-body"><div class="toast-title">'+esc(title)+'</div>'+(sub?'<div class="toast-sub">'+esc(sub)+'</div>':'')+'</div>'+(undo?'<button class="toast-undo">Undo</button>':'')+'</div></div>';
+}
+
+/* counts */
+function counts(builtins,freeform){
+ var bo=builtins.filter(function(r){return r.on;}).length;
+ var fo=freeform.filter(function(r){return r.enabled;}).length;
+ return {on:bo+fo,total:builtins.length+freeform.length,bo:bo};
+}
+
+/* ===================== bodies ===================== */
+function bodyDefault(){
+ var c=counts(BUILTIN,FREEFORM);
+ return intro(c.bo,BUILTIN.length,FREEFORM.length)+freeformSection(FREEFORM,{})+builtinSection(BUILTIN);
+}
+function bodyCatalog(){
+ var c=counts(BUILTIN,FREEFORM);
+ return intro(c.bo,BUILTIN.length,FREEFORM.length)+builtinSection(BUILTIN);
+}
+function bodyToggledOff(){
+ // a copy with b9 forced off to show off-state clearly, b1 stripper expanded (it is on)
+ var b=BUILTIN.map(function(r){return Object.assign({},r);});
+ b.forEach(function(r){if(r.id==='b9')r.on=false;});
+ var c=counts(b,FREEFORM);
+ return intro(c.bo,b.length,FREEFORM.length)+builtinSection(b);
+}
+function bodyStripperOff(){
+ var b=BUILTIN.filter(function(r){return r.category==='Punctuation';}).map(function(r){return Object.assign({},r,{on:false});});
+ return builtinSectionOne(b,'Punctuation');
+}
+function builtinSectionOne(items,cat){
+ // a focused single-category card to show the stripper OFF state up close
+ var cOn=items.filter(function(r){return r.on;}).length;
+ return '<section class="sec"><div class="sec-head"><span class="sec-mark">'+I('filter',17)+'</span><div class="sec-ttl"><div class="h">Anti-AI-tells</div><div class="d">Human punctuation, switched off (the deterministic pass is disabled)</div></div></div><div class="cat-groups"><div class="cat-group" style="border-top:none"><div class="cat-head"><span class="cat-name">'+cat+'</span><span class="cat-count">'+cOn+'/'+items.length+'</span></div><div class="rules">'+items.map(builtinRow).join('')+'</div></div></div></section>';
+}
+function bodyEmpty(){
+ var c=counts(BUILTIN,[]);
+ return intro(c.bo,BUILTIN.length,0)+freeformSection([],{})+builtinSection(BUILTIN);
+}
+function bodyAdding(){
+ var c=counts(BUILTIN,FREEFORM);
+ return intro(c.bo,BUILTIN.length,FREEFORM.length)+freeformSection(FREEFORM,{addFocus:true,addValue:'No one-word replies, always give them something to chew on',kind:'reply'});
+}
+function bodyDeleting(){
+ var c=counts(BUILTIN,FREEFORM);
+ return intro(c.bo,BUILTIN.length,FREEFORM.length)+freeformSection(FREEFORM,{leavingId:'f2'});
+}
+function bodyConfirming(){
+ var c=counts(BUILTIN,FREEFORM);
+ return intro(c.bo,BUILTIN.length,FREEFORM.length)+freeformSection(FREEFORM,{confirmingId:'f2'});
+}
+function bodyEditing(){
+ var c=counts(BUILTIN,FREEFORM);
+ return intro(c.bo,BUILTIN.length,FREEFORM.length)+freeformSection(FREEFORM,{editingId:'f3'});
+}
+function bodyCompact(){
+ var c=counts(BUILTIN,FREEFORM);
+ return intro(c.bo,BUILTIN.length,FREEFORM.length)+freeformSection(FREEFORM,{})+builtinSection(BUILTIN);
+}
+function bodySkeleton(){ return skeleton(); }
+
+/* ===================== frames ===================== */
+function frame(device,theme,label,body,extra,density){
+ var dark=theme==='dark';
+ var c=counts(BUILTIN,FREEFORM);
+ var screen='<div class="screen '+device+' pd-'+theme+'">'+app(body,c.on,c.total,dark,density)+(extra||'')+'</div>';
+ return '<figure class="vp"><figcaption><span class="tg tg--'+(device==='web'?'web':'mob')+'">'+(device==='web'?'Web · 1060':'Mobile · 392')+'</span><span class="tg tg--'+theme+'">'+(dark?'Dark':'Light')+'</span><span class="lbl">'+label+'</span></figcaption>'+screen+'</figure>';
+}
+function sectionHead(num,title,desc,notes,sub){
+ var noteList=(notes||[]).map(function(n){return '<li>'+n+'</li>';}).join('');
+ return '<section class="state-sec'+(sub?'':' divide')+'"><div class="sec-num">'+num+'</div><h2 class="sec-title'+(sub?' sub':'')+'">'+title+'</h2><p class="sec-desc">'+desc+'</p>'+(noteList?'<ul class="sec-notes">'+noteList+'</ul>':'')+'</section>';
+}
+function noteCard(t){return '<div class="note-card"><div class="nc">'+t+'</div></div>';}
+function gallery(f){return '<div class="gallery">'+f+'</div>';}
+
+/* ===================== build ===================== */
+var H='';
+H+='<header class="doc-head">'
+ +'<p class="doc-kicker">Pennedly · State spec · build contract</p>'
+ +'<h1 class="doc-title">Style rules · the line-level rulebook, every state rendered</h1>'
+ +'<p class="doc-lede">Full-fidelity render of <b>Style rules</b> (<code>/app/style-rules</code>), where the user controls the line-level rules that keep drafts from sounding like a machine. Two layers: the account\u2019s own <b>freeform rules</b> (full CRUD) and a <b>fixed built-in catalog</b> of anti-AI-tell fixes, grouped by category and toggled per account. The first built-in, <b>Human punctuation</b>, also drives a deterministic typographic pass (em-dashes become commas, guillemets become straight quotes) shown with a live before/after demo. Every frame uses the real PennedlyDesign tokens, the shared shell, and the real copy from <code>stylerules-data.jsx</code>. Reading width <b>720px</b>. Each state is labeled for <b>web + mobile</b> in <b>light + dark</b>. Em-dashes used as punctuation are stripped from copy (rules may still name the em-dash, they just don\u2019t use one).</p>'
+ +'<div class="doc-meta"><span class="m">route /app/style-rules</span><span class="m">sidebar: Style rules</span><span class="m">width 720</span><span class="m">order: Your rules, then Anti-AI-tells</span><span class="m">12 built-ins · 6 categories</span><span class="m">tweaks: yourRules · screen · dark · density</span></div>'
+ +'</header>'
+ +'<div class="legend"><span class="lk"><span class="dot" style="background:#171717;"></span>switch on (ink)</span><span class="lk"><span class="dot" style="background:#c8c7c3;"></span>switch off</span><span class="lk"><span class="dot" style="background:#2f4cc4;"></span>stripper / accent</span><span class="lk"><span class="dot" style="background:#b23b30;"></span>delete / danger</span></div>';
+
+// honesty note about filters
+H+=noteCard('<b>On the \u201Cfiltered\u201D state:</b> the real screen has <b>no filter chips</b>. The rework explicitly replaced the old flat filter bar with <b>category grouping</b> (Punctuation, Diction, Structure, Cadence, Formatting, Tone), each group carries its own on/off count. State 2 below renders that grouped catalog as its own focused view (the honest equivalent of \u201Cnarrowed\u201D), rather than fabricating a filter control that does not exist in code.');
+
+// STATE 1 — default
+H+=sectionHead('State 1','Default · your rules + built-in catalog',
+ 'The resting, populated screen. Intro explains the screen in one line with live counts. Then <b>Your rules</b> first (four freeform rules, each with an enabled switch, the rule text, a kind chip for Posts/Replies, and hover edit/delete), with the add composer at the foot. Then <b>Anti-AI-tells</b>, the fixed catalog grouped by the six categories in order, each rule a switch + title + description, applicability chips where a rule is posts-only, and the special Human punctuation card with its deterministic note and live before/after demo. Topbar pill shows <code>14 of 16 on</code>.',
+ ['Section order is Your rules, then Anti-AI-tells (matches the real component tree).',
+  'Two built-ins ship OFF by default: No hedging filler (Tone) and No hashtag stacks (Formatting), visible in their off styling in the catalog.',
+  'Human punctuation is ON, so its demo shows the messy original struck through, an arrow, and the cleaned result with straight quotes.']);
+H+=gallery(
+ frame('web','light','Default · populated',bodyDefault())
+ +frame('web','dark','Default · populated',bodyDefault())
+ +frame('mob','light','Default · mobile',bodyDefault())
+ +frame('mob','dark','Default · mobile',bodyDefault())
+);
+
+// STATE 2 — catalog focus (grouped)
+H+=sectionHead('State 2','Built-in catalog, grouped by category',
+ 'The Anti-AI-tells catalog on its own so the grouped structure is unambiguous: a category label and an on/off count per group, in the fixed order Punctuation, Diction, Structure, Cadence, Formatting, Tone. This grouping is what replaced a filter bar, the user toggles rules on or off but never adds or removes built-ins.',
+ ['Each cat-head sits on surface-2 with an uppercase label and a tabular n/n count.',
+  'Posts-only rules (No emoji bullets, No hashtag stacks) carry a \u201CPosts only\u201D chip; nothing is replies-only in the seed catalog.']);
+H+=gallery(
+ frame('web','light','Catalog · all six categories',bodyCatalog())
+ +frame('web','dark','Catalog · all six categories',bodyCatalog())
+ +frame('mob','light','Catalog · mobile',bodyCatalog())
+);
+
+// STATE 3 — toggled off + stripper expanded / off
+H+=sectionHead('State 3','A rule toggled off + Human punctuation expanded',
+ 'Off styling made unambiguous: Vary sentence length (Cadence) is shown OFF (track grey, knob left, title and description dimmed). The Human punctuation card stays expanded with its deterministic-pass note and the live before/after demo. The focused card on the right shows the same rule switched OFF, the stripper panel goes quiet (muted, no strike-through) because the typographic pass is disabled.',
+ ['When the stripper is ON the demo \u201Cto\u201D string is the cleaned text; when OFF the demo collapses to the original (no change), reflecting that the pass no longer runs.',
+  'Toggling a built-in off is a per-account opt-out, the catalog itself is fixed.']);
+H+=gallery(
+ frame('web','light','Rule off + stripper on (expanded)',bodyToggledOff())
+ +frame('web','dark','Rule off + stripper on (expanded)',bodyToggledOff())
+ +frame('web','light','Human punctuation switched OFF',bodyStripperOff())
+ +frame('web','dark','Human punctuation switched OFF',bodyStripperOff())
+);
+
+// STATE 4 — your rules empty
+H+=sectionHead('State 4','Your rules, empty',
+ 'The first-run Your rules state (driven by the yourRules=Empty tweak). The built-in catalog is never empty, only the user list is. Shows the calm empty message, three dashed hint chips from FREEFORM_HINTS (tap to add), and the full-width add composer with its Both / Posts / Replies segmented selector.',
+ ['Hint chips: Spell out numbers under ten, No exclamation marks in replies, Mention a book only when it\u2019s genuinely relevant.',
+  'Tapping a hint adds it as a Both-scoped rule; the composer Add button is disabled until there is text.']);
+H+=gallery(
+ frame('web','light','Empty your-rules',bodyEmpty())
+ +frame('web','dark','Empty your-rules',bodyEmpty())
+ +frame('mob','light','Empty · mobile',bodyEmpty())
+);
+
+// STATE 5 — adding / deleting with undo
+H+=sectionHead('State 5','Adding, confirming delete, and delete with Undo',
+ 'The CRUD micro-states. <b>Adding</b>: the composer focused with text and Replies selected, Add enabled. <b>Confirm</b>: a row swaps its edit/delete icons for an inline \u201CDelete?\u201D confirm. <b>Deleting</b>: the row fades and slides out while the Undo toast appears bottom-center. Delete is optimistic, the real call is deferred about five seconds and Undo cancels it.',
+ ['Add toast reads \u201CRule added \u00b7 Applied to replies/posts/every new draft\u201D depending on scope; the remove toast carries the Undo.',
+  'Inline edit (not shown here as a separate frame) turns the row into an accent-bordered input with a check + Cancel.']);
+H+=gallery(
+ frame('web','light','Adding · composer focused',bodyAdding())
+ +frame('web','dark','Confirm delete (inline)',bodyConfirming())
+ +frame('web','light','Deleting · row leaving + Undo toast',bodyDeleting(),toast('Rule removed','',true))
+ +frame('mob','light','Inline edit a rule',bodyEditing())
+);
+
+// STATE 6 — loading + compact
+H+=sectionHead('State 6','Loading skeleton & Compact density',
+ 'Left: the boot skeleton (about 850ms, or the screen=Loading tweak), intro lines plus five shimmer rule rows. Right: the Compact density variant (density tweak), rule rows tighten and the per-rule descriptions and the stripper panel are hidden, leaving just titles, switches, and chips.',
+ ['Skeleton uses the shared shimmer keyframe; it never shows real copy.',
+  'Compact is a real tweak (Comfortable / Compact); it only changes spacing and hides descriptions, it does not change which rules exist.']);
+H+=gallery(
+ frame('web','light','Loading skeleton',bodySkeleton())
+ +frame('web','dark','Loading skeleton',bodySkeleton())
+ +frame('web','light','Compact density',bodyCompact(),'','compact')
+ +frame('web','dark','Compact density',bodyCompact(),'','compact')
+);
+
+document.getElementById('root').innerHTML=H;
+</script>
+</body>
+</html>

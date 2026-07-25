@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pennedly · Главная (кокпит) — Спецификация</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../../ds/tokens.css" />
+<link rel="stylesheet" href="../../ds/components.css" />
+<link rel="stylesheet" href="../../import-banner.css" />
+<style>
+:root{
+  --font-sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --font-mono:"Geist Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --bg:#efedea; --surface:#ffffff; --surface-2:#f6f5f2; --border:#dcd9d2;
+  --text:#171717; --muted:#565550; --subtle:#6f6e69; --accent:#2f4cc4;
+  --code-bg:#f6f5f2; --good:#2c7350; --warn:#8a5b16; --danger:#b23b30;
+  --radius:14px;
+}
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%; scroll-behavior:smooth;}
+body{margin:0; background:var(--bg); color:var(--text);
+  font-family:var(--font-sans); font-size:15px; line-height:1.62;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;}
+.layout{display:grid; grid-template-columns:300px minmax(0,1fr); gap:0; max-width:1340px; margin:0 auto;}
+
+.toc{position:sticky; top:0; align-self:start; height:100vh; overflow-y:auto;
+  padding:34px 22px 40px 32px; border-right:1px solid var(--border);}
+.toc .doc-mark{display:flex; align-items:center; gap:10px; margin-bottom:6px;}
+.toc .doc-mark .nib{width:30px; height:30px; border-radius:8px; background:var(--text); display:grid; place-items:center; flex:0 0 auto;}
+.toc .doc-mark b{font-size:16px; font-weight:600; letter-spacing:-0.01em;}
+.toc .doc-sub{font-size:12px; color:var(--subtle); letter-spacing:0.02em; margin:0 0 22px 40px; text-transform:uppercase;}
+.toc nav{display:flex; flex-direction:column; gap:1px;}
+.toc nav a{display:flex; gap:9px; padding:6px 10px; border-radius:8px; text-decoration:none;
+  color:var(--muted); font-size:13.5px; line-height:1.35; transition:background .12s, color .12s;}
+.toc nav a:hover{background:var(--surface-2); color:var(--text);}
+.toc nav a .n{font-variant-numeric:tabular-nums; color:var(--subtle); font-weight:600; flex:0 0 16px;}
+.toc nav a.sub{padding-left:30px; font-size:12.5px; color:var(--subtle);}
+.toc nav a em{font-style:normal; color:var(--accent); font-size:11px; margin-left:4px;}
+.toc .meta{margin-top:24px; padding-top:18px; border-top:1px solid var(--border); font-size:12px; color:var(--subtle); line-height:1.7;}
+.toc .meta code{font-family:var(--font-mono); font-size:11px;}
+.toc .meta b{color:var(--text);}
+.toc .meta a{color:var(--accent); text-decoration:none;}
+
+main{padding:40px 56px 120px; min-width:0;}
+.kicker{font-family:var(--font-mono); font-size:12px; letter-spacing:0.04em; color:var(--accent); text-transform:uppercase; margin:0 0 10px;}
+h1.title{font-size:34px; line-height:1.1; letter-spacing:-0.025em; font-weight:600; margin:0 0 14px; text-wrap:balance;}
+h1.title span{color:var(--subtle); font-weight:500;}
+.lede{font-size:16px; color:var(--muted); max-width:80ch; margin:0 0 14px; text-wrap:pretty;}
+.filerow{display:flex; flex-wrap:wrap; gap:6px; margin:18px 0 6px;}
+.chip{font-family:var(--font-mono); font-size:11.5px; padding:4px 9px; border-radius:9999px; background:var(--surface); border:1px solid var(--border); color:var(--muted);}
+.chip--new{border-color:color-mix(in srgb, var(--accent) 40%, var(--border)); color:var(--accent);}
+
+section{margin-top:52px; scroll-margin-top:20px;}
+h2{font-size:21px; line-height:1.25; letter-spacing:-0.012em; font-weight:600; margin:0 0 4px; padding-top:10px;}
+h2 .h2n{font-family:var(--font-mono); font-size:14px; color:var(--accent); margin-right:10px; font-weight:500;}
+.section-note{color:var(--muted); font-size:14px; max-width:84ch; margin:6px 0 18px; text-wrap:pretty;}
+h3{font-size:15.5px; font-weight:600; letter-spacing:-0.005em; margin:30px 0 10px; padding-bottom:7px; border-bottom:1px solid var(--border);}
+h3 .stg{font-family:var(--font-mono); font-size:11px; color:var(--accent); border:1px solid var(--border); border-radius:6px; padding:1px 7px; margin-right:8px; text-transform:uppercase; letter-spacing:0.04em;}
+h3 .stg--shell{color:var(--good);}
+h4{font-size:13px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.04em; margin:22px 0 8px;}
+
+p{margin:0 0 12px; text-wrap:pretty;}
+ul,ol{margin:0 0 12px; padding-left:22px;}
+li{margin:3px 0;}
+code{font-family:var(--font-mono); font-size:0.86em; background:var(--code-bg); border:1px solid var(--border); padding:1px 5px; border-radius:5px; white-space:nowrap;}
+.tok{color:var(--accent);}
+strong{font-weight:600;}
+
+.tbl-wrap{overflow-x:auto; margin:0 0 16px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface);}
+table{width:100%; border-collapse:collapse; font-size:13px;}
+th,td{text-align:left; padding:9px 13px; border-bottom:1px solid var(--border); vertical-align:top;}
+thead th{font-size:11px; text-transform:uppercase; letter-spacing:0.04em; color:var(--subtle); font-weight:600; background:var(--surface-2);}
+tbody tr:last-child td{border-bottom:none;}
+td code, th code{white-space:nowrap;}
+td.val{font-family:var(--font-mono); font-size:12px; color:var(--text);}
+
+.note{border:1px solid var(--border); border-left:3px solid var(--accent); background:var(--surface);
+  border-radius:10px; padding:12px 16px; margin:14px 0; font-size:13.5px; color:var(--muted);}
+.note.warn{border-left-color:var(--warn);}
+.note.danger{border-left-color:var(--danger);}
+.note.good{border-left-color:var(--good);}
+.note b{color:var(--text);}
+.pane code, .check code, .note code, .section-note code, p code, td code, th code, li code{white-space:normal; overflow-wrap:anywhere;}
+.two{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+.two h4{margin-top:0;}
+.pane{border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); padding:16px 18px; min-width:0;}
+.pane.web{border-top:3px solid var(--text);}
+.pane.mob{border-top:3px solid var(--accent);}
+
+.check{list-style:none; padding:0; margin:0 0 8px;}
+.check li{position:relative; padding:5px 0 5px 26px; border-bottom:1px dashed var(--border); font-size:13.5px;}
+.check li:last-child{border-bottom:none;}
+.check li::before{content:"☐"; position:absolute; left:2px; top:4px; color:var(--subtle); font-size:14px;}
+.tagline{display:inline-block; font-size:11px; font-family:var(--font-mono); color:var(--accent); border:1px solid var(--border); border-radius:9999px; padding:2px 8px; margin-left:6px;}
+.statebar{display:flex; flex-wrap:wrap; gap:6px; margin:2px 0 14px;}
+.statebar .st{font-family:var(--font-mono); font-size:11px; padding:3px 9px; border-radius:6px; background:var(--surface-2); border:1px solid var(--border); color:var(--muted);}
+
+/* ───────────────────── LIVE FRAMES (real DS components) ───────────────────── */
+.frames{display:flex; flex-direction:column; gap:16px; margin:16px 0 6px;}
+.frow{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+@media(max-width:1040px){ .frow{grid-template-columns:1fr;} }
+.fr{display:flex; flex-direction:column; gap:9px; min-width:0;}
+.fr-head{display:inline-flex; align-items:center; gap:7px; font-family:var(--font-mono); font-size:11px; letter-spacing:.02em; color:var(--subtle);}
+.fr-head .dh{width:8px; height:8px; border-radius:9999px; background:var(--border);}
+.fr-head .dh--dark{background:#0a0a0a; border:1px solid #3a3a3a;}
+.frame{background:var(--color-bg); border:1px solid var(--color-border); border-radius:18px; padding:20px; overflow:hidden;}
+.frame *{box-sizing:border-box;}
+.frame button{font-family:inherit;}
+.frame--narrow{display:flex; justify-content:center;}
+.ruler{display:inline-flex; align-items:center; gap:6px; font-family:var(--font-mono); font-size:10.5px; color:var(--subtle); margin-bottom:7px;}
+.ruler b{color:var(--accent);}
+
+.skel-line{background:linear-gradient(100deg, var(--color-surface-2) 28%, color-mix(in srgb,var(--color-text) 7%, var(--color-surface-2)) 50%, var(--color-surface-2) 72%);
+  background-size:220% 100%; animation:shimmer 1.4s linear infinite; border-radius:6px;}
+@keyframes shimmer{ from{background-position:220% 0} to{background-position:-120% 0} }
+
+.tbdemo{display:flex; align-items:center; gap:13px; height:56px; padding:0 18px; background:color-mix(in srgb,var(--color-bg) 86%, transparent); border:1px solid var(--color-border); border-radius:12px;}
+.tbdemo .tbt{font-size:var(--text-h3); font-weight:600; letter-spacing:-0.006em; color:var(--color-text); flex:0 0 auto;}
+.tbdemo .sp{flex:1 1 auto;}
+.tbdemo .ib{width:34px; height:34px; display:grid; place-items:center; border:1px solid var(--color-border); border-radius:10px; background:var(--color-surface); color:var(--color-text-muted); flex:0 0 auto;}
+.tbdemo .status-pill{min-width:0;}
+.sp-txt{white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+
+/* ════════════════════════ COCKPIT COMPONENT LAYER ════════════════════════ */
+/* На живых токенах; правила 1–2: однострочные элементы получают min-width:0 +
+   nowrap/ellipsis и никогда не переносятся / не толкают соседа вниз. */
+.ov{display:flex; flex-direction:column; gap:18px;}
+
+.delta{display:inline-flex; align-items:center; gap:3px; font-size:var(--text-caption); font-weight:600; font-variant-numeric:tabular-nums; white-space:nowrap; flex:0 0 auto;}
+.delta svg{width:12px; height:12px;}
+.delta--up{color:var(--color-success);} .delta--down{color:var(--color-danger);} .delta--flat{color:var(--color-text-subtle);}
+.ov-dot{opacity:.5; flex:0 0 auto;}
+
+/* avatar + network badge */
+.ov-av,.ov-tr-av,.ov-au-av,.ovsw-av,.sb-acct-av{position:relative; overflow:visible; flex:0 0 auto; background:var(--color-surface-2); border:1px solid var(--color-border); border-radius:var(--radius-full); display:grid; place-items:center;}
+.ov-av{width:42px; height:42px;}
+.ov-av img,.ov-tr-av img,.ov-au-av img,.ovsw-av img,.sb-acct-av img{width:100%; height:100%; border-radius:inherit; object-fit:cover;}
+.ov-av .mono,.ov-tr-av .mono,.ov-au-av .mono,.ovsw-av .mono,.sb-acct-av .mono{font-size:14px; font-weight:600; color:var(--color-text-muted);}
+.ov-net{position:absolute; right:-3px; bottom:-3px; width:16px; height:16px; border-radius:6px; display:grid; place-items:center; font-family:var(--font-mono); font-size:9px; font-weight:600; line-height:1; background:var(--color-surface); color:var(--color-text-muted); box-shadow:0 0 0 2px var(--color-surface), inset 0 0 0 1px var(--color-border);}
+.ov-net--threads{color:var(--color-text);} .ov-net--bluesky{color:var(--color-accent);} .ov-net--mastodon{color:var(--color-success);}
+.ov-au-av .ov-net,.ovsw-av .ov-net,.sb-acct-av .ov-net{width:13px; height:13px; font-size:8px; border-radius:5px;}
+
+/* ── «Требует тебя» (hero) ── */
+.ov-tri{background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); overflow:hidden;}
+.ov-tri-head{display:flex; align-items:center; gap:10px; padding:14px 16px 11px;}
+.ov-tri-title{font-size:var(--text-h3); font-weight:600; letter-spacing:-0.006em; color:var(--color-text); min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.ov-tri-count{margin-left:auto; font-size:var(--text-caption); color:var(--color-text-subtle); font-variant-numeric:tabular-nums; white-space:nowrap; flex:0 0 auto;}
+.ov-tri-list{display:flex; flex-direction:column; border-top:1px solid var(--color-border);}
+.ov-tr{display:flex; align-items:center; gap:13px; padding:12px 16px; text-decoration:none; color:inherit; cursor:pointer; transition:background var(--duration-fast) var(--ease-standard);}
+.ov-tr:not(:last-child){border-bottom:1px solid var(--color-border);}
+.ov-tr:hover{background:var(--color-surface-2);}
+.ov-tr-av{width:38px; height:38px;}
+.ov-tr-av .mono{font-size:13px;}
+.ov-tr-body{flex:1 1 auto; min-width:0;}
+.ov-tr-line{display:flex; align-items:center; gap:9px; min-width:0;}
+.ov-tr-ic{width:22px; height:22px; border-radius:var(--radius-sm); display:grid; place-items:center; flex:0 0 auto; background:var(--color-surface-2); border:1px solid var(--color-border); color:var(--color-text-muted);}
+.ov-tr-title{font-size:var(--text-small); font-weight:600; color:var(--color-text); min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.ov-tr-meta{display:flex; align-items:center; gap:6px; font-size:var(--text-caption); color:var(--color-text-subtle); margin-top:3px; min-width:0;}
+.ov-tr-h{color:var(--color-text-muted); flex:0 0 auto; max-width:50%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.ov-tr-metatxt{min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.ov-tr--danger .ov-tr-ic{color:var(--color-danger); background:color-mix(in srgb,var(--color-danger) 12%,var(--color-surface)); border-color:color-mix(in srgb,var(--color-danger) 26%,transparent);}
+.ov-tr--accent .ov-tr-ic{color:var(--color-accent); background:color-mix(in srgb,var(--color-accent) 12%,var(--color-surface)); border-color:color-mix(in srgb,var(--color-accent) 26%,transparent);}
+.ov-tr--advisor .ov-tr-ic{color:var(--color-success); background:color-mix(in srgb,var(--color-success) 12%,var(--color-surface)); border-color:color-mix(in srgb,var(--color-success) 26%,transparent);}
+.ov-tr-go{width:30px; height:30px; border-radius:var(--radius-md); display:grid; place-items:center; flex:0 0 auto; border:1px solid var(--color-border); background:var(--color-surface); color:var(--color-text-muted);}
+.ov-tr-go svg{width:16px; height:16px;}
+.ov-tr:hover .ov-tr-go{background:var(--color-surface-2); color:var(--color-text);}
+.ov-tr-btn{display:inline-flex; align-items:center; gap:6px; flex:0 0 auto; white-space:nowrap; font-size:var(--text-caption); font-weight:600; color:var(--color-danger); padding:7px 12px; border-radius:var(--radius-full); border:1px solid color-mix(in srgb,var(--color-danger) 28%,transparent); background:color-mix(in srgb,var(--color-danger) 8%,var(--color-surface));}
+.ov-tri--zero{display:flex; flex-direction:column; align-items:center; text-align:center; padding:36px 24px;}
+.ov-tri-zero-mark{width:48px; height:48px; border-radius:var(--radius-full); display:grid; place-items:center; color:var(--color-success); background:color-mix(in srgb,var(--color-success) 12%,var(--color-surface)); border:1px solid color-mix(in srgb,var(--color-success) 26%,transparent); margin-bottom:14px;}
+.ov-tri-zero-t{font-size:var(--text-h3); font-weight:600; letter-spacing:-0.006em; color:var(--color-text);}
+.ov-tri-zero-s{font-size:var(--text-small); color:var(--color-text-muted); max-width:46ch; margin-top:6px; line-height:1.55;}
+.ov-tri-zero-foot{display:inline-flex; align-items:center; gap:5px; white-space:nowrap; font-size:var(--text-caption); color:var(--color-text-subtle); margin-top:14px;}
+
+/* ── секция-заголовок (аудит) ── */
+.ov-sec-head{display:flex; align-items:center; gap:9px; margin-bottom:11px; min-width:0;}
+.ov-sec-ic{width:26px; height:26px; border-radius:var(--radius-sm); display:grid; place-items:center; flex:0 0 auto; background:var(--color-surface-2); border:1px solid var(--color-border); color:var(--color-text-muted);}
+.ov-sec-t{font-size:var(--text-small); font-weight:600; color:var(--color-text); white-space:nowrap; flex:0 0 auto;}
+.ov-sec-s{font-size:var(--text-caption); color:var(--color-text-subtle); margin-left:2px; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.ov-au-row{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px;}
+@media(max-width:760px){ .ov-au-row{grid-template-columns:1fr;} }
+.ov-au{display:flex; flex-direction:column; gap:11px; background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:14px 15px; text-decoration:none; color:inherit; min-width:0; transition:border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);}
+.ov-au:hover{border-color:color-mix(in srgb,var(--color-text) 20%, var(--color-border)); box-shadow:var(--shadow-md);}
+.ov-au-head{display:flex; align-items:center; gap:10px; min-width:0;}
+.ov-au-av{width:30px; height:30px;}
+.ov-au-av .mono{font-size:11px;}
+.ov-au-id{min-width:0;}
+.ov-au-h{font-size:var(--text-small); font-weight:600; color:var(--color-text); line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.ov-au-when{font-size:var(--text-caption); color:var(--color-text-subtle); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.ov-au-sig{display:flex; align-items:center; gap:7px; min-width:0;}
+.ov-au-sig svg{width:15px; height:15px; flex:0 0 auto;}
+.ov-au-sig--up{color:var(--color-success);} .ov-au-sig--down{color:var(--color-danger);} .ov-au-sig--flat{color:var(--color-text-subtle);}
+.ov-au-delta{font-size:var(--text-h3); font-weight:600; font-variant-numeric:tabular-nums; letter-spacing:-0.01em; flex:0 0 auto;}
+.ov-au-lab{font-size:var(--text-caption); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0;}
+.ov-au-conf{font-size:var(--text-caption); color:var(--color-text-subtle); margin-top:-2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.ov-au-cta{display:inline-flex; align-items:center; gap:6px; font-size:var(--text-caption); font-weight:600; color:var(--color-accent); min-width:0;}
+.ov-au-cta svg{width:13px; height:13px; flex:0 0 auto;}
+.ov-au-ctatxt{white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.ov-au-done{display:inline-flex; align-items:center; gap:6px; font-size:var(--text-caption); font-weight:600; color:var(--color-text-subtle); white-space:nowrap;}
+.ov-au-done svg{width:13px; height:13px; color:var(--color-success); flex:0 0 auto;}
+
+/* полоса итогов */
+.ov-strip-cap{display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:-4px;}
+.ov-strip-cap .lab{font-size:var(--text-caption); font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:var(--color-text-subtle); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.ov-strip-cap .imp{font-size:var(--text-caption); color:var(--color-accent); font-weight:600; white-space:nowrap; flex:0 0 auto;}
+.ov-totals{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px;}
+@media(max-width:640px){ .ov-totals{grid-template-columns:repeat(2,minmax(0,1fr));} }
+.ov-total{background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:15px 17px; min-width:0;}
+.ov-total-lab{display:flex; align-items:center; gap:7px; font-size:var(--text-caption); font-weight:600; letter-spacing:.03em; text-transform:uppercase; color:var(--color-text-subtle); min-width:0;}
+.ov-total-lab .ic{width:24px; height:24px; border-radius:var(--radius-sm); display:grid; place-items:center; background:var(--color-surface-2); border:1px solid var(--color-border); color:var(--color-text-muted); flex:0 0 auto;}
+.ov-total-lab .ic svg{width:13px; height:13px;}
+.ov-total-labtxt{min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.ov-total-num{font-size:var(--text-h1); font-weight:600; letter-spacing:-0.015em; line-height:1.1; font-variant-numeric:tabular-nums; margin-top:11px; color:var(--color-text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.ov-total-foot{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:8px; min-width:0;}
+.ov-total-sub{font-size:var(--text-caption); color:var(--color-text-subtle); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0;}
+.ov-total--attention .ov-total-num{color:var(--color-accent);}
+
+/* сетка профилей */
+.ov-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:14px;}
+@media(max-width:760px){ .ov-grid{grid-template-columns:1fr;} }
+.ov-card{position:relative; background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:16px 18px; min-width:0;
+  transition:border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);}
+.ov-card:hover{border-color:color-mix(in srgb,var(--color-text) 22%, var(--color-border)); box-shadow:var(--shadow-md);}
+.ov-card-head{display:flex; align-items:center; gap:12px;}
+.ov-id{min-width:0; flex:1 1 auto;}
+.ov-name{font-size:var(--text-small); font-weight:600; color:var(--color-text); line-height:1.25; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.ov-handle{font-size:var(--text-caption); color:var(--color-text-subtle); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.ov-go{width:30px; height:30px; border-radius:var(--radius-md); flex:0 0 auto; display:grid; place-items:center; border:1px solid var(--color-border); background:var(--color-surface); color:var(--color-text-muted);}
+.ov-go svg{width:16px; height:16px;}
+.ov-card:hover .ov-go{background:var(--color-surface-2); color:var(--color-text);}
+.ov-metrics{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-top:16px;}
+@media(max-width:520px){ .ov-metrics{grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px;} }
+.ov-m{display:flex; flex-direction:column; gap:3px; min-width:0;}
+.ov-m-lab{font-size:10.5px; font-weight:600; letter-spacing:.03em; text-transform:uppercase; color:var(--color-text-subtle); display:flex; align-items:center; gap:4px; min-width:0;}
+.ov-m-lab svg{flex:0 0 auto;}
+.ov-m-labtxt{min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.ov-m-val{font-size:var(--text-h3); font-weight:600; font-variant-numeric:tabular-nums; letter-spacing:-0.006em; color:var(--color-text); line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.ov-m-val .u{font-size:var(--text-caption); font-weight:500; color:var(--color-text-subtle);}
+.ov-m--attention .ov-m-val{color:var(--color-accent);}
+.ov-status{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:15px; padding-top:13px; border-top:1px solid var(--color-border); min-width:0;}
+.ov-sync{display:inline-flex; align-items:center; gap:6px; font-size:var(--text-caption); color:var(--color-text-subtle); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0;}
+.ov-sync-dot{width:6px; height:6px; border-radius:var(--radius-full); background:var(--color-success); flex:0 0 auto;}
+.ov-sync--error{color:var(--color-danger);} .ov-sync--error .ov-sync-dot{background:var(--color-danger);}
+.ov-quick{display:flex; gap:7px; justify-content:flex-end; flex:0 0 auto;}
+.ov-quicklink{font-size:var(--text-caption); font-weight:600; color:var(--color-text-muted); padding:4px 9px; border-radius:var(--radius-full); border:1px solid var(--color-border); background:var(--color-surface-2); text-decoration:none; display:inline-flex; align-items:center; gap:5px; white-space:nowrap; flex:0 0 auto;}
+.ov-quicklink svg{width:12px; height:12px; opacity:.85;}
+.ov-quicklink:hover{background:var(--color-surface); border-color:color-mix(in srgb,var(--color-text) 20%, var(--color-border));}
+.ov-quicklink--attention{color:var(--color-accent); border-color:color-mix(in srgb,var(--color-accent) 28%, transparent); background:color-mix(in srgb,var(--color-accent) 10%, var(--color-surface));}
+.ov-card--importing .import-banner{box-shadow:none; margin-top:14px;}
+
+/* один профиль */
+.ov-singlewrap{display:flex; flex-direction:column; gap:16px;}
+.ov-single-note{display:flex; align-items:center; gap:13px; background:color-mix(in srgb,var(--color-accent) 6%, var(--color-surface)); border:1px solid color-mix(in srgb,var(--color-accent) 22%, var(--color-border)); border-radius:var(--radius-lg); padding:13px 15px;}
+.ov-single-ic{width:34px; height:34px; flex:0 0 auto; border-radius:var(--radius-md); display:grid; place-items:center; background:color-mix(in srgb,var(--color-accent) 12%, var(--color-surface)); border:1px solid color-mix(in srgb,var(--color-accent) 24%, transparent); color:var(--color-accent);}
+.ov-single-body{min-width:0;}
+.ov-single-t{font-size:var(--text-small); font-weight:600; color:var(--color-text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.ov-single-s{font-size:var(--text-caption); color:var(--color-text-muted); margin-top:1px; line-height:1.45;}
+.ov-single-go{margin-left:auto; width:30px; height:30px; flex:0 0 auto; border-radius:var(--radius-md); display:grid; place-items:center; border:1px solid var(--color-border); background:var(--color-surface); color:var(--color-text-muted);}
+
+/* nudge / empty / error */
+.ov-nudge{display:flex; align-items:center; gap:15px; background:color-mix(in srgb,var(--color-accent) 6%, var(--color-surface)); border:1px dashed color-mix(in srgb,var(--color-accent) 34%, var(--color-border)); border-radius:var(--radius-lg); padding:16px 18px;}
+.ov-nudge-ico{width:40px; height:40px; flex:0 0 auto; border-radius:var(--radius-md); display:grid; place-items:center; background:color-mix(in srgb,var(--color-accent) 12%, var(--color-surface)); border:1px solid color-mix(in srgb,var(--color-accent) 24%, transparent); color:var(--color-accent);}
+.ov-nudge-body{flex:1 1 auto; min-width:0;}
+.ov-nudge-t{font-size:var(--text-small); font-weight:600; color:var(--color-text);}
+.ov-nudge-s{font-size:var(--text-caption); color:var(--color-text-muted); margin-top:2px; line-height:1.5;}
+.ov-nudge .btn{flex:0 0 auto;}
+.ov-empty{display:flex; flex-direction:column; align-items:center; text-align:center; padding:56px 24px; border:1px dashed var(--color-border); border-radius:var(--radius-lg); background:color-mix(in srgb,var(--color-surface) 50%, transparent);}
+.ov-empty-mark{width:54px; height:54px; border-radius:16px; display:grid; place-items:center; margin-bottom:15px; background:color-mix(in srgb,var(--color-accent) 12%, var(--color-surface)); border:1px solid color-mix(in srgb,var(--color-accent) 24%, transparent); color:var(--color-accent);}
+.ov-empty-t{font-size:var(--text-h2); font-weight:600; letter-spacing:-0.01em; color:var(--color-text); margin-bottom:7px;}
+.ov-empty-s{font-size:var(--text-body); color:var(--color-text-muted); max-width:46ch; margin-bottom:18px; line-height:1.55;}
+.ov-error{display:flex; align-items:center; gap:13px; background:var(--color-surface); border:1px solid var(--color-border); border-left:3px solid var(--color-danger); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:14px 16px;}
+.ov-error-mark{width:36px; height:36px; flex:0 0 auto; border-radius:var(--radius-md); display:grid; place-items:center; background:color-mix(in srgb,var(--color-danger) 12%, var(--color-surface)); border:1px solid color-mix(in srgb,var(--color-danger) 28%, transparent); color:var(--color-danger);}
+.ov-error-body{flex:1 1 auto; min-width:0;}
+.ov-error-t{font-size:var(--text-small); font-weight:600; color:var(--color-text);}
+.ov-error-s{font-size:var(--text-caption); color:var(--color-text-muted); margin-top:2px;}
+
+/* сайдбар */
+.sb{width:236px; background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:10px; display:flex; flex-direction:column; gap:5px;}
+.sb-brand{display:flex; align-items:center; gap:9px; padding:8px 8px 12px;}
+.sb-mark{width:28px; height:28px; border-radius:var(--radius-sm); display:grid; place-items:center; flex:0 0 auto; background:var(--color-primary); color:var(--color-primary-foreground);}
+.sb-name{font-weight:600; letter-spacing:-0.01em;}
+.sb-nav{display:flex; flex-direction:column; gap:1px;}
+.sb-row{display:flex; align-items:center; gap:11px; padding:8px 10px; border-radius:var(--radius-md); color:var(--color-text-muted); font-size:var(--text-small); font-weight:500; min-width:0;}
+.sb-row svg{flex:0 0 auto;}
+.sb-rowtxt{white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.sb-row--active{background:var(--color-surface-2); color:var(--color-text); font-weight:600;}
+.sb-foot{margin-top:6px; border-top:1px solid var(--color-border); padding-top:8px;}
+.sb-acct{display:flex; align-items:center; gap:10px; width:100%; padding:7px; border:none; background:transparent; border-radius:var(--radius-md); cursor:pointer; text-align:left; color:inherit;}
+.sb-acct:hover{background:var(--color-surface-2);}
+.sb-acct-av{width:30px; height:30px;}
+.sb-acct-av .mono{font-size:11px;}
+.sb-acct-who{flex:1 1 auto; min-width:0; display:flex; flex-direction:column;}
+.sb-acct-nm{font-size:var(--text-small); font-weight:600; color:var(--color-text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.sb-acct-hd{font-size:var(--text-caption); color:var(--color-text-subtle); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.sb-acct svg{color:var(--color-text-subtle); flex:0 0 auto;}
+
+/* переключатель аккаунтов (меню вверх) */
+.ovsw{width:280px; background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-lg); box-shadow:var(--shadow-lg); padding:8px;}
+.ovsw-acct{padding:8px 9px 10px; border-bottom:1px solid var(--color-border); margin-bottom:6px;}
+.ovsw-acct-email{font-size:var(--text-small); font-weight:600; color:var(--color-text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.ovsw-acct-plan{display:inline-block; margin-top:4px; font-family:var(--font-mono); font-size:9.5px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--color-accent); border:1px solid color-mix(in srgb,var(--color-accent) 30%, var(--color-border)); border-radius:var(--radius-full); padding:1px 8px;}
+.ovsw-all{display:flex; align-items:center; gap:10px; padding:8px; border-radius:var(--radius-md); text-decoration:none; background:color-mix(in srgb,var(--color-accent) 8%, var(--color-surface)); border:1px solid color-mix(in srgb,var(--color-accent) 22%, transparent); margin-bottom:5px;}
+.ovsw-all .ovsw-ico{width:30px; height:30px; border-radius:var(--radius-md); display:grid; place-items:center; background:color-mix(in srgb,var(--color-accent) 14%, var(--color-surface)); border:1px solid color-mix(in srgb,var(--color-accent) 26%, transparent); color:var(--color-accent); flex:0 0 auto;}
+.ovsw-all .ovsw-ico svg{width:17px; height:17px;}
+.ovsw-cap{font-size:var(--text-caption); font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--color-text-subtle); padding:8px 8px 5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.ovsw-row{display:flex; align-items:center; gap:10px; padding:7px 8px; border-radius:var(--radius-md); border:none; background:transparent; width:100%; cursor:pointer; text-align:left;}
+.ovsw-row:hover{background:var(--color-surface-2);}
+.ovsw-av{width:30px; height:30px;}
+.ovsw-av .mono{font-size:12px;} .ovsw-av--add{border-style:dashed; color:var(--color-text-subtle);}
+.ovsw-who{flex:1 1 auto; min-width:0; display:flex; flex-direction:column;}
+.ovsw-nm{font-size:var(--text-small); font-weight:600; color:var(--color-text); line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.ovsw-hd{font-size:var(--text-caption); color:var(--color-text-subtle); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.ovsw-check{color:var(--color-success); flex:0 0 auto;}
+.ovsw-chev{color:var(--color-text-subtle); flex:0 0 auto;}
+.ovsw-sep{height:1px; background:var(--color-border); margin:6px 4px;}
+.ovsw-row--min{color:var(--color-text-muted); font-size:var(--text-small); font-weight:500; white-space:nowrap;}
+.ovsw-mini{width:30px; height:30px; display:grid; place-items:center; color:var(--color-text-subtle); flex:0 0 auto;}
+
+@media (max-width:980px){
+  .layout{grid-template-columns:1fr;}
+  .toc{position:static; height:auto; border-right:none; border-bottom:1px solid var(--border);}
+  .toc nav{display:grid; grid-template-columns:1fr 1fr; gap:1px 14px;}
+  main{padding:28px 22px 90px;}
+  .two{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<aside class="toc">
+  <div class="doc-mark">
+    <span class="nib"><svg width="18" height="18" viewBox="0 0 512 512"><g fill="#ededed"><g transform="rotate(42 256 256)"><path d="M236 150 Q236 128 256 128 Q276 128 276 150 L276 300 L256 360 L236 300 Z"/><rect x="236" y="206" width="40" height="7"/></g></g></svg></span>
+    <b>Pennedly</b>
+  </div>
+  <div class="doc-sub">Спецификация · Главная (кокпит)</div>
+  <nav>
+    <a href="#s1"><span class="n">1</span> Идентификация экрана</a>
+    <a href="#s2"><span class="n">2</span> «Главная» + сайдбар <em>new</em></a>
+    <a href="#s3"><span class="n">3</span> Анатомия + живой кокпит</a>
+    <a href="#s4"><span class="n">4</span> Очередь «Требует тебя» <em>hero</em></a>
+    <a class="sub" href="#s4-busy">— заполненная · анатомия строки</a>
+    <a class="sub" href="#s4-zero">— спокойное «всё разобрано»</a>
+    <a href="#s5"><span class="n">5</span> Строка growth-аудита <em>new</em></a>
+    <a href="#s6"><span class="n">6</span> Итоги + карточки профилей</a>
+    <a href="#s7"><span class="n">7</span> Статусы синка</a>
+    <a href="#s8"><span class="n">8</span> Все состояния</a>
+    <a href="#s9"><span class="n">9</span> Проверка раскладки <em>правила 1–2</em></a>
+    <a href="#s10"><span class="n">10</span> Данные · контракт</a>
+    <a href="#s11"><span class="n">11</span> Tweaks (демо-панель)</a>
+    <a href="#s12"><span class="n">12</span> Web ↔ Mobile</a>
+    <a href="#s13"><span class="n">13</span> Локализация · i18n</a>
+    <a href="#s14"><span class="n">14</span> Чек-лист</a>
+  </nav>
+  <div class="meta">
+    Экран: <b>Главная</b> (кокпит)<br>
+    Маршрут: <code>/app/overview</code><br>
+    Вход: <b>Главная</b> в навигации · «Все аккаунты»<br>
+    Правило-главной: <b>≥2 профилей</b> → кокпит; <b>1</b> → Студия<br>
+    Ширина: <code>--content-wide</code> 960<br>
+    Локаль ревью: <b>ru</b> · стресс: <b>de</b> (8 локалей)<br>
+    Mobile: <a href="Overview-Cockpit-Mobile-SPEC.html">Overview-Cockpit-Mobile-SPEC.html</a><br>
+    База: Overview-SPEC.html<br>
+    Источник: <code>overview-app.jsx</code>, <code>overview-parts.jsx</code>, <code>overview.css</code>
+  </div>
+</aside>
+
+<main>
+  <div class="doc-head">
+    <p class="kicker">Pennedly · Спецификация · Мульти-сетевой кокпит</p>
+    <h1 class="title">Главная <span>/app/overview · кокпит</span></h1>
+    <p class="lede">Pennedly становится <b>мульти-сетевым портфельным</b> продуктом — <b>Аккаунт</b> (логин) → <b>Бренды</b> (единица голоса) → <b>Профили</b> (один соц-аккаунт в одной сети). Старый read-only Overview вырастает в настоящую <b>Главную-кокпит</b>, которая при открытии сразу отвечает <b>«что от меня сейчас требуется?»</b>. Три добавления + один мобильный контрол: очередь <b>«Требует тебя»</b> (герой — черновики, ответы, сбои синка и аудиты по всему портфелю, каждая строка ведёт в нужный экран/профиль), компактная <b>строка growth-аудита</b> (сигнал недели по профилю, read-only, в «Аудит роста») и <b>Главная как стартовый экран</b> (пункт сайдбара, первый/активный; ≥2 профилей → сюда, 1 → Студия). Полоса <b>итогов портфеля</b> и сетка <b>карточек профилей</b> остаются под очередью. Всё — живой слой ДС (<b>светлая + тёмная</b>) на ширине <code>--content-wide</code> 960; текст русский, раскладка держит все 8 локалей (эталон длины — немецкий) по правилам 1–2.</p>
+    <div class="filerow">
+      <span class="chip chip--new">+ TriageQueue</span>
+      <span class="chip chip--new">+ GrowthAuditRow</span>
+      <span class="chip chip--new">+ NetworkBadge</span>
+      <span class="chip">overview-app.jsx</span>
+      <span class="chip">overview.css</span>
+      <span class="chip">import-banner.css</span>
+      <span class="chip">ds/tokens.css</span>
+    </div>
+  </div>
+
+  <div class="note danger">
+    <b>Критерий приёмки — раскладка (правила 1–2).</b>
+    <ul style="margin:8px 0 2px;">
+      <li><b>Правило 1.</b> Однострочные элементы — значения метрик и итогов, счётчики в очереди, бейджи, чипы @никнейм, метки кнопок, вердикт аудита, короткие подписи — <b>никогда не переносятся</b> на вторую строку и не толкают соседа вниз. Не влезает → осознанное усечение многоточием (число/начало строки остаётся), не разрыв строки. Доказано в §9 на <b>узком окне десктопа, обычном и совсем узком (320px) мобильном</b>.</li>
+      <li><b>Правило 2.</b> Текст русский, но контейнеры рассчитаны на самую длинную локаль (немецкий, ~1.3–1.5× к ru). Немецкая длина показана и держит правило 1 (§9, переключатель локали в Tweaks §11).</li>
+    </ul>
+  </div>
+
+  <div class="note good">
+    <b>Достраивает Overview, не начинает с нуля.</b> Полоса итогов, карточка профиля <code>AccountCard</code>, состояния importing/sync-error/empty/skeleton/error и пин «Все аккаунты» — перенесены 1:1 из Overview-SPEC.html. Новое: <b>очередь «Требует тебя»</b>, <b>строка growth-аудита</b>, пункт <b>Главная</b> + правило старта, и небольшой <b>значок сети</b> на аватаре каждого профиля (продукт теперь мульти-сетевой).
+  </div>
+
+  <!-- 1 -->
+  <section id="s1">
+    <h2><span class="h2n">1</span>Идентификация экрана</h2>
+    <p class="section-note">Маршрут, назначение, ширина и порядок сверху вниз: <code>sidebar | main(topbar + scroll(очередь → итоги → строка аудита → сетка профилей))</code>. Read-only, кроме <b>Retry</b> на сбое синка.</p>
+    <div class="tbl-wrap"><table><tbody>
+      <tr><th style="width:210px;">Маршрут</th><td><code>/app/overview</code>. Вход — пункт <b>Главная</b> (первый) и пин <b>«Все аккаунты»</b> в переключателе. Контекст — «Все аккаунты», не один профиль.</td></tr>
+      <tr><th>Тип</th><td><b>Полный app-shell</b> с контекстом «Все аккаунты»: пункт <b>Главная</b> в навигации <code>active</code>; account-control читает «Все аккаунты». Каркас 1:1 из Студии.</td></tr>
+      <tr><th>Назначение</th><td>Ответить <b>«что от меня сейчас требуется?»</b> по всему портфелю, затем дать цифры одним взглядом и вход в любой профиль в один клик.</td></tr>
+      <tr><th>Ширина</th><td><b>wide</b> = <code class="tok">--content-wide</code> 960. Топбар по той же ширине.</td></tr>
+      <tr><th>Секции (сверху вниз)</th><td><code>.ov-tri</code> (очередь — герой) → <code>.ov-totals</code> (итоги) → <code>.ov-ausec</code> (строка аудита) → <code>.ov-grid</code> (карточки). Пустая очередь → <code>.ov-tri--zero</code>.</td></tr>
+      <tr><th>Фазы</th><td><code>loading</code> (скелет) · <code>ready</code> · <code>empty</code> (нет профилей) · <code>error</code> (сбой загрузки списка + Retry). По профилю: <code>synced</code> / <code>importing</code> / <code>error</code>.</td></tr>
+    </tbody></table></div>
+  </section>
+
+  <!-- 2 -->
+  <section id="s2">
+    <h2><span class="h2n">2</span><span class="stg">new</span>«Главная» + сайдбар</h2>
+    <p class="section-note">Overview становится <b>Главной</b>: пункт сайдбара, первый и активный. При открытии приложение ведёт сюда, когда профилей <b>два и больше</b>; ровно с одним профилем кокпит не нужен — главной остаётся <b>Студия</b>. Пин «Все аккаунты» в переключателе тоже ведёт сюда.</p>
+    <div class="frames" id="f-sidebar"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:230px;">Правило / элемент</th><th>Поведение</th></tr></thead>
+      <tbody>
+        <tr><td><b>Маршрут старта</b></td><td><code>/app</code> → <code>/app/overview</code> при <b>профилей ≥ 2</b>; → <code>/app/studio</code> при <b>профилей == 1</b>. (Нет профилей → первый запуск, подключение.)</td></tr>
+        <tr><td><code>.sb-row--active</code> (Главная)</td><td>Первый пункт навигации, иконка <code>IcOverview</code>, метка «Главная», <code>active</code> на этом экране. Выше Студии / Ленты / Статистики / Аудитов.</td></tr>
+        <tr><td>Account-control</td><td>Внизу сайдбара; здесь читает <b>«Все аккаунты · N профилей»</b>, открывает меню вверх (email + тариф в шапке, сменить профиль, Все аккаунты, подключить, Настройки, выйти).</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- 3 -->
+  <section id="s3">
+    <h2><span class="h2n">3</span>Анатомия + живой кокпит</h2>
+    <p class="section-note">Весь кокпит в контексте — светлая и тёмная, на ширине экрана, пять профилей (один импортируется, у одного Threads-сбой синка). Очередь → итоги → строка аудита → карточки.</p>
+    <div class="frames" id="f-full"></div>
+
+    <h3 id="s3-topbar"><span class="stg stg--shell">shell</span>3.1 — Топбар</h3>
+    <p class="section-note">App-shell 1:1 из Студии. На Главной: заголовок «Главная», пилюля «N профилей · обновлено ежедневно».</p>
+    <div class="frames" id="f-topbar"></div>
+  </section>
+
+  <!-- 4 -->
+  <section id="s4">
+    <h2><span class="h2n">4</span><span class="stg">new · hero</span>Очередь «Требует тебя»</h2>
+    <p class="section-note">Приоритизированный, легко-сканируемый список всего, что требует действия, над карточками. Четыре сигнала (всё уже считается): <b>сбои синка</b>, <b>ответы</b>, <b>черновики</b>, <b>аудиты на разбор</b>. Порядок: <b>ответы и сбои синка — первыми, затем черновики, аудиты — последними.</b> Каждая строка показывает свой профиль (аватар + значок сети + @никнейм) и ведёт в нужный экран этого профиля.</p>
+
+    <h3 id="s4-busy">4.1 — Заполненная очередь + анатомия строки</h3>
+    <div class="frames" id="f-triage"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:170px;">Сигнал · класс</th><th>Строка читает</th><th>Ведёт в</th></tr></thead>
+      <tbody>
+        <tr><td><b>Сбой синка</b> <code>.ov-tr--danger</code></td><td>Профиль · «{Сеть}: сбой синка» · «Синхр. N ч назад». Действие = <b>Retry</b> (единственное мутирующее).</td><td>Retry (на месте) · профиль</td></tr>
+        <tr><td><b>Ответы</b> <code>.ov-tr--accent</code></td><td>Профиль · «N ответов к разбору» · «старшему N ч».</td><td><code>Ответы</code> · <code>?filter=needs-reply</code></td></tr>
+        <tr><td><b>Черновики</b> <code>.ov-tr--ink</code></td><td>Профиль · «N черновиков на проверку» · «ждут в Студии».</td><td><code>Студия</code> · pending</td></tr>
+        <tr><td><b>Аудиты</b> <code>.ov-tr--advisor</code></td><td>Профиль · «Аудит недели готов» · «N предложений · сигнал …».</td><td><code>Аудиты</code> · непросмотренный</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note"><b>Анатомия (правило 1).</b> <code>.ov-tr</code> = аватар профиля (со значком сети) · тело (плитка-иконка типа + строка-заголовок, затем @никнейм + мета) · действие справа (<code>.ov-tr-go</code> шеврон или <code>.ov-tr-btn</code> Retry). Заголовок и мета — <code>min-width:0</code> + усечение многоточием (число/начало остаётся); строка-аватар и действие фиксированы — соседи не съезжают.</div>
+
+    <h3 id="s4-zero">4.2 — Спокойное «всё разобрано» (нулевое состояние)</h3>
+    <p class="section-note">Когда ничего не ждёт, очередь — спокойное, <b>заслуженное</b> состояние покоя: мягкая галочка, «Всё разобрано», тихая строка «проверено только что». Никогда не выглядит как пустота/ошибка; итоги, строка аудита и карточки остаются ниже.</p>
+    <div class="frames" id="f-triage-zero"></div>
+  </section>
+
+  <!-- 5 -->
+  <section id="s5">
+    <h2><span class="h2n">5</span><span class="stg">new</span>Строка growth-аудита</h2>
+    <p class="section-note">Компактная read-only секция с последним сигналом аудита по профилю: <b>вердикт</b> (сигнал вверх / ровно / вниз + Δ), <b>уверенность</b> (по числу постов) и <b>«разобрать N предложений»</b>. Каждая карточка ведёт в полный «Аудит роста» этого профиля. Показываются только профили с недавним аудитом; без них секция мягко скрывается.</p>
+    <div class="frames" id="f-audit"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:200px;">Элемент / класс</th><th>Откуда (данные аудита)</th></tr></thead>
+      <tbody>
+        <tr><td><code>.ov-au-sig--{up|flat|down}</code></td><td>Знак <code>wowDelta</code> (неделя к неделе). Вверх = success, вниз = danger, ровно = subtle. Δ — tabular («+12%»).</td></tr>
+        <tr><td><code>.ov-au-conf</code></td><td>Уверенность по <code>postsAnalyzed</code> (≥16 Высокая · 11–15 Средняя · ≤10 Низкая) + «N постов».</td></tr>
+        <tr><td><code>.ov-au-cta</code> / <code>.ov-au-done</code></td><td>Число <code>undecided</code>-изменений → «Разобрать N предложений»; ноль → тихое «Всё разобрано».</td></tr>
+        <tr><td>Вырождение</td><td>Профили без недавнего аудита (importing / новые) опускаются; если ни у кого нет аудита — секция скрыта.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- 6 -->
+  <section id="s6">
+    <h2><span class="h2n">6</span>Итоги + карточки профилей <span class="tagline">перенесено</span></h2>
+    <p class="section-note">Без изменений из Overview. <b>Полоса итогов</b> суммирует синхронизированные профили (Подписчики +Δ · Просмотры · Посты · Ответы [accent]); <b>карточка профиля</b> несёт те же метрики, строку синка и quick-links, теперь со значком сети на аватаре и названием сети в подписи. Метка = одно слово, деталь — в подпись (правило 1).</p>
+    <div class="frames" id="f-strip"></div>
+    <div class="frames" id="f-card"></div>
+  </section>
+
+  <!-- 7 -->
+  <section id="s7">
+    <h2><span class="h2n">7</span>Статусы синка <span class="tagline">перенесено</span></h2>
+    <p class="section-note">Каждая карточка несёт состояние профиля: <b>synced</b> («● Обновлено N ч назад»), <b>importing</b> (Phase-0 баннер вместо метрик), <b>error</b> («● Сбой синка» + Retry). Сбой синка также поднимает строку очереди с высшим приоритетом.</p>
+    <div class="frames" id="f-status"></div>
+  </section>
+
+  <!-- 8 -->
+  <section id="s8">
+    <h2><span class="h2n">8</span>Все состояния</h2>
+    <div class="statebar"><span class="st">заполнено ●</span><span class="st">нулевой триаж</span><span class="st">один → Студия</span><span class="st">importing + error</span><span class="st">загрузка</span><span class="st">первый запуск</span><span class="st">ошибка</span></div>
+
+    <h3>8.1 — Один профиль → Главная = Студия</h3>
+    <p class="section-note">С одним профилем кокпит — не стартовый экран, им остаётся Студия. При прямом заходе вырождается в заметку + одну карточку + nudge «подключить ещё» (без героя-очереди, без пустого портфеля).</p>
+    <div class="frames" id="f-single"></div>
+
+    <h3>8.2 — Загрузка / первый запуск / ошибка</h3>
+    <p class="section-note">Загрузка повторяет раскладку кокпита (скелет очереди + итоги + карточки). Первый запуск/пусто — CTA «Подключить аккаунт» из Overview. Ошибка — баннер сбоя загрузки списка + Retry (сбой синка одного профиля живёт в его карточке и строке очереди).</p>
+    <div class="frames" id="f-aux"></div>
+  </section>
+
+  <!-- 9 -->
+  <section id="s9">
+    <h2><span class="h2n">9</span><span class="stg">правила 1–2</span>Проверка раскладки</h2>
+    <p class="section-note">Доказательство критерия приёмки. Тот же кокпит в жёстких условиях: <b>узкое окно браузера</b> (контейнер сжат до 720 и 600px — на 640 итоги переходят в 2-в-ряд), и <b>немецкая длина</b> (самая длинная локаль). Ни один однострочный элемент не переносится и не сбивает выравнивание — длинные метки усекаются многоточием, число/начало остаётся, аватар и действие фиксированы. <b>320px</b> проверен в <a href="Overview-Cockpit-Mobile-SPEC.html" style="color:var(--accent)">мобильной спецификации</a> (там ширина — телефонная).</p>
+    <h3>9.1 — Узкое окно браузера (контейнер 720 · 600)</h3>
+    <div class="frames" id="f-narrow"></div>
+    <h3>9.2 — Немецкая длина (стресс самой длинной локали)</h3>
+    <p class="section-note">«Synchronisierung fehlgeschlagen», «Erneut versuchen», «Wachstums-Audit» — самые длинные подписи. Усекаются, не ломая сетку. Это же состояние доступно в Tweaks (локаль = de).</p>
+    <div class="frames" id="f-stress"></div>
+  </section>
+
+  <!-- 10 -->
+  <section id="s10">
+    <h2><span class="h2n">10</span>Данные · контракт</h2>
+    <p class="section-note">Один запрос на весь портфель. <code>GET /api/me/overview?tz_offset=</code> → профили + предрассчитанные итоги. Счётчики триажа и сигналы аудита приходят по профилю.</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:170px;">Ключ</th><th>Поля</th><th>Куда идёт</th></tr></thead>
+      <tbody>
+        <tr><td><code>profiles[]</code></td><td class="val">handle, display_name, avatar, <b>network</b>, followers (+followers_delta 30д), views_7d, posts_this_week, replies_to_answer, sync_status (synced|importing|error), metrics_refreshed_at</td><td>Карточки · значок сети · триаж</td></tr>
+        <tr><td>счётчики по профилю</td><td class="val">pending_drafts, replies_to_answer, pending_audits; sync_status=='error' → сбой синка</td><td>Строки очереди</td></tr>
+        <tr><td><code>audit_signal</code></td><td class="val">wow_delta, posts_analyzed, undecided_count, posted_at (по профилю, если недавний)</td><td>Строка аудита</td></tr>
+        <tr><td><code>totals</code></td><td class="val">followers (+delta), views_7d, posts_this_week, replies_to_answer, profiles_count, synced_count, importing_count</td><td>Полоса итогов</td></tr>
+      </tbody>
+    </table></div>
+    <ul>
+      <li><b>Итоги</b> суммируют только <code>synced</code>; <code>importing</code> → <code>importing_count</code> («+N импортируется»); <code>error</code> исключены из итогов и подняты в очередь + карточку.</li>
+      <li><b>Приоритет очереди</b> = сбои синка и ответы, затем черновики, затем аудиты; внутри типа — строка на профиль, самые просроченные выше.</li>
+      <li><b>Read-only</b>, кроме <b>Retry</b> на сбое; остальные строки — навигация (deep-link в экран профиля).</li>
+      <li><b>Старт</b> по <code>profiles_count</code>: ≥2 → кокпит, 1 → Студия.</li>
+    </ul>
+  </section>
+
+  <!-- 11 -->
+  <section id="s11">
+    <h2><span class="h2n">11</span>Tweaks (демо-панель)</h2>
+    <p class="section-note">Как на живом экране (<code>overview-app.jsx → TweaksPanel</code>, <code>?demo=1</code>). Контролы проходят все состояния и обе локали.</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:120px;">Секция</th><th style="width:130px;">Контрол</th><th>Ключ → значения / эффект</th></tr></thead>
+      <tbody>
+        <tr><td>Оформление</td><td>Тёмная тема (toggle)</td><td><code>dark</code> → светлые / тёмные токены.</td></tr>
+        <tr><td>Состояние</td><td>Состояние (radio)</td><td><code>state</code> → <b>Заполнено</b> · <b>Всё разобрано</b> · <b>Один профиль</b> · <b>Загрузка</b> · <b>Пусто</b> · <b>Ошибка</b>.</td></tr>
+        <tr><td>Локаль</td><td>Локаль (select)</td><td><code>locale</code> → en/ru/uk/de/es/fr/it/pt; перерисовывает весь текст. <b>ru</b> — по умолчанию, <b>de</b> — стресс длины (правило 2).</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note">Профили importing + Threads-error входят в набор <b>Заполнено</b>, поэтому баннер импорта и строка сбоя синка + Retry проверяются без отдельного тумблера.</div>
+  </section>
+
+  <!-- 12 -->
+  <section id="s12">
+    <h2><span class="h2n">12</span>Web ↔ Mobile</h2>
+    <p class="section-note">Брейкпоинты: <b>880</b> (сайдбар → рейл) · <b>760</b> (итоги/сетка/строка аудита → 1-в-ряд) · <b>600</b> (телефон). Полный телефонный проход: <a href="Overview-Cockpit-Mobile-SPEC.html" style="color:var(--accent)">Overview-Cockpit-Mobile-SPEC.html</a>.</p>
+    <div class="two">
+      <div class="pane web"><h4>Десктоп ( &gt; 880 )</h4>
+        <ul>
+          <li>Фикс. сайдбар, <b>Главная</b> активна/первая; колонка 960.</li>
+          <li>Строки очереди на всю ширину; итоги 4-в-ряд; строка аудита 3-в-ряд; карточки 2-в-ряд.</li>
+          <li>Account-control = меню-вверх в подвале сайдбара.</li>
+        </ul>
+      </div>
+      <div class="pane mob"><h4>Телефон ( ≤ 600 )</h4>
+        <ul>
+          <li>Без сайдбара; гамбургер-drawer; <b>кнопка аккаунта внизу → нижний лист</b> (единственный контрол аккаунта).</li>
+          <li>Строки очереди в столбик; итоги 2×2; строка аудита скроллится; карточки в столбик.</li>
+          <li>Retry остаётся в своей строке очереди и карточке; свободный нижний край.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 13 -->
+  <section id="s13">
+    <h2><span class="h2n">13</span>Локализация · i18n</h2>
+    <p class="section-note">Весь текст ключевой (<code>triage.*</code>, <code>audit.*</code>, <code>account.*</code>) в 8 локалях: <b>en · ru · uk · de · es · fr · it · pt</b>. ru — ревью, de — эталон длины. Контейнеры рассчитаны на самую длинную локаль (правило 2); числа tabular, формат локали; «N ч назад» — относительный форматтер в TZ зрителя; @никнейм всегда LTR.</p>
+    <div class="tbl-wrap"><table id="i18n-tbl">
+      <thead><tr><th style="width:200px;">Ключ</th><th>en</th><th>ru (ревью)</th><th>de (длиннее)</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <div class="note good"><b>Плюрализация + интерполяция.</b> «N ответов / черновиков / предложений» и «+N импортируется» идут через ICU-плюрали локали; «{сеть}: сбой синка» интерполирует название сети. Длинные подписи усекаются на своей строке многоточием — выравнивание соседей не сбивается (правило 1).</div>
+  </section>
+
+  <!-- 14 -->
+  <section id="s14">
+    <h2><span class="h2n">14</span>Чек-лист</h2>
+    <ul class="check">
+      <li><b>Правило 1:</b> ни один однострочный элемент (метрики, итоги, счётчики, бейджи, @никнейм, метки кнопок, вердикт) не переносится и не толкает соседа вниз — на узком десктопе, мобильном и 320px. Не влезает → усечение, не разрыв строки.</li>
+      <li><b>Правило 2:</b> текст русский; контейнеры держат немецкую длину (§9, локаль de в Tweaks) без нарушения правила 1.</li>
+      <li><b>Главная</b> первая + активная; <code>/app</code> → кокпит при профилей ≥ 2, → Студия при == 1.</li>
+      <li>Очередь — герой (над итогами): сбои синка и ответы, затем черновики, затем аудиты; каждая строка показывает профиль (аватар + сеть + @никнейм) и ведёт в нужный экран; сбой синка → Retry на месте.</li>
+      <li>Нулевой триаж = спокойное «всё разобрано» (заслуженное), не пустота/ошибка; итоги + строка аудита + карточки остаются.</li>
+      <li>Строка аудита: сигнал вверх/ровно/вниз + Δ + уверенность + «разобрать N предложений»; только профили с недавним аудитом; скрыта без них.</li>
+      <li>Значок сети на аватаре каждого профиля (Threads / Bluesky / Mastodon…).</li>
+      <li>Итоги + карточки 1:1; итоги суммируют только synced; «+N импортируется».</li>
+      <li>Синк по карточке: synced / importing (Phase-0 баннер) / error (Retry).</li>
+      <li>Загрузка повторяет раскладку; первый запуск/пусто = CTA подключения; ошибка = баннер загрузки списка + Retry.</li>
+      <li>Корректно в светлой + тёмной; токены, не хардкод. Tweaks (<code>?demo=1</code>): dark · state · locale.</li>
+    </ul>
+    <div class="note" style="margin-top:18px;">Конец спецификации. Парный телефонный документ — <a href="Overview-Cockpit-Mobile-SPEC.html" style="color:var(--accent)">Overview-Cockpit-Mobile-SPEC.html</a>; база — Overview-SPEC.html.</div>
+  </section>
+</main>
+</div>
+
+<script src="cockpit-data.js"></script>
+<script src="cockpit-desktop.js"></script>
+<script>
+(function(){
+  var O = window.OVC, C = window.CKPT, LANG = 'ru';
+  function head(label,dark){ return '<div class="fr-head"><span class="dh'+(dark?' dh--dark':'')+'"></span>'+label+'</div>'; }
+  function frame(inner,dark,pad,cls){ return '<div class="frame'+(dark?' dark':'')+(cls?' '+cls:'')+'"'+(pad?' style="padding:'+pad+'"':'')+'>'+inner+'</div>'; }
+  function col(label,inner,dark,pad,cls){ return '<div class="fr">'+head(label,dark)+frame(inner,dark,pad,cls)+'</div>'; }
+  function rowOf(a,b){ return '<div class="frow">'+a+b+'</div>'; }
+  function clamp(w,inner){ return '<div class="ruler">контейнер <b>'+w+'px</b></div><div style="width:'+w+'px;max-width:100%">'+inner+'</div>'; }
+
+  O.set('f-sidebar', rowOf(col('Светлая · сайдбар (Главная активна)',O.sidebar(LANG),false,'18px'), col('Светлая · переключатель (меню вверх)',O.switcher(LANG),false,'18px')) + rowOf(col('Тёмная · сайдбар',O.sidebar(LANG),true,'18px'), col('Тёмная · переключатель',O.switcher(LANG),true,'18px')));
+  O.set('f-full', col('Светлая · 5 профилей (1 importing · 1 sync error)', O.cockpit(LANG), false) + col('Тёмная · 5 профилей', O.cockpit(LANG), true));
+  O.set('f-topbar', rowOf(col('Светлая',O.topbar(false,LANG),false), col('Тёмная',O.topbar(true,LANG),true)));
+  O.set('f-triage', col('Светлая · заполненная очередь', '<div class="ov">'+O.triageQueue(LANG)+'</div>', false) + col('Тёмная · заполненная очередь', '<div class="ov">'+O.triageQueue(LANG)+'</div>', true));
+  O.set('f-triage-zero', rowOf(col('Светлая · всё разобрано','<div class="ov">'+O.triageZero(LANG,4)+'</div>',false), col('Тёмная · всё разобрано','<div class="ov">'+O.triageZero(LANG,4)+'</div>',true)));
+  O.set('f-audit', col('Светлая · строка growth-аудита', '<div class="ov">'+O.auditRow(LANG)+'</div>', false) + col('Тёмная · строка growth-аудита', '<div class="ov">'+O.auditRow(LANG)+'</div>', true));
+  O.set('f-strip', col('Светлая · итоги', '<div class="ov">'+O.strip(LANG)+'</div>', false) + col('Тёмная · итоги', '<div class="ov">'+O.strip(LANG)+'</div>', true));
+  O.set('f-card', rowOf(col('Светлая · synced (Threads)',O.card(C.PROFILES.mara,LANG),false), col('Тёмная · внимание (Bluesky, 7 к ответу)',O.card(C.PROFILES.field,LANG),true)));
+  O.set('f-status', col('Светлая · importing (Threads)', '<div class="ov-grid" style="grid-template-columns:1fr">'+O.card(C.PROFILES.late,LANG)+'</div>', false) + col('Тёмная · сбой синка + Retry (Threads)', '<div class="ov-grid" style="grid-template-columns:1fr">'+O.card(C.PROFILES.quill,LANG)+'</div>', true));
+  O.set('f-single', rowOf(col('Светлая · один профиль',O.singleStudioNote(LANG),false), col('Тёмная · один профиль',O.singleStudioNote(LANG),true)));
+  O.set('f-aux', col('Загрузка (повторяет раскладку)', O.skeleton(), false) + col('Первый запуск / пусто', O.empty(LANG), true));
+  O.set('f-aux', document.getElementById('f-aux').innerHTML + col('Ошибка (загрузка списка) + Retry', O.errorBanner(LANG), false, '24px') + col('Тёмная · ошибка', O.errorBanner(LANG), true, '24px'));
+
+  // 9 — layout proof
+  O.set('f-narrow', col('Светлая · узкое окно 720', clamp(720, O.cockpit(LANG)), false, '16px', 'frame--narrow') + col('Тёмная · узкое окно 600', clamp(600, O.cockpit(LANG)), true, '16px', 'frame--narrow'));
+  O.set('f-stress', col('Немецкий (de) · светлая · 5 профилей', O.cockpit('de'), false) + col('Немецкий (de) · тёмная', O.cockpit('de'), true));
+
+  // i18n table
+  var tb = document.querySelector('#i18n-tbl tbody');
+  if(tb){ tb.innerHTML = C.I18N_LONG.map(function(r){ return '<tr><td><code>'+r.key+'</code></td><td>'+r.en+'</td><td>'+r.ru+'</td><td>'+r.de+'</td></tr>'; }).join(''); }
+})();
+</script>
+</body>
+</html>

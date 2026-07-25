@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pennedly · Что Pennedly изменил за меня — телефон (спецификация)</title>
+<meta name="description" content="Телефонный слой истории применённых изменений: лента в столбик, время под подписью, фильтр-чипы переносятся, деталь before→after, диалог отката = нижний лист. Все состояния." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../../ds/tokens.css" />
+<link rel="stylesheet" href="../../ds/components.css" />
+<link rel="stylesheet" href="applied-changes.css" />
+<style>
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%; scroll-behavior:smooth;}
+  body{margin:0; background:var(--color-bg); color:var(--color-text); font-family:var(--font-sans); font-size:15px; line-height:1.6; -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;}
+  .wrap{max-width:1160px; margin:0 auto; padding:46px 40px 130px;}
+  .kicker{font-family:var(--font-mono); font-size:12px; letter-spacing:0.05em; color:var(--color-accent); text-transform:uppercase; margin:0 0 12px;}
+  .doc-title{font-size:34px; line-height:1.08; letter-spacing:-0.025em; font-weight:600; margin:0 0 14px; text-wrap:balance;}
+  .doc-title span{color:var(--color-text-subtle); font-weight:500;}
+  .doc-lede{font-size:16px; color:var(--color-text-muted); max-width:82ch; margin:0 0 22px; text-wrap:pretty;}
+  .doc-lede b{color:var(--color-text); font-weight:600;}
+  .doc-lede a{color:var(--color-accent);}
+  .chips{display:flex; flex-wrap:wrap; gap:7px; margin:0 0 6px;}
+  .chip{font-family:var(--font-mono); font-size:11.5px; padding:5px 11px; border-radius:9999px; background:var(--color-surface); border:1px solid var(--color-border); color:var(--color-text-muted);}
+  .chip b{color:var(--color-text); font-weight:600;}
+
+  section.block{margin-top:58px; scroll-margin-top:20px;}
+  .block-head{border-top:2px solid var(--color-text); padding-top:18px; margin-bottom:14px;}
+  .block-name{display:flex; align-items:baseline; gap:13px; flex-wrap:wrap; margin:0 0 7px;}
+  .block-name .bn-n{font-family:var(--font-mono); font-size:20px; font-weight:500; color:var(--color-accent); letter-spacing:-0.01em;}
+  .block-name h2{font-size:24px; font-weight:600; letter-spacing:-0.015em; margin:0;}
+  .block-idea{font-size:15px; color:var(--color-text-muted); max-width:86ch; margin:0; text-wrap:pretty;}
+  .block-idea b{color:var(--color-text); font-weight:600;}
+
+  .frow{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
+  @media(max-width:900px){ .frow{grid-template-columns:1fr;} }
+  .fr{display:flex; flex-direction:column; gap:10px; min-width:0;}
+  .fr-head{display:inline-flex; align-items:center; gap:8px; font-family:var(--font-mono); font-size:11.5px; letter-spacing:.02em; color:var(--color-text-subtle);}
+  .fr-head .dh{width:8px; height:8px; border-radius:9999px; background:var(--color-border);}
+  .fr-head .dh--dark{background:#0a0a0a; border:1px solid #3a3a3a;}
+  .fr-head b{color:var(--color-text-muted); font-weight:600;}
+  .frame{background:var(--color-bg); color:var(--color-text); border:1px solid var(--color-border); border-radius:18px; padding:24px; overflow:hidden; display:grid; place-items:center;}
+  .frame.dark{background:#0a0a0a; border-color:#2b2a27;}
+  .frame *{box-sizing:border-box;}
+
+  code{font-family:var(--font-mono); font-size:0.86em; background:var(--color-surface-2); border:1px solid var(--color-border); padding:1px 5px; border-radius:5px;}
+  a.link{color:var(--color-accent); text-decoration:underline; text-underline-offset:2px;}
+  .note{border:1px solid var(--color-border); border-left:3px solid var(--color-accent); background:var(--color-surface); border-radius:10px; padding:12px 16px; margin:16px 0; font-size:13.5px; color:var(--color-text-muted); line-height:1.55;}
+  .note b{color:var(--color-text);}
+  .check{list-style:none; padding:0; margin:0;}
+  .check li{position:relative; padding:7px 0 7px 28px; border-bottom:1px dashed var(--color-border); font-size:13.5px; line-height:1.55;}
+  .check li:last-child{border-bottom:none;}
+  .check li::before{content:"\2610"; position:absolute; left:2px; top:6px; color:var(--color-text-subtle); font-size:15px;}
+  .check b{color:var(--color-text);}
+  .foot-meta{margin-top:26px; padding-top:18px; border-top:1px solid var(--color-border); font-size:12.5px; color:var(--color-text-subtle); line-height:1.7;}
+
+  /* phone shell inside a frame — center it */
+  .ch-phone{ box-shadow:var(--shadow-lg); }
+  @media(max-width:760px){ .wrap{padding:30px 18px 90px;} .doc-title{font-size:27px;} .frame{padding:16px 10px;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="kicker">Pennedly · история применённых изменений · телефон</p>
+  <h1 class="doc-title">Что Pennedly изменил за меня <span>— телефонный слой</span></h1>
+  <p class="doc-lede">Парная мобильная спека к <a class="link" href="Applied-Changes-History-SPEC.html">Applied-Changes-History-SPEC</a>. Та же общая правда рендера (<code>applied-changes-build.js</code>), в телефоне: <b>лента в столбик</b>, время уходит под подпись, ссылка «Открыть» — на всю ширину, <b>фильтр-чипы</b> переносятся, диалог отката становится <b>нижним листом</b> (главная кнопка в зоне достижимости). Референс 390px, проверка 360. Светлая и тёмная.</p>
+  <div class="chips">
+    <span class="chip">референс <b>390px</b> · проверка 360</span>
+    <span class="chip">лента — столбик</span>
+    <span class="chip">фильтр-чипы переносятся</span>
+    <span class="chip">диалог отката — нижний лист</span>
+  </div>
+
+  <!-- 1 -->
+  <section class="block" id="feed">
+    <div class="block-head"><div class="block-name"><span class="bn-n">01</span><h2>Лента + раскрытие</h2></div>
+      <p class="block-idea">Свежие сверху, группировка по дням. Строка складывается: чип источника + подпись + актор + время переносятся, шеврон справа. В раскрытии — деталь, «кто + когда», «Открыть» на всю ширину.</p></div>
+    <div class="frow" id="f-feed"></div>
+  </section>
+
+  <!-- 2 -->
+  <section class="block" id="filter">
+    <div class="block-head"><div class="block-name"><span class="bn-n">02</span><h2>Фильтр по источнику · payload-пары</h2></div>
+      <p class="block-idea">Чипы «Все / Агент / Проверка голоса / Аудит» переносятся на всю ширину. Справа — раскрытые payload-пары «поле: было → стало» в один столбик.</p></div>
+    <div class="frow" id="f-filter"></div>
+  </section>
+
+  <!-- 3 -->
+  <section class="block" id="states">
+    <div class="block-head"><div class="block-name"><span class="bn-n">03</span><h2>Загрузка · ошибка · пусто</h2></div>
+      <p class="block-idea">Скелет той же геометрии, что строка; спокойная инлайн-ошибка с «Повторить»; пустое состояние с ходом к Агенту.</p></div>
+    <div class="frow" id="f-states"></div>
+  </section>
+
+  <!-- 4 -->
+  <section class="block" id="rollback">
+    <div class="block-head"><div class="block-name"><span class="bn-n">04</span><h2>Откат · нижний лист</h2></div>
+      <p class="block-idea">Диалог подтверждения приезжает нижним листом: «Вернуть как было?», кнопка «Откатить» (деструктив) снизу-в-достижимости, + состояние busy «Откатываю…».</p></div>
+    <div class="frow" id="f-rollback"></div>
+  </section>
+
+  <!-- 5 -->
+  <section class="block" id="check">
+    <div class="block-head"><div class="block-name"><span class="bn-n">05</span><h2>Чек-лист · телефон</h2></div></div>
+    <ul class="check">
+      <li><b>Лента</b> — одна колонка, свежие сверху, группировка по дням; строка складывается, ничего не клипается.</li>
+      <li><b>Актор</b> (Вы / Pennedly) и время переносятся под подпись; «Открыть» — на всю ширину.</li>
+      <li><b>Фильтр-чипы</b> Все / Агент / Проверка голоса / Аудит переносятся; активный подсвечен.</li>
+      <li><b>Payload-пары</b> «поле: было → стало» встают в столбик; деталь без JSON.</li>
+      <li><b>Загрузка</b> (скелет), <b>инлайн-ошибка</b> с «Повторить», <b>пусто</b> — все читаются на 360px.</li>
+      <li><b>Откат</b> — нижний лист, «Откатить» снизу; read-only в первом релизе (кнопка инертна).</li>
+      <li>Обе темы, только токены <code>ds/tokens.css</code>, один акцент; проверено на 360px.</li>
+    </ul>
+    <div class="foot-meta">
+      Общая правда рендера: <code>applied-changes-build.js</code> + <code>applied-changes.css</code> (без расхождений с десктопом)<br>
+      Десктопная спека: <a class="link" href="Applied-Changes-History-SPEC.html">Applied-Changes-History-SPEC</a>
+    </div>
+  </section>
+
+</div>
+
+<script src="applied-changes-build.js"></script>
+<script>
+(function(){
+  var A = window.ACH;
+  function set(id,h){ var e=document.getElementById(id); if(e) e.innerHTML=h; }
+  function head(label,dark){ return "<div class='fr-head'><span class='dh"+(dark?" dh--dark":"")+"'></span>"+label+"</div>"; }
+  function frame(inner,dark){ return "<div class='frame"+(dark?" dark":"")+"'>"+inner+"</div>"; }
+  function fr(label,inner,dark){ return "<div class='fr'>"+head(label,dark)+frame(inner,dark)+"</div>"; }
+  function clone(r,rb){ var o={}; for(var k in r) o[k]=r[k]; o.rb=rb; return o; }
+  function mini(inner){ return "<div class='ch-screen'>"+inner+"</div>"; }
+
+  /* 1 · feed + expanded */
+  set("f-feed",
+    fr("Light · 390px · лента", A.phone(A.feed({bare:true, showFilters:true})), false)
+    + fr("Dark · 390px · раскрытая запись", A.phone(A.feed({bare:true, open:true, showFilters:true})), true));
+
+  /* 2 · filter + pairs */
+  set("f-filter",
+    fr("Light · 390px · фильтр «Проверка голоса»", A.phone(A.feed({bare:true, filter:"voice", showFilters:true})), false)
+    + fr("Dark · 360px · payload-пары раскрыты", A.phone(mini("<div class='ch-items'>"+A.row(A.REC.r3,true)+"</div>"), {sm:true}), true));
+
+  /* 3 · loading / error / empty */
+  set("f-states",
+    fr("Light · 390px · загрузка (скелет)", A.phone(A.loading({bare:true})), false)
+    + fr("Dark · 360px · инлайн-ошибка", A.phone(A.error({bare:true}), {sm:true}), true));
+  set("f-states", document.getElementById("f-states").innerHTML
+    + "<div class='fr' style='margin-top:18px'>"+head("Light · 390px · пусто",false)+frame(A.phone(A.empty({bare:true})),false)+"</div>");
+
+  /* 4 · rollback bottom sheet */
+  var sheetFeed = mini("<div class='ch-items'>"+A.row(clone(A.REC.r2,{can:true}))+A.row(A.REC.r3)+"</div>");
+  set("f-rollback",
+    fr("Light · 390px · нижний лист · подтверждение", A.phone(sheetFeed, {overlay:A.confirm({title:"Короче и без эмодзи", scope:"Голоса", sheet:true})}), false)
+    + fr("Dark · 390px · нижний лист · busy", A.phone(sheetFeed, {overlay:A.confirm({title:"Короче и без эмодзи", scope:"Голоса", busy:true, sheet:true})}), true));
+})();
+</script>
+</body>
+</html>

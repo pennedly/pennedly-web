@@ -1,0 +1,293 @@
+/* replies.css — Pennedly "Reply queue" screen.
+   Built on the ink-on-paper tokens + Studio shell/card classes (studio.css).
+   Adds only reply-specific pieces: status dots, post-context inset, translate
+   row, threaded reply block, and the per-post filter pills. No hardcoded hex. */
+
+/* top-bar status now uses the shared .status-pill (ds/components.css). */
+
+/* page intro */
+.page-intro { display: flex; flex-direction: column; gap: 4px; }
+.page-intro h1 { font-size: var(--text-h1); font-weight: 600; letter-spacing: -0.015em; margin: 0; }
+.page-intro p { font-size: var(--text-body); color: var(--color-text-muted); margin: 0; }
+
+/* status filter dots (extends studio's .filter / .fdot) */
+.dot-all       { background: var(--color-ink-300); }
+.dot-needs     { background: var(--color-accent); }
+.dot-drafts    { background: var(--color-ink-400); }
+.dot-replied   { background: var(--color-success); }
+.dot-skipped   { background: var(--color-ink-300); }
+
+/* ============================ MASTER-DETAIL ========================= */
+.rq-layout { display: grid; grid-template-columns: 300px 1fr; gap: 22px; align-items: start; }
+
+/* master — the post list */
+.rq-master {
+  position: sticky; top: 12px; align-self: start;
+  display: flex; flex-direction: column;
+  border: 1px solid var(--color-border); border-radius: var(--radius-lg);
+  background: var(--color-surface); box-shadow: var(--shadow-sm);
+  overflow: hidden; max-height: calc(100vh - 132px);
+}
+.rq-master-cap {
+  flex: 0 0 auto; padding: 13px 16px 11px; border-bottom: 1px solid var(--color-border);
+  font-size: var(--text-caption); font-weight: 600; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--color-text-subtle);
+}
+.rq-post-list { overflow-y: auto; display: flex; flex-direction: column; }
+.rq-post {
+  display: flex; flex-direction: column; gap: 8px; text-align: left;
+  padding: 13px 16px; border: none; border-bottom: 1px solid var(--color-border);
+  border-left: 3px solid transparent; background: transparent; cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-standard);
+}
+.rq-post:last-child { border-bottom: none; }
+.rq-post:hover { background: var(--color-surface-2); }
+.rq-post--active { background: var(--color-surface-2); border-left-color: var(--color-accent); }
+.rq-post-text {
+  font-size: var(--text-small); line-height: 1.45; color: var(--color-text);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.rq-post--active .rq-post-text { font-weight: 600; }
+.rq-post-meta { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; font-size: var(--text-caption); color: var(--color-text-subtle); }
+.rq-post-sep { opacity: 0.5; }
+.rq-post-count { white-space: nowrap; }
+.rq-post-badge {
+  margin-left: auto; flex: 0 0 auto; white-space: nowrap;
+  font-size: var(--text-caption); font-weight: 600; color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--color-accent) 28%, transparent);
+  border-radius: var(--radius-full); padding: 1px 8px;
+}
+
+/* detail */
+.rq-detail { min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.rq-detail .filterbar { position: static; }
+.rq-detail .feed { display: flex; flex-direction: column; gap: 14px; }
+
+/* context header — the post being replied under */
+.rq-context {
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 16px 18px;
+}
+.rq-context-cap { font-size: var(--text-caption); font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-text-subtle); }
+.rq-context-text { font-size: var(--text-body); line-height: 1.55; color: var(--color-text); margin: 8px 0 0; text-wrap: pretty; }
+.rq-context-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; }
+.rq-context-time { font-size: var(--text-caption); color: var(--color-text-subtle); }
+.rq-context-link { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; font-size: var(--text-small); font-weight: 500; color: var(--color-accent); text-decoration: none; }
+.rq-context-link:hover { text-decoration: underline; text-underline-offset: 2px; }
+
+/* ============================ COMMENT CARD ========================== */
+.cmt-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 14px 18px 14px;
+  animation: card-in var(--duration-slow) var(--ease-entrance) both;
+  transition: border-color var(--duration-base) var(--ease-standard),
+              box-shadow var(--duration-base) var(--ease-standard),
+              opacity var(--duration-slow) var(--ease-standard),
+              transform var(--duration-slow) var(--ease-standard);
+}
+.cmt-card:hover { border-color: color-mix(in srgb, var(--color-text) 14%, var(--color-border)); }
+.cmt-card--leaving { opacity: 0; transform: translateY(-6px) scale(0.99); }
+.cmt-card--skipped { opacity: 0.66; }
+
+/* ✕ remove-from-queue control in the comment header */
+.cmt-remove {
+  flex: 0 0 auto; width: 28px; height: 28px; display: grid; place-items: center;
+  border-radius: var(--radius-md); border: 1px solid transparent; background: transparent;
+  color: var(--color-text-subtle); cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+}
+.cmt-remove:hover { background: color-mix(in srgb, var(--color-danger) 10%, transparent); color: var(--color-danger); }
+
+/* comment body */
+.cmt-body { font-size: var(--text-body); line-height: 1.6; color: var(--color-text); margin: 11px 0 0; text-wrap: pretty; }
+.cmt-card--skipped .cmt-body { color: var(--color-text-muted); }
+
+/* translate row */
+.translate-row { display: flex; align-items: center; gap: 8px; margin-top: 9px; flex-wrap: wrap; }
+.translate-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: var(--text-caption); font-weight: 500; color: var(--color-accent);
+  background: none; border: none; cursor: pointer; padding: 2px 0;
+}
+.translate-btn:hover { text-decoration: underline; text-underline-offset: 2px; }
+.translate-note { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-caption); color: var(--color-text-subtle); }
+
+/* ============================ REPLY THREAD ========================== */
+.reply-thread { position: relative; margin-top: 14px; padding-left: 26px; }
+.reply-thread::before {
+  content: ""; position: absolute; left: 11px; top: -2px; bottom: 16px;
+  width: 2px; border-radius: 2px; background: var(--color-border);
+}
+.reply-block {
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+}
+.reply-block--replied { border-color: color-mix(in srgb, var(--color-success) 30%, var(--color-border)); }
+.reply-author { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.reply-author .ra-name { font-size: var(--text-small); font-weight: 600; }
+.reply-author .ra-tag {
+  font-size: var(--text-caption); color: var(--color-text-subtle);
+  display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;
+}
+.reply-author .ra-tag.is-good { color: var(--color-success); }
+.reply-text { font-size: var(--text-small); line-height: 1.6; color: var(--color-text); white-space: pre-wrap; text-wrap: pretty; }
+
+/* inline edit area for the reply */
+.reply-edit {
+  width: 100%; font-family: var(--font-sans); font-size: var(--text-small); line-height: 1.6;
+  color: var(--color-text); background: var(--color-surface);
+  border: 1px solid var(--color-accent); border-radius: var(--radius-sm);
+  padding: 9px 11px; resize: vertical; outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 16%, transparent);
+}
+.reply-edit-meta { display: flex; justify-content: flex-end; margin-top: 7px; }
+.reply-cc { font-size: var(--text-caption); font-variant-numeric: tabular-nums; color: var(--color-text-subtle); }
+.reply-cc.over { color: var(--color-danger); font-weight: 600; }
+
+/* generating shimmer */
+.reply-block--gen { display: flex; flex-direction: column; gap: 9px; }
+.reply-gen-note { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-caption); color: var(--color-accent); margin-top: 2px; }
+.reply-gen-note .nib { animation: nibwrite 1.5s var(--ease-standard) infinite; display: inline-flex; }
+
+/* ============================ CARD FOOTER =========================== */
+.cmt-foot {
+  display: flex; align-items: center; gap: 10px;
+  margin-top: 13px; padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+}
+.cmt-meta { display: flex; align-items: center; gap: 14px; flex: 1 1 auto; min-width: 0; }
+.cmt-meta .cm-item { display: inline-flex; align-items: center; gap: 5px; font-size: var(--text-caption); color: var(--color-text-subtle); white-space: nowrap; }
+.cmt-meta .cm-item .cm-ico { color: var(--color-text-subtle); }
+.cmt-actions { display: flex; align-items: center; gap: 7px; flex: 0 0 auto; }
+
+/* reply-block translate row sits a touch tighter */
+.translate-row--reply { margin-top: 8px; }
+
+/* publish-reply dialog: the comment being answered, then the reply preview */
+.pub-ctx {
+  display: flex; gap: 11px; margin-top: 6px; padding: 11px 13px;
+  background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius-md);
+}
+.pub-ctx .pub-ctx-bar { width: 2px; align-self: stretch; border-radius: 2px; background: var(--color-border); flex: 0 0 auto; }
+.pub-ctx .pub-ctx-txt { font-size: var(--text-small); line-height: 1.5; color: var(--color-text-muted); text-wrap: pretty; }
+
+/* ============================ RESPONSIVE ============================ */
+@media (max-width: 900px) {
+  .rq-layout { grid-template-columns: 1fr; gap: 16px; }
+  .rq-master { position: static; max-height: 300px; }
+}
+@media (max-width: 560px) {
+  .cmt-meta .cm-item:not(:first-child) { display: none; }
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   DESKTOP POST SWITCHER (reworked layout) — the left master list is replaced
+   by a horizontal, snap-scrolling row of post chips, sticky under the topbar.
+   One post's comments fill the single full-width column below. Same idiom as
+   the phone (Replies-Mobile-SPEC §4), just wider, with mouse affordances.
+   ════════════════════════════════════════════════════════════════════════ */
+.rq-switch {
+  position: sticky; top: 0; z-index: 8; margin: 0 0 4px;
+  padding: 12px 0 14px;
+  background: color-mix(in srgb, var(--color-bg) 88%, transparent);
+  backdrop-filter: saturate(1.1) blur(8px);
+}
+.rq-switch-cap {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 9px;
+  font-size: var(--text-caption); font-weight: 600; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--color-text-subtle);
+}
+.rq-switch-cap .n { color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+.rq-switch-wrap { position: relative; }
+.rq-switch-rail {
+  display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x proximity;
+  scroll-behavior: smooth; padding: 2px 1px;
+  -ms-overflow-style: none; scrollbar-width: none;
+}
+.rq-switch-rail::-webkit-scrollbar { display: none; }
+
+.rq-chip {
+  scroll-snap-align: start; flex: 0 0 280px; width: 280px; text-align: left;
+  display: flex; flex-direction: column; gap: 8px; padding: 12px 14px;
+  border: 1px solid var(--color-border); border-radius: var(--radius-md);
+  background: var(--color-surface); cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease-standard),
+              box-shadow var(--duration-fast) var(--ease-standard),
+              background var(--duration-fast) var(--ease-standard);
+}
+.rq-chip:hover { background: var(--color-surface-2); }
+.rq-chip:focus-visible { outline: none; border-color: var(--color-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 22%, transparent); }
+.rq-chip--active {
+  border-color: color-mix(in srgb, var(--color-accent) 55%, var(--color-border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-accent) 45%, transparent);
+  background: color-mix(in srgb, var(--color-accent) 5%, var(--color-surface));
+}
+.rq-chip-text {
+  font-size: var(--text-small); line-height: 1.45; color: var(--color-text);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.rq-chip--active .rq-chip-text { font-weight: 600; }
+.rq-chip-meta { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; font-size: var(--text-caption); color: var(--color-text-subtle); }
+.rq-chip-sep { opacity: 0.5; }
+.rq-chip-count { white-space: nowrap; }
+.rq-chip-badge {
+  margin-left: auto; flex: 0 0 auto; white-space: nowrap;
+  font-size: var(--text-caption); font-weight: 600; color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--color-accent) 28%, transparent);
+  border-radius: var(--radius-full); padding: 1px 8px;
+}
+.rq-chip-badge--done {
+  color: var(--color-success);
+  background: color-mix(in srgb, var(--color-success) 12%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--color-success) 28%, transparent);
+}
+
+/* horizontal-scroll affordances (no swipe on desktop): arrows + edge fades */
+.rq-switch-arrow {
+  position: absolute; top: 50%; transform: translateY(-50%); z-index: 4;
+  width: 32px; height: 32px; display: grid; place-items: center;
+  border-radius: var(--radius-full); border: 1px solid var(--color-border);
+  background: var(--color-surface); color: var(--color-text-muted);
+  box-shadow: var(--shadow-md); cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+}
+.rq-switch-arrow:hover { background: var(--color-surface-2); color: var(--color-text); }
+.rq-switch-arrow--left { left: -6px; }
+.rq-switch-arrow--right { right: -6px; }
+.rq-switch-fade { position: absolute; top: 0; bottom: 0; width: 52px; pointer-events: none; z-index: 2; }
+.rq-switch-fade--left { left: 0; background: linear-gradient(to right, var(--color-bg), transparent); }
+.rq-switch-fade--right { right: 0; background: linear-gradient(to left, var(--color-bg), transparent); }
+
+/* single-column flow below the switcher (full-width; readable measure for text) */
+.rq-flow { display: flex; flex-direction: column; gap: 16px; }
+.rq-flow .reply-text, .rq-flow .cmt-body { max-width: 72ch; }
+
+/* ============================ COMMENT HEAD (@username only) =========
+   Threads exposes only the commenter's @username — no avatar, no display
+   name — so the head is handle + time + status badge (+ ✕ remove). */
+.cmt-head { display: flex; align-items: flex-start; gap: 10px; }
+.cmt-id { min-width: 0; flex: 1 1 auto; }
+.cmt-handle { font-size: var(--text-small); font-weight: 600; color: var(--color-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cmt-sub { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: var(--text-caption); color: var(--color-text-subtle); margin-top: 1px; }
+.cmt-sub .sep { opacity: 0.6; }
+
+.cmt-badge {
+  display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto;
+  font-size: var(--text-caption); font-weight: 500; line-height: 1;
+  padding: 4px 9px; border-radius: var(--radius-full);
+  border: 1px solid var(--color-border); background: var(--color-surface-2); color: var(--color-text-muted);
+}
+.cmt-badge .pill-dot { width: 6px; height: 6px; border-radius: var(--radius-full); background: currentColor; }
+.cmt-badge--accent { color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface)); border-color: color-mix(in srgb, var(--color-accent) 30%, transparent); }
+.cmt-badge--good { color: var(--color-success); background: color-mix(in srgb, var(--color-success) 14%, var(--color-surface)); border-color: color-mix(in srgb, var(--color-success) 28%, transparent); }
+.cmt-badge--neutral { color: var(--color-text-muted); background: color-mix(in srgb, var(--color-text) 7%, var(--color-surface)); border-color: var(--color-border); }
+
+/* a CSS mono avatar for the "You" reply author (no external asset needed) */
+.ra-av { width: 24px; height: 24px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-full); background: var(--color-accent); color: var(--color-accent-foreground); font-size: 11px; font-weight: 600; }

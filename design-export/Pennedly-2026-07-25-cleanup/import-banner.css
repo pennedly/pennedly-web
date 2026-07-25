@@ -1,0 +1,110 @@
+/* import-banner.css — "Importing your history" banner + skeleton.
+   Reusable across Dashboard, Stats and Replies while a just-connected account
+   is still backfilling its posts, per-post metrics and comments in the
+   background (seconds to a few minutes). Tone is calm and non-apologetic: the
+   platform is working, the history is just loading.
+
+   Built on the ink-on-paper tokens + ds/components.css. Light/dark follow the
+   ambient theme — no hardcoded colour. Shared by First-Run-SPEC.html and, in
+   the product, mounted at the top of the content column on each screen.
+
+   Two live shapes:
+     .import-banner--syncing  — accent rail, spinner, live counts, progress bar
+     .import-banner--partial  — success rail, check, "Imported most of your history"
+   When the import resolves, the banner is removed entirely and the normal
+   screen renders. */
+
+.import-banner {
+  display: flex; align-items: center; gap: 14px;
+  padding: 13px 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+.import-banner--syncing { border-left-color: var(--color-accent); }
+.import-banner--partial { border-left-color: var(--color-success); }
+
+/* mark: a spinner while syncing, a check once most history has landed */
+.ib-mark {
+  width: 36px; height: 36px; flex: 0 0 auto; display: grid; place-items: center;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2); border: 1px solid var(--color-border);
+  color: var(--color-accent);
+}
+.import-banner--partial .ib-mark {
+  color: var(--color-success);
+  background: color-mix(in srgb, var(--color-success) 12%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--color-success) 28%, transparent);
+}
+.ib-spinner {
+  width: 18px; height: 18px; border-radius: var(--radius-full);
+  border: 2px solid color-mix(in srgb, var(--color-accent) 28%, transparent);
+  border-top-color: var(--color-accent);
+  animation: spin 0.7s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) { .ib-spinner { animation-duration: 1.6s; } }
+
+/* body: title + live progress sub + progress bar */
+.ib-body { flex: 1 1 auto; min-width: 0; }
+.ib-title { font-size: var(--text-small); font-weight: 600; color: var(--color-text); }
+.ib-sub {
+  font-size: var(--text-caption); color: var(--color-text-muted);
+  margin-top: 2px; font-variant-numeric: tabular-nums; text-wrap: pretty;
+}
+.ib-sub b { color: var(--color-text); font-weight: 600; }
+
+/* progress bar: a determinate fill once a post total is known, an
+   indeterminate sweep before then. Hidden once partial (counts tell the story). */
+.ib-bar {
+  position: relative; height: 4px; margin-top: 9px; max-width: 360px;
+  border-radius: var(--radius-full); background: var(--color-surface-2);
+  border: 1px solid var(--color-border); overflow: hidden;
+}
+.ib-bar-fill {
+  position: absolute; top: 0; bottom: 0; left: 0; width: 0;
+  border-radius: var(--radius-full); background: var(--color-accent);
+  transition: width var(--duration-slow) var(--ease-standard);
+}
+.ib-bar--indeterminate .ib-bar-fill {
+  width: 36%; animation: ib-sweep 1.3s var(--ease-standard) infinite;
+}
+@keyframes ib-sweep { 0% { transform: translateX(-115%); } 100% { transform: translateX(320%); } }
+@media (prefers-reduced-motion: reduce) {
+  .ib-bar--indeterminate .ib-bar-fill { animation: none; width: 30%; left: 35%; }
+}
+
+/* trailing hint (right): an ETA while syncing, nothing once partial */
+.ib-since { flex: 0 0 auto; align-self: center; font-size: var(--text-caption); color: var(--color-text-subtle); white-space: nowrap; }
+
+/* ============================ SKELETON ============================
+   The reusable placeholder that sits UNDER the banner on each screen while
+   the first rows of data are still landing. It mirrors the destination
+   layout 1:1 so nothing jumps when real content swaps in. `aria-hidden`. */
+.ib-skel {
+  display: block;
+  background: linear-gradient(100deg,
+    var(--color-surface-2) 28%,
+    color-mix(in srgb, var(--color-text) 7%, var(--color-surface-2)) 50%,
+    var(--color-surface-2) 72%);
+  background-size: 220% 100%;
+  animation: ib-shimmer 1.4s linear infinite;
+  border-radius: var(--radius-sm);
+}
+@keyframes ib-shimmer { from { background-position: 220% 0; } to { background-position: -120% 0; } }
+@media (prefers-reduced-motion: reduce) { .ib-skel { animation: none; } }
+
+/* a skeleton card shell that matches .stat-card / .spanel chrome */
+.ib-skel-card {
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 16px 18px;
+}
+
+/* ============================ RESPONSIVE ==========================
+   On the phone the ETA wraps under, the bar stretches full width. */
+@media (max-width: 560px) {
+  .import-banner { flex-wrap: wrap; }
+  .ib-since { order: 3; flex-basis: 100%; margin-left: 50px; }
+  .ib-bar { max-width: none; }
+}

@@ -1,0 +1,126 @@
+/* stats.css — Pennedly "Stats" screen (aggregate performance).
+   Built on the ink-on-paper tokens + Studio shell + shared shell. Hand-rolled
+   CSS charts; one quiet accent for emphasis. No hardcoded hex. */
+
+/* page intro + period control */
+.page-intro { display: flex; flex-direction: column; gap: 4px; }
+.page-intro h1 { font-size: var(--text-h1); font-weight: 600; letter-spacing: -0.015em; margin: 0; }
+.page-intro p { font-size: var(--text-body); color: var(--color-text-muted); margin: 0; }
+.stats-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.range-seg {
+  display: inline-flex; gap: 3px; padding: 3px; flex: 0 0 auto; max-width: 100%; overflow-x: auto;
+  background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius-md);
+}
+.range-btn {
+  height: 32px; padding: 0 14px; font-size: var(--text-small); font-weight: 500;
+  color: var(--color-text-muted); background: transparent; border: 1px solid transparent;
+  border-radius: var(--radius-sm); cursor: pointer; white-space: nowrap;
+  transition: color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
+}
+.range-btn:hover { color: var(--color-text); }
+.range-btn--active { background: var(--color-surface); color: var(--color-text); font-weight: 600; border-color: var(--color-border); box-shadow: var(--shadow-sm); }
+
+/* ========================== SUMMARY CARDS ========================== */
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.stat-card {
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 16px 18px;
+}
+.sc-top { display: flex; align-items: center; gap: 8px; }
+.sc-ico {
+  width: 26px; height: 26px; flex: 0 0 auto; display: grid; place-items: center;
+  border-radius: var(--radius-sm); background: var(--color-surface-2);
+  border: 1px solid var(--color-border); color: var(--color-text-muted);
+}
+.sc-label { font-size: var(--text-caption); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-subtle); }
+.sc-num { font-size: var(--text-h1); font-weight: 600; letter-spacing: -0.015em; line-height: 1.1; margin-top: 12px; font-variant-numeric: tabular-nums; }
+.sc-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px; }
+.sc-sub { font-size: var(--text-caption); color: var(--color-text-subtle); }
+
+/* delta chip */
+.delta { display: inline-flex; align-items: center; gap: 3px; font-size: var(--text-caption); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.delta--up { color: var(--color-success); }
+.delta--down { color: var(--color-danger); }
+.delta--flat { color: var(--color-text-subtle); }
+
+/* ============================== PANELS ============================= */
+.panel-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.spanel {
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 18px 20px 16px;
+}
+.spanel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.spanel-title { font-size: var(--text-h3); font-weight: 600; letter-spacing: -0.006em; }
+.spanel-cap { font-size: var(--text-caption); color: var(--color-text-subtle); margin-top: 3px; }
+.spanel-headline { text-align: right; flex: 0 0 auto; }
+.spanel-headline .hl-num { font-size: var(--text-h2); font-weight: 600; letter-spacing: -0.01em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.spanel-headline .hl-delta { margin-top: 4px; justify-content: flex-end; display: flex; }
+
+/* ---- column chart (hand-rolled trend): avg line + above/below bars ---- */
+.colchart { display: flex; flex-direction: column; gap: 9px; }
+.colplot { position: relative; height: 150px; display: flex; align-items: flex-end; gap: 7px; }
+.colbar-col { flex: 1 1 0; min-width: 0; height: 100%; display: flex; align-items: flex-end; }
+.colbar {
+  width: 100%; min-height: 3px; border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  transition: height var(--duration-slow) var(--ease-entrance), background var(--duration-base) var(--ease-standard);
+}
+.colbar--above { background: var(--color-accent); }
+.colbar--below { background: color-mix(in srgb, var(--color-text) 18%, var(--color-surface-2)); }
+.colbar-col:hover .colbar--below { background: color-mix(in srgb, var(--color-text) 30%, var(--color-surface-2)); }
+.colbar-col:hover .colbar--above { background: color-mix(in srgb, var(--color-accent) 86%, var(--color-text)); }
+/* dashed period-average reference line */
+.colavg { position: absolute; left: 0; right: 0; height: 0; border-top: 1.5px dashed color-mix(in srgb, var(--color-text) 42%, transparent); pointer-events: none; }
+.colavg-lbl {
+  position: absolute; right: 0; top: -9px; font-size: var(--text-caption); color: var(--color-text-subtle);
+  background: var(--color-surface); padding: 0 5px; font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.collabels { display: flex; gap: 7px; }
+.collabel {
+  flex: 1 1 0; min-width: 0; text-align: center; font-size: 0.6875rem; color: var(--color-text-subtle);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums;
+}
+
+/* ---- distribution (horizontal tiers) ---- */
+.distlist { display: flex; flex-direction: column; gap: 14px; }
+.distrow { display: grid; grid-template-columns: 1fr; gap: 7px; }
+.dist-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.dist-name { display: flex; align-items: center; gap: 8px; font-size: var(--text-small); color: var(--color-text); min-width: 0; white-space: nowrap; }
+.dist-dot { width: 9px; height: 9px; border-radius: 3px; flex: 0 0 auto; }
+.dist-name .dn-sub { font-size: var(--text-caption); color: var(--color-text-subtle); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.dist-val { font-size: var(--text-small); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dist-val .dv-pct { color: var(--color-text-subtle); font-weight: 400; margin-left: 6px; }
+.dist-track { height: 8px; border-radius: var(--radius-full); background: var(--color-surface-2); border: 1px solid var(--color-border); overflow: hidden; }
+.dist-fill { height: 100%; border-radius: var(--radius-full); transition: width var(--duration-slow) var(--ease-entrance); }
+
+/* tier colours: viral=success, good=accent, then a neutral ink ramp */
+.tier-viral   { background: var(--color-success); }
+.tier-good    { background: var(--color-accent); }
+.tier-average { background: color-mix(in srgb, var(--color-text) 30%, var(--color-surface)); }
+.tier-weak    { background: color-mix(in srgb, var(--color-text) 15%, var(--color-surface)); }
+
+/* ============================== EMPTY ============================= */
+.stats-empty {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  padding: 64px 28px;
+  border: 1px dashed var(--color-border); border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--color-surface) 50%, transparent);
+}
+.stats-empty .se-mark {
+  width: 54px; height: 54px; display: grid; place-items: center; margin-bottom: 18px;
+  border-radius: var(--radius-lg); background: var(--color-surface-2); border: 1px solid var(--color-border); color: var(--color-text-subtle);
+}
+.stats-empty .se-title { font-size: var(--text-h2); font-weight: 600; letter-spacing: -0.01em; }
+.stats-empty .se-sub { font-size: var(--text-body); color: var(--color-text-muted); margin-top: 8px; max-width: 44ch; line-height: 1.55; }
+.stats-empty .se-meta { display: flex; gap: 22px; margin-top: 22px; }
+.stats-empty .se-meta .sm { font-size: var(--text-small); color: var(--color-text-subtle); white-space: nowrap; }
+.stats-empty .se-meta .sm b { color: var(--color-text); font-weight: 600; }
+
+/* ============================ RESPONSIVE ========================== */
+@media (max-width: 760px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .panel-row { grid-template-columns: 1fr; }
+}
+@media (max-width: 460px) {
+  .stats-grid { grid-template-columns: 1fr; }
+  .collabel { display: none; }
+}

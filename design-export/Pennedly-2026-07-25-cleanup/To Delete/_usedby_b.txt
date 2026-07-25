@@ -1,0 +1,176 @@
+Account-Advisor-SPEC.html <- Navigation-Topbar-SPEC.html
+Account-Settings-SPEC.html <- Navigation-Topbar-SPEC.html
+Autopilot-Unified-SPEC.html <- Reply-Settings-3-Approaches-SPEC.html, Reply-Settings-3-Directions-SPEC.html
+Calendar-Mobile-SPEC.html <- Studio-Schedule-Mobile-SPEC.html
+Calendar-SPEC.html <- Studio-Schedule-SPEC.html
+Feed-Mobile-SPEC.html <- Pennedly Design System.html
+First-Run-SPEC.html <- Stats-Mobile-SPEC.html, Stats-SPEC.html
+Navigation-SPEC.html <- Navigation-Topbar-SPEC.html
+Navigation-SPEC.html#s3 <- Navigation-Topbar-SPEC.html
+Onboarding-SPEC.html <- Onboarding-Mobile-SPEC.html
+Onboarding.html <- Onboarding-Mobile-SPEC.html
+Overview-Cockpit-Mobile-SPEC.html <- Overview-Cockpit-SPEC.html
+Overview-Cockpit-SPEC.html <- Overview-Cockpit-Mobile-SPEC.html
+Overview-Mobile-SPEC.html <- Overview-Cockpit-Mobile-SPEC.html, Overview-SPEC.html
+Overview-SPEC.html <- Overview-Cockpit-SPEC.html, Overview-Mobile-SPEC.html
+Patterns-SPEC.html <- Patterns-Mobile-SPEC.html
+Pennedly Design System.html <- Replies-Media-SPEC.html, Studio-Compose-Media-SPEC.html, Studio-Ideas-SPEC.html, Studio-Schedule-SPEC.html, Studio-Thread-SPEC.html
+Pennedly Design System.html#m-components <- Studio-Mobile-SPEC.html
+Pennedly Design System.html#m-shell <- Onboarding-Mobile-SPEC.html, Patterns-Mobile-SPEC.html, Replies-Mobile-SPEC.html, Settings-Mobile-SPEC.html, Stats-Mobile-SPEC.html, Studio-Ideas-Mobile-SPEC.html, Studio-Mobile-SPEC.html, Studio-Schedule-Mobile-SPEC.html, Studio-Thread-Mobile-SPEC.html, Style-Rules-Mobile-SPEC.html
+Replies-Mobile-SPEC.html <- Pennedly Design System.html, Replies-Media-SPEC.html, Replies-SPEC.html
+Replies-Mobile-SPEC.html#s11 <- Replies-SPEC.html
+Replies-Mobile-SPEC.html#s4 <- Replies-SPEC.html
+Replies-SPEC.html <- Replies-Mobile-SPEC.html
+Replies.html <- Replies-Media-SPEC.html
+Scenario-Editor-SPEC.html <- Reply-Settings-3-Directions-SPEC.html
+Scenarios-Mobile-SPEC.html <- Scenarios-SPEC.html, Scenarios-WEB-SPEC.html
+Scenarios-WEB-SPEC.html <- Scenarios-Mobile-SPEC.html
+Settings-SPEC.html <- Settings-Mobile-SPEC.html
+Stats-Mobile-SPEC.html <- Stats-SPEC.html
+Stats-Mobile-SPEC.html#s10 <- Stats-SPEC.html
+Stats-SPEC.html <- Stats-Mobile-SPEC.html
+Studio-Compose-Media-SPEC.html <- Studio-Thread-SPEC.html
+Studio-Ideas-Mobile-SPEC.html <- Studio-Ideas-SPEC.html
+Studio-Ideas-SPEC.html <- Studio-Ideas-Mobile-SPEC.html
+Studio-Ideas-SPEC.html#sicons2 <- Studio-Ideas-Mobile-SPEC.html
+Studio-Mobile-SPEC.html <- Pennedly Design System.html, Studio-Compose-Media-SPEC.html
+Studio-SPEC.html <- Studio-Ideas-SPEC.html, Studio-Mobile-SPEC.html, Studio-Schedule-SPEC.html, Studio-Thread-SPEC.html
+Studio-SPEC.html#s2-composer <- Studio-Mobile-SPEC.html
+Studio-Schedule-Mobile-SPEC.html <- Studio-Schedule-SPEC.html
+Studio-Schedule-SPEC.html <- Studio-Schedule-Mobile-SPEC.html
+Studio-Thread-Mobile-SPEC.html <- Studio-Thread-SPEC.html
+Studio-Thread-SPEC.html <- Studio-Thread-Mobile-SPEC.html
+Studio-Thread-SPEC.html#sicon <- Studio-Thread-Mobile-SPEC.html
+Studio.html <- Studio-Compose-Media-SPEC.html, Studio-Ideas-SPEC.html, Studio-Schedule-SPEC.html, Studio-Thread-SPEC.html
+Style Rules.html <- Style-Rules-Mobile-SPEC.html
+Style-Rules-SPEC.html <- Style-Rules-Mobile-SPEC.html
+account-data.js?v=20260703a <- Navigation-Topbar-SPEC.html
+account-desktop.js?v=20260703a <- Navigation-Topbar-SPEC.html
+account-mobile.css?v=20260703a <- Navigation-Topbar-SPEC.html
+account-mobile.js?v=20260703a <- Navigation-Topbar-SPEC.html
+account-screens.css?v=20260703a <- Navigation-Topbar-SPEC.html
+account-screens.js?v=20260703a <- Navigation-Topbar-SPEC.html
+account.css?v=20260703a <- Navigation-Topbar-SPEC.html
+assets/avatars/mara.png <- Pennedly Design System.html
+autopilot.css <- Reply-Settings-3-Approaches-SPEC.html, Reply-Settings-3-Directions-SPEC.html, Reply-Settings-4-More-SPEC.html, Reply-Settings-Gallery-SPEC.html
+calendar.css <- Studio-Schedule-Mobile-SPEC.html, Studio-Schedule-SPEC.html
+cockpit-data.js <- Overview-Cockpit-Mobile-SPEC.html, Overview-Cockpit-SPEC.html
+cockpit-desktop.js <- Overview-Cockpit-SPEC.html
+cockpit-mobile.js <- Overview-Cockpit-Mobile-SPEC.html
+compose-media-spec.js <- Studio-Compose-Media-SPEC.html
+compose-media.css <- Studio-Compose-Media-SPEC.html, Studio-Thread-Mobile-SPEC.html, Studio-Thread-SPEC.html
+ds/app.js <- [1 files]
+ds/components.css <- [51 files]
+ds/data.js <- [1 files]
+ds/doc.css <- [1 files]
+ds/tokens.css <- [52 files]
+growth-comment.css <- Scenario-Growth-Comment-SPEC v2.html, Scenario-Growth-Comment-SPEC.html
+growth-comment.js <- Scenario-Growth-Comment-SPEC v2.html, Scenario-Growth-Comment-SPEC.html
+import-banner.css <- Overview-Cockpit-Mobile-SPEC.html, Overview-Cockpit-SPEC.html, Overview-Mobile-SPEC.html, Overview-SPEC.html, _vtest.html
+layer3-override.css <- Post-Reply-Audience-SPEC.html
+mobile/frame.css <- [17 files]
+mobile/mock.js <- [15 files]
+mobile/pennedly-mobile.css <- [17 files]
+mobile/spec.css <- [19 files]
+mobile/sprite.js <- [20 files]
+onboarding-app.jsx <- Onboarding.html
+onboarding-data.jsx <- Onboarding Redesign.html, Onboarding.html
+onboarding-icons.jsx <- Onboarding Redesign.html, Onboarding.html
+onboarding-parts.jsx <- Onboarding.html
+onboarding.css <- Onboarding.html
+patterns-app.jsx <- Patterns.html
+patterns-data.jsx <- Patterns.html
+patterns-parts.jsx <- Patterns.html
+patterns.css <- Patterns.html
+post-reply-audience.css <- Post-Reply-Audience-SPEC.html
+post-reply-audience.js <- Post-Reply-Audience-SPEC.html
+recipe-editor.css <- Post-Reply-Audience-SPEC.html, Recipe-Phrase-Affordance.html, Recipe-Phrase-Marking.html, Recipe-Phrase-Styles.html, Scenario-Editor-Recipe-SPEC.html, Scenario-Growth-Comment-SPEC v2.html, Scenario-Growth-Comment-SPEC.html
+recipe-editor.js <- Recipe-Phrase-Affordance.html, Recipe-Phrase-Marking.html, Recipe-Phrase-Styles.html, Scenario-Editor-Recipe-SPEC.html
+redesign/dir-atelier.css <- Onboarding Redesign.html
+redesign/dir-atelier.jsx <- Onboarding Redesign.html
+redesign/dir-broadsheet.css <- Onboarding Redesign.html
+redesign/dir-broadsheet.jsx <- Onboarding Redesign.html
+redesign/dir-manuscript.css <- Onboarding Redesign.html
+redesign/dir-manuscript.jsx <- Onboarding Redesign.html
+redesign/dir-stage.css <- Onboarding Redesign.html
+redesign/dir-stage.jsx <- Onboarding Redesign.html
+redesign/ob-app.jsx <- Onboarding Redesign.html
+redesign/ob-flow.jsx <- Onboarding Redesign.html
+redesign/ob-redesign.css <- Onboarding Redesign.html
+replies-app.jsx <- Replies.html
+replies-card.jsx <- Replies.html
+replies-data.jsx <- Replies.html
+replies-parts.jsx <- Replies.html
+replies-postselect.jsx <- Replies.html
+replies.css <- Replies-Media-SPEC.html, Replies-SPEC.html, Replies.html
+reply-media-spec.js <- Replies-Media-SPEC.html
+reply-media.css <- Replies-Media-SPEC.html
+scenario-editor-directions.js <- Scenario-Editor-Directions.html
+scenario-editor.css <- Post-Reply-Audience-SPEC.html, Recipe-Phrase-Affordance.html, Recipe-Phrase-Marking.html, Recipe-Phrase-Styles.html, Reply-Settings-3-Approaches-SPEC.html, Reply-Settings-3-Directions-SPEC.html, Reply-Settings-4-More-SPEC.html, Reply-Settings-Gallery-SPEC.html, Scenario-Editor-Recipe-SPEC.html, Scenario-Editor-SPEC.html, Scenario-Growth-Comment-SPEC v2.html, Scenario-Growth-Comment-SPEC.html
+scenario-editor.js <- Scenario-Editor-SPEC.html
+scenarios-ia.css <- Scenarios-WEB-SPEC.html
+scenarios-mobile-ia.css <- Scenarios-Mobile-SPEC.html
+scenarios-mobile-redesign.css <- Scenarios-Mobile-SPEC.html
+scenarios-mobile-redesign.js <- Scenarios-Mobile-SPEC.html
+scenarios-mobile.css <- Scenarios-Mobile-SPEC.html
+scenarios-redesign-data.js <- Post-Reply-Audience-SPEC.html, Recipe-Phrase-Affordance.html, Recipe-Phrase-Marking.html, Recipe-Phrase-Styles.html, Scenario-Editor-Directions.html, Scenario-Editor-Recipe-SPEC.html, Scenario-Editor-SPEC.html, Scenario-Growth-Comment-SPEC v2.html, Scenario-Growth-Comment-SPEC.html, Scenarios-Mobile-SPEC.html, Scenarios-SPEC.html
+scenarios-redesign.css <- Post-Reply-Audience-SPEC.html, Recipe-Phrase-Affordance.html, Recipe-Phrase-Marking.html, Recipe-Phrase-Styles.html, Reply-Settings-3-Approaches-SPEC.html, Reply-Settings-3-Directions-SPEC.html, Reply-Settings-4-More-SPEC.html, Reply-Settings-Gallery-SPEC.html, Scenario-Editor-Directions.html, Scenario-Editor-Recipe-SPEC.html, Scenario-Editor-SPEC.html, Scenario-Growth-Comment-SPEC v2.html, Scenario-Growth-Comment-SPEC.html, Scenarios-SPEC.html, Tip-Card-Plaque.html, Tip-Slot-Directions.html
+scenarios-redesign.js <- Scenarios-SPEC.html
+scenarios-spec.js <- Scenarios-WEB-SPEC.html
+scenarios.css <- Post-Reply-Audience-SPEC.html, Recipe-Phrase-Affordance.html, Recipe-Phrase-Marking.html, Recipe-Phrase-Styles.html, Reply-Settings-3-Approaches-SPEC.html, Reply-Settings-3-Directions-SPEC.html, Reply-Settings-4-More-SPEC.html, Reply-Settings-Gallery-SPEC.html, Scenario-Editor-Directions.html, Scenario-Editor-Recipe-SPEC.html, Scenario-Editor-SPEC.html, Scenario-Growth-Comment-SPEC v2.html, Scenario-Growth-Comment-SPEC.html, Scenarios-SPEC.html, Scenarios-WEB-SPEC.html, Tip-Card-Plaque.html, Tip-Slot-Directions.html
+settings-app.jsx <- Settings.html
+settings-data.jsx <- Settings.html
+settings-icons.jsx <- Settings.html
+settings-parts.jsx <- Settings.html
+settings.css <- Settings.html
+shell-data.jsx <- Onboarding Redesign.html, Onboarding.html, Patterns.html, Replies.html, Settings.html, Stats.html, Studio.html, Style Rules.html, Voice.html
+shell-parts.jsx <- Onboarding Redesign.html, Onboarding.html, Patterns.html, Replies.html, Settings.html, Stats.html, Studio.html, Style Rules.html, Voice.html
+shell.css <- Navigation-Topbar-SPEC.html, Onboarding.html, Patterns.html, Replies.html, Settings.html, Stats.html, Studio.html, Style Rules.html, Voice.html
+stats-app.jsx <- Stats.html
+stats-data.jsx <- Stats.html
+stats-firstrun.css <- Stats-Mobile-SPEC.html, Stats-SPEC.html
+stats-followers.css <- Stats-Mobile-SPEC.html, Stats-SPEC.html
+stats-parts.jsx <- Stats.html
+stats.css <- Stats-SPEC.html, Stats.html
+studio-app.jsx <- Studio.html
+studio-data.jsx <- Studio.html
+studio-icons.jsx <- Onboarding Redesign.html, Onboarding.html, Patterns.html, Replies.html, Settings.html, Stats.html, Studio.html, Style Rules.html, Voice.html
+studio-ideas-build.js <- Studio-Ideas-Mobile-SPEC.html, Studio-Ideas-SPEC.html
+studio-ideas-mobile-spec.js <- Studio-Ideas-Mobile-SPEC.html
+studio-ideas-spec.js <- Studio-Ideas-SPEC.html
+studio-ideas.css <- Studio-Ideas-Mobile-SPEC.html, Studio-Ideas-SPEC.html, Studio.html
+studio-parts.jsx <- Studio.html
+studio-schedule-build.js <- Studio-Schedule-Mobile-SPEC.html, Studio-Schedule-SPEC.html
+studio-schedule-mobile-spec.js <- Studio-Schedule-Mobile-SPEC.html
+studio-schedule-spec.js <- Studio-Schedule-SPEC.html
+studio-schedule.css <- Studio-Schedule-Mobile-SPEC.html, Studio-Schedule-SPEC.html
+studio-thread-build.js <- Studio-Thread-Mobile-SPEC.html, Studio-Thread-SPEC.html
+studio-thread-mobile-spec.js <- Studio-Thread-Mobile-SPEC.html
+studio-thread-spec.js <- Studio-Thread-SPEC.html
+studio-thread.css <- Studio-Thread-Mobile-SPEC.html, Studio-Thread-SPEC.html
+studio.css <- Navigation-Topbar-SPEC.html, Patterns.html, Replies-Media-SPEC.html, Replies.html, Settings.html, Stats.html, Studio-Compose-Media-SPEC.html, Studio-Ideas-Mobile-SPEC.html, Studio-Ideas-SPEC.html, Studio-Schedule-Mobile-SPEC.html, Studio-Schedule-SPEC.html, Studio-Thread-Mobile-SPEC.html, Studio-Thread-SPEC.html, Studio.html, Style Rules.html, Voice.html
+stylerules-app.jsx <- Style Rules.html
+stylerules-data.jsx <- Style Rules.html
+stylerules-icons.jsx <- Style Rules.html
+stylerules-parts.jsx <- Style Rules.html
+stylerules.css <- Style Rules.html
+tweaks-panel.jsx <- Onboarding Redesign.html, Onboarding.html, Patterns.html, Replies.html, Settings.html, Stats.html, Studio.html, Style Rules.html, Voice.html
+variants/atoms.css <- _vtest.html
+variants/shell.css <- _vtest.html
+variants/shell.js <- _vtest.html
+variants/v1.css <- _vtest.html
+variants/v1.js <- _vtest.html
+variants/v2.css <- _vtest.html
+variants/v2.js <- _vtest.html
+variants/v3.css <- _vtest.html
+variants/v3.js <- _vtest.html
+variants/v4.css <- _vtest.html
+variants/v4.js <- _vtest.html
+variants/v5.css <- _vtest.html
+variants/v5.js <- _vtest.html
+variants/vk.js <- _vtest.html
+voice-app.jsx <- Voice.html
+voice-data.jsx <- Voice.html
+voice-icons.jsx <- Voice.html
+voice-parts.jsx <- Voice.html
+voice.css <- Voice.html
