@@ -484,11 +484,6 @@ export function TopPostsPanel({ cap, rows }: { cap: string; rows: TopPostRow[] }
   );
 }
 
-// `TimeSlotRow` — by-hour / by-weekday bucket shape. Its former sole consumer,
-// BestTimesPanel, was replaced by HeatmapPanel below; the type stays because
-// stats/page.tsx still types the model's byHour/byWeekday fields with it.
-export type TimeSlotRow = { slot: number; posts: number; avg: number };
-
 // ─────────────────────────────── Heatmap ────────────────────────────────────
 export type HeatCellRow = { weekday: number; block: number; posts: number; avg_views: number };
 

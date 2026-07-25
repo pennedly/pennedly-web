@@ -18,7 +18,6 @@ export type DemoTopPost = {
   vs: number | null; // views ÷ the window average
   url: string | null;
 };
-export type DemoSlot = { slot: number; posts: number; avg: number };
 export type StatPeriodData = {
   gran: Gran;
   current: StatTotals;
@@ -26,8 +25,6 @@ export type StatPeriodData = {
   series: StatBucket[];
   tiers: { viral: number; good: number; average: number; weak: number };
   top: DemoTopPost[];
-  byHour: DemoSlot[]; // empty for today/yesterday — the panel is hidden there
-  byWeekday: DemoSlot[];
 };
 
 // Shared sample posts (Mara's voice) reused across periods at different scales.
@@ -82,8 +79,6 @@ export const STATS_DEMO: Record<StatPeriodKey, StatPeriodData> = {
       { text: P4, dateISO: "2026-06-10T09:00:00Z", views: 12600, likes: 98, comments: 7, vs: 0.9, url: null },
       { text: P5, dateISO: "2026-06-10T06:00:00Z", views: 8200, likes: 46, comments: 3, vs: 0.6, url: null },
     ],
-    byHour: [],
-    byWeekday: [],
   },
   yesterday: {
     gran: "hour",
@@ -95,8 +90,6 @@ export const STATS_DEMO: Record<StatPeriodKey, StatPeriodData> = {
       { text: P2, dateISO: "2026-06-09T13:00:00Z", views: 18200, likes: 142, comments: 11, vs: 1.2, url: null },
       { text: P3, dateISO: "2026-06-09T10:00:00Z", views: 12800, likes: 88, comments: 6, vs: 0.8, url: null },
     ],
-    byHour: [],
-    byWeekday: [],
   },
   "7d": {
     gran: "day",
@@ -110,21 +103,6 @@ export const STATS_DEMO: Record<StatPeriodKey, StatPeriodData> = {
       { text: P3, dateISO: "2026-06-09T19:00:00Z", views: 18000, likes: 120, comments: 9, vs: 1.3, url: null },
       { text: P4, dateISO: "2026-06-05T13:00:00Z", views: 11000, likes: 74, comments: 5, vs: 0.8, url: null },
       { text: P5, dateISO: "2026-06-04T08:00:00Z", views: 7600, likes: 41, comments: 2, vs: 0.5, url: null },
-    ],
-    byHour: [
-      { slot: 8, posts: 2, avg: 16800 },
-      { slot: 9, posts: 1, avg: 22600 },
-      { slot: 13, posts: 2, avg: 11200 },
-      { slot: 19, posts: 2, avg: 9400 },
-    ],
-    byWeekday: [
-      { slot: 1, posts: 1, avg: 9200 },
-      { slot: 2, posts: 1, avg: 16400 },
-      { slot: 3, posts: 1, avg: 11000 },
-      { slot: 4, posts: 1, avg: 22600 },
-      { slot: 5, posts: 1, avg: 13200 },
-      { slot: 6, posts: 1, avg: 18000 },
-      { slot: 7, posts: 1, avg: 7600 },
     ],
   },
   "30d": {
@@ -140,22 +118,6 @@ export const STATS_DEMO: Record<StatPeriodKey, StatPeriodData> = {
       { text: P3, dateISO: "2026-06-02T19:00:00Z", views: 22600, likes: 178, comments: 14, vs: 1.5, url: null },
       { text: P4, dateISO: "2026-05-16T13:00:00Z", views: 18000, likes: 120, comments: 9, vs: 1.2, url: null },
     ],
-    byHour: [
-      { slot: 8, posts: 6, avg: 14800 },
-      { slot: 9, posts: 4, avg: 21000 },
-      { slot: 13, posts: 5, avg: 12600 },
-      { slot: 19, posts: 4, avg: 16400 },
-      { slot: 22, posts: 2, avg: 9800 },
-    ],
-    byWeekday: [
-      { slot: 1, posts: 3, avg: 12400 },
-      { slot: 2, posts: 3, avg: 17800 },
-      { slot: 3, posts: 3, avg: 12000 },
-      { slot: 4, posts: 3, avg: 21000 },
-      { slot: 5, posts: 3, avg: 15400 },
-      { slot: 6, posts: 4, avg: 18800 },
-      { slot: 7, posts: 2, avg: 8600 },
-    ],
   },
   "90d": {
     gran: "week",
@@ -170,23 +132,6 @@ export const STATS_DEMO: Record<StatPeriodKey, StatPeriodData> = {
       { text: P4, dateISO: "2026-04-30T19:00:00Z", views: 30000, likes: 240, comments: 17, vs: 2.2, url: null },
       { text: P5, dateISO: "2026-03-22T08:00:00Z", views: 24000, likes: 188, comments: 12, vs: 1.8, url: null },
     ],
-    byHour: [
-      { slot: 7, posts: 4, avg: 9800 },
-      { slot: 8, posts: 10, avg: 14200 },
-      { slot: 9, posts: 8, avg: 18600 },
-      { slot: 13, posts: 9, avg: 12400 },
-      { slot: 19, posts: 10, avg: 15800 },
-      { slot: 22, posts: 7, avg: 10200 },
-    ],
-    byWeekday: [
-      { slot: 1, posts: 7, avg: 11200 },
-      { slot: 2, posts: 7, avg: 14800 },
-      { slot: 3, posts: 7, avg: 12600 },
-      { slot: 4, posts: 7, avg: 17400 },
-      { slot: 5, posts: 7, avg: 13800 },
-      { slot: 6, posts: 8, avg: 16200 },
-      { slot: 7, posts: 5, avg: 9400 },
-    ],
   },
   all: {
     gran: "week",
@@ -200,23 +145,6 @@ export const STATS_DEMO: Record<StatPeriodKey, StatPeriodData> = {
       { text: P5, dateISO: "2026-02-11T08:00:00Z", views: 52000, likes: 430, comments: 33, vs: 5.5, url: null },
       { text: P1, dateISO: "2026-06-08T15:00:00Z", views: 38200, likes: 312, comments: 24, vs: 4.0, url: null },
       { text: P4, dateISO: "2026-04-30T19:00:00Z", views: 30000, likes: 240, comments: 17, vs: 3.2, url: null },
-    ],
-    byHour: [
-      { slot: 7, posts: 12, avg: 8200 },
-      { slot: 8, posts: 30, avg: 11800 },
-      { slot: 9, posts: 26, avg: 14600 },
-      { slot: 13, posts: 32, avg: 10400 },
-      { slot: 19, posts: 38, avg: 12800 },
-      { slot: 22, posts: 30, avg: 9000 },
-    ],
-    byWeekday: [
-      { slot: 1, posts: 24, avg: 9800 },
-      { slot: 2, posts: 24, avg: 12200 },
-      { slot: 3, posts: 24, avg: 10600 },
-      { slot: 4, posts: 24, avg: 13400 },
-      { slot: 5, posts: 24, avg: 11000 },
-      { slot: 6, posts: 26, avg: 12600 },
-      { slot: 7, posts: 22, avg: 8200 },
     ],
   },
 };

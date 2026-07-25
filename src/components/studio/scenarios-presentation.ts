@@ -35,8 +35,8 @@ export type PresetPresentation = {
   gated?: boolean;
   /** living-sentence template (with {slots}) */
   sentenceKey: MessageKey;
-  /** the 3-step skeleton, as i18n keys */
-  skel: { whenKey: MessageKey; onlyifKey: MessageKey | null; whatdoKey: MessageKey };
+  /** the «когда» caption the preset gallery card shows under the sentence */
+  skel: { whenKey: MessageKey };
   /** build the {slots} from the account handle + (optional) field overrides */
   slots: (t: T, handle: string, f?: Record<string, string>) => SentenceSlots;
 };
@@ -53,14 +53,14 @@ export const PRESENTATION: Record<string, PresetPresentation> = {
     kind: "post",
     replies: false,
     sentenceKey: "scenarios.sentence.daily_question",
-    skel: { whenKey: "scenarios.skel.daily_question.when", onlyifKey: null, whatdoKey: "scenarios.skel.daily_question.whatdo" },
+    skel: { whenKey: "scenarios.skel.daily_question.when" },
     slots: (t, handle, f) => ({ when: whenSlot(t, f, "9:00"), who: who(handle) }),
   },
   rubric: {
     kind: "post",
     replies: false,
     sentenceKey: "scenarios.sentence.rubric",
-    skel: { whenKey: "scenarios.skel.rubric.when", onlyifKey: null, whatdoKey: "scenarios.skel.rubric.whatdo" },
+    skel: { whenKey: "scenarios.skel.rubric.when" },
     // No {name}: the column's title lives inside the baked instruction, so there
     // is nothing to read it off a saved scenario — the sentence says «your column».
     slots: (t, handle, f) => ({ when: whenSlot(t, f, "12:00"), who: who(handle) }),
@@ -69,7 +69,7 @@ export const PRESENTATION: Record<string, PresetPresentation> = {
     kind: "post",
     replies: false,
     sentenceKey: "scenarios.sentence.safety_net",
-    skel: { whenKey: "scenarios.skel.safety_net.when", onlyifKey: "scenarios.skel.safety_net.onlyif", whatdoKey: "scenarios.skel.safety_net.whatdo" },
+    skel: { whenKey: "scenarios.skel.safety_net.when" },
     // {time} is the deadline from condition_cfg.not_before; the fallback matches
     // the backend preset's own default ("18:00") so an unset one doesn't lie.
     slots: (_t, handle, f) => ({ time: v(f?.time || "18:00"), who: who(handle) }),
@@ -78,42 +78,42 @@ export const PRESENTATION: Record<string, PresetPresentation> = {
     kind: "reply",
     replies: true,
     sentenceKey: "scenarios.sentence.reply_duty",
-    skel: { whenKey: "scenarios.skel.reply_duty.when", onlyifKey: "scenarios.skel.reply_duty.onlyif", whatdoKey: "scenarios.skel.reply_duty.whatdo" },
+    skel: { whenKey: "scenarios.skel.reply_duty.when" },
     slots: (t, handle, f) => ({ interval: v(f?.interval || t("scenarios.slot.interval_15")), audience: v(audiencePhrase(t, f?.audience)), who: who(handle) }),
   },
   on_mention: {
     kind: "reply",
     replies: true,
     sentenceKey: "scenarios.sentence.on_mention",
-    skel: { whenKey: "scenarios.skel.on_mention.when", onlyifKey: null, whatdoKey: "scenarios.skel.on_mention.whatdo" },
+    skel: { whenKey: "scenarios.skel.on_mention.when" },
     slots: (_t, handle) => ({ who: who(handle) }),
   },
   amplify_viral: {
     kind: "post",
     replies: false,
     sentenceKey: "scenarios.sentence.amplify_viral",
-    skel: { whenKey: "scenarios.skel.amplify_viral.when", onlyifKey: null, whatdoKey: "scenarios.skel.amplify_viral.whatdo" },
+    skel: { whenKey: "scenarios.skel.amplify_viral.when" },
     slots: (t, handle, f) => ({ threshold: v(f?.threshold || t("scenarios.slot.views_5000")), who: who(handle) }),
   },
   milestone_thanks: {
     kind: "post",
     replies: false,
     sentenceKey: "scenarios.sentence.milestone_thanks",
-    skel: { whenKey: "scenarios.skel.milestone_thanks.when", onlyifKey: null, whatdoKey: "scenarios.skel.milestone_thanks.whatdo" },
+    skel: { whenKey: "scenarios.skel.milestone_thanks.when" },
     slots: (t, handle, f) => ({ step: v(f?.step || t("scenarios.slot.step_1000")), who: who(handle) }),
   },
   poll: {
     kind: "post",
     replies: false,
     sentenceKey: "scenarios.sentence.poll",
-    skel: { whenKey: "scenarios.skel.poll.when", onlyifKey: null, whatdoKey: "scenarios.skel.poll.whatdo" },
+    skel: { whenKey: "scenarios.skel.poll.when" },
     slots: (t, handle, f) => ({ when: whenSlot(t, f, "18:00"), who: who(handle) }),
   },
   seasonal: {
     kind: "post",
     replies: false,
     sentenceKey: "scenarios.sentence.seasonal",
-    skel: { whenKey: "scenarios.skel.seasonal.when", onlyifKey: null, whatdoKey: "scenarios.skel.seasonal.whatdo" },
+    skel: { whenKey: "scenarios.skel.seasonal.when" },
     // No {topic}: like the rubric's title, the season's theme is baked into the
     // instruction. {period} comes from the date guard that bounds the window.
     slots: (t, handle, f) => ({ period: v(f?.period || t("scenarios.demo.season_period")), who: who(handle) }),
@@ -123,7 +123,7 @@ export const PRESENTATION: Record<string, PresetPresentation> = {
     replies: true,
     gated: true,
     sentenceKey: "scenarios.sentence.promo",
-    skel: { whenKey: "scenarios.skel.promo.when", onlyifKey: null, whatdoKey: "scenarios.skel.promo.whatdo" },
+    skel: { whenKey: "scenarios.skel.promo.when" },
     slots: (t, handle, f) => ({ ask: v(f?.ask || t("scenarios.slot.promo_action")), who: who(handle) }),
   },
 };
@@ -245,28 +245,6 @@ function fieldsFromScenario(t: T, s: Scenario): Record<string, string> {
 
 export function publishModeOf(s: Scenario): PublishMode {
   return s.publish_mode ?? "auto";
-}
-
-// ── editor: build the live sentence + skeleton from the form's preset + fields ──
-export function presetSentence(
-  t: T,
-  presetId: string | null,
-  handle: string,
-  overrides?: Record<string, string>,
-): DerivedSentence {
-  const p = presetId ? PRESENTATION[presetId] : null;
-  if (!p) return { template: t("scenarios.sentence.generic_post"), slots: { who: who(handle) }, kind: "post" };
-  return { template: t(p.sentenceKey), slots: p.slots(t, handle, overrides), kind: p.kind };
-}
-
-export function presetSkel(t: T, presetId: string | null): { when: string; onlyif: string | null; whatdo: string } {
-  const p = presetId ? PRESENTATION[presetId] : null;
-  if (!p) return { when: t("scenarios.skel.generic_when"), onlyif: null, whatdo: t("scenarios.skel.generic_whatdo") };
-  return {
-    when: t(p.skel.whenKey),
-    onlyif: p.skel.onlyifKey ? t(p.skel.onlyifKey) : null,
-    whatdo: t(p.skel.whatdoKey),
-  };
 }
 
 // ════════════════════════════════════════════════════════════════════════════

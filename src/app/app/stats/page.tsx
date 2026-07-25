@@ -30,7 +30,6 @@ import {
   STAT_CARDS,
   StatsNudge,
   SummaryCard,
-  type TimeSlotRow,
   type TopPostRow,
   TopPostsPanel,
 } from "@/components/studio/StatsParts";
@@ -268,8 +267,6 @@ export default function StatsPage() {
         series: d.series,
         tiers: d.tiers,
         top: d.top.map<TopPostRow>((p) => ({ text: p.text, dateISO: p.dateISO, views: p.views, likes: p.likes, comments: p.comments, vs: p.vs, url: p.url })),
-        byHour: d.byHour.map<TimeSlotRow>((s) => ({ slot: s.slot, posts: s.posts, avg: s.avg })),
-        byWeekday: d.byWeekday.map<TimeSlotRow>((s) => ({ slot: s.slot, posts: s.posts, avg: s.avg })),
         heatmap: DEMO_HEATMAP,
       };
     }
@@ -286,8 +283,6 @@ export default function StatsPage() {
       series: stats.series.map<StatBucket>((b) => ({ label: fmtBucket(b.bucket_start, gran, locale, stats.series.length > 8), value: b.avg_views })),
       tiers: { viral: c.tier_counts.viral, good: c.tier_counts.good, average: c.tier_counts.mid, weak: c.tier_counts.flop },
       top: (stats.top_posts ?? []).map<TopPostRow>((p) => ({ text: p.text, dateISO: p.published_at, views: p.views, likes: p.likes, comments: p.comments, vs: p.vs_avg, url: p.threads_url })),
-      byHour: (stats.by_hour ?? []).map<TimeSlotRow>((s) => ({ slot: s.slot, posts: s.posts, avg: s.avg_views })),
-      byWeekday: (stats.by_weekday ?? []).map<TimeSlotRow>((s) => ({ slot: s.slot, posts: s.posts, avg: s.avg_views })),
       heatmap: stats.heatmap ?? [],
     };
   }, [demoOn, period, stats, gran, locale]);
