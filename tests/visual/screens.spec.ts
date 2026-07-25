@@ -1,4 +1,4 @@
-import { test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 // ── Mock-auth visual harness ─────────────────────────────────────────────────
 // Renders auth-gated /app screens with mocked backend data so the redesign can
@@ -10,6 +10,11 @@ import { test, type Page } from "@playwright/test";
 // Output:              test-results/visual/<name>-{light,dark}.png
 //
 // Add per-screen fixtures to `route()` below as each screen is restyled.
+//
+// PW_DIAG=1 logs every API path that fell through to the empty-array default
+// plus any uncaught page error — run it after adding a screen or an endpoint,
+// because a missing fixture is exactly how a screen quietly starts screenshotting
+// Next's error page.
 
 const ME = {
   user_id: 1,
@@ -777,7 +782,266 @@ const EXPLORE_RESULT = {
   latency_ms: 1840,
 };
 
+// ── Endpoints added after the original harness (2026-06+) ────────────────────
+// These used to fall through to the `[]` default, which is the WRONG SHAPE for
+// every one of them: the screen read `.points` / `.posts` / `.scenarios` off an
+// array, got undefined, and the whole segment died into Next's built-in error
+// page. The tests still passed because nothing asserted the content — `shoot()`
+// now guards that (see the `#__next_error__` check).
+
+// Deterministic day series ending on 2026-06-02 (the window the other fixtures
+// live in). No Date.now() anywhere, so screenshots stay byte-stable run to run.
+function daySeries(n: number): string[] {
+  const end = Date.UTC(2026, 5, 2);
+  return Array.from({ length: n }, (_, i) =>
+    new Date(end - (n - 1 - i) * 86_400_000).toISOString().slice(0, 10),
+  );
+}
+
+// Follower-growth line on Stats. Threads has no history, so the series accrues
+// from connect-time — 60 days of gentle growth with a couple of flat stretches.
+const FOLLOWER_POINTS = daySeries(60).map((day, i) => ({
+  day,
+  count: 1720 + i * 21 + (i % 7) * 6 - (i % 11),
+}));
+const FOLLOWERS = {
+  points: FOLLOWER_POINTS,
+  latest: FOLLOWER_POINTS[FOLLOWER_POINTS.length - 1].count,
+};
+
+// Account-level engagement series (Stats → Engagement panel). `views` is a real
+// day-series; likes/replies/reposts/quotes inside points[] are recent-only (the
+// contract says older days are truly 0), and the lifetime totals ride ONCE on
+// the envelope.
+const ENGAGEMENT_DAYS = daySeries(60);
+const ENGAGEMENT = {
+  points: ENGAGEMENT_DAYS.map((day, i) => {
+    const recent = i >= ENGAGEMENT_DAYS.length - 14;
+    const views = 900 + i * 34 + (i % 5) * 210 + (i % 3) * 90;
+    return {
+      day,
+      views,
+      likes: recent ? 40 + (i % 6) * 7 : 0,
+      replies: recent ? 6 + (i % 4) : 0,
+      reposts: recent ? 2 + (i % 3) : 0,
+      quotes: recent ? (i % 2) : 0,
+    };
+  }),
+  likes: 18420,
+  replies: 2310,
+  reposts: 940,
+  quotes: 210,
+};
+
+// Refresh (the Stats screen auto-pulls on open + the Refresh button). Answering
+// "nothing new" keeps the screenshot deterministic — a `refreshed: true` would
+// trigger a second round of fetches mid-shot.
+const STATS_REFRESH = {
+  refreshed: false,
+  refreshed_at: "2026-06-02T08:00:00Z",
+  posts: 24,
+  followers: FOLLOWERS.latest,
+};
+
+// The Replies post rail — one row per post that HAS comments, counted off
+// COMMENTS above (9001: 4 comments, 3 not yet replied/skipped; 9003: 2 and 1).
+const COMMENT_POSTS = {
+  count: 2,
+  status_counts: COMMENTS.status_counts,
+  needs_attention: 2,
+  posts: [
+    {
+      post_id: 9001,
+      post_text:
+        "The fastest way to find your voice online: publish the thing you're slightly embarrassed by.",
+      post_published_at: "2026-05-30T14:00:00Z",
+      post_threads_url: "https://www.threads.net/@mara.lin/post/9001",
+      total: 4,
+      unanswered: 3,
+    },
+    {
+      post_id: 9003,
+      post_text:
+        "Consistency beats intensity. Three small posts a week out-compound one viral month.",
+      post_published_at: "2026-05-29T09:15:00Z",
+      post_threads_url: "https://www.threads.net/@mara.lin/post/9003",
+      total: 2,
+      unanswered: 1,
+    },
+  ],
+};
+
+// Recent posts — the boost/«post» target picker on the Autopilot hub. Same
+// three posts as FEED, in the leaner PostSummary shape.
+const POSTS = {
+  count: 3,
+  posts: FEED.posts.map((p) => ({
+    id: p.id,
+    account_id: 1,
+    threads_post_id: p.threads_post_id,
+    threads_url: p.threads_url,
+    text: p.text,
+    published_at: p.published_at,
+    views: p.views,
+    likes: p.likes,
+    replies_count: p.comments_count,
+    viral_tier: p.viral_tier,
+  })),
+};
+
+// The Autopilot hub's routines. Covers the three shapes the hub renders
+// differently: a daily post, a weekly post, and the reply-duty policy.
+const SCENARIOS = {
+  scenarios: [
+    {
+      id: 31,
+      name: "Question of the day",
+      template: null,
+      enabled: true,
+      trigger_cfg: { kind: "daily_first_post", hour: 9 },
+      condition_cfg: { once_per_day: true },
+      action_cfg: { kind: "post" },
+      structured: null,
+      instruction:
+        "THIS POST IS THE QUESTION OF THE DAY. Ask one open question people can answer from their own experience — no lecture before it.",
+      reply_instruction: "Reply warmly and specifically. Never repeat the question back.",
+      next_run_at: "2026-06-03T09:00:00Z",
+      last_run_at: "2026-06-02T09:04:00Z",
+      fire_count: 41,
+      recent_skips: [],
+      publish_mode: "auto",
+      preset_id: "daily_question",
+      hour: 9,
+      jitter_minutes: 20,
+      per_day_times: null,
+    },
+    {
+      id: 32,
+      name: "Column: what I cut this week",
+      template: null,
+      enabled: true,
+      trigger_cfg: { kind: "weekly", weekday: 0, hour: 8 },
+      condition_cfg: { once_per_day: true },
+      action_cfg: { kind: "post" },
+      structured: null,
+      instruction:
+        "THIS POST IS AN ISSUE OF THE RECURRING COLUMN «What I cut this week» — one concrete thing removed, and what it bought.",
+      reply_instruction: "",
+      next_run_at: "2026-06-08T08:00:00Z",
+      last_run_at: "2026-06-01T08:00:00Z",
+      fire_count: 7,
+      recent_skips: [],
+      publish_mode: "ask",
+      preset_id: "rubric",
+      hour: 8,
+      jitter_minutes: 0,
+      per_day_times: null,
+    },
+    {
+      id: 33,
+      name: "Comment duty",
+      template: null,
+      enabled: true,
+      trigger_cfg: { kind: "on_new_comment", scope: "all_posts" },
+      condition_cfg: null,
+      action_cfg: {
+        kind: "reply_policy",
+        audience: "all_except_trolls",
+        max_per_day: 60,
+        skip_low_value: true,
+      },
+      structured: null,
+      instruction: "",
+      reply_instruction:
+        "You're on comment duty. Answer the person, not the topic — one idea per reply, no sign-offs.",
+      next_run_at: null,
+      last_run_at: "2026-06-02T13:40:00Z",
+      fire_count: 138,
+      recent_skips: [],
+      publish_mode: "auto",
+      preset_id: null,
+      hour: null,
+      jitter_minutes: null,
+      per_day_times: null,
+    },
+  ],
+};
+
+// The routine gallery's catalog. Two presets in the real PresetOut shape
+// (api/scenarios.py) — enough for the gallery to render both groups; the
+// baked instructions arrive already localized, so they're plain strings here.
+const PRESETS = {
+  locale: "en",
+  presets: [
+    {
+      id: "daily_question",
+      name_key: "scenarios.preset.daily_question",
+      icon: "IcChat",
+      group: "daily",
+      instruction:
+        "THIS POST IS THE QUESTION OF THE DAY. Ask one open question people can answer from their own experience.",
+      reply_instruction: "Reply warmly and specifically.",
+      trigger_cfg: { kind: "daily_first_post" },
+      condition_cfg: { once_per_day: true },
+      action_cfg: { kind: "post" },
+      fields: [
+        {
+          key: "topic",
+          name_key: "scenarios.field.topic",
+          kind: "text",
+          required: false,
+          default: null,
+          maps_to: "instruction",
+          min_count: null,
+          max_count: null,
+        },
+      ],
+      reply_defaults: { audience: "all_except_trolls", max_per_day: 40, skip_low_value: true },
+    },
+    {
+      id: "rubric",
+      name_key: "scenarios.preset.rubric",
+      icon: "IcBookmark",
+      group: "daily",
+      instruction: "THIS POST IS AN ISSUE OF A RECURRING COLUMN.",
+      reply_instruction: "",
+      trigger_cfg: { kind: "weekly", weekday: 0 },
+      condition_cfg: { once_per_day: true },
+      action_cfg: { kind: "post" },
+      fields: [
+        {
+          key: "rubric_name",
+          name_key: "scenarios.field.rubric_name",
+          kind: "text",
+          required: true,
+          default: null,
+          maps_to: "instruction",
+          min_count: null,
+          max_count: null,
+        },
+        {
+          key: "cadence",
+          name_key: "scenarios.field.cadence",
+          kind: "cadence",
+          required: false,
+          default: "weekly",
+          maps_to: "trigger_cfg.kind",
+          min_count: null,
+          max_count: null,
+        },
+      ],
+      reply_defaults: {},
+    },
+  ],
+};
+
 async function setup(page: Page): Promise<void> {
+  if (process.env.PW_DIAG) {
+    page.on("pageerror", (e) => console.log("PAGEERROR", e.message));
+    page.on("console", (m) => {
+      if (m.type() === "error") console.log("CONSOLE_ERR", m.text().slice(0, 300));
+    });
+  }
   // Seed a token + selected account + locale before any app code runs.
   await page.addInitScript(() => {
     localStorage.setItem(
@@ -798,6 +1062,9 @@ async function setup(page: Page): Promise<void> {
     const json = (body: unknown) =>
       route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(body) });
 
+    // Login: "email me a code" returns no body — the screen just flips to the
+    // 6-cell OTP view.
+    if (p.endsWith("/auth/email-code/request")) return json({});
     if (p.endsWith("/api/me")) return json(ME);
     if (p.endsWith("/api/me/accounts")) return json({ accounts: ACCOUNTS });
     if (p.includes("/onboarding"))
@@ -806,8 +1073,24 @@ async function setup(page: Page): Promise<void> {
     if (p.includes("/patterns/study")) return json(STUDY);
     if (p.includes("/feed")) return json(FEED);
     if (p.includes("/mentions")) return json(MENTIONS);
-    if (p.includes("/comments")) return json(COMMENTS);
+    if (p.includes("/comment-posts")) return json(COMMENT_POSTS);
+    if (p.includes("/comments")) {
+      // The Replies screen loads ONE post's thread at a time — mirror that, or
+      // every post in the rail shows the whole queue.
+      const postId = new URL(route.request().url()).searchParams.get("post_id");
+      if (!postId) return json(COMMENTS);
+      const comments = COMMENTS.comments.filter((c) => String(c.post_id) === postId);
+      return json({ ...COMMENTS, comments, count: comments.length });
+    }
+    if (p.includes("/stats/refresh")) return json(STATS_REFRESH);
     if (p.includes("/stats")) return json(STATS);
+    if (p.endsWith("/followers")) return json(FOLLOWERS);
+    if (p.endsWith("/engagement")) return json(ENGAGEMENT);
+    if (p.endsWith("/scenarios/presets")) return json(PRESETS);
+    if (p.endsWith("/scenarios")) return json(SCENARIOS);
+    // Account posts only — /api/generation/posts is a different endpoint,
+    // handled further down.
+    if (/\/accounts\/\d+\/posts$/.test(p)) return json(POSTS);
     if (/\/audits\/\d+$/.test(p)) return json(AUDIT_DETAIL);
     if (p.includes("/audits")) return json(AUDITS_LIST);
     if (p.endsWith("/autopost-rules")) return json(AUTOPOST_RULES);
@@ -834,11 +1117,18 @@ async function setup(page: Page): Promise<void> {
       return json({ text: "Start before you feel ready. The version of you that waits never ships.", latency_ms: 720, topic_label: "Shipping", prompt_tokens: 0, completion_tokens: 0 });
     if (p.includes("/drafts")) return json({ drafts: DRAFTS, count: DRAFTS.length });
     // Safe default — most list endpoints tolerate an empty array.
+    if (process.env.PW_DIAG) console.log("UNMOCKED", route.request().method(), p);
     return json([]);
   });
 }
 
 async function shoot(page: Page, name: string): Promise<void> {
+  // Guard: an uncaught render error swaps the whole document for Next's built-in
+  // error page (`<html id="__next_error__">`). That still screenshots fine, so
+  // for months stats/replies/autopilot shipped an "This page couldn't load" PNG
+  // under a green test. Fail loudly instead — no screen is ever meant to land
+  // there, not even the deliberate error states (those render our own UI).
+  await expect(page.locator("html#__next_error__"), `${name}: page crashed into Next's error page`).toHaveCount(0);
   // Hide Next.js dev overlays so they don't sit on top of the UI in shots.
   await page
     .addStyleTag({ content: "nextjs-portal,[data-nextjs-toast]{display:none!important}" })
@@ -948,10 +1238,8 @@ test("Feed — demo states", async ({ page }) => {
   await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
   await page.waitForTimeout(700);
   await shoot(page, "feed-demo-live"); // baseline + verdict cards
-  // expand the growth chart on the top card
-  await page.getByRole("button", { name: /growth/i }).first().click();
-  await page.waitForTimeout(300);
-  await shoot(page, "feed-demo-growth");
+  // (the per-post growth chart was dropped 2026-07-10 — `6397f20` — so there's
+  // no expandable card state to shoot here any more)
   // drive feed states via the panel (State is the only <select>)
   await page.getByRole("button", { name: "Open tweaks" }).click();
   await page.waitForTimeout(150);
@@ -973,25 +1261,28 @@ test("Mentions", async ({ page }) => {
 });
 
 test("Mentions — demo states", async ({ page }) => {
-  // Tester ?demo=1: 2-tweak panel (dark + state) over the read-only feed.
+  // Tester ?demo=1 over the triaged queue (rebuilt 2026-07-17, `b58d2a6`): the
+  // panel's State list is the screen's own MQ_STATES, and the old "Translated"
+  // state went away with the flat feed — translation is a per-card action now.
   await page.setViewportSize({ width: 1280, height: 1500 });
   await setup(page);
   await page.goto("/app/mentions?demo=1");
   await page.waitForSelector("aside", { state: "visible", timeout: 15_000 });
   await page.waitForTimeout(800);
-  await shoot(page, "mentions-demo"); // populated feed
+  await shoot(page, "mentions-demo"); // populated queue: needs-you / feed / filtered
   await page.getByRole("button", { name: "Open tweaks" }).click();
   await page.waitForTimeout(150);
   const sel = page.locator("select.twk-field").first();
-  await sel.selectOption("Translated");
+  for (const state of ["Filtered open", "Empty", "Loading", "Error", "Reconnect"]) {
+    await sel.selectOption(state);
+    await page.waitForTimeout(300);
+    await shoot(page, `mentions-demo-${state.toLowerCase().replace(/\s+/g, "-")}`);
+  }
+  // The veiled-media scam card — its own variant toggle, on top of Populated.
+  await sel.selectOption("Populated");
+  await page.getByRole("switch", { name: "Scam (veiled media) example" }).click();
   await page.waitForTimeout(300);
-  await shoot(page, "mentions-demo-translated");
-  await sel.selectOption("Empty");
-  await page.waitForTimeout(250);
-  await shoot(page, "mentions-demo-empty");
-  await sel.selectOption("Error");
-  await page.waitForTimeout(250);
-  await shoot(page, "mentions-demo-error");
+  await shoot(page, "mentions-demo-scam");
 });
 
 test("Replies", async ({ page }) => {
