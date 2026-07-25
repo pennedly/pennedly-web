@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="ds/tokens.css" />
 <link rel="stylesheet" href="ds/components.css" />
 <link rel="stylesheet" href="stats.css" />
+<link rel="stylesheet" href="stats-followers.css" />
 <style>
 :root{
   --font-sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
@@ -195,6 +196,7 @@ td .mono2{font-family:var(--font-mono); font-size:11.5px; color:var(--subtle);}
     <a class="sub" href="#s2-cards">— сводные карточки (4)</a>
     <a class="sub" href="#s2-delta">— дельта-чип</a>
     <a class="sub" href="#s2-trend">— тренд-график (перестроен)</a>
+    <a class="sub" href="#s2-follow">— Follower growth (НОВОЕ)</a>
     <a class="sub" href="#s2-top">— Top posts (НОВОЕ)</a>
     <a class="sub" href="#s2-best">— Best times (НОВОЕ)</a>
     <a class="sub" href="#s2-spread">— Performance spread</a>
@@ -238,6 +240,7 @@ td .mono2{font-family:var(--font-mono); font-size:11.5px; color:var(--subtle);}
       <span class="chip">studio.css</span>
       <span class="chip">ds/tokens.css</span>
       <span class="chip">ds/components.css</span>
+      <span class="chip chip--new">+ Follower growth</span>
       <span class="chip chip--new">+ Top posts</span>
       <span class="chip chip--new">+ Best times</span>
     </div>
@@ -369,7 +372,23 @@ td .mono2{font-family:var(--font-mono); font-size:11.5px; color:var(--subtle);}
     </table></div>
     <div class="note"><b>few vs many.</b> <b>≤ 8 бакетов</b> заполняют ширину панели (бары flex). <b>&gt; 8 бакетов</b> на <b>десктопе</b> тоже заполняют ширину (просто плотнее), на <b>телефоне</b> держат фикс. ~40px бары и прокручиваются вбок (см. mobile-spec). Подписи всегда разрежены до ~8 — даже на 30 дневных барах под графиком ~8 дат.</div>
 
-    <h3 id="s2-top"><span class="stg stg--new">NEW</span>2.6 — Top posts <code>.spanel</code> / <code>.toplist</code> <span class="tagline">TopPosts</span></h3>
+    <h3 id="s2-follow"><span class="stg stg--new">NEW</span>2.6 — Follower growth <code>.spanel</code> / <code>.fchart</code> <span class="tagline">FollowerChart</span></h3>
+    <p class="section-note">Панель роста подписчиков. Шапка: слева caption «FOLLOWERS» (+ тихий саб «Since you connected»), справа — <b>текущее число</b> (крупное, tabular) + <b>прирост за всё окно</b> (<b>+N</b> success / <b>−N</b> danger). Ниже — <b>линия</b> (accent 2.2px, скруглённая) с лёгкой accent-заливкой и <b>точкой на последнем значении</b>. <b>Важно: ось min–max, а НЕ от нуля</b> — счётчики подписчиков большие, а суточный прирост мал; нулевая база схлопнула бы линию в плоскую. Блок <b>независим от селектора периода</b> — всегда показывает всю историю с момента подключения. <b>Collecting</b> (меньше 2 дней данных): пунктирная плитка с чарт-глифом + «Collecting your follower data» + саб про то, что Threads отдаёт только сегодняшнее число.</p>
+    <div class="frames" id="f-followers"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:230px;">Элемент / класс</th><th>Описание</th></tr></thead>
+      <tbody>
+        <tr><td><code>.fchart-head</code></td><td><code>flex; justify-content:space-between</code>. Слева <code>.fchart-cap</code> «FOLLOWERS» (caption / w600 / uppercase / subtle) + <code>.fchart-sub</code> «Since you connected». Справа <code>.fchart-hl</code>.</td></tr>
+        <tr><td><code>.fchart-count</code> / <code>.fchart-gain</code></td><td>Текущее число (<code class="tok">--text-h2</code> / w600 / tabular) + прирост: <code>--up</code> success «+N» · <code>--down</code> danger «−N» · <code>--flat</code> subtle.</td></tr>
+        <tr><td><code>.fchart-plot</code> / <code>.fchart-svg</code></td><td>height 120 (телефон 112). SVG <code>viewBox 0 0 100 100; preserveAspectRatio:none</code> — заполняет ширину; линия <code>vector-effect:non-scaling-stroke</code>, поэтому штрих не растягивается.</td></tr>
+        <tr><td><code>.fchart-line</code> / <code>.fchart-area</code></td><td>Линия — <code>stroke accent 2.2; round</code>; заливка — <code>fill mix(accent 12%, transparent)</code> до низа.</td></tr>
+        <tr><td><code>.fchart-dot</code></td><td>Точка на последнем значении: 9×9 accent + кольцо <code>mix(accent 18%)</code>, позиционируется абсолютно по % последней точки.</td></tr>
+        <tr><td><code>.fchart-collect</code></td><td>Collecting: <code>dashed border; radius-md; bg mix(surface-2 45%)</code> + <code>.fchart-collect-mark</code> (<code>&lt;IcChart 20&gt;</code>) + title + sub.</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note"><b>Min–max, не от нуля.</b> Линия масштабируется от минимума к максимуму окна (с лёгким вертикальным паддингом), чтобы показать <i>форму</i> роста, а не плоскую черту у потолка. Данные — реалистичный шумный подъём (приливы/отливы), а не гладкий крутой ramp. Блок игнорирует период: <code>GET …/followers</code> — суточные снимки с момента подключения.</div>
+
+    <h3 id="s2-top"><span class="stg stg--new">NEW</span>2.7 — Top posts <code>.spanel</code> / <code>.toplist</code> <span class="tagline">TopPosts</span></h3>
     <p class="section-note">Панель «Top posts» / cap «By views · &lt;period&gt;». Топ-5 постов окна по просмотрам. Каждая строка: ранг · 2-строчный сниппет · мета (дата + views/likes/comments с мелкими глифами) · справа вердикт «N× your average» (та же метрика, что в Feed), с цветовой градацией. Вся строка ведёт в Threads, пока у поста есть URL (на десктопе — hover-подсветка, на телефоне — тап по всей строке).</p>
     <div class="frames" id="f-top"></div>
     <div class="tbl-wrap"><table>
@@ -383,7 +402,7 @@ td .mono2{font-family:var(--font-mono); font-size:11.5px; color:var(--subtle);}
       </tbody>
     </table></div>
 
-    <h3 id="s2-best"><span class="stg stg--new">NEW</span>2.7 — Best times to post <code>.spanel</code> / <code>.besttimes</code> <span class="tagline">BestTimes</span></h3>
+    <h3 id="s2-best"><span class="stg stg--new">NEW</span>2.8 — Best times to post <code>.spanel</code> / <code>.besttimes</code> <span class="tagline">BestTimes</span></h3>
     <p class="section-note">Панель «Best times to post» / cap «Average views per post by publish time · &lt;period&gt;». Два мини-графика: <b>By hour</b> (локальный час публикации) и <b>By day of week</b> (Mon→Sun, полная неделя всегда, пустые дни — пеньки). Бары = средние просмотры/пост для слота; <b>лучший слот</b> (среди слотов с ≥ 2 постами — чтобы один удачный пост не «короновал» час) тинтован accent и назван в чипе «Best · …». На десктопе — два графика рядом (2-col); на телефоне — стопкой. <b>Скрыт целиком для Today/Yesterday.</b></p>
     <div class="frames" id="f-best"></div>
     <div class="tbl-wrap"><table>
@@ -398,7 +417,7 @@ td .mono2{font-family:var(--font-mono); font-size:11.5px; color:var(--subtle);}
     </table></div>
     <div class="note"><b>Правило лучшего слота.</b> Best = слот с максимальным avg views/post <b>среди слотов с ≥ 2 постами</b>. Если ни у одного слота нет 2 постов — берётся абсолютный максимум. Это не даёт одному вирусному посту «короновать» случайный час/день.</div>
 
-    <h3 id="s2-spread">2.8 — Performance spread <code>.spanel</code> / <code>.distlist</code> <span class="tagline">DistributionBars</span></h3>
+    <h3 id="s2-spread">2.9 — Performance spread <code>.spanel</code> / <code>.distlist</code> <span class="tagline">DistributionBars</span></h3>
     <p class="section-note">Панель «Performance spread» / cap «&lt;N&gt; posts vs your baseline · &lt;period&gt;». Четыре тира — Viral (3×+) · Good (1.5–3×) · Average (0.7–1.5×) · Weak (ниже 0.7×) — каждый строка: цвет-точка + название + faint саб + count + percent + тонкий бар пропорции.</p>
     <div class="frames" id="f-spread"></div>
     <div class="tbl-wrap"><table>
@@ -410,7 +429,7 @@ td .mono2{font-family:var(--font-mono); font-size:11.5px; color:var(--subtle);}
       </tbody>
     </table></div>
 
-    <h3 id="s2-aux">2.9 — Empty / Loading</h3>
+    <h3 id="s2-aux">2.10 — Empty / Loading</h3>
     <p class="section-note">Empty — центрированная карточка «Not enough data yet» (чарт-глиф + объяснение про две недели + мини-мета «week so far / posts published»). Error-состояния нет. Loading — скелет, <b>повторяющий итоговую раскладку</b> (тот же грид, hero + панели), чтобы ничего не «прыгало» при загрузке.</p>
     <div class="frames" id="f-aux"></div>
     <div class="tbl-wrap"><table>
@@ -686,6 +705,32 @@ td .mono2{font-family:var(--font-mono); font-size:11.5px; color:var(--subtle);}
       '<div class="besttimes">'+btCard('By hour',hours,'6 PM')+btCard('By day of week',days,'Sat')+'</div>');
   }
 
+  /* ---- follower growth (NEW) — min–max scaled line, never 0-based ---- */
+  function flineSVG(pts){
+    var min=Math.min.apply(null,pts), max=Math.max.apply(null,pts), range=(max-min)||1, n=pts.length;
+    var P=pts.map(function(v,i){ var x=1+i/(n-1)*98; var y=8+(1-(v-min)/range)*84; return [x,y]; });
+    var line='M'+P.map(function(p){return p[0].toFixed(2)+' '+p[1].toFixed(2);}).join(' L');
+    var area=line+' L'+P[n-1][0].toFixed(2)+' 100 L'+P[0][0].toFixed(2)+' 100 Z';
+    return { svg:'<svg class="fchart-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path class="fchart-area" d="'+area+'"/><path class="fchart-line" d="'+line+'"/></svg>', x:P[n-1][0], y:P[n-1][1] };
+  }
+  function followers(collecting){
+    var capBlock='<div><div class="fchart-cap">Followers</div><div class="fchart-sub">Since you connected</div></div>';
+    if(collecting){
+      return '<div class="spanel"><div class="fchart-head">'+capBlock+'</div>'
+        +'<div class="fchart-collect"><span class="fchart-collect-mark">'+ic('chart',20)+'</span>'
+        +'<div class="fchart-collect-t">Collecting your follower data</div>'
+        +'<div class="fchart-collect-s">Threads gives only today\u2019s count, so the growth line fills in over the next few days.</div></div></div>';
+    }
+    var pts=[12010,12018,12009,12034,12041,12030,12058,12071,12064,12089,12102,12096,12118,12131,12120,12147,12160,12152,12178,12169,12194,12211,12203,12228,12241,12233,12259,12274,12266,12291,12312,12305,12331,12352,12344,12371,12398,12412,12424,12438];
+    var f=flineSVG(pts), first=pts[0], last=pts[pts.length-1], gain=last-first;
+    var gcls=gain>0?'up':(gain<0?'down':'flat'), gstr=(gain>0?'+':(gain<0?'\u2212':''))+Math.abs(gain).toLocaleString('en-US');
+    var head='<div class="fchart-head">'+capBlock
+      +'<div class="fchart-hl"><div class="fchart-count">'+last.toLocaleString('en-US')+'</div>'
+      +'<div class="fchart-gain fchart-gain--'+gcls+'">'+gstr+'</div></div></div>';
+    var foot='<div class="fchart-foot"><span>'+first.toLocaleString('en-US')+'</span><span>full history · not tied to the period</span><span>'+last.toLocaleString('en-US')+'</span></div>';
+    return '<div class="spanel">'+head+'<div class="fchart-plot">'+f.svg+'<span class="fchart-dot" style="left:'+f.x.toFixed(2)+'%;top:'+f.y.toFixed(2)+'%"></span></div>'+foot+'</div>';
+  }
+
   /* ---- spread ---- */
   var SPREAD={
     '7d':[['Viral','3\u00d7+ your average','tier-viral',1,14],['Good','1.5\u20133\u00d7 average','tier-good',2,29],['Average','0.7\u20131.5\u00d7 average','tier-average',3,43],['Weak','below 0.7\u00d7','tier-weak',1,14]],
@@ -711,18 +756,19 @@ td .mono2{font-family:var(--font-mono); font-size:11.5px; color:var(--subtle);}
   function col(label,inner,dark){ return '<div class="fr">'+head(label,dark)+frame(inner,dark)+'</div>'; }
   function set(id,html){ var e=document.getElementById(id); if(e) e.innerHTML=html; }
 
-  function dash(p){ return '<div class="stk">'+seg(p)+cards(p)+trendPanel(p)+topPosts(p)+bestTimes(p)+spread(p)+'</div>'; }
+  function dash(p){ return '<div class="stk">'+seg(p)+cards(p)+trendPanel(p)+followers(false)+topPosts(p)+bestTimes(p)+spread(p)+'</div>'; }
 
   function topbar(dark){
     return '<div class="tbdemo"><span class="tbt">Stats</span><span class="status-pill">'+ic('chart',13)+'Updated daily</span><span class="sp"></span><span class="ib">'+ic(dark?'sun':'clock',16)+'</span><span class="ib">'+ic('settings',16)+'</span></div>';
   }
 
   /* render */
-  set('f-dash', col('Light','<div class="stk">'+seg('7d')+cards('7d')+trendPanel('7d')+topPosts('7d')+bestTimes('7d')+spread('7d')+'</div>',false) + col('Dark','<div class="stk">'+seg('7d')+cards('7d')+trendPanel('7d')+topPosts('7d')+bestTimes('7d')+spread('7d')+'</div>',true));
+  set('f-dash', col('Light','<div class="stk">'+seg('7d')+cards('7d')+trendPanel('7d')+followers(false)+topPosts('7d')+bestTimes('7d')+spread('7d')+'</div>',false) + col('Dark','<div class="stk">'+seg('7d')+cards('7d')+trendPanel('7d')+followers(false)+topPosts('7d')+bestTimes('7d')+spread('7d')+'</div>',true));
   set('f-topbar', '<div class="frow">'+col('Light',topbar(false),false)+col('Dark',topbar(true),true)+'</div>');
   set('f-period', '<div class="frow">'+col('Light · 7 days',seg('7d'),false)+col('Dark · All time',seg('all'),true)+'</div>');
   set('f-cards', '<div class="frow">'+col('Light · 7 days',cards('7d'),false)+col('Dark · All time',cards('all'),true)+'</div>');
   set('f-trend', col('Light · 7 days (few, fills)',trendPanel('7d'),false) + col('Dark · Month (many, gap-filled)',trendPanel('month'),true));
+  set('f-followers', col('Light · with data (min–max line)',followers(false),false) + col('Dark · collecting',followers(true),true));
   set('f-top', '<div class="frow">'+col('Light',topPosts('7d'),false)+col('Dark',topPosts('7d'),true)+'</div>');
   set('f-best', col('Light',bestTimes('7d'),false) + col('Dark',bestTimes('7d'),true));
   set('f-spread', '<div class="frow">'+col('Light · 7 days',spread('7d'),false)+col('Dark · Month',spread('month'),true)+'</div>');
