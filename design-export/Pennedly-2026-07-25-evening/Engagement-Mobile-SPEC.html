@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Pennedly · Engagement — Mobile spec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="ds/tokens.css"/>
+<link rel="stylesheet" href="ds/components.css"/>
+<link rel="stylesheet" href="mobile/pennedly-mobile.css"/>
+<link rel="stylesheet" href="mobile/frame.css"/>
+<link rel="stylesheet" href="mobile/spec.css"/>
+<link rel="stylesheet" href="stats-followers.css"/>
+<link rel="stylesheet" href="engagement.css"/>
+</head>
+<body>
+<div class="layout">
+
+<aside class="toc">
+  <div class="doc-mark">
+    <span class="nib"><svg width="18" height="18" viewBox="0 0 512 512"><g fill="#ededed"><g transform="rotate(42 256 256)"><path d="M236 150 Q236 128 256 128 Q276 128 276 150 L276 300 L256 360 L236 300 Z"/><rect x="236" y="206" width="40" height="7"/></g></g></svg></span>
+    <b>Pennedly</b>
+  </div>
+  <div class="doc-sub">Mobile spec · Engagement</div>
+  <nav>
+    <a href="#s1"><span class="n">1</span> Panel identity</a>
+    <a href="#s2"><span class="n">2</span> The panel on a phone</a>
+    <a href="#s3"><span class="n">3</span> Metric selector + range</a>
+    <a href="#s4"><span class="n">4</span> Time series + tooltip</a>
+    <a href="#s5"><span class="n">5</span> Lifetime tiles</a>
+    <a href="#s6"><span class="n">6</span> States</a>
+    <a class="sub" href="#s6">— loading · thin · error</a>
+    <a href="#s7"><span class="n">7</span> The five metrics</a>
+    <a href="#s8"><span class="n">8</span> 360px</a>
+    <a href="#s9"><span class="n">9</span> Checklist</a>
+  </nav>
+  <div class="meta">
+    Panel: <b>Engagement</b><br>
+    Lives on: <code>/app/stats</code><br>
+    Sibling of: <b>Follower growth</b><br>
+    Phone breakpoint: <code>≤ 600px</code> · ref 390<br>
+    Desktop spec: <a class="link" href="Engagement-SPEC.html">Engagement-SPEC.html</a><br>
+    Screen: <a class="link" href="Stats-Mobile-SPEC.html">Stats-Mobile-SPEC.html</a>
+  </div>
+</aside>
+
+<main>
+  <div class="doc-head">
+    <p class="kicker">Pennedly · Mobile spec · Stats panel</p>
+    <h1 class="title">Engagement <span>· /app/stats panel</span> — phone</h1>
+    <p class="lede">The Engagement panel on a phone: a per-day time series of the selected metric (<strong>Views</strong> · Likes · Replies · Reposts · Quotes), a range control (30d / 90d / 1y), the account-wide <strong>lifetime tiles</strong>, and a per-point tooltip. It is the <strong>sibling</strong> of the Follower-growth chart and uses the same line treatment — only the axis differs (0-based, because this is a per-day metric, not a cumulative count). Same tokens and computed numbers as <a class="link" href="Engagement-SPEC.html">the desktop spec</a>; only the layout changes below 600px. Every state is shown, light and dark, on the real component layer at 390px.</p>
+    <div class="filerow">
+      <span class="chip chip--mob">engagement.css</span>
+      <span class="chip">pennedly-mobile.css</span>
+      <span class="chip">stats-followers.css</span>
+      <span class="chip">ds/tokens.css</span>
+    </div>
+  </div>
+
+  <div class="note good"><b>What does not change.</b> The five metrics, the gap-filled / continuous series, the 0-based axis with its faint floor rule, the «vs previous window» trend, the lifetime totals (the reliable account-wide figures), and the data honesty — Views real + backfilled, per-day Likes/Replies/Reposts/Quotes recent-only — are all identical to desktop. Mobile is a layout pass.</div>
+
+  <div class="note warn"><b>States are loading / thin-data / populated / error.</b> Loading is a skeleton that mirrors the populated layout so nothing reflows. Thin-data is an honest «building daily» treatment — never a fake flat line. Error offers a Retry.</div>
+
+  <!-- 1 -->
+  <section id="s1">
+    <h2><span class="h2n">1</span>Panel identity</h2>
+    <div class="tbl-wrap"><table><tbody>
+      <tr><th style="width:200px">Placement</th><td>A panel in the Stats stack on <code>/app/stats</code>, after Follower growth. Full column width, single column on a phone.</td></tr>
+      <tr><th>Shows</th><td>One metric's per-day series over a chosen window + the four lifetime totals.</td></tr>
+      <tr><th>Top→bottom (phone)</th><td>Caption + range → metric selector (scrolls) → headline (value + trend) → chart → x-axis → lifetime tiles (2-up).</td></tr>
+      <tr><th>Read-only</th><td>The metric tabs swap the series; the range swaps the window; the chart reveals a tooltip on tap/drag. Nothing mutates.</td></tr>
+    </tbody></table></div>
+  </section>
+
+  <!-- 2 -->
+  <section id="s2">
+    <h2><span class="h2n">2</span>The panel on a phone</h2>
+    <p class="section-note">The whole panel in context, light and dark — Views · 90d, populated. The metric selector scrolls horizontally; the lifetime tiles drop to a 2-up grid.</p>
+    <div class="stage" id="stg-panel"></div>
+  </section>
+
+  <!-- 3 -->
+  <section id="s3">
+    <h2><span class="h2n">3</span><span class="stg stg--fix">fix</span>Metric selector + range</h2>
+    <p class="section-note">Five metric tabs don't fit a phone row, so the selector becomes a <strong>horizontally scrollable</strong> segmented row — each tab keeps its icon so it stays compact, ≥44px hit. The range control (30d / 90d / 1y) sits at the top-right of the header and wraps below the caption if the locale is long.</p>
+    <div class="stage" id="stg-metric"></div>
+    <div class="note"><b>Rules.</b> <code>.emetric</code> is <code>overflow-x:auto</code>; tabs are <code>flex:1; min-width:max-content</code> so short labels fill and long ones scroll. Active tab = surface + shadow, icon tinted accent. The active tab drives the series, the headline value, and the headline trend.</div>
+  </section>
+
+  <!-- 4 -->
+  <section id="s4">
+    <h2><span class="h2n">4</span><span class="stg stg--fix">new</span>Time series + tooltip</h2>
+    <p class="section-note">Same line as Follower growth — accent 2.2px stroke, soft accent area, a dot on the latest point — but <strong>0-based</strong> with a faint floor rule. On a phone the plot is 132px; tap or drag across it to reveal the per-point tooltip (weekday + date and the value). Labels stay sparse (~5) so dates never wall up.</p>
+    <div class="stage" id="stg-chart"></div>
+    <div class="note"><b>0-based, on purpose.</b> A per-day metric belongs on a 0 floor. When older days of a Likes/Replies series are genuinely 0 the line rests on the floor and then climbs out of it — empty reads as empty, not as a plateau. (The Follower line is min–max because it is a count that should never touch 0.)</div>
+  </section>
+
+  <!-- 5 -->
+  <section id="s5">
+    <h2><span class="h2n">5</span><span class="stg stg--fix">new</span>Lifetime tiles</h2>
+    <p class="section-note">Below the chart, four small stat tiles for the account-wide lifetime totals — Likes · Replies · Reposts · Quotes. These are the <strong>reliable</strong> figures from the latest snapshot, independent of the metric or range above. On a phone they drop from 4-up to <strong>2-up</strong>; a null total renders «—».</p>
+    <div class="stage" id="stg-life"></div>
+  </section>
+
+  <!-- 6 -->
+  <section id="s6">
+    <h2><span class="h2n">6</span>States</h2>
+    <div class="statebar"><span class="st">loading</span><span class="st">thin-data</span><span class="st">populated</span><span class="st">error</span></div>
+    <p class="section-note">Loading mirrors the populated layout (skeleton selector + headline + chart + tiles) so nothing reflows. Thin-data plots the few real points honestly with a hatched «still building» stretch and a footnote — never a fake flat line. Error replaces the chart + tiles with a compact tile and a Retry.</p>
+    <div class="stage" id="stg-states"></div>
+  </section>
+
+  <!-- 7 -->
+  <section id="s7">
+    <h2><span class="h2n">7</span>The five metrics</h2>
+    <p class="section-note">Each metric over 90d. <strong>Views</strong> is a full, real, backfilled series. <strong>Likes / Replies / Reposts / Quotes</strong> are recent-only — the older two-thirds of the window are genuinely 0, so the line rests on the floor and then climbs. When the previous window has no data the trend reads «no prior window».</p>
+    <div class="stage" id="stg-metrics"></div>
+  </section>
+
+  <!-- 8 -->
+  <section id="s8">
+    <h2><span class="h2n">8</span>360px</h2>
+    <p class="section-note">No new breakpoint. The metric selector already scrolls, so longer labels stay reachable; the lifetime tiles stay 2-up (numbers are short); the headline number and chart get ~30px narrower; the chart's date labels are live DOM text and localize. The tooltip clamps to the plot edges so it never clips.</p>
+    <div class="stage" id="stg-narrow"></div>
+    <div class="note"><b>Localization.</b> Metric labels, the range labels, the «Lifetime totals» caption, the «vs previous …» sub, the «no prior window» / «building daily» copy, and the bucket/tooltip dates all localize (8 locales); DE/RU/UK run ~30–40% longer. Numbers are tabular and locale-formatted.</div>
+  </section>
+
+  <!-- 9 -->
+  <section id="s9">
+    <h2><span class="h2n">9</span>Checklist</h2>
+    <ul class="check">
+      <li>Panel sits in the Stats stack after Follower growth; outer card = <code>.m-spanel</code>; single column.</li>
+      <li>Metric selector scrolls horizontally; all 5 reachable (icon + label); ≥44px hit; active drives series + headline value + trend.</li>
+      <li>Range control 30d / 90d / 1y (default 90d), top-right, wraps under the caption on long locales.</li>
+      <li>Time series styled like the Follower line (accent 2.2 + soft area + latest dot) but <strong>0-based</strong> with a faint floor rule; 132px on a phone.</li>
+      <li>Per-point tooltip on tap/drag: weekday + date and the value; clamps to the plot edges; never clips.</li>
+      <li>Lifetime tiles: account-wide Likes / Replies / Reposts / Quotes; <strong>2-up</strong> on a phone; null → «—».</li>
+      <li>Honesty: Views real + backfilled; per-day Likes/Replies/Reposts/Quotes recent-only; mostly-zero-then-real reads as empty-then-real.</li>
+      <li>States: loading (skeleton, no reflow) · thin-data (honest «building daily») · populated · error (couldn't load + Retry).</li>
+      <li>Correct in light and dark; no hardcoded colour; sanity-checked at 360px.</li>
+    </ul>
+  </section>
+
+</main>
+</div>
+
+<script src="mobile/sprite.js"></script>
+<script src="mobile/mock.js"></script>
+<script src="engagement-render.js"></script>
+<script>
+(function () {
+  var M = window.MOCK, E = window.ENGAGE;
+  function set(id, html){ var e=document.getElementById(id); if(e) e.innerHTML=html; }
+  var top = M.top({ title:'Stats', pill:'success', pillText:'Updated daily', pillIcon:'chart', menu:true });
+
+  function ctxBody(state, metric, days, pin){
+    return E.panel({ metric:metric||'views', days:days||90, state:state||'ready', pin:pin, mob:true });
+  }
+
+  /* 2 — panel in context */
+  set('stg-panel',
+    M.col(M.light(), M.phone({ top:top, body:ctxBody('ready','views',90), tabs:false }), 'Engagement in context — selector, headline, 0-based line, lifetime tiles.') +
+    M.col(M.dark(), M.phone({ dark:true, top:top, body:ctxBody('ready','views',90), tabs:false }), 'Identical layout, dark tokens.'));
+
+  /* 3 — metric + range */
+  set('stg-metric',
+    M.col(M.light('Views active'), M.comp('<div class="m-spanel"><div class="echart-head"><div><div class="echart-cap">Engagement</div><div class="echart-sub">Views · per day · last 90 days</div></div>'+E.rangeBar(90)+'</div>'+E.metricBar('views')+'</div>'), 'Scrollable metric row + range control.') +
+    M.col(M.dark('Likes active'), M.comp('<div class="m-spanel"><div class="echart-head"><div><div class="echart-cap">Engagement</div><div class="echart-sub">Likes · per day · last 90 days</div></div>'+E.rangeBar(365)+'</div>'+E.metricBar('likes')+'</div>', {dark:true}), 'Range = 1y; metric = Likes.'));
+
+  /* 4 — time series + tooltip */
+  set('stg-chart',
+    M.col(M.light('Tooltip pinned'), M.comp('<div class="m-spanel">'+E.chartBlock({metric:'views', days:90, pin:0.62})+'</div>'), 'Tap/drag the plot for the day + value tooltip.') +
+    M.col(M.dark('Hover live'), M.comp('<div class="m-spanel">'+E.chartBlock({metric:'views', days:90})+'</div>', {dark:true}), '0-based line + soft area + latest dot.'));
+
+  /* 5 — lifetime tiles */
+  set('stg-life',
+    M.col(M.light('Populated'), M.comp('<div class="m-spanel">'+E.lifeBlock(false)+'</div>'), '2-up on a phone; reliable account-wide figures.') +
+    M.col(M.dark('Null (fresh)'), M.comp('<div class="m-spanel">'+E.lifeBlock(true)+'</div>', {dark:true}), 'No snapshot yet → «—».'));
+
+  /* 6 — states */
+  set('stg-states',
+    M.col(M.light('Loading'), M.phone({ top:top, tabs:false, body: ctxBody('loading') }), 'Skeleton mirrors the layout.') +
+    M.col(M.light('Thin data'), M.phone({ top:top, tabs:false, body: ctxBody('thin','views',90) }), '«Building daily» — honest, not a flat line.') +
+    M.col(M.dark('Error'), M.phone({ dark:true, top:top, tabs:false, body: ctxBody('error','views',90) }), 'Couldn\u2019t load + Retry.'));
+
+  /* 7 — metrics */
+  set('stg-metrics',
+    M.col(M.light('Views · real'), M.comp('<div class="m-spanel">'+E.chartBlock({metric:'views', days:90})+'</div>'), 'Full, real, backfilled series.') +
+    M.col(M.light('Likes · recent-only'), M.comp('<div class="m-spanel">'+E.chartBlock({metric:'likes', days:90})+'</div>'), 'Older days truly 0 → line on the floor, then climbs.') +
+    M.col(M.dark('Reposts · recent-only'), M.comp('<div class="m-spanel">'+E.chartBlock({metric:'reposts', days:90})+'</div>', {dark:true}), 'Mostly-zero-then-real, read gracefully.'));
+
+  /* 8 — 360 */
+  set('stg-narrow',
+    M.col(M.light('360 · panel'), M.phone({ variant:'sm', top:top, body:ctxBody('ready','views',90), tabs:false }), 'Same rules at 360 — selector scrolls, tiles stay 2-up.') +
+    M.col(M.dark('360 · quotes 1y'), M.comp('<div class="m-spanel">'+E.chartBlock({metric:'quotes', days:365})+'</div>', {dark:true, sm:true}), 'Sparse year window still reads cleanly.'));
+
+  E.wire(document);
+})();
+</script>
+</body>
+</html>

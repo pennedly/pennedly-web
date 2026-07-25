@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Pennedly · Studio — Scheduling spec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="ds/tokens.css"/>
+<link rel="stylesheet" href="ds/components.css"/>
+<link rel="stylesheet" href="studio.css"/>
+<link rel="stylesheet" href="calendar.css"/>
+<link rel="stylesheet" href="studio-schedule.css"/>
+<link rel="stylesheet" href="mobile/spec.css"/>
+<style>
+  html, body { height: auto; min-height: 100%; }
+  body { background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.62; }
+  .stage { display: flex; flex-wrap: wrap; gap: 28px 22px; align-items: flex-start; margin: 18px 0 6px; }
+  .devcol { display: flex; flex-direction: column; gap: 10px; flex: 0 0 auto; max-width: 100%; }
+  .devhead { display: inline-flex; align-items: center; gap: 7px; font-family: var(--font-mono); font-size: 11px; letter-spacing: .02em; color: var(--subtle); }
+  .devhead .dh-dot { width: 8px; height: 8px; border-radius: 9999px; background: var(--border); }
+  .devhead .dh-dot--dark { background: #0a0a0a; border: 1px solid #3a3a3a; }
+  .devhead .dh-dot--rec { background: var(--accent); }
+  .devcap { font-size: 12.5px; line-height: 1.45; color: var(--muted); max-width: 540px; text-wrap: pretty; }
+  .devcap b { color: var(--text); font-weight: 600; }
+  /* token-pinned web frame (light by default; .cf.dark flips via ds/tokens .dark) */
+  .cf { position: relative; flex: 0 0 auto; width: 560px; max-width: 100%; padding: 22px; border-radius: 22px; overflow: hidden; background: var(--color-bg); box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-text) 9%, transparent), 0 18px 40px -22px rgba(10,10,12,.35); }
+  .cf--tall { min-height: 540px; }
+  .cf .composer, .cf .draft { box-shadow: var(--shadow-sm); }
+  .recwrap { border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border)); background: color-mix(in srgb, var(--accent) 5%, var(--surface)); border-radius: 14px; padding: 5px; }
+  .recflag { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 10px; letter-spacing: .04em; text-transform: uppercase; color: var(--accent); padding: 3px 9px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 6px 0 2px; }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--muted); }
+  .legend .lg-dot { width: 10px; height: 10px; border-radius: 9999px; border: 1px solid rgba(0,0,0,.12); }
+</style>
+</head>
+<body>
+
+<!-- No NEW icon is needed: the entry point + dialog reuse IcClock, IcSend, IcCheck,
+     IcChevDown, IcExternal, IcCalendar — all already in the shipped set. -->
+<svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden" xmlns="http://www.w3.org/2000/svg"><defs></defs></svg>
+
+<div class="layout">
+
+<aside class="toc">
+  <div class="doc-mark">
+    <span class="nib"><svg width="18" height="18" viewBox="0 0 512 512"><g fill="#ededed"><g transform="rotate(42 256 256)"><path d="M236 150 Q236 128 256 128 Q276 128 276 150 L276 300 L256 360 L236 300 Z"/><rect x="236" y="206" width="40" height="7"/></g></g></svg></span>
+    <b>Pennedly</b>
+  </div>
+  <div class="doc-sub">Spec · Studio — Scheduling</div>
+  <nav>
+    <a href="#s0"><span class="n">0</span> The problem &amp; the ask</a>
+    <a href="#s1"><span class="n">1</span> Entry point on the card</a>
+    <a href="#s2"><span class="n">2</span> Dialog · Publish now</a>
+    <a href="#s3"><span class="n">3</span> Dialog · Schedule (empty)</a>
+    <a href="#s4"><span class="n">4</span> Dialog · Schedule (valid)</a>
+    <a href="#s5"><span class="n">5</span> Dialog · Schedule (too soon)</a>
+    <a href="#s6"><span class="n">6</span> Card · Scheduled</a>
+    <a href="#s7"><span class="n">7</span> Tab · Scheduled</a>
+    <a href="#s8"><span class="n">8</span> Tab · Scheduled empty</a>
+    <a href="#sval"><span class="n">＊</span> Anatomy &amp; values</a>
+    <a href="#scheck"><span class="n">✓</span> Checklist</a>
+  </nav>
+  <div class="meta">
+    Screen: <b>Studio</b> · scheduling<br>
+    Route: <code>/app</code> · ready card → dialog<br>
+    Extends: <a class="link" href="Studio.html">Studio.html</a> · <a class="link" href="Studio-SPEC.html">Studio-SPEC</a><br>
+    Mobile: <a class="link" href="Studio-Schedule-Mobile-SPEC.html">Studio-Schedule-Mobile-SPEC</a><br>
+    Calendar: <a class="link" href="Calendar-SPEC.html">Calendar-SPEC</a> (reschedule / retry)<br>
+    New layer: <code>studio-schedule.css</code> (+ <code>calendar.css</code> controls)<br>
+    Live code: <code>StudioParts.tsx</code><br>
+    System: <a class="link" href="Pennedly Design System.html">Pennedly DS</a>
+  </div>
+</aside>
+
+<main>
+  <div class="doc-head">
+    <p class="kicker">Pennedly · Spec · Studio — publish-later (scheduling)</p>
+    <h1 class="title">Scheduling <span>/app</span> — make “schedule for later” discoverable</h1>
+    <p class="lede">Today the only way to find scheduling is to press <strong>Publish</strong>, then spot a “Publish now / Schedule” switch <em>inside</em> the dialog — you can’t tell scheduling exists until you’ve already committed to publishing. This spec <strong>moves the entry point onto the ready draft card</strong>: a labelled <strong>Schedule</strong> button beside Publish (finalized from the reviewed options). Tapping it lands in the confirm dialog, opened in the right mode. It also documents the dialog’s <strong>Publish&nbsp;now / Schedule</strong> modes (Date + Time + a UTC echo, ≥ now + 5 min), the <strong>“Scheduled”</strong> card state, and the <strong>Scheduled</strong> tab. Reschedule / unschedule / retry live on the <a class="link" href="Calendar-SPEC.html">Calendar</a> — Studio links out. Every state is the real card + dialog (<code>studio.css</code> + <code>calendar.css</code> + <code>studio-schedule.css</code>), light and dark.</p>
+    <div class="filerow">
+      <span class="chip">studio-schedule.css</span>
+      <span class="chip">calendar.css</span>
+      <span class="chip">StudioParts.tsx</span>
+      <span class="chip">studio.css</span>
+      <span class="chip">ds/tokens.css</span>
+    </div>
+  </div>
+
+  <div class="note good"><b>Extend, don’t redesign.</b> The dialog, its account preview, char-meter and the <code>Publish&nbsp;now / Schedule</code> control are the shipped controls (specced in the <a class="link" href="Calendar-SPEC.html">Calendar spec</a>). The only new thing is the <b>card-level entry point</b>. <b>Publish-now stays one tap</b> — surfacing scheduling can’t slow the common case. Scheduling requires <b>≥ now + 5 min</b> and always echoes the local time as <b>UTC</b>. No new icon is needed.</div>
+
+  <!-- 0 -->
+  <section id="s0">
+    <h2><span class="h2n">0</span>The problem &amp; the ask</h2>
+    <p class="section-note">Scheduling is invisible until you’ve pressed Publish. The fix: make “Schedule” visible on the ready card itself, without pushing Publish out of the one-tap common case. Below, the same ready card with each proposed entry point.</p>
+    <div class="fix">
+      <div class="fix-bad"><h5>Today — hidden</h5><p>The ready card foot is just <b>Publish</b>. Scheduling only appears <em>after</em> you open the dialog and find the “Publish now / Schedule” switch — you can’t tell it exists.</p></div>
+      <div class="fix-good"><h5>Proposed — visible on the card</h5><p>A scheduling affordance sits on the ready card foot beside Publish, so “later” is discoverable up front. The dialog then opens straight into the matching mode.</p></div>
+    </div>
+  </section>
+
+  <!-- 1 -->
+  <section id="s1">
+    <h2><span class="h2n">1</span>Entry point on the card</h2>
+    <p class="section-note">The finalized entry on the ready card foot: a labelled <strong>Schedule</strong> (clock) beside the primary <strong>Publish</strong>, with the ⋯ overflow. “Schedule for later” is visible up front — the discovery failure is fixed — while Publish stays the one-tap common case. Tapping Schedule opens the dialog in Schedule mode; Publish opens it in Publish-now mode.</p>
+    <div class="stage" id="stg-entry"></div>
+    <div class="note"><b>Why two labelled buttons.</b> Of the reviewed options, this is the most discoverable — “Schedule” is a visible, named action rather than hidden behind a caret or an ambiguous icon (which is the very failure we’re fixing). Publish keeps its primary weight, so nothing about the common case slows down.</div>
+    <div class="legend">
+      <span><span class="lg-dot" style="background:#fff"></span>Light frame</span>
+      <span><span class="lg-dot" style="background:#0a0a0a"></span>Dark frame</span>
+      <span><span class="lg-dot" style="background:var(--surface-2)"></span>Each frame is the real ready card at the feed-column width</span>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section id="s2">
+    <h2><span class="h2n">2</span>Dialog · Publish now</h2>
+    <p class="section-note">The confirm dialog, opened in <strong>Publish now</strong> mode (the default, and where the “Publish” entry lands). Account preview + post text + char-meter; the <code>Publish&nbsp;now / Schedule</code> segmented control sits at the top as an escape hatch. Primary: <strong>Publish now</strong> (<code>IcCheck</code>).</p>
+    <div class="stage" id="stg-now"></div>
+  </section>
+
+  <!-- 3 -->
+  <section id="s3">
+    <h2><span class="h2n">3</span>Dialog · Schedule (empty)</h2>
+    <p class="section-note">Opened in <strong>Schedule</strong> mode (where the “Schedule” entry lands): empty Date + Time, a hint to pick a time ≥ 5 min out, and the <strong>Schedule</strong> primary <strong>disabled</strong> until a valid time is set.</p>
+    <div class="stage" id="stg-empty"></div>
+  </section>
+
+  <!-- 4 -->
+  <section id="s4">
+    <h2><span class="h2n">4</span>Dialog · Schedule (valid)</h2>
+    <p class="section-note">Date + Time filled with a time ≥ 5 min out. The hint echoes the chosen local time as UTC — <strong>“= 14:30 UTC · at least 5 min out”</strong> — and the primary becomes <strong>“Schedule for Sat, Jun 16 · 14:30”</strong> (<code>IcClock</code>), enabled.</p>
+    <div class="stage" id="stg-valid"></div>
+  </section>
+
+  <!-- 5 -->
+  <section id="s5">
+    <h2><span class="h2n">5</span>Dialog · Schedule (too soon)</h2>
+    <p class="section-note">A time less than 5 minutes out: the hint turns danger and the <strong>Schedule</strong> primary stays <strong>disabled</strong> — the picked Date/Time persist so the user only nudges the time.</p>
+    <div class="stage" id="stg-soon"></div>
+  </section>
+
+  <!-- 6 -->
+  <section id="s6">
+    <h2><span class="h2n">6</span>Card · Scheduled</h2>
+    <p class="section-note">Once scheduled, the draft gets an accent <strong>“Scheduled”</strong> badge and its foot reads <strong>🕐 “Goes out Sat, Jun 16, 14:30”</strong> (local). In Studio this is mostly <strong>read-only</strong> — the ⋯-menu and a “Manage on Calendar” link route to the <a class="link" href="Calendar-SPEC.html">Calendar</a>, where reschedule / unschedule / publish-now / retry live.</p>
+    <div class="stage" id="stg-card"></div>
+  </section>
+
+  <!-- 7 -->
+  <section id="s7">
+    <h2><span class="h2n">7</span>Tab · Scheduled (active)</h2>
+    <p class="section-note">A scheduled draft is a status <strong>between ready and published</strong>: it moves to a <strong>“Scheduled”</strong> tab (accent dot) in the Studio status filter.</p>
+    <div class="stage" id="stg-tab"></div>
+  </section>
+
+  <!-- 8 -->
+  <section id="s8">
+    <h2><span class="h2n">8</span>Tab · Scheduled (empty)</h2>
+    <p class="section-note">The empty-state for the Scheduled tab when nothing is queued — with a way into the Calendar.</p>
+    <div class="stage" id="stg-emptytab"></div>
+  </section>
+
+  <!-- values -->
+  <section id="sval">
+    <h2><span class="h2n">＊</span>Anatomy &amp; exact values</h2>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:200px">Element / class</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td>Entry point</td><td>Ready card foot = ⋯ + <code>.btn--secondary</code> “Schedule” (<code>IcClock</code>) + <code>.btn--primary</code> “Publish” (<code>IcSend</code>). Both labelled; Publish stays primary and one-tap.</td></tr>
+        <tr><td><code>.sched-seg</code></td><td>Dialog top: <b>Publish now</b> (<code>IcSend</code>) / <b>Schedule</b> (<code>IcClock</code>) segmented control. Opens pre-set to the entry’s mode; stays as an escape hatch.</td></tr>
+        <tr><td><code>.sched-fields</code></td><td>Schedule mode: <code>grid 1fr 1fr</code> Date + Time (<code>.sched-pick</code> faux picker) + <code>.sched-hint</code>. Stacks &lt; 760px.</td></tr>
+        <tr><td><code>.sched-hint</code></td><td>Empty → “pick a time ≥ 5 min out”; valid → <b>“= 14:30 UTC · at least 5 min out”</b> (tabular); too-soon → <code>.sched-hint--bad</code> (danger). Always echoes local → UTC.</td></tr>
+        <tr><td>Primary button</td><td>now → “Publish now” (<code>IcCheck</code>); valid → “Schedule for Sat, Jun 16 · 14:30” (<code>IcClock</code>); empty/too-soon → “Schedule” <code>disabled</code>.</td></tr>
+        <tr><td><code>.draft-badge</code></td><td>Scheduled card head: accent pill, <code>IcClock</code> + “Scheduled”.</td></tr>
+        <tr><td><code>.sched-goesout</code></td><td>Foot meta: <code>IcClock</code> (accent) + “Goes out <b>Sat, Jun 16, 14:30</b>” (tabular, local).</td></tr>
+        <tr><td><code>.sched-manage</code> + ⋯</td><td>“Manage on Calendar →” link + a <code>.card-menu</code> (“Managed on the Calendar”: Reschedule / Unschedule / Publish now, each routes out). Studio doesn’t rebuild these.</td></tr>
+        <tr><td><code>.filter</code> · Scheduled</td><td>New status tab between Ready and Published; <code>.fdot.dot-scheduled</code> = accent.</td></tr>
+        <tr><td><code>.empty</code></td><td>Scheduled empty: <code>IcClock</code> + “Nothing scheduled” + a Calendar CTA.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- checklist -->
+  <section id="scheck">
+    <h2><span class="h2n">✓</span>Checklist</h2>
+    <ul class="check">
+      <li>Scheduling is discoverable on the ready card itself — a labelled <b>Schedule</b> button beside Publish.</li>
+      <li>Publish stays the one-tap primary; the common case isn’t slowed.</li>
+      <li>Dialog · Publish now: account + text + char-meter + the now/schedule control; primary “Publish now”.</li>
+      <li>Dialog · Schedule empty: empty Date/Time, ≥5-min hint, Schedule disabled.</li>
+      <li>Dialog · Schedule valid: “= 14:30 UTC · at least 5 min out”; primary “Schedule for …” enabled.</li>
+      <li>Dialog · Schedule too soon: danger hint; Schedule disabled; picked time persists.</li>
+      <li>Card · Scheduled: accent “Scheduled” badge + “Goes out …” foot + ⋯/Calendar link (read-only in Studio).</li>
+      <li>Tab · Scheduled between Ready and Published (accent dot); + a per-tab empty state.</li>
+      <li>Reschedule / unschedule / retry are linked out to the Calendar, not rebuilt here.</li>
+      <li>≥ now + 5 min enforced; local time always echoed as UTC; numbers tabular; labels wrap on long locales.</li>
+      <li>Correct in light and dark; no hardcoded colour; no new icon.</li>
+    </ul>
+  </section>
+
+</main>
+</div>
+
+<template id="__bundler_thumbnail">
+  <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><rect width="512" height="512" rx="115" fill="#171717"/><g fill="none" stroke="#ededed" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"><circle cx="256" cy="256" r="120"/><path d="M256 192v68l44 30"/></g></svg>
+</template>
+
+<script src="mobile/sprite.js"></script>
+<script src="studio-schedule-build.js"></script>
+<script src="studio-schedule-spec.js"></script>
+</body>
+</html>

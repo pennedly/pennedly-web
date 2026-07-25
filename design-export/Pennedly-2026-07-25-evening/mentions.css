@@ -1,0 +1,62 @@
+/* mentions.css — Pennedly "Mentions" screen (read-only monitoring).
+   Built on the ink-on-paper tokens + Studio shell/card classes (studio.css) +
+   the shared shell. Calm and scannable; no hardcoded hex. */
+
+/* page intro */
+.page-intro { display: flex; flex-direction: column; gap: 4px; }
+.page-intro h1 { font-size: var(--text-h1); font-weight: 600; letter-spacing: -0.015em; margin: 0; }
+.page-intro p { font-size: var(--text-body); color: var(--color-text-muted); margin: 0; max-width: 64ch; text-wrap: pretty; }
+
+/* ============================ MENTION CARD ========================== */
+.ment-card {
+  position: relative;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 15px 18px 13px;
+  animation: card-in var(--duration-slow) var(--ease-entrance) both;
+  transition: border-color var(--duration-base) var(--ease-standard),
+              box-shadow var(--duration-base) var(--ease-standard);
+}
+.ment-card:hover { border-color: color-mix(in srgb, var(--color-text) 14%, var(--color-border)); }
+
+.ment-head { display: flex; align-items: center; gap: 11px; }
+.ment-id { min-width: 0; flex: 1 1 auto; }
+.ment-name { font-size: var(--text-small); font-weight: 600; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ment-sub { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: var(--text-caption); color: var(--color-text-subtle); margin-top: 2px; }
+.ment-sub > span { white-space: nowrap; }
+.ment-sub .sep { opacity: 0.6; }
+
+/* top-right "open on Threads" icon link */
+.ment-open-ico {
+  flex: 0 0 auto; width: 32px; height: 32px; display: grid; place-items: center;
+  border-radius: var(--radius-md); border: 1px solid transparent;
+  background: transparent; color: var(--color-text-subtle);
+  transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+}
+.ment-open-ico:hover { background: var(--color-surface-2); color: var(--color-text); }
+
+.ment-text { font-size: var(--text-body); line-height: 1.6; color: var(--color-text); margin: 12px 0 0; text-wrap: pretty; }
+.at-mention { color: var(--color-accent); font-weight: 500; }
+
+.ment-foot {
+  display: flex; align-items: center; gap: 10px;
+  margin-top: 13px; padding-top: 12px; border-top: 1px solid var(--color-border);
+}
+.ment-foot-spacer { flex: 1 1 auto; }
+
+/* translate affordance (foreign-language mentions → the viewer's language) */
+.translate-row { display: flex; align-items: center; gap: 8px; flex: 1 1 auto; min-width: 0; flex-wrap: wrap; }
+.translate-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: var(--text-caption); font-weight: 500; color: var(--color-accent);
+  background: none; border: none; cursor: pointer; padding: 2px 0;
+}
+.translate-btn:hover { text-decoration: underline; text-underline-offset: 2px; }
+.translate-note { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-caption); color: var(--color-text-subtle); }
+
+/* ============================ RESPONSIVE ============================ */
+@media (max-width: 560px) {
+  .ment-foot { flex-wrap: wrap; }
+}

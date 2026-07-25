@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pennedly · Рутина упоминаний — Слой 3, телефон (спецификация)</title>
+<meta name="description" content="Телефонный слой переопределений «Правил дома» для рутины упоминаний: частота, тихие часы, лимит, аудитория — одна колонка, контролы на всю ширину, наследование по умолчанию." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="ds/tokens.css" />
+<link rel="stylesheet" href="ds/components.css" />
+<link rel="stylesheet" href="scenarios.css" />
+<link rel="stylesheet" href="scenarios-redesign.css" />
+<link rel="stylesheet" href="scenario-editor.css" />
+<link rel="stylesheet" href="recipe-editor.css" />
+<link rel="stylesheet" href="autopilot.css" />
+<link rel="stylesheet" href="autopilot-publishmode.css" />
+<link rel="stylesheet" href="mention-routines.css" />
+<style>
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%; scroll-behavior:smooth;}
+  body{margin:0; background:var(--color-bg); color:var(--color-text); font-family:var(--font-sans); font-size:15px; line-height:1.6; -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;}
+  .wrap{max-width:1160px; margin:0 auto; padding:46px 40px 130px;}
+  .kicker{font-family:var(--font-mono); font-size:12px; letter-spacing:0.05em; color:var(--color-accent); text-transform:uppercase; margin:0 0 12px;}
+  .doc-title{font-size:34px; line-height:1.08; letter-spacing:-0.025em; font-weight:600; margin:0 0 14px; text-wrap:balance;}
+  .doc-title span{color:var(--color-text-subtle); font-weight:500;}
+  .doc-lede{font-size:16px; color:var(--color-text-muted); max-width:82ch; margin:0 0 22px; text-wrap:pretty;}
+  .doc-lede b{color:var(--color-text); font-weight:600;}
+  .doc-lede a{color:var(--color-accent);}
+
+  .chips{display:flex; flex-wrap:wrap; gap:7px; margin:0 0 6px;}
+  .chip{font-family:var(--font-mono); font-size:11.5px; padding:5px 11px; border-radius:9999px; background:var(--color-surface); border:1px solid var(--color-border); color:var(--color-text-muted);}
+  .chip b{color:var(--color-text); font-weight:600;}
+
+  section.block{margin-top:58px; scroll-margin-top:20px;}
+  .block-head{border-top:2px solid var(--color-text); padding-top:18px; margin-bottom:14px;}
+  .block-name{display:flex; align-items:baseline; gap:13px; flex-wrap:wrap; margin:0 0 7px;}
+  .block-name .bn-n{font-family:var(--font-mono); font-size:20px; font-weight:500; color:var(--color-accent); letter-spacing:-0.01em;}
+  .block-name h2{font-size:24px; font-weight:600; letter-spacing:-0.015em; margin:0;}
+  .block-idea{font-size:15px; color:var(--color-text-muted); max-width:86ch; margin:0; text-wrap:pretty;}
+  .block-idea b{color:var(--color-text); font-weight:600;}
+
+  .frow{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
+  @media(max-width:900px){ .frow{grid-template-columns:1fr;} }
+  .fr{display:flex; flex-direction:column; gap:10px; min-width:0;}
+  .fr-head{display:inline-flex; align-items:center; gap:8px; font-family:var(--font-mono); font-size:11.5px; letter-spacing:.02em; color:var(--color-text-subtle);}
+  .fr-head .dh{width:8px; height:8px; border-radius:9999px; background:var(--color-border);}
+  .fr-head .dh--dark{background:#0a0a0a; border:1px solid #3a3a3a;}
+  .fr-head b{color:var(--color-text-muted); font-weight:600;}
+  .frame{background:var(--color-bg); color:var(--color-text); border:1px solid var(--color-border); border-radius:18px; padding:24px; overflow:hidden; display:grid; place-items:center;}
+  .frame.dark{background:#0a0a0a; border-color:#2b2a27;}
+  .frame *{box-sizing:border-box;}
+
+  code{font-family:var(--font-mono); font-size:0.86em; background:var(--color-surface-2); border:1px solid var(--color-border); padding:1px 5px; border-radius:5px;}
+  a.link{color:var(--color-accent); text-decoration:underline; text-underline-offset:2px;}
+  .note{border:1px solid var(--color-border); border-left:3px solid var(--color-accent); background:var(--color-surface); border-radius:10px; padding:12px 16px; margin:16px 0; font-size:13.5px; color:var(--color-text-muted); line-height:1.55;}
+  .note.warn{border-left-color:var(--color-warning);}
+  .note b{color:var(--color-text);}
+  .check{list-style:none; padding:0; margin:0;}
+  .check li{position:relative; padding:7px 0 7px 28px; border-bottom:1px dashed var(--color-border); font-size:13.5px; line-height:1.55;}
+  .check li:last-child{border-bottom:none;}
+  .check li::before{content:"\2610"; position:absolute; left:2px; top:6px; color:var(--color-text-subtle); font-size:15px;}
+  .check b{color:var(--color-text);}
+  .foot-meta{margin-top:26px; padding-top:18px; border-top:1px solid var(--color-border); font-size:12.5px; color:var(--color-text-subtle); line-height:1.7;}
+
+  /* ── phone shell (device) — forces mobile layout regardless of doc width ── */
+  .ph{ width:390px; max-width:100%; background:var(--color-bg); border:1px solid var(--color-border); border-radius:30px; overflow:hidden; box-shadow:var(--shadow-lg); position:relative; }
+  .ph--sm{ width:360px; }
+  .ph-status{ display:flex; align-items:center; justify-content:space-between; padding:9px 20px 4px; font-size:12px; font-weight:600; color:var(--color-text); font-variant-numeric:tabular-nums; }
+  .ph-status .ps-r{ letter-spacing:2px; color:var(--color-text-muted); }
+  .ph-top{ display:flex; align-items:center; gap:11px; padding:6px 15px 12px; border-bottom:1px solid var(--color-border); }
+  .ph-top .pt-hamb{ width:34px; height:34px; display:grid; place-items:center; border:1px solid var(--color-border); border-radius:10px; background:var(--color-surface); color:var(--color-text-muted); flex:0 0 auto; }
+  .ph-top .pt-title{ font-size:var(--text-h3); font-weight:600; letter-spacing:-0.006em; }
+  .ph-top .pt-spacer{ flex:1 1 auto; }
+  .ph-top .pt-ic{ width:34px; height:34px; display:grid; place-items:center; border:1px solid var(--color-border); border-radius:10px; background:var(--color-surface); color:var(--color-text-muted); }
+  .ph-body{ padding:15px; display:flex; flex-direction:column; gap:14px; max-height:720px; overflow:hidden; }
+  .ph-body--tall{ max-height:860px; }
+
+  /* force single-column / full-width inside the phone (media queries can't see container width) */
+  .ph .rce{ max-width:none; }
+  .ph .rce-layers{ gap:0; }
+  .ph .rl-head{ padding:14px 15px; }
+  .ph .rl-body{ padding:4px 14px 17px; }
+  .ph .seg{ width:100%; flex-wrap:wrap; }
+  .ph .seg .seg-opt{ flex:1 1 0; text-align:center; }
+  .ph .seg--wrap .seg-opt{ flex:0 1 auto; }
+  .ph .aud-grid{ grid-template-columns:1fr; }
+  .ph .ml3-main{ flex-wrap:wrap; }
+  .ph .ml3-text{ flex-basis:calc(100% - 42px); }
+  .ph .ml3-btn, .ph .ml3-revert{ margin-left:42px; margin-top:4px; }
+  .ph .ml3-quiet .field{ min-width:120px; }
+  .ph .rc-step button{ width:36px; height:36px; }
+  .ph .rc-step .rcs-val{ height:36px; }
+
+  @media(max-width:760px){ .wrap{padding:30px 18px 90px;} .doc-title{font-size:27px;} .frame{padding:16px 10px;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="kicker">Pennedly · рутина упоминаний · слой 3 · телефон</p>
+  <h1 class="doc-title">Только для этой рутины <span>— телефонный слой</span></h1>
+  <p class="doc-lede">Парная мобильная спека к <a class="link" href="Mention-Routine-Layer3-SPEC.html">Mention-Routine-Layer3-SPEC</a>. Та же общая правда рендера (<code>mention-routines-build.js</code>), в телефоне: панель переопределений — <b>одна колонка</b>, строки на всю ширину, сегмент частоты и галерея аудитории тянутся, поля тихих часов и степпер лимита крупные (≥ 44px). Модель прежняя: <b>наследовать по умолчанию, переопределять по одному полю</b>. Референс 390px, проверка 360. Светлая и тёмная.</p>
+  <div class="chips">
+    <span class="chip">референс <b>390px</b> · проверка 360</span>
+    <span class="chip">панель — 1 колонка</span>
+    <span class="chip">сегмент частоты · галерея — full-width</span>
+    <span class="chip">тихие часы · степпер ≥44px</span>
+  </div>
+
+  <!-- 1 -->
+  <section class="block" id="inherit">
+    <div class="block-head"><div class="block-name"><span class="bn-n">01</span><h2>Дефолт · всё наследуется</h2></div>
+      <p class="block-idea">Свежая рутина: четыре спокойные строки-наследника, у каждой бейдж «как в Правилах дома», «Сейчас действует» с реальным значением аккаунта и кнопка «Своё значение». Счётчик — «всё как в Правилах дома».</p></div>
+    <div class="frow" id="f-inherit"></div>
+  </section>
+
+  <!-- 2 -->
+  <section class="block" id="freq">
+    <div class="block-head"><div class="block-name"><span class="bn-n">02</span><h2>Частота · «своё значение»</h2></div>
+      <p class="block-idea">Строка помечена акцентной кромкой и бейджем «своё». Сегмент из 5 значений (сразу … раз в день) переносится на всю ширину; под ним — «В Правилах дома: раз в час».</p></div>
+    <div class="frow" id="f-freq"></div>
+  </section>
+
+  <!-- 3 -->
+  <section class="block" id="quiet">
+    <div class="block-head"><div class="block-name"><span class="bn-n">03</span><h2>Тихие часы · пара и половина</h2></div>
+      <p class="block-idea">Пара полей «с … до …» в локальном времени. Половина окна — невалидно: подсветка + инлайн-требование, сохранить нельзя. Плюс «без тихих часов».</p></div>
+    <div class="frow" id="f-quiet"></div>
+  </section>
+
+  <!-- 4 -->
+  <section class="block" id="aud">
+    <div class="block-head"><div class="block-name"><span class="bn-n">04</span><h2>Кому отвечать · галерея в столбик</h2></div>
+      <p class="block-idea">Пункт последний и второстепенный. Галерея «фанатам / все кроме троллей / вопросы / свой вариант» встаёт в один столбик; «свой вариант» раскрывает поле (пустое = невалидно). Тролли отсекаются всегда.</p></div>
+    <div class="frow" id="f-aud"></div>
+  </section>
+
+  <!-- 5 -->
+  <section class="block" id="summary">
+    <div class="block-head"><div class="block-name"><span class="bn-n">05</span><h2>Свёрнутая сводка + несколько своих</h2></div>
+      <p class="block-idea">Свёрнутый слой: «Всё как в Правилах дома» ↔ «N настроек своих». Рядом — раскрытая панель с несколькими «своими» и «Вернуть всё к Правилам дома».</p></div>
+    <div class="frow" id="f-summary"></div>
+  </section>
+
+  <!-- 6 -->
+  <section class="block" id="check">
+    <div class="block-head"><div class="block-name"><span class="bn-n">06</span><h2>Чек-лист · телефон</h2></div></div>
+    <ul class="check">
+      <li><b>Панель</b> — одна колонка: лид → счётчик → 4 строки; строки, драверы и контролы на всю ширину.</li>
+      <li><b>Частота</b> — сегмент из 5 значений переносится, не клипается на 360px.</li>
+      <li><b>Тихие часы</b> — пара полей крупная; половина окна невалидна (инлайн-требование), сохранение блокируется; «без тихих часов» доступно.</li>
+      <li><b>Лимит</b> — степпер ≥ 44px; <b>аудитория</b> — галерея в один столбик, «свой вариант» с обязательным описанием, тролли отсекаются всегда.</li>
+      <li>Наследование по умолчанию; «своё» — акцентная кромка + бейдж; свёрнутая сводка в двух формах; мастер-выкл — мягкая заметка.</li>
+      <li>Обе темы, только токены <code>ds/tokens.css</code>, один акцент; проверено на 360px.</li>
+    </ul>
+    <div class="foot-meta">
+      Общая правда рендера: <code>mention-routines-build.js</code> + <code>mention-routines.css</code> (без расхождений с десктопом)<br>
+      Десктопная спека: <a class="link" href="Mention-Routine-Layer3-SPEC.html">Mention-Routine-Layer3-SPEC</a>
+    </div>
+  </section>
+
+</div>
+
+<script src="mention-routines-build.js"></script>
+<script>
+(function(){
+  var MR = window.MR, ic = MR.ic;
+  function set(id,h){ var e=document.getElementById(id); if(e) e.innerHTML=h; }
+  function head(label,dark){ return '<div class="fr-head"><span class="dh'+(dark?' dh--dark':'')+'"></span>'+label+'</div>'; }
+  function frame(inner,dark){ return '<div class="frame'+(dark?' dark':'')+'">'+inner+'</div>'; }
+  function fr(label,inner,dark){ return '<div class="fr">'+head(label,dark)+frame(inner,dark)+'</div>'; }
+  function phone(inner, opts){
+    opts=opts||{};
+    var top = opts.top===false ? '' :
+      '<div class="ph-top"><span class="pt-hamb">'+ic('back',18)+'</span><span class="pt-title">'+(opts.title||'Правка рутины')+'</span><span class="pt-spacer"></span><span class="pt-ic">'+ic('info',16)+'</span></div>';
+    return '<div class="ph'+(opts.sm?' ph--sm':'')+'">'
+      +'<div class="ph-status"><span>9:41</span><span class="ps-r">•••</span></div>'
+      + top
+      +'<div class="ph-body'+(opts.tall?' ph-body--tall':'')+'">'+inner+'</div></div>';
+  }
+
+  /* 1 · all inherited */
+  set('f-inherit',
+    fr('Light · 390px · всё наследуется', phone(MR.layer3Card({l3over:[]}), {tall:true}), false)
+    + fr('Dark · 360px · то же', phone(MR.layer3Card({l3over:[]}), {sm:true, tall:true}), true));
+
+  /* 2 · freq own */
+  set('f-freq',
+    fr('Light · 390px · частота = «несколько раз в день»', phone(MR.layer3Card({l3over:['freq'],l3freq:'multi'}), {tall:true}), false)
+    + fr('Dark · 390px · то же', phone(MR.layer3Card({l3over:['freq'],l3freq:'multi'}), {tall:true}), true));
+
+  /* 3 · quiet pair + invalid half */
+  set('f-quiet',
+    fr('Light · 390px · валидная пара 22:00–09:00', phone(MR.layer3Card({l3over:['quiet'],l3quietStart:'22:00',l3quietEnd:'09:00'}), {tall:true}), false)
+    + fr('Light · 360px · половина окна (невалидно)', phone(MR.layer3Card({l3over:['quiet'],l3quietHalf:true}), {sm:true, tall:true}), false));
+
+  /* 4 · audience custom */
+  set('f-aud',
+    fr('Light · 390px · «свой вариант» заполнен', phone(MR.layer3Card({l3over:['aud'],l3aud:'custom',l3audPrompt:'тем, кто пишет по делу и задаёт вопросы про работу'}), {tall:true}), false)
+    + fr('Dark · 360px · «свой вариант» пусто (невалидно)', phone(MR.layer3Card({l3over:['aud'],l3aud:'custom'}), {sm:true, tall:true}), true));
+
+  /* 5 · collapsed summary + several own */
+  set('f-summary',
+    fr('Light · свёрнут · «Всё как в Правилах дома» / «2 настройки свои»', phone('<div class="mr-hublist" style="display:flex;flex-direction:column;gap:12px">'+MR.layer3Card({collapsed:true,l3over:[]})+MR.layer3Card({collapsed:true,l3over:['freq','quiet']})+'</div>', {top:false}), false)
+    + fr('Dark · 390px · три свои + «Вернуть всё»', phone(MR.layer3Card({l3over:['freq','limit','aud'],l3freq:'30',l3limit:12,l3aud:'q',dark:true}), {tall:true}), true));
+})();
+</script>
+</body>
+</html>

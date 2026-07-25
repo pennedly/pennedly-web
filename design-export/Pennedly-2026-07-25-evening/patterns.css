@@ -1,0 +1,131 @@
+/* patterns.css — Pennedly "Pattern study" screen.
+   An insight moment: findings backed by evidence. Built on ink-on-paper tokens
+   + Studio shell classes (studio.css). One quiet accent. No hardcoded hex. */
+
+/* top-bar status now uses the shared .status-pill (ds/components.css). */
+
+.page-intro { display: flex; flex-direction: column; gap: 4px; }
+.page-intro h1 { font-size: var(--text-h1); font-weight: 600; letter-spacing: -0.015em; margin: 0; }
+.page-intro p { font-size: var(--text-body); color: var(--color-text-muted); margin: 0; max-width: 62ch; }
+
+/* ============================ RESULTS HEAD ========================== */
+.study-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.study-head .sh-title { font-size: var(--text-h2); font-weight: 600; letter-spacing: -0.01em; }
+.study-head .sh-cap { font-size: var(--text-small); color: var(--color-text-subtle); margin-top: 4px; }
+
+/* ============================ PATTERN CARD ========================== */
+.pattern-card {
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 20px 22px 18px;
+  animation: card-in var(--duration-slow) var(--ease-entrance) both;
+  transition: border-color var(--duration-base) var(--ease-standard);
+}
+.pattern-card:hover { border-color: color-mix(in srgb, var(--color-text) 12%, var(--color-border)); }
+
+.pc-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.kind-tag {
+  display: inline-flex; align-items: center; gap: 5px; flex: 0 0 auto;
+  font-size: var(--text-caption); font-weight: 600; letter-spacing: 0.02em;
+  padding: 3px 9px; border-radius: var(--radius-full);
+  background: var(--color-surface-2); color: var(--color-text-muted); border: 1px solid var(--color-border);
+}
+.pc-head .spacer { flex: 1 1 auto; }
+.strength {
+  display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; white-space: nowrap;
+  font-size: var(--text-caption); font-weight: 600;
+  padding: 4px 10px; border-radius: var(--radius-full); border: 1px solid var(--color-border);
+}
+.strength--strong { color: var(--color-success); background: color-mix(in srgb, var(--color-success) 12%, var(--color-surface)); border-color: color-mix(in srgb, var(--color-success) 28%, transparent); }
+.strength--emerging { color: var(--color-text-muted); background: var(--color-surface-2); }
+.strength .st-dot { width: 6px; height: 6px; border-radius: var(--radius-full); background: currentColor; }
+
+/* finding: a big accent stat anchoring a prominent sentence */
+.pc-finding { display: flex; align-items: center; gap: 18px; }
+.pc-stat { flex: 0 0 auto; font-size: var(--text-display); font-weight: 600; letter-spacing: -0.02em; line-height: 0.9; color: var(--color-accent); font-variant-numeric: tabular-nums; }
+.pc-headline { font-size: var(--text-h3); font-weight: 600; line-height: 1.32; letter-spacing: -0.006em; color: var(--color-text); text-wrap: pretty; }
+
+/* evidence */
+.pc-evidence { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--color-border); }
+.ev-cap { font-size: var(--text-caption); font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-text-subtle); margin-bottom: 12px; }
+.ev-bars { display: flex; flex-direction: column; gap: 11px; }
+.ev-row { display: grid; grid-template-columns: 168px 1fr auto; align-items: center; gap: 14px; }
+.ev-label { font-size: var(--text-small); color: var(--color-text); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ev-track { height: 22px; border-radius: var(--radius-sm); background: var(--color-surface-2); border: 1px solid var(--color-border); overflow: hidden; display: block; }
+.ev-fill { display: block; height: 100%; border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+.ev-fill--lead { background: var(--color-accent); }
+.ev-fill--base { background: color-mix(in srgb, var(--color-text) 22%, var(--color-surface-2)); }
+.ev-val { font-size: var(--text-small); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--color-text); display: inline-flex; align-items: baseline; gap: 8px; }
+.ev-val .ev-n { font-size: var(--text-caption); font-weight: 400; color: var(--color-text-subtle); font-variant-numeric: tabular-nums; }
+.ev-row--base .ev-label, .ev-row--base .ev-val { color: var(--color-text-muted); }
+.ev-note { font-size: var(--text-caption); color: var(--color-text-subtle); margin-top: 12px; }
+
+/* example posts */
+.examples { margin-top: 16px; display: flex; flex-direction: column; gap: 9px; }
+.ex-cap { font-size: var(--text-caption); font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-text-subtle); margin-bottom: 3px; }
+.ex-inset {
+  display: flex; align-items: flex-start; gap: 12px;
+  background: var(--color-surface-2); border: 1px solid var(--color-border);
+  border-radius: var(--radius-md); padding: 11px 14px;
+}
+.ex-bar { width: 2px; align-self: stretch; border-radius: 2px; background: var(--color-border); flex: 0 0 auto; }
+.ex-text { font-size: var(--text-small); line-height: 1.55; color: var(--color-text-muted); flex: 1 1 auto; min-width: 0; text-wrap: pretty; }
+.ex-metric { font-size: var(--text-caption); font-weight: 600; color: var(--color-text); white-space: nowrap; flex: 0 0 auto; display: inline-flex; align-items: center; gap: 5px; }
+.ex-metric .em-ico { color: var(--color-text-subtle); }
+
+/* =============================== IDLE ============================= */
+.idle-hero {
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-2xl); box-shadow: var(--shadow-sm);
+  padding: 40px 40px 36px; text-align: center;
+  display: flex; flex-direction: column; align-items: center;
+}
+.idle-mark { width: 56px; height: 56px; display: grid; place-items: center; border-radius: var(--radius-lg); background: var(--color-surface-2); border: 1px solid var(--color-border); color: var(--color-text); margin-bottom: 20px; }
+.idle-hero h2 { font-size: var(--text-h1); font-weight: 600; letter-spacing: -0.015em; margin: 0; }
+.idle-hero p { font-size: var(--text-body); color: var(--color-text-muted); margin: 12px 0 0; max-width: 46ch; line-height: 1.6; }
+.idle-hero .idle-run { margin-top: 26px; }
+.idle-scope { display: flex; align-items: center; gap: 10px; margin-top: 18px; font-size: var(--text-caption); color: var(--color-text-subtle); }
+.idle-scope .dot { width: 4px; height: 4px; border-radius: 999px; background: var(--color-text-subtle); }
+.btn--lg { height: 46px; padding-inline: 22px; font-size: var(--text-body); border-radius: var(--radius-lg); }
+
+/* what it looks for — a quiet row of chips on idle */
+.idle-kinds { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 28px; max-width: 460px; }
+.idle-kind { font-size: var(--text-caption); color: var(--color-text-muted); padding: 5px 11px; border: 1px solid var(--color-border); border-radius: var(--radius-full); background: var(--color-surface-2); white-space: nowrap; }
+
+/* ============================== RUNNING =========================== */
+.running-card {
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-2xl); box-shadow: var(--shadow-sm);
+  padding: 44px 40px; display: flex; flex-direction: column; align-items: center;
+}
+.running-nib { width: 40px; height: 40px; color: var(--color-text); animation: nib-write 1.5s var(--ease-standard) infinite; }
+.running-title { font-size: var(--text-h2); font-weight: 600; letter-spacing: -0.01em; margin-top: 18px; }
+.running-sub { font-size: var(--text-small); color: var(--color-text-muted); margin-top: 6px; }
+.run-steps { display: flex; flex-direction: column; gap: 12px; margin-top: 28px; width: 100%; max-width: 320px; }
+.run-step { display: flex; align-items: center; gap: 11px; font-size: var(--text-small); color: var(--color-text-subtle); transition: color var(--duration-base) var(--ease-standard); }
+.run-step--active { color: var(--color-text); font-weight: 500; }
+.run-step--done { color: var(--color-text-muted); }
+.run-tick { width: 20px; height: 20px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-full); border: 1.5px solid var(--color-border); color: var(--color-text-subtle); }
+.run-step--active .run-tick { border-color: var(--color-accent); color: var(--color-accent); }
+.run-step--done .run-tick { background: var(--color-success); border-color: var(--color-success); color: var(--color-success-foreground); }
+.run-spin { width: 12px; height: 12px; border-radius: 50%; border: 2px solid currentColor; border-top-color: transparent; animation: spin 0.6s linear infinite; }
+
+/* =============================== EMPTY =========================== */
+.study-empty {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  padding: 60px 28px; border: 1px dashed var(--color-border); border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--color-surface) 50%, transparent);
+}
+.study-empty .se-mark { width: 54px; height: 54px; display: grid; place-items: center; margin-bottom: 18px; border-radius: var(--radius-lg); background: var(--color-surface-2); border: 1px solid var(--color-border); color: var(--color-text-subtle); }
+.study-empty .se-title { font-size: var(--text-h2); font-weight: 600; letter-spacing: -0.01em; }
+.study-empty .se-sub { font-size: var(--text-body); color: var(--color-text-muted); margin-top: 8px; max-width: 44ch; line-height: 1.55; }
+.study-empty .se-progress { width: 100%; max-width: 280px; margin-top: 22px; }
+.study-empty .se-bar { height: 8px; border-radius: var(--radius-full); background: var(--color-surface-2); border: 1px solid var(--color-border); overflow: hidden; }
+.study-empty .se-bar i { display: block; height: 100%; background: var(--color-accent); border-radius: var(--radius-full); }
+.study-empty .se-count { font-size: var(--text-caption); color: var(--color-text-subtle); margin-top: 9px; }
+
+@media (max-width: 600px) {
+  .ev-row { grid-template-columns: 1fr auto; }
+  .ev-row .ev-track { grid-column: 1 / -1; order: 3; }
+  .pc-finding { gap: 14px; }
+  .pc-stat { font-size: var(--text-h1); }
+}

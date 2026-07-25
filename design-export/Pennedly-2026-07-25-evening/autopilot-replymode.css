@@ -1,0 +1,45 @@
+/* autopilot-replymode.css — the NEW 3-way auto-reply mode control for the
+   "Auto-reply policy" card (web + mobile). One choice of three — Off / All posts /
+   Selected — at the top of the card; the active segment is raised; "Off" dims the
+   rest of the policy. Shared by Autopilot-SPEC.html + Autopilot-Mobile-SPEC.html.
+   Matches the segmented idiom already used (.range-seg / .sched-seg / .act-tabs).
+   No hardcoded colour — every value is a token. */
+
+.rmode-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.rmode-label { font-size: var(--text-small); font-weight: 600; color: var(--color-text); min-width: 0; }
+
+/* segmented control — desktop sizes to content */
+.rmode-seg { display: inline-flex; gap: 3px; padding: 3px; flex: 0 0 auto; max-width: 100%;
+  background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+.rmode-btn {
+  height: 34px; padding: 0 16px; display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  font-family: var(--font-sans); font-size: var(--text-small); font-weight: 500; color: var(--color-text-muted);
+  background: transparent; border: 1px solid transparent; border-radius: var(--radius-sm); cursor: pointer; white-space: nowrap;
+  transition: color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
+}
+.rmode-btn:hover { color: var(--color-text); }
+.rmode-btn--active { background: var(--color-surface); color: var(--color-text); font-weight: 600; border-color: var(--color-border); box-shadow: var(--shadow-sm); }
+
+/* the "Selected" hint under the control */
+.rmode-hint { display: flex; align-items: flex-start; gap: 8px; margin-top: 12px;
+  font-size: var(--text-caption); color: var(--color-text-subtle); line-height: 1.5; text-wrap: pretty; }
+.rmode-hint svg { flex: 0 0 auto; color: var(--color-accent); margin-top: 1px; }
+.rmode-hint a { color: var(--color-accent); text-decoration: none; font-weight: 600; }
+
+/* the dimmed policy body when Off */
+.policy-list--off { opacity: 0.5; pointer-events: none; }
+
+/* ── full-width three equal segments: mobile + narrow desktop ── */
+.mob .rmode-row, .rmode-row--stack { flex-direction: column; align-items: stretch; }
+.mob .rmode-label, .rmode-row--stack .rmode-label { margin-bottom: 10px; }
+.mob .rmode-seg, .rmode-seg--full { display: flex; width: 100%; }
+.mob .rmode-btn, .rmode-seg--full .rmode-btn {
+  flex: 1 1 0; min-width: 0; padding: 0 8px; min-height: 44px;
+  white-space: normal; text-wrap: balance; line-height: 1.2;   /* long locales wrap, never clip */
+}
+@media (max-width: 640px) {
+  .rmode-row { flex-direction: column; align-items: stretch; }
+  .rmode-label { margin-bottom: 10px; }
+  .rmode-seg { display: flex; width: 100%; }
+  .rmode-btn { flex: 1 1 0; min-width: 0; padding: 0 8px; min-height: 44px; white-space: normal; text-wrap: balance; line-height: 1.2; }
+}

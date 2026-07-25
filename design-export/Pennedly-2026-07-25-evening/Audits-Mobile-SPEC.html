@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Pennedly · Audits — Mobile spec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="ds/tokens.css"/>
+<link rel="stylesheet" href="ds/components.css"/>
+<link rel="stylesheet" href="mobile/pennedly-mobile.css"/>
+<link rel="stylesheet" href="mobile/frame.css"/>
+<link rel="stylesheet" href="mobile/spec.css"/>
+</head>
+<body>
+<div class="layout">
+
+<aside class="toc">
+  <div class="doc-mark">
+    <span class="nib"><svg width="18" height="18" viewBox="0 0 512 512"><g fill="#ededed"><g transform="rotate(42 256 256)"><path d="M236 150 Q236 128 256 128 Q276 128 276 150 L276 300 L256 360 L236 300 Z"/><rect x="236" y="206" width="40" height="7"/></g></g></svg></span>
+    <b>Pennedly</b>
+  </div>
+  <div class="doc-sub">Mobile spec · Audits</div>
+  <nav>
+    <a href="#s1"><span class="n">1</span> Screen identity</a>
+    <a href="#s2"><span class="n">2</span> The phone layout</a>
+    <a href="#s3"><span class="n">3</span> Shell: top bar + drawer</a>
+    <a href="#s4"><span class="n">4</span> Audit header + WoW</a>
+    <a href="#s5"><span class="n">5</span> Suggestion card + diff</a>
+    <a class="sub" href="#s5">— stacked before → after</a>
+    <a href="#s6"><span class="n">6</span> Decision states</a>
+    <a class="sub" href="#s6">— accepted · rejected · rolled back</a>
+    <a href="#s7"><span class="n">7</span> Past audits (history)</a>
+    <a href="#s8"><span class="n">8</span> States</a>
+    <a href="#s9"><span class="n">9</span> Anatomy &amp; values</a>
+    <a href="#s10"><span class="n">10</span> Web ↔ mobile</a>
+    <a href="#s11"><span class="n">11</span> Localization &amp; 360px</a>
+    <a href="#s12"><span class="n">12</span> Checklist</a>
+  </nav>
+  <div class="meta">
+    Screen: <b>Audits</b> <span style="color:var(--subtle)">(tester-gated)</span><br>
+    Route: <code>/app/audits</code><br>
+    Desktop spec: <a class="link" href="Audits-SPEC.html">Audits-SPEC.html</a><br>
+    Phone breakpoint: <code>≤ 600px</code> · ref 390<br>
+    Layer: <code>mobile/pennedly-mobile.css</code><br>
+    System: <a class="link" href="Pennedly Design System.html#m-shell">DS · Mobile</a>
+  </div>
+</aside>
+
+<main>
+  <div class="doc-head">
+    <p class="kicker">Pennedly · Mobile spec · per-screen</p>
+    <h1 class="title">Audits <span>/app/audits</span> — phone</h1>
+    <p class="lede">The weekly audit: once a week Pennedly’s coach reviews how the account did and proposes small refinements to your voice, role-book and style. You <strong>accept or reject</strong> each one; accepted changes are effect-tracked and <strong>auto-rolled-back</strong> if they hurt performance. The dense parts on a phone are the before→after <strong>diffs</strong> and the decision rows. This spec stacks the diff vertically (current above proposed) and lays decisions out full-width, fitting cleanly at <strong>390px</strong> (sanity-checked at 360). A reading-width, text-heavy screen — same tokens, content and flow as <a class="link" href="Audits-SPEC.html">the desktop spec</a>; only the layout changes below 600px, on the decided shell (hamburger + drawer, no tab bar, free bottom edge). Frames are the real component layer at 390px, light and dark.</p>
+    <div class="filerow">
+      <span class="chip chip--mob">pennedly-mobile.css</span>
+      <span class="chip">audits-app.jsx</span>
+      <span class="chip">audits-change.jsx</span>
+      <span class="chip">audits-parts.jsx</span>
+      <span class="chip">shell-parts.jsx</span>
+    </div>
+  </div>
+
+  <div class="note good"><b>What does not change.</b> Audits are generated weekly by a background job — the user can’t trigger one. The only actions are Accept / Reject per suggestion; accepted changes apply to the role-book/style, are effect-tracked, and negative ones auto-roll-back server-side and are surfaced. The WoW delta and the diffs (old_text vs new_text) come from the backend. Read-only otherwise. Mobile is a layout pass; the only structural change is the shared app shell.</div>
+
+  <!-- 1 -->
+  <section id="s1">
+    <h2><span class="h2n">1</span>Screen identity</h2>
+    <div class="tbl-wrap"><table><tbody>
+      <tr><th style="width:210px">Route</th><td><code>/app/audits</code> — tester-gated (drawer row hidden for non-testers).</td></tr>
+      <tr><th>Desktop width</th><td><code>--content-reading</code> (~720px); a reading column.</td></tr>
+      <tr><th>Phone width</th><td>100% − 14px gutters; single reading column.</td></tr>
+      <tr><th>Top→bottom (phone)</th><td>Status bar → top bar (hamburger · “Audits” · theme) → audit header + WoW + summary → suggestion cards → past-audits history → <em>free bottom edge</em>.</td></tr>
+      <tr><th>Actions</th><td>Accept / Reject per suggestion only. Decided cards are read-only (append-only backend).</td></tr>
+    </tbody></table></div>
+  </section>
+
+  <!-- 2 -->
+  <section id="s2">
+    <h2><span class="h2n">2</span>The phone layout</h2>
+    <p class="section-note">The current audit in context, light and dark: the header with its WoW badge + summary, then the suggestion cards (an undecided one with its stacked diff, an accepted one with its measured effect, an auto-rolled-back one with its note). The column runs to the free bottom edge.</p>
+    <div class="stage" id="stg-layout"></div>
+  </section>
+
+  <!-- 3 -->
+  <section id="s3">
+    <h2><span class="h2n">3</span><span class="stg stg--shell">shell</span>Shell: top bar + drawer</h2>
+    <p class="section-note">The shell is shared (see <a class="link" href="Pennedly Design System.html#m-shell">DS · App shell &amp; nav</a>). Audits-specific shell values:</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:200px">Slot</th><th>Audits value</th></tr></thead>
+      <tbody>
+        <tr><td>Hamburger</td><td>Far left, opens <code>.m-drawer</code> (active row = Audits, with its “needs review” badge).</td></tr>
+        <tr><td>Title</td><td>“Audits”. No pill — the “needs review” count lives in the audit header’s progress line.</td></tr>
+        <tr><td>Top-bar action</td><td>Theme toggle only; account in the drawer foot.</td></tr>
+        <tr><td>Column</td><td>Reading width — one column, comfortable measure; the diffs and bodies wrap freely.</td></tr>
+      </tbody>
+    </table></div>
+    <div class="stage" id="stg-drawer"></div>
+  </section>
+
+  <!-- 4 -->
+  <section id="s4">
+    <h2><span class="h2n">4</span>Audit header + WoW</h2>
+    <p class="section-note">The latest audit leads with a header card: the week + range + posts analyzed, a week-over-week delta badge (how engagement moved vs last week), a short coach summary, and a progress line (how many suggestions still need review).</p>
+    <div class="stage" id="stg-head"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:180px">Element</th><th>Phone behavior</th></tr></thead>
+      <tbody>
+        <tr><td><b>WoW badge</b></td><td>Up = success / down = danger; “N% WoW”. Wraps under the week title on long locales rather than clipping.</td></tr>
+        <tr><td><b>Summary</b></td><td>One short paragraph (<code>text-body</code>), wraps freely.</td></tr>
+        <tr><td><b>Progress</b></td><td>“N need review” accent pill + “M of T decided”.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- 5 -->
+  <section id="s5">
+    <h2><span class="h2n">5</span><span class="stg stg--fix">fix</span>Suggestion card + diff</h2>
+    <p class="section-note">Each suggestion = a kind badge + title + status, a short description, an optional before→after diff, and the decision. The diff is where a phone breaks if you try two columns.</p>
+    <div class="fix">
+      <div class="fix-bad"><h5>Before</h5><p>The desktop diff can sit current-vs-proposed side by side. At 390px two text columns shrink to ~150px each, wrap into ragged stacks, and the “−/+” intent gets lost.</p></div>
+      <div class="fix-good"><h5>After</h5><p>The diff <strong>stacks vertically</strong>: a labelled <em>Now</em> block (danger-tinted, “−”) above a <em>Proposed</em> block (success-tinted, “+”), each full-width and wrapping freely. Decisions stack full-width below: <strong>Reject</strong> + <strong>Approve</strong> (primary) as equal 44px buttons that wrap on long locales.</p></div>
+    </div>
+    <div class="stage" id="stg-diff"></div>
+    <div class="note"><b>Rules.</b> The diff is collapsible behind a “View change” link on dense audits (shown expanded here). “Now” = current role-book/style text; “Proposed” = the new text. An autopilot-config suggestion swaps the diff for proposed posting-hour chips in local time. Add-a-note stays available while undecided. Once decided the card is read-only — no undo (append-only backend).</div>
+  </section>
+
+  <!-- 6 -->
+  <section id="s6">
+    <h2><span class="h2n">6</span>Decision states</h2>
+    <p class="section-note">A suggestion moves through: undecided → applied (then effect-tracked) or rejected. An applied change that hurt metrics is auto-rolled-back server-side and surfaced with a note.</p>
+    <div class="stage" id="stg-states-cards"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:130px">State</th><th>Phone treatment</th></tr></thead>
+      <tbody>
+        <tr><td><b>undecided</b></td><td>“Needs review” badge; diff + Reject/Approve full-width.</td></tr>
+        <tr><td><b>applied</b></td><td>“Applied” badge; effect chip — “measuring effect…” then the measured “+N% {metric}”. Read-only.</td></tr>
+        <tr><td><b>rejected</b></td><td>“Rejected” badge; card dimmed; “You rejected this suggestion”.</td></tr>
+        <tr><td><b>rolled back</b></td><td>“Rolled back” warning badge; the negative effect chip + an “Auto-rolled-back” note explaining it hurt performance and was reverted — no action needed.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- 7 -->
+  <section id="s7">
+    <h2><span class="h2n">7</span>Past audits (history)</h2>
+    <p class="section-note">Below the current audit, a list of prior weeks. Each row stacks: the week + a status badge, a 2-line summary, then a meta line (range · decided count · WoW). Tap to open that week’s audit.</p>
+    <div class="stage" id="stg-history"></div>
+  </section>
+
+  <!-- 8 -->
+  <section id="s8">
+    <h2><span class="h2n">8</span>States</h2>
+    <div class="statebar"><span class="st">loading</span><span class="st">ready</span><span class="st">empty</span><span class="st">error</span></div>
+    <p class="section-note">Loading shows a skeleton header + cards; ready is the current audit; empty is “no audits yet” (the weekly job hasn’t run); error is the shared banner with Retry.</p>
+    <div class="stage" id="stg-states"></div>
+  </section>
+
+  <!-- 9 -->
+  <section id="s9">
+    <h2><span class="h2n">9</span>Anatomy &amp; exact values</h2>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:210px">Element / class</th><th>Phone value</th></tr></thead>
+      <tbody>
+        <tr><td><code>.m-audithead</code></td><td>week + range + posts; WoW badge; summary; progress (“need review” pill + “M of T decided”).</td></tr>
+        <tr><td><code>.m-wow</code></td><td>up = success / down = danger; wraps under the title on long locales.</td></tr>
+        <tr><td><code>.change-card</code></td><td>kind badge + title + status; detail; diff; foot.</td></tr>
+        <tr><td><code>.m-diff</code></td><td>stacked: <code>--before</code> (danger, “−”, “Now”) over <code>--after</code> (success, “+”, “Proposed”); full-width, wraps.</td></tr>
+        <tr><td><code>.m-aphours</code></td><td>autopilot suggestion → proposed posting-hour chips in local time.</td></tr>
+        <tr><td><code>.m-cc-foot</code></td><td>meta line + full-width decision row (Reject ghost + Approve primary, 44px, wrap).</td></tr>
+        <tr><td><code>.effect</code></td><td>applied effect chip — measuring / “+N% {metric}” / down.</td></tr>
+        <tr><td><code>.m-rollback</code></td><td>warning-tinted “Auto-rolled-back” note.</td></tr>
+        <tr><td><code>.m-auditrow</code></td><td>history row: week + badge, 2-line summary, range · decided · WoW, chevron.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- 10 -->
+  <section id="s10">
+    <h2><span class="h2n">10</span>Web ↔ mobile</h2>
+    <div class="two">
+      <div class="pane web"><h4>Desktop ( &gt; 900 )</h4>
+        <ul>
+          <li>Fixed sidebar; ~720px reading column; coach narrative + cards.</li>
+          <li>Diff can sit current-vs-proposed side by side.</li>
+          <li>Decision actions inline on the card foot; history as a side list.</li>
+        </ul>
+      </div>
+      <div class="pane mob"><h4>Phone ( ≤ 600 )</h4>
+        <ul>
+          <li>No sidebar/tab bar; hamburger → drawer + account; free bottom edge.</li>
+          <li>Diff stacks: Now (−) above Proposed (+), full-width.</li>
+          <li>Decisions stack full-width; history is a column of stacked rows.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11 -->
+  <section id="s11">
+    <h2><span class="h2n">11</span>Localization &amp; 360px</h2>
+    <p class="section-note">Coach copy, kind badges, status badges, the diff labels (“Now” / “Proposed”), decision buttons and the WoW/effect phrases all localize into 8 locales; DE/RU/UK run ~30–40% longer. On a phone: the WoW badge wraps under the week title; the diff blocks grow taller as text wraps (never truncated — the whole point is to read the change); Reject/Approve wrap to two rows rather than shrink below 44px; history summaries clamp to 2 lines. Diffs are live text, never baked into an image.</p>
+    <div class="note"><b>360px behavior.</b> No new breakpoint — the gutter stays 14px; the reading column just gets ~30px narrower, so diff and body text simply rewrap to more lines. The decision buttons are the only width-sensitive element; on a long locale at 360 they stack to two full-width rows (Approve over Reject), still ≥44px. The drawer stays <code>min(82%, 312px)</code> → 82% (≈295px) at 360.</div>
+    <div class="stage" id="stg-narrow"></div>
+  </section>
+
+  <!-- 12 -->
+  <section id="s12">
+    <h2><span class="h2n">12</span>Checklist</h2>
+    <ul class="check">
+      <li>Below 600px there is no sidebar and no tab bar — one 52px top bar with a hamburger far-left.</li>
+      <li>Hamburger opens the left drawer (active = Audits, “needs review” badge) + account; bottom edge free.</li>
+      <li>Audit header shows week + range + posts + WoW delta badge + summary + progress.</li>
+      <li>Diffs stack vertically: “Now” (−, danger) above “Proposed” (+, success), full-width — never two columns.</li>
+      <li>Decisions are full-width (Reject + Approve, primary obvious, 44px) and wrap on long locales.</li>
+      <li>Decided cards are read-only; applied shows the measured effect chip (or “measuring…”).</li>
+      <li>Auto-rolled-back changes show the “Rolled back” badge + a note explaining it hurt metrics and was reverted.</li>
+      <li>Autopilot-config suggestions show proposed posting hours in local time.</li>
+      <li>Past audits are a column of stacked rows (week + badge, 2-line summary, range · decided · WoW); tap to open.</li>
+      <li>Loading = skeleton header + cards; empty = “no audits yet”; error banner has Retry.</li>
+      <li>Long bodies/labels wrap — never clipped; sanity-checked at 360px.</li>
+      <li>Correct in light and dark; no hardcoded colour.</li>
+    </ul>
+  </section>
+
+</main>
+</div>
+
+<script src="mobile/sprite.js"></script>
+<script src="mobile/mock.js"></script>
+<script>
+(function () {
+  var M = window.MOCK;
+  function set(id, html){ var e=document.getElementById(id); if(e) e.innerHTML=html; }
+
+  var top = M.top({ title:'Audits', menu:true });
+
+  var head = M.auditHeader({ week:'Week of May 25', range:'May 25 – Jun 1', posts:18, wow:12, review:2, decided:2, total:6,
+    summary:'Your revision posts are pulling ahead — let’s lean into craft and quiet the motivational closers.' });
+
+  var cUndecided = M.auditChange('undecided', { kind:'Voice', title:'Cut the motivational sign-offs',
+    detail:'Your strongest posts end on the idea; the weaker ones tack on a closer. I’ll stop drafting lines like “keep going” and let the last sentence land on its own.',
+    diff:{ before:'Posts may end with an encouraging line to the reader.', after:'Posts end on the idea — no motivational closers or “keep going” lines.' } });
+  var cApplied = M.auditChange('applied', { kind:'Cadence', title:'Move long posts to Tuesday mornings',
+    detail:'Essays over 200 words earn ~40% more reach when published Tuesday 8–10am. I’ll prioritise that window for long-form drafts by default.',
+    effect:'+22%', effectLabel:'reach' });
+  var cRolled = M.auditChange('rolledback', { kind:'Voice', title:'Enforce lowercase everywhere',
+    detail:'I tried carrying your warm lowercase replies into your posts too — but it flattened them. Rolled back to replies-only; your posts read better sentence-cased.',
+    effect:'-4%', effectLabel:'on posts' });
+
+  var body = head + cUndecided + cApplied + cRolled;
+
+  /* 2 — full layout */
+  set('stg-layout',
+    M.col(M.light(), M.phone({ top:top, body:body, tabs:false }), 'Audit in context — header + WoW, undecided diff, applied, rolled-back.') +
+    M.col(M.dark(), M.phone({ dark:true, top:top, body:body, tabs:false }), 'Identical layout, dark tokens.'));
+
+  /* 3 — drawer */
+  set('stg-drawer',
+    M.col(M.light('Drawer'), M.phone({ top:top, body:body, tabs:false, overlay:M.drawer('audits') }), 'Hamburger → left drawer; active row = Audits (badge).') +
+    M.col(M.dark('Drawer · dark'), M.phone({ dark:true, top:top, body:body, tabs:false, overlay:M.drawer('audits') }), ''));
+
+  /* 4 — header */
+  set('stg-head',
+    M.col(M.light('Up week'), M.comp(head), 'Week + range + posts; +12% WoW; summary; progress.') +
+    M.col(M.light('Down week'), M.comp(M.auditHeader({ week:'Week of May 11', range:'May 11 – 17', posts:14, wow:-3, review:0, decided:3, total:3, summary:'Cleaning up hashtags and leaning into behind-the-scenes posts.' })), 'A down week reads danger-tinted WoW.') +
+    M.col(M.dark('Dark'), M.comp(head, { dark:true }), ''));
+
+  /* 5 — diff */
+  set('stg-diff',
+    M.col(M.light('Undecided + diff'), M.comp(cUndecided), 'Stacked Now (−) / Proposed (+); Reject + Approve full-width.') +
+    M.col(M.light('Autopilot config'), M.comp(M.auditChange('undecided', { kind:'Autopilot', title:'Set your default auto-post hours', detail:'Your audience is most active in three windows. With Autopilot on, I’ll schedule posts at these times by default.', hours:['9:00 AM','2:00 PM','7:00 PM'] })), 'Diff → proposed hours in local time.') +
+    M.col(M.dark('Undecided · dark'), M.comp(cUndecided, { dark:true }), ''));
+
+  /* 6 — decision states */
+  set('stg-states-cards',
+    M.col(M.light('applied'), M.comp(cApplied), 'Effect chip “+22% reach”.') +
+    M.col(M.light('applied · measuring'), M.comp(M.auditChange('applied', { kind:'Topic', title:'Weight new drafts toward revision', detail:'Posts about cutting and revising beat your “just start” posts almost 2 to 1.', effect:null })), '“measuring effect…”.') +
+    M.col(M.light('rejected'), M.comp(M.auditChange('rejected', { kind:'Format', title:'Open on the tension, not the setup', detail:'Three of your top posts buried the hook in the second sentence.' })), 'Dimmed; “you rejected this”.') +
+    M.col(M.light('rolled back'), M.comp(cRolled), 'Warning badge + auto-rollback note.') +
+    M.col(M.dark('rolled back · dark'), M.comp(cRolled, { dark:true }), ''));
+
+  /* 7 — history */
+  set('stg-history',
+    M.col(M.light('History'), M.phone({ top:top, tabs:false, body:
+      M.auditRow({ title:'Week of May 18', summary:'A strong week for replies. Small tweaks to your openings and reply timing.', range:'May 18 – 24', decided:4, total:4, wow:5 }) +
+      M.auditRow({ title:'Week of May 11', summary:'Cleaning up hashtags and leaning into behind-the-scenes posts.', range:'May 11 – 17', decided:3, total:3, wow:-3 }) +
+      M.auditRow({ title:'Week of May 4', summary:'Found your best posting window and a sharper question style.', range:'May 4 – 10', decided:4, total:4, wow:9 }) +
+      M.auditRow({ title:'Week of Apr 27', summary:'Your first audit — establishing a baseline voice.', range:'Apr 27 – May 3', decided:3, total:3 }) }), 'Tap a week to open its audit.') +
+    M.col(M.dark('History · dark'), M.phone({ dark:true, top:top, tabs:false, body:
+      M.auditRow({ isNew:true, title:'Week of May 25', summary:'Your revision posts are pulling ahead — lean into craft.', range:'May 25 – Jun 1', decided:2, total:6, wow:12 }) +
+      M.auditRow({ title:'Week of May 18', summary:'A strong week for replies. Small tweaks to openings and timing.', range:'May 18 – 24', decided:4, total:4, wow:5 }) }), 'Current week shows the “Needs review” badge.'));
+
+  /* 8 — states */
+  set('stg-states',
+    M.col(M.light('Loading'), M.phone({ top:top, tabs:false, body: M.auditSkeleton() }), 'Skeleton header + cards.') +
+    M.col(M.light('Empty'), M.phone({ top:top, tabs:false, body: M.auditEmpty() }), '“No audits yet” — the weekly job hasn’t run.') +
+    M.col(M.light('Error'), M.phone({ top:top, tabs:false, body: M.errorBanner('Couldn’t load your audits','Something went wrong on our end.') }), 'Shared error banner with Retry.') +
+    M.col(M.dark('Empty · dark'), M.phone({ dark:true, top:top, tabs:false, body: M.auditEmpty() }), ''));
+
+  /* 11 — 360 */
+  set('stg-narrow',
+    M.col(M.light('360 · audit'), M.phone({ variant:'sm', top:top, body:body, tabs:false }), 'Same rules at 360 — diff + body just rewrap to more lines.') +
+    M.col(M.light('360 · diff'), M.comp(cUndecided, { sm:true }), 'Stacked diff + decisions hold at 360px.') +
+    M.col(M.dark('360 · dark'), M.phone({ variant:'sm', dark:true, top:top, body:body, tabs:false }), ''));
+})();
+</script>
+</body>
+</html>
