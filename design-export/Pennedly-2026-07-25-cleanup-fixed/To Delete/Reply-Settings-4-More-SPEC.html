@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pennedly · «Отвечать на комментарии» — ещё 4 подхода (десктоп)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../ds/tokens.css" />
+<link rel="stylesheet" href="../ds/components.css" />
+<link rel="stylesheet" href="../scenarios.css" />
+<link rel="stylesheet" href="../scenarios-redesign.css" />
+<link rel="stylesheet" href="../scenario-editor.css" />
+<link rel="stylesheet" href="../autopilot.css" />
+<style>
+:root{
+  --font-sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --font-mono:"Geist Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --bg:#efedea; --surface:#ffffff; --surface-2:#f6f5f2; --border:#dcd9d2;
+  --text:#171717; --muted:#565550; --subtle:#6f6e69; --accent:#2f4cc4;
+  --code-bg:#f6f5f2; --good:#2c7350; --warn:#8a5b16; --danger:#b23b30; --radius:14px;
+}
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%; scroll-behavior:smooth;}
+body{margin:0; background:var(--bg); color:var(--text); font-family:var(--font-sans); font-size:15px; line-height:1.62; -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;}
+.layout{display:grid; grid-template-columns:288px minmax(0,1fr); gap:0; max-width:1400px; margin:0 auto;}
+
+.toc{position:sticky; top:0; align-self:start; height:100vh; overflow-y:auto; padding:34px 22px 40px 32px; border-right:1px solid var(--border);}
+.toc .doc-mark{display:flex; align-items:center; gap:10px; margin-bottom:6px;}
+.toc .doc-mark .nib{width:30px; height:30px; border-radius:8px; background:var(--text); display:grid; place-items:center; flex:0 0 auto;}
+.toc .doc-mark b{font-size:16px; font-weight:600; letter-spacing:-0.01em;}
+.toc .doc-sub{font-size:12px; color:var(--subtle); letter-spacing:0.02em; margin:0 0 22px 40px; text-transform:uppercase;}
+.toc nav{display:flex; flex-direction:column; gap:1px;}
+.toc nav a{display:flex; gap:9px; padding:6px 10px; border-radius:8px; text-decoration:none; color:var(--muted); font-size:13.5px; line-height:1.35; transition:background .12s, color .12s;}
+.toc nav a:hover{background:var(--surface-2); color:var(--text);}
+.toc nav a .n{font-variant-numeric:tabular-nums; color:var(--subtle); font-weight:600; flex:0 0 16px;}
+.toc nav a.sub{padding-left:30px; font-size:12.5px; color:var(--subtle);}
+.toc .meta{margin-top:24px; padding-top:18px; border-top:1px solid var(--border); font-size:12px; color:var(--subtle); line-height:1.7;}
+.toc .meta code{font-family:var(--font-mono); font-size:11px;} .toc .meta b{color:var(--text);} .toc .meta a{color:var(--accent); text-decoration:none;}
+
+main{padding:40px 52px 120px; min-width:0;}
+.kicker{font-family:var(--font-mono); font-size:12px; letter-spacing:0.04em; color:var(--accent); text-transform:uppercase; margin:0 0 10px;}
+h1.title{font-size:34px; line-height:1.1; letter-spacing:-0.025em; font-weight:600; margin:0 0 14px; text-wrap:balance;}
+h1.title span{color:var(--subtle); font-weight:500;}
+.lede{font-size:16px; color:var(--muted); max-width:82ch; margin:0 0 14px; text-wrap:pretty;}
+.lede b{color:var(--text); font-weight:600;}
+
+section{margin-top:56px; scroll-margin-top:20px;}
+h2{font-size:23px; line-height:1.2; letter-spacing:-0.015em; font-weight:600; margin:0 0 4px; padding-top:10px;}
+h2 .h2n{font-family:var(--font-mono); font-size:15px; color:var(--accent); margin-right:12px; font-weight:600;}
+.idea{font-size:15px; color:var(--text); background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:10px; padding:11px 15px; margin:8px 0 18px; max-width:84ch;}
+.idea b{font-weight:600;}
+.section-note{color:var(--muted); font-size:14px; max-width:84ch; margin:6px 0 18px; text-wrap:pretty;}
+.section-note b{color:var(--text); font-weight:600;}
+h3{font-size:14px; font-weight:600; letter-spacing:0.02em; text-transform:uppercase; color:var(--subtle); margin:26px 0 11px;}
+
+p{margin:0 0 12px; text-wrap:pretty;}
+code{font-family:var(--font-mono); font-size:0.86em; background:var(--code-bg); border:1px solid var(--border); padding:1px 5px; border-radius:5px;}
+strong{font-weight:600;} a.link{color:var(--accent); text-decoration:underline; text-underline-offset:2px;}
+.section-note code, p code, td code{white-space:normal; overflow-wrap:anywhere;}
+
+.tbl-wrap{overflow-x:auto; margin:0 0 16px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface);}
+table{width:100%; border-collapse:collapse; font-size:13px;}
+th,td{text-align:left; padding:9px 13px; border-bottom:1px solid var(--border); vertical-align:top;}
+thead th{font-size:11px; text-transform:uppercase; letter-spacing:0.04em; color:var(--subtle); font-weight:600; background:var(--surface-2);}
+tbody tr:last-child td{border-bottom:none;}
+.note{border:1px solid var(--border); border-left:3px solid var(--accent); background:var(--surface); border-radius:10px; padding:12px 16px; margin:14px 0; font-size:13.5px; color:var(--muted);}
+.note.good{border-left-color:var(--good);} .note b{color:var(--text);}
+
+.dirs{display:grid; grid-template-columns:repeat(4,1fr); gap:11px; margin:18px 0 4px;}
+.dir{display:flex; flex-direction:column; gap:6px; padding:14px 15px; border:1px solid var(--border); border-radius:14px; background:var(--surface);}
+.dir .d-k{font-family:var(--font-mono); font-size:10.5px; letter-spacing:0.06em; text-transform:uppercase; color:var(--accent);}
+.dir .d-t{font-size:15px; font-weight:600; letter-spacing:-0.01em;}
+.dir .d-d{font-size:12px; color:var(--subtle); line-height:1.5;}
+@media(max-width:1100px){ .dirs{grid-template-columns:1fr 1fr;} }
+@media(max-width:760px){ .dirs{grid-template-columns:1fr;} }
+
+/* DESKTOP-ONLY full-width frames */
+.frames{display:flex; flex-direction:column; gap:14px; margin:14px 0 6px;}
+.fr-head{display:inline-flex; align-items:center; gap:7px; font-family:var(--font-mono); font-size:11px; letter-spacing:.02em; color:var(--subtle);}
+.fr-head b{color:var(--muted); font-weight:600;}
+.fr-head .dh{width:8px; height:8px; border-radius:9999px; background:var(--border);}
+.fr-head .dh--dark{background:#0a0a0a; border:1px solid #3a3a3a;}
+.frame{background:var(--color-bg); color:var(--color-text); border:1px solid var(--color-border); border-radius:18px; padding:26px; overflow:hidden;}
+.frame.dark{background:#0a0a0a; border-color:#2b2a27;}
+.frame *{box-sizing:border-box;}
+.screen{max-width:960px; margin:0 auto;}
+.screen .stk{display:flex; flex-direction:column; gap:14px;}
+
+/* ───── shared NEW bits ───── */
+.sc-builtin{display:inline-flex; align-items:center; gap:5px; font-family:var(--font-mono); font-size:10px; letter-spacing:0.04em; text-transform:uppercase; color:var(--color-text-subtle); border:1px solid var(--color-border); border-radius:var(--radius-full); padding:2px 8px 2px 7px; background:var(--color-surface-2); white-space:nowrap;}
+.sc-builtin svg{flex:0 0 auto; opacity:0.8;}
+.sc-selfrun{display:inline-flex; align-items:center; gap:6px; font-size:var(--text-caption); color:var(--color-text-subtle);}
+.sc-selfrun svg{flex:0 0 auto; opacity:0.85;} .sc-selfrun b{color:var(--color-text-muted); font-weight:600;}
+.sc-fromhr{display:inline-flex; align-items:center; gap:9px; font-size:var(--text-caption); color:var(--color-text-subtle); line-height:1.45;}
+.sc-fromhr a{color:var(--color-accent); text-decoration:underline; text-underline-offset:2px;}
+.who-hint{font-size:var(--text-caption); color:var(--color-text-subtle); margin-top:6px; display:block; line-height:1.45;}
+
+/* shared surface header */
+.rs-head{display:flex; align-items:center; gap:14px; padding:18px 22px;}
+.rs-head .rh-ico{width:42px; height:42px; flex:0 0 auto; border-radius:var(--radius-lg); display:grid; place-items:center; background:color-mix(in srgb,var(--color-success) 13%,var(--color-surface)); border:1px solid color-mix(in srgb,var(--color-success) 26%,transparent); color:var(--color-success);}
+.rs-head .rh-tt{flex:1 1 auto; min-width:0;}
+.rs-head .rh-name{font-size:var(--text-h3); font-weight:600; letter-spacing:-0.006em; display:flex; align-items:center; gap:9px; flex-wrap:wrap;}
+.rs-head .rh-sub{font-size:var(--text-caption); color:var(--color-text-subtle); margin-top:3px;}
+.rs-status{display:inline-flex; align-items:center; gap:7px; font-size:var(--text-small); font-weight:600; color:var(--color-success); padding:6px 12px 6px 10px; border-radius:var(--radius-full); background:color-mix(in srgb,var(--color-success) 12%,var(--color-surface)); border:1px solid color-mix(in srgb,var(--color-success) 28%,transparent);}
+.rs-status .d{width:8px; height:8px; border-radius:9999px; background:var(--color-success); box-shadow:0 0 0 3px color-mix(in srgb,var(--color-success) 22%,transparent);}
+.rs-foot{display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; padding:14px 22px; border-top:1px solid var(--color-border); background:var(--color-surface-2);}
+.rs-surface{background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-xl); box-shadow:var(--shadow-sm); overflow:hidden;}
+.rs-surface .rs-head{border-bottom:1px solid var(--color-border);}
+
+/* custom-text field shared (Свой вариант) */
+.who-custom{display:flex; flex-direction:column; gap:6px;}
+.who-custom textarea.field{min-height:60px;}
+
+/* ===== 1 · МОДАЛКА ===== */
+.mstage{position:relative; border-radius:16px; overflow:hidden; border:1px solid var(--color-border); min-height:640px;}
+.mback{padding:18px; display:flex; flex-direction:column; gap:12px; opacity:0.55; pointer-events:none; background:var(--color-bg);}
+.mscrim{position:absolute; inset:0; background:rgba(10,10,10,0.42);}
+.mdialog{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:min(580px,94%); background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-xl); box-shadow:var(--shadow-lg); overflow:hidden;}
+.mdialog-head{display:flex; align-items:center; gap:12px; padding:16px 20px; border-bottom:1px solid var(--color-border);}
+.mdialog-head .mh-ico{width:34px; height:34px; flex:0 0 auto; border-radius:var(--radius-md); display:grid; place-items:center; background:color-mix(in srgb,var(--color-success) 13%,var(--color-surface)); border:1px solid color-mix(in srgb,var(--color-success) 26%,transparent); color:var(--color-success);}
+.mdialog-head .mh-t{font-size:var(--text-body); font-weight:600; flex:1 1 auto; display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+.mdialog-head .mh-x{width:30px; height:30px; flex:0 0 auto; display:grid; place-items:center; border-radius:var(--radius-sm); border:1px solid var(--color-border); background:var(--color-surface); color:var(--color-text-subtle); cursor:pointer;}
+.mdialog-body{padding:18px 20px; display:flex; flex-direction:column; gap:18px; max-height:none;}
+.mdialog-foot{display:flex; align-items:center; gap:10px; padding:14px 20px; border-top:1px solid var(--color-border); background:var(--color-surface-2);}
+.mdialog-foot .mf-spacer{margin-left:auto;}
+.mfield-k{font-size:var(--text-small); font-weight:600; margin-bottom:9px; display:flex; align-items:center; gap:7px;}
+/* compact radio list reused in modal */
+.optlist{display:flex; flex-direction:column; gap:2px;}
+.opt{display:flex; align-items:center; gap:11px; padding:9px 11px; border-radius:var(--radius-md); cursor:pointer; border:1px solid transparent;}
+.opt:hover{background:var(--color-surface-2);}
+.opt--on{background:color-mix(in srgb,var(--color-accent) 6%,var(--color-surface)); border-color:color-mix(in srgb,var(--color-accent) 26%,var(--color-border));}
+.opt .o-r{width:18px; height:18px; flex:0 0 auto; border-radius:9999px; border:2px solid var(--color-border); display:grid; place-items:center;}
+.opt--on .o-r{border-color:var(--color-accent);} .opt--on .o-r::after{content:""; width:9px; height:9px; border-radius:9999px; background:var(--color-accent);}
+.opt .o-t{font-size:var(--text-small); font-weight:600;} .opt--on .o-t{color:var(--color-accent);}
+
+/* ===== 2 · ГАЛЕРЕЯ ПРЕСЕТОВ ===== */
+.gal{padding:6px 26px 4px;}
+.gal-sec{padding:22px 0; border-top:1px solid var(--color-border);}
+.gal-sec:first-child{border-top:none;}
+.gal-k{font-size:var(--text-small); font-weight:600; display:flex; align-items:center; gap:8px; margin-bottom:4px;}
+.gal-d{font-size:var(--text-caption); color:var(--color-text-subtle); margin-bottom:14px; line-height:1.5;}
+.aud-tiles{display:grid; grid-template-columns:repeat(2,1fr); gap:12px;}
+.aud-tile{display:flex; flex-direction:column; gap:8px; padding:15px 16px; border-radius:var(--radius-lg); border:1px solid var(--color-border); background:var(--color-surface); cursor:pointer; text-align:left; font-family:inherit; transition:border-color var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard);}
+.aud-tile:hover{border-color:color-mix(in srgb,var(--color-text) 16%,var(--color-border)); box-shadow:var(--shadow-sm);}
+.aud-tile-top{display:flex; align-items:center; gap:10px;}
+.aud-tile-ico{width:34px; height:34px; flex:0 0 auto; display:grid; place-items:center; border-radius:var(--radius-md); background:var(--color-surface-2); border:1px solid var(--color-border); color:var(--color-text-muted);}
+.aud-tile-name{font-size:var(--text-small); font-weight:600; flex:1 1 auto;}
+.aud-tile-check{width:20px; height:20px; flex:0 0 auto; border-radius:9999px; border:2px solid var(--color-border); display:grid; place-items:center; color:transparent;}
+.aud-tile-ex{font-size:var(--text-caption); color:var(--color-text-subtle); line-height:1.45;}
+.aud-tile--on{border-color:var(--color-accent); box-shadow:0 0 0 1px var(--color-accent); background:color-mix(in srgb,var(--color-accent) 5%,var(--color-surface));}
+.aud-tile--on .aud-tile-ico{background:color-mix(in srgb,var(--color-accent) 12%,var(--color-surface)); border-color:color-mix(in srgb,var(--color-accent) 26%,transparent); color:var(--color-accent);}
+.aud-tile--on .aud-tile-check{background:var(--color-accent); border-color:var(--color-accent); color:var(--color-accent-foreground);}
+.aud-tile--custom{grid-column:1 / -1;}
+.tile-custom{margin-top:12px; display:flex; flex-direction:column; gap:6px;}
+.tile-custom textarea.field{min-height:62px;}
+
+/* ===== 3 · СПИСОК ПРАВИЛ (фильтр) ===== */
+.flt{padding:18px 26px 6px; display:flex; flex-direction:column; gap:14px;}
+.flt-row{display:flex; align-items:flex-start; gap:13px; padding:14px 16px; border-radius:var(--radius-lg); border:1px solid var(--color-border); background:var(--color-surface);}
+.flt-row--allow{border-color:color-mix(in srgb,var(--color-success) 30%,var(--color-border)); background:color-mix(in srgb,var(--color-success) 5%,var(--color-surface));}
+.flt-row--deny{border-color:var(--color-border); background:var(--color-surface-2);}
+.flt-ico{width:32px; height:32px; flex:0 0 auto; display:grid; place-items:center; border-radius:var(--radius-md);}
+.flt-row--allow .flt-ico{background:color-mix(in srgb,var(--color-success) 14%,var(--color-surface)); color:var(--color-success); border:1px solid color-mix(in srgb,var(--color-success) 28%,transparent);}
+.flt-row--deny .flt-ico{background:var(--color-surface); color:var(--color-text-subtle); border:1px solid var(--color-border);}
+.flt-body{flex:1 1 auto; min-width:0;}
+.flt-k{font-size:var(--text-caption); font-weight:600; letter-spacing:0.04em; text-transform:uppercase; color:var(--color-text-subtle); margin-bottom:7px;}
+.flt-k--allow{color:var(--color-success);}
+.flt-templates{display:flex; flex-wrap:wrap; gap:7px; margin-bottom:11px;}
+.flt-tpl{font-size:var(--text-small); font-weight:500; padding:6px 12px; border-radius:var(--radius-full); border:1px solid var(--color-border); background:var(--color-surface); color:var(--color-text-muted); cursor:pointer; display:inline-flex; align-items:center; gap:6px;}
+.flt-tpl--on{color:var(--color-accent); border-color:color-mix(in srgb,var(--color-accent) 36%,var(--color-border)); background:color-mix(in srgb,var(--color-accent) 8%,var(--color-surface)); font-weight:600;}
+.flt-row--deny .flt-t{font-size:var(--text-small); color:var(--color-text); line-height:1.5;} .flt-row--deny .flt-t b{font-weight:600;}
+.flt-lock{margin-left:auto; flex:0 0 auto; font-size:10px; font-family:var(--font-mono); letter-spacing:0.04em; text-transform:uppercase; color:var(--color-text-subtle); display:inline-flex; align-items:center; gap:5px;}
+
+/* ===== 4 · ДАЙЛ ШИРОТЫ ===== */
+.dial{padding:20px 26px 8px; display:flex; flex-direction:column; gap:14px;}
+.dial-k{font-size:var(--text-small); font-weight:600; display:flex; align-items:center; gap:8px;}
+.dial-track{display:grid; grid-template-columns:repeat(3,1fr); border:1px solid var(--color-border); border-radius:var(--radius-lg); overflow:hidden; background:var(--color-surface-2); transition:opacity var(--duration-base) var(--ease-standard);}
+.dial-track.dim{opacity:0.45;}
+.dial-stop{padding:15px 12px; text-align:center; border:none; border-right:1px solid var(--color-border); background:transparent; cursor:pointer; font-family:inherit; color:var(--color-text-muted); font-size:var(--text-small); font-weight:600; line-height:1.3;}
+.dial-stop:last-child{border-right:none;}
+.dial-stop small{display:block; font-weight:400; font-size:var(--text-caption); color:var(--color-text-subtle); margin-top:4px;}
+.dial-stop--on{background:var(--color-surface); color:var(--color-accent); box-shadow:inset 0 -3px 0 0 var(--color-accent);}
+.dial-axis{display:flex; align-items:center; justify-content:space-between; font-size:var(--text-caption); color:var(--color-text-subtle);}
+.dial-axis .ax-line{flex:1 1 auto; height:1px; background:var(--color-border); margin:0 12px;}
+.dial-or{display:flex; align-items:center; gap:12px; font-size:var(--text-caption); color:var(--color-text-subtle); text-transform:uppercase; letter-spacing:0.05em;}
+.dial-or::before,.dial-or::after{content:""; flex:1 1 auto; height:1px; background:var(--color-border);}
+.dial-precise{display:flex; align-items:flex-start; gap:12px; padding:14px 16px; border-radius:var(--radius-lg); border:1px solid var(--color-border); background:var(--color-surface); cursor:pointer; text-align:left; font-family:inherit; width:100%;}
+.dial-precise--on{border-color:var(--color-accent); box-shadow:0 0 0 1px var(--color-accent); background:color-mix(in srgb,var(--color-accent) 5%,var(--color-surface));}
+.dial-precise .dp-r{width:20px; height:20px; flex:0 0 auto; margin-top:1px; border-radius:9999px; border:2px solid var(--color-border); display:grid; place-items:center;}
+.dial-precise--on .dp-r{border-color:var(--color-accent);} .dial-precise--on .dp-r::after{content:""; width:10px; height:10px; border-radius:9999px; background:var(--color-accent);}
+.dial-precise .dp-t{font-size:var(--text-small); font-weight:600; display:flex; align-items:center; gap:7px;} .dial-precise--on .dp-t{color:var(--color-accent);}
+.dial-precise .dp-d{font-size:var(--text-caption); color:var(--color-text-subtle); margin-top:3px; line-height:1.5;}
+.dial-custom{padding:2px 2px 2px 46px; display:flex; flex-direction:column; gap:6px; margin-top:-6px;}
+.dial-custom textarea.field{min-height:62px;}
+
+/* coexistence shared */
+.sc-card--paused .sc-card-head{opacity:0.5;}
+.sc-replaced{display:flex; align-items:flex-start; gap:11px; flex-wrap:wrap; margin-top:2px; padding:12px 14px; border-radius:var(--radius-md); background:color-mix(in srgb,var(--color-accent) 7%,var(--color-surface)); border:1px solid color-mix(in srgb,var(--color-accent) 24%,var(--color-border));}
+.sc-replaced .rp-ico{width:28px; height:28px; flex:0 0 auto; display:grid; place-items:center; border-radius:var(--radius-sm); background:color-mix(in srgb,var(--color-accent) 13%,var(--color-surface)); color:var(--color-accent);}
+.sc-replaced .rp-text{flex:1 1 220px; min-width:0; font-size:var(--text-small); color:var(--color-text); line-height:1.5;}
+.sc-replaced .rp-text b{font-weight:600;} .sc-replaced .rp-text a{color:var(--color-accent); text-decoration:underline; text-underline-offset:2px; font-weight:600;}
+.sc-overrides{display:inline-flex; align-items:center; gap:5px; font-family:var(--font-mono); font-size:10px; letter-spacing:0.04em; text-transform:uppercase; color:var(--color-accent); border:1px solid color-mix(in srgb,var(--color-accent) 30%,var(--color-border)); border-radius:var(--radius-full); padding:2px 8px; background:color-mix(in srgb,var(--color-accent) 8%,var(--color-surface)); white-space:nowrap;}
+
+@media (max-width:980px){
+  .layout{grid-template-columns:1fr;}
+  .toc{position:static; height:auto; border-right:none; border-bottom:1px solid var(--border);}
+  .toc nav{display:grid; grid-template-columns:1fr 1fr; gap:1px 14px;}
+  main{padding:28px 22px 90px;}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<aside class="toc">
+  <div class="doc-mark">
+    <span class="nib"><svg width="18" height="18" viewBox="0 0 512 512"><g fill="#ededed"><g transform="rotate(42 256 256)"><path d="M236 150 Q236 128 256 128 Q276 128 276 150 L276 300 L256 360 L236 300 Z"/><rect x="236" y="206" width="40" height="7"/></g></g></svg></span>
+    <b>Pennedly</b>
+  </div>
+  <div class="doc-sub">Ответы · ещё 4 подхода · десктоп</div>
+  <nav>
+    <a href="#intro"><span class="n">0</span> Задача · общее</a>
+    <a href="#a"><span class="n">4</span> Модалка</a>
+    <a class="sub" href="#a-hero">— окно · свой вариант</a>
+    <a class="sub" href="#a-states">— в списке</a>
+    <a href="#b"><span class="n">5</span> Галерея пресетов</a>
+    <a class="sub" href="#b-hero">— плитки · свой вариант</a>
+    <a class="sub" href="#b-states">— в списке</a>
+    <a href="#c"><span class="n">6</span> Фильтр-правила</a>
+    <a class="sub" href="#c-hero">— правила · свой вариант</a>
+    <a class="sub" href="#c-states">— в списке</a>
+    <a href="#d"><span class="n">7</span> Дайл широты</a>
+    <a class="sub" href="#d-hero">— шкала · свой вариант</a>
+    <a class="sub" href="#d-states">— в списке</a>
+    <a href="#cmp"><span class="n">★</span> Сравнение</a>
+  </nav>
+  <div class="meta">
+    Экран: <b>«Отвечать на комментарии»</b><br>
+    <b>Только десктоп</b> · контент 960px<br>
+    Партия 2 · ещё 4 подхода<br>
+    Демо: <b>Алекс · @alex.makes</b><br>
+    Токены: <code>ds/tokens.css</code> · <code>components.css</code>
+  </div>
+</aside>
+
+<main>
+  <div class="doc-head">
+    <p class="kicker">Pennedly · Автопилот · исследование · партия 2</p>
+    <h1 class="title">«Отвечать на комментарии» <span>— ещё четыре подхода (новые)</span></h1>
+    <p class="lede"><b>Четыре новых способа</b>, не повторяющих прошлые (карточка-инлайн, шаговый редактор, триаж, живая фраза, форма, диалог). Каждый настраивает одну встроенную рутину: <b>вкл/выкл + кому + коротко как</b>. «Кому» — <b>4 варианта</b>: «Только фанатам» · «Все, кроме троллей» · «Только вопросы» · <b>«Свой вариант»</b> (поле — описываешь словами, Pennedly решает по каждому комменту). Частота/тихие часы/потолок — из «Правил дома» (чип <span class="inherit" style="vertical-align:middle">из Правил дома</span>, не дублируем). <b>Только веб-десктоп, 960px.</b></p>
+    <div class="dirs">
+      <div class="dir"><span class="d-k">Подход 4</span><span class="d-t">Модалка</span><span class="d-d">Список не покидаешь — настройка открывается <b>окном поверх</b>. Быстро влез, поправил, закрыл.</span></div>
+      <div class="dir"><span class="d-k">Подход 5</span><span class="d-t">Галерея пресетов</span><span class="d-d">«Кому» — <b>четыре плитки-карточки</b> с примерами, выбираешь как шаблон. Свой — плитка с полем.</span></div>
+      <div class="dir"><span class="d-k">Подход 6</span><span class="d-t">Фильтр-правила</span><span class="d-d">Как почтовый фильтр: <b>«Отвечаю когда…» / «Никогда: тролли и спам»</b>. Свой = своя строка-правило.</span></div>
+      <div class="dir"><span class="d-k">Подход 7</span><span class="d-t">Дайл широты</span><span class="d-d">Одна <b>шкала «насколько широко отвечать»</b> (узко → широко) + отдельный точечный режим «по описанию».</span></div>
+    </div>
+  </div>
+
+  <!-- 0 -->
+  <section id="intro">
+    <h2><span class="h2n">0</span>Что одинаково во всех</h2>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:240px;">Правило</th><th>Как отражено</th></tr></thead>
+      <tbody>
+        <tr><td><b>Тумблер = режим ответов</b></td><td>Вкл → «на все», выкл → «выкл». «На выбранные посты» — <b>в Ленте</b>, не здесь.</td></tr>
+        <tr><td><b>Кому — 4 варианта</b></td><td>фанатам / все кроме троллей / вопросы / <b>свой вариант</b> (текст) = <code>reply_audience=custom</code> + <code>audience_prompt</code>.</td></tr>
+        <tr><td><b>Свип отвечает сам</b></td><td>Без подтверждения, опрос раз в ~15 минут (не мгновенно).</td></tr>
+        <tr><td><b>Частота/тихо/потолок</b></td><td>Глобальные, из «Правил дома». Чип, не редактируются здесь.</td></tr>
+        <tr><td><b>Встроенную нельзя удалить</b></td><td>Бейдж <span class="sc-builtin" style="vertical-align:middle">встроенная</span>, нет «Удалить».</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- 4 -->
+  <section id="a">
+    <h2><span class="h2n">4</span>Модалка</h2>
+    <p class="idea"><b>В чём идея:</b> не уводим со списка рутин — настройка открывается <b>окном поверх</b> затемнённого списка. Влез, выбрал «кому», написал «как», закрыл. Список всегда на месте за окном.</p>
+    <h3 id="a-hero">Окно настройки · «Свой вариант» раскрыт</h3>
+    <div class="frames" id="fa-hero"></div>
+    <h3 id="a-states">В списке рутин · включена / выключена / сосуществование</h3>
+    <div class="frames" id="fa-states"></div>
+  </section>
+
+  <!-- 5 -->
+  <section id="b">
+    <h2><span class="h2n">5</span>Галерея пресетов</h2>
+    <p class="idea"><b>В чём идея:</b> «кому отвечать» — это <b>четыре плитки-карточки</b> с иконкой и живым примером, выбираешь как шаблон. Четвёртая плитка — «Свой вариант» — разворачивает поле под галереей.</p>
+    <h3 id="b-hero">Экран настройки · плитка «Свой вариант» выбрана</h3>
+    <div class="frames" id="fb-hero"></div>
+    <h3 id="b-states">В списке рутин · включена / выключена / сосуществование</h3>
+    <div class="frames" id="fb-states"></div>
+  </section>
+
+  <!-- 6 -->
+  <section id="c">
+    <h2><span class="h2n">6</span>Фильтр-правила</h2>
+    <p class="idea"><b>В чём идея:</b> как почтовый фильтр. Зелёное правило <b>«Отвечаю, когда…»</b> (4 заготовки + своя строка) и серое <b>«Никогда не отвечаю: троллям и спаму»</b> — встроенный предохранитель. Видно, кого впускаем и кого режем.</p>
+    <h3 id="c-hero">Экран настройки · правило «Свой вариант»</h3>
+    <div class="frames" id="fc-hero"></div>
+    <h3 id="c-states">В списке рутин · включена / выключена / сосуществование</h3>
+    <div class="frames" id="fc-states"></div>
+  </section>
+
+  <!-- 7 -->
+  <section id="d">
+    <h2><span class="h2n">7</span>Дайл широты</h2>
+    <p class="idea"><b>В чём идея:</b> одна <b>шкала «насколько широко отвечать»</b> — от «узко» (только фанатам) к «широко» (все, кроме троллей). Чем правее — тем больше людей получат ответ. Нужна точность? Внизу отдельный режим <b>«по описанию»</b> (Свой вариант) с полем.</p>
+    <h3 id="d-hero">Экран настройки · режим «по описанию»</h3>
+    <div class="frames" id="fd-hero"></div>
+    <h3 id="d-states">В списке рутин · включена / выключена / сосуществование</h3>
+    <div class="frames" id="fd-states"></div>
+  </section>
+
+  <!-- compare -->
+  <section id="cmp">
+    <h2><span class="h2n">★</span>Сравнение (партия 2)</h2>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:170px;">&nbsp;</th><th>4 · Модалка</th><th>5 · Галерея</th><th>6 · Фильтр</th><th>7 · Дайл</th></tr></thead>
+      <tbody>
+        <tr><td><b>Метафора</b></td><td>Окно поверх списка</td><td>Выбор плитки-шаблона</td><td>Почтовый фильтр</td><td>Шкала широты</td></tr>
+        <tr><td><b>Где живёт</b></td><td>Модалка над списком</td><td>Отдельный экран</td><td>Отдельный экран</td><td>Отдельный экран</td></tr>
+        <tr><td><b>«Кому»</b></td><td>Радио-список в окне</td><td>4 плитки с примерами</td><td>Правило «отвечаю когда»</td><td>Шкала + точечный режим</td></tr>
+        <tr><td><b>Сильная сторона</b></td><td>Не теряешь контекст списка</td><td>Наглядно, с примерами</td><td>Видно, кого режем</td><td>Одно движение, мало места</td></tr>
+        <tr><td><b>Слабая сторона</b></td><td>Окно ограничено по высоте</td><td>Занимает площадь</td><td>«Свой» делит вес с заготовками</td><td>«вопросы» плохо ложатся на ось</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note good"><b>Подсказка.</b> «Модалка» — самая нативная для правок из списка. «Галерея» — самая дружелюбная новичку. «Фильтр» — для тех, кто думает категориями «впустить/не впустить». «Дайл» — самый компактный, но ось «широты» не идеально вмещает «только вопросы» (поэтому вопросы там — как отдельная средняя ступень). Вместе с партией 1 у основателя теперь 7 подходов на выбор.</div>
+  </section>
+</main>
+</div>
+
+<script>
+(function(){
+  function ic(n,s){ s=s||14; var v='viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"';
+    var P={
+      clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+      bubble:'<path d="M21 12a8 8 0 0 1-11.5 7.2L4 20l1-5A8 8 0 1 1 21 12Z"/>',
+      check:'<path d="M20 7 9 18l-5-5"/>',
+      x:'<path d="M6 6l12 12M18 6 6 18"/>',
+      repeat:'<path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>',
+      mic:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',
+      sliders:'<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>',
+      anchor:'<circle cx="12" cy="5" r="2.4"/><path d="M12 7.4V21M5 13a7 7 0 0 0 14 0M3.5 13h2.2M18.3 13h2.2"/>',
+      swap:'<path d="M7 4 3 8l4 4"/><path d="M3 8h13a4 4 0 0 1 4 4"/><path d="M17 20l4-4-4-4"/><path d="M21 16H8a4 4 0 0 1-4-4"/>',
+      pen:'<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"/>',
+      gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>',
+      heart:'<path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.5-7 10-7 10Z"/>',
+      help:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 .9-1 1.7M12 17v.5"/>',
+      ban:'<circle cx="12" cy="12" r="9"/><path d="M5.6 5.6 18.4 18.4"/>',
+      users:'<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M16 5.5a3 3 0 0 1 0 5.4M21 19a5.5 5.5 0 0 0-3.5-5.1"/>'
+    };
+    return '<svg width="'+s+'" height="'+s+'" '+v+'>'+(P[n]||'')+'</svg>';
+  }
+  function sw(on){ return '<label class="switch"><input type="checkbox"'+(on?' checked':'')+' aria-label="режим"><span class="track"></span><span class="knob"></span></label>'; }
+  function swLg(on){ return '<label class="switch switch--lg"><input type="checkbox"'+(on?' checked':'')+' aria-label="режим"><span class="track"></span><span class="knob"></span></label>'; }
+  function set(id,html){ var e=document.getElementById(id); if(e) e.innerHTML=html; }
+  function fhead(label,dark){ return '<div class="fr-head"><span class="dh'+(dark?' dh--dark':'')+'"></span>'+label+'</div>'; }
+  function frameFull(label,inner,dark){ return '<div class="fr">'+fhead(label,dark)+'<div class="frame'+(dark?' dark':'')+'"><div class="screen">'+inner+'</div></div></div>'; }
+
+  var CUSTOM='тем, кто пишет по делу, без флуда';
+  var PH='напр.: только тем, кто спрашивает про цены';
+  var HINT='Опиши своими словами, кому отвечаем — остальных пропустим.';
+  function customField(){ return '<div class="who-custom"><textarea class="field" placeholder="'+PH+'">'+CUSTOM+'</textarea><span class="who-hint">'+HINT+'</span></div>'; }
+  function howField(){ return '<textarea class="field" placeholder="напр.: коротко и тепло, без эмодзи; на грубость не реагирую" style="min-height:62px">коротко и тепло, без воды; на грубость не реагирую</textarea>'; }
+
+  function rsHead(on,sub){
+    return '<div class="rs-head"><span class="rh-ico">'+ic('bubble',22)+'</span>'
+      +'<div class="rh-tt"><div class="rh-name">Отвечать на комментарии <span class="sc-plaque">'+ic('bubble',11)+' отвечает людям</span> <span class="sc-builtin">'+ic('anchor',11)+' встроенная</span></div>'
+      +'<div class="rh-sub">'+(sub||'Авто-ответы аккаунта · свип отвечает сам')+'</div></div>'
+      +'<span class="rs-status"><span class="d"></span>Вкл</span>'+swLg(on)+'</div>';
+  }
+  function selfRunFoot(){
+    return '<div class="rs-foot"><span class="sc-selfrun">'+ic('repeat',13)+' <b>отвечает сама</b> · без подтверждения · опрос раз в ~15 мин</span>'
+      +'<span class="sc-fromhr"><span class="inherit">'+ic('sliders',10)+' из Правил дома</span> частота · тихие часы · потолок — в <a href="#">Правилах дома</a></span></div>';
+  }
+
+  /* list card + coexistence (shared) */
+  function listCard(o){
+    o=o||{}; var on=o.on, paused=o.paused, action=o.action||'Открыть';
+    var statusTxt=paused?'На паузе':(on?'Активна':'Выключена');
+    var line=paused?'Дефолтный свип «на все» — сейчас <span class="who">заменён сценарием</span>.'
+      :on?'Отвечает <span class="v">тем, кто пишет по делу</span>, в твоём голосе.'
+      :'Авто-ответы аккаунта <span class="v">выключены</span>.';
+    var name='<div class="sc-card-name">Отвечать на комментарии'+((on&&!paused)?' <span class="sc-plaque">'+ic('bubble',11)+' отвечает людям</span>':'')+' <span class="sc-builtin">'+ic('anchor',11)+' встроенная</span></div>';
+    var body='';
+    if(!on&&!paused) body='<div class="sc-createdoff"><span class="co-ico">'+ic('bubble',15)+'</span><span class="co-text"><b>Создан, но выключен</b> — включи, когда будешь готов отвечать людям.</span><button class="btn btn--secondary btn--sm">Включить</button></div>';
+    if(paused) body='<div class="sc-replaced"><span class="rp-ico">'+ic('swap',15)+'</span><span class="rp-text"><b>Заменена сценарием «Тёплый приём новичкам».</b> Пока он активен, ответами управляет он. <a href="#">Открыть сценарий →</a></span></div>';
+    var foot='<div class="sc-card-foot"><div class="sc-runs"><div class="sc-run"><span class="sr-k">статус</span><span class="sr-v'+((on&&!paused)?'':' muted')+'">'+(paused?'на паузе':(on?'отвечает':'выключена'))+'</span></div>'
+      +((on&&!paused)?'<span class="sc-selfrun">'+ic('repeat',12)+' отвечает сама · ~15 мин</span><span class="sc-selfrun"><span class="inherit">'+ic('sliders',10)+' из Правил дома</span></span>':'')+'</div>'
+      +'<div class="sc-card-actions"><a class="btn btn--ghost btn--sm" href="#">Активность</a><a class="btn btn--secondary btn--sm" href="#">'+action+'</a></div></div>';
+    return '<div class="sc-card '+((on&&!paused)?'sc-card--on':'sc-card--off')+(paused?' sc-card--paused':'')+'">'
+      +'<div class="sc-card-head"><span class="sc-card-icon">'+ic('bubble',20)+'</span>'
+      +'<div class="sc-card-titles">'+name+'<div class="sc-cardline">'+line+'</div></div>'
+      +'<div class="sc-card-toggle"><span class="sc-card-state">'+statusTxt+'</span>'+sw(on&&!paused)+'</div></div>'+body+foot+'</div>';
+  }
+  function customScenarioCard(){
+    return '<div class="sc-card sc-card--on"><div class="sc-card-head"><span class="sc-card-icon">'+ic('bubble',20)+'</span>'
+      +'<div class="sc-card-titles"><div class="sc-card-name">Тёплый приём новичкам <span class="sc-plaque">'+ic('bubble',11)+' отвечает людям</span> <span class="sc-overrides">'+ic('swap',10)+' перебивает дефолт</span></div>'
+      +'<div class="sc-cardline">Отвечает <span class="v">только новым подписчикам</span> тёплым «рад, что заглянул».</div></div>'
+      +'<div class="sc-card-toggle"><span class="sc-card-state">Активен</span>'+sw(true)+'</div></div>'
+      +'<div class="sc-card-foot"><div class="sc-runs"><div class="sc-run"><span class="sr-k">статус</span><span class="sr-v">отвечает</span></div></div>'
+      +'<div class="sc-card-actions"><a class="btn btn--ghost btn--sm" href="#">Активность</a><a class="btn btn--secondary btn--sm" href="#">Открыть</a></div></div></div>';
+  }
+  function statesFrame(action){ return '<div class="stk">'+listCard({on:true,action:action})+listCard({on:false,action:action})+listCard({paused:true,action:action})+customScenarioCard()+'</div>'; }
+
+  /* ===== 4 · МОДАЛКА ===== */
+  function approachModal(){
+    var opts=[['Только фанатам',0],['Все, кроме троллей',0],['Только вопросы',0],[ic('pen',12)+' Свой вариант',1]];
+    var ol='<div class="optlist">'+opts.map(function(o){ return '<div class="opt'+(o[1]?' opt--on':'')+'"><span class="o-r"></span><span class="o-t">'+o[0]+'</span></div>'; }).join('')+'</div>';
+    var dialog='<div class="mdialog"><div class="mdialog-head"><span class="mh-ico">'+ic('bubble',17)+'</span><span class="mh-t">Отвечать на комментарии <span class="sc-builtin">'+ic('anchor',10)+' встроенная</span></span><button class="mh-x">'+ic('x',15)+'</button></div>'
+      +'<div class="mdialog-body">'
+      +'<div><div class="mfield-k">'+ic('bubble',13)+' Кому отвечать</div>'+ol+'<div style="margin-top:10px">'+customField()+'</div></div>'
+      +'<div><div class="mfield-k">'+ic('mic',13)+' Как отвечать <span style="font-weight:400;color:var(--color-text-subtle)">— коротко, необязательно</span></div>'+howField()+'</div>'
+      +'<div class="sc-fromhr" style="padding-top:2px"><span class="inherit">'+ic('sliders',10)+' из Правил дома</span> частота · тихие часы · потолок — общие, в Правилах дома</div>'
+      +'</div>'
+      +'<div class="mdialog-foot"><span class="sc-selfrun">'+ic('repeat',12)+' отвечает сама · ~15 мин</span><span class="mf-spacer"></span><button class="btn btn--ghost btn--sm">Отмена</button><button class="btn btn--primary btn--sm">Сохранить</button></div></div>';
+    var back='<div class="mback">'+listCard({on:true,action:'Настроить'})+listCard({on:false,action:'Настроить'})+'</div>';
+    return '<div class="mstage">'+back+'<div class="mscrim"></div>'+dialog+'</div>';
+  }
+
+  /* ===== 5 · ГАЛЕРЕЯ ПРЕСЕТОВ ===== */
+  function tile(icn,name,ex,on,custom){
+    return '<button class="aud-tile'+(on?' aud-tile--on':'')+(custom?' aud-tile--custom':'')+'"><div class="aud-tile-top"><span class="aud-tile-ico">'+ic(icn,17)+'</span><span class="aud-tile-name">'+name+'</span><span class="aud-tile-check">'+ic('check',13)+'</span></div><div class="aud-tile-ex">'+ex+'</div></button>';
+  }
+  function approachGallery(){
+    var tiles='<div class="aud-tiles">'
+      +tile('heart','Только фанатам','«спасибо, что читаешь!» — тем, кто уже с тобой',false)
+      +tile('users','Все, кроме троллей','всем по-доброму, кроме явного негатива и спама',false)
+      +tile('help','Только вопросы','отвечаю там, где о чём-то спросили',false)
+      +tile('pen','Свой вариант','опиши аудиторию словами — решу по каждому комменту',true,true)
+      +'</div>'
+      +'<div class="tile-custom">'+customField()+'</div>';
+    var body='<div class="gal">'
+      +'<div class="gal-sec"><div class="gal-k">'+ic('bubble',14)+' Кому отвечать</div><div class="gal-d">Выбери шаблон аудитории. Свип ответит только ей, остальных пропустит.</div>'+tiles+'</div>'
+      +'<div class="gal-sec"><div class="gal-k">'+ic('mic',14)+' Как отвечать <span style="font-weight:400;color:var(--color-text-subtle)">— коротко, необязательно</span></div><div class="gal-d">Поверх твоего голоса — свип всё равно пишет как ты.</div>'+howField()+'</div>'
+      +'</div>';
+    return '<div class="rs-surface">'+rsHead(true,'Выбери шаблон «кому» и тон')+body+selfRunFoot()+'</div>';
+  }
+
+  /* ===== 6 · ФИЛЬТР-ПРАВИЛА ===== */
+  function approachFilter(){
+    var tpls=['Только фанатам','Все, кроме троллей','Только вопросы'].map(function(x){ return '<button class="flt-tpl">'+x+'</button>'; }).join('')+'<button class="flt-tpl flt-tpl--on">'+ic('pen',12)+' Свой вариант</button>';
+    var allow='<div class="flt-row flt-row--allow"><span class="flt-ico">'+ic('check',16)+'</span><div class="flt-body"><div class="flt-k flt-k--allow">Отвечаю, когда…</div><div class="flt-templates">'+tpls+'</div>'+customField()+'</div></div>';
+    var deny='<div class="flt-row flt-row--deny"><span class="flt-ico">'+ic('ban',16)+'</span><div class="flt-body"><div class="flt-k">Никогда не отвечаю</div><div class="flt-t"><b>Троллям и спаму.</b> Встроенный предохранитель — он всегда поверх твоего правила, отключить нельзя.</div></div><span class="flt-lock">'+ic('anchor',11)+' всегда</span></div>';
+    var how='<div class="flt-row" style="display:block"><div class="flt-k" style="color:var(--color-text-subtle)">'+ic('mic',12)+' Как отвечать — коротко, необязательно</div>'+howField()+'</div>';
+    var body='<div class="flt">'+allow+deny+how+'</div>';
+    return '<div class="rs-surface">'+rsHead(true,'Собери фильтр: кому отвечаем, кого режем')+body+selfRunFoot()+'</div>';
+  }
+
+  /* ===== 7 · ДАЙЛ ШИРОТЫ ===== */
+  function approachDial(){
+    var track='<div class="dial-track dim">'
+      +'<button class="dial-stop">Только фанатам<small>узко</small></button>'
+      +'<button class="dial-stop">Только вопросы<small>средне</small></button>'
+      +'<button class="dial-stop">Все, кроме троллей<small>широко</small></button>'
+      +'</div>'
+      +'<div class="dial-axis"><span>меньше людей</span><span class="ax-line"></span><span>больше людей</span></div>';
+    var precise='<button class="dial-precise dial-precise--on"><span class="dp-r"></span><span><span class="dp-t">'+ic('pen',13)+' По описанию (Свой вариант)</span><span class="dp-d">Точечно: опиши аудиторию словами — Pennedly решит по каждому комменту, не по ширине.</span></span></button>'
+      +'<div class="dial-custom">'+customField()+'</div>';
+    var how='<div style="padding:6px 26px 4px"><div class="dial-k" style="margin-bottom:9px">'+ic('mic',14)+' Как отвечать <span style="font-weight:400;color:var(--color-text-subtle)">— коротко, необязательно</span></div>'+howField()+'</div>';
+    var body='<div class="dial"><div class="dial-k">'+ic('sliders',14)+' Насколько широко отвечать</div>'+track+'<div class="dial-or">или</div>'+precise+'</div>'+how;
+    return '<div class="rs-surface">'+rsHead(true,'Сдвинь шкалу широты — или опиши точно')+body+selfRunFoot()+'</div>';
+  }
+
+  /* render */
+  set('fa-hero', '<div class="frames">'+frameFull('4 · Модалка · Light · 960', approachModal(), false)+frameFull('4 · Модалка · Dark', approachModal(), true)+'</div>');
+  set('fa-states', frameFull('4 · в списке · вкл / выкл / пауза+сценарий · Light', statesFrame('Настроить'), false));
+
+  set('fb-hero', '<div class="frames">'+frameFull('5 · Галерея · Light · 960', approachGallery(), false)+frameFull('5 · Галерея · Dark', approachGallery(), true)+'</div>');
+  set('fb-states', frameFull('5 · в списке · вкл / выкл / пауза+сценарий · Light', statesFrame('Настроить'), false));
+
+  set('fc-hero', '<div class="frames">'+frameFull('6 · Фильтр · Light · 960', approachFilter(), false)+frameFull('6 · Фильтр · Dark', approachFilter(), true)+'</div>');
+  set('fc-states', frameFull('6 · в списке · вкл / выкл / пауза+сценарий · Light', statesFrame('Настроить'), false));
+
+  set('fd-hero', '<div class="frames">'+frameFull('7 · Дайл · Light · 960', approachDial(), false)+frameFull('7 · Дайл · Dark', approachDial(), true)+'</div>');
+  set('fd-states', frameFull('7 · в списке · вкл / выкл / пауза+сценарий · Light', statesFrame('Настроить'), false));
+})();
+</script>
+</body>
+</html>

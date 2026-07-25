@@ -1,0 +1,172 @@
+/* variants/atoms.css — shared DS atoms for all 5 concepts.
+   Pure ds/tokens.css: ink-on-paper, one accent, both themes, no hardcoded hex.
+   Concepts style their own LAYOUT; these atoms stay identical everywhere so the
+   5 concepts are compared on structure, not on re-drawn primitives. */
+
+.v-ic { display: inline-block; vertical-align: -0.15em; flex: 0 0 auto; }
+.v-netlogo { display: block; }
+
+/* ── avatar (photo + monogram fallback + network badge) ── */
+.v-av {
+  position: relative; width: var(--av, 40px); height: var(--av, 40px); flex: 0 0 auto;
+  border-radius: var(--radius-full); overflow: visible; display: inline-grid; place-items: center;
+}
+.v-av img {
+  width: 100%; height: 100%; border-radius: var(--radius-full); object-fit: cover;
+  display: block; background: var(--color-surface-2);
+}
+.v-av-mono {
+  width: 100%; height: 100%; border-radius: var(--radius-full);
+  display: grid; place-items: center;
+  background: var(--color-surface-2); border: 1px solid var(--color-border);
+  color: var(--color-text-muted); font-weight: 600; letter-spacing: 0.01em;
+  font-size: calc(var(--av, 40px) * 0.34); font-variant: small-caps;
+}
+.v-av-net {
+  position: absolute; right: -3px; bottom: -3px;
+  display: grid; place-items: center; padding: 2px;
+  border-radius: var(--radius-full); background: var(--color-surface);
+  border: 1px solid var(--color-border); color: var(--color-text);
+  box-shadow: var(--shadow-sm);
+}
+.v-av--dim img, .v-av--dim .v-av-mono { filter: grayscale(1); opacity: 0.55; }
+.v-av--dim .v-av-net { color: var(--color-text-subtle); }
+
+/* ── delta chip (▲/▼ + number) ── */
+.v-delta {
+  display: inline-flex; align-items: center; gap: 1px; white-space: nowrap;
+  font-size: var(--text-caption); font-weight: 600; font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.v-delta--up { color: var(--color-success); }
+.v-delta--down { color: var(--color-danger); }
+.v-delta .v-ic { margin-right: -1px; }
+
+/* ── data chip (advisor grounding etc.) ── */
+.v-chip {
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+  font-size: var(--text-caption); font-weight: 500; line-height: 1;
+  padding: 5px 10px; border-radius: var(--radius-full);
+  border: 1px solid var(--color-border); background: var(--color-surface-2); color: var(--color-text-muted);
+}
+.v-chip-t { font-variant-numeric: tabular-nums; }
+.v-chip--up { color: var(--color-success); border-color: color-mix(in srgb, var(--color-success) 32%, transparent); background: color-mix(in srgb, var(--color-success) 12%, var(--color-surface)); }
+.v-chip--down { color: var(--color-danger); border-color: color-mix(in srgb, var(--color-danger) 32%, transparent); background: color-mix(in srgb, var(--color-danger) 12%, var(--color-surface)); }
+.v-chip--accent { color: var(--color-accent); border-color: color-mix(in srgb, var(--color-accent) 34%, transparent); background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface)); }
+.v-chip--ink { color: var(--color-text); }
+
+/* ── voice affordance ── */
+.v-voice {
+  display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;
+  font-family: inherit; font-size: var(--text-caption); font-weight: 500; line-height: 1;
+  padding: 4px 9px; border-radius: var(--radius-full); border: 1px solid transparent; cursor: pointer;
+}
+.v-voice--on { color: var(--color-text-subtle); border-color: transparent; background: transparent; cursor: default; }
+.v-voice--off { color: var(--color-accent); border-color: color-mix(in srgb, var(--color-accent) 34%, transparent); background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface)); }
+.v-voice--off:hover { background: color-mix(in srgb, var(--color-accent) 18%, var(--color-surface)); }
+
+/* ── metric cell ── */
+.v-m { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.v-m-lab { display: inline-flex; align-items: center; gap: 5px; color: var(--color-text-subtle); font-size: var(--text-caption); }
+.v-m-lab .v-ic { opacity: 0.8; }
+.v-m-labtxt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: 0.01em; }
+.v-m-row { display: inline-flex; align-items: baseline; gap: 7px; min-width: 0; }
+.v-m-val { font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; white-space: nowrap; color: var(--color-text); font-size: 1.0625rem; }
+.v-m--sm .v-m-val { font-size: var(--text-small); }
+.v-m--lg .v-m-val { font-size: 1.375rem; }
+.v-m--xl .v-m-val { font-size: 2.25rem; letter-spacing: -0.02em; }
+.v-m--attention .v-m-val { color: var(--color-accent); }
+.v-m--attention .v-m-lab { color: color-mix(in srgb, var(--color-accent) 70%, var(--color-text-subtle)); }
+
+/* ── sync status line ── */
+.v-sync { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; font-size: var(--text-caption); color: var(--color-text-subtle); }
+.v-sync-dot { width: 6px; height: 6px; border-radius: var(--radius-full); background: var(--color-success); flex: 0 0 auto; }
+.v-sync--error { color: var(--color-danger); }
+.v-sync--error .v-sync-dot { background: var(--color-danger); }
+.v-sync--imp { color: var(--color-accent); }
+.v-sync--imp .v-sync-dot { background: var(--color-accent); animation: dot-pulse 1.4s ease-in-out infinite; }
+.v-sync--off { color: var(--color-text-subtle); }
+.v-sync--off .v-sync-dot { background: var(--color-ink-400); }
+
+/* ── plan / small tags ── */
+.v-plan {
+  display: inline-flex; align-items: center; font-family: var(--font-mono);
+  font-size: 10.5px; font-weight: 500; letter-spacing: 0.06em; line-height: 1;
+  padding: 3px 7px; border-radius: var(--radius-sm);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 34%, var(--color-border));
+  color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 8%, var(--color-surface));
+}
+.v-tag {
+  display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;
+  font-size: var(--text-caption); color: var(--color-text-muted);
+  padding: 3px 8px; border-radius: var(--radius-full); border: 1px solid var(--color-border); background: var(--color-surface);
+}
+.v-tester { color: var(--color-text-subtle); border-style: dashed; }
+
+/* ── retry / small action buttons ── */
+.v-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  font-family: inherit; font-size: var(--text-small); font-weight: 500; white-space: nowrap;
+  cursor: pointer; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text);
+  height: 32px; padding: 0 12px; border-radius: var(--radius-md);
+  transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
+}
+.v-btn:hover { background: var(--color-surface-2); }
+.v-btn--sm { height: 28px; padding: 0 10px; font-size: var(--text-caption); border-radius: var(--radius-sm); }
+.v-btn--primary { background: var(--color-primary); color: var(--color-primary-foreground); border-color: transparent; }
+.v-btn--primary:hover { background: color-mix(in srgb, var(--color-primary) 88%, var(--color-bg)); }
+.v-btn--accent { background: var(--color-accent); color: var(--color-accent-foreground); border-color: transparent; }
+.v-btn--accent:hover { background: color-mix(in srgb, var(--color-accent) 88%, var(--color-bg)); }
+.v-btn--danger { color: var(--color-danger); border-color: color-mix(in srgb, var(--color-danger) 34%, var(--color-border)); }
+.v-btn--danger:hover { background: color-mix(in srgb, var(--color-danger) 10%, var(--color-surface)); }
+.v-btn--ghost { background: transparent; border-color: transparent; color: var(--color-text-muted); }
+.v-btn--ghost:hover { background: var(--color-surface-2); color: var(--color-text); }
+
+/* ── quick links (Студия / Ответы) ── */
+.v-quick { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; font-size: var(--text-caption); font-weight: 500; color: var(--color-text-muted); cursor: pointer; padding: 4px 8px; border-radius: var(--radius-sm); }
+.v-quick:hover { background: var(--color-surface-2); color: var(--color-text); }
+.v-quick--attention { color: var(--color-accent); }
+.v-quick-n { font-variant-numeric: tabular-nums; font-weight: 600; }
+
+/* ── network picker rows (Threads live / LinkedIn soon) ── */
+.v-picker { display: flex; flex-direction: column; gap: 8px; }
+.v-picker-row {
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+  padding: 12px 14px; border-radius: var(--radius-lg); border: 1px solid var(--color-border);
+  background: var(--color-surface); cursor: pointer; font-family: inherit;
+  transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
+}
+.v-picker-row:hover { border-color: color-mix(in srgb, var(--color-accent) 40%, var(--color-border)); background: var(--color-surface-2); }
+.v-picker-row[aria-disabled="true"] { cursor: not-allowed; opacity: 0.6; pointer-events: none; }
+.v-picker-mark { width: 38px; height: 38px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-md); background: var(--color-surface-2); border: 1px solid var(--color-border); color: var(--color-text); }
+.v-picker-txt { flex: 1 1 auto; min-width: 0; }
+.v-picker-name { font-size: var(--text-small); font-weight: 600; color: var(--color-text); }
+.v-picker-sub { font-size: var(--text-caption); color: var(--color-text-subtle); }
+.v-picker-soon { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-text-subtle); border: 1px solid var(--color-border); border-radius: var(--radius-full); padding: 3px 8px; }
+
+/* ── skeleton shimmer ── */
+.v-skel {
+  display: block; border-radius: var(--radius-sm);
+  background: linear-gradient(100deg, var(--color-surface-2) 28%, color-mix(in srgb, var(--color-text) 7%, var(--color-surface-2)) 50%, var(--color-surface-2) 72%);
+  background-size: 220% 100%; animation: ib-shimmer 1.4s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) { .v-skel { animation: none; } }
+
+/* ── explicit light scope (re-asserts light tokens so a preview frame stays
+   light even inside a dark-mode document) ── */
+.light {
+  --color-bg: #efedea; --color-surface: #ffffff; --color-surface-2: #f6f5f2; --color-border: #dcd9d2;
+  --color-text: #171717; --color-text-muted: #565550; --color-text-subtle: #6f6e69;
+  --color-primary: #171717; --color-primary-foreground: #ededed;
+  --color-accent: #2f4cc4; --color-accent-foreground: #ffffff;
+  --color-success: #2c7350; --color-success-foreground: #ffffff;
+  --color-warning: #8a5b16; --color-warning-foreground: #ffffff;
+  --color-danger: #b23b30; --color-danger-foreground: #ffffff;
+  --shadow-sm: 0 1px 2px 0 rgb(23 23 23 / 0.06);
+  --shadow-md: 0 4px 12px -2px rgb(23 23 23 / 0.08), 0 2px 6px -3px rgb(23 23 23 / 0.06);
+  --shadow-lg: 0 16px 40px -12px rgb(23 23 23 / 0.16), 0 6px 14px -8px rgb(23 23 23 / 0.08);
+}
+
+/* narrow-width proof wrappers */
+.narrow390 .vshell--mobile { width: 390px; }
+.narrow320 .vshell--mobile { width: 320px; }

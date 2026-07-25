@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pennedly · Replies — Спецификация (пиксель-в-пиксель)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../../ds/tokens.css" />
+<link rel="stylesheet" href="../../ds/components.css" />
+<link rel="stylesheet" href="replies.css" />
+<style>
+:root{
+  --font-sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --font-mono:"Geist Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --bg:#efedea; --surface:#ffffff; --surface-2:#f6f5f2; --border:#dcd9d2;
+  --text:#171717; --muted:#565550; --subtle:#6f6e69; --accent:#2f4cc4;
+  --code-bg:#f6f5f2; --good:#2c7350; --warn:#8a5b16; --danger:#b23b30;
+  --radius:14px;
+}
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%; scroll-behavior:smooth;}
+body{margin:0; background:var(--bg); color:var(--text);
+  font-family:var(--font-sans); font-size:15px; line-height:1.62;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;}
+.layout{display:grid; grid-template-columns:300px minmax(0,1fr); gap:0; max-width:1340px; margin:0 auto;}
+
+.toc{position:sticky; top:0; align-self:start; height:100vh; overflow-y:auto;
+  padding:34px 22px 40px 32px; border-right:1px solid var(--border);}
+.toc .doc-mark{display:flex; align-items:center; gap:10px; margin-bottom:6px;}
+.toc .doc-mark .nib{width:30px; height:30px; border-radius:8px; background:var(--text); display:grid; place-items:center; flex:0 0 auto;}
+.toc .doc-mark b{font-size:16px; font-weight:600; letter-spacing:-0.01em;}
+.toc .doc-sub{font-size:12px; color:var(--subtle); letter-spacing:0.02em; margin:0 0 22px 40px; text-transform:uppercase;}
+.toc nav{display:flex; flex-direction:column; gap:1px;}
+.toc nav a{display:flex; gap:9px; padding:6px 10px; border-radius:8px; text-decoration:none;
+  color:var(--muted); font-size:13.5px; line-height:1.35; transition:background .12s, color .12s;}
+.toc nav a:hover{background:var(--surface-2); color:var(--text);}
+.toc nav a .n{font-variant-numeric:tabular-nums; color:var(--subtle); font-weight:600; flex:0 0 16px;}
+.toc nav a.sub{padding-left:30px; font-size:12.5px; color:var(--subtle);}
+.toc .meta{margin-top:24px; padding-top:18px; border-top:1px solid var(--border); font-size:12px; color:var(--subtle); line-height:1.7;}
+.toc .meta code{font-family:var(--font-mono); font-size:11px;}
+.toc .meta b{color:var(--text);}
+.toc .meta a{color:var(--accent); text-decoration:none;}
+
+main{padding:40px 56px 120px; min-width:0;}
+.kicker{font-family:var(--font-mono); font-size:12px; letter-spacing:0.04em; color:var(--accent); text-transform:uppercase; margin:0 0 10px;}
+h1.title{font-size:34px; line-height:1.1; letter-spacing:-0.025em; font-weight:600; margin:0 0 14px; text-wrap:balance;}
+h1.title span{color:var(--subtle); font-weight:500;}
+.lede{font-size:16px; color:var(--muted); max-width:76ch; margin:0 0 14px; text-wrap:pretty;}
+.filerow{display:flex; flex-wrap:wrap; gap:6px; margin:18px 0 6px;}
+.chip{font-family:var(--font-mono); font-size:11.5px; padding:4px 9px; border-radius:9999px; background:var(--surface); border:1px solid var(--border); color:var(--muted);}
+.chip--new{border-color:color-mix(in srgb, var(--accent) 40%, var(--border)); color:var(--accent);}
+
+section{margin-top:52px; scroll-margin-top:20px;}
+h2{font-size:21px; line-height:1.25; letter-spacing:-0.012em; font-weight:600; margin:0 0 4px; padding-top:10px;}
+h2 .h2n{font-family:var(--font-mono); font-size:14px; color:var(--accent); margin-right:10px; font-weight:500;}
+.section-note{color:var(--muted); font-size:14px; max-width:82ch; margin:6px 0 18px; text-wrap:pretty;}
+h3{font-size:15.5px; font-weight:600; letter-spacing:-0.005em; margin:30px 0 10px; padding-bottom:7px; border-bottom:1px solid var(--border);}
+h3 .stg{font-family:var(--font-mono); font-size:11px; color:var(--accent); border:1px solid var(--border); border-radius:6px; padding:1px 7px; margin-right:8px; text-transform:uppercase; letter-spacing:0.04em;}
+h3 .stg--shell{color:var(--good);}
+h3 .stg--new{color:var(--accent); border-color:color-mix(in srgb, var(--accent) 40%, var(--border));}
+h4{font-size:13px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.04em; margin:22px 0 8px;}
+
+p{margin:0 0 12px; text-wrap:pretty;}
+ul,ol{margin:0 0 12px; padding-left:22px;}
+li{margin:3px 0;}
+code{font-family:var(--font-mono); font-size:0.86em; background:var(--code-bg); border:1px solid var(--border); padding:1px 5px; border-radius:5px; white-space:nowrap;}
+.tok{color:var(--accent);}
+strong{font-weight:600;}
+a.link{color:var(--accent); text-decoration:underline; text-underline-offset:2px; text-decoration-color:color-mix(in srgb,var(--accent) 40%,transparent);}
+
+.tbl-wrap{overflow-x:auto; margin:0 0 16px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface);}
+table{width:100%; border-collapse:collapse; font-size:13px;}
+th,td{text-align:left; padding:9px 13px; border-bottom:1px solid var(--border); vertical-align:top;}
+thead th{font-size:11px; text-transform:uppercase; letter-spacing:0.04em; color:var(--subtle); font-weight:600; background:var(--surface-2);}
+tbody tr:last-child td{border-bottom:none;}
+td code, th code{white-space:nowrap;}
+td.val{font-family:var(--font-mono); font-size:12px; color:var(--text);}
+.sw{display:inline-block; width:12px; height:12px; border-radius:3px; border:1px solid rgba(0,0,0,.18); vertical-align:-1px; margin-right:6px;}
+td .mono2{font-family:var(--font-mono); font-size:11.5px; color:var(--subtle);}
+.grp td{background:var(--surface-2); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.04em; color:var(--subtle);}
+
+.note{border:1px solid var(--border); border-left:3px solid var(--accent); background:var(--surface);
+  border-radius:10px; padding:12px 16px; margin:14px 0; font-size:13.5px; color:var(--muted);}
+.note.warn{border-left-color:var(--warn);}
+.note.danger{border-left-color:var(--danger);}
+.note.good{border-left-color:var(--good);}
+.note b{color:var(--text);}
+.pane code, .check code, .note code, .section-note code, p code, td code, th code, li code{white-space:normal; overflow-wrap:anywhere;}
+.two{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+.two h4{margin-top:0;}
+.pane{border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); padding:16px 18px; min-width:0;}
+.pane.web{border-top:3px solid var(--text);}
+.pane.mob{border-top:3px solid var(--accent);}
+
+.check{list-style:none; padding:0; margin:0 0 8px;}
+.check li{position:relative; padding:5px 0 5px 26px; border-bottom:1px dashed var(--border); font-size:13.5px;}
+.check li:last-child{border-bottom:none;}
+.check li::before{content:"☐"; position:absolute; left:2px; top:4px; color:var(--subtle); font-size:14px;}
+.tagline{display:inline-block; font-size:11px; font-family:var(--font-mono); color:var(--accent); border:1px solid var(--border); border-radius:9999px; padding:2px 8px; margin-left:6px;}
+.statebar{display:flex; flex-wrap:wrap; gap:6px; margin:2px 0 14px;}
+.statebar .st{font-family:var(--font-mono); font-size:11px; padding:3px 9px; border-radius:6px; background:var(--surface-2); border:1px solid var(--border); color:var(--muted);}
+
+/* ───────────────────── LIVE FRAMES (real DS components) ───────────────────── */
+.frames{display:flex; flex-direction:column; gap:16px; margin:16px 0 6px;}
+.frow{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+@media(max-width:1040px){ .frow{grid-template-columns:1fr;} }
+.fr{display:flex; flex-direction:column; gap:9px; min-width:0;}
+.fr-head{display:inline-flex; align-items:center; gap:7px; font-family:var(--font-mono); font-size:11px; letter-spacing:.02em; color:var(--subtle);}
+.fr-head .dh{width:8px; height:8px; border-radius:9999px; background:var(--border);}
+.fr-head .dh--dark{background:#0a0a0a; border:1px solid #3a3a3a;}
+.frame{background:var(--color-bg); border:1px solid var(--color-border); border-radius:18px; padding:22px; overflow:hidden;}
+.frame *{box-sizing:border-box;}
+.frame .stk{display:flex; flex-direction:column; gap:16px;}
+.frame--rel{position:relative; min-height:340px;}
+.frame--rel .overlay{position:absolute;}
+.frame .overlay{ inset:0; display:grid; place-items:center; padding:24px; background:color-mix(in srgb, var(--color-ink-950) 55%, transparent); }
+
+/* mirrored studio.css pieces the live frames need (doc-local) */
+.skel-line{background:linear-gradient(100deg, var(--color-surface-2) 28%, color-mix(in srgb,var(--color-text) 7%, var(--color-surface-2)) 50%, var(--color-surface-2) 72%);
+  background-size:220% 100%; animation:shimmer 1.4s linear infinite; border-radius:6px;}
+@keyframes shimmer{ from{background-position:220% 0} to{background-position:-120% 0} }
+.cmt-card.skeleton{pointer-events:none;}
+@keyframes nibwrite{0%,100%{transform:translateX(0) rotate(0)}35%{transform:translateX(2px) rotate(-8deg)}70%{transform:translateX(-1px) rotate(5deg)}}
+
+.filterbar{display:flex; gap:4px; padding:4px; background:var(--color-surface-2); border:1px solid var(--color-border); border-radius:var(--radius-md);}
+.filter{flex:1 1 0; display:inline-flex; align-items:center; justify-content:center; gap:8px; height:36px; padding:0 10px; font-size:var(--text-small); font-weight:500; color:var(--color-text-muted); background:transparent; border:1px solid transparent; border-radius:var(--radius-sm); cursor:pointer; white-space:nowrap;}
+.filter--active{background:var(--color-surface); color:var(--color-text); font-weight:600; border-color:var(--color-border); box-shadow:var(--shadow-sm);}
+.filter .fdot{width:7px; height:7px; border-radius:var(--radius-full); flex:0 0 auto;}
+.filter .fcount{font-size:var(--text-caption); font-weight:600; color:var(--color-text-subtle); font-variant-numeric:tabular-nums;}
+.filter--active .fcount{color:var(--color-text-muted);}
+
+.empty{display:flex; flex-direction:column; align-items:center; text-align:center; padding:52px 24px; border:1px dashed var(--color-border); border-radius:var(--radius-lg); background:color-mix(in srgb,var(--color-surface) 50%,transparent);}
+.empty-mark{width:52px; height:52px; display:grid; place-items:center; margin-bottom:14px; border-radius:var(--radius-lg); background:var(--color-surface-2); border:1px solid var(--color-border); color:var(--color-text-subtle);}
+.empty-title{font-size:var(--text-h3); font-weight:600;}
+.empty-sub{font-size:var(--text-small); color:var(--color-text-muted); margin-top:6px; max-width:40ch; line-height:1.55;}
+
+.error-banner{display:flex; gap:14px; padding:16px 18px; background:color-mix(in srgb,var(--color-danger) 9%,var(--color-surface)); border:1px solid color-mix(in srgb,var(--color-danger) 32%,var(--color-border)); border-radius:var(--radius-lg);}
+.eb-mark{width:34px; height:34px; flex:0 0 auto; display:grid; place-items:center; border-radius:var(--radius-full); background:color-mix(in srgb,var(--color-danger) 16%,var(--color-surface)); color:var(--color-danger);}
+.eb-title{font-size:var(--text-small); font-weight:600;}
+.eb-sub{font-size:var(--text-caption); color:var(--color-text-muted); margin-top:2px;}
+
+.topbar-mock{display:flex; align-items:center; gap:13px; height:56px; padding:0 18px; background:color-mix(in srgb,var(--color-bg) 86%,transparent); border:1px solid var(--color-border); border-radius:12px;}
+.topbar-mock .tt{font-size:var(--text-h3); font-weight:600; letter-spacing:-0.006em; color:var(--color-text);}
+.topbar-mock .ib{width:34px; height:34px; display:grid; place-items:center; border:1px solid var(--color-border); border-radius:10px; background:var(--color-surface); color:var(--color-text-muted);}
+
+.dialog-head{ display:flex; gap:13px; align-items:flex-start; }
+.dialog-mark{ width:38px; height:38px; flex:0 0 auto; display:grid; place-items:center; border-radius:var(--radius-md); background:color-mix(in srgb,var(--color-accent) 12%, var(--color-surface)); border:1px solid color-mix(in srgb,var(--color-accent) 26%, transparent); color:var(--color-accent); }
+.dialog-title{ font-size:var(--text-h3); font-weight:600; letter-spacing:-0.006em; }
+.dialog-sub{ font-size:var(--text-small); color:var(--color-text-muted); line-height:1.55; margin-top:6px; }
+.dialog-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:20px; }
+
+@media (max-width:980px){
+  .layout{grid-template-columns:1fr;}
+  .toc{position:static; height:auto; border-right:none; border-bottom:1px solid var(--border);}
+  .toc nav{display:grid; grid-template-columns:1fr 1fr; gap:1px 14px;}
+  main{padding:28px 22px 90px;}
+  .two{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<aside class="toc">
+  <div class="doc-mark">
+    <span class="nib"><svg width="18" height="18" viewBox="0 0 512 512"><g fill="#ededed"><g transform="rotate(42 256 256)"><path d="M236 150 Q236 128 256 128 Q276 128 276 150 L276 300 L256 360 L236 300 Z"/><rect x="236" y="206" width="40" height="7"/></g></g></svg></span>
+    <b>Pennedly</b>
+  </div>
+  <div class="doc-sub">Спецификация · Replies</div>
+  <nav>
+    <a href="#s1"><span class="n">1</span> Идентификация экрана</a>
+    <a href="#s2"><span class="n">2</span> Анатомия + живые фреймы</a>
+    <a class="sub" href="#s2-shell">— shell: topbar</a>
+    <a class="sub" href="#s2-switch">— Post-свитчер (главное)</a>
+    <a class="sub" href="#s2-context">— Контекст поста</a>
+    <a class="sub" href="#s2-filter">— Фильтр статусов</a>
+    <a class="sub" href="#s2-card">— Карточка · @username</a>
+    <a class="sub" href="#s2-thread">— Тред ответа по статусам</a>
+    <a class="sub" href="#s2-foot">— Футер по статусу</a>
+    <a class="sub" href="#s2-dialog">— PublishReplyDialog</a>
+    <a class="sub" href="#s2-aux">— Empty / Loading / Error</a>
+    <a href="#s3"><span class="n">3</span> Все состояния</a>
+    <a href="#s4"><span class="n">4</span> Что не меняется</a>
+    <a href="#s5"><span class="n">5</span> Один идиом · Web ↔ Mobile</a>
+    <a href="#s6"><span class="n">6</span> Точные значения</a>
+    <a href="#s7"><span class="n">7</span> Локализация</a>
+    <a href="#s8"><span class="n">8</span> Чек-лист</a>
+  </nav>
+  <div class="meta">
+    Экран: <b>Replies</b> · tester-gated<br>
+    Маршрут: <code>/app/replies</code><br>
+    Группа nav: <b>Workspace</b><br>
+    Тип: <b>полный app-shell</b> (sidebar = да)<br>
+    <b>Новая раскладка: горизонтальный post-свитчер сверху</b> (левый master-список убран)<br>
+    Ширина: <code>--content-wide</code> 960 · одна колонка<br>
+    Иконография: спокойная · <b>без молний</b><br>
+    Mobile: <a class="link" href="Replies-Mobile-SPEC.html">Replies-Mobile-SPEC.html</a><br>
+    CSS: <code>replies.css</code><br>
+    Токены: <code>ds/tokens.css</code>, <code>ds/components.css</code>
+  </div>
+</aside>
+
+<main>
+  <div class="doc-head">
+    <p class="kicker">Pennedly · Спецификация · Документация экрана</p>
+    <h1 class="title">Replies <span>/app/replies</span> — пиксель-в-пиксель</h1>
+    <p class="lede">Спецификация <b>переработанного десктопного</b> экрана <b>Replies</b> — очереди ответов на комментарии (reply-first — ключевое отличие Pennedly). Под постами пользователя собираются комментарии; Pennedly пишет ответ <b>в голосе пользователя</b>, тот ревьюит и одним подтверждением публикует тред-ответ в Threads. <b>Главное изменение:</b> прежний two-column master-detail (узкая колонка-список постов слева, комментарии справа) заменён на <b>горизонтальный post-свитчер сверху</b> — ровно тот же идиом, что уже на мобиле (<a class="link" href="Replies-Mobile-SPEC.html#s4">§4 mobile-spec</a>), только в десктоп-размере, со стрелками/драгом/fade вместо свайпа. Левая вертикальная колонка убирается полностью; комментарии и composer занимают всю ширину одной читаемой колонки. Документ покрывает <b>десктоп</b> одним проходом: живые фреймы (реальные DS-компоненты на <code>replies.css</code>, <b>светлая И тёмная</b> темы, на ширине экрана), пронумерованная анатомия, все состояния, «что не меняется», маппинг Web↔Mobile (теперь это <b>один идиом</b>), локализация в 8 языков и чек-лист. Тон Pennedly — «партнёр по черновикам», спокойная иконография; <b>никаких молний</b>.</p>
+    <div class="filerow">
+      <span class="chip chip--new">replies.css · post-switcher</span>
+      <span class="chip">replies-app.jsx</span>
+      <span class="chip">replies-parts.jsx</span>
+      <span class="chip">replies-postselect.jsx</span>
+      <span class="chip">replies-card.jsx</span>
+      <span class="chip">replies-data.jsx</span>
+      <span class="chip">shell-parts.jsx</span>
+      <span class="chip">ds/tokens.css</span>
+      <span class="chip">ds/components.css</span>
+    </div>
+  </div>
+
+  <div class="note warn">
+    <b>Десктоп переработан: master-список → горизонтальный свитчер.</b> Прежняя левая колонка <code>.rq-master</code> (300px, вертикальный список постов) <b>убрана полностью</b>. Теперь посты переключаются <b>горизонтальным snap-scroll рядом чипов сверху</b> (<code>.rq-switch</code>), sticky под топбаром; комментарии выбранного поста заполняют единственную full-width колонку (<code>.rq-flow</code>). Единственное структурное изменение десктопа — этот свитчер; всё остальное (контекст поста, фильтр, карточки, диалог) сохранено, просто на полной ширине.
+  </div>
+
+  <div class="note good">
+    <b>Состояния одним взглядом.</b> Два твика (<code>?demo=1</code>): <code>dark</code> и <code>state</code>. <code>state</code> = Live (свитчер + комментарии) · Loading (skeleton свитчера + 3 SkeletonCard) · Empty (per-tab пусто / нет постов) · Error (ErrorBanner). Статусы карточек уже в сид-данных: <b>new · generating · draft · approved · replied · skipped</b>. Лимит ответа — <b>500</b> символов. Публикация — только через confirm-диалог.
+  </div>
+
+  <!-- ===================== 1 ===================== -->
+  <section id="s1">
+    <h2><span class="h2n">1</span>Идентификация экрана</h2>
+    <p class="section-note">Маршрут, назначение, новая раскладка сверху вниз: <code>sidebar | main(topbar + scroll(content: page-intro + post-switcher(sticky) + flow(context + filter + comments)))</code>.</p>
+    <div class="tbl-wrap"><table><tbody>
+      <tr><th style="width:210px;">Маршрут</th><td><code>/app/replies</code>. Пункт <b>Replies</b> в группе <b>Workspace</b>, <b>tester-gated</b> (badge 3). Демо: <code>?demo=1</code> + Tweaks.</td></tr>
+      <tr><th>Тип</th><td><b>Полный app-shell</b>: <code>&lt;window.Sidebar active="replies"/&gt;</code>. Каркас 1:1 из Studio.</td></tr>
+      <tr><th>Назначение</th><td>Очередь ответов на комментарии. На каждый: <b>generate</b> (Pennedly пишет ответ в голосе) → <b>edit/regenerate</b> → <b>approve</b> → <b>publish</b> (тред-ответ в Threads). Цель — «inbox zero» без потери голоса. Лимит ответа <b>500</b>.</td></tr>
+      <tr><th>Новая раскладка</th><td><b>Одна колонка.</b> <code>.page-intro</code> → <b><code>.rq-switch</code> (горизонтальный post-свитчер, sticky)</b> → <code>.rq-flow</code>: <code>&lt;PostContext&gt;</code> + <code>&lt;StatusFilter&gt;</code> + лента комментариев. <b>Левого master-списка нет.</b></td></tr>
+      <tr><th>Ширина контента</th><td><b>wide</b> = <code class="tok">--content-wide</code> 960px. Топбар выровнен через <code>.topbar-inner.topbar--wide</code>.</td></tr>
+      <tr><th>Топбар</th><td>Заголовок «Replies» + <code>.status-pill</code>: <code>--accent</code> «N need a reply» (когда есть <code>new</code>) / <code>--success</code> «All caught up». Действия — тема + Settings.</td></tr>
+      <tr><th>Свитчер постов</th><td><b>Горизонтальный ряд чипов</b> (<code>.rq-chip</code> 280px), snap-scroll, sticky под топбаром. Это то, чем меняешь пост — остаётся в досягаемости при прокрутке длинного списка комментов.</td></tr>
+      <tr><th>Фазы (state)</th><td><code>loading</code> (skeleton свитчера + 3 SkeletonCard) · <code>ready</code> · per-tab <code>empty</code> · глобальный <code>empty</code> (нет постов) · <code>error</code> (ErrorBanner).</td></tr>
+      <tr><th>Backend-правда</th><td>Threads-API отдаёт <b>только @username комментатора</b> — без аватара и имени; карточка их <b>не выдумывает</b>. Лайков по ответам API не отдаёт → их нет нигде. Время — в локальной TZ зрителя.</td></tr>
+    </tbody></table></div>
+  </section>
+
+  <!-- ===================== 2 ===================== -->
+  <section id="s2">
+    <h2><span class="h2n">2</span>Анатомия + живые фреймы</h2>
+    <p class="section-note">Весь экран в контексте — светлая и тёмная темы, новая одноколоночная раскладка со свитчером сверху. Дальше — каждая часть отдельно с таблицей значений.</p>
+    <div class="frames" id="f-dash"></div>
+
+    <h3 id="s2-shell"><span class="stg stg--shell">shell</span>2.1 — Топбар + status-pill</h3>
+    <p class="section-note">App-shell общий (Studio). Активный пункт = <b>Replies</b> (Workspace, tester-gated). Status-pill отражает, есть ли комментарии в статусе <code>new</code>.</p>
+    <div class="frames" id="f-topbar"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:230px;">Элемент / класс</th><th>Описание</th></tr></thead>
+      <tbody>
+        <tr><td><code>.topbar-inner.topbar--wide</code></td><td>max-width 960; padding-inline 24; flex gap 16.</td></tr>
+        <tr><td><code>.topbar-title</code></td><td>«Replies» — <code class="tok">--text-h3</code> 19 / w600.</td></tr>
+        <tr><td><code>.status-pill--accent</code> / <code>--success</code></td><td><b>есть new</b> → accent «N need a reply» + точка; <b>0</b> → success «All caught up».</td></tr>
+        <tr><td><code>.icon-btn</code> ×2</td><td>Тема + Settings. 36×36.</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 id="s2-switch"><span class="stg stg--new">REWORKED</span>2.2 — Post-свитчер <code>.rq-switch</code> / <code>.rq-chip</code> <span class="tagline">главное</span></h3>
+    <p class="section-note">Горизонтальный ряд чипов-постов, <b>snap-scroll, sticky под топбаром</b> (он — то, чем меняешь пост, поэтому остаётся в досягаемости при прокрутке длинного списка комментов). Чип: короткий сниппет поста (clamp 2) + дата + бейдж числа <b>неотвеченных</b> комментов; активный чип — accent-кольцо + tint. Ширина чипа <b>280px</b> (шире мобильных 220px — видно несколько одновременно). <b>На десктопе нет свайпа</b>, поэтому обязательны мышиные аффордансы:</p>
+    <div class="frames" id="f-switch"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:230px;">Элемент / класс</th><th>Описание</th></tr></thead>
+      <tbody>
+        <tr><td><code>.rq-switch</code> (sticky)</td><td><code>position:sticky; top:0; z-index:8</code> + лёгкий blur. <code>.rq-switch-cap</code> «Posts with comments · N».</td></tr>
+        <tr><td><code>.rq-switch-rail</code></td><td><code>display:flex; gap:10; overflow-x:auto; scroll-snap-type:x proximity; scrollbar скрыт</code>. <code>role="listbox"</code>.</td></tr>
+        <tr><td><code>.rq-chip</code> / <code>--active</code></td><td><code>flex:0 0 280; scroll-snap-align:start; border; radius-md; bg surface</code>. Active → accent-кольцо + tint, текст w600. <code>role="option"</code>, <code>aria-selected</code>.</td></tr>
+        <tr><td><code>.rq-chip-text / -meta / -badge</code></td><td>Сниппет (clamp 2) + дата · «N comments» + бейдж <b>«N to answer»</b> (accent) / <b>«All answered»</b> (success, <code>--done</code>).</td></tr>
+        <tr><td><code>.rq-switch-arrow</code> ‹ ›</td><td>Кнопки-стрелки по краям — <b>появляются при overflow</b>. 32×32, shadow-md. Скроллят рейл на «страницу». <code>aria-label</code>.</td></tr>
+        <tr><td><code>.rq-switch-fade</code> left/right</td><td>Мягкие fade-градиенты на краях (сигнал «есть ещё»). <code>pointer-events:none</code>; растворяются в <code>--color-bg</code>.</td></tr>
+        <tr><td>мышь / колесо / клавиатура</td><td><b>click-drag</b> для прокрутки мышью; <b>shift+wheel</b> = горизонтальный скролл; при выборе активный чип <b>авто-доскролливается</b> в видимую зону; клавиатура <b>← / →</b> переключают пост, видимые фокус-кольца.</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note"><b>Состояния свитчера.</b> <b>Мало постов</b> (рейл влезает) → стрелки и fade скрыты. <b>Много постов</b> (overflow) → стрелки + fade + drag. При программном выборе поста активный чип центрируется в зоне просмотра.</div>
+
+    <h3 id="s2-context">2.3 — Контекст выбранного поста <code>.rq-context</code></h3>
+    <p class="section-note">Под свитчером — компактный контекст: текст поста, под которым отвечаем, его время и «Open in Threads». Всегда ясно, под каким постом идёт работа.</p>
+    <div class="frames" id="f-context"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:230px;">Элемент / класс</th><th>Описание</th></tr></thead>
+      <tbody>
+        <tr><td><code>.rq-context</code></td><td><code>bg surface; border; radius-lg; shadow-sm; padding 16/18</code>.</td></tr>
+        <tr><td><code>.rq-context-cap</code></td><td>«Replying under your post» — caption / uppercase / subtle.</td></tr>
+        <tr><td><code>.rq-context-text</code></td><td>Текст поста — <code class="tok">--text-body</code> 15 / lh1.55.</td></tr>
+        <tr><td><code>.rq-context-foot</code> + <code>.rq-context-link</code></td><td>Время + «Open in Threads» (<code>&lt;IcExternal&gt;</code>, → threads.net, _blank).</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 id="s2-filter">2.4 — Фильтр статусов <code>.filterbar</code> ×5 <span class="tagline">StatusFilter</span></h3>
+    <p class="section-note">Пять табов на full-width: <b>All</b> (дефолт) · <b>Needs reply</b> · <b>Draft</b> · <b>Replied</b> · <b>Skipped</b>. Счётчики — по комментариям активного поста. В Replies фильтр <b>не sticky</b> (sticky — это свитчер).</p>
+    <div class="frames" id="f-filter"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:230px;">Элемент / класс</th><th>Описание</th></tr></thead>
+      <tbody>
+        <tr><td><code>.filterbar</code></td><td><code>flex; gap 4; padding 4; bg surface-2; border; radius-md</code>. <code>role="tablist"</code>. <code>position:static</code>.</td></tr>
+        <tr><td><code>.filter</code> ×5 / <code>--active</code></td><td><code>flex:1; height 36; --text-small</code>. Active → surface + shadow. <code>.fdot.dot-{key}</code> + <code>.flabel</code> + <code>.fcount</code>.</td></tr>
+        <tr><td>точки</td><td><code>dot-all</code> ink-300 · <code>dot-needs</code> accent · <code>dot-drafts</code> ink-400 · <code>dot-replied</code> success · <code>dot-skipped</code> ink-300.</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 id="s2-card">2.5 — Карточка-комментарий <code>.cmt-card</code> — <b>@username only</b> <span class="tagline">CommentCard</span></h3>
+    <p class="section-note">Threads отдаёт <b>только @username</b> комментатора — без фото и имени. Поэтому шапка карточки = <code>@username + время</code> + бейдж статуса (+ ✕ для new/draft/approved). <b>Аватар комментатора не рисуем и имя не выдумываем.</b> (В блоке ответа — <i>твой</i> аватар; он есть.)</p>
+    <div class="frames" id="f-card"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:230px;">Элемент / класс</th><th>Описание</th></tr></thead>
+      <tbody>
+        <tr><td><code>article.cmt-card</code></td><td><code>bg surface; border; radius-lg; shadow-sm; padding 14/18; animation card-in</code>. <code>--skipped</code> → opacity 0.66.</td></tr>
+        <tr><td><code>.cmt-head</code> / <code>.cmt-handle</code> / <code>.cmt-sub</code></td><td><b>@username</b> (w600) + время (sub). <b>Без аватара/имени.</b></td></tr>
+        <tr><td><code>.cmt-badge</code> по статусу</td><td>New / Approved → accent + dot; Replied → good + dot; Draft → neutral + ink-400 dot; Skipped → neutral.</td></tr>
+        <tr><td><code>.cmt-remove</code> (✕)</td><td>«Remove from queue» (new/draft/approved): 28×28, hover → danger-tint. → Skipped.</td></tr>
+        <tr><td><code>.cmt-body</code></td><td>Текст комментария — <code class="tok">--text-body</code> 15 / lh1.6. <code>max-width:72ch</code> в потоке (читаемый measure).</td></tr>
+        <tr><td><code>.translate-row</code></td><td>Только если у коммента есть <code>lang</code>: «Translate from {язык}» ↔ «Show original» (инлайн-тогл, <code>&lt;IcGlobe&gt;</code>). Отдельно для коммента и для ответа.</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 id="s2-thread">2.6 — Тред ответа по статусам <code>.reply-thread</code> / <code>.reply-block</code></h3>
+    <p class="section-note">Черновик ответа тредится под комментарием: левая нить-«ветка», строка «You» (твой аватар) со статус-тегом, и текст ответа. Полный жизненный цикл — <b>new → generating → draft → approved → replied</b> (+ <b>skipped</b>), и режим <b>editing</b>.</p>
+    <div class="frames" id="f-thread"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:120px;">Статус</th><th>Тред ответа</th></tr></thead>
+      <tbody>
+        <tr><td><b>new</b></td><td class="val">Треда нет — только комментарий + footer с «Generate reply».</td></tr>
+        <tr><td><b>generating</b></td><td class="val"><code>.reply-block--gen</code>: две shimmer-строки + <code>.reply-gen-note</code> (<code>&lt;IcNib&gt;</code> анимация <b>nibwrite</b>) «Drafting a reply in your voice…». Footer скрыт.</td></tr>
+        <tr><td><b>draft</b></td><td class="val">Тег «drafted in your voice» (<code>&lt;IcNib&gt;</code>) + текст ответа. Footer: Regenerate · Edit · Approve.</td></tr>
+        <tr><td><b>approved</b></td><td class="val">Тег «approved · ready to publish» (accent, <code>&lt;IcCheck&gt;</code>). Footer: Edit · Publish reply.</td></tr>
+        <tr><td><b>editing</b></td><td class="val"><code>textarea.reply-edit</code> (accent-рамка + ring, autosize) + <code>.reply-cc</code> «N / 500». Footer: Cancel · Save (disabled при пусто/&gt;500).</td></tr>
+        <tr><td><b>replied</b></td><td class="val"><code>.reply-block--replied</code> (success-рамка) + тег «replied {time}» (success) <b>или</b> «Auto-replied by Pennedly» (сигнал автопилота). Footer: Open in Threads.</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 id="s2-foot">2.7 — Футер карточки <code>.cmt-foot</code> по статусу</h3>
+    <p class="section-note"><code>.cmt-foot</code>: <code>flex; gap 10; border-top</code>. Слева <code>.cmt-meta</code> (язык / «Published …» / «Removed …»), справа <code>.cmt-actions</code>. На карточке может быть <b>несколько</b> кнопок (это норма). Все — <code>.btn--sm</code>. <b>Скрыт во время generating.</b></p>
+    <div class="frames" id="f-foot"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:96px;">Статус</th><th>Лево (.cmt-meta)</th><th>Право (.cmt-actions)</th></tr></thead>
+      <tbody>
+        <tr><td><b>new</b></td><td>—</td><td class="val">primary «Generate reply» (IcNib)</td></tr>
+        <tr><td><b>draft</b></td><td>«{lang}» (если lang)</td><td class="val">ghost «Regenerate» (IcTweak) + secondary «Edit» (IcPencil) + primary «Approve» (IcCheck)</td></tr>
+        <tr><td><b>approved</b></td><td>«{lang}» (если lang)</td><td class="val">secondary «Edit» + primary «Publish reply» (IcReply)</td></tr>
+        <tr><td><b>editing</b></td><td>(как у статуса)</td><td class="val">ghost «Cancel» + primary «Save» (disabled при пусто/&gt;500)</td></tr>
+        <tr><td><b>replied</b></td><td>«Published {time}» (IcCheck)</td><td class="val">secondary-ссылка «Open in Threads» (IcExternal)</td></tr>
+        <tr><td><b>skipped</b></td><td>«Removed from queue · won't be answered»</td><td class="val">ghost «Restore» (IcUndo)</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 id="s2-dialog">2.8 — Диалог публикации <code>.overlay</code> + <code>.dialog</code> <span class="tagline">PublishReplyDialog</span></h3>
+    <p class="section-note">Публикация ответа — только через confirm-диалог: цитата комментария + превью ответа + «Publish reply». Центрированный modal (на телефоне — bottom-sheet).</p>
+    <div class="frames" id="f-dialog"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:230px;">Элемент / класс</th><th>Описание</th></tr></thead>
+      <tbody>
+        <tr><td><code>.overlay</code> / <code>.dialog</code></td><td>Scrim + центр. диалог (ds/components.css). <code>.dialog-mark</code> (<code>&lt;IcReply&gt;</code>) + title «Publish this reply?» + sub.</td></tr>
+        <tr><td><code>.pub-ctx</code></td><td>Цитата комментария: <code>.pub-ctx-bar</code> (нить) + <code>.pub-ctx-txt</code>.</td></tr>
+        <tr><td>превью ответа</td><td><code>.reply-block</code> с «You» + текстом ответа.</td></tr>
+        <tr><td><code>.dialog-actions</code></td><td>«Cancel» (ghost) / «Publish reply» (primary, IcReply).</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 id="s2-aux">2.9 — Empty / Loading / Error</h3>
+    <p class="section-note">Per-tab empty, skeleton (свитчер + 3 карточки) и общий ErrorBanner.</p>
+    <div class="frames" id="f-aux"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:230px;">Элемент / класс</th><th>Описание</th></tr></thead>
+      <tbody>
+        <tr><td><code>.empty</code></td><td>Mark (<code>&lt;IcReplies&gt;</code>) + per-tab заголовок/подзаголовок. Без CTA-кнопки.</td></tr>
+        <tr><td><code>.cmt-card.skeleton</code></td><td>Skeleton-карточка: строка-заголовок + тред-плейсхолдер (<code>.skel-line</code> shimmer). Loading = свитчер-скелет + <b>3</b> штуки.</td></tr>
+        <tr><td><code>.error-banner</code></td><td>«Couldn't load your replies» + «Retry» (<code>&lt;IcUndo&gt;</code>).</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- ===================== 3 ===================== -->
+  <section id="s3">
+    <h2><span class="h2n">3</span>Все состояния по очереди</h2>
+    <div class="statebar"><span class="st">Default</span><span class="st">Switcher overflow</span><span class="st">Switcher few</span><span class="st">new/gen/draft</span><span class="st">approved/replied/skipped</span><span class="st">editing</span><span class="st">translate</span><span class="st">autopilot</span><span class="st">Empty</span><span class="st">Loading</span><span class="st">Error</span><span class="st">Dialog</span></div>
+
+    <h3>3.1 — Свитчер: overflow (стрелки + fade) vs few (без стрелок)</h3>
+    <div class="frames" id="f-states-switch"></div>
+
+    <h3>3.2 — Карточки: жизненный цикл</h3>
+    <div class="frames" id="f-states-life"></div>
+
+    <h3>3.3 — Editing · translate · autopilot</h3>
+    <div class="frames" id="f-states-edit"></div>
+
+    <h3>3.4 — Empty · Loading · Error · Dialog</h3>
+    <div class="frames" id="f-states-aux"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:130px;">State</th><th>Что рендерится</th></tr></thead>
+      <tbody>
+        <tr><td><b>Default</b></td><td class="val">Свитчер (активный пост) + контекст + фильтр + карточки разных статусов.</td></tr>
+        <tr><td><b>Switcher</b></td><td class="val">overflow → стрелки ‹ › + fade + drag; few → стрелки/fade скрыты.</td></tr>
+        <tr><td><b>Lifecycle</b></td><td class="val">new · generating (nib) · draft · approved · replied (success) · skipped (dim).</td></tr>
+        <tr><td><b>Editing</b></td><td class="val">textarea 500-счётчик; Cancel/Save.</td></tr>
+        <tr><td><b>Translate / Autopilot</b></td><td class="val">инлайн «Translate from {lang}» (коммент и ответ независимо); «Auto-replied by Pennedly».</td></tr>
+        <tr><td><b>Empty / Loading / Error</b></td><td class="val">per-tab empty; skeleton; ErrorBanner + Retry.</td></tr>
+        <tr><td><b>Dialog</b></td><td class="val">PublishReplyDialog: цитата + превью + Publish reply.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- ===================== 4 ===================== -->
+  <section id="s4">
+    <h2><span class="h2n">4</span>Что не меняется <span class="tagline">What does not change</span></h2>
+    <p class="section-note">Это <b>layout-pass</b>. Единственное структурное изменение десктопа — левый master-список → горизонтальный свитчер сверху. Всё прочее идентично прежнему и мобильной спеке:</p>
+    <ul>
+      <li>Жизненный цикл <b>new → generating → draft → approved → replied</b>; <b>skip / restore</b>.</li>
+      <li>Лимит ответа <b>500 символов</b> (<code>REPLY_LIMIT</code>), счётчик «N / 500».</li>
+      <li><b>Перевод комментария и ответа</b> — инлайн-тогл «Translate from {lang}» ↔ «Show original», независимо, только у комментариев с полем <code>lang</code>.</li>
+      <li><b>Тред-блок ответа</b> с нитью-веткой и строкой «You».</li>
+      <li>Сигнал автопилота <b>«Auto-replied by Pennedly»</b> на блоке ответа.</li>
+      <li>Состояния <b>loading / empty / error</b>.</li>
+      <li>Threads отдаёт <b>только @username</b> комментатора — без аватара и имени; карточка их <b>не выдумывает</b>.</li>
+    </ul>
+  </section>
+
+  <!-- ===================== 5 ===================== -->
+  <section id="s5">
+    <h2><span class="h2n">5</span>Один идиом · Web ↔ Mobile</h2>
+    <p class="section-note">Теперь свитчер — <b>общий идиом на обоих</b>: десктоп = широкий горизонтальный ряд со <b>стрелками / драгом / fade</b>, мобайл = <b>swipe</b> (Replies-Mobile-SPEC §4). <b>Прежнее описание «left list of posts» в мобильной спеке устарело</b> — десктоп тоже горизонтальный свитчер, просто шире. Брейкпоинты: <b>880px</b> (shell → icon-rail) · <b>600px</b> (телефонный слой).</p>
+    <div class="two">
+      <div class="pane web"><h4>Десктоп ( &gt; 880 )</h4>
+        <ul>
+          <li>Фикс. сайдбар; одна колонка 960.</li>
+          <li>Master → <b>горизонтальный post-свитчер</b> сверху (sticky); 280px чипы.</li>
+          <li>Аффордансы: <b>стрелки ‹ ›</b>, <b>fade</b> на краях, <b>click-drag</b> + shift+wheel, авто-доскролл активного, <b>←/→</b>.</li>
+          <li>Комментарии выбранного поста — full-width; деталь публикации = <b>центр. modal</b>.</li>
+        </ul>
+      </div>
+      <div class="pane mob"><h4>Телефон ( ≤ 600 )</h4>
+        <ul>
+          <li>Нет сайдбара/таб-бара; гамбургер → drawer; свободный нижний край.</li>
+          <li><b>Тот же свитчер</b>, sticky; 220px чипы; <b>swipe</b> вместо стрелок.</li>
+          <li>Шапка карточки = @username + время; футер двухъярусный (иконки 44×44 + grow-primary).</li>
+          <li>Публикация = <b>bottom-sheet</b> (primary сверху).</li>
+        </ul>
+      </div>
+    </div>
+    <div class="note">Единственные отличия десктоп↔мобайл: <b>ширина чипа</b> (280 vs 220), <b>аффорданс прокрутки</b> (стрелки/драг vs swipe) и <b>форма детали публикации</b> (modal vs bottom-sheet). Идиом (горизонтальный свитчер постов), статусы, перевод, тред, @username-шапка — идентичны. Парный документ: <a class="link" href="Replies-Mobile-SPEC.html">Replies-Mobile-SPEC.html</a>.</div>
+  </section>
+
+  <!-- ===================== 6 ===================== -->
+  <section id="s6">
+    <h2><span class="h2n">6</span>Точные значения · контракт</h2>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:230px;">Поле / правило</th><th>Описание</th></tr></thead>
+      <tbody>
+        <tr><td><code>POSTS</code> (свитчер)</td><td>Посты, под которыми есть комментарии, <b>новые сверху</b> (сорт. по <code>at</code>). На пост: <code>total</code> (всего) + <code>unanswered</code> (статус ≠ replied и ≠ skipped). Бейдж = unanswered «N to answer» / «All answered».</td></tr>
+        <tr><td><code>COMMENTS</code> (статусы)</td><td><code>new · draft · approved · replied · skipped</code> (+ переходный <code>generating</code>, <code>editing</code>). Счётчики фильтра — по комментариям активного поста.</td></tr>
+        <tr><td>Фильтры</td><td><b>All</b> (все) · <b>Needs reply</b> (new+draft+approved) · <b>Draft</b> (draft+approved) · <b>Replied</b> · <b>Skipped</b>.</td></tr>
+        <tr><td>Лимит ответа</td><td><code>REPLY_LIMIT = 500</code>. Save disabled при пусто или &gt; 500.</td></tr>
+        <tr><td>Перевод</td><td>Только у комментов с <code>lang</code> (в сидах es/de). Коммент и ответ переводятся независимо. Это тогл «from {lang}», не выбор из 8 локалей.</td></tr>
+        <tr><td>Публикация</td><td>Постит ответ <b>тредом</b> под комментарием в Threads. Только через confirm-диалог. Тост «Reply published» + Undo.</td></tr>
+        <tr><td>@username</td><td>Threads-API отдаёт только @username — карточка не выдумывает аватар/имя.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- ===================== 7 ===================== -->
+  <section id="s7">
+    <h2><span class="h2n">7</span>Локализация и доступность</h2>
+    <p class="section-note">Вся UI-копи — 8 локалей: <b>en · ru · uk · de · es · fr · it · pt</b>, EN фолбэк. RU/DE/UK длиннее на ~30–40%. Комментарии приходят на любом языке (перевод инлайн); сам UI ответа локализуется.</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:200px;">Строка</th><th>en</th><th>ru (длиннее)</th></tr></thead>
+      <tbody>
+        <tr><td>Заголовок</td><td>Replies</td><td>Ответы</td></tr>
+        <tr><td>Свитчер cap</td><td>Posts with comments</td><td>Посты с комментариями</td></tr>
+        <tr><td>Бейдж чипа</td><td>4 to answer / All answered</td><td>4 без ответа / Все отвечены</td></tr>
+        <tr><td>Context cap</td><td>Replying under your post</td><td>Отвечаем под вашим постом</td></tr>
+        <tr><td>Статус-тег</td><td>drafted in your voice</td><td>черновик в вашем голосе</td></tr>
+        <tr><td>Approved tag</td><td>approved · ready to publish</td><td>одобрено · готово к публикации</td></tr>
+        <tr><td>Autopilot tag</td><td>Auto-replied by Pennedly</td><td>Авто-ответ от Pennedly</td></tr>
+        <tr><td>Primary (new)</td><td>Generate reply</td><td>Сгенерировать ответ</td></tr>
+        <tr><td>Empty (needs)</td><td>You're all caught up</td><td>Вы всё разобрали</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note"><b>Доступность.</b> Свитчер — клавиатура <b>←/→</b> (переключение поста) + Tab, видимые фокус-кольца на чипах и стрелках; <code>role="listbox"/"option"</code> + <code>aria-selected</code>. Фильтр — <code>role="tablist"/"tab"</code>. Длинные RU/DE-лейблы статус-тегов и primary-кнопок <b>оборачиваются</b> (никогда не клипаются). Контраст и фокус — по токенам, как в Stats/Autopilot. Полный 360-проход — в <a class="link" href="Replies-Mobile-SPEC.html#s11">mobile-spec</a>.</div>
+  </section>
+
+  <!-- ===================== 8 ===================== -->
+  <section id="s8">
+    <h2><span class="h2n">8</span>Чек-лист реализации</h2>
+    <ul class="check">
+      <li>Полный app-shell; активный пункт = Replies (Workspace, tester-gated, badge 3); топбар «Replies» + status-pill (accent «N need a reply» / success «All caught up»); ширина <code>--content-wide</code> 960, <b>одна колонка</b>.</li>
+      <li><b>Левый master-список убран; посты — горизонтальный post-свитчер сверху</b> (<code>.rq-switch</code>), sticky под топбаром; чипы 280px (сниппет clamp-2 + дата + бейдж неотвеченных); активный = accent-кольцо + tint.</li>
+      <li>Десктоп-аффордансы прокрутки: <b>стрелки ‹ ›</b> (при overflow) + <b>fade</b> на краях + <b>click-drag</b> + shift+wheel + авто-доскролл активного чипа + клавиатура <b>←/→</b> + фокус-кольца.</li>
+      <li>Состояния свитчера: few (стрелки/fade скрыты) · overflow (стрелки + fade) · активный центрируется.</li>
+      <li>Под свитчером (full-width): контекст поста (текст + время + Open in Threads) → фильтр статусов ×5 (All/Needs/Draft/Replied/Skipped, не sticky) → карточки комментариев.</li>
+      <li>Карточка = <b>@username + время</b> (без аватара/имени) + бейдж статусa + ✕ remove; тело (measure ≤72ch) + инлайн-перевод (коммент и ответ независимо).</li>
+      <li>Тред ответа: new → generating (nib) → draft → approved → replied (success / «Auto-replied by Pennedly») + skipped; editing = textarea + «N / 500».</li>
+      <li>Футер по статусу (несколько кнопок — норма); generating скрывает футер.</li>
+      <li>PublishReplyDialog: цитата комментария + превью ответа + Publish reply; тост + Undo.</li>
+      <li>Состояния: Default / Loading (свитчер-скелет + 3 карточки) / per-tab Empty / Error (Retry).</li>
+      <li>Корректно в светлой и тёмной теме; только семантические токены; копи выживает в 8 локалях; клавиатура и фокус доступны.</li>
+    </ul>
+    <div class="note" style="margin-top:18px;">Конец спецификации. Десктоп и телефон теперь — <b>один идиом</b> (горизонтальный post-свитчер). CSS — <code>replies.css</code> (+ shell). Парный телефонный документ — <a class="link" href="Replies-Mobile-SPEC.html">Replies-Mobile-SPEC.html</a>.</div>
+  </section>
+</main>
+</div>
+
+<script>
+(function(){
+  function ic(n,s){ s=s||14; var v='viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"';
+    var P={
+      nib:'<path d="M4 20 L13 11"/><path d="M12 4 L20 12 L13 11 L13 4 Z"/>',
+      tweak:'<path d="M5 19l9-9"/><path d="M14.5 5.5l1 1"/><path d="M16 4l1.5 1.5L19 7l1.5-1.5L19 4l-1.5-1.5L16 4Z"/>',
+      pencil:'<path d="M5 19l1-4L16 5l3 3L9 18l-4 1Z"/><path d="M14 7l3 3"/>',
+      check:'<path d="M5 12.5l4.5 4.5L19 7"/>',
+      reply:'<path d="M9 7L4 11l5 4"/><path d="M4 11h8a6 6 0 0 1 6 6v2"/>',
+      external:'<path d="M14 5h5v5"/><path d="M19 5l-8 8"/><path d="M18 13v4a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/>',
+      globe:'<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.5 2.2 2.5 14.8 0 17M12 3.5c-2.5 2.2-2.5 14.8 0 17"/>',
+      undo:'<path d="M9 7L5 11l4 4"/><path d="M5 11h9a5 5 0 0 1 0 10h-3"/>',
+      x:'<path d="M6 6l12 12M18 6L6 18"/>',
+      chevL:'<path d="M15 6l-6 6 6 6"/>',
+      chevR:'<path d="M9 6l6 6-6 6"/>',
+      sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"/>',
+      moon:'<path d="M20 13a8 8 0 1 1-9-9 6.5 6.5 0 0 0 9 9Z"/>',
+      settings:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>'
+    };
+    return '<svg width="'+s+'" height="'+s+'" '+v+'>'+(P[n]||'')+'</svg>';
+  }
+  function set(id,html){ var e=document.getElementById(id); if(e) e.innerHTML=html; }
+  function head(label,dark){ return '<div class="fr-head"><span class="dh'+(dark?' dh--dark':'')+'"></span>'+label+'</div>'; }
+  function frame(inner,dark,extra){ return '<div class="frame'+(dark?' dark':'')+(extra?' '+extra:'')+'">'+inner+'</div>'; }
+  function col(label,inner,dark,extra){ return '<div class="fr">'+head(label,dark)+frame(inner,dark,extra)+'</div>'; }
+
+  /* ---------- posts ---------- */
+  var POSTS=[
+    {text:'Wrote 1,000 words this morning before I opened email. Cut 600 of them. The 400 that survived are the only ones that mattered.', full:'Wrote 1,000 words this morning before I opened email. Cut 600 of them. The 400 that survived are the only ones that mattered.', at:'May 30', total:5, unanswered:4},
+    {text:'Editing is just deciding, over and over, what you actually meant. The cuts are where the voice shows up.', at:'May 29', total:5, unanswered:3},
+    {text:'The draft you\u2019re avoiding is usually the one worth writing. Open the doc, write one bad sentence.', at:'May 28', total:6, unanswered:0},
+    {text:'A question I keep coming back to: who is this paragraph for? Write to that one person.', at:'May 27', total:4, unanswered:2},
+    {text:'Weekend writing is permission, not pressure. Write one true line and stop.', at:'May 26', total:3, unanswered:1}
+  ];
+  var POSTS_FEW=[POSTS[0],POSTS[1]];
+
+  function chip(p, active){
+    var badge = p.unanswered>0
+      ? '<span class="rq-chip-badge">'+p.unanswered+' to answer</span>'
+      : '<span class="rq-chip-badge rq-chip-badge--done">All answered</span>';
+    return '<button class="rq-chip'+(active?' rq-chip--active':'')+'" role="option" aria-selected="'+(active?'true':'false')+'">'
+      +'<div class="rq-chip-text">'+p.text+'</div>'
+      +'<div class="rq-chip-meta"><span>'+p.at+'</span><span class="rq-chip-sep">\u00B7</span><span class="rq-chip-count">'+p.total+' comments</span>'+badge+'</div></button>';
+  }
+  function switcher(activeIdx, opts){
+    opts=opts||{};
+    var posts = opts.posts || POSTS;
+    var overflow = opts.overflow!==false;
+    var chips = posts.map(function(p,i){ return chip(p, i===(opts.active!=null?opts.active:activeIdx)); }).join('');
+    var arrows = overflow
+      ? '<button class="rq-switch-arrow rq-switch-arrow--left" aria-label="Previous post">'+ic('chevL',16)+'</button><button class="rq-switch-arrow rq-switch-arrow--right" aria-label="Next post">'+ic('chevR',16)+'</button>'
+      : '';
+    var fades = overflow
+      ? '<span class="rq-switch-fade rq-switch-fade--left"></span><span class="rq-switch-fade rq-switch-fade--right"></span>'
+      : '';
+    return '<div class="rq-switch" style="position:static;padding-top:0"><div class="rq-switch-cap">Posts with comments <span class="n">'+posts.length+'</span></div>'
+      +'<div class="rq-switch-wrap">'+fades+arrows+'<div class="rq-switch-rail" role="listbox" aria-label="Posts with comments">'+chips+'</div></div></div>';
+  }
+
+  function context(p){
+    return '<div class="rq-context"><div class="rq-context-cap">Replying under your post</div>'
+      +'<div class="rq-context-text">'+(p.full||p.text)+'</div>'
+      +'<div class="rq-context-foot"><span class="rq-context-time">'+p.at+'</span><a class="rq-context-link" href="https://www.threads.net" target="_blank" rel="noopener">Open in Threads'+ic('external',14)+'</a></div></div>';
+  }
+
+  function filter(active){
+    var F=[['all','All','all',5],['needs','Needs reply','needs',3],['drafts','Draft','drafts',2],['replied','Replied','replied',1],['skipped','Skipped','skipped',1]];
+    return '<div class="filterbar" role="tablist" aria-label="Comment status">'+F.map(function(f){
+      return '<button class="filter'+(f[0]===active?' filter--active':'')+'" role="tab" aria-selected="'+(f[0]===active?'true':'false')+'"><span class="fdot dot-'+f[2]+'"></span><span class="flabel">'+f[1]+'</span><span class="fcount">'+f[3]+'</span></button>';
+    }).join('')+'</div>';
+  }
+
+  /* ---------- comment card ---------- */
+  function badge(status){
+    if(status==='new') return '<span class="cmt-badge cmt-badge--accent"><span class="pill-dot"></span>New</span>';
+    if(status==='approved') return '<span class="cmt-badge cmt-badge--accent"><span class="pill-dot"></span>Approved</span>';
+    if(status==='replied') return '<span class="cmt-badge cmt-badge--good"><span class="pill-dot"></span>Replied</span>';
+    if(status==='skipped') return '<span class="cmt-badge cmt-badge--neutral">Skipped</span>';
+    return '<span class="cmt-badge cmt-badge--neutral"><span class="pill-dot" style="background:var(--color-ink-400)"></span>Draft</span>';
+  }
+  function replyTag(status,o){
+    if(status==='draft'||status==='editing') return '<span class="ra-tag">'+ic('nib',12)+'drafted in your voice</span>';
+    if(status==='approved') return '<span class="ra-tag" style="color:var(--color-accent)">'+ic('check',12)+'approved \u00B7 ready to publish</span>';
+    if(status==='replied') return o.autopilot
+      ? '<span class="ra-tag is-good">'+ic('nib',12)+'Auto-replied by Pennedly</span>'
+      : '<span class="ra-tag is-good">'+ic('check',12)+'replied '+(o.repliedTime||'1h ago')+'</span>';
+    return '';
+  }
+  function replyThread(status,o){
+    if(status==='generating'){
+      return '<div class="reply-thread"><div class="reply-block reply-block--gen"><div class="skel-line" style="width:88%;height:11px"></div><div class="skel-line" style="width:60%;height:11px"></div><div class="reply-gen-note"><span class="nib">'+ic('nib',13)+'</span>Drafting a reply in your voice\u2026</div></div></div>';
+    }
+    var cls = status==='replied'?' reply-block--replied':'';
+    var inner;
+    if(status==='editing'){
+      inner='<div class="reply-author"><span class="ra-av">Y</span><span class="ra-name">You</span>'+replyTag('draft',o)+'</div>'
+        +'<textarea class="reply-edit" rows="3" aria-label="Edit reply">'+o.reply+'</textarea>'
+        +'<div class="reply-edit-meta"><span class="reply-cc">'+o.reply.length+' / 500</span></div>';
+    } else {
+      var trow = o.replyLang ? '<div class="translate-row translate-row--reply"><button class="translate-btn">'+ic('globe',13)+'Translate from '+o.replyLang+'</button></div>' : '';
+      inner='<div class="reply-author"><span class="ra-av">Y</span><span class="ra-name">You</span>'+replyTag(status,o)+'</div>'
+        +'<div class="reply-text">'+o.reply+'</div>'+trow;
+    }
+    return '<div class="reply-thread"><div class="reply-block'+cls+'">'+inner+'</div></div>';
+  }
+  function foot(status,o){
+    o=o||{};
+    if(status==='generating') return '';
+    var meta='', actions='';
+    if(status==='new'){ actions='<button class="btn btn--primary btn--sm">'+ic('nib',15)+' Generate reply</button>'; }
+    else if(status==='draft'){ if(o.lang) meta='<span class="cm-item">'+ic('globe',13)+o.lang+'</span>'; actions='<button class="btn btn--ghost btn--sm">'+ic('tweak',15)+' Regenerate</button><button class="btn btn--secondary btn--sm">'+ic('pencil',15)+' Edit</button><button class="btn btn--primary btn--sm">'+ic('check',15)+' Approve</button>'; }
+    else if(status==='approved'){ if(o.lang) meta='<span class="cm-item">'+ic('globe',13)+o.lang+'</span>'; actions='<button class="btn btn--secondary btn--sm">'+ic('pencil',15)+' Edit</button><button class="btn btn--primary btn--sm">'+ic('reply',15)+' Publish reply</button>'; }
+    else if(status==='editing'){ actions='<button class="btn btn--ghost btn--sm">Cancel</button><button class="btn btn--primary btn--sm">'+ic('check',15)+' Save</button>'; }
+    else if(status==='replied'){ meta='<span class="cm-item">'+ic('check',13)+'Published '+(o.repliedTime||'1h ago')+'</span>'; actions='<a class="btn btn--secondary btn--sm" href="https://www.threads.net" target="_blank" rel="noopener">'+ic('external',15)+' Open in Threads</a>'; }
+    else if(status==='skipped'){ meta='<span class="cm-item">Removed from queue \u00B7 won\u2019t be answered</span>'; actions='<button class="btn btn--ghost btn--sm">'+ic('undo',15)+' Restore</button>'; }
+    return '<div class="cmt-foot"><div class="cmt-meta">'+meta+'</div><div class="cmt-actions">'+actions+'</div></div>';
+  }
+  function commentCard(status,o){
+    o=o||{};
+    var remove=(status==='new'||status==='draft'||status==='approved'||status==='editing')
+      ? '<button class="cmt-remove" aria-label="Remove from queue">'+ic('x',15)+'</button>' : '';
+    var head='<div class="cmt-head"><div class="cmt-id"><div class="cmt-handle">'+o.handle+'</div><div class="cmt-sub">'+o.time+'</div></div>'+badge(status)+remove+'</div>';
+    var trans = o.lang ? '<div class="translate-row"><button class="translate-btn">'+ic('globe',13)+'Translate from '+o.lang+'</button></div>' : '';
+    var body='<p class="cmt-body">'+o.text+'</p>'+trans;
+    var thread=(status==='draft'||status==='approved'||status==='replied'||status==='editing'||status==='generating') ? replyThread(status,o) : '';
+    return '<article class="cmt-card'+(status==='skipped'?' cmt-card--skipped':'')+'">'+head+body+thread+foot(status,o)+'</article>';
+  }
+
+  /* ---------- comment seed set (active post pA) ---------- */
+  var C={
+    new:   {handle:'@devon_makes', time:'2h ago', text:'this hit me at exactly the right time. how do you actually decide what to cut?'},
+    gen:   {handle:'@devon_makes', time:'2h ago', text:'this hit me at exactly the right time. how do you actually decide what to cut?'},
+    draft: {handle:'@theo_writes', time:'3h ago', text:'\u201Cthe 400 that survived\u201D \uD83D\uDE2D ok this is calling me OUT', reply:'ha \u2014 the survivors are always the ones that scared me a little. those are usually the keepers.'},
+    appr:  {handle:'@marina.k', time:'4h ago', text:'do you write longhand first or go straight to a doc?', reply:'straight to a doc, always \u2014 I type faster than I can second-guess. longhand is only for when I\u2019m truly stuck.'},
+    replied:{handle:'@paulwrites', time:'5h ago', text:'saving this. genuinely needed the permission to cut today.', reply:'cut freely \u2014 you can always paste it back later, but you almost never want to.', repliedTime:'1h ago'},
+    skipped:{handle:'@growthhacks_io', time:'6h ago', text:'\uD83D\uDE80 amazing post!! check out my page for DAILY writing hacks and follow back \uD83D\uDD25 link in bio'},
+    edit:  {handle:'@sam_writes', time:'7h ago', text:'but what if the worst first line is somehow still too precious to delete lol', reply:'then it\u2019s not the worst one yet \uD83D\uDE04 write three more bad ones \u2014 the real throwaway shows up fast.'},
+    transC:{handle:'@lucia.r', time:'8h ago', text:'Esto es justo lo que necesitaba leer hoy. \u00A1Mil gracias por compartirlo! \uD83D\uDE4F', lang:'Spanish'},
+    transR:{handle:'@kenji.dev', time:'9h ago', text:'Genau so mache ich das auch. Der erste Satz ist immer der schlechteste.', lang:'German', reply:'genau \u2014 der erste Satz muss nur existieren, nicht gut sein. \uD83D\uDE42', replyLang:'German'},
+    auto:  {handle:'@rivka.k', time:'10h ago', text:'the third sentence is exactly where I always lose people. this completely reframes it.', reply:'that\u2019s the spot \u2014 the first two are a promise, the third has to pay it off.', autopilot:true, repliedTime:'2h ago'}
+  };
+
+  /* ---------- aux ---------- */
+  function empty(filter){
+    var M={all:['Your queue is empty','When people comment on your posts, they\u2019ll show up here ready for a reply in your voice.'],
+      needs:['You\u2019re all caught up','No comments are waiting on a reply. Nicely done \u2014 go make something new in the Studio.'],
+      drafts:['No drafts in progress','Generate a reply on a comment and it\u2019ll wait here until you approve and publish it.'],
+      replied:['Nothing published yet','Replies you publish will appear here, threaded under their comment.'],
+      skipped:['Nothing skipped','Comments you pass on \u2014 spam, noise, the unanswerable \u2014 land here.']};
+    var m=M[filter]||M.all;
+    return '<div class="empty"><div class="empty-mark">'+ic('reply',24)+'</div><div class="empty-title">'+m[0]+'</div><div class="empty-sub">'+m[1]+'</div></div>';
+  }
+  function skelCard(){
+    return '<article class="cmt-card skeleton"><div class="skel-line" style="width:40%;height:13px"></div><div class="skel-line" style="width:92%;height:14px;margin-top:14px"></div><div class="skel-line" style="width:68%;height:14px;margin-top:8px"></div>'
+      +'<div class="reply-thread" style="margin-top:14px"><div class="reply-block"><div class="skel-line" style="width:30%;height:11px"></div><div class="skel-line" style="width:85%;height:11px;margin-top:9px"></div><div class="skel-line" style="width:52%;height:11px;margin-top:6px"></div></div></div></article>';
+  }
+  function skelChip(){ return '<div class="rq-chip" style="cursor:default"><div class="skel-line" style="width:90%;height:12px"></div><div class="skel-line" style="width:55%;height:12px;margin-top:7px"></div><div class="skel-line" style="width:40%;height:11px;margin-top:12px"></div></div>'; }
+  function skeleton(){
+    return '<div class="rq-switch" style="position:static;padding-top:0"><div class="rq-switch-cap">Posts with comments</div><div class="rq-switch-wrap"><div class="rq-switch-rail">'+skelChip()+skelChip()+skelChip()+'</div></div></div>'
+      +'<div class="rq-flow">'+skelCard()+skelCard()+skelCard()+'</div>';
+  }
+  function errorBanner(){
+    return '<div class="error-banner"><span class="eb-mark">'+ic('x',18)+'</span><div style="flex:1 1 auto"><div class="eb-title">Couldn\u2019t load your replies</div><div class="eb-sub">Something went wrong on our end.</div><button class="btn btn--secondary btn--sm" style="margin-top:10px">'+ic('undo',15)+' Retry</button></div></div>';
+  }
+  function publishDialog(){
+    return '<div class="overlay"><div class="dialog" role="dialog" aria-modal="true">'
+      +'<div class="dialog-head"><span class="dialog-mark">'+ic('reply',18)+'</span><div><div class="dialog-title">Publish this reply?</div>'
+      +'<div class="dialog-sub">It posts as a threaded reply under @marina.k\u2019s comment on Threads. You can edit or delete it there afterwards.</div></div></div>'
+      +'<div class="pub-ctx"><span class="pub-ctx-bar"></span><div class="pub-ctx-txt">do you write longhand first or go straight to a doc?</div></div>'
+      +'<div class="reply-thread" style="margin-top:12px"><div class="reply-block"><div class="reply-author"><span class="ra-av">Y</span><span class="ra-name">You</span></div><div class="reply-text">straight to a doc, always \u2014 I type faster than I can second-guess. longhand is only for when I\u2019m truly stuck.</div></div></div>'
+      +'<div class="dialog-actions"><button class="btn btn--ghost">Cancel</button><button class="btn btn--primary">'+ic('reply',15)+' Publish reply</button></div></div></div>';
+  }
+  function toast(){
+    return '<div style="position:absolute;left:50%;bottom:18px;transform:translateX(-50%)"><div class="toast toast--success"><span class="toast-mark"></span><div style="flex:1 1 auto;font-size:var(--text-small);color:var(--color-text)">Reply published</div><button style="font-size:var(--text-small);font-weight:600;color:var(--color-accent);background:none;border:none;cursor:pointer;padding:4px 6px">Undo</button></div></div>';
+  }
+
+  /* ---------- topbar ---------- */
+  function topbar(needs,dark){
+    var pill = needs>0
+      ? '<span class="status-pill status-pill--accent"><span class="pill-dot"></span>'+needs+' need a reply</span>'
+      : '<span class="status-pill status-pill--success"><span class="pill-dot"></span>All caught up</span>';
+    return '<div class="topbar-mock"><span class="tt">Replies</span>'+pill+'<span style="flex:1 1 auto"></span>'
+      +'<span class="ib">'+ic(dark?'sun':'moon',16)+'</span><span class="ib">'+ic('settings',16)+'</span></div>';
+  }
+
+  /* ---------- compose ---------- */
+  function dash(){
+    return '<div class="stk">'+switcher(0,{})
+      +'<div class="rq-flow">'+context(POSTS[0])+filter('all')
+      +commentCard('new',C.new)+commentCard('draft',C.draft)+commentCard('approved',C.appr)+'</div></div>';
+  }
+
+  /* ===================== RENDER ===================== */
+  set('f-dash', col('Light · switcher + comments',dash(),false)+col('Dark · switcher + comments',dash(),true));
+  set('f-topbar','<div class="frow">'+col('Light · 4 need a reply',topbar(4,false),false)+col('Dark · all caught up',topbar(0,true),true)+'</div>');
+  set('f-switch', col('Light · overflow (arrows + fade)',switcher(0,{}),false)+col('Dark · overflow',switcher(1,{}),true));
+  set('f-context','<div class="frow">'+col('Light',context(POSTS[0]),false)+col('Dark',context(POSTS[1]),true)+'</div>');
+  set('f-filter','<div class="frow">'+col('Light · All',filter('all'),false)+col('Dark · Needs reply',filter('needs'),true)+'</div>');
+  set('f-card','<div class="frow">'+col('Light · new (@username only)',commentCard('new',C.new),false)+col('Dark · draft',commentCard('draft',C.draft),true)+'</div>');
+  set('f-thread', col('Light · draft → approved → replied','<div class="stk">'+commentCard('draft',C.draft)+commentCard('approved',C.appr)+commentCard('replied',C.replied)+'</div>',false)
+    +col('Dark · new → generating','<div class="stk">'+commentCard('new',C.new)+commentCard('generating',C.gen)+'</div>',true));
+  set('f-foot','<div class="frow">'+col('Light · draft foot',commentCard('draft',C.draft),false)+col('Light · approved foot',commentCard('approved',C.appr),false)+col('Dark · replied foot',commentCard('replied',C.replied),true)+col('Dark · skipped foot',commentCard('skipped',C.skipped),true)+'</div>');
+  set('f-dialog', col('Light · PublishReplyDialog',publishDialog(),false,'frame--rel')+col('Dark · PublishReplyDialog',publishDialog(),true,'frame--rel'));
+  set('f-aux','<div class="frow">'+col('Light · Empty (needs)',empty('needs'),false)+col('Dark · Error',errorBanner(),true)+'</div>');
+
+  set('f-states-switch', col('Light · overflow (arrows + fade + drag)',switcher(0,{}),false)+col('Dark · few posts (no arrows/fade)',switcher(0,{posts:POSTS_FEW,overflow:false}),true));
+  set('f-states-life', col('Light · new / generating / draft','<div class="stk">'+commentCard('new',C.new)+commentCard('generating',C.gen)+commentCard('draft',C.draft)+'</div>',false)
+    +col('Dark · approved / replied / skipped','<div class="stk">'+commentCard('approved',C.appr)+commentCard('replied',C.replied)+commentCard('skipped',C.skipped)+'</div>',true));
+  set('f-states-edit','<div class="frow">'+col('Light · editing (N / 500)',commentCard('editing',C.edit),false)+col('Light · translate (comment)',commentCard('new',C.transC),false)+col('Dark · reply translate',commentCard('draft',C.transR),true)+col('Dark · Auto-replied by Pennedly',commentCard('replied',C.auto),true)+'</div>');
+  set('f-states-aux','<div class="frow">'+col('Light · Loading (skeleton)',skeleton(),false)+col('Light · Empty (skipped)',empty('skipped'),false)+col('Dark · Error',errorBanner(),true)+col('Dark · Dialog',publishDialog(),true,'frame--rel')+'</div>');
+})();
+</script>
+</body>
+</html>

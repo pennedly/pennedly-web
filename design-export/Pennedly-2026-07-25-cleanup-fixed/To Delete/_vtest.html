@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>V-test</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../ds/tokens.css" />
+<link rel="stylesheet" href="../ds/components.css" />
+<link rel="stylesheet" href="../import-banner.css" />
+<link rel="stylesheet" href="variants/atoms.css" />
+<link rel="stylesheet" href="variants/shell.css" />
+<link rel="stylesheet" href="variants/v1.css" />
+<link rel="stylesheet" href="variants/v2.css" />
+<link rel="stylesheet" href="variants/v3.css" />
+<link rel="stylesheet" href="variants/v4.css" />
+<link rel="stylesheet" href="variants/v5.css" />
+<style>
+  body { margin: 0; background: #cfccc6; font-family: "Geist", sans-serif; padding: 24px; }
+  .lab { font-family: "Geist Mono", monospace; font-size: 12px; color: #333; margin: 22px 0 8px; }
+  .wrap { max-width: 1000px; margin: 0 auto 20px; }
+  .mob { width: 390px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="variants/vk.js"></script>
+<script src="variants/shell.js"></script>
+<script src="variants/v1.js"></script>
+<script src="variants/v2.js"></script>
+<script src="variants/v3.js"></script>
+<script src="variants/v4.js"></script>
+<script src="variants/v5.js"></script>
+<script>
+  var root = document.getElementById('root');
+  var CONCEPTS = { V1: window.V1, V2: window.V2, V3: window.V3, V4: window.V4, V5: window.V5 };
+  function stage(concept, title, key, opts) {
+    opts = opts || {};
+    var C = CONCEPTS[concept]; if (!C) return;
+    var ctx = { r: VK.resolve(key), lang: opts.lang || 'ru', device: opts.device || 'desktop', chrome: (concept === 'V5' ? 'minimal' : opts.chrome) };
+    var body = C.render(ctx);
+    var shell = VSHELL.render(body, ctx);
+    var w = document.createElement('div');
+    w.className = 'wrap' + (opts.device === 'mobile' ? ' mob' : '');
+    w.innerHTML = '<div class="lab">' + title + '</div>' + shell;
+    if (opts.dark) w.querySelector('.vshell').classList.add('dark');
+    root.appendChild(w);
+  }
+  var only = (new URLSearchParams(location.search)).get('c') || 'V1';
+  var oneS = (new URLSearchParams(location.search)).get('s');
+  var STAGES = [
+    ['2 brands · light', 'two_brands', {}],
+    ['2 brands · dark', 'two_brands', { dark: true }],
+    ['1 brand · N profiles', 'single_brand', {}],
+    ['1 brand · 1 profile (new, thin)', 'one_profile', {}],
+    ['all disconnected', 'all_off', {}],
+    ['loading', 'loading', {}],
+    ['mobile · 2 brands', 'two_brands', { device: 'mobile' }],
+    ['de · 2 brands', 'two_brands', { lang: 'de' }],
+    ['mobile · all off', 'all_off', { device: 'mobile' }],
+  ];
+  STAGES.forEach(function (S) {
+    if (oneS && S[1] !== oneS) return;
+    stage(only, only + ' · ' + S[0], S[1], S[2]);
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pennedly · Редактор сценария — модель «Карточка-рецепт»</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../ds/tokens.css" />
+<link rel="stylesheet" href="../ds/components.css" />
+<link rel="stylesheet" href="../scenarios.css" />
+<link rel="stylesheet" href="../scenarios-redesign.css" />
+<link rel="stylesheet" href="../scenario-editor.css" />
+<link rel="stylesheet" href="../recipe-editor.css" />
+<style>
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{margin:0; background:var(--color-bg); color:var(--color-text);
+    font-family:var(--font-sans); font-size:15px; line-height:1.6;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;}
+  .wrap{max-width:1180px; margin:0 auto; padding:48px 40px 130px;}
+
+  .kicker{font-family:var(--font-mono); font-size:12px; letter-spacing:0.05em; color:var(--color-accent); text-transform:uppercase; margin:0 0 12px;}
+  .doc-title{font-size:34px; line-height:1.08; letter-spacing:-0.025em; font-weight:600; margin:0 0 14px; text-wrap:balance;}
+  .doc-title span{color:var(--color-text-subtle); font-weight:500;}
+  .doc-lede{font-size:16px; color:var(--color-text-muted); max-width:80ch; margin:0 0 22px; text-wrap:pretty;}
+  .doc-lede b{color:var(--color-text); font-weight:600;}
+
+  .chips{display:flex; flex-wrap:wrap; gap:7px; margin:0 0 30px;}
+  .chip{font-family:var(--font-mono); font-size:11.5px; padding:5px 11px; border-radius:9999px; background:var(--color-surface); border:1px solid var(--color-border); color:var(--color-text-muted); display:inline-flex; align-items:center; gap:6px;}
+  .chip b{color:var(--color-text); font-weight:600;}
+
+  /* depth-layer model strip */
+  .layers-map{display:grid; grid-template-columns:repeat(3,1fr); gap:13px; margin:0 0 14px;}
+  @media(max-width:820px){ .layers-map{grid-template-columns:1fr;} }
+  .lmap{display:flex; flex-direction:column; gap:6px; padding:16px 17px; border:1px solid var(--color-border); border-radius:var(--radius-lg); background:var(--color-surface); box-shadow:var(--shadow-sm);}
+  .lmap .lm-n{font-family:var(--font-mono); font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:var(--color-accent); display:flex; align-items:center; gap:7px;}
+  .lmap .lm-t{font-size:16px; font-weight:600; letter-spacing:-0.008em;}
+  .lmap .lm-d{font-size:13px; color:var(--color-text-muted); line-height:1.5; text-wrap:pretty;}
+  .lmap--pro .lm-n{color:var(--color-text-subtle);}
+
+  section.block{margin-top:62px; scroll-margin-top:20px;}
+  .block-head{border-top:2px solid var(--color-text); padding-top:18px; margin-bottom:14px;}
+  .block-name{display:flex; align-items:baseline; gap:13px; flex-wrap:wrap; margin:0 0 7px;}
+  .block-name .bn-n{font-family:var(--font-mono); font-size:20px; font-weight:500; color:var(--color-accent); letter-spacing:-0.01em;}
+  .block-name h2{font-size:24px; font-weight:600; letter-spacing:-0.015em; margin:0;}
+  .block-idea{font-size:15px; color:var(--color-text-muted); max-width:84ch; margin:0; text-wrap:pretty;}
+  .block-idea b{color:var(--color-text); font-weight:600;}
+
+  .fr{display:flex; flex-direction:column; gap:10px; margin-top:22px;}
+  .fr-head{display:inline-flex; align-items:center; gap:8px; font-family:var(--font-mono); font-size:11.5px; letter-spacing:.02em; color:var(--color-text-subtle);}
+  .fr-head .dh{width:8px; height:8px; border-radius:9999px; background:var(--color-border);}
+  .fr-head .dh--dark{background:#0a0a0a; border:1px solid #3a3a3a;}
+  .fr-head b{color:var(--color-text-muted); font-weight:600;}
+  .frame{background:var(--color-bg); color:var(--color-text); border:1px solid var(--color-border); border-radius:18px; padding:30px 32px; overflow:hidden;}
+  .frame.dark{background:#0a0a0a; border-color:#2b2a27;}
+  .frame *{box-sizing:border-box;}
+  @media(max-width:760px){ .frame{padding:20px 16px;} }
+
+  /* storyboard: 3 steps with arrows */
+  .story{display:grid; grid-template-columns:1fr; gap:14px; margin-top:22px;}
+  .story-step{display:flex; flex-direction:column; gap:9px;}
+  .story-cap{display:flex; align-items:center; gap:10px;}
+  .story-cap .sc-num{width:26px; height:26px; flex:0 0 auto; display:grid; place-items:center; border-radius:9999px; font-family:var(--font-mono); font-size:13px; font-weight:600; background:color-mix(in srgb,var(--color-accent) 12%,var(--color-surface)); border:1px solid color-mix(in srgb,var(--color-accent) 28%,transparent); color:var(--color-accent);}
+  .story-cap .sc-t{font-size:14px; font-weight:600;}
+  .story-cap .sc-d{font-size:13px; color:var(--color-text-muted);}
+  .story-arrow{display:flex; align-items:center; justify-content:center; color:var(--color-text-subtle); margin:-2px 0;}
+
+  .states-grid{display:grid; grid-template-columns:1fr; gap:26px; margin-top:22px;}
+
+  @media(max-width:760px){
+    .wrap{padding:30px 18px 90px;}
+    .doc-title{font-size:27px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="kicker">Pennedly · Автопилот · редактор одного сценария</p>
+  <h1 class="doc-title">Карточка-рецепт <span>— переосмысленный редактор сценария</span></h1>
+  <p class="doc-lede">Уходим от пошагового редактора (6 шагов слева) к одной модели: <b>сценарий — это читаемая фраза, которую правишь по месту</b>. «Когда · если → Pennedly напишет [что] твоим голосом и [как опубликует]». Каждый выделенный слот — блок-настройка: тап разворачивает редактор <b>прямо на месте</b>, не уводя с экрана. Справа — живой предпросмотр, «следующие 3 запуска» и «Прогнать сейчас». Глубина — прогрессивная, без тумблера «просто/эксперт».</p>
+
+  <div class="chips">
+    <span class="chip">двухколоночник · <b>~960px</b> · web-desktop</span>
+    <span class="chip">только <b>пост</b> + <b>ответ</b></span>
+    <span class="chip">ответ — опрос <b>раз в 15 мин</b>, без расписания</span>
+    <span class="chip">«Прогнать» → <b>только черновик</b>, даже у несохранённого</span>
+    <span class="chip">режим «спроси/авто» — <b>внутри редактора</b></span>
+    <span class="chip">никаких контролов-пустышек</span>
+  </div>
+
+  <div class="layers-map">
+    <div class="lmap"><span class="lm-n">Слой 1 · открыт сразу</span><span class="lm-t">Суть</span><span class="lm-d">Сама фраза-рецепт: <b>Когда · Что писать · Как опубликовать</b>. Тап по слоту — редактор на месте.</span></div>
+    <div class="lmap"><span class="lm-n">Слой 2 · свёрнут</span><span class="lm-t">Настроить точнее</span><span class="lm-d">Условия «только если», точное время / дни / слоты, длина · формат · тема · призыв.</span></div>
+    <div class="lmap lmap--pro"><span class="lm-n">Слой 3 · для продвинутых</span><span class="lm-t">Только для этого сценария</span><span class="lm-d">Переопределить «Правила дома» для ответов. Секция-заглушка — реализуем второй волной.</span></div>
+  </div>
+
+  <!-- ═══════════ HERO 1 ═══════════ -->
+  <section class="block" id="hero-post">
+    <div class="block-head">
+      <div class="block-name"><span class="bn-n">01</span><h2>Ключевой экран · сценарий-ПОСТ</h2></div>
+      <p class="block-idea"><b>«Утренний вопрос».</b> Слот <b>«Когда»</b> раскрыт прямо в карточке: частота, любое время, разброс минут, несколько слотов в день. Справа — живое превью поста, следующие 3 запуска и «Прогнать сейчас». Под рецептом — свёрнутые слои глубины.</p>
+    </div>
+    <div class="fr"><div class="fr-head"><span class="dh"></span>Light · слот «Когда» раскрыт на месте · правка существующего</div>
+      <div data-recipe='{"kind":"post","openSlot":"when"}'></div></div>
+  </section>
+
+  <!-- ═══════════ FLEXIBLE WHEN ═══════════ -->
+  <section class="block" id="schedule">
+    <div class="block-head">
+      <div class="block-name"><span class="bn-n">Когда</span><h2>Гибкое расписание — все режимы</h2></div>
+      <p class="block-idea">Слот <b>«Когда»</b> разворачивает полный планировщик. Сверху — режим частоты, ниже — его контролы. Можно задать <b>конкретные дни недели</b> (и даже <b>разное время в разные дни</b>), <b>числа месяца</b>, <b>даты в году</b>, <b>раз в N дней</b>, <b>период дат для разовой акции</b> или <b>реактивное событие</b>. Везде — точное время, несколько слотов в день и разброс минут.</p>
+    </div>
+    <div class="fr"><div class="fr-head"><span class="dh"></span>По дням недели · мульти-выбор + общее время</div>
+      <div data-recipe-card='{"kind":"post","openSlot":"when","whenMode":"weekly"}'></div></div>
+    <div class="fr"><div class="fr-head"><span class="dh"></span>По дням недели · <b>разное время в разные дни</b></div>
+      <div data-recipe-card='{"kind":"post","openSlot":"when","whenMode":"weekly","perDay":true}'></div></div>
+    <div class="fr"><div class="fr-head"><span class="dh"></span>Раз в месяц · числа месяца + «последний день»</div>
+      <div data-recipe-card='{"kind":"post","openSlot":"when","whenMode":"monthly"}'></div></div>
+    <div class="fr"><div class="fr-head"><span class="dh"></span>Раз в год · даты-годовщины</div>
+      <div data-recipe-card='{"kind":"post","openSlot":"when","whenMode":"yearly"}'></div></div>
+    <div class="fr"><div class="fr-head"><span class="dh"></span>Раз в N дней · интервал + старт</div>
+      <div data-recipe-card='{"kind":"post","openSlot":"when","whenMode":"everyN"}'></div></div>
+    <div class="fr"><div class="fr-head"><span class="dh"></span>Период дат · разовая акция с окном дат</div>
+      <div data-recipe-card='{"kind":"post","openSlot":"when","whenMode":"period"}'></div></div>
+    <div class="fr"><div class="fr-head"><span class="dh"></span>По событию · реактивный, без расписания</div>
+      <div data-recipe-card='{"kind":"post","openSlot":"when","whenMode":"event"}'></div></div>
+  </section>
+
+  <!-- ═══════════ HERO 2 ═══════════ -->
+  <section class="block" id="hero-reply">
+    <div class="block-head">
+      <div class="block-name"><span class="bn-n">02</span><h2>Ключевой экран · сценарий-ОТВЕТ</h2></div>
+      <p class="block-idea"><b>«Дежурство в комментах».</b> У ответа <b>нет расписания</b> — слот «Когда» заблокирован честной строкой «проверяет каждые 15 минут». Раскрыт слот <b>«Кому»</b> — галерея «Кому отвечать» с пометкой, что тролли отсекаются «Правилами дома». Справа — ветка ответа вместо поста.</p>
+    </div>
+    <div class="fr"><div class="fr-head"><span class="dh"></span>Light · слот «Кому отвечать» раскрыт · превью = ветка ответа</div>
+      <div data-recipe='{"kind":"reply","openSlot":"who"}'></div></div>
+  </section>
+
+  <!-- ═══════════ STORYBOARD ═══════════ -->
+  <section class="block" id="storyboard">
+    <div class="block-head">
+      <div class="block-name"><span class="bn-n">03</span><h2>Раскадровка · слот → редактор → обратно</h2></div>
+      <p class="block-idea">Петля <b>«увидел → поменял → проверил»</b> на слоте «Что писать». Свёрнутый слот показывает значение человеческими словами; тап разворачивает редактор <b>прямо в карточке</b>; «Готово» сворачивает его обратно — и фраза сразу читается по-новому.</p>
+    </div>
+    <div class="story">
+      <div class="story-step">
+        <div class="story-cap"><span class="sc-num">1</span><span class="sc-t">Свёрнуто</span><span class="sc-d">— слот показывает текущее значение словами.</span></div>
+        <div data-recipe-card='{"kind":"post","whatText":"пост на тему дня"}'></div>
+      </div>
+      <div class="story-arrow"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg></div>
+      <div class="story-step">
+        <div class="story-cap"><span class="sc-num">2</span><span class="sc-t">Тап по слоту</span><span class="sc-d">— редактор раскрылся прямо на месте, экран не сменился.</span></div>
+        <div data-recipe-card='{"kind":"post","openSlot":"what","whatText":"пост на тему дня"}'></div>
+      </div>
+      <div class="story-arrow"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg></div>
+      <div class="story-step">
+        <div class="story-cap"><span class="sc-num">3</span><span class="sc-t">«Готово»</span><span class="sc-d">— свернулось обратно, фраза обновилась.</span></div>
+        <div data-recipe-card='{"kind":"post","whatText":"короткий пост-вопрос на тему «довести дело до конца»"}'></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ LAYER 2 ═══════════ -->
+  <section class="block" id="layer2">
+    <div class="block-head">
+      <div class="block-name"><span class="bn-n">04</span><h2>Слой 2 · «Настроить точнее» раскрыт</h2></div>
+      <p class="block-idea">Те же блоки, но во всю глубину: <b>конструктор условий</b> «+ добавить условие», точное время с разбросом и слотами, контент (длина · формат · тема · призыв). У каждого контрола — микро-строка «зачем». Жёсткие пределы площадки подписаны честно прямо в контексте.</p>
+    </div>
+    <div class="fr"><div class="fr-head"><span class="dh"></span>Light · сценарий-ПОСТ · слой 2 раскрыт</div>
+      <div data-recipe='{"kind":"post","layer2":true}'></div></div>
+  </section>
+
+  <!-- ═══════════ LAYER 3 ═══════════ -->
+  <section class="block" id="layer3">
+    <div class="block-head">
+      <div class="block-name"><span class="bn-n">05</span><h2>Слой 3 · «Только для этого сценария» (заглушка)</h2></div>
+      <p class="block-idea">Помечен <b>«для продвинутых»</b>. Переопределить «Правила дома» — свой лимит, частоту проверки, тихие часы — только для этой рутины. Сейчас всё наследуется; точечное переопределение нарисовано заглушкой и приедет второй волной.</p>
+    </div>
+    <div class="fr"><div class="fr-head"><span class="dh"></span>Light · сценарий-ОТВЕТ · слой 3 раскрыт</div>
+      <div data-recipe='{"kind":"reply","layer3":true}'></div></div>
+  </section>
+
+  <!-- ═══════════ BIG TEXT WINDOW ═══════════ -->
+  <section class="block" id="bigtext">
+    <div class="block-head">
+      <div class="block-name"><span class="bn-n">06</span><h2>Длинный текст — отдельное окно</h2></div>
+      <p class="block-idea">Везде, где можно ввести <b>много текста</b> (инструкция, тон ответа, своя аудитория) — не тесное поле, а удобный триггер: показывает текущий текст и кнопку <b>«Открыть в отдельном окне»</b>. Тап открывает полноразмерное окно ввода с большим полем, подсказкой и «Сохранить».</p>
+    </div>
+    <div class="fr"><div class="fr-head"><span class="dh"></span>Триггер в редакторе · слот «Что писать» раскрыт</div>
+      <div data-recipe='{"kind":"post","openSlot":"what"}'></div></div>
+    <div class="fr"><div class="fr-head"><span class="dh"></span>Окно ввода открыто · полноразмерное поле</div>
+      <div data-recipe='{"kind":"post","openSlot":"what","modal":"instruction"}'></div></div>
+  </section>
+
+  <!-- ═══════════ STATES ═══════════ -->
+  <section class="block" id="states">
+    <div class="block-head">
+      <div class="block-name"><span class="bn-n">07</span><h2>Состояния</h2></div>
+      <p class="block-idea">Создание нового (черновик, не сохранён) · заход из шаблона (фраза уже заполнена пресетом) · слот <b>«Как публиковать»</b> раскрыт — «Спроси меня» по умолчанию и «Автоматически» как осознанный опт-ин, всё внутри редактора.</p>
+    </div>
+    <div class="states-grid">
+      <div class="fr"><div class="fr-head"><span class="dh"></span>Создание нового · статус «черновик, не сохранён»</div>
+        <div data-recipe='{"kind":"post","isNew":true,"whatText":"короткий пост на тему дня"}'></div></div>
+      <div class="fr"><div class="fr-head"><span class="dh"></span>Заход из шаблона «Рубрика» · фраза предзаполнена пресетом</div>
+        <div data-recipe='{"kind":"post","isNew":true,"tmpl":true,"name":"Рубрика «Маленькая победа»"}'></div></div>
+      <div class="fr"><div class="fr-head"><span class="dh"></span>Слот «Как публиковать» раскрыт · «Автоматически» выбран</div>
+        <div data-recipe='{"kind":"post","openSlot":"how","mode":"auto"}'></div></div>
+    </div>
+  </section>
+
+  <!-- ═══════════ DARK ═══════════ -->
+  <section class="block" id="dark">
+    <div class="block-head">
+      <div class="block-name"><span class="bn-n">★</span><h2>Тёмная тема</h2></div>
+      <p class="block-idea">Только семантические токены — корректно в тёмной теме без правок.</p>
+    </div>
+    <div class="states-grid">
+      <div class="fr"><div class="fr-head"><span class="dh dh--dark"></span>Dark · сценарий-ОТВЕТ · слот «Как звучит ответ» раскрыт</div>
+        <div data-recipe='{"kind":"reply","openSlot":"tone","dark":true}'></div></div>
+      <div class="fr"><div class="fr-head"><span class="dh dh--dark"></span>Dark · сценарий-ПОСТ · слой 2 раскрыт</div>
+        <div data-recipe='{"kind":"post","layer2":true,"dark":true}'></div></div>
+    </div>
+  </section>
+
+</div>
+
+<script src="../scenarios-redesign-data.js"></script>
+<script src="../recipe-editor.js"></script>
+</body>
+</html>

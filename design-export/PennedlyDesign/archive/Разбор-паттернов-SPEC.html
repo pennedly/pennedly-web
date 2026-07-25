@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Разбор паттернов — State Spec · Pennedly</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+/* ============================================================ *
+ * DOC CHROME — the spec page itself (namespaced, not Pennedly) *
+ * ============================================================ */
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{margin:0; background:#e7e4df; color:#1c1b19;
+  font-family:"Geist",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;}
+.doc-head{max-width:1180px; margin:0 auto; padding:46px 40px 8px;}
+.doc-kicker{font-family:"Geist Mono",monospace; font-size:12px; letter-spacing:0.08em; text-transform:uppercase; color:#2f4cc4; margin:0 0 12px;}
+.doc-title{font-size:38px; line-height:1.05; letter-spacing:-0.025em; font-weight:600; margin:0 0 14px;}
+.doc-lede{font-size:16px; line-height:1.6; color:#56544f; max-width:80ch; margin:0 0 8px;}
+.doc-lede b{color:#1c1b19; font-weight:600;}
+.doc-lede code{font-family:"Geist Mono",monospace; font-size:0.84em; background:#dedbd4; padding:1px 5px; border-radius:5px;}
+.doc-meta{display:flex; flex-wrap:wrap; gap:7px; margin:22px 0 4px;}
+.doc-meta .m{font-family:"Geist Mono",monospace; font-size:11.5px; padding:4px 10px; border-radius:9999px; background:#fff; border:1px solid #d4d1ca; color:#56544f;}
+.legend{max-width:1180px; margin:18px auto 0; padding:0 40px; display:flex; flex-wrap:wrap; gap:18px; font-size:12.5px; color:#56544f;}
+.legend .lk{display:inline-flex; align-items:center; gap:7px;}
+.legend .dot{width:10px; height:10px; border-radius:3px; border:1px solid rgba(0,0,0,.15);}
+
+.flowbar{max-width:1180px; margin:24px auto 0; padding:0 40px;}
+.flowbar .fb-inner{display:flex; flex-wrap:wrap; align-items:center; gap:10px; background:#fff; border:1px solid #d4d1ca; border-radius:14px; padding:14px 18px;}
+.flowbar .fb-step{display:inline-flex; align-items:center; gap:8px; font-size:13px; color:#1c1b19;}
+.flowbar .fb-step .fb-n{font-family:"Geist Mono",monospace; font-size:11px; width:20px; height:20px; display:grid; place-items:center; border-radius:6px; background:#eef0fb; color:#2f4cc4; font-weight:600;}
+.flowbar .fb-arrow{color:#a8a59d; font-size:15px;}
+.flowbar .fb-loop{font-family:"Geist Mono",monospace; font-size:11px; color:#2c7350; margin-left:4px;}
+
+.state-sec{max-width:1180px; margin:8px auto 0; padding:40px 40px 8px;}
+.state-sec + .state-sec{border-top:1px solid #d4d1ca; margin-top:20px;}
+.sec-num{font-family:"Geist Mono",monospace; font-size:13px; color:#2f4cc4; font-weight:500;}
+.sec-title{font-size:25px; line-height:1.2; letter-spacing:-0.015em; font-weight:600; margin:6px 0 8px;}
+.sec-desc{font-size:14.5px; line-height:1.6; color:#56544f; max-width:82ch; margin:0 0 6px;}
+.sec-desc b{color:#1c1b19; font-weight:600;}
+.sec-desc code{font-family:"Geist Mono",monospace; font-size:0.86em; background:#dedbd4; padding:1px 5px; border-radius:5px;}
+.sec-notes{margin:10px 0 0; padding:0; list-style:none; display:flex; flex-direction:column; gap:5px;}
+.sec-notes li{position:relative; padding-left:20px; font-size:13px; line-height:1.55; color:#56544f; max-width:86ch;}
+.sec-notes li::before{content:"\203A"; position:absolute; left:4px; top:0; color:#2f4cc4; font-weight:700;}
+.sec-notes li b{color:#1c1b19; font-weight:600;}
+.sec-notes code{font-family:"Geist Mono",monospace; font-size:0.85em; background:#dedbd4; padding:1px 5px; border-radius:5px;}
+
+/* frame gallery */
+.gallery{max-width:1180px; margin:0 auto; padding:22px 40px 12px; display:flex; flex-wrap:wrap; gap:30px 34px; align-items:flex-start;}
+.vp{margin:0;}
+.vp figcaption{display:flex; align-items:center; gap:9px; margin:0 0 10px; font-size:12px; color:#56544f;}
+.vp figcaption .tg{font-family:"Geist Mono",monospace; font-size:10.5px; letter-spacing:0.03em; text-transform:uppercase; padding:3px 8px; border-radius:6px; border:1px solid #d4d1ca; background:#fff;}
+.vp figcaption .tg--web{color:#1c1b19;}
+.vp figcaption .tg--mob{color:#2f4cc4; border-color:#c2c8ef; background:#eef0fb;}
+.vp figcaption .tg--light{color:#7b6a2a; border-color:#e3dcc4; background:#f7f2e4;}
+.vp figcaption .tg--dark{color:#cfcfe6; border-color:#3a3a52; background:#26263a;}
+.vp figcaption .lbl{font-weight:500; color:#1c1b19;}
+
+/* the device shell that holds one rendered Pennedly screen */
+.screen{
+  border-radius:16px; overflow:hidden; position:relative;
+  box-shadow:0 18px 50px -20px rgba(20,18,15,.5), 0 4px 12px -6px rgba(20,18,15,.25);
+}
+.screen.web{width:1040px;}
+.screen.mob{width:392px; border-radius:30px; padding:0; box-shadow:0 18px 50px -18px rgba(20,18,15,.55), 0 0 0 9px #15140f, 0 0 0 10px #2a2925;}
+@media (max-width:1140px){
+  .screen.web{width:100%; max-width:920px;}
+}
+
+/* strings table */
+.loc-tbl-wrap{max-width:1180px; margin:18px auto 0; padding:0 40px;}
+.loc-tbl{width:100%; border-collapse:collapse; background:#fff; border:1px solid #d4d1ca; border-radius:14px; overflow:hidden; font-size:13px;}
+.loc-tbl th,.loc-tbl td{text-align:left; padding:9px 14px; border-bottom:1px solid #e3e0d9; vertical-align:top; line-height:1.5;}
+.loc-tbl thead th{font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:#7b7a74; background:#f3f1ec; font-weight:600;}
+.loc-tbl tbody tr:last-child td{border-bottom:none;}
+.loc-tbl td.k{font-family:"Geist Mono",monospace; font-size:11.5px; color:#2f4cc4; white-space:nowrap;}
+.loc-tbl td.en{color:#1c1b19; width:38%;}
+.loc-tbl td.ru{color:#3c3b37; width:38%;}
+.loc-langs{max-width:1180px; margin:14px auto 0; padding:0 40px; display:flex; flex-wrap:wrap; gap:8px;}
+.loc-langs .lg{font-family:"Geist Mono",monospace; font-size:12px; padding:5px 11px; border-radius:9999px; border:1px solid #d4d1ca; background:#fff; color:#56544f;}
+.loc-langs .lg.auth{color:#2c7350; border-color:#bcd6c7; background:#eef6f0;}
+.loc-langs .lg.auth b{color:#1f5b3e;}
+
+.foot{max-width:1180px; margin:30px auto; padding:24px 40px 60px;}
+.foot .ft-card{background:#fff; border:1px solid #d4d1ca; border-radius:14px; padding:20px 24px;}
+.foot h3{font-size:15px; margin:0 0 10px; letter-spacing:-0.01em;}
+.foot ul{margin:0; padding-left:20px; display:flex; flex-direction:column; gap:6px;}
+.foot li{font-size:13px; line-height:1.55; color:#56544f;}
+.foot li b{color:#1c1b19;}
+.foot code{font-family:"Geist Mono",monospace; font-size:0.85em; background:#dedbd4; padding:1px 5px; border-radius:5px;}
+
+/* =============================================================== *
+ *  PENNEDLY DESIGN TOKENS — scoped to .screen so each frame can   *
+ *  be light or dark independently on the same page.              *
+ * =============================================================== */
+.screen, .screen *{box-sizing:border-box;}
+.screen{
+  --font-sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --font-mono:"Geist Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --color-bg:#efedea; --color-surface:#ffffff; --color-surface-2:#f6f5f2; --color-border:#dcd9d2;
+  --color-text:#171717; --color-text-muted:#565550; --color-text-subtle:#6f6e69;
+  --color-primary:#171717; --color-primary-foreground:#ededed;
+  --color-accent:#2f4cc4; --color-accent-foreground:#ffffff;
+  --color-success:#2c7350; --color-success-foreground:#ffffff;
+  --color-warning:#8a5b16; --color-warning-foreground:#ffffff;
+  --color-danger:#b23b30; --color-danger-foreground:#ffffff;
+  --radius-sm:6px; --radius-md:10px; --radius-lg:14px; --radius-xl:20px; --radius-2xl:28px; --radius-full:9999px;
+  --shadow-sm:0 1px 2px 0 rgb(23 23 23 / 0.06);
+  --shadow-md:0 4px 12px -2px rgb(23 23 23 / 0.08), 0 2px 6px -3px rgb(23 23 23 / 0.06);
+  --shadow-lg:0 16px 40px -12px rgb(23 23 23 / 0.16), 0 6px 14px -8px rgb(23 23 23 / 0.08);
+  --text-display:3rem; --text-h1:2rem; --text-h2:1.5rem; --text-h3:1.1875rem;
+  --text-body:0.9375rem; --text-small:0.8125rem; --text-caption:0.75rem;
+  --content-reading:720px; --content-wide:960px;
+  --ease-standard:cubic-bezier(0.2,0.7,0.3,1); --ease-entrance:cubic-bezier(0.16,1,0.3,1);
+  --duration-fast:120ms; --duration-base:180ms; --duration-slow:240ms;
+  font-family:var(--font-sans);
+}
+.screen.pd-dark{
+  --color-bg:#0a0a0a; --color-surface:#171717; --color-surface-2:#201f1d; --color-border:#2b2a27;
+  --color-text:#ededed; --color-text-muted:#a2a19c; --color-text-subtle:#898882;
+  --color-primary:#ededed; --color-primary-foreground:#171717;
+  --color-accent:#9aacff; --color-accent-foreground:#0a0a0a;
+  --color-success:#5fbf8d; --color-success-foreground:#0a0a0a;
+  --color-warning:#d8a754; --color-warning-foreground:#0a0a0a;
+  --color-danger:#ef8a80; --color-danger-foreground:#0a0a0a;
+  --shadow-sm:0 1px 2px 0 rgb(0 0 0 / 0.5);
+  --shadow-md:0 6px 16px -4px rgb(0 0 0 / 0.6);
+  --shadow-lg:0 20px 48px -16px rgb(0 0 0 / 0.7);
+}
+
+/* =============================================================== *
+ *  REAL APP SHELL (studio.css subset) + components scoped here.   *
+ * =============================================================== */
+.screen .app{display:flex; height:100%; background:var(--color-bg); color:var(--color-text); font-family:var(--font-sans); line-height:1.5;}
+.screen .sidebar{flex:0 0 248px; display:flex; flex-direction:column; gap:4px; padding:16px 14px; border-right:1px solid var(--color-border); background:var(--color-bg);}
+.screen .brand{display:flex; align-items:center; gap:11px; padding:8px 8px 16px;}
+.screen .brand-mark{width:34px; height:34px; flex:0 0 auto; border-radius:var(--radius-md); box-shadow:var(--shadow-sm); display:grid; place-items:center; background:var(--color-text); color:var(--color-bg);}
+.screen .brand-name{font-size:var(--text-h3); font-weight:600; letter-spacing:-0.01em; line-height:1;}
+.screen .brand-sub{font-size:var(--text-caption); color:var(--color-text-subtle); margin-top:3px;}
+.screen .nav{display:flex; flex-direction:column; gap:2px;}
+.screen .nav-cap{font-size:var(--text-caption); font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--color-text-subtle); padding:14px 12px 6px;}
+.screen .nav-item{display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:var(--radius-md); font-size:var(--text-small); font-weight:500; color:var(--color-text-muted); border:1px solid transparent; position:relative; cursor:pointer; text-decoration:none;}
+.screen .nav-item:hover{background:var(--color-surface-2); color:var(--color-text);}
+.screen .nav-item--active{background:var(--color-surface-2); color:var(--color-text); font-weight:600;}
+.screen .nav-item .nav-ico{width:16px; height:16px; flex:0 0 auto; opacity:0.85;}
+.screen .nav-item .nav-label{white-space:nowrap;}
+.screen .nav-item .nav-badge{margin-left:auto; font-size:var(--text-caption); font-weight:600; color:var(--color-text-subtle); background:var(--color-surface-2); border:1px solid var(--color-border); border-radius:var(--radius-full); min-width:20px; height:18px; padding:0 6px; display:inline-flex; align-items:center; justify-content:center;}
+.screen .nav-item--active .nav-badge{color:var(--color-text);}
+.screen .sidebar-foot{margin-top:auto; padding-top:10px; position:relative;}
+.screen .account{display:flex; align-items:center; gap:10px; width:100%; padding:8px; border-radius:var(--radius-md); border:1px solid transparent; background:transparent; color:var(--color-text); cursor:pointer; text-align:left;}
+.screen .account:hover{background:var(--color-surface-2);}
+.screen .account .who{min-width:0;}
+.screen .account .who .nm{font-size:var(--text-small); font-weight:600; line-height:1.2;}
+.screen .account .who .hd{font-size:var(--text-caption); color:var(--color-text-subtle); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.screen .account .chev{margin-left:auto; color:var(--color-text-subtle); flex:0 0 auto;}
+.screen .avatar{position:relative; flex:0 0 auto; border-radius:var(--radius-full); overflow:hidden; display:grid; place-items:center; user-select:none; box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--color-text) 8%, transparent);}
+.screen .avatar-mono{width:100%; height:100%; display:grid; place-items:center; background:var(--color-text); color:var(--color-bg); font-weight:600; letter-spacing:0.01em;}
+.screen .main{flex:1 1 auto; min-width:0; display:flex; flex-direction:column;}
+.screen .topbar{flex:0 0 auto; display:flex; align-items:center; gap:16px; height:60px; padding:0 24px; border-bottom:1px solid var(--color-border); background:color-mix(in srgb, var(--color-bg) 86%, transparent); position:sticky; top:0; z-index:10;}
+.screen .topbar:has(> .topbar-inner){padding-inline:0;}
+.screen .topbar-inner{width:100%; max-width:var(--content-reading); margin-inline:auto; padding-inline:24px; display:flex; align-items:center; gap:16px;}
+.screen .topbar-title{font-size:var(--text-h3); font-weight:600; letter-spacing:-0.006em;}
+.screen .topbar-spacer{flex:1 1 auto;}
+.screen .topbar-actions{display:flex; align-items:center; gap:8px;}
+.screen .icon-btn{width:36px; height:36px; flex:0 0 auto; display:grid; place-items:center; border-radius:var(--radius-md); border:1px solid var(--color-border); background:var(--color-surface); color:var(--color-text-muted); cursor:pointer;}
+.screen .icon-btn:hover{background:var(--color-surface-2); color:var(--color-text);}
+.screen .scroll{flex:1 1 auto; overflow:hidden;}
+.screen .content{max-width:var(--content-reading); margin:0 auto; padding:28px 24px 40px; display:flex; flex-direction:column; gap:20px;}
+.screen .feed{display:flex; flex-direction:column; gap:14px;}
+
+/* status pill + button (components.css) */
+.screen .status-pill{display:inline-flex; align-items:center; gap:7px; white-space:nowrap; font-size:var(--text-small); color:var(--color-text-muted); padding:5px 11px 5px 9px; border:1px solid var(--color-border); border-radius:var(--radius-full); background:var(--color-surface);}
+.screen .status-pill .pill-dot{width:7px; height:7px;}
+.screen .pill-dot{width:6px; height:6px; border-radius:var(--radius-full); background:currentColor;}
+.screen .status-pill--accent{color:var(--color-accent); border-color:color-mix(in srgb, var(--color-accent) 30%, var(--color-border));}
+.screen .status-pill--accent .pill-dot{background:var(--color-accent);}
+.screen .status-pill--success{color:var(--color-success); border-color:color-mix(in srgb, var(--color-success) 30%, var(--color-border));}
+.screen .status-pill--success .pill-dot{background:var(--color-success);}
+.screen .status-pill--warning{color:var(--color-warning); border-color:color-mix(in srgb, var(--color-warning) 35%, var(--color-border));}
+.screen .status-pill--warning .pill-dot{background:var(--color-warning);}
+.screen .btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; font-family:var(--font-sans); font-weight:500; font-size:var(--text-small); white-space:nowrap; cursor:pointer; user-select:none; border:1px solid transparent; border-radius:var(--radius-md); height:40px; padding-inline:16px;}
+.screen .btn--primary{background:var(--color-primary); color:var(--color-primary-foreground);}
+.screen .btn--secondary{background:var(--color-surface); color:var(--color-text); border-color:var(--color-border);}
+.screen .btn--secondary:hover{background:var(--color-surface-2);}
+.screen .btn--lg{height:46px; padding-inline:22px; font-size:var(--text-body); border-radius:var(--radius-lg);}
+.screen .btn--sm{height:34px; padding-inline:12px; font-size:var(--text-small);}
+.screen .btn--danger{background:var(--color-danger); color:var(--color-danger-foreground);}
+.screen .btn:disabled{opacity:0.5; cursor:not-allowed;}
+
+/* ===================== page intro + notice (verbatim) ===================== */
+.screen .page-intro{display:flex; flex-direction:column; gap:6px;}
+.screen .page-intro h1{font-size:var(--text-h1); font-weight:600; letter-spacing:-0.015em; margin:0;}
+.screen .page-intro p{font-size:var(--text-body); color:var(--color-text-muted); margin:0; max-width:62ch; text-wrap:pretty;}
+
+.screen .paste-notice{display:flex; align-items:flex-start; gap:11px; background:var(--color-surface-2); border:1px solid var(--color-border); border-radius:var(--radius-md); padding:12px 14px;}
+.screen .paste-notice .pn-ico{color:var(--color-text-subtle); flex:0 0 auto; margin-top:1px;}
+.screen .paste-notice .pn-body{min-width:0;}
+.screen .paste-notice .pn-t{font-size:var(--text-small); font-weight:600; color:var(--color-text);}
+.screen .paste-notice .pn-d{font-size:var(--text-small); color:var(--color-text-muted); line-height:1.5; margin-top:2px; text-wrap:pretty;}
+
+/* ===================== composer (single post) ===================== */
+.screen .composer-head{display:flex; align-items:center; gap:10px; margin-bottom:10px;}
+.screen .composer-head .ch-t{font-size:var(--text-small); font-weight:600; color:var(--color-text);}
+.screen .composer-head .ch-cancel{margin-left:auto; font-size:var(--text-caption); color:var(--color-text-subtle); background:none; border:none; cursor:pointer; padding:0;}
+.screen .paste-box{background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-xl); box-shadow:var(--shadow-sm); padding:16px 16px 12px; transition:border-color var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard);}
+.screen .paste-box.is-focus{border-color:color-mix(in srgb, var(--color-accent) 55%, var(--color-border)); box-shadow:var(--shadow-md);}
+.screen .paste-box.paste-box--warn{border-color:color-mix(in srgb, var(--color-warning) 55%, var(--color-border));}
+.screen .paste-area{width:100%; display:block; border:none; background:transparent; resize:vertical; font-family:var(--font-sans); font-size:var(--text-body); line-height:1.62; color:var(--color-text); padding:4px 2px; min-height:118px; outline:none;}
+.screen .paste-area.is-placeholder{color:var(--color-text-subtle);}
+.screen .paste-foot{display:flex; align-items:center; gap:12px; margin-top:10px; padding-top:12px; border-top:1px solid var(--color-border);}
+.screen .paste-meta{display:flex; align-items:center; gap:10px; flex:1 1 auto; min-width:0; flex-wrap:wrap;}
+.screen .sample-count{display:inline-flex; align-items:center; gap:7px; white-space:nowrap; font-size:var(--text-caption); color:var(--color-text-subtle); font-variant-numeric:tabular-nums;}
+.screen .sample-count .sc-dot{width:6px; height:6px; border-radius:var(--radius-full); background:var(--color-text-subtle);}
+.screen .sample-count--ready .sc-dot{background:var(--color-success);}
+.screen .sample-count--ready{color:var(--color-text-muted);}
+.screen .link-warn{display:inline-flex; align-items:center; gap:7px; min-width:0; font-size:var(--text-caption); font-weight:500; color:var(--color-warning);}
+.screen .link-warn .lw-ico{flex:0 0 auto;}
+.screen .link-warn span{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+
+/* collapsed "add another post" bar */
+.screen .add-another{display:flex; align-items:center; gap:12px; width:100%; text-align:left; cursor:pointer;
+  background:var(--color-surface); border:1px dashed var(--color-border); border-radius:var(--radius-xl);
+  padding:15px 18px; color:var(--color-text);
+  transition:border-color var(--duration-base) var(--ease-standard), background var(--duration-base) var(--ease-standard);}
+.screen .add-another:hover{border-color:color-mix(in srgb, var(--color-accent) 45%, var(--color-border)); background:var(--color-surface-2);}
+.screen .add-another .aa-ico{width:34px; height:34px; flex:0 0 auto; display:grid; place-items:center; border-radius:var(--radius-md); background:var(--color-surface-2); border:1px solid var(--color-border); color:var(--color-text-muted);}
+.screen .add-another:hover .aa-ico{color:var(--color-accent); border-color:color-mix(in srgb, var(--color-accent) 35%, var(--color-border));}
+.screen .add-another .aa-body{min-width:0;}
+.screen .add-another .aa-t{font-size:var(--text-small); font-weight:600;}
+.screen .add-another .aa-d{font-size:var(--text-caption); color:var(--color-text-subtle); margin-top:1px;}
+.screen .add-another .aa-go{margin-left:auto; color:var(--color-text-subtle); flex:0 0 auto;}
+
+/* list section divider */
+.screen .bd-list-cap{display:flex; align-items:center; gap:12px; font-size:var(--text-caption); font-weight:600; letter-spacing:0.05em; text-transform:uppercase; color:var(--color-text-subtle);}
+.screen .bd-list-cap::after{content:""; flex:1 1 auto; height:1px; background:var(--color-border);}
+
+/* ===================== analyzing card ===================== */
+.screen .reading-card{background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-2xl); box-shadow:var(--shadow-sm); padding:40px 40px; display:flex; flex-direction:column; align-items:center;}
+.screen .reading-nib{width:40px; height:40px; color:var(--color-text); animation:nib-write 1.5s var(--ease-standard) infinite;}
+.screen .reading-title{font-size:var(--text-h2); font-weight:600; letter-spacing:-0.01em; margin-top:18px;}
+.screen .reading-sub{font-size:var(--text-small); color:var(--color-text-muted); margin-top:6px; text-align:center; max-width:42ch;}
+.screen .reading-quote{margin-top:20px; display:flex; gap:11px; width:100%; max-width:380px; background:var(--color-surface-2); border:1px solid var(--color-border); border-radius:var(--radius-md); padding:11px 14px;}
+.screen .reading-quote .rq-bar{width:2px; align-self:stretch; border-radius:2px; background:var(--color-border); flex:0 0 auto;}
+.screen .reading-quote .rq-text{font-size:var(--text-small); color:var(--color-text-muted); line-height:1.5; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; text-wrap:pretty;}
+.screen .read-steps{display:flex; flex-direction:column; gap:12px; margin-top:24px; width:100%; max-width:340px;}
+.screen .read-step{display:flex; align-items:center; gap:11px; font-size:var(--text-small); color:var(--color-text-subtle);}
+.screen .read-step--active{color:var(--color-text); font-weight:500;}
+.screen .read-step--done{color:var(--color-text-muted);}
+.screen .read-tick{width:20px; height:20px; flex:0 0 auto; display:grid; place-items:center; border-radius:var(--radius-full); border:1.5px solid var(--color-border); color:var(--color-text-subtle);}
+.screen .read-step--active .read-tick{border-color:var(--color-accent); color:var(--color-accent);}
+.screen .read-step--done .read-tick{background:var(--color-success); border-color:var(--color-success); color:var(--color-success-foreground);}
+.screen .read-spin{width:12px; height:12px; border-radius:50%; border:2px solid currentColor; border-top-color:transparent; animation:spin 0.6s linear infinite;}
+.screen .read-dot{width:6px; height:6px; border-radius:99px; background:currentColor; opacity:0.5;}
+
+/* ===================== breakdown card ===================== */
+.screen .xc-card{background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:22px 22px 18px; transition:border-color var(--duration-base) var(--ease-standard);}
+.screen .xc-card:hover{border-color:color-mix(in srgb, var(--color-text) 12%, var(--color-border));}
+.screen .xc-head{display:flex; align-items:center; gap:10px;}
+.screen .xc-kind{display:inline-flex; align-items:center; gap:5px; flex:0 0 auto; font-size:var(--text-caption); font-weight:600; letter-spacing:0.02em; padding:3px 9px; border-radius:var(--radius-full); background:var(--color-surface-2); color:var(--color-text-muted); border:1px solid var(--color-border);}
+.screen .xc-head .xc-idx{margin-left:auto; font-size:var(--text-caption); font-weight:600; color:var(--color-text-subtle); font-variant-numeric:tabular-nums; letter-spacing:0.04em;}
+.screen .xc-name{font-size:var(--text-h2); font-weight:600; letter-spacing:-0.01em; line-height:1.2; margin-top:12px; color:var(--color-text);}
+.screen .xc-technique{font-size:var(--text-body); line-height:1.6; color:var(--color-text-muted); margin-top:8px; max-width:60ch; text-wrap:pretty;}
+.screen .xc-why{display:flex; align-items:flex-start; gap:9px; margin-top:14px;}
+.screen .xc-why .xw-ico{color:var(--color-text-subtle); flex:0 0 auto; margin-top:1px;}
+.screen .xc-why .xw-text{font-size:var(--text-small); font-style:italic; color:var(--color-text-subtle); line-height:1.5; text-wrap:pretty;}
+.screen .xc-transfer{margin-top:18px; padding-top:16px; border-top:1px solid var(--color-border); display:flex; flex-direction:column; gap:14px;}
+.screen .xc-cap{font-size:var(--text-caption); font-weight:600; letter-spacing:0.05em; text-transform:uppercase; color:var(--color-text-subtle); margin-bottom:8px;}
+.screen .xc-source{display:flex; gap:12px; background:var(--color-surface-2); border:1px solid var(--color-border); border-radius:var(--radius-md); padding:11px 14px;}
+.screen .xc-source .xs-bar{width:2px; align-self:stretch; border-radius:2px; background:var(--color-border); flex:0 0 auto;}
+.screen .xc-source .xs-text{font-size:var(--text-small); line-height:1.55; color:var(--color-text-muted); text-wrap:pretty;}
+.screen .xc-voice{display:flex; gap:12px; background:var(--color-bg); border:1px solid var(--color-border); border-radius:var(--radius-md); padding:13px 15px;}
+.screen .xc-voice .xv-bar{width:2px; align-self:stretch; border-radius:2px; background:var(--color-accent); flex:0 0 auto;}
+.screen .xc-voice .xv-text{font-size:var(--text-body); font-style:italic; line-height:1.55; color:var(--color-text); text-wrap:pretty;}
+.screen .xc-rule{display:flex; align-items:center; gap:12px; margin-top:16px; flex-wrap:wrap;}
+.screen .rule-mono{flex:1 1 240px; min-width:0; display:inline-flex; align-items:center; gap:9px; font-family:var(--font-mono); font-size:var(--text-small); color:var(--color-text); line-height:1.4; background:var(--color-surface-2); border:1px dashed var(--color-border); border-radius:var(--radius-md); padding:9px 12px;}
+.screen .rule-mono .rm-do{color:var(--color-success); font-weight:500; flex:0 0 auto;}
+.screen .rule-mono .rm-text{min-width:0; text-wrap:pretty;}
+.screen .add-voice{flex:0 0 auto;}
+.screen .add-voice--done{display:inline-flex; align-items:center; gap:7px; flex:0 0 auto; font-size:var(--text-small); font-weight:600; color:var(--color-success); padding:0 6px; white-space:nowrap;}
+
+/* ===================== per-post error card ===================== */
+.screen .bd-error{background:color-mix(in srgb, var(--color-danger) 7%, var(--color-surface)); border:1px solid color-mix(in srgb, var(--color-danger) 28%, var(--color-border)); border-radius:var(--radius-lg); padding:18px 20px; display:flex; align-items:flex-start; gap:13px;}
+.screen .bd-error .be-ico{color:var(--color-danger); flex:0 0 auto; margin-top:1px;}
+.screen .bd-error .be-body{flex:1 1 auto; min-width:0;}
+.screen .bd-error .be-title{font-size:var(--text-small); font-weight:600;}
+.screen .bd-error .be-sub{font-size:var(--text-caption); color:var(--color-text-muted); margin-top:3px; line-height:1.5; text-wrap:pretty;}
+.screen .bd-error .be-quote{margin-top:11px; display:flex; gap:10px; background:var(--color-surface-2); border:1px solid var(--color-border); border-radius:var(--radius-md); padding:9px 12px;}
+.screen .bd-error .be-quote .bq-bar{width:2px; align-self:stretch; border-radius:2px; background:var(--color-border); flex:0 0 auto;}
+.screen .bd-error .be-quote .bq-text{font-size:var(--text-small); color:var(--color-text-muted); line-height:1.5; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;}
+.screen .bd-error .be-actions{display:flex; gap:8px; margin-top:13px;}
+
+/* ===================== daily-limit notice ===================== */
+.screen .limit-note{background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-xl); box-shadow:var(--shadow-sm); padding:20px 22px; display:flex; align-items:flex-start; gap:14px;}
+.screen .limit-note .ln-mark{width:40px; height:40px; flex:0 0 auto; display:grid; place-items:center; border-radius:var(--radius-md); background:var(--color-surface-2); border:1px solid var(--color-border); color:var(--color-text-muted);}
+.screen .limit-note .ln-body{flex:1 1 auto; min-width:0;}
+.screen .limit-note .ln-t{font-size:var(--text-h3); font-weight:600; letter-spacing:-0.006em;}
+.screen .limit-note .ln-d{font-size:var(--text-small); color:var(--color-text-muted); margin-top:5px; line-height:1.55; text-wrap:pretty; max-width:56ch;}
+.screen .limit-note .ln-link{display:inline-flex; align-items:center; gap:6px; margin-top:12px; font-size:var(--text-small); font-weight:600; color:var(--color-accent); cursor:pointer;}
+
+/* ===== keyframes (canonical) ===== */
+@keyframes nib-write{0%,100%{transform:translateX(0) rotate(0deg);}35%{transform:translateX(3px) rotate(-7deg);}70%{transform:translateX(-1px) rotate(3deg);}}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* =============================================================== *
+ *  MOBILE FRAME OVERRIDES — replicate the 880 (icon-rail) + 600   *
+ *  + 560 media queries per-frame, applied with a class.           *
+ * =============================================================== */
+.screen.mob .sidebar{flex-basis:72px; padding:16px 10px;}
+.screen.mob .brand-name,.screen.mob .brand-sub,.screen.mob .nav-cap,
+.screen.mob .nav-item .nav-label,.screen.mob .nav-item .nav-badge,
+.screen.mob .account .who,.screen.mob .account .chev{display:none;}
+.screen.mob .brand{justify-content:center; padding:8px 0 16px;}
+.screen.mob .nav-item{justify-content:center; padding:10px;}
+.screen.mob .account{justify-content:center;}
+.screen.mob .content{padding:18px 14px 40px;}
+.screen.mob .topbar-inner{padding-inline:14px;}
+.screen.mob .xc-name{font-size:var(--text-h3);}
+.screen.mob .limit-note .ln-t{font-size:var(--text-small);}
+</style>
+</head>
+<body>
+
+<header class="doc-head">
+  <p class="doc-kicker">Pennedly · State spec · build contract</p>
+  <h1 class="doc-title">Разбор паттернов — every state, rendered</h1>
+  <p class="doc-lede">Full-fidelity render of the redesigned <b>Explore patterns</b> screen (<code>/app/patterns/explore</code>), rebuilt around a <b>one-post-at-a-time</b> flow. The old single textarea (paste many posts at once, separated by blank lines) is gone. Now the user pastes <b>one</b> post they admire, hits <b>Break it down</b>, and gets a single result — the name of the move plus <b>that post rewritten in their own voice</b>. An <b>Add another post</b> control reopens the composer; each breakdown stacks into a running list. Pennedly never opens links and never reads other accounts — it only reads the words the user pastes. Every frame uses the real PennedlyDesign tokens, the shared app shell, and authored copy. Reading width is <b>720px</b>. Each state is shown for <b>web + mobile</b> in <b>light + dark</b>; copy ships in <b>8 locales</b> (EN/RU authored).</p>
+  <div class="doc-meta">
+    <span class="m">route /app/patterns/explore</span>
+    <span class="m">sidebar: Explore patterns (compass)</span>
+    <span class="m">width --content-reading 720</span>
+    <span class="m">flow: one post → break down → add another</span>
+    <span class="m">states: empty · entered · analyzing · one · several · error · limit</span>
+  </div>
+</header>
+
+<div class="flowbar">
+  <div class="fb-inner">
+    <span class="fb-step"><span class="fb-n">1</span>Paste one post</span>
+    <span class="fb-arrow">&rarr;</span>
+    <span class="fb-step"><span class="fb-n">2</span>Break it down</span>
+    <span class="fb-arrow">&rarr;</span>
+    <span class="fb-step"><span class="fb-n">3</span>Move named + rewritten in your voice</span>
+    <span class="fb-arrow">&rarr;</span>
+    <span class="fb-step"><span class="fb-n">4</span>Add another post</span>
+    <span class="fb-loop">&#8635; loop · breakdowns stack into a list</span>
+  </div>
+</div>
+
+<div class="legend">
+  <span class="lk"><span class="dot" style="background:#2f4cc4;"></span>accent / your-voice / count</span>
+  <span class="lk"><span class="dot" style="background:#2c7350;"></span>success / ready / added</span>
+  <span class="lk"><span class="dot" style="background:#8a5b16;"></span>warning / link caution / limit</span>
+  <span class="lk"><span class="dot" style="background:#b23b30;"></span>danger / one-post error</span>
+  <span class="lk"><span class="dot" style="background:#dcd9d2;"></span>border / source line</span>
+</div>
+
+<div id="root"></div>
+
+<script>
+/* ============================================================ *
+ *  Icons — 24-grid, 1.8 stroke, round caps (matches studio).   *
+ * ============================================================ */
+function ic(d, size){ size = size||16; return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+d+'</svg>'; }
+const ICONS = {
+  studio:   '<path d="M4 20l1-4L16 5a2 2 0 0 1 3 3L8 19z"/><path d="M14 7l3 3"/>',
+  feed:     '<rect x="4" y="5" width="16" height="4.5" rx="1.4"/><rect x="4" y="14.5" width="16" height="4.5" rx="1.4"/>',
+  replies:  '<path d="M5 6.5h14v8.5H10l-4 3.5v-3.5H5z"/>',
+  at:       '<circle cx="12" cy="12" r="3.4"/><path d="M15.4 12v1.6a2.4 2.4 0 0 0 4.1 1.4A8 8 0 1 0 15 19.4"/>',
+  chart:    '<path d="M5 19V5"/><path d="M5 19h14"/><rect x="8" y="11" width="2.6" height="5"/><rect x="13" y="7.5" width="2.6" height="8.5"/>',
+  audit:    '<rect x="6" y="4" width="12" height="16" rx="2"/><path d="M9 9h6M9 12.5h6M9 16h3.5"/>',
+  study:    '<path d="M5 5.5A1.5 1.5 0 0 1 6.5 4H18v13H6.5A1.5 1.5 0 0 0 5 18.5z"/><path d="M5 18.5A1.5 1.5 0 0 1 6.5 17H18v3H6.5A1.5 1.5 0 0 1 5 18.5z"/>',
+  compass:  '<circle cx="12" cy="12" r="8.2"/><path d="M15.4 8.6l-2 4.8-4.8 2 2-4.8z"/>',
+  voice:    '<path d="M4 12h2l2-5 3 11 3-13 2 7h4"/>',
+  stylerules:'<path d="M5 6h14M5 12h14M5 18h9"/>',
+  autopilot:'<circle cx="12" cy="12" r="8.2"/><path d="M12 8v4l3 2"/>',
+  moon:     '<path d="M20 14.5A8 8 0 1 1 9.5 4 6.3 6.3 0 0 0 20 14.5z"/>',
+  sun:      '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M2 12h2M20 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/>',
+  settings: '<circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l1.8-1.3-1.8-3.1-2.1.8a7 7 0 0 0-2-1.2l-.3-2.2H8.5l-.3 2.2a7 7 0 0 0-2 1.2l-2.1-.8L2.3 9.5l1.8 1.3A7 7 0 0 0 4 12a7 7 0 0 0 .1 1.2l-1.8 1.3 1.8 3.1 2.1-.8a7 7 0 0 0 2 1.2l.3 2.2h3.2l.3-2.2a7 7 0 0 0 2-1.2l2.1.8 1.8-3.1-1.8-1.3A7 7 0 0 0 19 12z"/>',
+  nib:      '<path d="M12 3.5 7 8.5l3 9 2 2 2-2 3-9z"/><circle cx="12" cy="11" r="1.2"/>',
+  quote:    '<path d="M9.5 7C7 7.8 5.5 10 5.5 12.7V17h4.5v-4.3H8.2C8.2 10.5 9.2 9.3 11 8.7Zm9 0c-2.5.8-4 3-4 5.7V17h4.5v-4.3h-1.8c0-2.2 1-3.4 2.8-4Z"/>',
+  link:     '<path d="M9.5 14.5 14.5 9.5"/><path d="M11 7.5 12.4 6a3.6 3.6 0 0 1 5.1 5.1L16 12.6"/><path d="M13 16.5 11.6 18a3.6 3.6 0 0 1-5.1-5.1L8 11.4"/>',
+  check:    '<path d="M5 12.5 10 17.5 19 7"/>',
+  plus:     '<path d="M12 5v14M5 12h14"/>',
+  arrowR:   '<path d="M10 6l6 6-6 6"/>',
+  chevD:    '<path d="M6 9.5 12 15l6-5.5"/>',
+  alert:    '<path d="M12 8.5v4.5"/><path d="M12 16.2v.1"/><path d="M10.3 4.6 3.4 17a1.9 1.9 0 0 0 1.7 2.9h13.8a1.9 1.9 0 0 0 1.7-2.9L13.7 4.6a1.9 1.9 0 0 0-3.4 0Z"/>',
+  refresh:  '<path d="M20 11.5A8 8 0 1 0 18.4 16"/><path d="M20 5v6h-6"/>',
+  x:        '<path d="M6 6l12 12M18 6 6 18"/>',
+  lock:     '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+};
+function I(name, size){ return ic(ICONS[name]||'', size); }
+
+/* ============================================================ *
+ *  Shared app shell (Sidebar + Topbar) — active = explore.     *
+ * ============================================================ */
+const NAV = [
+  { cap:'Workspace', items:[
+    ['studio','Studio',4],['feed','My Feed',0],['replies','Replies',3],['at','Mentions',0] ]},
+  { cap:'Insight', items:[
+    ['chart','Stats',0],['audit','Audits',1],['study','Pattern study',0],['compass','Explore patterns',0] ]},
+  { cap:'Voice & automation', items:[
+    ['voice','Voice',0],['stylerules','Style rules',0],['autopilot','Autopilot',0] ]},
+];
+function sidebar(navTitle){
+  let groups = NAV.map(function(g){
+    let items = g.items.map(function(it){
+      var id=it[0], label=it[1], badge=it[2];
+      var active = label===navTitle ? ' nav-item--active' : '';
+      var cur = label===navTitle ? ' aria-current="page"' : '';
+      var bdg = badge ? '<span class="nav-badge">'+badge+'</span>' : '';
+      return '<a class="nav-item'+active+'"'+cur+'><span class="nav-ico">'+I(id,16)+'</span><span class="nav-label">'+label+'</span>'+bdg+'</a>';
+    }).join('');
+    return '<div class="nav-cap">'+g.cap+'</div>'+items;
+  }).join('');
+  return '<aside class="sidebar">'
+    + '<div class="brand"><span class="brand-mark">'+I('nib',19)+'</span><div><div class="brand-name">Pennedly</div><div class="brand-sub">Drafting partner</div></div></div>'
+    + '<nav class="nav">'+groups+'</nav>'
+    + '<div class="sidebar-foot"><button class="account">'
+      + '<span class="avatar" style="width:32px;height:32px;"><span class="avatar-mono" style="font-size:13px;">ML</span></span>'
+      + '<div class="who"><div class="nm">Mara Lin</div><div class="hd">@mara.lin</div></div>'
+      + '<span class="chev">'+I('chevD',15)+'</span>'
+    + '</button></div>'
+  + '</aside>';
+}
+function topbar(L, pill, pillTone, dark){
+  var themeIcon = dark ? I('sun',17) : I('moon',16);
+  var tone = pillTone || 'accent';
+  var pillHtml = pill ? '<span class="status-pill status-pill--'+tone+'"><span class="pill-dot"></span>'+pill+'</span>' : '';
+  return '<header class="topbar"><div class="topbar-inner">'
+    + '<span class="topbar-title">'+L.title+'</span>'
+    + pillHtml
+    + '<span class="topbar-spacer"></span>'
+    + '<div class="topbar-actions">'
+      + '<button class="icon-btn" aria-label="Toggle theme">'+themeIcon+'</button>'
+      + '<button class="icon-btn" aria-label="Settings">'+I('settings',17)+'</button>'
+    + '</div>'
+  + '</div></header>';
+}
+function pageIntro(L){
+  return '<div class="page-intro"><h1>'+L.title+'</h1><p>'+L.intro+'</p></div>';
+}
+function app(L, body, pill, pillTone, dark){
+  return '<div class="app">'+sidebar(L.navTitle)+'<div class="main">'+topbar(L,pill,pillTone,dark)
+    + '<div class="scroll"><div class="content">'+pageIntro(L)+body+'</div></div></div></div>';
+}
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ============================================================ *
+ *  Copy — EN (original) + RU (authored). Card data is sample;   *
+ *  the model returns the real move + rewrite per post.          *
+ * ============================================================ */
+const T = {
+  en: {
+    title:'Explore patterns', navTitle:'Explore patterns',
+    intro:"Paste one post you admire and Pennedly names the move behind it, then rewrites that post in your own voice. Learn the move, not the post.",
+    noticeT:'Paste the text, not links.',
+    noticeD:"Pennedly never opens links or reads other people's accounts. Copy the words of a post you admire and drop it in below \u2014 one post at a time.",
+    placeholder:'Paste one post you admire here.',
+    countEmpty:'No post yet',
+    countReady:function(w){ return w+' words \u00b7 ready'; },
+    analyze:'Break it down',
+    addAnotherT:'Add another post', addAnotherD:'Pennedly only reads what you paste.',
+    composeHead:'Add another post', cancel:'Cancel',
+    analyzingT:'Reading the craft\u2026',
+    analyzingSub:"Pulling the move out of the post \u2014 not the post itself.",
+    steps:["Reading the text you pasted","Separating the move from the post","Naming the technique","Rewriting it in your voice"],
+    listCap:'Your breakdowns',
+    capBrought:'The post you brought',
+    capVoice:'The same post, in your voice',
+    doLabel:'do:', addVoice:'Add to my voice', addedVoice:'Added to your voice',
+    pill:function(n){ return n+' '+(n===1?'breakdown':'breakdowns'); },
+    errT:"Couldn't break that one down",
+    errSub:"Something went wrong on our end. Your text is safe \u2014 try again in a moment.",
+    retry:'Try again', discard:'Discard',
+    limitT:"That's all your breakdowns for today",
+    limitD:"You've used all 20 on the Creator plan. They reset at midnight, your time \u2014 or move up a plan for more.",
+    limitLink:'See plans', limitPill:'Daily limit reached',
+    warnHandle:'That looks like an @handle. Paste what they wrote, not their account.',
+    warnLink:"That looks like a link. Paste the words of the post instead \u2014 Pennedly never opens links.",
+    cards:[
+      { kind:'Hook', name:'The concrete number',
+        technique:"Opens on one exact, slightly surprising figure instead of a vague claim \u2014 so the reader has something specific to picture before any point is made.",
+        why:"A precise number reads as reported, not performed. It feels true before you've argued anything.",
+        brought:"I deleted 40,000 followers worth of old posts last night. Not because they were bad. Because they weren't me anymore.",
+        voice:"I cut 600 words out of this post before you ever saw it. What's left is the only part that was working.",
+        rule:"open on a specific number, not a vague claim" },
+      { kind:'Structure', name:'The quarter-turn reframe',
+        technique:"States a belief the reader already holds, then rotates it one notch so the same idea is suddenly seen from a sharper angle \u2014 no argument, just a better lens.",
+        why:"People rarely share what they agree with. They share what quietly reorganizes something they already knew.",
+        brought:"Most advice is autobiography in disguise. When someone tells you how to succeed, they're really telling you how they survived.",
+        voice:"You don't find your voice by writing more. You find it by deleting every line that sounds like someone else.",
+        rule:"take a familiar idea, turn it one notch" },
+      { kind:'Cadence', name:'The withheld turn',
+        technique:"Sets up an expectation in the opening line, then holds the payoff back until a short final sentence that lands on its own, alone.",
+        why:"The gap between setup and payoff is where attention lives. A hard last line gives the reader a place to stop.",
+        brought:"Here's what nobody tells you about going viral: the post you worked hardest on is never the one that lands. It's the one you almost didn't publish.",
+        voice:"I rewrote this opening nine times. The version you're reading is the one I almost deleted.",
+        rule:"end on a short line, let it land alone" },
+    ],
+  },
+  ru: {
+    title:'Разбор паттернов', navTitle:'Explore patterns',
+    intro:"Вставьте один пост, который вам понравился, \u2014 Pennedly назовёт приём за ним и перепишет этот пост вашим голосом. Учитесь приёму, а не посту.",
+    noticeT:'Вставляйте текст, а не ссылки.',
+    noticeD:"Pennedly не открывает ссылки и не читает чужие аккаунты. Скопируйте слова поста, который вам понравился, и вставьте сюда \u2014 по одному посту за раз.",
+    placeholder:'Вставьте сюда один пост, который вам понравился.',
+    countEmpty:'Пока пусто',
+    countReady:function(w){ return w+' слов \u00b7 готово'; },
+    analyze:'Разобрать',
+    addAnotherT:'Добавить ещё', addAnotherD:'Pennedly читает только то, что вы вставили.',
+    composeHead:'Добавить ещё', cancel:'Отмена',
+    analyzingT:'Читаю приём\u2026',
+    analyzingSub:"Вытаскиваю из поста приём, а не сам пост.",
+    steps:["Читаю вставленный текст","Отделяю приём от поста","Называю приём","Переписываю вашим голосом"],
+    listCap:'Ваши разборы',
+    capBrought:'Пост, который вы принесли',
+    capVoice:'Тот же пост \u2014 вашим голосом',
+    doLabel:'делать:', addVoice:'Добавить в мой голос', addedVoice:'Добавлено в ваш голос',
+    pill:function(n){ var f=(n%10===1&&n%100!==11)?'разбор':((n%10>=2&&n%10<=4&&(n%100<10||n%100>=20))?'разбора':'разборов'); return n+' '+f; },
+    errT:"Не получилось разобрать этот пост",
+    errSub:"Что-то пошло не так на нашей стороне. Ваш текст сохранён \u2014 попробуйте ещё раз.",
+    retry:'Повторить', discard:'Убрать',
+    limitT:"На сегодня разборы закончились",
+    limitD:"Вы использовали все 20 на тарифе Creator. Они обновятся в полночь по вашему времени \u2014 или перейдите на тариф повыше.",
+    limitLink:'Тарифы', limitPill:'Лимит на сегодня',
+    warnHandle:'Похоже на @упоминание. Вставьте то, что человек написал, а не его аккаунт.',
+    warnLink:"Похоже на ссылку. Вставьте слова поста \u2014 Pennedly не открывает ссылки.",
+    cards:[
+      { kind:'Хук', name:'Точное число',
+        technique:"Открывается одним точным, чуть неожиданным числом вместо общего заявления \u2014 читателю есть что представить ещё до того, как прозвучит мысль.",
+        why:"Точное число читается как факт, а не как поза. Оно кажется правдой ещё до всякого довода.",
+        brought:"Вчера ночью я удалил старых постов на 40 000 подписчиков. Не потому что они были плохие. Потому что это был уже не я.",
+        voice:"Я вырезал из этого поста 600 слов ещё до того, как вы его увидели. Осталось только то, что и работало.",
+        rule:"открывать точным числом, а не общим заявлением" },
+      { kind:'Структура', name:'Поворот на четверть',
+        technique:"Берёт убеждение, которое у читателя уже есть, и поворачивает его на одну зарубку \u2014 та же мысль вдруг видна под более острым углом. Без спора, просто другая оптика.",
+        why:"Люди редко делятся тем, с чем согласны. Они делятся тем, что тихо перекладывает по полочкам уже знакомое.",
+        brought:"Почти любой совет \u2014 это автобиография под маской. Когда тебе говорят, как добиться успеха, на деле рассказывают, как выжили сами.",
+        voice:"Свой голос находишь не тогда, когда пишешь больше. А когда вычёркиваешь каждую строчку, которая звучит как кто-то другой.",
+        rule:"взять знакомую мысль и повернуть на одну зарубку" },
+      { kind:'Ритм', name:'Отложенная развязка',
+        technique:"Задаёт ожидание в первой строке и придерживает развязку до короткого последнего предложения, которое стоит особняком.",
+        why:"Внимание живёт в зазоре между завязкой и развязкой. Жёсткая последняя строка даёт читателю место, где остановиться.",
+        brought:"Вот чего вам не говорят про вирусные посты: тот, над которым вы бились дольше всего, никогда не выстреливает. Выстреливает тот, что вы чуть не удалили.",
+        voice:"Я переписывал это начало девять раз. Та версия, что вы читаете, \u2014 та, которую я чуть не стёр.",
+        rule:"заканчивать короткой строкой и дать ей прозвучать одной" },
+    ],
+  },
+};
+
+/* ============================================================ *
+ *  Building blocks.                                            *
+ * ============================================================ */
+function notice(L){
+  return '<div class="paste-notice"><span class="pn-ico">'+I('quote',18)+'</span>'
+    + '<div class="pn-body"><div class="pn-t">'+L.noticeT+'</div><div class="pn-d">'+L.noticeD+'</div></div></div>';
+}
+// composer for a single post. opts: {filled, words, warn, focus, head}
+function composer(L, opts){
+  opts = opts || {};
+  var ready = !!opts.filled && !opts.warn;
+  var boxClass = 'paste-box' + (opts.warn ? ' paste-box--warn' : (opts.focus ? ' is-focus' : ''));
+  var area = opts.filled
+    ? '<div class="paste-area">'+esc(opts.text||'')+'</div>'
+    : '<div class="paste-area is-placeholder">'+L.placeholder+'</div>';
+  var countLabel = ready ? L.countReady(opts.words||0) : L.countEmpty;
+  var warnMsg = opts.warn===2 ? L.warnLink : L.warnHandle;
+  var meta = '<div class="paste-meta">'
+    + '<span class="sample-count'+(ready?' sample-count--ready':'')+'"><span class="sc-dot"></span>'+countLabel+'</span>'
+    + (opts.warn ? '<span class="link-warn">'+I('link',15)+'<span>'+warnMsg+'</span></span>' : '')
+    + '</div>';
+  var btn = '<button class="btn btn--primary"'+(ready?'':' disabled')+'>'+I('compass',16)+' '+L.analyze+'</button>';
+  var head = opts.head
+    ? '<div class="composer-head"><span class="ch-t">'+L.composeHead+'</span><button class="ch-cancel">'+L.cancel+'</button></div>'
+    : '';
+  return head + '<div class="'+boxClass+'">'+area+'<div class="paste-foot">'+meta+btn+'</div></div>';
+}
+function addAnother(L){
+  return '<button class="add-another"><span class="aa-ico">'+I('plus',18)+'</span>'
+    + '<div class="aa-body"><div class="aa-t">'+L.addAnotherT+'</div><div class="aa-d">'+L.addAnotherD+'</div></div>'
+    + '<span class="aa-go">'+I('arrowR',16)+'</span></button>';
+}
+function analyzing(L, step, quoteText){
+  var rows = L.steps.map(function(s,i){
+    var state = i<step ? 'done' : (i===step ? 'active' : '');
+    var tick = i<step ? I('check',12) : (i===step ? '<span class="read-spin"></span>' : '<span class="read-dot"></span>');
+    return '<div class="read-step read-step--'+state+'"><span class="read-tick">'+tick+'</span>'+esc(s)+'</div>';
+  }).join('');
+  var quote = quoteText ? '<div class="reading-quote"><span class="rq-bar"></span><span class="rq-text">'+esc(quoteText)+'</span></div>' : '';
+  return '<div class="reading-card"><span class="reading-nib">'+I('nib',40)+'</span>'
+    + '<div class="reading-title">'+L.analyzingT+'</div>'
+    + '<div class="reading-sub">'+L.analyzingSub+'</div>'
+    + quote
+    + '<div class="read-steps">'+rows+'</div></div>';
+}
+function breakdownCard(L, p, idx, added){
+  var idxStr = String(idx+1).padStart(2,'0');
+  var action = added
+    ? '<span class="add-voice--done">'+I('check',15)+' '+L.addedVoice+'</span>'
+    : '<button class="btn btn--secondary add-voice">'+I('plus',15)+' '+L.addVoice+'</button>';
+  return '<article class="xc-card">'
+    + '<div class="xc-head"><span class="xc-kind">'+esc(p.kind)+'</span><span class="xc-idx">'+idxStr+'</span></div>'
+    + '<div class="xc-name">'+esc(p.name)+'</div>'
+    + '<div class="xc-technique">'+esc(p.technique)+'</div>'
+    + '<div class="xc-why"><span class="xw-ico">'+I('quote',16)+'</span><span class="xw-text">'+esc(p.why)+'</span></div>'
+    + '<div class="xc-transfer">'
+      + '<div><div class="xc-cap">'+L.capBrought+'</div><div class="xc-source"><span class="xs-bar"></span><span class="xs-text">'+esc(p.brought)+'</span></div></div>'
+      + '<div><div class="xc-cap">'+L.capVoice+'</div><div class="xc-voice"><span class="xv-bar"></span><span class="xv-text">'+esc(p.voice)+'</span></div></div>'
+    + '</div>'
+    + '<div class="xc-rule"><span class="rule-mono"><span class="rm-do">'+L.doLabel+'</span><span class="rm-text">'+esc(p.rule)+'</span></span>'+action+'</div>'
+  + '</article>';
+}
+function errorCard(L, quoteText){
+  return '<div class="bd-error"><span class="be-ico">'+I('alert',18)+'</span>'
+    + '<div class="be-body"><div class="be-title">'+L.errT+'</div>'
+    + '<div class="be-sub">'+L.errSub+'</div>'
+    + '<div class="be-quote"><span class="bq-bar"></span><span class="bq-text">'+esc(quoteText)+'</span></div>'
+    + '<div class="be-actions"><button class="btn btn--danger btn--sm">'+I('refresh',15)+' '+L.retry+'</button>'
+      + '<button class="btn btn--secondary btn--sm">'+L.discard+'</button></div></div></div>';
+}
+function limitNote(L){
+  return '<div class="limit-note"><span class="ln-mark">'+I('lock',20)+'</span>'
+    + '<div class="ln-body"><div class="ln-t">'+L.limitT+'</div>'
+    + '<div class="ln-d">'+L.limitD+'</div>'
+    + '<span class="ln-link">'+L.limitLink+' '+I('arrowR',14)+'</span></div></div>';
+}
+function listCap(L){ return '<div class="bd-list-cap">'+L.listCap+'</div>'; }
+
+/* ----- composed bodies (newest breakdown sits at the top of the list) ----- */
+function bodyEmpty(L){ return notice(L) + composer(L, {filled:false}); }
+function bodyEntered(L){ return notice(L) + composer(L, {filled:true, text:L.cards[0].brought, words:21, focus:true}); }
+function bodyAnalyzing(L){ return analyzing(L, 2, L.cards[0].brought); }
+function bodyOne(L){
+  return addAnother(L) + '<div class="feed">'+breakdownCard(L, L.cards[0], 0, false)+'</div>';
+}
+function bodySeveral(L){
+  // three breakdowns, newest first: indices show order they were created (01..03)
+  var cards = [
+    breakdownCard(L, L.cards[2], 2, false),
+    breakdownCard(L, L.cards[1], 1, true),
+    breakdownCard(L, L.cards[0], 0, true)
+  ].join('');
+  return addAnother(L) + listCap(L) + '<div class="feed">'+cards+'</div>';
+}
+function bodyComposing(L){
+  // "Add another" expanded: composing the next post while breakdowns wait below
+  var cards = [
+    breakdownCard(L, L.cards[1], 1, false),
+    breakdownCard(L, L.cards[0], 0, true)
+  ].join('');
+  return composer(L, {filled:false, focus:true, head:true}) + listCap(L) + '<div class="feed">'+cards+'</div>';
+}
+function bodyError(L){
+  return errorCard(L, L.cards[1].brought) + listCap(L) + '<div class="feed">'+breakdownCard(L, L.cards[0], 0, true)+'</div>';
+}
+function bodyLimit(L){
+  var cards = [
+    breakdownCard(L, L.cards[1], 1, true),
+    breakdownCard(L, L.cards[0], 0, true)
+  ].join('');
+  return limitNote(L) + listCap(L) + '<div class="feed">'+cards+'</div>';
+}
+
+/* ============================================================ *
+ *  Frame + section builders.                                   *
+ * ============================================================ */
+function frame(device, theme, label, body, pill, pillTone, L){
+  var dark = theme==='dark';
+  return '<figure class="vp">'
+    + '<figcaption><span class="tg tg--'+(device==='web'?'web':'mob')+'">'+(device==='web'?'Web \u00b7 1040':'Mobile \u00b7 392')+'</span>'
+      + '<span class="tg tg--'+theme+'">'+(dark?'Dark':'Light')+'</span>'
+      + '<span class="lbl">'+label+'</span></figcaption>'
+    + '<div class="screen '+device+' pd-'+theme+'">'+app(L, body, pill, pillTone, dark)+'</div>'
+  + '</figure>';
+}
+function section(num, title, desc, notes, makeBody, pill, pillTone, devices){
+  devices = devices || [['web','light'],['web','dark'],['mob','light'],['mob','dark']];
+  var frames = devices.map(function(dt){ return frame(dt[0],dt[1], title, makeBody(T.en), pill, pillTone, T.en); }).join('');
+  var noteList = (notes||[]).map(function(n){ return '<li>'+n+'</li>'; }).join('');
+  return '<section class="state-sec">'
+    + '<div class="sec-num">State '+num+'</div>'
+    + '<h2 class="sec-title">'+title+'</h2>'
+    + '<p class="sec-desc">'+desc+'</p>'
+    + (noteList?'<ul class="sec-notes">'+noteList+'</ul>':'')
+  + '</section>'
+  + '<div class="gallery">'+frames+'</div>';
+}
+
+/* ---- build the page ---- */
+var html = '';
+
+// STATE 1 — EMPTY
+html += section('1', 'Empty \u00b7 nothing pasted yet',
+  'The resting state. Page title and subtitle (<b>learn the move, not the post</b>), the calm <code>Paste the text, not links</code> notice, then a single-post composer: a textarea (min 118px) for <b>one</b> post, a live counter, and the <code>Break it down</code> primary button (compass), <b>disabled</b> until one post is in and there is no link issue. No breakdown list yet, no topbar pill.',
+  [
+    'The composer takes <b>one</b> post, not many \u2014 the old blank-line-separated multi-paste is removed.',
+    'Counter reads <code>No post yet</code>; the dot is subtle (not yet success-green).',
+    'Card border turns <b>accent</b> on focus and the shadow deepens (<code>:focus-within</code>).',
+  ],
+  bodyEmpty, null, null);
+
+// STATE 2 — ENTERED (ready) + variants
+html += section('2', 'One post entered \u00b7 ready',
+  'The user has pasted one post. The composer is focused (accent border), the counter flips to <b>success green</b> with a word count (<code>21 words \u00b7 ready</code>), and <code>Break it down</code> is enabled. Still one post, still no list.',
+  [
+    'Counter: <code>No post yet</code> \u2192 <code>N words \u00b7 ready</code>; dot goes success-green once there is text and no link issue.',
+    '<b>Break it down</b> enables only when there is pasted text and no link/@handle caution.',
+  ],
+  bodyEntered, null, null);
+
+// State 2 variants — link caution
+html += '<div class="state-sec" style="padding-top:8px;padding-bottom:0;"><div class="sec-num">State 2 \u00b7 variant</div>'
+  + '<h2 class="sec-title" style="font-size:19px;">The link / @handle caution</h2>'
+  + '<p class="sec-desc">Core to the promise: a pasted block that looks like a <b>link</b> or an <b>@handle</b> flips the whole composer border to <b>warning</b>, shows an inline link-icon caution, and keeps <code>Break it down</code> disabled. The server also rejects link-only input with a 422, so the UI refuses it up front. This is how the screen enforces \u201cpaste the words, not a URL.\u201d</p></div>'
+  + '<div class="gallery">'
+    + frame('web','light','@handle caution', notice(T.en)+composer(T.en,{filled:true, warn:1, text:"@maralin posted this last week and it's been living in my head"}), null, null, T.en)
+    + frame('web','dark','Link / URL caution', notice(T.en)+composer(T.en,{filled:true, warn:2, text:"https://www.threads.net/@maralin/post/abc123"}), null, null, T.en)
+  + '</div>';
+
+// STATE 3 — ANALYZING
+html += section('3', 'Analyzing \u00b7 one post',
+  'Pennedly reads the single post. A centered card: the nib mark with its writing animation, a <code>Reading the craft\u2026</code> title and calm sub, a <b>quoted preview of the post being read</b>, then the four steps as a vertical stepper (green check = done, accent spinner = active, faint dot = pending). Frame captured mid-run (step 3 of 4 active).',
+  [
+    'Because it is one post, the steps are singular: <code>Naming the technique</code>, <code>Rewriting it in your voice</code>.',
+    'Steps run ~650ms each; on a real response the view resolves to a single breakdown (or the per-post error) ~450ms after the last step.',
+    'Nib uses the canonical <code>nib-write</code> keyframe (1.5s); spinner uses <code>spin</code> (0.6s).',
+  ],
+  bodyAnalyzing, null, null);
+
+// STATE 4 — ONE RESULT READY
+html += section('4', 'One breakdown ready',
+  'The result of one post. At the top, the composer has collapsed into an <code>Add another post</code> bar (the loop affordance). Below it, one breakdown card: kind tag + index <code>01</code>, the technique name (h2), what the move is, an italic <i>why it works</i>, then the transfer block \u2014 <b>The post you brought</b> (grey bar, the pasted post verbatim) and <b>The same post, in your voice</b> (accent bar, the rewrite). A dashed <code>do:</code> rule chip + <code>Add to my voice</code>. Topbar shows the accent pill <code>1 breakdown</code>.',
+  [
+    '<b>Add another post</b> is the collapsed composer; clicking it reopens the textarea (see the variant below).',
+    'The rewrite is <b>the same post in the user\u2019s voice</b> \u2014 not a fresh unrelated example. This is the core deliverable.',
+    '<b>Add to my voice</b> appends the <code>do:</code> rule to the role-book DO list, then flips to the green <code>Added to your voice</code> check (wire to the role-book mutation + toast/undo, like the rest of the app).',
+  ],
+  bodyOne, T.en.pill(1), 'accent');
+
+// STATE 5 — SEVERAL ACCUMULATED + composing variant
+html += section('5', 'Several breakdowns accumulated',
+  'The list grows. The <code>Add another post</code> bar stays pinned at the top; below a <code>Your breakdowns</code> divider, the cards stack <b>newest first</b>, each keeping its own creation index (<code>03 / 02 / 01</code>) and its own <code>Add to my voice</code> state. The topbar pill counts the list: <code>3 breakdowns</code>. Two cards here are shown already <b>Added to your voice</b>.',
+  [
+    'Each card is one analyzed post \u2014 independent: its own move, its own rewrite, its own add-state.',
+    'Order is reverse-chronological (most recent under the composer); indices preserve the order they were created.',
+    'No bulk re-run \u2014 the flow is strictly one post at a time.',
+  ],
+  bodySeveral, T.en.pill(3), 'accent');
+
+// State 5 variant — composing the next
+html += '<div class="state-sec" style="padding-top:8px;padding-bottom:0;"><div class="sec-num">State 5 \u00b7 variant</div>'
+  + '<h2 class="sec-title" style="font-size:19px;">Add another \u2014 composing the next</h2>'
+  + '<p class="sec-desc">Tapping <code>Add another post</code> expands the composer back to a focused textarea (with a <code>Cancel</code> to recollapse), while the existing breakdowns wait below the <code>Your breakdowns</code> divider. This is the loop in motion: break down \u2192 add another \u2192 paste the next.</p></div>'
+  + '<div class="gallery">'
+    + frame('web','light','Composing post 3', bodyComposing(T.en), T.en.pill(2), 'accent', T.en)
+    + frame('mob','dark','Composing \u00b7 mobile', bodyComposing(T.en), T.en.pill(2), 'accent', T.en)
+  + '</div>';
+
+// STATE 6 — ERROR (one post)
+html += section('6', 'One post failed',
+  'A breakdown that did not come back. This is a <b>per-post</b> error, not a whole-screen failure: a danger-toned card takes the slot the new breakdown would have filled, names the problem, <b>keeps the pasted text safe</b> (quoted, two lines), and offers <code>Try again</code> (danger) + <code>Discard</code>. Every breakdown already in the list stays put below it.',
+  [
+    'Scoped to the single attempt \u2014 the rest of the list is untouched, so one bad post never wipes the session.',
+    '<b>Try again</b> re-submits the same preserved text; <b>Discard</b> drops just this attempt and returns to the composer.',
+    'Uses the danger token family (<code>bg mix(danger 7%)</code>, <code>border mix(danger 28%)</code>) \u2014 same vocabulary as the shared ErrorBanner.',
+  ],
+  bodyError, null, null,
+  [['web','light'],['web','dark'],['mob','light']]);
+
+// STATE 7 — LIMIT
+html += section('7', 'Daily limit reached',
+  'The Creator plan has a daily breakdown quota. When it is spent, the composer / <code>Add another</code> is replaced by a calm limit notice (lock mark + title + reset copy + a quiet <code>See plans</code> link), and the topbar shows a <b>warning</b> pill <code>Daily limit reached</code>. Breakdowns already made stay fully visible and usable \u2014 nothing is taken away.',
+  [
+    'Soft cap, not an error: surface tones (not danger), and the existing list is preserved and interactive.',
+    'Copy is honest about the reset (<b>midnight, the viewer\u2019s local time</b>) and offers the upgrade path without nagging.',
+    'The real quota lives server-side; the UI mirrors it and disables new breakdowns when spent.',
+  ],
+  bodyLimit, T.en.limitPill, 'warning',
+  [['web','light'],['web','dark'],['mob','light']]);
+
+document.getElementById('root').innerHTML = html;
+
+/* ============================================================ *
+ *  LOCALIZATION SECTION — RU authored render + strings + langs *
+ * ============================================================ */
+var loc = '';
+loc += '<section class="state-sec"><div class="sec-num">Localization</div>'
+  + '<h2 class="sec-title">8 locales \u00b7 EN &amp; RU authored</h2>'
+  + '<p class="sec-desc">All end-user copy is localized. The app ships <b>8 UI locales</b>; <b>EN</b> (original) and <b>RU</b> are <b>authored by hand</b> (not machine) \u2014 idiomatic, voice-matched, em-dashes avoided. Card content (move name, technique, the brought post, the rewrite) is <b>sample</b> data; the model returns the real move + rewrite per post in the user\u2019s language. Below: the <b>Several breakdowns</b> state rendered in Russian, then the full string table.</p></section>';
+loc += '<div class="gallery">'
+  + frame('web','light','RU \u00b7 several breakdowns', bodySeveral(T.ru), T.ru.pill(3), 'accent', T.ru)
+  + frame('mob','dark','RU \u00b7 mobile', bodyOne(T.ru), T.ru.pill(1), 'accent', T.ru)
+  + '</div>';
+
+// language chips
+var LANGS = [['en','English',1],['ru','Русский',1],['uk','Українська',0],['de','Deutsch',0],['es','Español',0],['fr','Français',0],['it','Italiano',0],['pt','Português',0]];
+loc += '<div class="loc-langs">' + LANGS.map(function(l){
+  return '<span class="lg'+(l[2]?' auth':'')+'">'+l[0]+' \u00b7 '+(l[2]?'<b>'+l[1]+'</b> authored':l[1]+' pending')+'</span>';
+}).join('') + '</div>';
+
+// strings table EN | RU
+var ROWS = [
+  ['title', T.en.title, T.ru.title],
+  ['intro', T.en.intro, T.ru.intro],
+  ['notice.title', T.en.noticeT, T.ru.noticeT],
+  ['notice.body', T.en.noticeD, T.ru.noticeD],
+  ['composer.placeholder', T.en.placeholder, T.ru.placeholder],
+  ['count.empty', T.en.countEmpty, T.ru.countEmpty],
+  ['count.ready', T.en.countReady('N'), T.ru.countReady('N')],
+  ['btn.analyze', T.en.analyze, T.ru.analyze],
+  ['addAnother.title', T.en.addAnotherT, T.ru.addAnotherT],
+  ['addAnother.sub', T.en.addAnotherD, T.ru.addAnotherD],
+  ['analyzing.title', T.en.analyzingT, T.ru.analyzingT],
+  ['analyzing.sub', T.en.analyzingSub, T.ru.analyzingSub],
+  ['steps', T.en.steps.join(' \u00b7 '), T.ru.steps.join(' \u00b7 ')],
+  ['list.cap', T.en.listCap, T.ru.listCap],
+  ['card.cap.brought', T.en.capBrought, T.ru.capBrought],
+  ['card.cap.voice', T.en.capVoice, T.ru.capVoice],
+  ['card.do', T.en.doLabel, T.ru.doLabel],
+  ['card.addVoice', T.en.addVoice, T.ru.addVoice],
+  ['card.addedVoice', T.en.addedVoice, T.ru.addedVoice],
+  ['pill.count', T.en.pill(1)+' / '+T.en.pill(3), T.ru.pill(1)+' / '+T.ru.pill(3)+' / '+T.ru.pill(5)],
+  ['error.title', T.en.errT, T.ru.errT],
+  ['error.sub', T.en.errSub, T.ru.errSub],
+  ['error.retry', T.en.retry, T.ru.retry],
+  ['error.discard', T.en.discard, T.ru.discard],
+  ['limit.title', T.en.limitT, T.ru.limitT],
+  ['limit.body', T.en.limitD, T.ru.limitD],
+  ['limit.link', T.en.limitLink, T.ru.limitLink],
+  ['limit.pill', T.en.limitPill, T.ru.limitPill],
+  ['warn.handle', T.en.warnHandle, T.ru.warnHandle],
+  ['warn.link', T.en.warnLink, T.ru.warnLink],
+];
+loc += '<div class="loc-tbl-wrap"><table class="loc-tbl"><thead><tr><th>key</th><th>EN (original)</th><th>RU (authored)</th></tr></thead><tbody>'
+  + ROWS.map(function(r){ return '<tr><td class="k">'+r[0]+'</td><td class="en">'+esc(r[1])+'</td><td class="ru">'+esc(r[2])+'</td></tr>'; }).join('')
+  + '</tbody></table></div>';
+
+loc += '<div class="loc-tbl-wrap" style="margin-top:6px;"><p class="sec-desc" style="font-size:13px;">RU plural for the count pill follows the Russian rule: <code>1 разбор</code> \u00b7 <code>2\u20134 разбора</code> \u00b7 <code>5+ разборов</code>. The word counter (<code>N слов</code>) should agree the same way at build time.</p></div>';
+
+document.getElementById('root').insertAdjacentHTML('beforeend', loc);
+
+/* ============================================================ *
+ *  Build-contract footnotes                                    *
+ * ============================================================ */
+var foot = '<div class="foot"><div class="ft-card"><h3>Build contract \u00b7 what must stay true</h3><ul>'
+  + '<li><b>One post at a time.</b> The composer accepts a single post; there is no blank-line multi-paste. Submitting analyzes that one post and appends one breakdown.</li>'
+  + '<li><b>Pennedly reads text, never links.</b> Link / bare-URL / @handle input flips the composer to warning and disables <code>Break it down</code>; the server also 422s link-only input. Never fetch a URL.</li>'
+  + '<li><b>Per post: the move + that post in the user\u2019s voice.</b> Each card names the technique and rewrites <i>the pasted post</i> in the user\u2019s voice \u2014 the deliverable, not a generic example.</li>'
+  + '<li><b>Learn the move, not the post.</b> The subtitle and the <code>do:</code> rule keep the emphasis on the transferable technique; <code>Add to my voice</code> folds the rule into the role-book.</li>'
+  + '<li><b>The list is the memory.</b> Breakdowns stack newest-first and persist for the session; per-post errors are scoped and never clear the list.</li>'
+  + '<li><b>Tokens only.</b> Every color is a semantic token; light/dark flip for free. Reading width <code>720</code>; topbar aligns to the same column via <code>.topbar-inner</code>.</li>'
+  + '<li><b>Canonical motion.</b> <code>nib-write</code> (1.5s) on analyzing, <code>spin</code> (0.6s) on the active step, <code>card-in</code> on appearing breakdowns. Reduced-motion safe.</li>'
+  + '<li><b>8 locales, EN/RU authored.</b> All strings localize; counts respect locale plural rules. Card bodies come from the model in the user\u2019s language.</li>'
+  + '</ul></div></div>';
+document.getElementById('root').insertAdjacentHTML('beforeend', foot);
+</script>
+</body>
+</html>

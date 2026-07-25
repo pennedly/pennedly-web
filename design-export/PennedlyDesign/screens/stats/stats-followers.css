@@ -1,0 +1,49 @@
+/* stats-followers.css — the NEW "Follower growth" panel for the Stats screen
+   (web + mobile). The card chrome is the existing `.spanel` (web) / `.m-spanel`
+   (mobile); this layer only styles the inner follower header + the hand-rolled
+   SVG line chart + the "collecting" tile. Shared by Stats-SPEC.html and
+   Stats-Mobile-SPEC.html. No hardcoded colour — every value is a token.
+
+   IMPORTANT: the line is MIN–MAX scaled, never 0-based. Follower counts are
+   large and daily growth is small; a 0-baseline would flatten the shape to a
+   flat line. Min–max shows the real (gently rising, noisy) shape. */
+
+/* header: caption "FOLLOWERS" left · latest count + gain right */
+.fchart-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.fchart-cap { font-size: var(--text-caption); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-subtle); }
+.fchart-sub { font-size: var(--text-caption); color: var(--color-text-subtle); margin-top: 3px; }
+.fchart-hl { text-align: right; flex: 0 0 auto; }
+.fchart-count { font-size: var(--text-h2); font-weight: 600; letter-spacing: -0.01em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.fchart-gain { font-size: var(--text-caption); font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 4px; white-space: nowrap; }
+.fchart-gain--up { color: var(--color-success); }
+.fchart-gain--down { color: var(--color-danger); }
+.fchart-gain--flat { color: var(--color-text-subtle); }
+
+/* plot: an SVG line that fills the width (non-scaling stroke keeps it crisp),
+   a faint area fill, and an HTML dot pinned to the latest point. */
+.fchart-plot { position: relative; width: 100%; height: 120px; }
+.mob .fchart-plot { height: 112px; }
+.fchart-svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.fchart-area { fill: color-mix(in srgb, var(--color-accent) 12%, transparent); stroke: none; }
+.fchart-line {
+  fill: none; stroke: var(--color-accent); stroke-width: 2.2;
+  stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke;
+}
+.fchart-dot {
+  position: absolute; width: 9px; height: 9px; border-radius: var(--radius-full);
+  background: var(--color-accent); transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) 18%, transparent);
+}
+
+/* baseline caption under the plot (e.g. min→max range) */
+.fchart-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; font-size: var(--text-caption); color: var(--color-text-subtle); font-variant-numeric: tabular-nums; }
+
+/* collecting state — fewer than 2 days of data */
+.fchart-collect {
+  display: flex; flex-direction: column; align-items: center; text-align: center; gap: 9px;
+  padding: 26px 20px; border: 1px dashed var(--color-border); border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-surface-2) 45%, transparent);
+}
+.fchart-collect-mark { width: 42px; height: 42px; display: grid; place-items: center; border-radius: var(--radius-md); background: var(--color-surface-2); border: 1px solid var(--color-border); color: var(--color-text-subtle); }
+.fchart-collect-t { font-size: var(--text-small); font-weight: 600; color: var(--color-text); }
+.fchart-collect-s { font-size: var(--text-caption); color: var(--color-text-subtle); max-width: 44ch; line-height: 1.5; text-wrap: pretty; }

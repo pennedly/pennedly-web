@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pennedly · Дашборд аккаунта — Пустые состояния (Спецификация)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../../ds/tokens.css" />
+<link rel="stylesheet" href="../../ds/components.css" />
+<link rel="stylesheet" href="../../import-banner.css" />
+<link rel="stylesheet" href="../../account.css" />
+<link rel="stylesheet" href="../../components/account-empty.css" />
+<style>
+:root{
+  --font-sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --font-mono:"Geist Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --bg:#efedea; --surface:#ffffff; --surface-2:#f6f5f2; --border:#dcd9d2;
+  --text:#171717; --muted:#565550; --subtle:#6f6e69; --accent:#2f4cc4;
+  --code-bg:#f6f5f2; --good:#2c7350; --warn:#8a5b16; --danger:#b23b30;
+  --radius:14px;
+}
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%; scroll-behavior:smooth;}
+body{margin:0; background:var(--bg); color:var(--text);
+  font-family:var(--font-sans); font-size:15px; line-height:1.62;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;}
+.layout{display:grid; grid-template-columns:300px minmax(0,1fr); gap:0; max-width:1400px; margin:0 auto;}
+
+.toc{position:sticky; top:0; align-self:start; height:100vh; overflow-y:auto;
+  padding:34px 22px 40px 32px; border-right:1px solid var(--border);}
+.toc .doc-mark{display:flex; align-items:center; gap:10px; margin-bottom:6px;}
+.toc .doc-mark .nib{width:30px; height:30px; border-radius:8px; background:var(--text); display:grid; place-items:center; flex:0 0 auto;}
+.toc .doc-mark b{font-size:16px; font-weight:600; letter-spacing:-0.01em;}
+.toc .doc-sub{font-size:12px; color:var(--subtle); letter-spacing:0.02em; margin:0 0 22px 40px; text-transform:uppercase;}
+.toc nav{display:flex; flex-direction:column; gap:1px;}
+.toc nav a{display:flex; gap:9px; padding:6px 10px; border-radius:8px; text-decoration:none;
+  color:var(--muted); font-size:13.5px; line-height:1.35; transition:background .12s, color .12s;}
+.toc nav a:hover{background:var(--surface-2); color:var(--text);}
+.toc nav a .n{font-variant-numeric:tabular-nums; color:var(--subtle); font-weight:600; flex:0 0 16px;}
+.toc nav a em{font-style:normal; color:var(--accent); font-size:11px; margin-left:4px;}
+.toc .meta{margin-top:24px; padding-top:18px; border-top:1px solid var(--border); font-size:12px; color:var(--subtle); line-height:1.7;}
+.toc .meta code{font-family:var(--font-mono); font-size:11px;}
+.toc .meta b{color:var(--text);}
+.toc .meta a{color:var(--accent); text-decoration:none;}
+
+main{padding:40px 56px 120px; min-width:0;}
+.kicker{font-family:var(--font-mono); font-size:12px; letter-spacing:0.04em; color:var(--accent); text-transform:uppercase; margin:0 0 10px;}
+h1.title{font-size:34px; line-height:1.1; letter-spacing:-0.025em; font-weight:600; margin:0 0 14px; text-wrap:balance;}
+h1.title span{color:var(--subtle); font-weight:500;}
+.lede{font-size:16px; color:var(--muted); max-width:80ch; margin:0 0 14px; text-wrap:pretty;}
+.filerow{display:flex; flex-wrap:wrap; gap:6px; margin:18px 0 6px;}
+.chip{font-family:var(--font-mono); font-size:11.5px; padding:4px 9px; border-radius:9999px; background:var(--surface); border:1px solid var(--border); color:var(--muted);}
+.chip--new{border-color:color-mix(in srgb, var(--accent) 40%, var(--border)); color:var(--accent);}
+
+section{margin-top:52px; scroll-margin-top:20px;}
+h2{font-size:21px; line-height:1.25; letter-spacing:-0.012em; font-weight:600; margin:0 0 4px; padding-top:10px;}
+h2 .h2n{font-family:var(--font-mono); font-size:14px; color:var(--accent); margin-right:10px; font-weight:500;}
+.section-note{color:var(--muted); font-size:14px; max-width:84ch; margin:6px 0 18px; text-wrap:pretty;}
+h3{font-size:15.5px; font-weight:600; letter-spacing:-0.005em; margin:30px 0 10px; padding-bottom:7px; border-bottom:1px solid var(--border);}
+h3 .stg{font-family:var(--font-mono); font-size:11px; color:var(--accent); border:1px solid var(--border); border-radius:6px; padding:1px 7px; margin-right:8px; text-transform:uppercase; letter-spacing:0.04em;}
+h3 .stg--new{color:var(--accent);}
+h3 .stg--hero{color:var(--danger); border-color:color-mix(in srgb,var(--danger) 34%,var(--border));}
+h4{font-size:13px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.04em; margin:22px 0 8px;}
+
+p{margin:0 0 12px; text-wrap:pretty;}
+ul,ol{margin:0 0 12px; padding-left:22px;}
+li{margin:3px 0;}
+code{font-family:var(--font-mono); font-size:0.86em; background:var(--code-bg); border:1px solid var(--border); padding:1px 5px; border-radius:5px; white-space:nowrap;}
+.tok{color:var(--accent);}
+strong{font-weight:600;}
+a.link{color:var(--accent); text-decoration:none;}
+a.link:hover{text-decoration:underline;}
+
+.tbl-wrap{overflow-x:auto; margin:0 0 16px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface);}
+table{width:100%; border-collapse:collapse; font-size:13px;}
+th,td{text-align:left; padding:9px 13px; border-bottom:1px solid var(--border); vertical-align:top;}
+thead th{font-size:11px; text-transform:uppercase; letter-spacing:0.04em; color:var(--subtle); font-weight:600; background:var(--surface-2);}
+tbody tr:last-child td{border-bottom:none;}
+td code, th code{white-space:nowrap;}
+td.val{font-family:var(--font-mono); font-size:12px; color:var(--text);}
+
+.note{border:1px solid var(--border); border-left:3px solid var(--accent); background:var(--surface);
+  border-radius:10px; padding:12px 16px; margin:14px 0; font-size:13.5px; color:var(--muted);}
+.note.warn{border-left-color:var(--warn);}
+.note.danger{border-left-color:var(--danger);}
+.note.good{border-left-color:var(--good);}
+.note b{color:var(--text);}
+.pane code, .check code, .note code, .section-note code, p code, td code, th code, li code{white-space:normal; overflow-wrap:anywhere;}
+.two{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+.two h4{margin-top:0;}
+.pane{border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); padding:16px 18px; min-width:0;}
+.pane.web{border-top:3px solid var(--text);}
+.pane.mob{border-top:3px solid var(--accent);}
+
+.check{list-style:none; padding:0; margin:0 0 8px;}
+.check li{position:relative; padding:5px 0 5px 26px; border-bottom:1px dashed var(--border); font-size:13.5px;}
+.check li:last-child{border-bottom:none;}
+.check li::before{content:"☐"; position:absolute; left:2px; top:4px; color:var(--subtle); font-size:14px;}
+.statebar{display:flex; flex-wrap:wrap; gap:6px; margin:2px 0 14px;}
+.statebar .st{font-family:var(--font-mono); font-size:11px; padding:3px 9px; border-radius:6px; background:var(--surface-2); border:1px solid var(--border); color:var(--muted);}
+
+/* before/after behaviour diagram */
+.ba{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:16px 0 6px;}
+@media(max-width:760px){ .ba{grid-template-columns:1fr;} }
+.bacard{border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); padding:15px 17px;}
+.bacard .lab{font-family:var(--font-mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; margin-bottom:7px;}
+.bacard.before{border-left:3px solid var(--danger);} .bacard.before .lab{color:var(--danger);}
+.bacard.after{border-left:3px solid var(--good);} .bacard.after .lab{color:var(--good);}
+.bacard b{color:var(--text);} .bacard p{font-size:12.7px; color:var(--muted); margin:0; line-height:1.55;}
+
+/* ───────── LIVE FRAMES (real DS components) ───────── */
+.frames{display:flex; flex-direction:column; gap:16px; margin:16px 0 6px;}
+.frow{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+@media(max-width:1040px){ .frow{grid-template-columns:1fr;} }
+.fr{display:flex; flex-direction:column; gap:9px; min-width:0;}
+.fr-head{display:inline-flex; align-items:center; gap:7px; font-family:var(--font-mono); font-size:11px; letter-spacing:.02em; color:var(--subtle);}
+.fr-head .dh{width:8px; height:8px; border-radius:9999px; background:var(--border);}
+.fr-head .dh--dark{background:#0a0a0a; border:1px solid #3a3a3a;}
+.frame{background:var(--color-bg); border:1px solid var(--color-border); border-radius:18px; padding:20px; overflow:hidden;}
+.frame *{box-sizing:border-box;}
+.frame button{font-family:inherit;}
+.frame--pad14{padding:14px;}
+.ruler{display:inline-flex; align-items:center; gap:6px; font-family:var(--font-mono); font-size:10.5px; color:var(--subtle); margin-bottom:7px;}
+.ruler b{color:var(--accent);}
+
+/* ───────── interactive playground (= ?demo=1 Tweaks) ───────── */
+.pg{border:1px solid var(--border); border-radius:18px; background:var(--surface); overflow:hidden; margin:16px 0 8px; box-shadow:0 1px 2px rgba(23,23,23,.06);}
+.pg-bar{display:flex; flex-wrap:wrap; align-items:center; gap:13px 20px; padding:13px 16px; border-bottom:1px solid var(--border); background:var(--surface-2);}
+.pg-grp{display:flex; align-items:center; gap:9px; min-width:0;}
+.pg-grp > .lab{font-size:10.5px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--subtle); white-space:nowrap;}
+.seg{display:inline-flex; background:var(--surface); border:1px solid var(--border); border-radius:9px; padding:2px; gap:2px; flex-wrap:wrap;}
+.seg button{appearance:none; border:none; background:transparent; font-family:inherit; font-size:12.5px; font-weight:500; color:var(--muted); padding:5px 11px; border-radius:7px; cursor:pointer; white-space:nowrap; transition:background .12s, color .12s;}
+.seg button:hover{color:var(--text);}
+.seg button.on{background:var(--text); color:#fff; font-weight:600;}
+.pg-spacer{flex:1 1 auto;}
+.pg-toggle{display:inline-flex; align-items:center; gap:8px; font-size:12.5px; font-weight:500; color:var(--muted); cursor:pointer; white-space:nowrap; user-select:none;}
+.pg-toggle input{position:absolute; opacity:0; width:0; height:0;}
+.pg-tk{width:38px; height:22px; border-radius:9999px; background:var(--border); position:relative; transition:background .18s; flex:0 0 auto;}
+.pg-tk::after{content:""; position:absolute; top:3px; left:3px; width:16px; height:16px; border-radius:9999px; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.18); transition:transform .18s;}
+.pg-toggle input:checked ~ .pg-tk{background:var(--text);}
+.pg-toggle input:checked ~ .pg-tk::after{transform:translateX(16px);}
+.pg-stage{padding:22px; background:var(--color-bg); transition:background .18s;}
+.pg-foot{display:flex; align-items:center; gap:8px; padding:9px 16px; border-top:1px solid var(--border); background:var(--surface-2); font-size:12px; color:var(--subtle);}
+.pg-foot code{font-size:11px;}
+.pg-foot .k{font-family:var(--font-mono); color:var(--accent); font-weight:600;}
+
+@media (max-width:980px){
+  .layout{grid-template-columns:1fr;}
+  .toc{position:static; height:auto; border-right:none; border-bottom:1px solid var(--border);}
+  .toc nav{display:grid; grid-template-columns:1fr 1fr; gap:1px 14px;}
+  main{padding:28px 22px 90px;}
+  .two{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<aside class="toc">
+  <div class="doc-mark">
+    <span class="nib"><svg width="18" height="18" viewBox="0 0 512 512"><g fill="#ededed"><g transform="rotate(42 256 256)"><path d="M236 150 Q236 128 256 128 Q276 128 276 150 L276 300 L256 360 L236 300 Z"/><rect x="236" y="206" width="40" height="7"/></g></g></svg></span>
+    <b>Pennedly</b>
+  </div>
+  <div class="doc-sub">Спецификация · Пустые состояния дашборда</div>
+  <nav>
+    <a href="#s1"><span class="n">1</span> Идентификация + сдвиг поведения <em>fix</em></a>
+    <a href="#s2"><span class="n">2</span> Живой дашборд + Tweaks <em>demo</em></a>
+    <a href="#s3"><span class="n">3</span> Подключение · пикер <em>picker</em></a>
+    <a href="#s4"><span class="n">4</span> Все отключены <em>2 · hero</em></a>
+    <a href="#s5"><span class="n">5</span> Смешанное <em>3</em></a>
+    <a href="#s6"><span class="n">6</span> Карточка «Отключён»</a>
+    <a href="#s7"><span class="n">7</span> Загрузка · скелет</a>
+    <a href="#s8"><span class="n">8</span> Ошибка · ErrorBanner</a>
+    <a href="#s9"><span class="n">9</span> Данные · контракт</a>
+    <a href="#s10"><span class="n">10</span> Локализация · i18n</a>
+    <a href="#s11"><span class="n">11</span> Web ↔ Mobile</a>
+    <a href="#s12"><span class="n">12</span> Чек-лист</a>
+  </nav>
+  <div class="meta">
+    Экран: <b>Дашборд аккаунта — пустые состояния</b><br>
+    Маршрут: <code>/app/account</code> (верхний уровень)<br>
+    Правка: <b>дашборд durable ПОВЕРХ профилей</b><br>
+    Состояния: all-disconnected · mixed · loading · error<br>
+    Первый вход: <b>полный экран</b> → <a href="../../components/Connect-Network-Picker-SPEC.html">Picker</a><br>
+    Локаль ревью: <b>ru</b> · стресс: <b>de</b> (8 локалей)<br>
+    Mobile: <a href="../../screens/account/Account-Dashboard-Empty-Mobile-SPEC.html">Account-Dashboard-Empty-Mobile-SPEC.html</a><br>
+    База: <a href="../../screens/account/Account-Dashboard-SPEC.html">Account-Dashboard-SPEC.html</a><br>
+    Дельты: <code>account-empty-data.js</code>, <code>account-empty-desktop.js</code>, <code>account-empty.css</code>
+  </div>
+</aside>
+
+<main>
+  <div class="doc-head">
+    <p class="kicker">Pennedly · Спецификация · Durable dashboard</p>
+    <h1 class="title">Дашборд аккаунта — пустые состояния <span>/app/account · 0 живых профилей</span></h1>
+    <p class="lede">Не новый экран, а <b>новые состояния</b> существующего <a class="link" href="../../screens/account/Account-Dashboard-SPEC.html">дашборда аккаунта</a>. Сегодня рабочий кабинет требует <b>хотя бы один живой профиль</b>: при нуле подключённых профилей шелл жёстко редиректит в полноэкранный мастер подключения, и <b>весь хром</b> (сайдбар, идентичность, переключатель) исчезает. Пользователь, отключивший последний профиль — или у которого молча протух токен, — попадает в мастер нового пользователя и <b>чувствует себя разлогиненным</b>, хотя сессия и все данные целы. Мы делаем дашборд, который существует <b>ПОВЕРХ профилей — для всех, КРОМЕ брэнд-нью пользователя</b>: у брэнд-нью (0 профилей когда-либо) ещё ничего нет, поэтому ему показывается <b>полноэкранный первый вход</b> с пикером сетей (см. <a class="link" href="../../components/Connect-Network-Picker-SPEC.html">Connect-Network-Picker-SPEC</a>). Всем остальным — <b>полный хром в дашборде</b>: «все отключены», «смешанное», плюс скелет загрузки и <code>ErrorBanner</code>. «Подключить другой» и «Переподключить» открывают тот же <b>пикер сетей</b> (Threads live · LinkedIn «скоро»). Всё на токенах ДС (<b>светлая + тёмная</b>), общий шелл, статус-пилюли и дисциплина §3.8; текст русский, раскладка держит 8 локалей (эталон длины — немецкий).</p>
+    <div class="filerow">
+      <span class="chip chip--new">+ ACCE.stateShell</span>
+      <span class="chip chip--new">+ networkPicker</span>
+      <span class="chip chip--new">+ disconnectedCard</span>
+      <span class="chip chip--new">+ reassure</span>
+      <span class="chip chip--new">+ errorBanner</span>
+      <span class="chip">account.css</span>
+      <span class="chip">account-empty.css</span>
+      <span class="chip">ds/tokens.css</span>
+    </div>
+  </div>
+
+  <div class="note danger">
+    <b>Критерий приёмки.</b> Во всех <b>in-dashboard</b> состояниях (все отключены · смешанное · загрузка · ошибка) <b>сохраняется полный хром</b> — сайдбар с меню аккаунта, логин-переключатель в подвале и топбар. Отключивший последний профиль больше <b>не</b> выкидывается в мастер; брэнд-нью получает <b>полноэкранный первый вход</b> (пикер), а не мастер. <b>Никаких фейковых метрик</b> и пустых карточек. Однострочные элементы не переносятся (Rule 1); контейнеры держат немецкую длину (Rule 2).
+  </div>
+
+  <!-- 1 -->
+  <section id="s1">
+    <h2><span class="h2n">1</span>Идентификация + сдвиг поведения</h2>
+    <p class="section-note">Экран тот же, что <a class="link" href="../../screens/account/Account-Dashboard-SPEC.html">Account-Dashboard-SPEC</a> — меняется только то, что происходит <b>без живых профилей</b>. Раньше это был гейт в онбординг; теперь это состояния самого дашборда.</p>
+    <div class="ba">
+      <div class="bacard before"><div class="lab">Было</div><p><b>0 профилей → редирект в <code>/app/onboarding</code>.</b> Полноэкранный мастер, хром скрыт. Отключивший последний профиль ощущает себя разлогиненным, хотя данные целы.</p></div>
+      <div class="bacard after"><div class="lab">Стало</div><p><b>Отключился последний профиль → дашборд с полным хромом.</b> Сайдбар + меню + топбар на месте; отключённые профили с «Переподключить». Брэнд-нью (0 когда-либо) → полноэкранный пикер сетей.</p></div>
+    </div>
+    <div class="tbl-wrap"><table><tbody>
+      <tr><th style="width:210px;">Маршрут</th><td><code>/app/account</code> — верхний уровень входа после логина. Существует <b>поверх профилей</b>, не требует ни одного живого.</td></tr>
+      <tr><th>Хром (всегда)</th><td>Сайдбар уровня аккаунта (Дашборд / Советник / Настройки) + <b>логин-переключатель</b> в подвале; топбар с breadcrumb «Аккаунт». Идентичны <a class="link" href="../../screens/account/Account-Dashboard-SPEC.html">базовому дашборду</a>.</td></tr>
+      <tr><th>Состояния</th><td><b>Первый вход</b> (0 профилей когда-либо) → <b>полный экран</b>, пикер сетей (<a class="link" href="../../components/Connect-Network-Picker-SPEC.html">отд. спека</a>). В дашборде: <code>all_disc</code> (были, все отключены) · <code>mixed</code> (≥1 живой + ≥1 отключён) · <code>loading</code> · <code>error</code>.</td></tr>
+      <tr><th>Действия</th><td><b>Connect</b> / <b>Подключить другой</b> / <b>Reconnect</b> открывают общий <b>пикер сетей</b> (Threads live · LinkedIn «скоро»). Threads → существующий OAuth-флоу (кнопка → редирект); Reconnect — тот же флоу на известный <code>@handle</code>. Не новый экран.</td></tr>
+      <tr><th>Вне охвата</th><td>Удаление аккаунта, биллинг, настройки профиля, бренд-уровень (2+). Здесь не рисуются.</td></tr>
+    </tbody></table></div>
+  </section>
+
+  <!-- 2 -->
+  <section id="s2">
+    <h2><span class="h2n">2</span><span class="stg">demo · ?demo=1</span>Живой дашборд + Tweaks</h2>
+    <p class="section-note">Полный экран на живых токенах. Панель = <code>?demo=1</code> Tweaks: переключайте <b>состояние</b> (все отключены / смешанное / загрузка / ошибка), <b>локаль</b> (ru / de) и <b>тему</b>. В каждом — <b>полный хром</b>. Первый вход — полноэкранный (см. <a class="link" href="../../components/Connect-Network-Picker-SPEC.html">Picker</a>).</p>
+    <div class="pg">
+      <div class="pg-bar">
+        <div class="pg-grp"><span class="lab">Состояние</span>
+          <div class="seg" id="pg-state">
+            <button data-v="all_disc" class="on">Все отключены</button>
+            <button data-v="mixed">Смешанное</button>
+            <button data-v="loading">Загрузка</button>
+            <button data-v="error">Ошибка</button>
+          </div>
+        </div>
+        <div class="pg-grp"><span class="lab">Локаль</span>
+          <div class="seg" id="pg-lang">
+            <button data-v="ru" class="on">ru</button>
+            <button data-v="de">de</button>
+          </div>
+        </div>
+        <div class="pg-spacer"></div>
+        <label class="pg-toggle"><input type="checkbox" id="pg-dark"><span class="pg-tk"></span>Тёмная</label>
+      </div>
+      <div class="pg-stage" id="pg-stage"></div>
+      <div class="pg-foot"><span class="k">demo</span> Состояния дашборда — <code>all_disc</code> · <code>mixed</code> · <code>loading</code> · <code>error</code> — с полным хромом. Первый вход — полный экран (<a class="link" href="../../components/Connect-Network-Picker-SPEC.html">Picker</a>).</div>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section id="s3">
+    <h2><span class="h2n">3</span><span class="stg">picker</span>Подключение · пикер сетей</h2>
+    <p class="section-note">Брэнд-нью пользователь (0 профилей когда-либо) сюда <b>не попадает</b> — ему показывается <b>полноэкранный первый вход</b> с пикером сетей (Threads live · LinkedIn «скоро»); он вынесен в <a class="link" href="../../components/Connect-Network-Picker-SPEC.html">Connect-Network-Picker-SPEC</a>. В дашборде тот же <b>пикер</b> открывают «Подключить другой» (§4) и «Переподключить» (карточка §6) как поповер. Threads → OAuth; Reconnect нацелен на известный <code>@handle</code>, данные целы.</p>
+    <div class="frames" id="f-picker"></div>
+  </section>
+
+  <!-- 4 -->
+  <section id="s4">
+    <h2><span class="h2n">4</span><span class="stg stg--hero">состояние 2 · hero</span>Все отключены</h2>
+    <p class="section-note">Профили были, но сейчас все отключены (токен протух или пользователь отключил их). Тот же хром. Это <b>главный анти-«я потерял рабочий кабинет» момент</b>: сверху — баннер уверенности («данные, настройки, голос и история сохранены — переподключение всё вернёт»), затем идентичность аккаунта <b>без фейковых итогов</b>, и каждый ранее подключённый профиль — карточкой с пилюлей <code>status-pill--warning</code> «Отключён» и явной кнопкой «Переподключить», плюс вторичная «Подключить другой аккаунт» (открывает <a class="link" href="../../components/Connect-Network-Picker-SPEC.html">пикер сетей</a>).</p>
+    <div class="frames" id="f-alldisc"></div>
+  </section>
+
+  <!-- 5 -->
+  <section id="s5">
+    <h2><span class="h2n">5</span><span class="stg stg--new">состояние 3</span>Смешанное</h2>
+    <p class="section-note">≥1 живой + ≥1 отключён. Нормальный заполненный дашборд (шапка + итоги + «Требует тебя» + советник + карточки), но <b>отключённые профили рисуются с пилюлей «Отключён» и inline «Переподключить»</b> вместо живых метрик — мёртвый профиль <b>виден и восстановим</b>, а не спрятан. Здесь рядом: synced, <b>отключён</b> (<code>@mara.studio</code>), сбой синка (<code>@mara.co</code>, danger — отличается от «Отключён») и importing.</p>
+    <div class="frames" id="f-mixed"></div>
+  </section>
+
+  <!-- 6 -->
+  <section id="s6">
+    <h2><span class="h2n">6</span>Карточка «Отключён» — анатомия</h2>
+    <p class="section-note">Переиспользуемый блок (и в §4, и inline в §5). Аватар приглушён (идентичность крепкая, активность выключена), @никнейм + имя чёткие. Пилюля <code>status-pill--warning</code> «Отключён» + «Данные сохранены», строка <code>disconnected_at</code> и primary «Переподключить». <b>Тон — warning, не danger</b>: это восстановимое состояние, отличное от сбоя синка.</p>
+    <div class="frames" id="f-disccard"></div>
+  </section>
+
+  <!-- 7 -->
+  <section id="s7">
+    <h2><span class="h2n">7</span>Загрузка · скелет</h2>
+    <p class="section-note">Стандартный скелет — повторяет раскладку дашборда (шапка → советник → карточки), общий с базовым экраном. Появляется, пока <code>GET /api/me/account</code> в полёте.</p>
+    <div class="frames" id="f-skel"></div>
+  </section>
+
+  <!-- 8 -->
+  <section id="s8">
+    <h2><span class="h2n">8</span><span class="stg">§3.8</span>Ошибка · ErrorBanner</h2>
+    <p class="section-note">Общий инлайн-<code>ErrorBanner</code> (<code>window.ErrorBanner</code>, §3.8) в контентной области — хром сохраняется. Danger-марка, «Не удалось загрузить аккаунт», подкопия «данные в безопасности» и <b>Retry</b>. Тот же класс <code>.error-banner</code>, что в Feed / Replies / Mentions.</p>
+    <div class="frames" id="f-error"></div>
+  </section>
+
+  <!-- 9 -->
+  <section id="s9">
+    <h2><span class="h2n">9</span>Данные · контракт</h2>
+    <p class="section-note">Тот же запрос, что базовый дашборд: <code>GET /api/me/account</code>. Бэкенд отдаёт и отключённые профили с <code>disconnected_at</code>; клиент решает состояние по числу <b>живых</b> и <b>отключённых</b> профилей.</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:170px;">Ключ</th><th>Поля</th><th>Куда идёт</th></tr></thead>
+      <tbody>
+        <tr><td><code>profiles[]</code></td><td class="val">…, sync_status (synced|importing|error), <b>connection</b> (live|<b>disconnected</b>), <b>disconnected_at</b></td><td>Живые → обычные карточки; <code>disconnected</code> → карточка «Отключён»</td></tr>
+        <tr><td><code>account</code></td><td class="val">name, email, plan</td><td>Идентичность (сайдбар · шапка · логин)</td></tr>
+        <tr><td><code>totals</code></td><td class="val">суммируют только <code>synced</code> живые; при 0 живых — не рисуются</td><td>Итоги (только в mixed)</td></tr>
+      </tbody>
+    </table></div>
+    <h4>Разрешение состояния (клиент)</h4>
+    <ul>
+      <li><code>live == 0 && ever_connected == false</code> → <b>полноэкранный первый вход</b> (пикер сетей, не в дашборде — <a class="link" href="../../components/Connect-Network-Picker-SPEC.html">Picker</a>).</li>
+      <li><code>live == 0 && disconnected &gt; 0</code> → <b>all_disc</b> — баннер уверенности + карточки «Отключён».</li>
+      <li><code>live ≥ 1 && disconnected ≥ 1</code> → <b>mixed</b> — обычный дашборд; отключённые inline.</li>
+      <li>Запрос в полёте → <b>loading</b>; сбой запроса → <b>error</b> (Retry перезапускает).</li>
+      <li><b>Гейт в онбординг снят</b>: <code>live == 0</code> больше не редиректит — рисуется дашборд.</li>
+    </ul>
+  </section>
+
+  <!-- 10 -->
+  <section id="s10">
+    <h2><span class="h2n">10</span>Локализация · i18n</h2>
+    <p class="section-note">Новые строки — в 8 локалях (<b>en · ru · uk · de · es · fr · it · pt</b>); ru — ревью, de — эталон длины. Контейнеры рассчитаны на самую длинную локаль; @никнеймы LTR; «N профилей · все отключены» через ICU-плюрали.</p>
+    <div class="tbl-wrap"><table id="i18n-tbl">
+      <thead><tr><th style="width:180px;">Ключ</th><th>en</th><th>ru (ревью)</th><th>de (длиннее)</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+  </section>
+
+  <!-- 11 -->
+  <section id="s11">
+    <h2><span class="h2n">11</span>Web ↔ Mobile</h2>
+    <p class="section-note">Те же состояния на телефоне: полный шелл сохраняется (гамбургер → drawer навигации аккаунта + логин; докнутая кнопка профилей). Полный проход — <a class="link" href="../../screens/account/Account-Dashboard-Empty-Mobile-SPEC.html">Account-Dashboard-Empty-Mobile-SPEC.html</a>.</p>
+    <div class="two">
+      <div class="pane web"><h4>Десктоп ( &gt; 880 )</h4>
+        <ul>
+          <li>Фикс. сайдбар аккаунта + топбар во всех состояниях.</li>
+          <li>Пустое состояние центрировано; карточки «Отключён» 2-в-ряд.</li>
+          <li>Слот переключателя: отключённый переключатель (all_disc) / обычный (mixed). «Подключить другой» / «Переподключить» → пикер сетей.</li>
+        </ul>
+      </div>
+      <div class="pane mob"><h4>Телефон ( ≤ 600 )</h4>
+        <ul>
+          <li>Без сайдбара; гамбургер → drawer + логин остаются.</li>
+          <li>Пустое состояние и карточки «Отключён» в столбик; Reconnect на всю ширину.</li>
+          <li>Докнутая кнопка → лист профилей (в all_disc — с отключёнными).</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 12 -->
+  <section id="s12">
+    <h2><span class="h2n">12</span>Чек-лист</h2>
+    <div class="statebar"><span class="st">first-connect · fullscreen</span><span class="st">all-disconnected</span><span class="st">mixed</span><span class="st">loading</span><span class="st">error</span><span class="st">ru · de</span><span class="st">light · dark</span></div>
+    <ul class="check">
+      <li><b>Полный хром во всех in-dashboard состояниях:</b> сайдбар + меню аккаунта + логин-переключатель + топбар. Отключивший последний профиль больше не редиректит в онбординг.</li>
+      <li><b>Первый вход (0 профилей когда-либо):</b> <b>полноэкранный</b> пикер сетей (Threads live · LinkedIn «скоро») + «что дальше» — не в дашборде (см. <a class="link" href="../../components/Connect-Network-Picker-SPEC.html">Picker</a>). Без фейковых метрик.</li>
+      <li><b>Все отключены:</b> баннер уверенности (данные целы, reconnect всё вернёт) + идентичность без итогов + карточки с <code>status-pill--warning</code> «Отключён» + «Переподключить» + «Подключить другой аккаунт».</li>
+      <li><b>Смешанное:</b> обычный дашборд; отключённые профили inline с пилюлей + «Переподключить» вместо метрик — видимы и восстановимы.</li>
+      <li><b>Отключён ≠ сбой синка:</b> warning-тон + Reconnect против danger-тона + Retry; распознаются с первого взгляда.</li>
+      <li>Скелет загрузки повторяет раскладку; <code>ErrorBanner</code> (§3.8) с Retry, данные в безопасности.</li>
+      <li>Connect / «Подключить другой» / Reconnect открывают общий <b>пикер сетей</b>; LinkedIn — disabled «скоро» везде. Threads → OAuth; Reconnect → на известный <code>@handle</code>. Не новый экран.</li>
+      <li>Светлая + тёмная на токенах; Rule 1 (нет переносов) и Rule 2 (немецкая длина) держатся; 8 локалей.</li>
+    </ul>
+    <div class="note" style="margin-top:18px;">Конец спецификации. Парный телефонный документ — <a class="link" href="../../screens/account/Account-Dashboard-Empty-Mobile-SPEC.html">Account-Dashboard-Empty-Mobile-SPEC.html</a>. База состояний — <a class="link" href="../../screens/account/Account-Dashboard-SPEC.html">Account-Dashboard-SPEC.html</a>.</div>
+  </section>
+</main>
+</div>
+
+<script src="../../account-data.js"></script>
+<script src="../../account-desktop.js"></script>
+<script src="../../components/account-empty-data.js"></script>
+<script src="../../components/account-empty-desktop.js"></script>
+<script>
+(function(){
+  var X = window.ACCX, E = window.ACCE, L = 'ru';
+  function head(label,dark){ return '<div class="fr-head"><span class="dh'+(dark?' dh--dark':'')+'"></span>'+label+'</div>'; }
+  function frame(inner,dark,cls){ return '<div class="frame'+(dark?' dark':'')+(cls?' '+cls:'')+'">'+inner+'</div>'; }
+  function col(label,inner,dark,cls){ return '<div class="fr">'+head(label,dark)+frame(inner,dark,cls)+'</div>'; }
+  function rowOf(a,b){ return '<div class="frow">'+a+b+'</div>'; }
+
+  // §3 — connect picker (sheet form: connect-another + reconnect)
+  E.set('f-picker', rowOf(
+    col('Светлая · «Подключить другой»', '<div style="display:flex;justify-content:center">'+E.pickerSheet(L)+'</div>', false, 'frame--pad14'),
+    col('Тёмная · «Переподключить @mara.co»', '<div style="display:flex;justify-content:center">'+E.pickerSheet(L,{reconnHandle:'@mara.co'})+'</div>', true, 'frame--pad14')));
+
+  // §4 — all-disconnected (full shell)
+  E.set('f-alldisc',
+    col('Светлая · ru · баннер уверенности + карточки «Отключён»', E.stateShell(L,'all_disc',false), false) +
+    col('Тёмная · ru', E.stateShell(L,'all_disc',true), true) +
+    col('Немецкий (de) · стресс длины', E.stateShell('de','all_disc',false), false));
+
+  // §5 — mixed (full shell)
+  E.set('f-mixed',
+    col('Светлая · ru · отключённый профиль inline', E.stateShell(L,'mixed',false), false) +
+    col('Тёмная · ru', E.stateShell(L,'mixed',true), true));
+
+  // §6 — disconnected card anatomy (isolated)
+  function cardWrap(inner){ return '<div class="acc"><div class="acc-grid" style="grid-template-columns:1fr">'+inner+'</div></div>'; }
+  E.set('f-disccard', rowOf(
+    col('Светлая · @mara.lin', cardWrap(E.disconnectedCard(X.DISCONNECTED.lin, L)), false, 'frame--pad14'),
+    col('Тёмная · @mara.co (без аватара, давно)', cardWrap(E.disconnectedCard(X.DISCONNECTED.co, L)), true, 'frame--pad14')));
+
+  // §7 — skeleton
+  E.set('f-skel', col('Светлая · загрузка', '<div class="acc">'+window.ACC.skeleton()+'</div>', false));
+
+  // §8 — error (isolated banner + full shell)
+  E.set('f-error', rowOf(
+    col('Светлая · ErrorBanner (§3.8)', '<div class="acc">'+E.errorBanner(L)+'</div>', false, 'frame--pad14'),
+    col('Тёмная · в полном хроме', E.stateShell(L,'error',true), true)));
+
+  // i18n table
+  var tb = document.querySelector('#i18n-tbl tbody');
+  if(tb){ tb.innerHTML = X.I18N.map(function(r){ return '<tr><td><code>'+r.key+'</code></td><td>'+r.en+'</td><td>'+r.ru+'</td><td>'+r.de+'</td></tr>'; }).join(''); }
+
+  // ── live playground (= ?demo=1) ──
+  var pg = { state:'all_disc', lang:'ru', dark:false };
+  function seg(id){
+    document.querySelectorAll('#'+id+' button').forEach(function(b){
+      b.addEventListener('click', function(){
+        document.querySelectorAll('#'+id+' button').forEach(function(x){ x.classList.remove('on'); });
+        b.classList.add('on');
+        if(id==='pg-state') pg.state=b.getAttribute('data-v');
+        if(id==='pg-lang') pg.lang=b.getAttribute('data-v');
+        renderPG();
+      });
+    });
+  }
+  function renderPG(){
+    var stage = document.getElementById('pg-stage');
+    stage.classList.toggle('dark', pg.dark);
+    stage.innerHTML = E.stateShell(pg.lang, pg.state, pg.dark);
+  }
+  seg('pg-state'); seg('pg-lang');
+  document.getElementById('pg-dark').addEventListener('change', function(){ pg.dark=this.checked; renderPG(); });
+  renderPG();
+})();
+</script>
+</body>
+</html>
