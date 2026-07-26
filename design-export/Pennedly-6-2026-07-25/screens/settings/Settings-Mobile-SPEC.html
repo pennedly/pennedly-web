@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Pennedly · Settings — Mobile spec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../../ds/tokens.css"/>
+<link rel="stylesheet" href="../../ds/components.css"/>
+<link rel="stylesheet" href="../../mobile/pennedly-mobile.css"/>
+<link rel="stylesheet" href="../../mobile/frame.css"/>
+<link rel="stylesheet" href="../../mobile/spec.css"/>
+</head>
+<body>
+<div class="layout">
+
+<aside class="toc">
+  <div class="doc-mark">
+    <span class="nib"><svg width="18" height="18" viewBox="0 0 512 512"><g fill="#ededed"><g transform="rotate(42 256 256)"><path d="M236 150 Q236 128 256 128 Q276 128 276 150 L276 300 L256 360 L236 300 Z"/><rect x="236" y="206" width="40" height="7"/></g></g></svg></span>
+    <b>Pennedly</b>
+  </div>
+  <div class="doc-sub">Mobile spec · Settings</div>
+  <nav>
+    <a href="#s1"><span class="n">1</span> Screen identity</a>
+    <a href="#s2"><span class="n">2</span> The phone layout</a>
+    <a href="#s3"><span class="n">3</span> Shell: top bar + drawer</a>
+    <a href="#s4"><span class="n">4</span> Section pattern — the fix</a>
+    <a href="#s5"><span class="n">5</span> Identity + language</a>
+    <a href="#s6"><span class="n">6</span> Connected accounts</a>
+    <a href="#s7"><span class="n">7</span> Appearance + danger zone</a>
+    <a href="#s8"><span class="n">8</span> Confirmations</a>
+    <a class="sub" href="#s8">— disconnect · delete</a>
+    <a href="#s9"><span class="n">9</span> States</a>
+    <a href="#s10"><span class="n">10</span> Anatomy &amp; values</a>
+    <a href="#s11"><span class="n">11</span> Localization &amp; 360px</a>
+    <a href="#s12"><span class="n">12</span> Checklist</a>
+  </nav>
+  <div class="meta">
+    Screen: <b>Settings</b><br>
+    Route: <code>/app/settings</code><br>
+    Desktop spec: <a class="link" href="Settings-SPEC.html">Settings-SPEC.html</a><br>
+    Phone breakpoint: <code>≤ 600px</code> · ref 390<br>
+    Layer: <code>mobile/pennedly-mobile.css</code><br>
+    System: <a class="link" href="../../system/Pennedly Design System.html#m-shell">DS · Mobile</a>
+  </div>
+</aside>
+
+<main>
+  <div class="doc-head">
+    <p class="kicker">Pennedly · Mobile spec · per-screen</p>
+    <h1 class="title">Settings <span>/app/settings</span> — phone</h1>
+    <p class="lede">Account management: the signed-in identity, the connected Threads account(s), the UI language, appearance, and a danger zone. A settings-width screen, so the work on a phone is making each section fit and feel native — single column, clear headers, full-width rows, 44px controls, labels above fields. Danger actions are clearly separated and confirmed. Same tokens, content and backend rules as <a class="link" href="Settings-SPEC.html">the desktop spec</a>; only the layout changes below 600px, on the decided shell (hamburger + drawer, no tab bar, free bottom edge). Frames are the real component layer at 390px, light and dark.</p>
+    <div class="filerow">
+      <span class="chip chip--mob">pennedly-mobile.css</span>
+      <span class="chip">settings-app.jsx</span>
+      <span class="chip">settings-parts.jsx</span>
+      <span class="chip">shell-parts.jsx</span>
+      <span class="chip">ds/tokens.css</span>
+    </div>
+  </div>
+
+  <div class="note good"><b>What does not change.</b> Connected accounts come from the backend; disconnecting deauthorizes the Threads account and starts the data-deletion cascade (confirmed). Deleting the Pennedly account cascades everything (confirmed). Language sets the UI locale and mirrors to the server. Plan tier is shown but <strong>billing isn’t built yet</strong> — no upgrade/payment UI. No invented notification settings or profile editing. <strong>Account-switch and Log out live in the drawer foot</strong> (the shared shell), not on this screen. Mobile is a layout pass; the only structural change is the shell.</div>
+
+  <!-- 1 -->
+  <section id="s1">
+    <h2><span class="h2n">1</span>Screen identity</h2>
+    <div class="tbl-wrap"><table><tbody>
+      <tr><th style="width:210px">Route</th><td><code>/app/settings</code> — account-level controls.</td></tr>
+      <tr><th>Desktop width</th><td><code>--content-reading</code>; a settings column.</td></tr>
+      <tr><th>Phone width</th><td>100% − 14px gutters; single column of section cards.</td></tr>
+      <tr><th>Top→bottom (phone)</th><td>Status bar → top bar (hamburger · “Settings” · theme) → Account → Language → Connected accounts → Appearance → Danger zone → <em>free bottom edge</em>.</td></tr>
+      <tr><th>Not here</th><td>Account-switch + Log out (drawer foot). No billing/upgrade (not built).</td></tr>
+    </tbody></table></div>
+  </section>
+
+  <!-- 2 -->
+  <section id="s2">
+    <h2><span class="h2n">2</span>The phone layout</h2>
+    <p class="section-note">The screen in context, light and dark: the identity card, the language picker, connected accounts, appearance, and the danger zone — each a full-width section card. The list runs to the free bottom edge.</p>
+    <div class="stage" id="stg-layout"></div>
+  </section>
+
+  <!-- 3 -->
+  <section id="s3">
+    <h2><span class="h2n">3</span><span class="stg stg--shell">shell</span>Shell: top bar + drawer</h2>
+    <p class="section-note">The shell is shared (see <a class="link" href="../../system/Pennedly Design System.html#m-shell">DS · App shell &amp; nav</a>). Settings-specific shell values:</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:200px">Slot</th><th>Settings value</th></tr></thead>
+      <tbody>
+        <tr><td>Hamburger</td><td>Far left, opens <code>.m-drawer</code> (active row = Settings).</td></tr>
+        <tr><td>Title</td><td>“Settings”.</td></tr>
+        <tr><td>Top-bar action</td><td>Theme toggle only.</td></tr>
+        <tr><td>Drawer foot</td><td>The account control there is where switch-account + Log out live — so Settings never duplicates them.</td></tr>
+      </tbody>
+    </table></div>
+    <div class="stage" id="stg-drawer"></div>
+  </section>
+
+  <!-- 4 -->
+  <section id="s4">
+    <h2><span class="h2n">4</span><span class="stg stg--fix">fix</span>Section pattern — the fix</h2>
+    <p class="section-note">Every settings group is a card: a header (title + optional description) over a body of full-width rows. On a phone each control gets the whole width; nothing sits in a cramped right column.</p>
+    <div class="fix">
+      <div class="fix-bad"><h5>Before</h5><p>Desktop label-on-left / control-on-right rows split the width; selects and account rows shrink and long locale labels collide with their control.</p></div>
+      <div class="fix-good"><h5>After</h5><p>One column of section cards. Controls are full-width 44px; toggles right-aligned on their row; the language picker is a 2-up flag grid; account rows give the handle room and keep Disconnect reachable. Danger actions get their own danger-tinted card.</p></div>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section id="s5">
+    <h2><span class="h2n">5</span>Identity + language</h2>
+    <p class="section-note">Identity = avatar + email + plan badge (read-only; a note says billing isn’t available yet). Language = the 8 UI locales as flag + native + English buttons, in a 2-up grid; the active one is accent-ringed with a check.</p>
+    <div class="stage" id="stg-id"></div>
+  </section>
+
+  <!-- 6 -->
+  <section id="s6">
+    <h2><span class="h2n">6</span>Connected accounts</h2>
+    <p class="section-note">Each connected Threads account is a row: avatar + display name (+ a “Primary” tag) + @handle, with a <strong>Disconnect</strong> (danger) button. “Connect another account” is a full-width button at the foot. A zero-state shows the connect call-to-action.</p>
+    <div class="stage" id="stg-accts"></div>
+  </section>
+
+  <!-- 7 -->
+  <section id="s7">
+    <h2><span class="h2n">7</span>Appearance + danger zone</h2>
+    <p class="section-note">Appearance is a light/dark toggle row. The danger zone is a separate danger-tinted card: deleting the Pennedly account is a full-width danger button (confirmed in a sheet). Disconnecting an account is also a danger action, surfaced per-row above.</p>
+    <div class="stage" id="stg-danger"></div>
+  </section>
+
+  <!-- 8 -->
+  <section id="s8">
+    <h2><span class="h2n">8</span>Confirmations</h2>
+    <p class="section-note">Both destructive actions confirm in a bottom sheet (the desktop’s inline/modal confirm folded to a phone). Disconnect explains the deauthorize + data-deletion; delete-account requires typing <code>DELETE</code> before the danger button.</p>
+    <div class="stage" id="stg-confirm"></div>
+  </section>
+
+  <!-- 9 -->
+  <section id="s9">
+    <h2><span class="h2n">9</span>States</h2>
+    <div class="statebar"><span class="st">loading</span><span class="st">ready</span><span class="st">zero accounts</span><span class="st">error</span></div>
+    <p class="section-note">Loading is a skeleton of section cards; ready is all sections; the zero-accounts state shows the connect CTA; error is the shared banner with Retry.</p>
+    <div class="stage" id="stg-states"></div>
+  </section>
+
+  <!-- 10 -->
+  <section id="s10">
+    <h2><span class="h2n">10</span>Anatomy &amp; exact values</h2>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:210px">Element / class</th><th>Phone value</th></tr></thead>
+      <tbody>
+        <tr><td><code>.m-setcard</code></td><td>section card; header (title + desc) + body. <code>--danger</code> tints border + bg.</td></tr>
+        <tr><td><code>.m-identity</code></td><td>avatar 52 + email + plan badge; billing note below.</td></tr>
+        <tr><td><code>.m-langgrid / .m-lang</code></td><td>2-up flag buttons (flag + native + English + check); active = accent ring.</td></tr>
+        <tr><td><code>.m-acctrow</code></td><td>avatar 40 + name (+ Primary) + handle + Disconnect (danger).</td></tr>
+        <tr><td><code>.m-aprow</code></td><td>appearance row: icon + label + right-aligned toggle.</td></tr>
+        <tr><td><code>.m-setcard--danger</code></td><td>danger zone; full-width Delete-account button.</td></tr>
+        <tr><td><code>.m-dialogsheet</code> (disconnect/delete)</td><td>bottom sheet; danger mark; danger primary on top.</td></tr>
+        <tr><td><code>.m-confirm-type</code></td><td>type-<code>DELETE</code> field before the delete button.</td></tr>
+        <tr><td><code>.m-content--notab</code></td><td>bottom inset = <code>26 + safe-area</code> (no tab bar).</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- 11 -->
+  <section id="s11">
+    <h2><span class="h2n">11</span>Localization &amp; 360px</h2>
+    <p class="section-note">Section titles/descriptions, the plan/billing note, language English-names, account labels, appearance and danger copy all localize into 8 locales; DE/RU/UK run ~30–40% longer. On a phone: section descriptions wrap; the language grid’s native + English names truncate with ellipsis inside their cell (the flag + check stay put); account display names truncate while the handle keeps a line; the Disconnect/Delete buttons wrap rather than clip; the type-to-confirm keyword (DELETE) is locale-stable.</p>
+    <div class="note"><b>360px behavior.</b> No new breakpoint — the gutter stays 14px; the language grid stays 2-up (cells get ~15px narrower, names ellipsis sooner); account rows and full-width controls just get narrower. The drawer stays <code>min(82%, 312px)</code> → 82% (≈295px) at 360.</div>
+    <div class="stage" id="stg-narrow"></div>
+  </section>
+
+  <!-- 12 -->
+  <section id="s12">
+    <h2><span class="h2n">12</span>Checklist</h2>
+    <ul class="check">
+      <li>Below 600px there is no sidebar and no tab bar — one 52px top bar with a hamburger far-left.</li>
+      <li>Hamburger opens the left drawer (active = Settings) + account; account-switch + Log out are in the drawer foot, not on this screen; bottom edge free.</li>
+      <li>Identity shows email + plan badge, read-only; a note says billing isn’t available yet (no upgrade UI).</li>
+      <li>Language = 8 UI locales as flag + native + English; active is accent-ringed with a check.</li>
+      <li>Connected accounts list rows (avatar + name + handle) + Disconnect (danger) + “Connect another account”.</li>
+      <li>Appearance = light/dark toggle row.</li>
+      <li>Danger zone is a separate danger-tinted card; Delete account is a full-width danger button.</li>
+      <li>Disconnect + Delete confirm in a bottom sheet; delete requires typing DELETE.</li>
+      <li>Loading = skeleton cards; zero-accounts shows the connect CTA; error banner has Retry.</li>
+      <li>Labels wrap on long locales — never pushing controls off-screen; sanity-checked at 360px.</li>
+      <li>Correct in light and dark; no hardcoded colour.</li>
+    </ul>
+  </section>
+
+</main>
+</div>
+
+<script src="../../mobile/sprite.js"></script>
+<script src="../../mobile/mock.js"></script>
+<script>
+(function () {
+  var M = window.MOCK;
+  function set(id, html){ var e=document.getElementById(id); if(e) e.innerHTML=html; }
+
+  var top = M.top({ title:'Settings', menu:true });
+
+  var gap = '<div style="height:14px"></div>';
+  var body = M.setIdentity() + gap + M.setLanguage('en') + gap + M.setAccounts() + gap + M.setAppearance(false) + gap + M.setDanger();
+
+  /* 2 — full layout */
+  set('stg-layout',
+    M.col(M.light(), M.phone({ top:top, body:body, tabs:false }), 'All sections — identity, language, accounts, appearance, danger zone.') +
+    M.col(M.dark(), M.phone({ dark:true, top:top, body:body, tabs:false }), 'Identical layout, dark tokens.'));
+
+  /* 3 — drawer */
+  set('stg-drawer',
+    M.col(M.light('Drawer'), M.phone({ top:top, body:body, tabs:false, overlay:M.drawer('settings') }), 'Hamburger → left drawer; account-switch + Log out in the foot.') +
+    M.col(M.dark('Drawer · dark'), M.phone({ dark:true, top:top, body:body, tabs:false, overlay:M.drawer('settings') }), ''));
+
+  /* 5 — identity + language */
+  set('stg-id',
+    M.col(M.light('Identity'), M.comp(M.setIdentity()), 'Email + plan badge; billing note (read-only).') +
+    M.col(M.light('Language'), M.comp(M.setLanguage('en')), '8 locales · flag + native + English; active ringed.') +
+    M.col(M.dark('Language · dark'), M.comp(M.setLanguage('de'), { dark:true }), 'German active.'));
+
+  /* 6 — connected accounts */
+  set('stg-accts',
+    M.col(M.light('Two accounts'), M.comp(M.setAccounts()), 'Rows + Disconnect + connect another.') +
+    M.col(M.light('Zero accounts'), M.comp(M.setAccounts({ empty:true })), 'Connect call-to-action.') +
+    M.col(M.dark('Accounts · dark'), M.comp(M.setAccounts(), { dark:true }), ''));
+
+  /* 7 — appearance + danger */
+  set('stg-danger',
+    M.col(M.light('Appearance'), M.comp(M.setAppearance(false)), 'Light / dark toggle.') +
+    M.col(M.light('Danger zone'), M.comp(M.setDanger()), 'Separate danger-tinted card; delete account.') +
+    M.col(M.dark('Danger · dark'), M.comp(M.setDanger(), { dark:true }), ''));
+
+  /* 8 — confirmations */
+  set('stg-confirm',
+    M.col(M.light('Disconnect'), M.phone({ top:top, body:body, tabs:false, overlay:M.disconnectSheet() }), 'Deauthorize + data-deletion · confirmed in a sheet.') +
+    M.col(M.light('Delete account'), M.phone({ top:top, body:body, tabs:false, overlay:M.deleteAccountSheet() }), 'Type DELETE before the danger button.') +
+    M.col(M.dark('Delete · dark'), M.phone({ dark:true, top:top, body:body, tabs:false, overlay:M.deleteAccountSheet() }), ''));
+
+  /* 9 — states */
+  set('stg-states',
+    M.col(M.light('Loading'), M.phone({ top:top, tabs:false, body: M.setSkeleton() }), 'Skeleton section cards.') +
+    M.col(M.light('Zero accounts'), M.phone({ top:top, tabs:false, body: M.setIdentity() + gap + M.setAccounts({ empty:true }) + gap + M.setAppearance(false) }), 'Connect CTA in place of the list.') +
+    M.col(M.light('Error'), M.phone({ top:top, tabs:false, body: M.errorBanner('Couldn’t load your settings','Something went wrong on our end.') }), 'Shared error banner with Retry.') +
+    M.col(M.dark('Loading · dark'), M.phone({ dark:true, top:top, tabs:false, body: M.setSkeleton() }), ''));
+
+  /* 11 — 360 */
+  set('stg-narrow',
+    M.col(M.light('360 · settings'), M.phone({ variant:'sm', top:top, body:body, tabs:false }), 'Same rules at 360 — language grid stays 2-up; names ellipsis sooner.') +
+    M.col(M.light('360 · language'), M.comp(M.setLanguage('en'), { sm:true }), '2-up flag grid holds at 360px.') +
+    M.col(M.dark('360 · dark'), M.phone({ variant:'sm', dark:true, top:top, body:body, tabs:false }), ''));
+})();
+</script>
+</body>
+</html>

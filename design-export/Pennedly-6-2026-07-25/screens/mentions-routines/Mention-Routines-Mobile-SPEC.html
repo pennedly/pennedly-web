@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pennedly · Рутины упоминаний — телефон (спецификация)</title>
+<meta name="description" content="Телефонный слой рутин упоминаний: хаб карточками в столбик и конструктор в одну колонку (превью под рецептом), драверы и действия на всю ширину." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../../ds/tokens.css" />
+<link rel="stylesheet" href="../../ds/components.css" />
+<link rel="stylesheet" href="../../scenarios.css" />
+<link rel="stylesheet" href="../../scenarios-redesign.css" />
+<link rel="stylesheet" href="../../scenario-editor.css" />
+<link rel="stylesheet" href="../../recipe-editor.css" />
+<link rel="stylesheet" href="../../autopilot.css" />
+<link rel="stylesheet" href="../../autopilot-publishmode.css" />
+<link rel="stylesheet" href="../../mention-routines.css" />
+<style>
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%; scroll-behavior:smooth;}
+  body{margin:0; background:var(--color-bg); color:var(--color-text); font-family:var(--font-sans); font-size:15px; line-height:1.6; -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;}
+  .wrap{max-width:1160px; margin:0 auto; padding:46px 40px 130px;}
+  .kicker{font-family:var(--font-mono); font-size:12px; letter-spacing:0.05em; color:var(--color-accent); text-transform:uppercase; margin:0 0 12px;}
+  .doc-title{font-size:34px; line-height:1.08; letter-spacing:-0.025em; font-weight:600; margin:0 0 14px; text-wrap:balance;}
+  .doc-title span{color:var(--color-text-subtle); font-weight:500;}
+  .doc-lede{font-size:16px; color:var(--color-text-muted); max-width:82ch; margin:0 0 22px; text-wrap:pretty;}
+  .doc-lede b{color:var(--color-text); font-weight:600;}
+  .doc-lede a{color:var(--color-accent);}
+
+  .chips{display:flex; flex-wrap:wrap; gap:7px; margin:0 0 6px;}
+  .chip{font-family:var(--font-mono); font-size:11.5px; padding:5px 11px; border-radius:9999px; background:var(--color-surface); border:1px solid var(--color-border); color:var(--color-text-muted);}
+  .chip b{color:var(--color-text); font-weight:600;}
+
+  section.block{margin-top:58px; scroll-margin-top:20px;}
+  .block-head{border-top:2px solid var(--color-text); padding-top:18px; margin-bottom:14px;}
+  .block-name{display:flex; align-items:baseline; gap:13px; flex-wrap:wrap; margin:0 0 7px;}
+  .block-name .bn-n{font-family:var(--font-mono); font-size:20px; font-weight:500; color:var(--color-accent); letter-spacing:-0.01em;}
+  .block-name h2{font-size:24px; font-weight:600; letter-spacing:-0.015em; margin:0;}
+  .block-idea{font-size:15px; color:var(--color-text-muted); max-width:86ch; margin:0; text-wrap:pretty;}
+  .block-idea b{color:var(--color-text); font-weight:600;}
+
+  .frames{display:flex; flex-direction:column; gap:16px; margin:18px 0 6px;}
+  .frow{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
+  @media(max-width:900px){ .frow{grid-template-columns:1fr;} }
+  .fr{display:flex; flex-direction:column; gap:10px; min-width:0;}
+  .fr-head{display:inline-flex; align-items:center; gap:8px; font-family:var(--font-mono); font-size:11.5px; letter-spacing:.02em; color:var(--color-text-subtle);}
+  .fr-head .dh{width:8px; height:8px; border-radius:9999px; background:var(--color-border);}
+  .fr-head .dh--dark{background:#0a0a0a; border:1px solid #3a3a3a;}
+  .fr-head b{color:var(--color-text-muted); font-weight:600;}
+  .frame{background:var(--color-bg); color:var(--color-text); border:1px solid var(--color-border); border-radius:18px; padding:24px; overflow:hidden; display:grid; place-items:center;}
+  .frame.dark{background:#0a0a0a; border-color:#2b2a27;}
+  .frame *{box-sizing:border-box;}
+
+  code{font-family:var(--font-mono); font-size:0.86em; background:var(--color-surface-2); border:1px solid var(--color-border); padding:1px 5px; border-radius:5px;}
+  a.link{color:var(--color-accent); text-decoration:underline; text-underline-offset:2px;}
+  .note{border:1px solid var(--color-border); border-left:3px solid var(--color-accent); background:var(--color-surface); border-radius:10px; padding:12px 16px; margin:16px 0; font-size:13.5px; color:var(--color-text-muted); line-height:1.55;}
+  .note b{color:var(--color-text);}
+  .check{list-style:none; padding:0; margin:0;}
+  .check li{position:relative; padding:7px 0 7px 28px; border-bottom:1px dashed var(--color-border); font-size:13.5px; line-height:1.55;}
+  .check li:last-child{border-bottom:none;}
+  .check li::before{content:"\2610"; position:absolute; left:2px; top:6px; color:var(--color-text-subtle); font-size:15px;}
+  .check b{color:var(--color-text);}
+  .foot-meta{margin-top:26px; padding-top:18px; border-top:1px solid var(--color-border); font-size:12.5px; color:var(--color-text-subtle); line-height:1.7;}
+
+  /* ── phone shell (device) — forces mobile layout regardless of doc width ── */
+  .ph{ width:390px; max-width:100%; background:var(--color-bg); border:1px solid var(--color-border); border-radius:30px; overflow:hidden; box-shadow:var(--shadow-lg); position:relative; }
+  .ph--sm{ width:360px; }
+  .ph-status{ display:flex; align-items:center; justify-content:space-between; padding:9px 20px 4px; font-size:12px; font-weight:600; color:var(--color-text); font-variant-numeric:tabular-nums; }
+  .ph-status .ps-r{ letter-spacing:2px; color:var(--color-text-muted); }
+  .ph-top{ display:flex; align-items:center; gap:11px; padding:6px 15px 12px; border-bottom:1px solid var(--color-border); }
+  .ph-top .pt-hamb{ width:34px; height:34px; display:grid; place-items:center; border:1px solid var(--color-border); border-radius:10px; background:var(--color-surface); color:var(--color-text-muted); flex:0 0 auto; }
+  .ph-top .pt-title{ font-size:var(--text-h3); font-weight:600; letter-spacing:-0.006em; }
+  .ph-top .pt-spacer{ flex:1 1 auto; }
+  .ph-top .pt-ic{ width:34px; height:34px; display:grid; place-items:center; border:1px solid var(--color-border); border-radius:10px; background:var(--color-surface); color:var(--color-text-muted); }
+  .ph-body{ padding:15px; display:flex; flex-direction:column; gap:14px; max-height:660px; overflow:hidden; }
+  .ph-body--tall{ max-height:760px; }
+
+  /* force single-column / full-width inside the phone (media queries can't see container width) */
+  .ph .rce, .ph .sced { max-width:none; }
+  .ph .rce-grid{ grid-template-columns:1fr; gap:16px; }
+  .ph .rce-aside{ position:static; }
+  .ph .ed-topbar{ margin-bottom:16px; }
+  .ph .sc-actionbar{ flex-direction:column-reverse; align-items:stretch; }
+  .ph .sc-actionbar .btn{ width:100%; }
+  .ph .sc-actionbar .sa-spacer{ display:none; }
+  .ph .rcd-head .rcdh-done{ min-height:40px; padding:8px 16px; }
+  .ph .seg{ width:100%; }
+  .ph .seg-opt{ flex:1 1 0; text-align:center; }
+  .ph .mr-action, .ph .sc-mode{ width:100%; }
+  .ph .sc-card-foot{ flex-direction:column; align-items:flex-start; gap:12px; }
+  .ph .sc-card-actions{ width:100%; display:flex; gap:9px; }
+  .ph .sc-card-actions .btn, .ph .sc-card-actions .rtm-edit{ flex:1 1 auto; justify-content:center; }
+  .ph .mr-addcard{ width:100%; }
+  /* Слой 3 «Только для этой рутины» — панель переопределений на всю ширину */
+  .ph .seg--wrap .seg-opt{ flex:0 1 auto; }
+  .ph .aud-grid{ grid-template-columns:1fr; }
+  .ph .ml3-main{ flex-wrap:wrap; }
+  .ph .ml3-text{ flex-basis:calc(100% - 42px); }
+  .ph .ml3-btn, .ph .ml3-revert{ margin-left:42px; margin-top:4px; }
+  .ph .ml3-quiet .field{ min-width:120px; }
+
+  @media(max-width:760px){ .wrap{padding:30px 18px 90px;} .doc-title{font-size:27px;} .frame{padding:16px 10px;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="kicker">Pennedly · Рутины упоминаний · телефон</p>
+  <h1 class="doc-title">Рутины упоминаний <span>— телефонный слой</span></h1>
+  <p class="doc-lede">Парная мобильная спека к <a class="link" href="Mention-Routines-SPEC.html">Mention-Routines-SPEC</a>. Та же общая правда рендера (<code>mention-routines-build.js</code>), просто в телефоне: <b>хаб — карточки в столбик</b>, <b>конструктор — одна колонка</b> (живой предпросмотр уезжает под рецепт), драверы, сегменты и тайлы действий тянутся на всю ширину, «Готово» и кнопки ≥ 44px. Референс 390px, проверка на 360. Светлая и тёмная.</p>
+  <div class="chips">
+    <span class="chip">референс <b>390px</b> · проверка 360</span>
+    <span class="chip">хаб — столбик</span>
+    <span class="chip">конструктор — 1 колонка</span>
+    <span class="chip">действия full-width ≥44px</span>
+  </div>
+
+  <!-- 1 -->
+  <section class="block" id="hub">
+    <div class="block-head"><div class="block-name"><span class="bn-n">01</span><h2>Хаб · карточки в столбик</h2></div>
+      <p class="block-idea">«+ Новая рутина упоминаний» на всю ширину сверху, под ней — карточки в один столбик. Бейдж режима, статус и «Изменить» переносятся, ничего не клипается. Рутина по умолчанию — с пометкой fallback.</p></div>
+    <div class="frow" id="f-hub"></div>
+  </section>
+
+  <!-- 2 -->
+  <section class="block" id="empty">
+    <div class="block-head"><div class="block-name"><span class="bn-n">02</span><h2>Пустой хаб</h2></div>
+      <p class="block-idea">Первый заход: приглашение собрать помощника под цель + одна крупная кнопка «Создать первую рутину».</p></div>
+    <div class="frow" id="f-empty"></div>
+  </section>
+
+  <!-- 3 -->
+  <section class="block" id="hero">
+    <div class="block-head"><div class="block-name"><span class="bn-n">03</span><h2>Конструктор · рецепт + поле цели</h2></div>
+      <p class="block-idea">Рецепт-фраза наверху, слот «цель» раскрыт прямо под ней: большое поле, счётчик до 500, чекбокс catch-all и честная гарантия — всё на всю ширину. Живой предпросмотр уезжает ниже.</p></div>
+    <div class="frow" id="f-hero"></div>
+  </section>
+
+  <!-- 4 -->
+  <section class="block" id="action">
+    <div class="block-head"><div class="block-name"><span class="bn-n">04</span><h2>Конструктор · действие (Скоро)</h2></div>
+      <p class="block-idea">Слот «действие» раскрыт: «Ответить в моём голосе» выбрано, «Ответить сгенерированным фото» — заблокировано, метка «Скоро», тайлы на всю ширину.</p></div>
+    <div class="frow" id="f-action"></div>
+  </section>
+
+  <!-- 5 -->
+  <section class="block" id="expanded">
+    <div class="block-head"><div class="block-name"><span class="bn-n">05</span><h2>Конструктор · развёрнутый</h2></div>
+      <p class="block-idea">Слои «Настроить точнее» (вложение + подсказка) и <b>«Только для этой рутины»</b> (панель переопределений «Правил дома») раскрыты; сегмент вложения и строки Слоя 3 — на всю ширину. Полный проход по Слою 3 — <a class="link" href="../mention-routine/Mention-Routine-Layer3-Mobile-SPEC.html">в парной спеке</a>.</p></div>
+    <div class="frow" id="f-expanded"></div>
+  </section>
+
+  <!-- 6 -->
+  <section class="block" id="cards">
+    <div class="block-head"><div class="block-name"><span class="bn-n">06</span><h2>Карточка · три режима</h2></div>
+      <p class="block-idea">Авто (отвечает сразу, янтарь) · спроси (черновик ответа) · выключена — как на постинге. Действия карточки на всю ширину.</p></div>
+    <div class="frow" id="f-cards"></div>
+  </section>
+
+  <!-- 7 -->
+  <section class="block" id="check">
+    <div class="block-head"><div class="block-name"><span class="bn-n">07</span><h2>Чек-лист · телефон</h2></div></div>
+    <ul class="check">
+      <li><b>Хаб</b> — карточки в один столбик; «+ Новая рутина» full-width сверху; бейдж/статус/«Изменить» переносятся, не клипаются.</li>
+      <li><b>Конструктор</b> — одна колонка: рецепт → драверы → живой предпросмотр под ним; асайд не липкий.</li>
+      <li><b>Поле цели</b>, сегмент вложения, тайлы действий, выбор режима — на всю ширину; «Готово» и кнопки ≥ 44px.</li>
+      <li><b>Действие «Скоро»</b> — заблокированный тайл с меткой, читается и на 360px.</li>
+      <li>Гарантии движка те же: авто только на безопасное; жалобы/лиды/провокации ждут в очереди.</li>
+      <li>Обе темы, только токены <code>ds/tokens.css</code>, один акцент; проверено на 360px.</li>
+    </ul>
+    <div class="foot-meta">
+      Общая правда рендера: <code>mention-routines-build.js</code> + <code>mention-routines.css</code> (без расхождений с десктопом)<br>
+      Десктопная спека: <a class="link" href="Mention-Routines-SPEC.html">Mention-Routines-SPEC</a>
+    </div>
+  </section>
+
+</div>
+
+<script src="../../mention-routines-build.js"></script>
+<script>
+(function(){
+  var MR = window.MR, ic = MR.ic;
+  function set(id,h){ var e=document.getElementById(id); if(e) e.innerHTML=h; }
+  function head(label,dark){ return '<div class="fr-head"><span class="dh'+(dark?' dh--dark':'')+'"></span>'+label+'</div>'; }
+  function frame(inner,dark){ return '<div class="frame'+(dark?' dark':'')+'">'+inner+'</div>'; }
+  function fr(label,inner,dark){ return '<div class="fr">'+head(label,dark)+frame(inner,dark)+'</div>'; }
+  function phone(inner, opts){
+    opts=opts||{};
+    var top = opts.top===false ? '' :
+      '<div class="ph-top"><span class="pt-hamb">'+ic('back',18)+'</span><span class="pt-title">'+(opts.title||'Рутины упоминаний')+'</span><span class="pt-spacer"></span><span class="pt-ic">'+ic('info',16)+'</span></div>';
+    return '<div class="ph'+(opts.sm?' ph--sm':'')+'">'
+      +'<div class="ph-status"><span>9:41</span><span class="ps-r">•••</span></div>'
+      + top
+      +'<div class="ph-body'+(opts.tall?' ph-body--tall':'')+'">'+inner+'</div></div>';
+  }
+
+  /* 1 · hub */
+  set('f-hub',
+    fr('Light · 390px · хаб', phone(MR.hub()), false)
+    + fr('Dark · 390px · хаб', phone(MR.hub(), {}), true));
+
+  /* 2 · empty */
+  set('f-empty',
+    fr('Light · 390px · пусто', phone(MR.emptyHub()), false)
+    + fr('Dark · 360px · пусто', phone(MR.emptyHub(), {sm:true}), true));
+
+  /* 3 · constructor hero (goal drawer open) */
+  var heroCfg = {name:'Сгенерировать по фото', openSlot:'goal', goalText:'прикладывают фото и просят сделать их в моём фирменном стиле', media:'image', mode:'ask'};
+  set('f-hero',
+    fr('Light · 390px · рецепт + поле цели', phone(MR.constructor(heroCfg), {title:'Новая рутина', tall:true}), false)
+    + fr('Dark · 390px · то же', phone(MR.constructor(Object.assign({}, heroCfg)), {title:'Новая рутина', tall:true}), true));
+
+  /* 4 · action drawer (soon) */
+  var actCfg = {name:'Сгенерировать по фото', openSlot:'action', goalShort:'просят показать их будущего ребёнка', media:'image', mode:'ask', inst:'по имени, тепло; забираю в работу и пришлю вариант в течение дня'};
+  set('f-action',
+    fr('Light · 390px · действие · «фото» заблокировано', phone(MR.constructor(actCfg), {title:'Правка рутины', tall:true}), false)
+    + fr('Dark · 360px · то же', phone(MR.constructor(Object.assign({}, actCfg)), {title:'Правка рутины', sm:true, tall:true}), true));
+
+  /* 5 · expanded */
+  var expCfg = {name:'Разбор по фото', goalShort:'прикладывают фото работы и просят разбор', media:'image', mode:'auto', inst:'по делу, с одним конкретным улучшением', layer2:true, layer3:true, hint:false};
+  set('f-expanded',
+    fr('Light · 390px · слои раскрыты', phone(MR.constructor(expCfg), {title:'Правка рутины', tall:true}), false)
+    + fr('Dark · 390px · слои раскрыты', phone(MR.constructor(Object.assign({}, expCfg)), {title:'Правка рутины', tall:true}), true));
+
+  /* 6 · card modes */
+  set('f-cards',
+    fr('Light · авто + спроси', phone('<div class="mr-hublist">'+MR.hubCard(MR.CARDS.course)+MR.hubCard(MR.CARDS.photo)+'</div>', {top:false}), false)
+    + fr('Dark · выключена + fallback', phone('<div class="mr-hublist">'+MR.hubCard(MR.CARDS.praise)+MR.hubCard(MR.CARDS.fallback)+'</div>', {top:false}), true));
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,412 @@
+/* scenarios.css — Pennedly "Scenarios" screen.
+   Recurring / conditional content via the model WHEN (trigger) → IF (condition)
+   → GENERATE (post/reply) WITH AN INSTRUCTION on top of your voice. First
+   template is "Акция" (promo campaign). OFF is the safe default for every
+   scenario. Built on ink-on-paper tokens + the shared shell. No hardcoded hex. */
+
+/* ===================== page intro / section shell ===================== */
+.sc-page { display: flex; flex-direction: column; gap: 20px; }
+.sc-intro { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.sc-intro .sci-text { min-width: 0; }
+.sc-intro h1 { font-size: var(--text-h1); font-weight: 600; letter-spacing: -0.015em; margin: 0; }
+.sc-intro p { font-size: var(--text-body); color: var(--color-text-muted); margin: 4px 0 0; max-width: 60ch; }
+
+/* the WHEN → IF → GENERATE model line, reused on cards + editors */
+.flowline { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.flowstep { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-caption); font-weight: 600; }
+.flowstep .fl-k { color: var(--color-text-subtle); font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; }
+.flowstep .fl-v { color: var(--color-text); font-weight: 500; }
+.flowsep { color: var(--color-text-subtle); opacity: 0.55; }
+
+/* ===================== scenario LIST ===================== */
+.sc-list { display: flex; flex-direction: column; gap: 12px; }
+.sc-card {
+  display: flex; flex-direction: column; gap: 13px;
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 17px 19px;
+  transition: border-color var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard);
+}
+.sc-card:hover { border-color: color-mix(in srgb, var(--color-text) 14%, var(--color-border)); box-shadow: var(--shadow-md); }
+.sc-card--off { opacity: 0.78; }
+.sc-card-head { display: flex; align-items: flex-start; gap: 13px; }
+.sc-card-icon {
+  width: 40px; height: 40px; flex: 0 0 auto; display: grid; place-items: center;
+  border-radius: var(--radius-md); background: var(--color-surface-2);
+  border: 1px solid var(--color-border); color: var(--color-text-muted);
+}
+.sc-card--on .sc-card-icon { background: color-mix(in srgb, var(--color-success) 13%, var(--color-surface)); border-color: color-mix(in srgb, var(--color-success) 26%, transparent); color: var(--color-success); }
+.sc-card-titles { flex: 1 1 auto; min-width: 0; }
+.sc-card-name { font-size: var(--text-h3); font-weight: 600; letter-spacing: -0.006em; display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.sc-card-desc { font-size: var(--text-small); color: var(--color-text-muted); margin-top: 3px; line-height: 1.5; }
+.sc-card-toggle { flex: 0 0 auto; display: flex; align-items: center; gap: 10px; }
+.sc-card-state { font-size: var(--text-caption); font-weight: 600; color: var(--color-text-subtle); }
+.sc-card--on .sc-card-state { color: var(--color-success); }
+
+/* template badge */
+.tpl-badge { display: inline-flex; align-items: center; gap: 5px; font-size: var(--text-caption); font-weight: 600; line-height: 1; padding: 4px 9px 4px 7px; border-radius: var(--radius-full); border: 1px solid var(--color-border); background: var(--color-surface-2); color: var(--color-text-muted); white-space: nowrap; }
+.tpl-badge svg { opacity: 0.9; }
+.tpl-badge--promo { background: color-mix(in srgb, var(--color-accent) 11%, var(--color-surface)); color: var(--color-accent); border-color: color-mix(in srgb, var(--color-accent) 26%, transparent); }
+/* provenance: schedule-summary badge (when not promo-seeded) — neutral, mono */
+.tpl-badge--sched { background: var(--color-surface-2); color: var(--color-text-muted); font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.01em; padding-left: 8px; }
+.tpl-badge--sched .tb-k { color: var(--color-text-subtle); }
+
+/* meta row: trigger flow + next/last run */
+.sc-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding-top: 13px; border-top: 1px solid var(--color-border); }
+.sc-runs { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.sc-run { display: flex; flex-direction: column; gap: 1px; }
+.sc-run .sr-k { font-size: 10.5px; font-family: var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-text-subtle); }
+.sc-run .sr-v { font-size: var(--text-small); font-weight: 500; color: var(--color-text); font-variant-numeric: tabular-nums; }
+.sc-run .sr-v.muted { color: var(--color-text-subtle); font-weight: 400; }
+.sc-card-actions { display: flex; align-items: center; gap: 8px; }
+
+/* ===================== ENTRY: «Начать с пресета» chip row ===================== */
+/* Replaces the old 2×2 template grid. One scenario, one form; presets just
+   pre-fill it. No «Свой» — «с нуля» is the implicit default (empty form). */
+.sc-presetbar { display: flex; flex-wrap: wrap; align-items: center; gap: 11px; padding: 14px 16px; background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius-lg); }
+.sc-presetbar .pb-k { font-size: var(--text-caption); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-subtle); display: inline-flex; align-items: center; gap: 7px; }
+.sc-presets { display: flex; flex-wrap: wrap; gap: 8px; }
+.sc-preset { display: inline-flex; align-items: center; gap: 7px; font-size: var(--text-small); font-weight: 600; padding: 7px 13px; border-radius: var(--radius-full); border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text-muted); cursor: pointer; transition: border-color var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard); }
+.sc-preset svg { flex: 0 0 auto; }
+.sc-preset--live { color: var(--color-accent); border-color: color-mix(in srgb, var(--color-accent) 32%, var(--color-border)); background: color-mix(in srgb, var(--color-accent) 8%, var(--color-surface)); }
+.sc-preset--live:hover { box-shadow: var(--shadow-sm); border-color: color-mix(in srgb, var(--color-accent) 52%, var(--color-border)); }
+.sc-preset--soon { cursor: default; opacity: 0.66; }
+.sc-preset .pp-soon { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-subtle); border: 1px solid var(--color-border); border-radius: var(--radius-full); padding: 1px 6px; }
+.sc-preset-or { font-size: var(--text-small); color: var(--color-text-subtle); margin-left: auto; }
+.sc-preset-or b { color: var(--color-text-muted); font-weight: 600; }
+
+/* ===================== PROMO-HELPER disclosure (inside the one form) ===================== */
+/* «Промо-помощник» ON = the preserved rich «Акция» editor, re-hosted as a
+   reveal inside the same card. OFF = collapsed header; the free «Инструкция»
+   textarea below becomes the heart of the form. */
+.sc-helper { border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); overflow: hidden; transition: border-color var(--duration-base) var(--ease-standard); }
+.sc-helper--on { border-color: color-mix(in srgb, var(--color-accent) 30%, var(--color-border)); }
+.sc-helper-head { display: flex; align-items: center; gap: 13px; padding: 13px 15px; }
+.sc-helper--on .sc-helper-head { background: color-mix(in srgb, var(--color-accent) 6%, var(--color-surface)); }
+.sc-helper-ico { width: 36px; height: 36px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-md); background: var(--color-surface-2); border: 1px solid var(--color-border); color: var(--color-text-muted); }
+.sc-helper--on .sc-helper-ico { background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface)); border-color: color-mix(in srgb, var(--color-accent) 26%, transparent); color: var(--color-accent); }
+.sc-helper-txt { flex: 1 1 auto; min-width: 0; }
+.sc-helper-t { font-size: var(--text-small); font-weight: 600; display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.sc-helper-d { font-size: var(--text-caption); color: var(--color-text-subtle); margin-top: 2px; line-height: 1.45; }
+.sc-helper-body { padding: 16px 15px 16px; display: flex; flex-direction: column; gap: 16px; border-top: 1px solid color-mix(in srgb, var(--color-accent) 20%, var(--color-border)); }
+
+/* free «Инструкция» textarea (the heart, when promo-helper is OFF) */
+.sc-instr label { font-size: var(--text-small); font-weight: 600; color: var(--color-text); display: flex; align-items: center; gap: 8px; }
+.sc-instr textarea.field { min-height: 132px; }
+
+/* ===================== POWER-USER disclosure «Показать как сценарий» ===================== */
+.sc-disclose { border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+.sc-disclose-head { display: flex; align-items: center; gap: 11px; width: 100%; padding: 13px 15px; cursor: pointer; background: transparent; border: none; text-align: left; color: var(--color-text); font-family: inherit; }
+.sc-disclose-head .dh-ico { color: var(--color-text-subtle); display: inline-flex; flex: 0 0 auto; transition: transform var(--duration-base) var(--ease-standard); }
+.sc-disclose--open .sc-disclose-head .dh-ico { transform: rotate(90deg); }
+.sc-disclose-t { font-size: var(--text-small); font-weight: 600; flex: 1 1 auto; }
+.sc-disclose-hint { font-size: var(--text-caption); color: var(--color-text-subtle); white-space: nowrap; }
+.sc-disclose-body { padding: 4px 15px 17px; border-top: 1px solid var(--color-border); display: flex; flex-direction: column; gap: 16px; }
+.sc-raw-note { font-size: var(--text-caption); color: var(--color-text-subtle); line-height: 1.5; margin: 12px 0 2px; }
+
+/* schedule: a third «скоро» segment (В период дат — ships with Сезонное) */
+.seg-opt--soon { color: var(--color-text-subtle); opacity: 0.6; cursor: default; display: inline-flex; align-items: center; gap: 6px; }
+.seg-opt--soon .so-tag { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.04em; text-transform: uppercase; border: 1px solid var(--color-border); border-radius: var(--radius-full); padding: 0 5px; }
+
+/* ===================== EDITOR (Акция + Свой) ===================== */
+.sc-editor { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 22px; align-items: start; }
+.sc-form { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.sc-formcard { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 20px 22px; }
+.sc-formcard + .sc-formcard { margin-top: 0; }
+.sc-fc-title { font-size: var(--text-h3); font-weight: 600; letter-spacing: -0.006em; display: flex; align-items: center; gap: 9px; }
+.sc-fc-title .fc-k { font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-accent); border: 1px solid color-mix(in srgb, var(--color-accent) 30%, var(--color-border)); border-radius: var(--radius-sm); padding: 2px 7px; }
+.sc-fc-sub { font-size: var(--text-small); color: var(--color-text-subtle); margin: 4px 0 16px; line-height: 1.5; }
+.sc-fieldset { display: flex; flex-direction: column; gap: 16px; }
+.sc-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.sc-field > label { font-size: var(--text-small); font-weight: 500; color: var(--color-text); }
+.sc-field .field-hint { margin-top: 0; }
+.sc-field--err .field { border-color: var(--color-danger); }
+.sc-field--err .field-hint { color: var(--color-danger); }
+
+/* toggle rows (require follow / require like) */
+.sc-toggles { display: flex; flex-direction: column; }
+.sc-toggle { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 13px 0; border-top: 1px solid var(--color-border); }
+.sc-toggle:first-child { border-top: none; padding-top: 4px; }
+.sc-toggle .st-label { min-width: 0; }
+.sc-toggle .st-t { font-size: var(--text-small); font-weight: 600; display: inline-flex; align-items: center; gap: 7px; }
+.sc-toggle .st-d { font-size: var(--text-caption); color: var(--color-text-subtle); margin-top: 2px; line-height: 1.5; }
+
+/* schedule segmented choice */
+.sc-sched { display: flex; flex-direction: column; gap: 12px; }
+.seg { display: inline-flex; gap: 3px; padding: 3px; background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+.seg-opt { height: 34px; padding: 0 14px; font-size: var(--text-small); font-weight: 500; color: var(--color-text-muted); background: transparent; border: 1px solid transparent; border-radius: var(--radius-sm); cursor: pointer; white-space: nowrap; }
+.seg-opt--active { background: var(--color-surface); color: var(--color-text); font-weight: 600; border-color: var(--color-border); box-shadow: var(--shadow-sm); }
+.sc-everyn { display: flex; align-items: center; gap: 10px; font-size: var(--text-small); color: var(--color-text-muted); }
+.sc-everyn .field { width: 76px; height: 36px; text-align: center; font-variant-numeric: tabular-nums; }
+
+/* save / delete action bar */
+.sc-actionbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sc-actionbar .sa-spacer { margin-left: auto; }
+.sc-delete-confirm { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 13px; padding-top: 13px; border-top: 1px solid var(--color-border); }
+.sc-delete-confirm .sdc-t { font-size: var(--text-small); color: var(--color-text); font-weight: 500; flex: 1 1 auto; }
+
+/* ===================== LIVE PREVIEW ===================== */
+.sc-preview { position: sticky; top: 16px; display: flex; flex-direction: column; gap: 12px; }
+.sc-prev-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.sc-prev-cap { font-size: var(--text-caption); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-subtle); display: inline-flex; align-items: center; gap: 7px; }
+.sc-prev-panel { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow: hidden; }
+.sc-prev-cta { padding: 15px 17px; background: color-mix(in srgb, var(--color-accent) 6%, var(--color-surface)); border-bottom: 1px solid var(--color-border); }
+.sc-prev-cta .pc-k { font-size: 10.5px; font-family: var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-accent); margin-bottom: 6px; }
+.sc-prev-cta .pc-text { font-size: var(--text-small); line-height: 1.6; color: var(--color-text); text-wrap: pretty; }
+.sc-prev-cta .pc-text b { font-weight: 600; }\n/* free-instruction preview: neutral echo of the instruction (no accent CTA) */\n.sc-prev-cta--free { background: var(--color-surface-2); }\n.sc-prev-cta--free .pc-k { color: var(--color-text-subtle); }
+
+/* mock Threads-style post */
+.mockpost { padding: 15px 17px; }
+.mockpost-top { display: flex; align-items: center; gap: 9px; margin-bottom: 9px; }
+.mockpost-who { display: flex; flex-direction: column; line-height: 1.2; }
+.mockpost-who .mw-n { font-size: var(--text-small); font-weight: 600; }
+.mockpost-who .mw-h { font-size: var(--text-caption); color: var(--color-text-subtle); }
+.mockpost-time { margin-left: auto; font-size: var(--text-caption); color: var(--color-text-subtle); }
+.mockpost-text { font-size: var(--text-small); line-height: 1.6; color: var(--color-text); text-wrap: pretty; }
+.mockpost-stats { display: flex; gap: 16px; margin-top: 11px; }
+.mockpost-stats .ms { display: inline-flex; align-items: center; gap: 5px; font-size: var(--text-caption); color: var(--color-text-subtle); }
+
+/* a sample reply thread under the post (shows the mechanic) */
+.mockreply { border-top: 1px solid var(--color-border); padding: 13px 17px; background: var(--color-surface-2); }
+.mockreply .mr-k { font-size: 10.5px; font-family: var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-text-subtle); margin-bottom: 9px; }
+.mr-comment { display: flex; gap: 9px; }
+.mr-comment .mrc-body { min-width: 0; }
+.mr-comment .mrc-who { font-size: var(--text-caption); font-weight: 600; color: var(--color-text-muted); }
+.mr-comment .mrc-text { font-size: var(--text-small); color: var(--color-text-muted); line-height: 1.5; margin-top: 1px; }
+.mr-bot { display: flex; gap: 9px; margin-top: 11px; padding-left: 13px; position: relative; }
+.mr-bot::before { content: ""; position: absolute; left: 3px; top: 2px; bottom: 6px; width: 2px; border-radius: 2px; background: var(--color-border); }
+.mr-bot .mrb-body { min-width: 0; }
+.mr-bot .mrb-who { display: flex; align-items: center; gap: 7px; font-size: var(--text-caption); font-weight: 600; margin-bottom: 3px; }
+.mr-bot .mrb-tag { font-weight: 500; color: var(--color-accent); display: inline-flex; align-items: center; gap: 4px; }
+.mr-bot .mrb-text { font-size: var(--text-small); color: var(--color-text); line-height: 1.55; text-wrap: pretty; }
+
+/* preview loading + empty */
+.prev-loading { padding: 17px; display: flex; flex-direction: column; gap: 10px; }
+.prev-empty { padding: 34px 22px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 7px; color: var(--color-text-subtle); }
+.prev-empty .pe-mark { width: 40px; height: 40px; display: grid; place-items: center; border-radius: var(--radius-md); background: var(--color-surface-2); border: 1px solid var(--color-border); margin-bottom: 4px; }
+.prev-empty .pe-t { font-size: var(--text-small); font-weight: 600; color: var(--color-text-muted); }
+.prev-empty .pe-s { font-size: var(--text-caption); max-width: 30ch; line-height: 1.5; }
+
+/* ===================== shared: empty / skeleton / error ===================== */
+.sc-empty { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 40px 26px; border: 1px dashed var(--color-border); border-radius: var(--radius-lg); background: color-mix(in srgb, var(--color-surface) 50%, transparent); }
+.sc-empty .se-mark { width: 48px; height: 48px; display: grid; place-items: center; margin-bottom: 15px; border-radius: var(--radius-md); background: var(--color-surface-2); border: 1px solid var(--color-border); color: var(--color-text-subtle); }
+.sc-empty .se-title { font-size: var(--text-h3); font-weight: 600; }
+.sc-empty .se-sub { font-size: var(--text-small); color: var(--color-text-muted); margin-top: 6px; max-width: 44ch; line-height: 1.55; }
+.sc-empty-tpls { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 18px 0 4px; }
+.sc-empty-tpl { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-small); font-weight: 500; color: var(--color-text-muted); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-full); padding: 6px 13px; }
+.sc-empty .btn { margin-top: 16px; }
+
+.sc-error { display: flex; align-items: flex-start; gap: 13px; padding: 16px 18px; background: color-mix(in srgb, var(--color-danger) 7%, var(--color-surface)); border: 1px solid color-mix(in srgb, var(--color-danger) 28%, var(--color-border)); border-radius: var(--radius-lg); }
+.sc-error .sce-mark { width: 36px; height: 36px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-md); background: color-mix(in srgb, var(--color-danger) 13%, var(--color-surface)); color: var(--color-danger); }
+.sc-error .sce-body { flex: 1 1 auto; min-width: 0; }
+.sc-error .sce-title { font-size: var(--text-small); font-weight: 600; color: var(--color-text); }
+.sc-error .sce-sub { font-size: var(--text-caption); color: var(--color-text-muted); margin-top: 3px; line-height: 1.5; }
+
+/* skeleton lines (mirrors the product; the doc supplies the shimmer keyframes) */
+.sk { background: linear-gradient(100deg, var(--color-surface-2) 28%, color-mix(in srgb, var(--color-text) 7%, var(--color-surface-2)) 50%, var(--color-surface-2) 72%); background-size: 220% 100%; animation: shimmer 1.4s linear infinite; border-radius: 6px; }
+.sc-skel-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 17px 19px; display: flex; flex-direction: column; gap: 13px; }
+.sc-skel-row { display: flex; align-items: center; gap: 13px; }
+
+/* ===================== responsive (≤640) ===================== */
+@media (max-width: 880px) {
+  .sc-editor { grid-template-columns: 1fr; }
+  .sc-preview { position: static; }
+}
+@media (max-width: 640px) {
+  .tpl-grid { grid-template-columns: 1fr; }
+  .sc-card-foot { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .sc-card-actions { width: 100%; }
+  .sc-card-actions .btn { flex: 1 1 auto; }
+  .seg { width: 100%; }
+  .seg-opt { flex: 1 1 0; text-align: center; }
+  .sc-actionbar .btn { flex: 1 1 auto; }
+  .sc-actionbar .sa-spacer { margin-left: 0; width: 100%; }
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   REDESIGN — «РУТИННЫЙ АВТОПИЛОТ»
+   Scenarios becomes a routine autopilot: discover a PRESET (a real, shippable
+   recurring/conditional routine) → it pre-fills the ONE form → edit the 1–2
+   fields that ARE the intent → preview a real sample → switch it on. The list
+   is a CONTROL CENTER (is my week covered? is anything spamming?), not a CRUD
+   list. Every preset below is real — NO "soon". Built on the same ink tokens.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* ───────── discovery: lede microcopy + base-kit CTA ───────── */
+.sc-disco { display: flex; flex-direction: column; gap: 22px; }
+.sc-disco-lede { display: flex; align-items: center; gap: 13px; flex-wrap: wrap; padding: 15px 18px; background: color-mix(in srgb, var(--color-success) 7%, var(--color-surface)); border: 1px solid color-mix(in srgb, var(--color-success) 24%, var(--color-border)); border-radius: var(--radius-lg); }
+.sc-disco-lede .dl-mark { width: 34px; height: 34px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-md); background: color-mix(in srgb, var(--color-success) 13%, var(--color-surface)); border: 1px solid color-mix(in srgb, var(--color-success) 26%, transparent); color: var(--color-success); }
+.sc-disco-lede .dl-text { flex: 1 1 280px; min-width: 0; font-size: var(--text-small); color: var(--color-text); line-height: 1.5; }
+.sc-disco-lede .dl-text b { font-weight: 600; }
+.sc-disco-lede .btn { flex: 0 0 auto; }
+
+/* ───────── preset GALLERY (grouped by nature, impact-sorted) ───────── */
+.sc-pgroups { display: flex; flex-direction: column; gap: 26px; }
+.sc-pgroup { display: flex; flex-direction: column; gap: 13px; }
+.sc-pg-head { display: flex; align-items: baseline; gap: 11px; flex-wrap: wrap; }
+.sc-pg-title { font-size: var(--text-small); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text); }
+.sc-pg-note { font-size: var(--text-caption); color: var(--color-text-subtle); }
+.sc-pg-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; }
+.sc-pg-grid--two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* one preset card */
+.sc-pcard { display: flex; flex-direction: column; gap: 9px; text-align: left; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 15px 16px; cursor: pointer; transition: border-color var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard), transform var(--duration-fast) var(--ease-standard); min-width: 0; }
+.sc-pcard:hover { border-color: color-mix(in srgb, var(--color-text) 16%, var(--color-border)); box-shadow: var(--shadow-md); }
+.sc-pcard:active { transform: translateY(0.5px); }
+.sc-pcard-top { display: flex; align-items: center; gap: 11px; }
+.sc-pcard-ico { width: 38px; height: 38px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-md); background: var(--color-surface-2); border: 1px solid var(--color-border); color: var(--color-text-muted); }
+.sc-pcard-name { font-size: var(--text-small); font-weight: 600; letter-spacing: -0.004em; flex: 1 1 auto; min-width: 0; line-height: 1.25; }
+.sc-pcard-desc { font-size: var(--text-caption); color: var(--color-text-muted); line-height: 1.5; min-height: 2.4em; }
+.sc-pcard-foot { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
+.sc-pcard-when { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.01em; color: var(--color-text-subtle); display: inline-flex; align-items: center; gap: 5px; }
+.sc-pcard-when svg { opacity: 0.85; }
+/* impact rank — a tiny 3-pip meter, sorted high→low within a group */
+.sc-impact { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; }
+.sc-impact .ip { width: 5px; height: 5px; border-radius: var(--radius-full); background: var(--color-border); }
+.sc-impact .ip.on { background: var(--color-success); }
+.sc-impact .ip-k { font-size: 9.5px; font-family: var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-text-subtle); margin-right: 2px; }
+
+/* «Каждый день» reply-first core — highlighted group */
+.sc-pcard--core { background: color-mix(in srgb, var(--color-accent) 5%, var(--color-surface)); border-color: color-mix(in srgb, var(--color-accent) 24%, var(--color-border)); }
+.sc-pcard--core .sc-pcard-ico { background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface)); border-color: color-mix(in srgb, var(--color-accent) 26%, transparent); color: var(--color-accent); }
+/* THE FACE — Разговор дня, primary core preset */
+.sc-pcard--face { box-shadow: var(--shadow-md); }
+.sc-pcard--face .sc-pcard-name::after { content: "лицо ленты"; margin-left: 8px; font-family: var(--font-mono); font-size: 9px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-accent); border: 1px solid color-mix(in srgb, var(--color-accent) 30%, var(--color-border)); border-radius: var(--radius-full); padding: 1px 7px; vertical-align: 1px; white-space: nowrap; }
+
+/* «Кампании» — gated, visually set apart, last */
+.sc-pcampaign { border: 1px dashed color-mix(in srgb, var(--color-warning) 40%, var(--color-border)); border-radius: var(--radius-lg); background: color-mix(in srgb, var(--color-warning) 5%, var(--color-surface)); padding: 16px; }
+.sc-pcard--campaign { border-style: solid; }
+.sc-pcard--campaign .sc-pcard-ico { background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface)); border-color: color-mix(in srgb, var(--color-accent) 26%, transparent); color: var(--color-accent); }
+
+/* risk badge «мощно, осторожно» + soft frequency nudge */
+.sc-risk { display: inline-flex; align-items: center; gap: 5px; font-size: var(--text-caption); font-weight: 600; line-height: 1; padding: 4px 9px 4px 7px; border-radius: var(--radius-full); background: color-mix(in srgb, var(--color-warning) 13%, var(--color-surface)); color: var(--color-warning); border: 1px solid color-mix(in srgb, var(--color-warning) 30%, transparent); }
+.sc-nudge { font-size: var(--text-caption); color: var(--color-text-subtle); display: inline-flex; align-items: center; gap: 5px; }
+.sc-nudge code { font-family: var(--font-mono); font-size: 10.5px; background: var(--color-surface-2); border: 1px solid var(--color-border); padding: 1px 6px; border-radius: var(--radius-sm); color: var(--color-text-muted); white-space: nowrap; }
+
+/* quiet «с нуля» at the bottom */
+.sc-scratch { display: flex; justify-content: center; padding-top: 4px; }
+.sc-scratch button { background: transparent; border: none; cursor: pointer; font-family: inherit; font-size: var(--text-small); color: var(--color-text-subtle); display: inline-flex; align-items: center; gap: 7px; padding: 8px 12px; border-radius: var(--radius-md); }
+.sc-scratch button:hover { background: var(--color-surface-2); color: var(--color-text-muted); }
+
+/* ───────── CONTROL-CENTER list: cap control + stacking warnings ───────── */
+.sc-cc-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 13px 16px; background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius-lg); }
+.sc-cc-head .cc-k { font-size: var(--text-caption); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-subtle); display: inline-flex; align-items: center; gap: 7px; }
+/* per-day cap stepper */
+.sc-cap { display: inline-flex; align-items: center; gap: 9px; margin-left: auto; }
+.sc-cap-l { font-size: var(--text-small); color: var(--color-text-muted); }
+.sc-stepper { display: inline-flex; align-items: center; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); overflow: hidden; }
+.sc-stepper button { width: 32px; height: 34px; display: grid; place-items: center; background: transparent; border: none; cursor: pointer; color: var(--color-text-muted); font-family: inherit; }
+.sc-stepper button:hover { background: var(--color-surface-2); color: var(--color-text); }
+.sc-stepper .sv { min-width: 30px; text-align: center; font-size: var(--text-small); font-weight: 600; font-variant-numeric: tabular-nums; border-inline: 1px solid var(--color-border); height: 34px; display: grid; place-items: center; }
+
+/* stacking / autopost warnings — name the victims */
+.sc-warn { display: flex; align-items: flex-start; gap: 12px; padding: 13px 16px; border-radius: var(--radius-lg); background: color-mix(in srgb, var(--color-warning) 8%, var(--color-surface)); border: 1px solid color-mix(in srgb, var(--color-warning) 30%, var(--color-border)); }
+.sc-warn .sw-mark { width: 30px; height: 30px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-md); background: color-mix(in srgb, var(--color-warning) 14%, var(--color-surface)); color: var(--color-warning); }
+.sc-warn .sw-body { flex: 1 1 auto; min-width: 0; }
+.sc-warn .sw-title { font-size: var(--text-small); font-weight: 600; color: var(--color-text); }
+.sc-warn .sw-sub { font-size: var(--text-caption); color: var(--color-text-muted); margin-top: 2px; line-height: 1.5; }
+.sc-warn .sw-sub b { color: var(--color-text); font-weight: 600; }
+.sc-warn--autopost { background: color-mix(in srgb, var(--color-danger) 7%, var(--color-surface)); border-color: color-mix(in srgb, var(--color-danger) 28%, var(--color-border)); }
+.sc-warn--autopost .sw-mark { background: color-mix(in srgb, var(--color-danger) 13%, var(--color-surface)); color: var(--color-danger); }
+.sc-warn--autopost .btn { margin-top: 9px; }
+
+/* ───────── CONTROL-CENTER card: weekly cadence strip + provenance + runs ───────── */
+.sc-cadence { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.sc-cad-days { display: inline-flex; gap: 4px; }
+.sc-cad-day { width: 30px; height: 28px; display: grid; place-items: center; border-radius: var(--radius-sm); background: var(--color-surface-2); border: 1px solid var(--color-border); font-family: var(--font-mono); font-size: 10.5px; font-weight: 500; color: var(--color-text-subtle); }
+.sc-cad-day.fire { background: color-mix(in srgb, var(--color-accent) 14%, var(--color-surface)); border-color: color-mix(in srgb, var(--color-accent) 30%, transparent); color: var(--color-accent); font-weight: 600; }
+.sc-cad-day.fire--evt { background: color-mix(in srgb, var(--color-success) 13%, var(--color-surface)); border-color: color-mix(in srgb, var(--color-success) 28%, transparent); color: var(--color-success); }
+.sc-cad-cap { font-size: var(--text-caption); color: var(--color-text-subtle); display: inline-flex; align-items: center; gap: 6px; }
+.sc-cad-cap .cc-when { color: var(--color-text-muted); font-weight: 500; }
+
+/* run-count chip + skip note in the card foot */
+.sc-runcount { font-size: var(--text-caption); color: var(--color-text-subtle); display: inline-flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
+.sc-runcount b { color: var(--color-text-muted); font-weight: 600; }
+.sc-skip { display: flex; align-items: flex-start; gap: 9px; margin-top: 11px; padding: 9px 12px; border-radius: var(--radius-md); background: var(--color-surface-2); border: 1px dashed var(--color-border); font-size: var(--text-caption); color: var(--color-text-muted); line-height: 1.5; }
+.sc-skip svg { flex: 0 0 auto; margin-top: 1px; color: var(--color-text-subtle); }
+.sc-skip b { color: var(--color-text); font-weight: 600; }
+
+/* cross-account «Применить к…» */
+.sc-apply { display: inline-flex; align-items: center; gap: 7px; font-size: var(--text-small); font-weight: 500; color: var(--color-text-muted); background: transparent; border: 1px solid var(--color-border); border-radius: var(--radius-md); height: 32px; padding: 0 12px; cursor: pointer; }
+.sc-apply:hover { background: var(--color-surface-2); color: var(--color-text); }
+.sc-apply-pop { margin-top: 11px; padding: 13px 15px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-2); }
+.sc-apply-pop .ap-k { font-size: var(--text-caption); font-weight: 600; color: var(--color-text-subtle); margin-bottom: 10px; letter-spacing: 0.03em; text-transform: uppercase; }
+.sc-acct { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--color-border); }
+.sc-acct:first-of-type { border-top: none; padding-top: 0; }
+.sc-acct .ac-name { font-size: var(--text-small); font-weight: 500; flex: 1 1 auto; }
+.sc-acct .ac-h { font-size: var(--text-caption); color: var(--color-text-subtle); font-family: var(--font-mono); }
+.sc-apply-pop .ap-foot { display: flex; gap: 9px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--color-border); }
+
+/* ───────── unified form: КОГДА expanded (5 modes) ───────── */
+/* weekly day picker (Еженедельно) */
+.sc-weekdays { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+.sc-wd { width: 38px; height: 38px; display: grid; place-items: center; border-radius: var(--radius-md); background: var(--color-surface); border: 1px solid var(--color-border); font-size: var(--text-small); font-weight: 500; color: var(--color-text-muted); cursor: pointer; }
+.sc-wd.on { background: var(--color-primary); color: var(--color-primary-foreground); border-color: var(--color-primary); font-weight: 600; }
+/* date range (В период дат) */
+.sc-daterange { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.sc-daterange .dr-field { display: flex; flex-direction: column; gap: 5px; }
+.sc-daterange .dr-field label { font-size: var(--text-caption); color: var(--color-text-subtle); }
+.sc-daterange .field { width: 168px; }
+.sc-daterange .dr-arrow { color: var(--color-text-subtle); align-self: flex-end; margin-bottom: 9px; }
+/* event trigger (По событию) — read-only schedule + editable threshold */
+.sc-event { display: flex; flex-direction: column; gap: 13px; }
+.sc-event-ro { display: flex; align-items: center; gap: 11px; padding: 12px 14px; border-radius: var(--radius-md); background: var(--color-surface-2); border: 1px solid var(--color-border); }
+.sc-event-ro .ev-ico { width: 32px; height: 32px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-md); background: color-mix(in srgb, var(--color-success) 12%, var(--color-surface)); border: 1px solid color-mix(in srgb, var(--color-success) 26%, transparent); color: var(--color-success); }
+.sc-event-ro .ev-txt { font-size: var(--text-small); color: var(--color-text); line-height: 1.45; }
+.sc-event-ro .ev-txt b { font-weight: 600; }
+.sc-event-ro .ev-lock { margin-left: auto; font-size: 10px; font-family: var(--font-mono); letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-subtle); display: inline-flex; align-items: center; gap: 5px; flex: 0 0 auto; }
+.sc-threshold { display: flex; align-items: center; gap: 10px; font-size: var(--text-small); color: var(--color-text-muted); flex-wrap: wrap; }
+.sc-threshold .field { width: 130px; text-align: center; font-variant-numeric: tabular-nums; }
+.sc-threshold .th-auto { font-size: var(--text-caption); color: var(--color-text-subtle); }
+
+/* poll options editor (Опрос) */
+.sc-poll { display: flex; flex-direction: column; gap: 9px; }
+.sc-poll-opt { display: flex; align-items: center; gap: 9px; }
+.sc-poll-opt .po-n { width: 22px; height: 22px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-full); background: var(--color-surface-2); border: 1px solid var(--color-border); font-family: var(--font-mono); font-size: 11px; color: var(--color-text-subtle); }
+.sc-poll-opt .field { flex: 1 1 auto; }
+.sc-poll-opt .po-del { width: 34px; height: 34px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-sm); border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text-subtle); cursor: pointer; }
+.sc-poll-add { align-self: flex-start; }
+
+/* milestone ladder (Спасибо за N) */
+.sc-ladder { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: var(--text-small); color: var(--color-text-muted); }
+.sc-ladder .field { width: 92px; text-align: center; font-variant-numeric: tabular-nums; }
+
+/* ───────── «Что зашьётся» — read-only baked proven-rules ───────── */
+.sc-baked { border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-2); overflow: hidden; }
+.sc-baked-head { display: flex; align-items: center; gap: 11px; width: 100%; padding: 12px 15px; cursor: pointer; background: transparent; border: none; text-align: left; color: var(--color-text); font-family: inherit; }
+.sc-baked-head .bh-ico { width: 28px; height: 28px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-sm); background: var(--color-surface); border: 1px solid var(--color-border); color: var(--color-text-muted); }
+.sc-baked-head .bh-t { font-size: var(--text-small); font-weight: 600; flex: 1 1 auto; }
+.sc-baked-head .bh-chev { color: var(--color-text-subtle); transition: transform var(--duration-base) var(--ease-standard); flex: 0 0 auto; }
+.sc-baked--open .sc-baked-head .bh-chev { transform: rotate(90deg); }
+.sc-baked-body { padding: 4px 15px 15px; }
+.sc-baked-intro { font-size: var(--text-caption); color: var(--color-text-subtle); line-height: 1.5; margin: 0 0 11px; }
+.sc-baked-rules { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0; }
+.sc-baked-rule { display: flex; align-items: flex-start; gap: 9px; padding: 9px 0; border-top: 1px solid var(--color-border); font-size: var(--text-small); color: var(--color-text); line-height: 1.5; }
+.sc-baked-rule:first-child { border-top: none; }
+.sc-baked-rule .br-ico { flex: 0 0 auto; margin-top: 2px; color: var(--color-success); }
+.sc-baked-foot { display: flex; align-items: center; gap: 7px; margin-top: 11px; padding-top: 11px; border-top: 1px solid var(--color-border); font-size: var(--text-caption); color: var(--color-text-subtle); }
+
+/* ───────── preview: «Грунтован на…» honesty + Run-now result ───────── */
+.sc-primed { display: flex; align-items: center; gap: 8px; padding: 9px 17px; background: var(--color-surface-2); border-bottom: 1px solid var(--color-border); font-size: var(--text-caption); color: var(--color-text-subtle); line-height: 1.45; }
+.sc-primed svg { flex: 0 0 auto; opacity: 0.8; }
+.sc-primed b { color: var(--color-text-muted); font-weight: 600; }
+.sc-when-fires { display: flex; align-items: center; gap: 8px; padding: 11px 17px; border-top: 1px solid var(--color-border); font-size: var(--text-small); color: var(--color-text-muted); }
+.sc-when-fires svg { flex: 0 0 auto; color: var(--color-text-subtle); }
+.sc-when-fires b { color: var(--color-text); font-weight: 600; }
+.sc-runnow-bar { padding: 13px 17px; border-top: 1px solid var(--color-border); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sc-runnow-bar .rn-note { font-size: var(--text-caption); color: var(--color-text-subtle); flex: 1 1 140px; line-height: 1.4; }
+/* run-now produced a DRAFT (never publishes) */
+.sc-draftnote { display: flex; align-items: center; gap: 8px; padding: 11px 17px; background: color-mix(in srgb, var(--color-success) 8%, var(--color-surface)); border-top: 1px solid color-mix(in srgb, var(--color-success) 24%, var(--color-border)); font-size: var(--text-small); color: var(--color-success); font-weight: 600; }
+.sc-draftnote svg { flex: 0 0 auto; }
+.sc-draftnote .dn-sub { font-weight: 400; color: var(--color-text-muted); }
+
+/* responsive — preset gallery + control center */
+@media (max-width: 880px) {
+  .sc-pg-grid, .sc-pg-grid--two { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 640px) {
+  .sc-pg-grid, .sc-pg-grid--two { grid-template-columns: 1fr; }
+  .sc-disco-lede .btn { width: 100%; }
+  .sc-cc-head .sc-cap { margin-left: 0; width: 100%; }
+  .sc-daterange .field { width: 100%; }
+  .sc-cadence { gap: 9px; }
+}

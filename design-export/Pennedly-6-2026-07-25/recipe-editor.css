@@ -1,0 +1,376 @@
+/* recipe-editor.css — Pennedly «Редактор сценария», модель КАРТОЧКА-РЕЦЕПТ.
+   Сценарий = одна читаемая фраза с редактируемыми слотами. Тап по слоту
+   разворачивает редактор этого блока ПРЯМО НА МЕСТЕ (inline-drawer), не уводя
+   с экрана. Справа — живой предпросмотр + «следующие 3 запуска» + «Прогнать».
+   Прогрессивная глубина: Слой 1 «Суть» открыт, Слой 2 «Точнее» и Слой 3
+   «Только для этого сценария» свёрнуты.
+
+   Слой поверх ds/tokens.css + ds/components.css + scenarios.css +
+   scenarios-redesign.css. Только семантические токены. Светлая + тёмная. */
+
+/* ════════════════ КАРКАС ════════════════ */
+.rce { max-width: 1000px; position: relative; }
+
+/* ════════════════ ПОЛЕ ДЛИННОГО ТЕКСТА → ОТДЕЛЬНОЕ ОКНО ════════════════
+   Любой свободный текст (инструкция, тон, своя аудитория) — не тесная
+   textarea, а удобный триггер: показывает текущий текст и открывает
+   полноразмерное окно для ввода. */
+.bigtext { display: flex; flex-direction: column; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); overflow: hidden; cursor: text; transition: border-color var(--duration-base) var(--ease-standard); }
+.bigtext:hover { border-color: color-mix(in srgb, var(--color-accent) 32%, var(--color-border)); }
+.bigtext-val { padding: 11px 13px; font-size: var(--text-small); line-height: 1.55; color: var(--color-text); min-height: 52px; text-wrap: pretty; }
+.bigtext-val.is-empty { color: var(--color-text-subtle); }
+.bigtext-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 11px 8px 13px; border-top: 1px solid var(--color-border); background: var(--color-surface-2); }
+.bigtext-foot .bt-hint { font-size: var(--text-caption); color: var(--color-text-subtle); line-height: 1.4; min-width: 0; }
+.bigtext-expand { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-caption); font-weight: 600; color: var(--color-accent); background: transparent; border: none; cursor: pointer; font-family: inherit; padding: 4px 7px; border-radius: var(--radius-sm); white-space: nowrap; }
+.bigtext-expand:hover { background: color-mix(in srgb, var(--color-accent) 9%, transparent); }
+
+/* the dedicated window */
+.bt-overlay { position: absolute; inset: 0; z-index: 10; display: flex; align-items: flex-start; justify-content: center; padding: 48px 24px; }
+.bt-scrim { position: absolute; inset: 0; background: color-mix(in srgb, var(--color-ink-950) 48%, transparent); backdrop-filter: blur(1.5px); }
+.bt-dialog { position: relative; width: 100%; max-width: 580px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); overflow: hidden; display: flex; flex-direction: column; animation: bt-in var(--duration-base) var(--ease-entrance); }
+@keyframes bt-in { from { opacity: 0; transform: translateY(-8px) scale(0.99); } to { opacity: 1; transform: none; } }
+.bt-dh { display: flex; align-items: center; gap: 11px; padding: 15px 18px; border-bottom: 1px solid var(--color-border); }
+.bt-dh-ico { width: 30px; height: 30px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--color-accent) 11%, var(--color-surface)); border: 1px solid color-mix(in srgb, var(--color-accent) 24%, transparent); color: var(--color-accent); }
+.bt-dh-t { font-size: var(--text-body); font-weight: 600; flex: 1 1 auto; min-width: 0; letter-spacing: -0.004em; }
+.bt-dh-x { width: 30px; height: 30px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-sm); background: transparent; border: none; cursor: pointer; color: var(--color-text-subtle); }
+.bt-dh-x:hover { background: var(--color-surface-2); color: var(--color-text); }
+.bt-db { padding: 18px; display: flex; flex-direction: column; gap: 13px; }
+.bt-area { width: 100%; min-height: 280px; resize: vertical; font-family: inherit; font-size: 15.5px; line-height: 1.6; color: var(--color-text); background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 14px 15px; outline: none; }
+.bt-area:focus { border-color: var(--color-accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 22%, transparent); background: var(--color-surface); }
+.bt-why { display: flex; align-items: flex-start; gap: 8px; font-size: var(--text-caption); color: var(--color-text-subtle); line-height: 1.5; }
+.bt-why svg { flex: 0 0 auto; margin-top: 1px; opacity: 0.8; }
+.bt-why b { color: var(--color-text-muted); font-weight: 600; }
+.bt-df { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-top: 1px solid var(--color-border); background: var(--color-surface-2); }
+.bt-df .bt-count { font-size: var(--text-caption); color: var(--color-text-subtle); font-variant-numeric: tabular-nums; }
+.rce-grid { display: grid; grid-template-columns: minmax(0, 1fr) 392px; gap: 30px; align-items: start; }
+@media (max-width: 900px) { .rce-grid { grid-template-columns: 1fr; gap: 22px; } }
+.rce-main { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+/* статус-строка над рецептом */
+.rce-status { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.rce-status .sc-bigstatus { margin-left: auto; }
+.rce-next { font-size: var(--text-small); color: var(--color-text-muted); display: inline-flex; align-items: center; gap: 7px; }
+.rce-next svg { color: var(--color-text-subtle); flex: 0 0 auto; }
+.rce-next b { color: var(--color-text); font-weight: 600; }
+
+/* ════════════════ КАРТОЧКА-РЕЦЕПТ ════════════════ */
+.recipe { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-xl); box-shadow: var(--shadow-sm); overflow: hidden; }
+.recipe-eyebrow { display: flex; align-items: center; gap: 8px; padding: 14px 22px; border-bottom: 1px solid var(--color-border); background: var(--color-surface-2); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-subtle); }
+.recipe-eyebrow svg { color: var(--color-accent); flex: 0 0 auto; }
+.recipe-eyebrow .re-kind { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.04em; color: var(--color-text-muted); border: 1px solid var(--color-border); border-radius: var(--radius-full); padding: 2px 9px 2px 7px; background: var(--color-surface); text-transform: none; }
+.recipe-eyebrow .re-kind svg { color: var(--color-accent); }
+
+/* the prose itself — large, readable, editorial */
+.recipe-prose { font-size: 21px; line-height: 1.75; color: var(--color-text); margin: 0; padding: 22px 24px 12px; text-wrap: pretty; font-weight: 400; }
+.recipe-prose .who { font-weight: 600; color: var(--mention); white-space: nowrap; }
+
+/* username/mention gets its OWN colour (violet) so it never reads as an
+   editable blue slot. Distinct hue, same calmness; works light + dark. */
+.recipe { --mention: oklch(0.52 0.14 295); }
+.dark .recipe, .frame.dark .recipe { --mention: oklch(0.80 0.12 295); }
+
+/* condition on its own quiet line UNDER the sentence — never chops the prose */
+.recipe-cond { padding: 0 24px 20px; font-size: 15px; line-height: 1.6; color: var(--color-text-muted); }
+.recipe-cond .rc-condlead { display: inline-flex; align-items: center; gap: 6px; color: var(--color-text-subtle); }
+.recipe-cond .rc-condlead svg { opacity: 0.7; }
+.recipe-cond .rc-slot { font-size: 15px; }
+
+/* ════════════════ 5 ВАРИАНТОВ ОФОРМЛЕНИЯ СЛОТОВ ════════════════
+   Все — без подсветок и подчёркиваний. Слот = просто текст, который
+   читается как ссылка (цветом или весом). Включается классом recipe--vN. */
+/* общий сброс для всех вариантов: убрать рамку-подчёркивание и иконки-приставки */
+.recipe--v1 .rc-slot, .recipe--v2 .rc-slot, .recipe--v3 .rc-slot, .recipe--v4 .rc-slot, .recipe--v5 .rc-slot { border-bottom: none; }
+.recipe--v1 .rcs-ico, .recipe--v2 .rcs-ico, .recipe--v3 .rcs-ico, .recipe--v4 .rcs-ico, .recipe--v5 .rcs-ico { display: none; }
+.recipe--v1 .rc-slot--lock, .recipe--v2 .rc-slot--lock, .recipe--v3 .rc-slot--lock, .recipe--v4 .rc-slot--lock, .recipe--v5 .rc-slot--lock { border-bottom: none; font-weight: 400; }
+.recipe--v1 .rc-slot--add, .recipe--v2 .rc-slot--add, .recipe--v3 .rc-slot--add, .recipe--v4 .rc-slot--add, .recipe--v5 .rc-slot--add { border: none; background: transparent; padding: 0; font-size: 1em; }
+
+/* V1 · синие ссылки — акцент, полужирный, без подчёркивания */
+.recipe--v1 .rc-slot { color: var(--color-accent); font-weight: 600; }
+.recipe--v1 .rc-slot:hover { color: color-mix(in srgb, var(--color-accent) 78%, var(--color-text)); }
+.recipe--v1 .rc-slot--add { color: var(--color-accent); font-weight: 600; }
+
+/* V2 · серый полужирный — приглушённый, вес выделяет «поля» */
+.recipe--v2 .rc-slot { color: var(--color-text-muted); font-weight: 600; }
+.recipe--v2 .rc-slot:hover { color: var(--color-text); }
+.recipe--v2 .rc-slot--add { color: var(--color-text-subtle); font-weight: 600; }
+
+/* V3 · контраст веса — значения тёмные жирные, связки серые обычные, без цвета */
+.recipe--v3 .recipe-prose { color: var(--color-text-subtle); }
+.recipe--v3 .rc-slot { color: var(--color-text); font-weight: 700; }
+.recipe--v3 .rc-slot:hover { color: var(--color-accent); }
+.recipe--v3 .rc-slot--add { color: var(--color-text-muted); font-weight: 600; }
+.recipe--v3 .recipe-prose .who { color: var(--color-text); }
+
+/* V4 · только при наведении — в покое чистый текст, ховер красит в синий */
+.recipe--v4 .rc-slot { color: inherit; font-weight: inherit; }
+.recipe--v4 .rc-slot:hover { color: var(--color-accent); }
+.recipe--v4 .rc-slot--add { color: var(--color-text-subtle); font-weight: 500; }
+.recipe--v4 .rc-slot--add:hover { color: var(--color-accent); }
+
+/* V5 · значение + маркер-каретка — тёмный полужирный, акцентный «⌄» в конце */
+.recipe--v5 .rc-slot { color: var(--color-text); font-weight: 600; }
+.recipe--v5 .rc-slot::after { content: " ⌄"; color: var(--color-accent); font-weight: 400; font-size: 0.82em; vertical-align: 1px; }
+.recipe--v5 .rc-slot:hover { color: var(--color-accent); }
+.recipe--v5 .rc-slot--add { color: var(--color-accent); font-weight: 600; }
+.recipe--v5 .rc-slot--add::after { content: none; }
+
+/* ════════════════ С ЯВНЫМ СИГНАЛОМ «МОЖНО НАЖАТЬ» ════════════════
+   База — синие ссылки; сверху добавляем подсказку, что это редактируется. */
+/* строка-легенда над фразой */
+.recipe-hint { display: flex; align-items: center; gap: 8px; padding: 11px 24px 0; font-size: 13px; color: var(--color-text-subtle); }
+.recipe-hint svg { color: var(--color-accent); flex: 0 0 auto; }
+.recipe-hint b { color: var(--color-text-muted); font-weight: 600; }
+
+/* общий синий-ссылочный базис для v6–v8 + сброс рамок/иконок */
+.recipe--v6 .rc-slot, .recipe--v7 .rc-slot, .recipe--v8 .rc-slot { border-bottom: none; color: var(--color-accent); font-weight: 600; }
+.recipe--v6 .rcs-ico, .recipe--v7 .rcs-ico, .recipe--v8 .rcs-ico { display: none; }
+.recipe--v6 .rc-slot--lock, .recipe--v7 .rc-slot--lock, .recipe--v8 .rc-slot--lock { border-bottom: none; font-weight: 400; }
+.recipe--v6 .rc-slot--add, .recipe--v7 .rc-slot--add, .recipe--v8 .rc-slot--add { border: none; background: transparent; padding: 0; font-size: 1em; color: var(--color-accent); font-weight: 600; }
+
+/* V6 · синее + карандаш в конце каждого слота */
+.recipe--v6 .rc-slot::after { content: " ✎"; font-size: 0.76em; color: color-mix(in srgb, var(--color-accent) 80%, var(--color-text)); vertical-align: 1px; }
+.recipe--v6 .rc-slot--lock::after, .recipe--v6 .rc-slot--add::after { content: none; }
+
+/* V7 · синее + каретка «⌄» (как у выпадающего списка) */
+.recipe--v7 .rc-slot::after { content: " ⌄"; font-size: 0.82em; color: var(--color-accent); vertical-align: 1px; }
+.recipe--v7 .rc-slot--lock::after, .recipe--v7 .rc-slot--add::after { content: none; }
+
+/* V8 · синее + мягкая «пилюля» появляется только на наведении (в покое чисто) */
+.recipe--v8 .rc-slot { border-radius: 6px; padding: 1px 5px; margin: 0 -3px; -webkit-box-decoration-break: clone; box-decoration-break: clone; transition: background var(--duration-base) var(--ease-standard); }
+.recipe--v8 .rc-slot:hover { background: color-mix(in srgb, var(--color-accent) 12%, transparent); }
+.recipe--v8 .rc-slot--lock { padding: 0; margin: 0; }
+
+/* ════════════════ С ЯВНОЙ МЕТКОЙ-ОБВОДКОЙ (точки / пунктир) ════════════════ */
+.recipe--v9 .rc-slot, .recipe--v10 .rc-slot, .recipe--v11 .rc-slot { border-bottom: none; }
+.recipe--v9 .rcs-ico, .recipe--v10 .rcs-ico, .recipe--v11 .rcs-ico { display: none; }
+.recipe--v9 .rc-slot--lock, .recipe--v10 .rc-slot--lock, .recipe--v11 .rc-slot--lock { border-bottom: none; font-weight: 400; text-decoration: none; }
+.recipe--v9 .rc-slot--add, .recipe--v10 .rc-slot--add, .recipe--v11 .rc-slot--add { border: none; background: transparent; padding: 0; font-size: 1em; text-decoration: none; }
+
+/* V9 · точки под текстом (серый пунктир), сам текст тёмный спокойный */
+.recipe--v9 .rc-slot { color: var(--color-text); font-weight: 600; text-decoration: underline; text-decoration-style: dotted; text-decoration-color: color-mix(in srgb, var(--color-text-subtle) 75%, transparent); text-underline-offset: 4px; text-decoration-thickness: 1.5px; }
+.recipe--v9 .rc-slot:hover { color: var(--color-accent); text-decoration-color: var(--color-accent); }
+.recipe--v9 .rc-slot--add { color: var(--color-text-subtle); font-weight: 600; }
+
+/* V10 · точки под текстом + синий текст (двойной сигнал) */
+.recipe--v10 .rc-slot { color: var(--color-accent); font-weight: 600; text-decoration: underline; text-decoration-style: dotted; text-decoration-color: color-mix(in srgb, var(--color-accent) 50%, transparent); text-underline-offset: 4px; text-decoration-thickness: 1.5px; }
+.recipe--v10 .rc-slot:hover { text-decoration-color: var(--color-accent); }
+.recipe--v10 .rc-slot--add { color: var(--color-accent); font-weight: 600; }
+
+/* V11 · тонкая пунктирная серая обводка вокруг слова (без заливки) */
+.recipe--v11 .rc-slot { color: var(--color-text); font-weight: 600; border: 1px dashed color-mix(in srgb, var(--color-text-subtle) 55%, var(--color-border)); border-radius: 6px; padding: 1px 6px; margin: 0 1px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.recipe--v11 .rc-slot:hover { border-color: var(--color-accent); color: var(--color-accent); }
+.recipe--v11 .rc-slot--lock { border: 1px dotted var(--color-border); border-radius: 6px; padding: 1px 6px; }
+.recipe--v11 .rc-slot--add { color: var(--color-text-subtle); font-weight: 600; }
+
+/* открытый слот (его редактор сейчас развёрнут) — акцентом, без чужого solid-подчёркивания */
+.recipe--v9 .rc-slot.is-open, .recipe--v10 .rc-slot.is-open { color: var(--color-accent); border-bottom: none; text-decoration-color: var(--color-accent); }
+.recipe--v11 .rc-slot.is-open { color: var(--color-accent); border-color: var(--color-accent); border-bottom: 1px dashed var(--color-accent); }
+
+/* an editable slot — underlined word, NO fill block */
+.rc-slot { display: inline; white-space: normal; font: inherit; font-weight: 600; color: var(--color-text); cursor: pointer; line-height: inherit;
+  background: transparent; border: none;
+  border-bottom: 1px dashed color-mix(in srgb, var(--color-accent) 55%, var(--color-border));
+  border-radius: 0; padding: 0 1px; transition: color var(--duration-base) var(--ease-standard), border-color var(--duration-base) var(--ease-standard); }
+.rc-slot:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.rc-slot:hover { color: var(--color-accent); border-bottom-color: var(--color-accent); }
+.rc-slot.is-open { color: var(--color-accent); border-bottom: 2px solid var(--color-accent); }
+.rc-slot .rcs-ico { vertical-align: -2px; margin-right: 2px; opacity: 0.6; }
+
+/* a locked slot — value is fixed by the platform (e.g. reply polls every 15 min) */
+.rc-slot--lock { color: var(--color-text-muted); background: transparent; border: none; border-bottom: 1px dotted var(--color-border); cursor: default; display: inline-flex; align-items: center; gap: 5px; font-weight: 600; padding: 0 1px; }
+.rc-slot--lock svg { opacity: 0.6; flex: 0 0 auto; }
+
+/* empty IF slot reads as a quiet "+ добавить условие" */
+.rc-slot--add { color: var(--color-text-subtle); background: transparent; border: 1px dashed var(--color-border); font-weight: 500; font-size: 0.9em; border-radius: 7px; padding: 3px 11px; vertical-align: 1px; display: inline-flex; align-items: center; gap: 5px; }
+.rc-slot--add:hover { color: var(--color-accent); border-color: color-mix(in srgb, var(--color-accent) 40%, var(--color-border)); background: transparent; }
+.rc-slot--add.is-open { color: var(--color-accent); border-color: var(--color-accent); border-style: solid; }
+
+/* ════════════════ INLINE-DRAWER (редактор слота прямо на месте) ════════════════ */
+.rc-drawer { border-top: 1px solid var(--color-border); background: var(--color-surface-2); padding: 0; animation: rcd-in var(--duration-base) var(--ease-entrance); }
+@keyframes rcd-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.rcd-head { display: flex; align-items: center; gap: 10px; padding: 14px 22px 0; }
+.rcd-head .rcdh-ico { width: 28px; height: 28px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--color-accent) 11%, var(--color-surface)); border: 1px solid color-mix(in srgb, var(--color-accent) 24%, transparent); color: var(--color-accent); }
+.rcd-head .rcdh-t { font-size: var(--text-small); font-weight: 600; flex: 1 1 auto; }
+.rcd-head .rcdh-done { background: var(--color-primary); color: var(--color-primary-foreground); border: none; cursor: pointer; font-family: inherit; font-size: var(--text-small); font-weight: 600; padding: 6px 14px; border-radius: var(--radius-sm); display: inline-flex; align-items: center; gap: 6px; }
+.rcd-head .rcdh-done:hover { background: color-mix(in srgb, var(--color-primary) 88%, var(--color-bg)); }
+.rcd-body { padding: 14px 22px 20px; display: flex; flex-direction: column; gap: 15px; }
+
+/* «зачем / что даст» — микро-строка пользы под контролом (петля «увидел→поменял→проверил») */
+.rc-why { display: flex; align-items: flex-start; gap: 8px; font-size: var(--text-caption); color: var(--color-text-subtle); line-height: 1.5; }
+.rc-why svg { flex: 0 0 auto; margin-top: 1px; opacity: 0.8; }
+.rc-why b { color: var(--color-text-muted); font-weight: 600; }
+
+/* «наследуется из Правил дома → переопределить здесь» */
+.rc-inherit { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-caption); color: var(--color-text-subtle); }
+.rc-inherit .ri-badge { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--color-accent); border: 1px solid color-mix(in srgb, var(--color-accent) 30%, var(--color-border)); border-radius: var(--radius-full); padding: 1px 7px; }
+.rc-inherit a { color: var(--color-accent); font-weight: 600; text-decoration: none; }
+.rc-inherit a:hover { text-decoration: underline; }
+
+/* честная подпись про жёсткий предел платформы */
+.rc-hard { display: flex; align-items: flex-start; gap: 7px; font-size: var(--text-caption); color: var(--color-text-subtle); line-height: 1.45; padding: 8px 11px; border-radius: var(--radius-sm); background: var(--color-surface); border: 1px solid var(--color-border); }
+.rc-hard svg { flex: 0 0 auto; margin-top: 1px; opacity: 0.85; }
+
+/* ── точное время + разброс (джиттер) ── */
+.rc-time-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.rc-time-row .field { width: 92px; text-align: center; font-variant-numeric: tabular-nums; }
+.rc-jitter { flex: 1 1 220px; min-width: 180px; }
+.rc-jitter .rcj-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.rc-jitter .rcj-k { font-size: var(--text-caption); color: var(--color-text-muted); font-weight: 500; }
+.rc-jitter .rcj-v { font-size: var(--text-caption); font-weight: 600; color: var(--color-text); font-variant-numeric: tabular-nums; }
+.rc-range { -webkit-appearance: none; appearance: none; width: 100%; height: 5px; border-radius: var(--radius-full); background: linear-gradient(90deg, color-mix(in srgb, var(--color-accent) 55%, var(--color-surface)) 0 40%, var(--color-border) 40% 100%); outline: none; }
+.rc-range::-webkit-slider-thumb { -webkit-appearance: none; width: 17px; height: 17px; border-radius: var(--radius-full); background: var(--color-surface); border: 2px solid var(--color-accent); cursor: pointer; box-shadow: var(--shadow-sm); }
+.rc-range::-moz-range-thumb { width: 17px; height: 17px; border-radius: var(--radius-full); background: var(--color-surface); border: 2px solid var(--color-accent); cursor: pointer; }
+
+/* ── дни недели (мульти) ── */
+.wk-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+.wk-pill { min-width: 38px; height: 34px; padding: 0 9px; display: grid; place-items: center; border-radius: var(--radius-sm); font-size: var(--text-small); font-weight: 500; cursor: pointer; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text-muted); font-family: inherit; }
+.wk-pill:hover { border-color: color-mix(in srgb, var(--color-text) 16%, var(--color-border)); }
+.wk-pill--on { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-primary-foreground); font-weight: 600; }
+
+/* ── гибкий планировщик «Когда» ── */
+.seg--wrap { display: flex; flex-wrap: wrap; }
+.when-modebody { display: flex; flex-direction: column; gap: 15px; }
+.rc-inline2 { display: flex; align-items: center; gap: 9px; font-size: var(--text-small); color: var(--color-text); flex-wrap: wrap; }
+.rc-toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 11px 13px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+.rc-toggle-row .rtr-t { font-size: var(--text-small); font-weight: 500; }
+.rc-toggle-row .rtr-d { font-size: var(--text-caption); color: var(--color-text-subtle); margin-top: 2px; line-height: 1.4; }
+.daytime-list { display: flex; flex-direction: column; }
+.daytime-row { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-top: 1px solid var(--color-border); }
+.daytime-row:first-child { border-top: none; padding-top: 2px; }
+.daytime-row .dt-day { width: 40px; flex: 0 0 auto; font-size: var(--text-small); font-weight: 600; color: var(--color-text); }
+.daytime-row .rc-slots { flex: 1 1 auto; }
+.dom-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+.dom-grid .wk-pill { min-width: 0; padding: 0; height: 32px; }
+.dom-last { width: 100%; margin-top: 7px; }
+.dom-grid .wk-pill.dom-rare { color: var(--color-text-subtle); }
+.dom-grid .wk-pill.dom-rare.wk-pill--on { color: var(--color-primary-foreground); }
+.dom-note, .yd-note { display: flex; align-items: flex-start; gap: 7px; margin-top: 9px; font-size: var(--text-caption); color: var(--color-text-subtle); line-height: 1.45; }
+.dom-note svg, .yd-note svg { flex: 0 0 auto; margin-top: 1px; opacity: 0.8; }
+.dom-note b, .yd-note b { color: var(--color-text-muted); font-weight: 600; }
+.dom-fallback { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; padding: 11px 13px; border-radius: var(--radius-md); background: color-mix(in srgb, var(--color-warning) 7%, var(--color-surface)); border: 1px solid color-mix(in srgb, var(--color-warning) 26%, var(--color-border)); }
+.dom-fallback .domf-k { display: flex; align-items: center; gap: 7px; font-size: var(--text-caption); font-weight: 600; color: var(--color-warning); }
+.dom-fallback .domf-k svg { flex: 0 0 auto; }
+.dom-fallback .field { max-width: 320px; }
+.rc-daterange { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.rc-daterange .field { max-width: 172px; }
+.rc-daterange .dr-sep { color: var(--color-text-subtle); }
+.count-badge { display: inline-flex; align-items: center; gap: 6px; margin-top: 9px; font-family: var(--font-mono); font-size: 11px; color: var(--color-text-muted); background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius-full); padding: 3px 10px; }
+.count-badge svg { opacity: 0.8; }
+.year-dates { display: flex; flex-direction: column; gap: 8px; }
+.year-dates .yd-row { display: flex; align-items: center; gap: 8px; }
+.year-dates .yd-row .field { max-width: 132px; }
+.year-dates .yd-row .cr-x { width: 28px; height: 28px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-sm); background: transparent; border: none; cursor: pointer; color: var(--color-text-subtle); }
+.year-dates .yd-row .cr-x:hover { background: var(--color-surface-2); color: var(--color-danger); }
+.year-dates .rc-slotadd { align-self: flex-start; }
+
+/* ── слоты времени (несколько в день) ── */
+.rc-slots { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.rc-slotchip { display: inline-flex; align-items: center; gap: 7px; font-size: var(--text-small); font-weight: 600; padding: 6px 8px 6px 11px; border-radius: var(--radius-full); background: var(--color-surface); border: 1px solid var(--color-border); color: var(--color-text); font-variant-numeric: tabular-nums; }
+.rc-slotchip .scx { width: 18px; height: 18px; display: grid; place-items: center; border-radius: var(--radius-full); background: transparent; border: none; cursor: pointer; color: var(--color-text-subtle); }
+.rc-slotchip .scx:hover { background: var(--color-surface-2); color: var(--color-text); }
+.rc-slotadd { display: inline-flex; align-items: center; gap: 5px; font-size: var(--text-small); font-weight: 600; color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 9%, var(--color-surface)); border: 1px dashed color-mix(in srgb, var(--color-accent) 36%, var(--color-border)); cursor: pointer; font-family: inherit; padding: 6px 12px; border-radius: var(--radius-full); }
+.rc-slotadd:hover { background: color-mix(in srgb, var(--color-accent) 15%, var(--color-surface)); }
+
+/* ── конструктор условий (ЕСЛИ) ── */
+.cond-list { display: flex; flex-direction: column; gap: 9px; }
+.cond-row { display: flex; align-items: center; gap: 11px; padding: 11px 13px; border-radius: var(--radius-md); background: var(--color-surface); border: 1px solid var(--color-border); }
+.cond-row .cr-ico { width: 26px; height: 26px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-sm); background: var(--color-surface-2); border: 1px solid var(--color-border); color: var(--color-text-muted); }
+.cond-row .cr-body { flex: 1 1 auto; min-width: 0; }
+.cond-row .cr-t { font-size: var(--text-small); font-weight: 500; color: var(--color-text); }
+.cond-row .cr-d { font-size: var(--text-caption); color: var(--color-text-subtle); margin-top: 1px; line-height: 1.4; }
+.cond-row .cr-ctl { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; }
+.cond-row .cr-x { width: 26px; height: 26px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-sm); background: transparent; border: none; cursor: pointer; color: var(--color-text-subtle); }
+.cond-row .cr-x:hover { background: var(--color-surface-2); color: var(--color-danger); }
+.cond-add { display: inline-flex; align-items: center; gap: 7px; align-self: flex-start; font-size: var(--text-small); font-weight: 600; color: var(--color-accent); background: transparent; border: 1px dashed color-mix(in srgb, var(--color-accent) 36%, var(--color-border)); cursor: pointer; font-family: inherit; padding: 9px 14px; border-radius: var(--radius-md); }
+.cond-add:hover { background: color-mix(in srgb, var(--color-accent) 7%, var(--color-surface)); }
+/* menu of addable conditions */
+.cond-menu { display: flex; flex-direction: column; gap: 2px; padding: 6px; border-radius: var(--radius-md); background: var(--color-surface); border: 1px solid var(--color-border); box-shadow: var(--shadow-md); }
+.cond-menu .cm-opt { display: flex; align-items: center; gap: 10px; padding: 9px 11px; border-radius: var(--radius-sm); cursor: pointer; background: transparent; border: none; font-family: inherit; text-align: left; width: 100%; color: var(--color-text); }
+.cond-menu .cm-opt:hover { background: var(--color-surface-2); }
+.cond-menu .cm-opt svg { color: var(--color-text-subtle); flex: 0 0 auto; }
+.cond-menu .cm-opt .cm-t { font-size: var(--text-small); font-weight: 500; flex: 1 1 auto; }
+.cond-menu .cm-opt .cm-d { font-size: var(--text-caption); color: var(--color-text-subtle); }
+
+/* tiny stepper input */
+.rc-step { display: inline-flex; align-items: center; gap: 0; border: 1px solid var(--color-border); border-radius: var(--radius-sm); overflow: hidden; background: var(--color-surface); }
+.rc-step button { width: 30px; height: 32px; border: none; background: transparent; cursor: pointer; color: var(--color-text-muted); font-size: 16px; display: grid; place-items: center; }
+.rc-step button:hover { background: var(--color-surface-2); color: var(--color-text); }
+.rc-step .rcs-val { min-width: 42px; text-align: center; font-size: var(--text-small); font-weight: 600; font-variant-numeric: tabular-nums; border-left: 1px solid var(--color-border); border-right: 1px solid var(--color-border); height: 32px; display: grid; place-items: center; }
+
+/* ── «Кому отвечать» — компактная галерея аудитории ── */
+.aud-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; }
+@media (max-width: 520px) { .aud-grid { grid-template-columns: 1fr; } }
+.aud-tile { display: flex; flex-direction: column; gap: 4px; padding: 12px 13px; border-radius: var(--radius-md); border: 1px solid var(--color-border); background: var(--color-surface); cursor: pointer; text-align: left; font-family: inherit; transition: border-color var(--duration-base) var(--ease-standard); }
+.aud-tile:hover { border-color: color-mix(in srgb, var(--color-text) 16%, var(--color-border)); }
+.aud-tile .at-t { font-size: var(--text-small); font-weight: 600; color: var(--color-text); display: flex; align-items: center; gap: 7px; }
+.aud-tile .at-t svg { color: var(--color-text-subtle); flex: 0 0 auto; }
+.aud-tile .at-d { font-size: var(--text-caption); color: var(--color-text-subtle); line-height: 1.4; }
+.aud-tile--on { border-color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 6%, var(--color-surface)); box-shadow: 0 0 0 1px var(--color-accent); }
+.aud-tile--on .at-t svg { color: var(--color-accent); }
+.aud-custom { margin-top: 11px; }
+
+/* ── КАК публиковать (Спроси ↔ Авто) внутри редактора ── */
+.rce-how .sc-mode { padding: 12px 14px; }
+
+/* ════════════════ СЛОИ ГЛУБИНЫ ════════════════ */
+.rce-layers { display: flex; flex-direction: column; gap: 12px; }
+.rce-layer { border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); box-shadow: var(--shadow-sm); overflow: hidden; }
+.rce-layer.is-open { border-color: color-mix(in srgb, var(--color-accent) 30%, var(--color-border)); }
+.rl-head { display: flex; align-items: center; gap: 12px; width: 100%; padding: 15px 18px; cursor: pointer; background: transparent; border: none; text-align: left; font-family: inherit; color: var(--color-text); }
+.rl-head:hover { background: var(--color-surface-2); }
+.rl-chev { color: var(--color-text-subtle); transition: transform var(--duration-base) var(--ease-standard); flex: 0 0 auto; }
+.is-open > .rl-head .rl-chev { transform: rotate(90deg); }
+.rl-hd { flex: 1 1 auto; min-width: 0; }
+.rl-t { font-size: 15px; font-weight: 600; letter-spacing: -0.004em; display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.rl-pro { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-text-subtle); border: 1px solid var(--color-border); border-radius: var(--radius-full); padding: 1px 8px; }
+.rl-sum { font-size: var(--text-caption); color: var(--color-text-subtle); margin-top: 3px; line-height: 1.45; text-wrap: pretty; }
+.rl-body { padding: 4px 18px 19px; border-top: 1px solid var(--color-border); display: flex; flex-direction: column; gap: 20px; }
+.rl-group { display: flex; flex-direction: column; gap: 11px; }
+.rl-group > .rlg-k { font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-text-subtle); }
+
+/* layer-3 stub — «для продвинутых», реализуем второй волной */
+.rce-stub { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border-radius: var(--radius-md); border: 1px dashed var(--color-border); background: var(--color-surface-2); }
+.rce-stub .rs-ico { width: 30px; height: 30px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--radius-sm); background: var(--color-surface); border: 1px solid var(--color-border); color: var(--color-text-subtle); }
+.rce-stub .rs-t { font-size: var(--text-small); font-weight: 600; color: var(--color-text); }
+.rce-stub .rs-d { font-size: var(--text-caption); color: var(--color-text-muted); margin-top: 2px; line-height: 1.5; }
+.rce-stub .rs-soon { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-subtle); border: 1px solid var(--color-border); border-radius: var(--radius-full); padding: 2px 8px; margin-top: 8px; display: inline-block; }
+
+/* ════════════════ ПРАВО · ЖИВОЙ ПРЕДПРОСМОТР ════════════════ */
+.rce-aside { position: sticky; top: 18px; display: flex; flex-direction: column; gap: 13px; }
+@media (max-width: 900px) { .rce-aside { position: static; } }
+.rce-stagecap { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-subtle); display: inline-flex; align-items: center; gap: 7px; }
+.rce-stage { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-2xl); box-shadow: var(--shadow-lg); overflow: hidden; }
+.rce-stagebar { display: flex; align-items: center; gap: 9px; padding: 12px 17px; border-bottom: 1px solid var(--color-border); background: var(--color-surface-2); }
+.rce-stagebar .sb-dot { width: 9px; height: 9px; border-radius: var(--radius-full); flex: 0 0 auto; background: color-mix(in srgb, var(--color-accent) 55%, var(--color-border)); }
+.rce-stagebar .sb-t { font-size: var(--text-small); font-weight: 600; color: var(--color-text-muted); }
+.rce-stagebar .sb-live { margin-left: auto; font-size: 10px; font-family: var(--font-mono); letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-subtle); display: inline-flex; align-items: center; gap: 6px; }
+.rce-stagebar .sb-live::before { content: ""; width: 6px; height: 6px; border-radius: var(--radius-full); background: var(--color-success); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-success) 20%, transparent); }
+.rce-stage .mockpost { padding: 18px 20px; }
+.rce-stage .mockpost-text { font-size: 15px; line-height: 1.65; }
+.rce-stage .mockreply { padding: 16px 20px; }
+
+.rce-invoice { display: flex; align-items: flex-start; gap: 8px; padding: 11px 17px; background: var(--color-surface-2); border-top: 1px solid var(--color-border); font-size: var(--text-caption); color: var(--color-text-subtle); line-height: 1.45; }
+.rce-invoice svg { flex: 0 0 auto; margin-top: 1px; opacity: 0.85; }
+.rce-invoice b { color: var(--color-text-muted); font-weight: 600; }
+
+/* следующие 3 запуска */
+.rce-runs { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 14px 16px; }
+.rce-runs .rr-k { font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-text-subtle); display: flex; align-items: center; gap: 7px; margin-bottom: 11px; }
+.rce-runs .rr-k svg { color: var(--color-text-subtle); }
+.rr-list { display: flex; flex-direction: column; }
+.rr-item { display: flex; align-items: center; gap: 11px; padding: 9px 0; border-top: 1px solid var(--color-border); }
+.rr-item:first-child { border-top: none; padding-top: 0; }
+.rr-item .rri-dot { width: 7px; height: 7px; border-radius: var(--radius-full); flex: 0 0 auto; background: color-mix(in srgb, var(--color-accent) 60%, var(--color-border)); }
+.rr-item .rri-when { font-size: var(--text-small); font-weight: 600; color: var(--color-text); flex: 0 0 auto; font-variant-numeric: tabular-nums; min-width: 116px; }
+.rr-item .rri-what { font-size: var(--text-caption); color: var(--color-text-subtle); flex: 1 1 auto; line-height: 1.4; text-align: right; }
+
+.rce-runnow { display: flex; align-items: center; gap: 11px; flex-wrap: wrap; }
+.rce-runnow .rn-note { font-size: var(--text-caption); color: var(--color-text-subtle); flex: 1 1 130px; line-height: 1.4; }
+
+/* подпись режима публикации решается ВНУТРИ редактора (слот КАК), не в окне */
+.rce-foot { display: flex; flex-direction: column; gap: 13px; margin-top: 4px; }
+.rce-foot .sc-actionbar { margin-top: 2px; }
+
+@media (max-width: 900px) {
+  .rce-aside { margin-top: 2px; }
+}
