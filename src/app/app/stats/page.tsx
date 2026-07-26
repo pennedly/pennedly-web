@@ -50,9 +50,10 @@ const DEMO_FOLLOWER_POINTS = Array.from({ length: 14 }, (_, i) => ({
 // Demo best-time heatmap (?demo=1): evenings + weekends hottest, nights coolest —
 // fills the whole grid so the colour range reads clearly.
 const DEMO_HEATMAP = (() => {
-  const blockBase = [4200, 9000, 16500, 2400]; // morning, day, evening, night
+  // Six three-hour blocks, 06–24 local: 6–8 · 9–11 · 12–14 · 15–17 · 18–20 · 21–23.
+  const blockBase = [3200, 9000, 7400, 6100, 16500, 8200];
   const out: { weekday: number; block: number; posts: number; avg_views: number }[] = [];
-  for (let block = 0; block < 4; block++)
+  for (let block = 0; block < 6; block++)
     for (let wd = 1; wd <= 7; wd++) {
       const weekend = wd >= 6 ? 1.45 : 1;
       const wobble = 0.8 + (((wd * 7 + block * 3) % 5) * 0.1);

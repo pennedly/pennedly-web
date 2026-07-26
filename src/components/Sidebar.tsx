@@ -289,7 +289,10 @@ export function Sidebar() {
             aria-hidden
           />
           <aside
-            className="relative flex w-72 max-w-[82%] flex-col border-r border-border bg-bg px-3.5 py-4 shadow-lg"
+            // Эталон (mobile/pennedly-mobile.css .m-drawer): width min(82%, 312px)
+            // on --color-surface — the panel reads as a sheet over the page, not
+            // as the page itself. We were 24px narrower and used the page bg.
+            className="relative flex w-[min(82%,312px)] flex-col border-r border-border bg-surface px-3.5 py-4 shadow-lg"
             style={{ animation: "drawer-in 0.22s var(--ease-entrance)" }}
           >
             <button

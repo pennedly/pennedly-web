@@ -234,7 +234,21 @@ export default function FeedPage() {
       setPostAutoReply(p.id, next).catch(() => {
         setPosts((ps) => ps.map((x) => (x.id === p.id ? { ...x, auto_reply: !next } : x)));
       });
-      toast(next ? t("feed.autoreply_on") : t("feed.autoreply_off"), "success", { description: next ? t("feed.autoreply_sub_on") : t("feed.autoreply_sub_off") });
+      // Turning it ON while the account reply master is OFF stores the override
+      // but nothing goes out — say that instead of a plain success (B-major
+      // from LAUNCH-READINESS: the toggle used to claim success either way).
+      const masterOff = replyMode === "off";
+      toast(
+        next ? t("feed.autoreply_on") : t("feed.autoreply_off"),
+        next && masterOff ? "error" : "success",
+        {
+          description: next
+            ? masterOff
+              ? t("feed.autoreply_master_off")
+              : t("feed.autoreply_sub_on")
+            : t("feed.autoreply_sub_off"),
+        },
+      );
     },
     onDelete: (p) => setDeleteTarget(p),
     onTranslate: async (p, lang) => (await translateText(p.text, lang.code)).translated_text,
@@ -367,6 +381,7 @@ export default function FeedPage() {
                   authorName={demoOn ? "Mara Lin" : account.name}
                   authorHandle={demoOn ? "mara.lin" : account.handle}
                   tester={demoOn ? true : isTester}
+                  replyMasterOff={!demoOn && replyMode === "off"}
                   h={handlers}
                 />
               ))}

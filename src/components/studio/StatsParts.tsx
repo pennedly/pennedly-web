@@ -490,11 +490,18 @@ export type HeatCellRow = { weekday: number; block: number; posts: number; avg_v
 // Cool → warm so the difference is obvious at a glance (the founder's ask):
 // low avg views = cool blue, high = warm coral. Index 0 = empty (no posts).
 const HEAT_COLORS = ["", "var(--color-heat-1)", "var(--color-heat-2)", "var(--color-heat-3)", "var(--color-heat-4)"];
+// Six THREE-hour columns, exactly the grid the design draws (6 AM · 9 AM · 12 PM
+// · 3 PM · 6 PM · 9 PM), left→right. `block = -1` from the API is the off-grid
+// night bucket (00–05): it has no column, so the panel reports it in a footnote
+// instead of dropping those posts silently.
+const HEAT_BLOCKS = [0, 1, 2, 3, 4, 5] as const;
 const HEAT_BLOCK_KEYS: MessageKey[] = [
-  "stats.block_morning",
-  "stats.block_day",
-  "stats.block_evening",
-  "stats.block_night",
+  "stats.block_6am",
+  "stats.block_9am",
+  "stats.block_12pm",
+  "stats.block_3pm",
+  "stats.block_6pm",
+  "stats.block_9pm",
 ];
 
 // Best-time-to-post heatmap: weekday (cols) × time-of-day block (rows), each
@@ -514,6 +521,8 @@ export function HeatmapPanel({ cap, cells }: { cap: string; cells: HeatCellRow[]
     return r <= 0.25 ? 1 : r <= 0.5 ? 2 : r <= 0.75 ? 3 : 4;
   };
   const hasData = cells.some((c) => c.posts > 0);
+  // The API's off-grid night bucket (block -1, 00:00–05:59) — no column for it.
+  const offGrid = cells.reduce((n, c) => (c.block === -1 ? n + c.posts : n), 0);
   const DAYS = [1, 2, 3, 4, 5, 6, 7];
   return (
     <section className="rounded-lg border border-border bg-surface px-5 pb-4 pt-[18px] shadow-sm">
@@ -526,18 +535,19 @@ export function HeatmapPanel({ cap, cells }: { cap: string; cells: HeatCellRow[]
       ) : (
         <>
           <div className="overflow-x-auto">
-            <div className="grid min-w-[320px] gap-1" style={{ gridTemplateColumns: "minmax(54px,auto) repeat(7, minmax(0,1fr))" }}>
+            {/* Time across the top, weekdays down the side — the design's axes. */}
+            <div className="grid min-w-[320px] gap-1" style={{ gridTemplateColumns: "minmax(42px,auto) repeat(6, minmax(0,1fr))" }}>
               <div />
-              {DAYS.map((wd) => (
-                <div key={`h${wd}`} className="pb-0.5 text-center text-caption font-medium capitalize text-text-subtle">
-                  {dayLabel(wd)}
+              {HEAT_BLOCKS.map((block) => (
+                <div key={`h${block}`} className="pb-0.5 text-center text-caption font-medium text-text-subtle">
+                  {t(HEAT_BLOCK_KEYS[block])}
                 </div>
               ))}
-              {[0, 1, 2, 3].flatMap((block) => [
-                <div key={`l${block}`} className="flex items-center pr-2 text-caption font-medium text-text-muted">
-                  {t(HEAT_BLOCK_KEYS[block])}
+              {DAYS.flatMap((wd) => [
+                <div key={`l${wd}`} className="flex items-center pr-2 text-caption font-medium capitalize text-text-muted">
+                  {dayLabel(wd)}
                 </div>,
-                ...DAYS.map((wd) => {
+                ...HEAT_BLOCKS.map((block) => {
                   const c = byKey.get(`${wd}-${block}`);
                   const lvl = level(c);
                   const title =
@@ -556,6 +566,13 @@ export function HeatmapPanel({ cap, cells }: { cap: string; cells: HeatCellRow[]
               ])}
             </div>
           </div>
+          {offGrid > 0 && (
+            // Posts published 00:00–05:59 have no column in this grid — say how
+            // many instead of letting them vanish from the panel.
+            <p className="mt-2.5 text-caption text-text-subtle">
+              {t("stats.heat_offgrid").replace("{n}", String(offGrid))}
+            </p>
+          )}
           <div className="mt-3 flex items-center justify-end gap-1.5 text-caption text-text-subtle">
             <span>{t("stats.heat_low")}</span>
             {[1, 2, 3, 4].map((l) => (

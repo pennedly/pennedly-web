@@ -661,6 +661,7 @@ export function FeedCard({
   authorName,
   authorHandle,
   tester,
+  replyMasterOff = false,
   h,
 }: {
   p: FeedCardModel;
@@ -670,6 +671,10 @@ export function FeedCard({
   authorName: string;
   authorHandle: string;
   tester: boolean;
+  /** The account's reply master is OFF — a per-post «reply to this» is stored
+   *  but nothing goes out until the master is back on, so say so instead of
+   *  letting the pill claim replies are running. */
+  replyMasterOff?: boolean;
   h: FeedHandlers;
 }) {
   const { t } = useTranslation();
@@ -761,13 +766,20 @@ export function FeedCard({
           type="button"
           aria-pressed={p.autoReply}
           onClick={() => h.onToggleAutoReply(p)}
+          title={p.autoReply && replyMasterOff ? t("feed.autoreply_master_off") : undefined}
           className={cn(
             "inline-flex h-8 items-center gap-[7px] rounded-full border pl-[11px] pr-[13px] text-small font-medium transition-colors max-md:h-9 max-md:self-start",
-            p.autoReply ? "border-accent/32 bg-accent/12 text-accent" : "border-border bg-surface-2 text-text-muted hover:border-text/20",
+            // ON + master OFF reads as pending, not active — the accent tint is
+            // reserved for replies that actually go out.
+            p.autoReply && !replyMasterOff
+              ? "border-accent/32 bg-accent/12 text-accent"
+              : p.autoReply
+                ? "border-warning/30 bg-warning/[0.08] text-text-muted"
+                : "border-border bg-surface-2 text-text-muted hover:border-text/20",
           )}
         >
           {p.autoReply ? <IcReply size={14} /> : <span className="h-[9px] w-[9px] rounded-full border-[1.6px] border-text-subtle" />}
-          {p.autoReply ? t("feed.autoreply_on") : t("feed.autoreply_off")}
+          {p.autoReply ? (replyMasterOff ? t("feed.autoreply_paused") : t("feed.autoreply_on")) : t("feed.autoreply_off")}
         </button>
         <div className="ml-auto flex items-center gap-2 max-md:ml-0 max-md:w-full">
           {p.threadsUrl ? (
