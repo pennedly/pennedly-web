@@ -1,9 +1,8 @@
 import type { HTMLAttributes } from "react";
 
 import { cn } from "@/lib/cn";
-import { IcX } from "@/components/icons";
 
-// Badge — graded status pill (quiet, desaturated). Tag — removable chip.
+// Badge — graded status pill (quiet, desaturated).
 // Status = quiet colored dots/badges, never loud fills.
 
 export type BadgeTone = "good" | "neutral" | "bad" | "accent";
@@ -41,34 +40,4 @@ export function Badge({
  *  via `bg-current`, or pass a `bg-*` class. */
 export function StatusDot({ className }: { className?: string }) {
   return <span className={cn("h-[7px] w-[7px] shrink-0 rounded-full", className)} />;
-}
-
-export function Tag({
-  onRemove,
-  className,
-  children,
-  ...rest
-}: { onRemove?: () => void } & HTMLAttributes<HTMLSpanElement>) {
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border border-border bg-surface-2 py-1 text-caption font-medium text-text",
-        onRemove ? "pl-2.5 pr-1.5" : "px-2.5",
-        className,
-      )}
-      {...rest}
-    >
-      {children}
-      {onRemove && (
-        <button
-          type="button"
-          onClick={onRemove}
-          aria-label="Remove"
-          className="grid h-4 w-4 place-items-center rounded-full text-text-subtle transition-colors hover:bg-text/10 hover:text-text"
-        >
-          <IcX size={11} />
-        </button>
-      )}
-    </span>
-  );
 }

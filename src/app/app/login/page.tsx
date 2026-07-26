@@ -60,6 +60,7 @@ const DEV_BUILD = process.env.NEXT_PUBLIC_BUILD_HASH || "dev";
 // Globe + locale code → 8-locale listbox (login.css .lang-switch), on the real
 // i18n store. Matches the design's LangSwitch (not the flag-based shell one).
 function LangSwitch() {
+  const { t } = useTranslation();
   const current = useLocale();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -95,7 +96,7 @@ function LangSwitch() {
       {open && (
         <div
           role="listbox"
-          aria-label="Interface language"
+          aria-label={t("a11y.interface_language")}
           className="absolute right-0 top-[calc(100%+6px)] z-20 min-w-[200px] rounded-lg border border-border bg-surface p-1.5 shadow-lg"
         >
           {LOCALES.map((l) => {

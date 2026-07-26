@@ -15,7 +15,7 @@ import Link from "next/link";
 
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/cn";
-import { useTranslation } from "@/lib/i18n";
+import { pluralKey, useTranslation } from "@/lib/i18n";
 import { tzLocalHourToUtc, tzUtcOffsetLabel } from "@/lib/timezone";
 import { IcChevRight, IcClock, IcReplies, IcSliders, IcVoice } from "@/components/icons";
 
@@ -168,10 +168,10 @@ export function HouseRules({
   onQuietTo,
   onCeiling,
 }: HouseRulesProps) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
 
   // ── collapsed summary: built from the live values ──
-  const postsLabel = (cap === 1 ? t("ap.summary.posts_one") : t("ap.summary.posts_many")).replace("{n}", String(cap));
+  const postsLabel = t(pluralKey(locale, cap, { one: "ap.summary.posts_one", few: "ap.summary.posts_few", many: "ap.summary.posts_many" })).replace("{n}", String(cap));
   const freqLabel = t(FREQ_SUMMARY_KEY[freq]);
   const quietLabel = quietOn ? `${quietFrom}–${quietTo}` : "—";
   // split «… <b>{posts}</b> … <b>{freq}</b> … <b>{quiet}</b>» so we can bold the values.

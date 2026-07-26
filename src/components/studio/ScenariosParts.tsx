@@ -20,7 +20,7 @@ import Link from "next/link";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/cn";
-import { useTranslation } from "@/lib/i18n";
+import { pluralKey, useTranslation } from "@/lib/i18n";
 import { localHourToUtc, localUtcOffsetLabel } from "@/lib/timezone";
 import {
   IcArrowUp,
@@ -619,9 +619,9 @@ export function ConflictBracket({
 
 // The quiet «{n} совет скрыт» button in the routine-list header (design .rl-hidden).
 export function HiddenTipsPill({ count, onShow }: { count: number; onShow: () => void }) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   if (count <= 0) return null;
-  const label = (count === 1 ? t("scenarios.tip.hidden_one") : t("scenarios.tip.hidden_many")).replace("{n}", String(count));
+  const label = t(pluralKey(locale, count, { one: "scenarios.tip.hidden_one", few: "scenarios.tip.hidden_few", many: "scenarios.tip.hidden_many" })).replace("{n}", String(count));
   return (
     <button
       type="button"

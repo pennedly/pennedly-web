@@ -114,7 +114,7 @@ export default function AuditDetailPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-bg">
-        <Spinner size={20} className="text-text-subtle" />
+        <Spinner size={20} className="text-text-subtle" label={t("a11y.loading")} />
       </div>
     );
   }

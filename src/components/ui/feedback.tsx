@@ -4,11 +4,15 @@ import { cn } from "@/lib/cn";
 
 // Loading + empty primitives: Spinner, Skeleton(+Text), EmptyState.
 
-export function Spinner({ size = 16, className }: { size?: number; className?: string }) {
+// `label` is what a screen reader announces. Pass a localized string wherever
+// the spinner IS the loading state (a whole screen or panel). Left out, the
+// spinner goes decorative — that is the case inside buttons and rows, where a
+// localized label ("Saving…", "Connecting…") already sits right next to it and
+// a second announcement would only repeat it in English.
+export function Spinner({ size = 16, className, label }: { size?: number; className?: string; label?: string }) {
   return (
     <span
-      role="status"
-      aria-label="Loading"
+      {...(label ? { role: "status", "aria-label": label } : { "aria-hidden": true })}
       className={cn(
         "inline-block animate-spin rounded-full border-2 border-current border-t-transparent",
         className,

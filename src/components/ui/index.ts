@@ -4,7 +4,7 @@
 
 export { Button, buttonClasses, type ButtonVariant, type ButtonSize } from "./button";
 export { Card, Panel } from "./card";
-export { Badge, StatusDot, Tag, type BadgeTone } from "./badge";
+export { Badge, StatusDot, type BadgeTone } from "./badge";
 export { Input, Textarea, Select, FieldLabel, FieldHint } from "./field";
 export { Switch } from "./switch";
 export { Spinner, Skeleton, SkeletonText, EmptyState } from "./feedback";

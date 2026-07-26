@@ -28,7 +28,8 @@ type Unit =
   | "items"
   | "profiles"
   | "brands"
-  | "changes";
+  | "changes"
+  | "published_posts";
 
 // `other` mirrors the plain plural already in the message catalogs; `one`
 // (and `few`/`many` for ru/uk) are the additions that make counts grammatical.
@@ -143,6 +144,18 @@ const UNITS: Record<Unit, Record<LocaleCode, PluralForms>> = {
     it: { one: "modifica", other: "modifiche" },
     pt: { one: "alteração", other: "alterações" },
   },
+  // The feed's own counter ("12 published posts") — the adjective inflects with
+  // the noun in Slavic locales, so it travels as one unit, not `posts` + a word.
+  published_posts: {
+    en: { one: "published post", other: "published posts" },
+    ru: { one: "опубликованный пост", few: "опубликованных поста", many: "опубликованных постов", other: "опубликованных постов" },
+    uk: { one: "опублікований пост", few: "опубліковані пости", many: "опублікованих постів", other: "опублікованих постів" },
+    de: { one: "veröffentlichter Beitrag", other: "veröffentlichte Beiträge" },
+    es: { one: "publicación publicada", other: "publicaciones publicadas" },
+    fr: { one: "post publié", other: "posts publiés" },
+    it: { one: "post pubblicato", other: "post pubblicati" },
+    pt: { one: "post publicado", other: "posts publicados" },
+  },
 };
 
 /** The unit noun for `count`, inflected for `locale` — e.g. (ru, 4, "posts") → "поста". */
@@ -150,4 +163,22 @@ export function pluralUnit(locale: LocaleCode, unit: Unit, count: number): strin
   const forms = UNITS[unit][locale];
   const category = new Intl.PluralRules(locale).select(count);
   return forms[category as keyof PluralForms] ?? forms.other;
+}
+
+/** Catalog-key picker for whole sentences that inflect ("{n} tips hidden").
+ *
+ *  The old idiom here was `n === 1 ? key_one : key_many`, which is right for
+ *  English and wrong for ru/uk, where 2–4 takes its own form ("2 совета", not
+ *  "2 советов"). This picks by the real CLDR category instead, falling back to
+ *  `many` when a locale has no `few` (every non-Slavic one). Use `pluralUnit`
+ *  when only a noun inflects; use this when the verb or adjective moves too. */
+export function pluralKey<K extends string>(
+  locale: LocaleCode,
+  count: number,
+  forms: { one: K; few?: K; many: K },
+): K {
+  const category = new Intl.PluralRules(locale).select(count);
+  if (category === "one") return forms.one;
+  if (category === "few") return forms.few ?? forms.many;
+  return forms.many;
 }

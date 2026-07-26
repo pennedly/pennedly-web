@@ -19,7 +19,7 @@ import { AppFooter } from "@/components/AppFooter";
 import { Sidebar } from "@/components/Sidebar";
 import { Spinner } from "@/components/ui/feedback";
 import { fetchMe, getTokens, subscribeTokens } from "@/lib/api";
-import { adoptServerLocale } from "@/lib/i18n";
+import { adoptServerLocale, useTranslation } from "@/lib/i18n";
 import {
   refreshAccountsPresence,
   useHasConnectedAccounts,
@@ -36,6 +36,7 @@ export default function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const { t } = useTranslation();
   const pathname = usePathname();
   const router = useRouter();
   const exempt = SHELL_EXEMPT.has(pathname) || isAccountScreen(pathname);
@@ -131,7 +132,7 @@ export default function AppLayout({
   if (hasAccounts !== true) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-bg">
-        <Spinner size={20} className="text-text-subtle" />
+        <Spinner size={20} className="text-text-subtle" label={t("a11y.loading")} />
       </div>
     );
   }

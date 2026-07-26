@@ -9,7 +9,7 @@
 import { type ReactNode } from "react";
 
 import { cn } from "@/lib/cn";
-import { useTranslation, type MessageKey } from "@/lib/i18n";
+import { pluralUnit, useTranslation, type MessageKey } from "@/lib/i18n";
 import { smoothAreaPath, smoothLinePath } from "@/lib/chart";
 import { IcArrowDown, IcArrowRight, IcArrowUp, IcBubble, IcChart, IcEye, IcHeart, IcLock, IcNib, IcSparkle } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -284,6 +284,7 @@ function FollowerCollect({ locked, title, sub }: { locked: boolean; title: strin
 }
 
 function FollowerLine({ series }: { series: number[] }) {
+  const { t } = useTranslation();
   const W = 600;
   const H = 120;
   const PAD = 10;
@@ -299,7 +300,7 @@ function FollowerLine({ series }: { series: number[] }) {
   const curve = smoothLinePath(pts);
   const area = smoothAreaPath(pts, H);
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="auto" role="img" aria-label="Followers over time" className="mt-4 block">
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="auto" role="img" aria-label={t("a11y.followers_chart")} className="mt-4 block">
       <path d={area} fill="var(--color-accent)" fillOpacity="0.1" />
       <path d={curve} fill="none" stroke="var(--color-accent)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
       <circle cx={x(n - 1)} cy={y(series[n - 1])} r="3.6" fill="var(--color-accent)" stroke="var(--color-surface)" strokeWidth="2" />
@@ -329,7 +330,7 @@ export function DistributionBars({
   tiers: { viral: number; good: number; average: number; weak: number };
   calculating?: boolean;
 }) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const total = tiers.viral + tiers.good + tiers.average + tiers.weak;
   const maxCount = Math.max(1, tiers.viral, tiers.good, tiers.average, tiers.weak);
   return (
@@ -366,7 +367,7 @@ export function DistributionBars({
                   <span className="skel h-[13px] w-[46px] shrink-0 rounded" aria-hidden />
                 ) : (
                   <span className="shrink-0 text-small font-semibold tabular-nums">
-                    {n} {t("stats.posts_word")}
+                    {n} {pluralUnit(locale, "posts", n)}
                     <span className="ml-1.5 font-normal text-text-subtle">{pct}%</span>
                   </span>
                 )}
@@ -552,7 +553,7 @@ export function HeatmapPanel({ cap, cells }: { cap: string; cells: HeatCellRow[]
                   const lvl = level(c);
                   const title =
                     c && c.posts > 0
-                      ? `${dayLabel(wd)} · ${t(HEAT_BLOCK_KEYS[block])} — ${fmt(Math.round(c.avg_views))} ${t("stats.cap_per")} · ${c.posts} ${t("stats.posts_word")}`
+                      ? `${dayLabel(wd)} · ${t(HEAT_BLOCK_KEYS[block])} — ${fmt(Math.round(c.avg_views))} ${t("stats.cap_per")} · ${c.posts} ${pluralUnit(locale, "posts", c.posts)}`
                       : `${dayLabel(wd)} · ${t(HEAT_BLOCK_KEYS[block])} — ${t("stats.heat_no_posts")}`;
                   return (
                     <div

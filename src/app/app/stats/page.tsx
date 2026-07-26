@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 
 import { ApiError, clearTokens, fetchEngagement, fetchFollowers, fetchMe, fetchStats, getTokens, refreshStats } from "@/lib/api";
 import { useSelectedAccountId } from "@/lib/account";
-import { useTranslation, type MessageKey } from "@/lib/i18n";
+import { pluralUnit, useTranslation, type MessageKey } from "@/lib/i18n";
 import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
 import { BetaNotice } from "@/components/ui/beta-notice";
 import { ErrorBanner } from "@/components/ui/error-banner";
@@ -351,7 +351,7 @@ export default function StatsPage() {
   const GRAN_KEY: Record<Gran, MessageKey> = { hour: "stats.g_hour", day: "stats.g_day", week: "stats.g_week" };
   const granWord = t(GRAN_KEY[gran]);
   const chartCap = `${t("stats.cap_per")} ${granWord} · ${periodLabel}`;
-  const tierCap = `${model?.current.posts ?? 0} ${t("stats.posts_word")} ${t("stats.spread_cap")} · ${periodLabel}`;
+  const tierCap = `${model?.current.posts ?? 0} ${pluralUnit(locale, "posts", model?.current.posts ?? 0)} ${t("stats.spread_cap")} · ${periodLabel}`;
 
   // ── honest empty-states (First-Run-SPEC §4) ──
   // Viral tiers: "Calculating…" until a baseline exists — first-run, or a real

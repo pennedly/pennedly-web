@@ -171,7 +171,7 @@ export function ConnectNetworkDialog({
       <div className="acc-connect-panel">
         <div className="acc-connect-head">
           <span className="acc-connect-title">{t("acc.picker_choose")}</span>
-          <button className="acc-connect-close" type="button" aria-label="close" onClick={onClose}>
+          <button className="acc-connect-close" type="button" aria-label={t("a11y.close")} onClick={onClose}>
             <IcX size={16} />
           </button>
         </div>

@@ -132,6 +132,7 @@ function DebugStyles() {
 // ───────────────────────────── Pieces ───────────────────────────────────────
 
 function ThemeToggle() {
+  const { t } = useTranslation();
   const [dark, setDark] = useState(false);
   // The no-FOUC script in the root layout sets `.dark` before paint; read it
   // on mount so the icon matches.
@@ -150,7 +151,7 @@ function ThemeToggle() {
     <button
       type="button"
       onClick={toggle}
-      aria-label="Toggle theme"
+      aria-label={t("a11y.toggle_theme")}
       data-fx="iconbtn"
       className="grid h-[38px] w-[38px] place-items-center rounded-md border border-border bg-surface text-text-muted transition-colors duration-[120ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] hover:bg-surface-2 hover:text-text"
     >
@@ -615,7 +616,7 @@ function LandingContent({ showSample }: { showSample: boolean }) {
             <BrandMark size={20} radius={6} /> © {new Date().getFullYear()} Pennedly
           </span>
           <span className="flex-1" />
-          <nav aria-label="Legal" className="flex flex-wrap items-center gap-x-[18px] gap-y-1.5">
+          <nav aria-label={t("a11y.legal_nav")} className="flex flex-wrap items-center gap-x-[18px] gap-y-1.5">
             {FOOTER_LINKS.map((l) => (
               <Link
                 key={l.labelKey}

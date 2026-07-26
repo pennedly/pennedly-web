@@ -40,7 +40,7 @@ import {
 } from "@/lib/api";
 import { useSelectedAccountId } from "@/lib/account";
 import { cn } from "@/lib/cn";
-import { useTranslation, type MessageKey } from "@/lib/i18n";
+import { pluralKey, useTranslation, type MessageKey } from "@/lib/i18n";
 import { useTesterGuard } from "@/lib/tester";
 import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
 import { Button } from "@/components/ui/button";
@@ -275,7 +275,7 @@ function freshForm(preset: ScenarioPreset | null, t: (k: MessageKey) => string):
 
 export default function ScenariosPage() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [demoParam] = useState(() =>
     typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("demo") === "1" : false,
   );
@@ -681,7 +681,7 @@ export default function ScenariosPage() {
     const time = fmtHour(group.hour);
     const quoted = group.scenarios.map((s) => `**«${s.name}»**`);
     const names = quoted.length <= 1 ? quoted.join("") : `${quoted.slice(0, -1).join(", ")} ${t("common.and")} ${quoted[quoted.length - 1]}`;
-    const title = (n === 1 ? t("scenarios.tip.conflict_title_one") : t("scenarios.tip.conflict_title_many")).replace("{n}", String(n));
+    const title = t(pluralKey(locale, n, { one: "scenarios.tip.conflict_title_one", few: "scenarios.tip.conflict_title_few", many: "scenarios.tip.conflict_title_many" })).replace("{n}", String(n));
     const body = t("scenarios.tip.conflict_body").replace("{names}", names).replace("{time}", time).replace("{cap}", String(cap));
     return { id: `conflict:${group.hour}`, title, body };
   }
@@ -1536,7 +1536,7 @@ export default function ScenariosPage() {
             <div className="flex flex-wrap items-baseline justify-between gap-x-3.5 gap-y-0.5">
               <span className="text-h3 font-semibold tracking-tight">{t("ap.routines.title")}</span>
               <span className="text-small text-text-subtle">
-                {(scenarios.length === 1 ? t("ap.routines.count_one") : t("ap.routines.count_many"))
+                {t(pluralKey(locale, scenarios.length, { one: "ap.routines.count_one", few: "ap.routines.count_few", many: "ap.routines.count_many" }))
                   .replace("{total}", String(scenarios.length))
                   .replace("{active}", String(activeCount))}
               </span>

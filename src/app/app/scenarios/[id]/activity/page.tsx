@@ -112,7 +112,7 @@ export default function ScenarioActivityPage() {
     <ActivityShell title={data?.scenario_name ?? t("scenarios.activity.title")} sub={t("scenarios.act.subtitle")}>
       {loading ? (
         <div className="grid place-items-center py-20">
-          <Spinner />
+          <Spinner label={t("a11y.loading")} />
         </div>
       ) : error ? (
         <div className="rounded-lg border border-border border-l-[3px] border-l-danger bg-surface px-4 py-3.5 text-small text-text-muted shadow-sm">

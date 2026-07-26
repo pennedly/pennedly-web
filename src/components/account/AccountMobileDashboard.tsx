@@ -215,7 +215,7 @@ function NavDrawer({ data, t, nav, onClose, onOpenLogin, active = "dashboard" }:
   return (
     <>
       <button className="m-scrim" type="button" aria-label="" onClick={onClose} />
-      <aside className="m-drawer" role="dialog" aria-label="Account menu">
+      <aside className="m-drawer" role="dialog" aria-label={t("a11y.account_menu")}>
         <div className="m-drawer-head">
           <div className="m-drawer-brand">
             <span className="m-brand-mark">
@@ -374,7 +374,7 @@ function Topbar({
         </span>
       ) : null}
       <div className="ma-top-spacer" />
-      <button className="ma-top-ic" type="button" aria-label="theme" onClick={() => { nav.toggleTheme(); setThemeDark((d) => !d); }}>
+      <button className="ma-top-ic" type="button" aria-label={t("a11y.toggle_theme")} onClick={() => { nav.toggleTheme(); setThemeDark((d) => !d); }}>
         {isDark ? <IcSun size={16} /> : <IcMoon size={16} />}
       </button>
     </div>

@@ -1522,7 +1522,7 @@ export default function OnboardingPage() {
     <>
       {stage === "loading" ? (
         <div className="flex min-h-screen items-center justify-center text-text" style={{ background: OB_BG }}>
-          <Spinner size={20} />
+          <Spinner size={20} label={t("a11y.loading")} />
         </div>
       ) : (
         <Frame stepIndex={STAGE_INDEX[stage]} showSkip={showSkip} showBack={showBack} preview={preview} onSkip={onSkip} wide={wide}>

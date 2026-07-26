@@ -57,7 +57,7 @@ import { ReplyAudienceGallery } from "@/components/studio/ReplyAudienceGallery";
 import { AUDIENCE_PRESETS, type ReplyAudience, mergeAudiencePrompt } from "@/components/studio/reply-audience";
 import { Badge, InheritChip, StatusBadge } from "@/components/studio/Badges";
 import { IcReplies, IcRepeat, IcSliders, IcSwap } from "@/components/icons";
-import { useTranslation, type MessageKey } from "@/lib/i18n";
+import { pluralKey, useTranslation, type MessageKey } from "@/lib/i18n";
 import { cn } from "@/lib/cn";
 import type { Scenario, ScenarioPreset, ScenarioPreview as ScenarioPreviewT } from "@/lib/types";
 
@@ -512,7 +512,7 @@ const GAL_CONFLICT: Scenario[] = [
 const GAL_PLAIN = mkScenario(94, "Маленькая победа", 9, { trigger_cfg: { kind: "weekly", weekday: 1, hour: 9 } });
 
 export default function ScenariosGallery() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [dark, setDark] = useState(false);
   // DEMO_CATALOG = the backend-shaped presets + the synthetic «Ответ на
   // упоминания» (on_mention) + «Акция» — mirrors what the live page builds.
@@ -533,7 +533,7 @@ export default function ScenariosGallery() {
   const conflictNames = GAL_CONFLICT.map((s) => `**«${s.name}»**`);
   const conflictAdvice: TipAdvice = {
     id: "gal-conflict",
-    title: t("scenarios.tip.conflict_title_many").replace("{n}", String(GAL_CONFLICT.length)),
+    title: t(pluralKey(locale, GAL_CONFLICT.length, { one: "scenarios.tip.conflict_title_one", few: "scenarios.tip.conflict_title_few", many: "scenarios.tip.conflict_title_many" })).replace("{n}", String(GAL_CONFLICT.length)),
     body: t("scenarios.tip.conflict_body")
       .replace("{names}", `${conflictNames.slice(0, -1).join(", ")} ${t("common.and")} ${conflictNames[conflictNames.length - 1]}`)
       .replace("{time}", "8:00")

@@ -8,7 +8,7 @@
 // row opens a detail dialog with the per-status actions. Pure components driven
 // by props so the live screen (real API) and the ?demo=1 review render alike.
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 
 import { cn } from "@/lib/cn";
 import { useTranslation } from "@/lib/i18n";
@@ -147,25 +147,57 @@ function EntryRow({ entry, locale, onSelect }: { entry: CalendarEntry; locale: s
   );
 }
 
+// The unobtrusive "now" divider inside today's list (spec §2.2, `.cal-nowrow`):
+// a label on the left, a hairline filling the rest.
+function NowRow({ label }: { label: string }) {
+  return (
+    <div className="flex items-center gap-2.5 px-0.5 py-px">
+      <span className="shrink-0 text-caption font-semibold tabular-nums text-accent">{label}</span>
+      <span className="h-[1.5px] flex-1 rounded-[2px] bg-accent opacity-45" />
+    </div>
+  );
+}
+
 export function CalendarAgenda({ entries, onSelect }: { entries: CalendarEntry[]; onSelect: (e: CalendarEntry) => void }) {
   const { t, locale } = useTranslation();
   const groups = groupByDay(entries);
+  // Read the clock only after mount (a server-rendered "now" would mismatch on
+  // hydration) and re-read it every minute so the divider keeps up with time.
+  const [now, setNow] = useState<Date | null>(null);
+  useEffect(() => {
+    setNow(new Date());
+    const id = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+  const nowLabel = now ? `${t("calendar.now")} · ${fmtTime(now.toISOString(), locale)}` : null;
   return (
     <div className="flex flex-col gap-5">
-      {groups.map((g) => (
-        <section key={g.key}>
-          <div className={cn("sticky top-13 z-[4] -mx-1 mb-2 flex items-baseline gap-2 bg-bg/85 px-1 py-1 backdrop-blur md:top-15", g.isPast && "opacity-60")}>
-            <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-lg text-h3 font-semibold tabular-nums", g.isToday ? "bg-accent text-accent-foreground" : "text-text")}>{g.date.getDate()}</span>
-            <span className="text-small font-semibold text-text">{g.date.toLocaleDateString(locale, { weekday: "long" })}</span>
-            <span className="text-caption text-text-subtle">{g.date.toLocaleDateString(locale, { month: "short", day: "numeric" })}</span>
-            {g.isToday && <span className="rounded-full bg-accent/12 px-2 py-px text-caption font-semibold text-accent">{t("calendar.today")}</span>}
-            <span className="ml-auto text-caption text-text-subtle">{g.entries.length}</span>
-          </div>
-          <div className="flex flex-col gap-2">
-            {g.entries.map((e) => <EntryRow key={e.id} entry={e} locale={locale} onSelect={onSelect} />)}
-          </div>
-        </section>
-      ))}
+      {groups.map((g) => {
+        // Index of the first entry still ahead of us — where the divider goes.
+        // All past → it lands after the last row; all ahead → before the first.
+        const nowAt = g.isToday && now ? g.entries.findIndex((e) => new Date(e.scheduled_at).getTime() > now.getTime()) : -1;
+        const nowIdx = nowAt === -1 && g.isToday && now ? g.entries.length : nowAt;
+        return (
+          <section key={g.key}>
+            <div className={cn("sticky top-13 z-[4] -mx-1 mb-2 flex items-baseline gap-2 bg-bg/85 px-1 py-1 backdrop-blur md:top-15", g.isPast && "opacity-60")}>
+              <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-lg text-h3 font-semibold tabular-nums", g.isToday ? "bg-accent text-accent-foreground" : "text-text")}>{g.date.getDate()}</span>
+              <span className="text-small font-semibold text-text">{g.date.toLocaleDateString(locale, { weekday: "long" })}</span>
+              <span className="text-caption text-text-subtle">{g.date.toLocaleDateString(locale, { month: "short", day: "numeric" })}</span>
+              {g.isToday && <span className="rounded-full bg-accent/12 px-2 py-px text-caption font-semibold text-accent">{t("calendar.today")}</span>}
+              <span className="ml-auto text-caption text-text-subtle">{g.entries.length}</span>
+            </div>
+            <div className="flex flex-col gap-2">
+              {g.entries.map((e, i) => (
+                <Fragment key={e.id}>
+                  {nowLabel && i === nowIdx && <NowRow label={nowLabel} />}
+                  <EntryRow entry={e} locale={locale} onSelect={onSelect} />
+                </Fragment>
+              ))}
+              {nowLabel && nowIdx === g.entries.length && <NowRow label={nowLabel} />}
+            </div>
+          </section>
+        );
+      })}
     </div>
   );
 }

@@ -312,7 +312,7 @@ export function TriageQueue({
   const { t, locale } = useTranslation();
   const items = buildTriageItems(accounts, locale, t);
 
-  if (items.length === 0) return <TriageZero profiles={accounts.length} />;
+  if (items.length === 0) return <TriageZero />;
 
   const profileCount = new Set(items.map((i) => i.account.id)).size;
   const count = `${items.length} ${pluralUnit(locale, "items", items.length)} · ${profileCount} ${pluralUnit(locale, "profiles", profileCount)}`;
@@ -384,7 +384,7 @@ function TriageRow({
   );
 }
 
-function TriageZero({ profiles }: { profiles: number }) {
+function TriageZero() {
   const { t } = useTranslation();
   return (
     <section className="flex flex-col items-center rounded-lg border border-border bg-surface px-6 py-8 text-center shadow-sm">
@@ -393,7 +393,7 @@ function TriageZero({ profiles }: { profiles: number }) {
       </span>
       <div className="mt-3.5 text-small font-semibold text-text">{t("overview.triage.zero.title")}</div>
       <div className="mt-1 max-w-md text-caption text-text-subtle">
-        {t("overview.triage.zero.body").replace("{n}", String(profiles))}
+        {t("overview.triage.zero.body")}
       </div>
       <div className="mt-3 inline-flex items-center gap-1 whitespace-nowrap text-caption text-text-subtle">
         <IcClock size={12} />

@@ -12,7 +12,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { mediaUrl } from "@/lib/api";
 import { extractFirstUrl } from "@/lib/links";
 import { cn } from "@/lib/cn";
-import { useTranslation, type MessageKey } from "@/lib/i18n";
+import { pluralUnit, useTranslation, type MessageKey } from "@/lib/i18n";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Mono } from "@/components/ui/mono";
 import { AccountFace } from "@/components/ui/avatar";
@@ -81,11 +81,11 @@ export type FeedHandlers = {
 
 // ─────────────────────────────── FeedBar ────────────────────────────────────
 export function FeedBar({ count, sort, onSort }: { count: number; sort: "recent" | "top"; onSort: (s: "recent" | "top") => void }) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   return (
     <div className="flex items-center justify-between gap-3 max-md:flex-wrap max-md:gap-y-2.5">
       <span className="text-small text-text-muted">
-        <b className="font-semibold text-text">{count}</b> {t("feed.published_posts")}
+        <b className="font-semibold text-text">{count}</b> {pluralUnit(locale, "published_posts", count)}
       </span>
       <div role="tablist" aria-label={t("feed.sort_label")} className="inline-flex gap-[3px] rounded-md border border-border bg-surface-2 p-[3px] max-md:flex-wrap">
         {(["recent", "top"] as const).map((k) => (
@@ -693,7 +693,7 @@ export function FeedCard({
 
   return (
     <article
-      className="rounded-lg border border-border bg-surface px-[18px] pb-3.5 pt-4 shadow-sm transition-colors hover:border-text/15"
+      className="rounded-lg border border-border bg-surface px-[18px] pb-3.5 pt-4 shadow-sm transition-colors hover:border-text/15 max-md:px-4 max-md:pb-3 max-md:pt-3.5"
       style={{ animation: "card-in var(--duration-slow) var(--ease-entrance) both" }}
     >
       {/* head */}
@@ -841,7 +841,7 @@ export function FeedEmpty({ onStudio }: { onStudio: () => void }) {
 
 export function FeedSkeleton() {
   return (
-    <div className="rounded-lg border border-border bg-surface px-[18px] pb-3.5 pt-4 shadow-sm">
+    <div className="rounded-lg border border-border bg-surface px-[18px] pb-3.5 pt-4 shadow-sm max-md:px-4 max-md:pb-3 max-md:pt-3.5">
       <div className="flex items-center gap-[11px]">
         <div className="skel h-[34px] w-[34px] rounded-full" />
         <div className="flex-1 space-y-1.5">

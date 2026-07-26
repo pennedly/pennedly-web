@@ -28,7 +28,7 @@ import { pt } from "./messages/pt";
 import { DEFAULT_LOCALE, LOCALES, type LocaleCode } from "./locales";
 
 export { LOCALES, DEFAULT_LOCALE, type LocaleCode } from "./locales";
-export { pluralUnit } from "./plurals";
+export { pluralUnit, pluralKey } from "./plurals";
 export type { MessageKey } from "./messages/en";
 
 const STORAGE_KEY = "pennedly.locale";

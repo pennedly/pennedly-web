@@ -65,7 +65,7 @@ export function AppFooter() {
         />
 
         <nav
-          aria-label="Legal"
+          aria-label={t("a11y.legal_nav")}
           className="flex w-full flex-wrap items-center gap-x-3 gap-y-0 sm:w-auto sm:gap-x-4 sm:gap-y-1"
         >
           {links.map((l) => (
