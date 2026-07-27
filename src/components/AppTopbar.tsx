@@ -160,7 +160,12 @@ export function AppTopbar({
           </div>
         ) : null}
 
-        <div className="flex h-13 w-full items-center gap-3 max-md:h-auto max-md:min-h-13 max-md:py-1.5 md:h-15">
+        {/* App-Header-Pill-Placement-SPEC §3/§9.1 — fixed-height, non-wrapping
+            row. `flex-nowrap` + column-only `gap-x-2.5` (10px) is what makes the
+            old 106px wrap structurally impossible: the pill has a hard 132px
+            budget, the title collapses to whatever is left, nothing ever drops
+            to a second line. */}
+        <div className="flex h-13 w-full flex-nowrap items-center gap-x-2.5 md:h-15">
           {/* Phone: hamburger → nav drawer (Sidebar renders the drawer). */}
           <button
             type="button"
@@ -184,36 +189,42 @@ export function AppTopbar({
             </svg>
           </button>
 
-          {/* Title + pill share one flexible group so a long pill drops to a
-              second line instead of shoving the title to zero width and the
-              theme toggle off the screen (cockpit spec: «на длинных локалях
-              падает ниже»; the actions block is `flex: 0 0 auto` in the эталон). */}
-          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1">
-            {/* App-Header-SPEC §4 — with a hero on screen this is invisible at
-                rest and docks as the hero fades out. `opacity` never touches
-                layout, so the slot keeps its width and neither the pill nor the
-                action icons shift.
+          {/* App-Header-Pill-Placement-SPEC §2/§3 — the pill owns the leading
+              slot PERMANENTLY (moved from after the title). It never reads
+              `--hdr-reveal` and never resizes with it, so its left edge sits at
+              the exact same x at rest, mid-dock and docked. `max-w-[132px]` is
+              the hard budget from §9.1 — any string that needs more than that
+              is not a bar pill (see App-Header-Pill-Placement-SPEC §6). Omitted
+              entirely when there is no pill, so the title starts right at the
+              pill's x instead of leaving a gap. */}
+          {pill ? <div className="max-w-[132px] shrink-0">{pill}</div> : null}
 
-                Reduced motion: the hook snaps the reveal 0→1 at 16px, so the
-                6px offset only ever exists while the title is fully transparent
-                — the translate is never seen, which is what the spec asks for
-                ("opacity swap only"). */}
-            <h1
-              className="truncate text-h3 font-semibold"
-              style={
-                hasHero
-                  ? {
-                      opacity: "var(--hdr-reveal, 0)",
-                      transform: "translateY(calc(6px * (1 - var(--hdr-reveal, 0))))",
-                    }
-                  : undefined
-              }
-            >
-              {title}
-            </h1>
-            {pill}
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
+          {/* App-Header-SPEC §4 — with a hero on screen this is invisible at
+              rest and docks as the hero fades out. `opacity` never touches
+              layout, so the slot keeps its width and neither the pill nor the
+              action icons shift. Now AFTER the pill (Pill-Placement-SPEC §3):
+              its box is `flex: 1 1 auto; min-width: 0` and already spans the
+              leftover space at every reveal value, so revealing it reflows
+              nothing — only its ink appears.
+
+              Reduced motion: the hook snaps the reveal 0→1 at 16px, so the
+              6px offset only ever exists while the title is fully transparent
+              — the translate is never seen, which is what the spec asks for
+              ("opacity swap only"). */}
+          <h1
+            className="min-w-0 flex-1 truncate text-h3 font-semibold"
+            style={
+              hasHero
+                ? {
+                    opacity: "var(--hdr-reveal, 0)",
+                    transform: "translateY(calc(6px * (1 - var(--hdr-reveal, 0))))",
+                  }
+                : undefined
+            }
+          >
+            {title}
+          </h1>
+          <div className="ml-auto flex shrink-0 items-center gap-2">
             {actions}
             <ThemeToggle />
             <Link href="/app/settings" aria-label={t("nav.settings")} className={cn(ICON_BTN, "hidden md:grid")}>

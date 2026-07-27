@@ -338,9 +338,11 @@ export default function FeedPage() {
 
   return (
     <div className="min-h-screen bg-bg text-text">
-      {/* No green «Updated just now» over a failed/still-loading feed — the
-          success pill shows only when the feed actually loaded. */}
-      <AppTopbar maxW="960px" title={t("feed.title")} hasHero pill={phase === "ready" || phase === "empty" ? <TopbarPill tone="success">{t("feed.updated")}</TopbarPill> : undefined} />
+      {/* App-Header-Pill-Placement-SPEC §6 — «Обновлено только что» blows the
+          bar pill's 132px budget in ru/de, so it no longer lives in the bar at
+          all; it moved to FeedBar's freshness slot below (right-aligned in the
+          sort row), rendered only once there's a loaded feed to describe it. */}
+      <AppTopbar maxW="960px" title={t("feed.title")} hasHero />
       <main className="mx-auto flex max-w-[960px] flex-col gap-4 px-3.5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4 md:gap-5 md:px-6 md:pb-24 md:pt-7">
         <div className="flex flex-col gap-1">
           <h1 style={HERO_FADE_STYLE} className="text-h1 font-semibold tracking-[-0.015em]">{t("feed.title")}</h1>
@@ -371,7 +373,12 @@ export default function FeedPage() {
           <FeedEmpty onStudio={() => router.push("/app")} />
         ) : (
           <>
-            <FeedBar count={cards.length} sort={sort} onSort={onSort} />
+            <FeedBar
+              count={cards.length}
+              sort={sort}
+              onSort={onSort}
+              freshness={<TopbarPill tone="success">{t("feed.updated")}</TopbarPill>}
+            />
             <div className="flex flex-col gap-5">
               {cards.map((p) => (
                 <FeedCard

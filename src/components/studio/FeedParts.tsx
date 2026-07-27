@@ -80,14 +80,33 @@ export type FeedHandlers = {
 };
 
 // ─────────────────────────────── FeedBar ────────────────────────────────────
-export function FeedBar({ count, sort, onSort }: { count: number; sort: "recent" | "top"; onSort: (s: "recent" | "top") => void }) {
+export function FeedBar({
+  count,
+  sort,
+  onSort,
+  freshness,
+}: {
+  count: number;
+  sort: "recent" | "top";
+  onSort: (s: "recent" | "top") => void;
+  // App-Header-Pill-Placement-SPEC §6 — «Обновлено только что» is too wide for
+  // the bar's 132px pill budget in ru/de, so it lives here instead: in this
+  // persistent toolbar row, full text, never truncated, and outside the
+  // header's scroll collapse. It shares the right-hand group with the sort
+  // segment rather than sitting beside the count — at 375px/ru the count
+  // already needs the full left half, and crowding the pill next to it
+  // truncated the pill to «О…», which §6 forbids.
+  freshness?: ReactNode;
+}) {
   const { t, locale } = useTranslation();
   return (
     <div className="flex items-center justify-between gap-3 max-md:flex-wrap max-md:gap-y-2.5">
       <span className="text-small text-text-muted">
         <b className="font-semibold text-text">{count}</b> {pluralUnit(locale, "published_posts", count)}
       </span>
-      <div role="tablist" aria-label={t("feed.sort_label")} className="inline-flex gap-[3px] rounded-md border border-border bg-surface-2 p-[3px] max-md:flex-wrap">
+      <div className="flex items-center gap-2 max-md:flex-wrap max-md:justify-end max-md:gap-y-2">
+        {freshness}
+        <div role="tablist" aria-label={t("feed.sort_label")} className="inline-flex gap-[3px] rounded-md border border-border bg-surface-2 p-[3px] max-md:flex-wrap">
         {(["recent", "top"] as const).map((k) => (
           <button
             key={k}
@@ -103,6 +122,7 @@ export function FeedBar({ count, sort, onSort }: { count: number; sort: "recent"
             {t(k === "recent" ? "feed.sort_recent" : "feed.sort_top")}
           </button>
         ))}
+        </div>
       </div>
     </div>
   );

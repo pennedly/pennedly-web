@@ -231,14 +231,11 @@ export default function MentionsPage() {
 
   return (
     <div className="min-h-screen bg-bg text-text">
-      <AppTopbar
-        maxW="960px"
-        title={t("mentions.title")}
-        hasHero
-        pill={
-          <TopbarPill icon={<IcClock size={13} className="text-text-subtle" />}>{t("mentions.updated_hourly")}</TopbarPill>
-        }
-      />
+      {/* App-Header-Pill-Placement-SPEC §6 — «Обновляется ежечасно» blows the
+          bar pill's 132px budget in ru/de, so it no longer lives in the bar;
+          it moved into the persistent row above (§6/§10: Mentions ends up with
+          NO bar pill at all, so the docked title starts right at the pill's x). */}
+      <AppTopbar maxW="960px" title={t("mentions.title")} hasHero />
       <main className="mx-auto flex max-w-[960px] flex-col gap-5 px-3.5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4 md:px-6 md:pb-24 md:pt-7">
         <div className="flex flex-col gap-1">
           <h1 style={HERO_FADE_STYLE} className="text-h1 font-semibold tracking-tight">{t("mentions.title")}</h1>
@@ -259,6 +256,13 @@ export default function MentionsPage() {
           <EmptyMQ t={t} />
         ) : (
           <>
+            {/* App-Header-Pill-Placement-SPEC §6 — the freshness line that used
+                to live in the bar's pill slot. Mentions has no other persistent
+                toolbar row, so it sits here: right-aligned, full width, full
+                text, above the zones and outside the header's scroll collapse. */}
+            <div className="flex items-center justify-end">
+              <TopbarPill icon={<IcClock size={13} className="text-text-subtle" />}>{t("mentions.updated_hourly")}</TopbarPill>
+            </div>
             <RoutinesEntry t={t} />
 
             {queue.length > 0 && (
