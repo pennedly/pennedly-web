@@ -63,7 +63,7 @@
     </div>
   </div>
 
-  <div class="note good"><b>What does not change.</b> The data is the backend’s: manually scheduled drafts (<code>source:'manual'</code>, with text) and the projected autopilot rules (<code>source:'autopilot'</code>, <code>text:null</code> until post time). Statuses are <code>scheduled</code> / <code>projected</code> / <code>failed</code>. The Calendar only <em>shows and moves</em> — creation lives in the Studio, recurrence in Autopilot. Mobile is a layout pass: the week grid becomes an agenda; the popover becomes a sheet; drag becomes Edit time. <b>Hours are UTC server-side, shown in the viewer’s local timezone.</b></div>
+  <div class="note good"><b>What does not change.</b> The data is the backend’s: manually scheduled drafts (<code>source:'manual'</code>, with text) and the projected autopilot rules (<code>source:'autopilot'</code>, <code>text:null</code> until post time). Statuses are <code>scheduled</code> / <code>projected</code> / <code>failed</code>. The Calendar only <em>shows and moves</em> — creation lives in the Studio, recurrence in Autopilot. Mobile is a layout pass over the same agenda: the centred modal becomes a bottom sheet, everything else is width. <b>Hours are UTC server-side, shown in the viewer’s local timezone.</b></div>
 
   <div class="note warn"><b>New screen, built on our tokens.</b> No third-party calendar library — the agenda, chips and sheets are all <code>calendar.css</code> on <code>ds/tokens.css</code>. The Autopilot screen is untouched; a projection’s sheet only links out to it. <b>Calendar / clock / pencil icons only — no bolt.</b></div>
 
@@ -122,9 +122,9 @@
   <!-- 6 -->
   <section id="s6">
     <h2><span class="h2n">6</span><span class="stg stg--fix">fix</span>Detail bottom-sheet</h2>
-    <p class="section-note">Tapping a row opens a <strong>bottom sheet</strong> (our pattern: slide up from the bottom, rounded top, full-width 44px buttons, primary on top). Three variants mirror the desktop popover.</p>
+    <p class="section-note">Tapping a row opens a <strong>bottom sheet</strong> (our pattern: slide up from the bottom, rounded top, full-width 44px buttons, primary on top). Three variants mirror the desktop modal.</p>
     <div class="fix">
-      <div class="fix-bad"><h5>Before</h5><p>A desktop popover anchored to a tiny chip is unreachable and clips off-screen on a phone.</p></div>
+      <div class="fix-bad"><h5>Before</h5><p>A centred modal sized for a desktop column leaves the actions mid-screen and out of thumb reach on a phone.</p></div>
       <div class="fix-good"><h5>After</h5><p>A bottom sheet within thumb reach: the local time + UTC line, the text (or ghost placeholder), then stacked full-width actions — primary on top.</p></div>
     </div>
     <div class="stage" id="stg-sheet"></div>
@@ -200,7 +200,7 @@
       <li>Toolbar: title + “+ Schedule a post”, and a nav row (‹ › range stepper, range label, Today, UTC+1 chip); on phone the nav row sits full-width above the title-button row.</li>
       <li>Agenda (default, single view): day-groups with header + count; rows sorted by time; three chip variants (manual solid / projection ghost-dashed / failed danger); past rows dim; ≥44px tap → sheet.</li>
       <li>Detail bottom sheet: local time + UTC line; manual (Edit time / Publish now / Unschedule / Delete) · projection (read-only + “Manage schedule” → Autopilot) · failed (reason + Retry); full-width buttons, primary on top.</li>
-      <li>Move = Edit time (date + local-hour picker), no drag on phone.</li>
+      <li>Move = Edit time (date + local-hour picker); no drag anywhere.</li>
       <li>Studio sheet: Publish now | Schedule; Schedule reveals Date + Time (16px / ≥44px, “= HH:00 UTC”, ≥ +5 min) + preview + count; primary “Schedule for &lt;…&gt;”; toast w/ Undo; draft gets “Scheduled · &lt;date&gt;” badge + Scheduled filter.</li>
       <li>Empty = “Nothing scheduled yet” (+ autopilot note + CTA); Loading = skeleton mirroring the agenda; correct in light and dark; no hardcoded colour.</li>
       <li>All copy survives the longest of 8 locales — never clipped; sanity-checked at 360px; times in the viewer’s local timezone.</li>

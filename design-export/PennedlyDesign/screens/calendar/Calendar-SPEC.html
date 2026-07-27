@@ -243,7 +243,7 @@ td .mono2{font-family:var(--font-mono); font-size:11.5px; color:var(--subtle);}
         <tr><td><code>.cal-tb-title</code> / <code>.cal-tb-sub</code></td><td>«Calendar» (<code class="tok">--text-h2</code>) + sub «Everything scheduled for @mara.lin».</td></tr>
         <tr><td><code>.cal-tz</code></td><td>Ярлык таймзоны зрителя: <code>&lt;IcClock&gt;</code> + «UTC+1». Все времена показаны в ней.</td></tr>
         <tr><td><code>.btn--secondary</code> «+ Schedule a post»</td><td>Ведёт в Студию (создание + выбор времени). На календаре пост не создают.</td></tr>
-        <tr><td><code>.cal-range</code> + <code>.cal-step</code></td><td>‹ / › листают диапазон (неделя/месяц вперёд-назад); <code>.cal-range-lbl</code> «Jun 15 – 21»; «Today» возвращает к текущей дате; справа — лёгкая легенда типов записей.</td></tr>
+        <tr><td><code>.cal-range</code> + <code>.cal-step</code></td><td>‹ / › листают двухнедельное окно шагом в неделю; <code>.cal-range-lbl</code> «Jun 15 – 21»; «Today» возвращает к текущей дате; справа — лёгкая легенда типов записей.</td></tr>
       </tbody>
     </table></div>
 
@@ -359,7 +359,7 @@ td .mono2{font-family:var(--font-mono); font-size:11.5px; color:var(--subtle);}
       <tbody>
         <tr><td><code>.draft-badge</code></td><td>На карточке черновика: <code>&lt;IcClock&gt;</code> + «Scheduled · Jun 18 · 09:00» (accent-tint pill).</td></tr>
         <tr><td><code>.draft-tabs</code> / <code>.draft-tab</code></td><td>Фильтр Студии: <b>Drafts · Scheduled · Published</b> (active = surface). У Scheduled — счётчик <code>.ct</code>.</td></tr>
-        <tr><td><code>.draft-card-foot</code></td><td>У запланированной карточки: «Goes out …» + действия Edit time / Publish now (зеркалят popover календаря).</td></tr>
+        <tr><td><code>.draft-card-foot</code></td><td>У запланированной карточки: «Goes out …» + действия Edit time / Publish now (зеркалят модалку календаря).</td></tr>
         <tr><td>Empty «Scheduled»</td><td>«Nothing scheduled» + «Drafts you schedule for later land here» + CTA в Календарь.</td></tr>
       </tbody>
     </table></div>
@@ -368,7 +368,7 @@ td .mono2{font-family:var(--font-mono); font-size:11.5px; color:var(--subtle);}
   <!-- ===================== 5 ===================== -->
   <section id="s5">
     <h2><span class="h2n">5</span>Один идиом · Web ↔ Mobile</h2>
-    <p class="section-note">Теперь это <b>один идиом — агенда-лента по дням — на обоих</b>. Десктоп = центрированный широкий столбец (деталь = <b>popover</b>); мобайл = full-width (деталь = <b>bottom-sheet</b>). <b>Никакой сетки неделя/месяц.</b> Брейкпоинты: <b>880px</b> (shell → icon-rail) · <b>600px</b> (телефонный слой <code>pennedly-mobile.css</code> + <code>calendar.css</code> <code>.mcal-*</code>). Полный телефонный проход — <a class="link" href="Calendar-Mobile-SPEC.html">Calendar-Mobile-SPEC.html</a>.</p>
+    <p class="section-note">Теперь это <b>один идиом — агенда-лента по дням — на обоих</b>. Десктоп = центрированный широкий столбец (деталь = <b>модалка по центру</b>); мобайл = full-width (та же модалка складывается в <b>bottom-sheet</b>). <b>Никакой сетки неделя/месяц.</b> Брейкпоинты: <b>880px</b> (shell → icon-rail) · <b>600px</b> (телефонный слой <code>pennedly-mobile.css</code> + <code>calendar.css</code> <code>.mcal-*</code>). Полный телефонный проход — <a class="link" href="Calendar-Mobile-SPEC.html">Calendar-Mobile-SPEC.html</a>.</p>
     <div class="two">
       <div class="pane web"><h4>Десктоп ( &gt; 880 )</h4>
         <ul>
@@ -382,10 +382,10 @@ td .mono2{font-family:var(--font-mono); font-size:11.5px; color:var(--subtle);}
       <div class="pane mob"><h4>Телефон ( ≤ 600 )</h4>
         <ul>
           <li>Нет сайдбара/таб-бара; гамбургер → drawer; свободный нижний край.</li>
-          <li><b>Та же агенда-лента</b>, full-width; компактная неделя-полоска сверху для навигации.</li>
-          <li>(Month — лишь компактная пип-сетка-опция для обзора; тап по дню → agenda дня.)</li>
+          <li><b>Та же агенда-лента</b>, full-width; тулбар с ‹ › степпером над ней.</li>
+          
           <li>Деталь — <b>bottom-sheet</b> (full-width 44px кнопки, primary сверху).</li>
-          <li>Перенос — через «<b>Edit time</b>» (drag&amp;drop на телефоне не используется).</li>
+          <li>Перенос — через «<b>Edit time</b>» (перетаскивания нет ни на одном размере).</li>
         </ul>
       </div>
     </div>
@@ -450,7 +450,7 @@ td .mono2{font-family:var(--font-mono); font-size:11.5px; color:var(--subtle);}
       <li>Деталь-модалка по центру: ручной (Unschedule / Publish now / Edit time, с режимом правки времени) · проекция (read-only + «Manage schedule» → Автопилот) · failed (причина + Unschedule / Retry).</li>
       <li>Студия: сегмент «Publish now | Schedule»; Schedule = Date + Time (local, «= HH:00 UTC», ≥ +5 мин) + превью + счётчик; главная кнопка «Schedule for &lt;…&gt;»; тост с Undo; бейдж «Scheduled · &lt;date&gt;» + вкладка «Scheduled».</li>
       <li>Время UTC server-side, показ в локальной TZ + offset-label; проекция read-only; привязка к выбранному аккаунту.</li>
-      <li>Состояния Default/Detail(×3)/Drag/Empty/Loading; loading-скелет повторяет ленту.</li>
+      <li>Состояния Default/Detail(×3)/Empty/Loading; loading-скелет повторяет ленту.</li>
       <li>Корректно в светлой и тёмной теме; только семантические токены; копи выживает в 8 локалях; парный телефонный документ — <a class="link" href="Calendar-Mobile-SPEC.html">Calendar-Mobile-SPEC.html</a>.</li>
     </ul>
     <div class="note" style="margin-top:18px;">Конец спецификации. Один идиом (агенда-лента) на десктопе и телефоне; новый CSS — <code>calendar.css</code> + общий shell + интеграция в <code>studio-parts.jsx</code>. Парный телефонный документ — <a class="link" href="Calendar-Mobile-SPEC.html">Calendar-Mobile-SPEC.html</a>.</div>
