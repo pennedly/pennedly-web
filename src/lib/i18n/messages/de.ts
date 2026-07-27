@@ -2945,7 +2945,7 @@ export const de: Partial<Record<MessageKey, string>> = {
   "mr.pill": "Auto-Szenarien",
   "mr.back": "Erwähnungen",
   "mr.subtitle": "Auto-Szenarien für Erwähnungen, basierend auf einem Ziel in deinen Worten. Pennedly findet passende Erwähnungen und antwortet in deiner Stimme, allein oder mit deiner Zustimmung.",
-  "mr.hub.title": "Erwähnungs-Routinen",
+  "mr.hub.title": "Deine Routinen",
   "mr.hub.count": "{total} Routinen · {on} aktiv",
   "mr.hub.add": "Neue Erwähnungs-Routine",
   "mr.card.fallback_tag": "Standard",

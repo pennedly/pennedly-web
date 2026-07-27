@@ -2923,7 +2923,7 @@ export const es: Partial<Record<MessageKey, string>> = {
   "mr.pill": "Escenarios automáticos",
   "mr.back": "Menciones",
   "mr.subtitle": "Escenarios automáticos para menciones, basados en un objetivo que describes con tus propias palabras. Pennedly busca qué menciones encajan y responde en tu voz, solo o con tu OK.",
-  "mr.hub.title": "Rutinas de menciones",
+  "mr.hub.title": "Tus rutinas",
   "mr.hub.count": "{total} rutinas · {on} activas",
   "mr.hub.add": "Nueva rutina de menciones",
   "mr.card.fallback_tag": "predeterminada",

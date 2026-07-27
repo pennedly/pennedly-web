@@ -2935,7 +2935,7 @@ export const pt: Partial<Record<MessageKey, string>> = {
   "mr.pill": "Auto-cenários",
   "mr.back": "Menções",
   "mr.subtitle": "Auto-cenários para menções, amarrados a um objetivo que você descreve com suas próprias palavras. Pennedly acha quais menções se encaixam e responde na sua voz, por conta própria ou com seu OK.",
-  "mr.hub.title": "Rotinas de menção",
+  "mr.hub.title": "Suas rotinas",
   "mr.hub.count": "{total} rotinas · {on} ativas",
   "mr.hub.add": "Nova rotina de menção",
   "mr.card.fallback_tag": "padrão",

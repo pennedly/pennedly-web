@@ -1104,7 +1104,7 @@ export const en = {
   "mr.pill": "Auto-scenarios",
   "mr.back": "Mentions",
   "mr.subtitle": "Auto-scenarios for mentions, keyed to a goal you describe in your own words. Pennedly finds which mentions fit and replies in your voice, itself or with your OK.",
-  "mr.hub.title": "Mention routines",
+  "mr.hub.title": "Your routines",
   "mr.hub.count": "{total} routines · {on} active",
   "mr.hub.add": "New mention routine",
   "mr.card.fallback_tag": "default",

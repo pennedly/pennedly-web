@@ -2968,7 +2968,7 @@ export const fr: Partial<Record<MessageKey, string>> = {
   "mr.pill": "Auto-scénarios",
   "mr.back": "Mentions",
   "mr.subtitle": "Auto-scénarios pour les mentions, basés sur un but décrit dans tes propres termes. Pennedly trouve les mentions qui correspondent et répond dans ta voix, lui-même ou avec ton accord.",
-  "mr.hub.title": "Routines de mentions",
+  "mr.hub.title": "Tes routines",
   "mr.hub.count": "{total} routines · {on} actives",
   "mr.card.fallback_tag": "par défaut",
   "mr.card.media_image": "photo seulement",
