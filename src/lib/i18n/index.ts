@@ -15,7 +15,7 @@
 // you can ship a feature in en first and translate to others later
 // at any pace.
 
-import { useSyncExternalStore } from "react";
+import { useCallback, useMemo, useSyncExternalStore } from "react";
 
 import { en, type MessageKey } from "./messages/en";
 import { ru } from "./messages/ru";
@@ -134,10 +134,15 @@ function lookup(locale: LocaleCode, key: MessageKey): string {
 /** React hook — re-renders when the locale changes. */
 export function useTranslation() {
   const locale = useLocale();
-  return {
-    locale,
-    t: (key: MessageKey): string => lookup(locale, key),
-  };
+  // Stable across renders (only changes when `locale` does) — an inline
+  // `t: (key) => …` here was a fresh function every render, which silently
+  // turned into infinite loops wherever a `useEffect`/`useMemo` depended on
+  // `t` and set state with a fresh reference inside (e.g. `new Set()`, a
+  // spread object): new `t` → effect refires → new state → re-render → new
+  // `t` again. Confirmed on 2 independent screens (role-book, mentions
+  // routine editor) before this fix.
+  const t = useCallback((key: MessageKey): string => lookup(locale, key), [locale]);
+  return useMemo(() => ({ locale, t }), [locale, t]);
 }
 
 /** Non-React lookup, useful in event handlers / toasts / API errors. */
