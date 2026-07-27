@@ -28,7 +28,7 @@
     <a href="#s3"><span class="n">3</span> Shell: top bar + drawer</a>
     <a class="sub" href="#s3">— drawer open</a>
     <a href="#s4"><span class="n">4</span> Sort bar</a>
-    <a href="#s5"><span class="n">5</span> Metrics, virality &amp; growth</a>
+    <a href="#s5"><span class="n">5</span> Metrics &amp; virality</a>
     <a class="sub" href="#s5">— 4 virality bands</a>
     <a href="#s6"><span class="n">6</span> Post-card foot — the fix</a>
     <a class="sub" href="#s6">— ⋯ overflow (Delete)</a>
@@ -54,7 +54,7 @@
   <div class="doc-head">
     <p class="kicker">Pennedly · Mobile spec · per-screen</p>
     <h1 class="title">My Feed <span>/app/feed</span> — phone</h1>
-    <p class="lede">Your published Threads posts with inline analytics — read-only, each post measured against your own average. On a phone the desktop content could overlap: the per-card metric grid and the growth chart are the parts that need folding. This spec fits them cleanly at <strong>390px</strong> (sanity-checked at 360) on the decided mobile shell — a slim top bar with a <strong>hamburger</strong> that opens a <strong>left navigation drawer</strong>, no bottom tab bar, free bottom edge. Same tokens, metrics, virality logic and states as <a class="link" href="Feed-SPEC.html">the desktop spec</a> — only the layout changes below 600px. Every frame is the real component layer at 390px, light and dark.</p>
+    <p class="lede">Your published Threads posts with inline analytics — read-only, each post measured against your own average. On a phone the desktop content could overlap: the per-card metric grid is the part that needs folding. This spec fits it cleanly at <strong>390px</strong> (sanity-checked at 360) on the decided mobile shell — a slim top bar with a <strong>hamburger</strong> that opens a <strong>left navigation drawer</strong>, no bottom tab bar, free bottom edge. Same tokens, metrics, virality logic and states as <a class="link" href="Feed-SPEC.html">the desktop spec</a> — only the layout changes below 600px. Every frame is the real component layer at 390px, light and dark.</p>
     <div class="filerow">
       <span class="chip chip--mob">pennedly-mobile.css</span>
       <span class="chip">feed-app.jsx</span>
@@ -66,7 +66,7 @@
 
   <div class="note danger"><b>Synced to the current product: the Baseline summary card is gone.</b> The feed used to open with a 4-up stat card (avg views/likes/comments/reposts + sparkline) above the sort bar. That block was removed (desktop commit fb3e0b2) — it is not moved, hidden, or replaced. The feed now opens directly with the sort bar, then post cards. The per-card ratio badge (“N× average”) is unchanged and still the only place that number shows.</div>
 
-  <div class="note good"><b>What does not change.</b> The average-relative virality bands, the views/likes/comments/reposts metric set, the cumulative growth chart vs your average, the auto-replies toggle, translate-on-every-card, tester-gated Delete, reply-context, and the loading/empty/error states are all identical to desktop. Feed is read-only analytics — no post editing here. Mobile is a layout pass; the only structural change is the shared app shell (tab bar → hamburger drawer).</div>
+  <div class="note good"><b>What does not change.</b> The average-relative virality bands, the views/likes/comments/reposts metric set, the auto-replies toggle, translate-on-every-card, tester-gated Delete, reply-context, and the loading/empty/error states are all identical to desktop. Feed is read-only analytics — no post editing here. Mobile is a layout pass; the only structural change is the shared app shell (tab bar → hamburger drawer).</div>
 
   <!-- 1 -->
   <section id="s1">
@@ -114,8 +114,8 @@
 
   <!-- 5 -->
   <section id="s5">
-    <h2><span class="h2n">5</span>Metrics, virality &amp; growth</h2>
-    <p class="section-note">The metric block goes vertical: the hero (views) on its own line, the three secondary metrics in an even row below (they wrap on long locales). The virality badge stays top-right of the header; “Growth” expands the cumulative chart inline, drawn against your-average. Four virality bands judge each post against your account average:</p>
+    <h2><span class="h2n">5</span>Metrics &amp; virality</h2>
+    <p class="section-note">The metric block goes vertical: the hero (views) on its own line, the three secondary metrics in an even row below (they wrap on long locales). The virality badge stays top-right of the header. Four virality bands judge each post against your account average:</p>
     <div class="stage" id="stg-viral"></div>
     <div class="tbl-wrap"><table>
       <thead><tr><th style="width:150px">Band</th><th>Meaning · phone treatment</th></tr></thead>
@@ -123,8 +123,7 @@
         <tr><td><b>over (≥1.5×)</b></td><td>Success-tinted “N× average” with an up arrow. Strong post.</td></tr>
         <tr><td><b>on par (0.85–1.5×)</b></td><td>Neutral “On par”.</td></tr>
         <tr><td><b>under (&lt;0.85×)</b></td><td>Neutral “N× average” (e.g. 0.6×). No alarm colour — this is intentional, not an error tone.</td></tr>
-        <tr><td><b>still settling</b></td><td>Warning-tinted clock “Still settling” on very fresh posts whose metrics aren’t stable yet; the growth caption reads “Still climbing”.</td></tr>
-        <tr><td>Growth panel</td><td>Full-width <code>viewBox</code> SVG; dashed “your average” reference line + last-point marker. The Growth icon button reads “on” while expanded.</td></tr>
+        <tr><td><b>still settling</b></td><td>Warning-tinted clock “Still settling” on very fresh posts whose metrics aren’t stable yet.</td></tr>
       </tbody>
     </table></div>
   </section>
@@ -133,8 +132,8 @@
   <section id="s6">
     <h2><span class="h2n">6</span><span class="stg stg--fix">fix</span>Post-card foot — the fix</h2>
     <div class="fix">
-      <div class="fix-bad"><h5>Before</h5><p>“Auto-replies · Growth · Open on Threads · ⋯” share one row. On a phone it crams: “Open on Threads” wraps to two lines and the ⋯ overflows off the right edge.</p></div>
-      <div class="fix-good"><h5>After</h5><p>The auto-replies pill moves to its own meta line. The action row keeps one primary — <strong>Open on Threads</strong> (grows) — with Growth collapsed to a 44px icon and ⋯ as a 44px overflow holding Translate / Open / Delete.</p></div>
+      <div class="fix-bad"><h5>Before</h5><p>The auto-reply pill, “Open on Threads” and ⋯ share one row. On a phone “Open on Threads” wraps to two lines and the ⋯ overflows off the right edge.</p></div>
+      <div class="fix-good"><h5>After</h5><p>The auto-replies pill moves to its own meta line. The action row keeps one growing primary — <strong>Open on Threads</strong> — with ⋯ as a 44px overflow anchored right, holding Translate / Open / Delete (Delete tester-gated).</p></div>
     </div>
     <div class="stage" id="stg-foot"></div>
     <p class="section-note">The ⋯ is right-anchored (last in the row), so it opens leftward fully inside the frame. It holds the secondary actions — Delete is tester-gated:</p>
@@ -152,9 +151,10 @@
       <thead><tr><th style="width:160px">Detail</th><th>Phone behavior</th></tr></thead>
       <tbody>
         <tr><td><b>auto-replies</b></td><td>Own meta line; ink border + reply icon when on, hollow dot when off. Toggles in place.</td></tr>
+        <tr><td><b>replies paused</b></td><td>Per-post flag on, but the account's reply master is off — pill turns warning-tinted (border/bg mix(warning), muted text, reply icon), reads “Replies: paused”; a title tooltip explains nothing goes out until replies are back on in House rules.</td></tr>
         <tr><td><b>translated</b></td><td>Body swaps to the translation; a <code>.translate-bar</code> reads “Translated to {native} · Show original”. Each post’s own language is the original.</td></tr>
         <tr><td><b>reply post</b></td><td>A quoted reply-context block above the body; “replied to @who” in the sub-line, wraps.</td></tr>
-        <tr><td><b>still settling</b></td><td>Warning clock badge; small early metrics; “Still climbing” growth caption.</td></tr>
+        <tr><td><b>still settling</b></td><td>Warning clock badge; small early metrics.</td></tr>
       </tbody>
     </table></div>
   </section>
@@ -180,8 +180,7 @@
         <tr><td><code>.vbadge</code> / <code>--over</code> / <code>--settling</code></td><td>4 bands; over = success, settling = warning clock, on-par/under = neutral. Wraps before clipping.</td></tr>
         <tr><td><code>.m-metrics</code></td><td>hero <code>text-h3</code> views + label; subs <code>text-small</code>, gap 18, wrap.</td></tr>
         <tr><td><code>.ar-pill</code></td><td>own meta line; 36px tall; ink border when on.</td></tr>
-        <tr><td><code>.m-foot-row</code></td><td>Growth 44px icon · Open on Threads grow-primary · ⋯ 44px (right-anchored).</td></tr>
-        <tr><td><code>.m-trend svg</code></td><td>full-width; height auto; dashed your-average line; axis caption row below.</td></tr>
+        <tr><td><code>.m-foot-row</code></td><td>Open on Threads grow-primary · ⋯ 44px (right-anchored).</td></tr>
         <tr><td><code>.m-dialogsheet</code> (delete)</td><td>bottom sheet; danger mark; quoted post; <b>Delete</b> on top, Cancel below.</td></tr>
         <tr><td><code>.m-content--notab</code></td><td>bottom inset = <code>26 + safe-area</code> (no tab bar).</td></tr>
       </tbody>
@@ -196,7 +195,7 @@
         <ul>
           <li>Fixed sidebar; 960px column; topbar with freshness pill.</li>
           <li>Sort + count on one line, directly under the title; metric row inline.</li>
-          <li>Foot is one row (pill + Growth + Open + ⋯).</li>
+          <li>Foot is one row (pill + Open + ⋯).</li>
           <li>Delete confirm = centered modal dialog.</li>
         </ul>
       </div>
@@ -204,7 +203,7 @@
         <ul>
           <li>No sidebar/tab bar; hamburger → left drawer + account; free bottom edge.</li>
           <li>Sort bar is its own row, directly under the title; metric block vertical (hero + subs).</li>
-          <li>Foot is two-tier (pill line + grow-primary + 44px Growth/⋯).</li>
+          <li>Foot is two-tier (pill line + grow-primary + 44px ⋯).</li>
           <li>Delete confirm = bottom sheet, danger primary on top.</li>
         </ul>
       </div>
@@ -214,8 +213,8 @@
   <!-- 11 -->
   <section id="s11">
     <h2><span class="h2n">11</span>Localization &amp; 360px</h2>
-    <p class="section-note">“Open on Threads”, “Auto-replies on/off”, the virality phrases, sort labels and metric labels all localize into 8 locales; DE/RU/UK run ~30–40% longer. On a phone: the primary wraps rather than clips; the auto-replies pill and virality badge wrap before truncating; the sort segmented control wraps to its own line; metric labels (“views”) stay beside the number and wrap the row if a locale runs long. Never bake a metric or label into the chart image — the SVG text uses live <code>&lt;text&gt;</code>.</p>
-    <div class="note"><b>360px behavior.</b> No new breakpoint — the gutter stays 14px and the sort bar and post cards just get ~30px narrower. Metric subs and the segmented control already wrap; the growth SVG is width-100% so it simply scales. Long primary labels are a touch more likely to wrap to two lines (still ≥44px). The drawer stays <code>min(82%, 312px)</code> → 82% (≈295px) at 360.</div>
+    <p class="section-note">“Open on Threads”, “Auto-replies on/off”, the virality phrases, sort labels and metric labels all localize into 8 locales; DE/RU/UK run ~30–40% longer. On a phone: the primary wraps rather than clips; the auto-replies pill and virality badge wrap before truncating; the sort segmented control wraps to its own line; metric labels (“views”) stay beside the number and wrap the row if a locale runs long.</p>
+    <div class="note"><b>360px behavior.</b> No new breakpoint — the gutter stays 14px and the sort bar and post cards just get ~30px narrower. Metric subs and the segmented control already wrap. Long primary labels are a touch more likely to wrap to two lines (still ≥44px). The drawer stays <code>min(82%, 312px)</code> → 82% (≈295px) at 360.</div>
     <div class="stage" id="stg-narrow"></div>
   </section>
 
@@ -229,8 +228,9 @@
       <li>Sort bar is its own row directly under the title (Recent / Top), count tabular.</li>
       <li>Metric block is vertical: hero views line + secondary row; numbers tabular.</li>
       <li>All four virality bands present; over = success, settling = warning clock, on-par/under = neutral (no alarm colour); each wraps before clipping.</li>
-      <li>Growth chart is a full-width SVG with the live “your average” line; Growth icon reads “on” when expanded.</li>
-      <li>Post-card foot is two-tier: auto-replies pill on its own line; one grow-primary; Growth + ⋯ at 44×44.</li>
+      <li>Post-card foot is two-tier: auto-replies pill on its own line; one grow-primary; ⋯ at 44×44.</li>
+      <li>“Show older posts” — secondary button, centered under the last card, <code>margin-top:20px</code>; visible only when the server returns <code>has_more</code>; a spinner replaces the leading space while loading; loads the next 50 posts, sort order unchanged.</li>
+      <li>Auto-replies pill has a third state — <b>paused</b> (post flagged but the account's reply master is off): warning-tinted border/bg, muted text, reply icon, “Replies: paused”, with an explanatory title.</li>
       <li>“Open on Threads” wraps on long locales — never clipped, ⋯ never off-edge; ⋯ opens fully inside the frame.</li>
       <li>⋯ holds Translate / Open / Delete (Delete tester-gated, danger); translated shows “Show original”.</li>
       <li>Reply posts show the quoted-comment context; “replied to @who” wraps.</li>
@@ -257,7 +257,8 @@
 
   var feed = M.sortBar('recent', 6)
     + M.feedCard({ viral:'over', ratio:'3.3', autoReplies:true })
-    + M.feedCard({ viral:'onpar', autoReplies:false, m:{ views:'15.6K', likes:'304', comments:'19', reposts:'11' } });
+    + M.feedCard({ viral:'onpar', autoReplies:false, m:{ views:'15.6K', likes:'304', comments:'19', reposts:'11' } })
+    + M.loadMore();
 
   /* 2 — full layout */
   set('stg-layout',
@@ -275,18 +276,20 @@
     M.col(M.light('Top'), M.comp(M.sortBar('top', 6)), 'Sorted by views, client-side.') +
     M.col(M.dark('Dark'), M.comp(M.sortBar('recent', 6), { dark:true }), ''));
 
-  /* 5 — virality bands + growth */
+  /* 5 — virality bands */
   set('stg-viral',
     M.col(M.light('over · 3.3×'), M.comp(M.feedCard({ viral:'over', ratio:'3.3' }))) +
     M.col(M.light('on par'), M.comp(M.feedCard({ viral:'onpar', m:{ views:'15.6K', likes:'304', comments:'19', reposts:'11' } }))) +
     M.col(M.light('under · 0.6×'), M.comp(M.feedCard({ viral:'under', ratio:'0.6', m:{ views:'8,400', likes:'142', comments:'9', reposts:'4' } }))) +
-    M.col(M.light('Growth open'), M.comp(M.feedCard({ viral:'over', ratio:'3.3', expanded:true }))) +
+    M.col(M.light('still settling'), M.comp(M.feedCard({ settling:true, autoReplies:true }))) +
     M.col(M.dark('over · dark'), M.comp(M.feedCard({ viral:'over', ratio:'3.3' }), { dark:true })));
 
   /* 6 — foot + overflow menu */
   set('stg-foot',
-    M.col(M.light('Default'), M.comp(M.feedCard({ viral:'over', ratio:'3.3', autoReplies:true })), 'Growth icon · Open on Threads (grows) · ⋯.') +
-    M.col(M.dark('Dark'), M.comp(M.feedCard({ viral:'over', ratio:'3.3', autoReplies:true }), { dark:true }), ''));
+    M.col(M.light('Default'), M.comp(M.feedCard({ viral:'over', ratio:'3.3', autoReplies:true })), 'Open on Threads (grows) · ⋯.') +
+    M.col(M.dark('Dark'), M.comp(M.feedCard({ viral:'over', ratio:'3.3', autoReplies:true }), { dark:true }), '') +
+    M.col(M.light('Show older posts'), M.comp(M.loadMore()), 'Visible only when has_more; centered, margin-top 20.') +
+    M.col(M.light('Loading'), M.comp(M.loadMore({ loading:true })), 'Spinner inside the button; text stays put; re-tap blocked.'));
 
   set('stg-menu',
     M.col(M.light('⋯ open'), M.phone({ top:top, tabs:false, body: M.sortBar('recent',6) + M.feedCard({ viral:'over', ratio:'3.3', menu:true }) + M.feedCard({ viral:'onpar' }) }), 'Translate ▸ · Open · — · Delete (tester, danger). Opens fully inside the frame.') +
@@ -296,6 +299,7 @@
   set('stg-details',
     M.col(M.light('Auto-replies on'), M.comp(M.feedCard({ viral:'over', ratio:'3.3', autoReplies:true })), 'Ink border + reply icon.') +
     M.col(M.light('Auto-replies off'), M.comp(M.feedCard({ viral:'onpar', autoReplies:false })), 'Hollow dot, muted.') +
+    M.col(M.light('Replies paused'), M.comp(M.feedCard({ viral:'onpar', autoReplies:'paused' })), 'Master off — warning-tinted, muted.') +
     M.col(M.light('Translated'), M.comp(M.feedCard({ viral:'onpar', body:ES_F2, lang:{ native:'English', text:EN_F2 } })), '“Translated to English · Show original”.') +
     M.col(M.light('Reply post'), M.comp(M.feedCard({ reply:true, viral:'over', ratio:'2.0', m:{ views:'31.8K', likes:'902', comments:'47', reposts:'28' } })), 'Quoted parent + “replied to @who”.') +
     M.col(M.light('Still settling'), M.comp(M.feedCard({ settling:true, autoReplies:true })), 'Fresh post; warning clock; small early metrics.') +

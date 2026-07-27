@@ -389,7 +389,9 @@ export default function FeedPage() {
             </div>
             {!demoOn && hasMore && (
               <div className="mt-5 flex justify-center">
-                <Button variant="secondary" loading={loadingMore} onClick={() => void loadMore()}>
+                {/* 40px is the DS secondary height; the phone spec wants a 44px
+                    touch target (`.m-loadmore`), so it grows below md. */}
+                <Button variant="secondary" loading={loadingMore} onClick={() => void loadMore()} className="max-md:min-h-[44px]">
                   {t("feed.load_more")}
                 </Button>
               </div>

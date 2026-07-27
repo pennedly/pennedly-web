@@ -354,6 +354,7 @@ td .mono2{font-family:var(--font-mono); font-size:11.5px; color:var(--subtle);}
         <tr><td><code>button.ar-pill</code></td><td>Auto-reply тогл (слева): <code>inline-flex; gap:7px; height:32px; padding:0 13px 0 11px; --text-small / w500; radius-full; bg surface-2; border; color muted</code>. <code>aria-pressed</code>. Hover → <code>border mix(text 18%, border)</code>.</td></tr>
         <tr><td><code>.ar-pill--on</code></td><td>Включено: <code>color accent; bg mix(accent 12%, surface); border mix(accent 32%)</code>; иконка <code>&lt;IcReply 14&gt;</code> (<code>.ar-ico</code>, accent); текст «Auto-replies on».</td></tr>
         <tr><td><code>.ar-dot</code> (off)</td><td>Выключено: <code>.ar-dot</code> 9×9 полый кружок (border 1.6px subtle); текст «Auto-replies off».</td></tr>
+        <tr><td><code>.ar-pill--paused</code></td><td>Пост отмечен, но мастер ответов аккаунта выключен — ничего не уйдёт: <code>border mix(warning 30%, border); bg mix(warning 8%, surface); color text-muted</code>; иконка <code>&lt;IcReply 14&gt;</code> (та же, что у активного состояния, но muted); текст «Ответы: на паузе»; <code>title</code> — «Account replies are off — this post is marked, but nothing goes out until you turn replies back on in House rules.» Акцентная заливка остаётся только за реально работающими ответами.</td></tr>
         <tr><td><code>.feed-actions</code></td><td><code>flex; align-items:center; gap:8px; margin-left:auto</code> (прижато вправо).</td></tr>
         <tr><td>«Open on Threads»</td><td><code>a.btn--primary.btn--sm</code>: <code>&lt;IcExternal 15&gt;</code> «Open on Threads», href <code>https://www.threads.net</code> (target _blank).</td></tr>
         <tr><td><code>.menu-anchor</code> + <code>.icon-btn</code> 34×34</td><td>Триггер ⋯: <code>&lt;IcMore 17&gt;</code>, <code>aria-haspopup="menu"; aria-expanded</code>. Закрытие — <code>mousedown</code> вне якоря.</td></tr>
@@ -490,6 +491,7 @@ td .mono2{font-family:var(--font-mono); font-size:11.5px; color:var(--subtle);}
         <ul>
           <li><b>off</b>: <code>.ar-pill</code> нейтральный + <code>.ar-dot</code> (полый кружок), «Auto-replies off».</li>
           <li><b>on</b>: <code>.ar-pill--on</code> (accent fill/border) + IcReply (accent), «Auto-replies on».</li>
+          <li><b>paused</b> (третье состояние): пост отмечен, но мастер ответов аккаунта выключен, значит ничего не уйдёт — <code>.ar-pill--paused</code> (border mix(warning 30%), bg mix(warning 8%), color text-muted) + IcReply muted, «Ответы: на паузе», title с объяснением. Пилюля не имеет права рапортовать успех, когда мастер выключен.</li>
           <li>Клик → оптимистичный тогл + тост (on/off, см. §2.11). <code>aria-pressed</code> отражает состояние.</li>
           <li>Сиды: on у f1/f2/f4; off у f3/f5/f6.</li>
         </ul>
@@ -718,7 +720,7 @@ td .mono2{font-family:var(--font-mono); font-size:11.5px; color:var(--subtle);}
       <li>Стилизованы только <code>--over</code> (success) и <code>--settling</code> (accent); прочие — базовый <code>.vbadge</code>.</li>
       <li>Героическая метрика views (h2 24, IcEye 18) + ряд likes/comments/reposts (15px, tabular).</li>
       <li>Лайков/метрик на уровне ответов нет — только на самом посте.</li>
-      <li>Auto-reply: off = полый dot + «Auto-replies off»; on = accent fill + IcReply + «Auto-replies on»; клик → тост.</li>
+      <li>Auto-reply: off = полый dot + «Auto-replies off»; on = accent fill + IcReply + «Auto-replies on»; paused (мастер ответов выключен) = border/bg warning-mix, текст muted, «Ответы: на паузе», без акцентной заливки; клик → тост.</li>
       <li>reply-вид (f3) показывает <code>.reply-ctx</code> и «replied to {who}» в сабе.</li>
       <li>Удаление → leaving 250ms → исчезает + toast с Undo.</li>
     </ul>

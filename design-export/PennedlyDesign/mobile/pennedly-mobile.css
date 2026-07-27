@@ -599,15 +599,10 @@
 .mob .ar-pill--on { color: var(--color-text); border-color: color-mix(in srgb, var(--color-text) 18%, var(--color-border)); }
 .mob .ar-pill .ar-dot { width: 7px; height: 7px; border-radius: 9999px; background: var(--color-text-subtle); flex: 0 0 auto; }
 .mob .ar-pill--on .ar-ico { color: var(--color-accent); flex: 0 0 auto; }
+.mob .ar-pill--paused { color: var(--color-text-muted); border-color: color-mix(in srgb, var(--color-warning) 30%, var(--color-border)); background: color-mix(in srgb, var(--color-warning) 8%, var(--color-surface)); }
 
-/* trend panel */
-.mob .m-trend { margin-top: 12px; padding: 12px; background: var(--color-surface-2);
-  border: 1px solid var(--color-border); border-radius: var(--radius-md); }
-.mob .m-trend-cap { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
-.mob .m-trend-cap .tc-t { font-size: var(--text-small); font-weight: 600; }
-.mob .m-trend-cap .tc-s { font-size: var(--text-caption); color: var(--color-text-subtle); }
-.mob .m-trend svg { display: block; width: 100%; height: auto; }
-.mob .m-trend-axis { display: flex; justify-content: space-between; font-size: var(--text-caption); color: var(--color-text-subtle); margin-top: 4px; }
+/* “Show older posts” — 44px touch target on phone */
+.mob .m-loadmore { min-height: 44px; }
 
 /* ===================== REPLIES-SPECIFIC: reply thread ================== */
 .mob .reply-thread { margin-top: 12px; padding-left: 12px; border-left: 2px solid var(--color-border); }
@@ -923,9 +918,6 @@
 .mob .vbadge--settling { color: var(--color-warning);
   background: color-mix(in srgb, var(--color-warning) 13%, var(--color-surface));
   border-color: color-mix(in srgb, var(--color-warning) 28%, transparent); }
-
-/* Growth icon button reads "on" while the trend panel is expanded */
-.mob .m-iconbtn--foot-on { color: var(--color-text); border-color: color-mix(in srgb, var(--color-text) 22%, var(--color-border)); background: var(--color-surface-2); }
 
 /* danger mark for the delete bottom sheet */
 .mob .m-dialogsheet .dialog-mark--danger {

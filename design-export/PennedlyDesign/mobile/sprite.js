@@ -29,6 +29,7 @@
     sym('menu', '<path d="M4 7h16M4 12h16M4 17h16"/>'),
     sym('chev-down', '<path d="M6 9l6 6 6-6"/>'),
     sym('chev-right', '<path d="M9 6l6 6-6 6"/>'),
+    sym('chev-left', '<path d="M15 6l-6 6 6 6"/>'),
     sym('arrow-left', '<path d="M19 12H5M11 6l-6 6 6 6"/>'),
     sym('arrow-up', '<path d="M12 19V5M6 11l6-6 6 6"/>'),
     sym('arrow-down', '<path d="M12 5v14M6 13l6 6 6-6"/>'),

@@ -159,8 +159,7 @@ td .mono2{font-family:var(--font-mono); font-size:11.5px; color:var(--subtle);}
     <a class="sub" href="#s2-toolbar">— Навигатор · TZ · Schedule</a>
     <a class="sub" href="#s2-agenda">— Агенда-лента · день-группа</a>
     <a class="sub" href="#s2-row">— Строка-запись (3 типа)</a>
-    <a class="sub" href="#s2-pop">— Деталь-popover</a>
-    <a class="sub" href="#s2-drag">— Перетаскивание</a>
+    <a class="sub" href="#s2-pop">— Деталь-модалка</a>
     <a class="sub" href="#s2-aux">— Empty / Loading</a>
     <a href="#s3"><span class="n">3</span> Все состояния</a>
     <a href="#s4"><span class="n">4</span> Интеграция в Студию</a>
@@ -204,11 +203,11 @@ td .mono2{font-family:var(--font-mono); font-size:11.5px; color:var(--subtle);}
   </div>
 
   <div class="note warn">
-    <b>Десктоп переделан на агенда-идиом.</b> Прежний вид сеткой неделя/месяц <b>удалён полностью</b> — плотная календарная сетка неудобна. Десктоп теперь = <b>агенда-лента по дням</b>, идентичная мобильной (единственное отличие — деталь = <b>popover</b> вместо bottom-sheet). Сторонних календарных библиотек нет; всё на <code>calendar.css</code> поверх <code>ds/tokens.css</code>. Экран <b>Автопилота не трогаем</b> — из детали проекции лишь ссылка «Manage schedule» туда.
+    <b>Десктоп переделан на агенда-идиом.</b> Прежний вид сеткой неделя/месяц <b>удалён полностью</b> — плотная календарная сетка неудобна. Десктоп теперь = <b>агенда-лента по дням</b>, идентичная мобильной (единственное отличие — деталь = <b>модалка по центру</b> вместо bottom-sheet). Сторонних календарных библиотек нет; всё на <code>calendar.css</code> поверх <code>ds/tokens.css</code>. Экран <b>Автопилота не трогаем</b> — из детали проекции лишь ссылка «Manage schedule» туда.
   </div>
 
   <div class="note good">
-    <b>Состояния одним взглядом.</b> Два твика (<code>?demo=1</code>): <code>dark</code> и <code>state</code>. <code>state</code> = Default (лента из нескольких дней: ручные + проекция + один failed, «сегодня» с now-маркером, прошедшие дни приглушены) · Empty («Nothing scheduled yet») · Loading (skeleton, повторяющий ленту) · Detail (popover: ручной / проекция / failed) · Drag (перетаскивание записи на другой день + drop-цель + тост Undo). Все — в светлой <b>и</b> тёмной теме.
+    <b>Состояния одним взглядом.</b> Два твика (<code>?demo=1</code>): <code>dark</code> и <code>state</code>. <code>state</code> = Default (лента из нескольких дней: ручные + проекция + один failed, «сегодня» с now-маркером, прошедшие дни приглушены) · Empty («Nothing scheduled yet») · Loading (skeleton, повторяющий ленту) · Detail (модалка по центру: ручной / проекция / failed). Все — в светлой <b>и</b> тёмной теме.
   </div>
 
   <!-- ===================== 1 ===================== -->
@@ -277,33 +276,30 @@ td .mono2{font-family:var(--font-mono); font-size:11.5px; color:var(--subtle);}
     </table></div>
     <div class="note"><b>Почему проекция — призрак.</b> Повторяющийся пост автопилота на будущую дату ещё не имеет текста (он генерируется в момент выхода). Пунктир + курсив-плейсхолдер честно говорят: «это предсказание правила, а не готовый черновик». Кликом — read-only деталь со ссылкой в Автопилот.</div>
 
-    <h3 id="s2-pop">2.4 — Деталь-popover <code>.cal-pop</code> <span class="tagline">click a row</span></h3>
-    <p class="section-note">Клик по записи открывает <b>popover</b> (на десктопе) у строки. На мобиле то же содержимое = bottom-sheet. Три варианта по источнику/статусу:</p>
+    <h3 id="s2-pop">2.4 — Деталь — модалка по центру <code>.cal-modal</code> <span class="tagline">click a row</span></h3>
+    <p class="section-note">Клик по записи открывает модальное окно по центру экрана — не поповер у строки. Подложка (<code>.overlay</code>): <code>fixed inset-0</code>, bg mix(ink-950 55%), небольшой backdrop-blur, содержимое центрируется, padding 24; закрытие — клик по подложке и <code>Esc</code> (блокируется на время запроса). Панель — общий <code>.dialog</code>: max-width 420, ширина 100%, border, bg surface, padding 24, shadow-lg, анимация входа <code>dialog-in</code>. Три варианта по источнику/статусу:</p>
     <div class="frames" id="f-pop"></div>
-    <div class="tbl-wrap"><table>
-      <thead><tr><th style="width:120px;">Вариант</th><th>Содержимое · действия</th></tr></thead>
-      <tbody>
-        <tr><td><b>Ручной</b></td><td class="val">Тег «Scheduled» (карандаш) · полный текст · локальное время крупно + <code>UTC</code>-подсказка · источник. Действия: <b>Edit time</b> · <b>Publish now</b> · <b>Unschedule</b> (вернуть в черновики) · <b>Delete</b> (danger).</td></tr>
-        <tr><td><b>Проекция</b></td><td class="val">Тег «Autopilot» (часы) · <b>read-only</b> · ghost-текст «Text is written automatically at post time» · правило (<code>rule_name</code>). Единственное действие — ссылка «<b>Manage schedule</b>» → Автопилот.</td></tr>
-        <tr><td><b>Failed</b></td><td class="val">Тег «Failed» (danger) · текст · <code>.cal-pop-fail</code> с причиной («Threads rejected the post — duplicate content») · действие <b>Retry</b> (+ Delete).</td></tr>
-      </tbody>
-    </table></div>
-
-    <h3 id="s2-drag"><span class="stg stg--new">interactive</span>2.5 — Перетаскивание + тост Undo</h3>
-    <p class="section-note">Ключевое — «интерактивный календарь». <b>Перетаскивание записи</b> на другой день/время = перенос. Аффорданс захвата — <code>.cal-row-grip</code> (проявляется на hover, курсор <code>grab</code>). При захвате строка → <code>.cal-row--dragging</code> (полупрозрачная, пунктир). День-группа-цель подсвечивается (<code>.cal-daygroup--drop</code> + пунктирный <code>.cal-drop</code>-плейсхолдер на месте вставки). Отпускание → перенос + тост «<b>Moved to Fri, Jun 19 · 13:00</b>» с <b>Undo</b> (4200ms). Проекции автопилота <b>не</b> перетаскиваются (их время правится в Автопилоте; у <code>--proj</code> grip скрыт). Клавиатура: фокус на записи + <code>↑/↓</code> по слотам дня, <code>←/→</code> по дням. На телефоне перенос — через «Edit time».</p>
-    <div class="frames" id="f-drag"></div>
     <div class="tbl-wrap"><table>
       <thead><tr><th style="width:230px;">Элемент / класс</th><th>Описание</th></tr></thead>
       <tbody>
-        <tr><td><code>.cal-row-grip</code></td><td>Аффорданс захвата (6-точек), opacity 0 → .65 на hover, <code>cursor:grab</code>. Вся строка — drag-handle.</td></tr>
-        <tr><td><code>.cal-row--dragging</code></td><td>Перетаскиваемый источник: opacity .45, пунктир, <code>cursor:grabbing</code>, тень.</td></tr>
-        <tr><td><code>.cal-daygroup--drop</code> + <code>.cal-drop</code></td><td>День-цель: пунктирный outline списка; <code>.cal-drop</code> — плейсхолдер-слот (h52) с подписью «Drop here · &lt;date · time&gt;».</td></tr>
-        <tr><td><code>.cal-toast</code> + <code>.ct-undo</code></td><td>«Moved to &lt;date · time&gt;» (success-точка) + кнопка <b>Undo</b>. Возврат при Undo до закрытия.</td></tr>
-        <tr><td>read-only проекции</td><td>У <code>--proj</code> grip скрыт; попытка драга → tooltip «Edit the schedule in Autopilot».</td></tr>
+        <tr><td><code>.cal-modal-when</code></td><td>Шапка: слева время крупно (<code>.lt</code>, small/w600/tabular) и под ним «HH:MM UTC · Wed, Jun 17» (<code>.ut</code>, caption/subtle); справа <code>.cal-modal-close</code> 32×32.</td></tr>
+        <tr><td><code>.cal-modal-src</code></td><td>Строка источника: иконка (карандаш 13 у ручного, часы 13 у проекции) + ярлык, caption/w600/muted, margin-top 12.</td></tr>
+        <tr><td><code>.cal-modal-text</code> / <code>--ghost</code></td><td>Текст поста: margin-top 8, max-height 180 со скроллом, surface-2, padding 14, body/lh1.55. У проекции — курсив subtle «Text is written automatically at post time».</td></tr>
+        <tr><td><code>.cal-modal-fail</code></td><td>Только у failed: margin-top 10, border danger 30%, bg danger 7%, padding 12, caption/danger — причина отказа.</td></tr>
+        <tr><td><code>.cal-modal-fields</code></td><td>Режим правки времени: 2 колонки, gap 10, поля высотой 36 (на телефоне 44 + шрифт 16px против зума); фокус — акцентная рамка.</td></tr>
+        <tr><td><code>.cal-modal-actions</code></td><td>margin-top 20, прижаты вправо, gap 10.</td></tr>
+      </tbody>
+    </table></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:120px;">Вариант</th><th>Содержимое · действия</th></tr></thead>
+      <tbody>
+        <tr><td><b>Ручной</b></td><td class="val">Тег-иконка карандаш · полный текст · время крупно + UTC-строка. Действия: <b>Unschedule</b> (ghost) · <b>Publish now</b> (вторичная sm, иконка send) · <b>Edit time</b> (primary sm, иконка clock) — режим правки заменяет текст на <code>.cal-modal-fields</code> и кнопки на <b>Cancel</b> / <b>Save</b> (Save блокируется, если время ближе чем сейчас + 5 минут).</td></tr>
+        <tr><td><b>Проекция</b></td><td class="val">Тег-иконка часы · <b>read-only</b> · ghost-текст «Text is written automatically at post time» · правило (<code>rule_name</code>). Единственное действие — вторичная <b>Manage schedule</b> со ссылкой на <code>/app/autopilot</code> (иконка external).</td></tr>
+        <tr><td><b>Failed</b></td><td class="val">Тег-иконка danger · текст · <code>.cal-modal-fail</code> с причиной («Threads rejected the post — duplicate content»). Действия: <b>Unschedule</b> (ghost, цвет danger, иконка trash) · <b>Retry</b> (primary, иконка reload).</td></tr>
       </tbody>
     </table></div>
 
-    <h3 id="s2-aux">2.6 — Empty / Loading</h3>
+    <h3 id="s2-aux">2.5 — Empty / Loading</h3>
     <p class="section-note">Empty (ничего не запланировано) и skeleton, повторяющий агенда-ленту.</p>
     <div class="frames" id="f-aux"></div>
     <div class="tbl-wrap"><table>
@@ -318,15 +314,15 @@ td .mono2{font-family:var(--font-mono); font-size:11.5px; color:var(--subtle);}
   <!-- ===================== 3 ===================== -->
   <section id="s3">
     <h2><span class="h2n">3</span>Все состояния по очереди</h2>
-    <div class="statebar"><span class="st">Default</span><span class="st">Detail·manual</span><span class="st">Detail·proj</span><span class="st">Detail·failed</span><span class="st">Drag</span><span class="st">Empty</span><span class="st">Loading</span></div>
+    <div class="statebar"><span class="st">Default</span><span class="st">Detail·manual</span><span class="st">Detail·proj</span><span class="st">Detail·failed</span><span class="st">Empty</span><span class="st">Loading</span></div>
 
     <h3>3.1 — Default · прошедший день (приглушён)</h3>
     <div class="frames" id="f-states-view"></div>
 
-    <h3>3.2 — Detail-popover: проекция / failed</h3>
+    <h3>3.2 — Деталь-модалка: проекция / failed</h3>
     <div class="frames" id="f-states-pop"></div>
 
-    <h3>3.3 — Drag · Empty · Loading</h3>
+    <h3>3.3 — Empty · Loading</h3>
     <div class="frames" id="f-states-misc"></div>
     <div class="tbl-wrap"><table>
       <thead><tr><th style="width:130px;">State</th><th>Что рендерится</th></tr></thead>
@@ -334,8 +330,7 @@ td .mono2{font-family:var(--font-mono); font-size:11.5px; color:var(--subtle);}
         <tr><td><b>Default</b></td><td class="val">Лента: несколько дней, ручные + проекция, «сегодня» подсвечен с now-маркером, прошедший день приглушён, один failed.</td></tr>
         <tr><td><b>Empty</b></td><td class="val">«Nothing scheduled yet» + упоминание, что autopilot-посты тоже сюда попадут + CTA.</td></tr>
         <tr><td><b>Loading</b></td><td class="val">Skeleton, повторяющий ленту (день-заголовки + строки).</td></tr>
-        <tr><td><b>Detail</b></td><td class="val">Popover у строки: ручной (полный набор действий) / проекция (read-only + Manage schedule) / failed (причина + Retry).</td></tr>
-        <tr><td><b>Drag</b></td><td class="val">Перетаскивание: источник dimmed, день-цель подсвечена, drop-плейсхолдер, тост Undo.</td></tr>
+        <tr><td><b>Detail</b></td><td class="val">Модалка по центру: ручной (полный набор действий) / проекция (read-only + Manage schedule) / failed (причина + Retry).</td></tr>
       </tbody>
     </table></div>
   </section>
@@ -380,8 +375,8 @@ td .mono2{font-family:var(--font-mono); font-size:11.5px; color:var(--subtle);}
           <li>Фикс. сайдбар; <b>центрированная агенда-лента</b> (≈840px), а не на всю ширину.</li>
           <li>День-группы со sticky-заголовками; строки стопкой по времени; now-маркер.</li>
           <li>Range-навигатор (‹ диапазон ›) + TZ + «+ Schedule a post» над лентой.</li>
-          <li>Деталь — <b>popover</b> у строки.</li>
-          <li>Перенос — <b>drag&amp;drop</b> записи между днями + тост Undo (+ клавиатура).</li>
+          <li>Деталь — <b>центрированная модалка</b>.</li>
+          <li>Перенос — через «<b>Edit time</b>».</li>
         </ul>
       </div>
       <div class="pane mob"><h4>Телефон ( ≤ 600 )</h4>
@@ -394,7 +389,7 @@ td .mono2{font-family:var(--font-mono); font-size:11.5px; color:var(--subtle);}
         </ul>
       </div>
     </div>
-    <div class="note">Единственные отличия десктоп↔мобайл: <b>ширина</b> (центрированный столбец vs full-width) и <b>форма детали</b> (popover vs bottom-sheet). Структура записи, три типа (manual/proj/failed), группировка по дням, статусы и привязка к аккаунту — идентичны.</div>
+    <div class="note">Единственные отличия десктоп↔мобайл: <b>ширина</b> (центрированный столбец vs full-width) и <b>форма детали</b> (модалка по центру vs bottom-sheet). Структура записи, три типа (manual/proj/failed), группировка по дням, статусы и привязка к аккаунту — идентичны.</div>
   </section>
 
   <!-- ===================== 6 ===================== -->
@@ -405,7 +400,7 @@ td .mono2{font-family:var(--font-mono); font-size:11.5px; color:var(--subtle);}
       <tbody>
         <tr><td><code>GET …/calendar?from&amp;to&amp;account</code></td><td>Окно записей для выбранного аккаунта: ручные запланированные черновики <b>+</b> вычисленная проекция правил автопилота на диапазон. Возвращает <code>entries[]</code>.</td></tr>
         <tr><td>Запись (<code>entry</code>)</td><td class="val">{ <code>id</code>, <code>source</code> ('manual'|'autopilot'), <code>scheduled_at</code> (ISO-UTC), <code>local_time</code>, <code>text</code> (сниппет; у autopilot-проекции <code>null</code> → «will be generated»), <code>status</code> ('scheduled'|'projected'|'failed'), <code>rule_name?</code> (для autopilot), <code>account</code> }</td></tr>
-        <tr><td><code>PATCH …/scheduled/:id</code></td><td>Перенос ручного поста (drag или Edit time): новый <code>scheduled_at</code> (UTC). Только <code>source:'manual'</code>.</td></tr>
+        <tr><td><code>PATCH …/scheduled/:id</code></td><td>Перенос ручного поста (Edit time): новый <code>scheduled_at</code> (UTC). Только <code>source:'manual'</code>.</td></tr>
         <tr><td><code>POST …/scheduled/:id/publish</code></td><td>Publish now из детали. <code>DELETE</code> = unschedule (вернуть в черновики) / delete.</td></tr>
         <tr><td><code>POST …/scheduled/:id/retry</code></td><td>Retry для <code>status:'failed'</code>.</td></tr>
         <tr><td>Studio publish</td><td><code>POST …/drafts/:id/schedule</code> { <code>scheduled_at</code> UTC } — из диалога Студии (режим Schedule). Минимум <code>now + 5 min</code>.</td></tr>
@@ -452,8 +447,7 @@ td .mono2{font-family:var(--font-mono); font-size:11.5px; color:var(--subtle);}
       <li>День-группа: sticky-заголовок (число + день недели + дата + «Today», прошедшие дни приглушены) → строки по времени; в «сегодня» — ненавязчивый now-маркер.</li>
       <li>Строка ×3: <b>manual</b> (плотный, карандаш) · <b>projected</b> (пунктир/призрак, часы, текст «пишется при выходе», grip скрыт) · <b>failed</b> (danger); время + UTC + статус-точка; past = dim.</li>
       <li>Range-навигатор (‹ диапазон › + Today + легенда) над лентой — переключатель периода, <b>не сетка</b>.</li>
-      <li>Деталь-popover: ручной (Edit time / Publish now / Unschedule / Delete) · проекция (read-only + «Manage schedule» → Автопилот) · failed (причина + Retry).</li>
-      <li>Перетаскивание записи = перенос: grip-аффорданс, dragging-стейт, подсветка дня-цели + плейсхолдер, тост «Moved to &lt;date · time&gt;» с Undo; проекции не перетаскиваются; клавиатурный перенос стрелками. На телефоне — Edit time.</li>
+      <li>Деталь-модалка по центру: ручной (Unschedule / Publish now / Edit time, с режимом правки времени) · проекция (read-only + «Manage schedule» → Автопилот) · failed (причина + Unschedule / Retry).</li>
       <li>Студия: сегмент «Publish now | Schedule»; Schedule = Date + Time (local, «= HH:00 UTC», ≥ +5 мин) + превью + счётчик; главная кнопка «Schedule for &lt;…&gt;»; тост с Undo; бейдж «Scheduled · &lt;date&gt;» + вкладка «Scheduled».</li>
       <li>Время UTC server-side, показ в локальной TZ + offset-label; проекция read-only; привязка к выбранному аккаунту.</li>
       <li>Состояния Default/Detail(×3)/Drag/Empty/Loading; loading-скелет повторяет ленту.</li>
@@ -477,6 +471,7 @@ td .mono2{font-family:var(--font-mono); font-size:11.5px; color:var(--subtle);}
       undo:'<path d="M9 7L5 11l4 4"/><path d="M5 11h9a5 5 0 0 1 0 10h-3"/>',
       ext:'<path d="M14 4h6v6"/><path d="M20 4 10 14"/><path d="M19 14v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
       grip:'<circle cx="9" cy="6" r="1.1"/><circle cx="15" cy="6" r="1.1"/><circle cx="9" cy="12" r="1.1"/><circle cx="15" cy="12" r="1.1"/><circle cx="9" cy="18" r="1.1"/><circle cx="15" cy="18" r="1.1"/>',
+      x:'<path d="M6 6l12 12M18 6L6 18"/>',
       alert:'<path d="M12 4 2.5 20.5h19L12 4Z"/><path d="M12 10v4"/><circle cx="12" cy="17.4" r="0.6" fill="currentColor" stroke="none"/>',
       chevL:'<path d="M15 6l-6 6 6 6"/>',
       chevR:'<path d="M9 6l6 6-6 6"/>',
@@ -499,34 +494,33 @@ td .mono2{font-family:var(--font-mono); font-size:11.5px; color:var(--subtle);}
             : 'Autopilot <span class="rule">\u00B7 '+(o.rule||'Evening question')+'</span>');
     var text = typ==='proj' ? 'Text is written automatically at post time' : o.text;
     var utc = o.utc ? '<span class="utc">'+o.utc+' UTC</span>' : '';
-    return '<div class="cal-row cal-row--'+typ+(o.past?' cal-row--past':'')+(o.dragging?' cal-row--dragging':'')+'" tabindex="0" role="button">'
+    return '<div class="cal-row cal-row--'+typ+(o.past?' cal-row--past':'')+'" tabindex="0" role="button">'
       +'<div class="cal-row-time"><span class="t">'+o.time+'</span>'+utc+'</div>'
       +'<span class="cal-row-ico">'+glyph+'</span>'
       +'<div class="cal-row-body"><div class="cal-row-src">'+src+'</div><div class="cal-row-text">'+text+'</div></div>'
-      +'<div class="cal-row-end"><span class="cal-row-dot"></span>'+(typ!=='proj'?'<span class="cal-row-grip">'+ic('grip',16)+'</span>':'')+'</div></div>';
+      +'<div class="cal-row-end"><span class="cal-row-dot"></span></div></div>';
   }
   function nowrow(t){ return '<div class="cal-nowrow"><span class="lbl">now \u00B7 '+t+'</span><span class="ln"></span></div>'; }
   function dayGroup(o){
     var rows = o.rows.map(function(r){ return r.now ? nowrow(r.time) : row(r); }).join('');
-    if(o.drop){ rows += '<div class="cal-drop">Drop here \u00B7 '+o.drop+'</div>'; }
     var head = '<div class="cal-dayhead'+(o.today?' cal-dayhead--today':'')+'">'
       +'<span class="cal-dh-num">'+o.num+'</span>'
       +'<span class="cal-dh-meta"><span class="cal-dh-dow">'+o.dow+'</span><span class="cal-dh-sub">'+o.sub+'</span></span>'
       +(o.today?'<span class="cal-dh-today">Today</span>':'')
       +'<span class="cal-dh-count">'+o.count+'</span></div>';
-    return '<div class="cal-daygroup'+(o.past?' cal-daygroup--past':'')+(o.dropGroup?' cal-daygroup--drop':'')+'">'+head+'<div class="cal-day-list">'+rows+'</div></div>';
+    return '<div class="cal-daygroup'+(o.past?' cal-daygroup--past':'')+'">'+head+'<div class="cal-day-list">'+rows+'</div></div>';
   }
 
   /* ---------- day data ---------- */
-  function gToday(opts){ opts=opts||{}; return dayGroup({num:'17',dow:'Wednesday',sub:'June 17',today:true,count:'3 posts',rows:[
+  function gToday(){ return dayGroup({num:'17',dow:'Wednesday',sub:'June 17',today:true,count:'3 posts',rows:[
     {type:'proj',time:'09:00',utc:'08:00',rule:'Morning thought',past:true},
     {now:true,time:'11:20'},
-    {type:'manual',time:'13:00',utc:'12:00',text:'editing is just deciding, over and over, what you actually meant. the cuts are where the voice shows up.', dragging:opts.dragging},
+    {type:'manual',time:'13:00',utc:'12:00',text:'editing is just deciding, over and over, what you actually meant. the cuts are where the voice shows up.'},
     {type:'proj',time:'18:00',utc:'17:00',rule:'Evening question'}]}); }
   function gThu(){ return dayGroup({num:'18',dow:'Thursday',sub:'June 18',count:'2 posts',rows:[
     {type:'proj',time:'09:00',utc:'08:00',rule:'Morning thought'},
     {type:'proj',time:'18:00',utc:'17:00',rule:'Evening question'}]}); }
-  function gFri(opts){ opts=opts||{}; return dayGroup({num:'19',dow:'Friday',sub:'June 19',count:opts.drop?'4 posts':'3 posts', dropGroup:opts.drop, drop:opts.drop?'Fri, Jun 19 \u00B7 13:00':null, rows:[
+  function gFri(){ return dayGroup({num:'19',dow:'Friday',sub:'June 19',count:'3 posts',rows:[
     {type:'proj',time:'09:00',utc:'08:00',rule:'Morning thought'},
     {type:'manual',time:'09:30',utc:'08:30',text:'a question I keep coming back to: who is this paragraph for? write to that one person.'},
     {type:'proj',time:'18:00',utc:'17:00',rule:'Evening question'}]}); }
@@ -539,7 +533,6 @@ td .mono2{font-family:var(--font-mono); font-size:11.5px; color:var(--subtle);}
     {type:'proj',time:'18:00',utc:'17:00',rule:'Evening question',past:true}]}); }
 
   function agendaMain(){ return '<div class="cal-agenda">'+gToday()+gThu()+gFri()+gSat()+'</div>'; }
-  function agendaDrag(){ return '<div class="cal-agenda">'+gToday({dragging:true})+gThu()+gFri({drop:true})+'</div>'; }
   function agendaPast(){ return '<div class="cal-agenda">'+gTuePast()+gToday()+'</div>'; }
 
   /* ---------- navigator ---------- */
@@ -558,28 +551,28 @@ td .mono2{font-family:var(--font-mono); font-size:11.5px; color:var(--subtle);}
   }
   function page(inner){ return '<div class="cal-wrap">'+toolbar()+range()+inner+'</div>'; }
 
-  /* ---------- popovers ---------- */
-  function popManual(){
-    return '<div class="cal-pop"><div class="cal-pop-head"><span class="cal-pop-tag cal-pop-tag--manual">'+ic('pencil',12)+'Scheduled</span>'
-      +'<span class="cal-pop-when"><div class="lt">13:00</div><div class="ut">12:00 UTC</div></span></div>'
-      +'<div class="cal-pop-body">editing is just deciding, over and over, what you actually meant. the cuts are where the voice shows up.</div>'
-      +'<div class="cal-pop-meta">'+ic('calendar',13)+'Wed, Jun 17 \u00B7 manual draft</div>'
-      +'<div class="cal-pop-actions"><button class="btn btn--secondary btn--sm">'+ic('clock',14)+' Edit time</button><button class="btn btn--secondary btn--sm">'+ic('send',14)+' Publish now</button></div>'
-      +'<div class="cal-pop-actions cal-pop-actions--end" style="border-top:none;padding-top:0;margin-top:8px"><button class="btn btn--ghost btn--sm">Unschedule</button><button class="btn btn--danger btn--sm">'+ic('trash',14)+' Delete</button></div></div>';
+  /* ---------- detail modal ---------- */
+  function modalManual(){
+    return '<div class="overlay"><div class="dialog" role="dialog" aria-modal="true" aria-label="Scheduled post">'
+      +'<div class="cal-modal-when"><div><span class="lt">13:00</span><span class="ut">12:00 UTC \u00B7 Wed, Jun 17</span></div><button class="cal-modal-close">'+ic('x',16)+'</button></div>'
+      +'<div class="cal-modal-src">'+ic('pencil',13)+'Manual draft</div>'
+      +'<div class="cal-modal-text">editing is just deciding, over and over, what you actually meant. the cuts are where the voice shows up.</div>'
+      +'<div class="cal-modal-actions"><button class="btn btn--ghost">Unschedule</button><button class="btn btn--secondary btn--sm">'+ic('send',15)+' Publish now</button><button class="btn btn--primary btn--sm">'+ic('clock',15)+' Edit time</button></div></div></div>';
   }
-  function popProj(){
-    return '<div class="cal-pop"><div class="cal-pop-head"><span class="cal-pop-tag">'+ic('clock',12)+'Autopilot</span>'
-      +'<span class="cal-pop-when"><div class="lt">18:00</div><div class="ut">17:00 UTC</div></span></div>'
-      +'<div class="cal-pop-body cal-pop-body--ghost">Text is written automatically in your voice at post time.</div>'
-      +'<div class="cal-pop-meta"><span class="cal-pop-rule">'+ic('clock',13)+'Evening question</span><span style="opacity:.5">\u00B7</span> recurring</div>'
-      +'Manage schedule in Autopilot'+ic('ext',13)+'</div>';
+  function modalProj(){
+    return '<div class="overlay"><div class="dialog" role="dialog" aria-modal="true" aria-label="Autopilot post">'
+      +'<div class="cal-modal-when"><div><span class="lt">18:00</span><span class="ut">17:00 UTC \u00B7 Wed, Jun 17</span></div><button class="cal-modal-close">'+ic('x',16)+'</button></div>'
+      +'<div class="cal-modal-src">'+ic('clock',13)+'Autopilot \u00B7 Evening question</div>'
+      +'<div class="cal-modal-text cal-modal-text--ghost">Text is written automatically in your voice at post time.</div>'
+      +'<div class="cal-modal-actions"><a class="btn btn--secondary" href="/app/autopilot">'+ic('ext',15)+' Manage schedule</a></div></div></div>';
   }
-  function popFailed(){
-    return '<div class="cal-pop"><div class="cal-pop-head"><span class="cal-pop-tag cal-pop-tag--failed">'+ic('alert',12)+'Failed</span>'
-      +'<span class="cal-pop-when"><div class="lt">13:00</div><div class="ut">12:00 UTC</div></span></div>'
-      +'<div class="cal-pop-body">three small edits that made this paragraph finally land \u2014 cut the throat-clear, name the stakes, end on a verb.</div>'
-      +'<div class="cal-pop-fail">'+ic('alert',14)+'<span>Threads rejected the post \u2014 duplicate content within 24h. Edit the text or pick a new time, then retry.</span></div>'
-      +'<div class="cal-pop-actions"><button class="btn btn--primary btn--sm">'+ic('undo',14)+' Retry</button><button class="btn btn--ghost btn--sm">'+ic('trash',14)+' Delete</button></div></div>';
+  function modalFailed(){
+    return '<div class="overlay"><div class="dialog" role="dialog" aria-modal="true" aria-label="Failed post">'
+      +'<div class="cal-modal-when"><div><span class="lt">13:00</span><span class="ut">12:00 UTC \u00B7 Wed, Jun 17</span></div><button class="cal-modal-close">'+ic('x',16)+'</button></div>'
+      +'<div class="cal-modal-src">'+ic('alert',13)+'Failed to publish</div>'
+      +'<div class="cal-modal-text">three small edits that made this paragraph finally land \u2014 cut the throat-clear, name the stakes, end on a verb.</div>'
+      +'<div class="cal-modal-fail">'+ic('alert',14)+'<span>Threads rejected the post \u2014 duplicate content within 24h. Edit the text or pick a new time, then retry.</span></div>'
+      +'<div class="cal-modal-actions"><button class="btn btn--ghost" style="color:var(--color-danger)">'+ic('trash',15)+' Unschedule</button><button class="btn btn--primary">'+ic('undo',15)+' Retry</button></div></div></div>';
   }
 
   /* ---------- empty / skeleton ---------- */
@@ -594,11 +587,6 @@ td .mono2{font-family:var(--font-mono); font-size:11.5px; color:var(--subtle);}
       +'<div class="cal-row-body"><div class="skel-line" style="width:110px;height:11px"></div><div class="skel-line" style="width:100%;height:12px;margin-top:9px"></div><div class="skel-line" style="width:68%;height:12px;margin-top:6px"></div></div></div>'; }
     function skHead(){ return '<div class="cal-dayhead" style="position:static"><div class="skel-line" style="width:38px;height:38px;border-radius:10px;flex:0 0 auto"></div><div style="margin-left:13px"><div class="skel-line" style="width:96px;height:13px"></div><div class="skel-line" style="width:62px;height:10px;margin-top:6px"></div></div></div>'; }
     return '<div class="cal-wrap"><div class="cal-agenda skeleton" aria-hidden="true">'+skHead()+'<div class="cal-day-list">'+skRow()+skRow()+'</div>'+skHead()+'<div class="cal-day-list">'+skRow()+skRow()+'</div></div></div>';
-  }
-
-  /* ---------- toast ---------- */
-  function toast(){
-    return '<div style="position:absolute;left:50%;bottom:18px;transform:translateX(-50%)"><div class="cal-toast"><span class="ct-mark"></span><span class="ct-text">Moved to <b>Fri, Jun 19 \u00B7 13:00</b></span><button class="ct-undo">Undo</button></div></div>';
   }
 
   /* ---------- studio publish dialog ---------- */
@@ -639,13 +627,12 @@ td .mono2{font-family:var(--font-mono); font-size:11.5px; color:var(--subtle);}
   set('f-row','<div class="frow">'
     +col('Light \u00B7 3 row types','<div class="cal-agenda" style="gap:9px;display:flex;flex-direction:column">'+row({type:'manual',time:'13:00',utc:'12:00',text:'editing is just deciding, over and over, what you actually meant.'})+row({type:'proj',time:'18:00',utc:'17:00',rule:'Evening question'})+row({type:'failed',time:'13:00',utc:'12:00',text:'three small edits that made this paragraph finally land'})+row({type:'manual',time:'09:00',utc:'08:00',text:'a past, dimmed entry example',past:true})+'</div>',false)
     +col('Dark \u00B7 3 row types','<div class="cal-agenda" style="gap:9px;display:flex;flex-direction:column">'+row({type:'manual',time:'13:00',utc:'12:00',text:'editing is just deciding, over and over, what you actually meant.'})+row({type:'proj',time:'18:00',utc:'17:00',rule:'Evening question'})+row({type:'failed',time:'13:00',utc:'12:00',text:'three small edits that made this paragraph finally land'})+row({type:'manual',time:'09:00',utc:'08:00',text:'a past, dimmed entry example',past:true})+'</div>',true)+'</div>');
-  set('f-pop','<div class="frow">'+col('Light \u00B7 manual',popManual(),false)+col('Dark \u00B7 manual',popManual(),true)+'</div>');
-  set('f-drag', col('Light \u00B7 dragging \u2192 drop on Fri','<div class="cal-wrap">'+agendaDrag()+'</div>'+toast(),false,'frame--rel')+col('Dark \u00B7 dragging','<div class="cal-wrap">'+agendaDrag()+'</div>',true));
+  set('f-pop','<div class="frow">'+col('Light \u00B7 manual',modalManual(),false,'frame--rel')+col('Dark \u00B7 manual',modalManual(),true,'frame--rel')+'</div>');
   set('f-aux','<div class="frow">'+col('Light \u00B7 Empty',empty(),false)+col('Dark \u00B7 Loading',skeleton(),true)+'</div>');
 
   set('f-states-view', col('Light \u00B7 today + past (dim)','<div class="cal-wrap">'+agendaPast()+'</div>',false)+col('Dark \u00B7 today + past (dim)','<div class="cal-wrap">'+agendaPast()+'</div>',true));
-  set('f-states-pop','<div class="frow">'+col('Light \u00B7 projection (read-only)',popProj(),false)+col('Light \u00B7 failed (+ Retry)',popFailed(),false)+col('Dark \u00B7 projection',popProj(),true)+col('Dark \u00B7 failed',popFailed(),true)+'</div>');
-  set('f-states-misc', col('Light \u00B7 Drag + toast','<div class="cal-wrap">'+agendaDrag()+'</div>'+toast(),false,'frame--rel')+col('Dark \u00B7 Empty',empty(),true));
+  set('f-states-pop','<div class="frow">'+col('Light \u00B7 projection (read-only)',modalProj(),false,'frame--rel')+col('Light \u00B7 failed (+ Retry)',modalFailed(),false,'frame--rel')+col('Dark \u00B7 projection',modalProj(),true,'frame--rel')+col('Dark \u00B7 failed',modalFailed(),true,'frame--rel')+'</div>');
+  set('f-states-misc', col('Light \u00B7 Empty',empty(),false)+col('Dark \u00B7 Loading',skeleton(),true));
 
   set('f-studio','<div class="frow">'+col('Light \u00B7 Publish now',studioDialog('now'),false,'frame--rel')+col('Light \u00B7 Schedule',studioDialog('schedule'),false,'frame--rel')+col('Dark \u00B7 Schedule',studioDialog('schedule'),true,'frame--rel')+col('Dark \u00B7 Publish now',studioDialog('now'),true,'frame--rel')+'</div>');
   set('f-badge', col('Light \u00B7 Scheduled tab + cards',draftScheduled(),false)+col('Dark \u00B7 Scheduled tab + cards',draftScheduled(),true));

@@ -352,7 +352,7 @@
     ).join('') + `</div>`;
   }
 
-  // Feed post card. opts: { reply, autoReplies, expanded, over, viral, settling,
+  // Feed post card. opts: { reply, autoReplies (true|false|'paused'), over, viral, settling,
   //   lang ({native,text} → translated), menu (⋯ open w/ Delete), m (metric overrides) }
   function feedCard(opts = {}) {
     const o = opts;
@@ -376,15 +376,10 @@
     const metrics = `<div class="m-metrics"><div class="m-metric-hero">${ic('eye',18)}<span class="m-num">${m.views}</span><span class="m-lbl">views</span></div>`
       + `<div class="m-metric-subs"><span class="m-metric-sub">${ic('heart',15)}${m.likes}</span><span class="m-metric-sub">${ic('bubble',15)}${m.comments}</span><span class="m-metric-sub">${ic('repost',15)}${m.reposts}</span></div></div>`;
     const trBar = o.lang ? `<div class="translate-bar">${ic('globe',13)}<span>Translated to ${o.lang.native}</span><span class="tb-dot">·</span><button class="tb-orig">Show original</button></div>` : '';
-    const trend = o.expanded ? `<div class="m-trend"><div class="m-trend-cap"><span class="tc-t">Views over 7 days</span><span class="tc-s">peaked Tue 2pm</span></div>`
-      + `<svg viewBox="0 0 600 112" role="img" aria-label="Views over time vs your average"><path d="M8 84 L107 70 L206 40 L305 30 L404 24 L503 20 L592 16 L592 92 L8 92 Z" fill="var(--color-accent)" fill-opacity="0.10"/>`
-      + `<line x1="8" y1="58" x2="592" y2="58" stroke="var(--color-text-subtle)" stroke-width="1" stroke-dasharray="4 4" opacity="0.75"/>`
-      + `<text x="592" y="52" text-anchor="end" font-size="11" fill="var(--color-text-subtle)" style="font-family:var(--font-sans)">your average</text>`
-      + `<path d="M8 84 L107 70 L206 40 L305 30 L404 24 L503 20 L592 16" fill="none" stroke="var(--color-accent)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>`
-      + `<circle cx="592" cy="16" r="3.6" fill="var(--color-accent)" stroke="var(--color-surface)" stroke-width="2"/></svg>`
-      + `<div class="m-trend-axis"><span>Posted</span><span>Now</span></div></div>` : '';
-    const arOn = o.autoReplies !== false;
-    const pill = `<button class="ar-pill ${arOn?'ar-pill--on':''}">${arOn?ic('reply',14):'<span class="ar-dot"></span>'}Auto-replies ${arOn?'on':'off'}</button>`;
+    const arState = o.autoReplies === 'paused' ? 'paused' : (o.autoReplies === false ? 'off' : 'on');
+    const pill = arState === 'paused'
+      ? `<button class="ar-pill ar-pill--paused" title="Account replies are off — this post is marked, but nothing goes out until you turn replies back on in House rules.">${ic('reply',14)}Replies: paused</button>`
+      : `<button class="ar-pill ${arState==='on'?'ar-pill--on':''}">${arState==='on'?ic('reply',14):'<span class="ar-dot"></span>'}Auto-replies ${arState==='on'?'on':'off'}</button>`;
     const delMenu = [
       ...(o.lang ? [{icon:'undo',label:'Show original'}] : []),
       {icon:'globe',label:'Translate',caret:true},
@@ -394,12 +389,16 @@
     ];
     const overflow = `<div class="m-menu-anchor"><button class="m-iconbtn--foot" aria-label="More actions">${ic('more',18)}</button>`
       + (o.menu ? menu(delMenu) : '') + `</div>`;
-    const growthCls = o.expanded ? ' m-iconbtn--foot-on' : '';
     const foot = `<div class="m-foot"><div class="m-foot-meta">${pill}</div>`
-      + `<div class="m-foot-row"><button class="m-iconbtn--foot${growthCls}" aria-label="Growth" aria-expanded="${o.expanded?'true':'false'}">${ic('chart',18)}</button>`
-      + `<a class="btn btn--primary m-btn m-btn--grow">${ic('external',15)}Open on Threads</a>`
+      + `<div class="m-foot-row"><a class="btn btn--primary m-btn m-btn--grow">${ic('external',15)}Open on Threads</a>`
       + `${overflow}</div></div>`;
-    return `<article class="m-card">${head('Mara Lin', sub, 'mara.png', v)}${replyCtx}<p class="m-card-body">${body}</p>${trBar}${metrics}${trend}${foot}</article>`;
+    return `<article class="m-card">${head('Mara Lin', sub, 'mara.png', v)}${replyCtx}<p class="m-card-body">${body}</p>${trBar}${metrics}${foot}</article>`;
+  }
+
+  // "Show older posts" — centered under the last card; visible only when has_more. opts: { loading }
+  function loadMore(opts = {}) {
+    const o = opts || {};
+    return `<div style="display:flex;justify-content:center;margin-top:20px"><button class="btn btn--secondary m-loadmore"${o.loading?' disabled':''}>${o.loading?'<span class="m-lg-spin"></span>':''}Show older posts</button></div>`;
   }
 
   /* ---------------------- Feed: baseline + sort bar ---------------------- */
@@ -1548,7 +1547,7 @@
 
   window.MOCK = {
     ic, statusbar, top, tabs, drawer, phone, comp, col, light, dark,
-    composer, stroka, filterbar, studioCard, feedCard, feedBaseline, sortBar, deleteSheet,
+    composer, stroka, filterbar, studioCard, feedCard, feedBaseline, sortBar, deleteSheet, loadMore,
     commentCard, postSwitcher, replyContext, repliesFilter, publishReplySheet, mentionCard,
     statsPeriods, statsSummary, statsBarChart, statsHours, statsTopPosts, statsBestTimes, statsSpread, statsPanel, statsEmpty, statsSkeleton,
     auditHeader, auditChange, auditRow, auditEmpty, auditSkeleton,

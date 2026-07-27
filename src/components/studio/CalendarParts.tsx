@@ -82,7 +82,10 @@ export function CalendarToolbar({
   onSchedule: () => void;
 }) {
   const { t } = useTranslation();
-  const nav = "grid h-8 w-8 place-items-center rounded-md border border-border bg-surface text-text-muted transition-colors hover:bg-surface-2 hover:text-text";
+  // `shrink-0` is load-bearing: without it the 32px steppers squeeze to ~17px
+  // on a 375px phone once a long locale's range label and «Сегодня» join the
+  // row (spec `.mcal-navbtn` is `flex: 0 0 auto`).
+  const nav = "grid h-8 w-8 shrink-0 place-items-center rounded-md border border-border bg-surface text-text-muted transition-colors hover:bg-surface-2 hover:text-text";
   return (
     <div className="mb-4 flex flex-wrap items-center gap-3">
       <div className="min-w-0 flex-1">
@@ -92,12 +95,14 @@ export function CalendarToolbar({
       <Button variant="secondary" size="sm" icon={<IcPlus size={15} />} onClick={onSchedule} className="max-md:order-2">
         {t("calendar.schedule_post")}
       </Button>
-      <div className="flex items-center gap-2 max-md:order-1 max-md:w-full">
+      {/* Wraps rather than clips: on a long locale the tz chip drops to a second
+          line instead of running off the right edge (mobile spec §11). */}
+      <div className="flex flex-wrap items-center gap-2 gap-y-2.5 max-md:order-1 max-md:w-full">
         <button type="button" aria-label={t("calendar.prev")} onClick={onPrev} className={nav}><IcArrowLeft size={15} /></button>
         <span className="min-w-[8.5rem] text-center text-small font-medium tabular-nums text-text">{rangeLabel}</span>
         <button type="button" aria-label={t("calendar.next")} onClick={onNext} className={nav}><IcArrowRight size={15} /></button>
-        <button type="button" onClick={onToday} className={cn(buttonClasses({ variant: "ghost", size: "sm" }))}>{t("calendar.today")}</button>
-        <span className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-caption text-text-subtle">
+        <button type="button" onClick={onToday} className={cn(buttonClasses({ variant: "ghost", size: "sm" }), "shrink-0")}>{t("calendar.today")}</button>
+        <span className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-caption text-text-subtle">
           <IcClock size={12} /> {tzLabel}
         </span>
       </div>

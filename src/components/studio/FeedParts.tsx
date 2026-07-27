@@ -774,7 +774,10 @@ export function FeedCard({
             p.autoReply && !replyMasterOff
               ? "border-accent/32 bg-accent/12 text-accent"
               : p.autoReply
-                ? "border-warning/30 bg-warning/[0.08] text-text-muted"
+                // Spec `.ar-pill--paused`: an opaque mix with the border/surface,
+                // not a translucent warning. The two diverge on dark, where a
+                // 8%-alpha tint all but disappears against the card.
+                ? "border-[color-mix(in_srgb,var(--color-warning)_30%,var(--color-border))] bg-[color-mix(in_srgb,var(--color-warning)_8%,var(--color-surface))] text-text-muted"
                 : "border-border bg-surface-2 text-text-muted hover:border-text/20",
           )}
         >
