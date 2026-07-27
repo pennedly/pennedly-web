@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000
+    },
+    {
+      "name": "design",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8080", "--directory", "/Users/zakharsazanavets/Developer/Zakhar/Pennedly/pennedly-web/design-export/PennedlyDesign"],
+      "port": 8080
+    },
+    {
+      "name": "design3",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8777", "--directory", "/tmp/pennedly3"],
+      "port": 8777
+    }
+  ]
+}

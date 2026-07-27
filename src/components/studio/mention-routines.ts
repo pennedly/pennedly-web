@@ -3,7 +3,7 @@
 // is the goal in the owner's words (empty = the catch-all «по умолчанию» routine),
 // `trigger_cfg.requires_media` narrows the attachment, `publish_mode` is auto/ask.
 // The engine (backend Phase 3) is live; the generated-photo action is «Скоро».
-// Ported from design-export/Pennedly-2026-07-17 (mention-routines-build.js).
+// Ported from design-export/PennedlyDesign (mention-routines-build.js).
 
 import { fetchAutopilot, updateAutopilot } from "@/lib/api";
 import type { Scenario } from "@/lib/types";

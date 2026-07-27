@@ -1,5 +1,5 @@
 /* mentions-queue.css — Pennedly «Упоминания»: очередь с интентами, медиа и рутинами.
-   Ported 1:1 from design-export/Pennedly-2026-07-17/mentions-queue.css. Tokens from
+   Ported 1:1 from design-export/PennedlyDesign/screens/mentions/mentions-queue.css. Tokens from
    globals.css (--color-*, --radius-*, --shadow-*, --text-*, --font-*, --duration-*,
    --ease-*, card-in). Action buttons use the app's <button className={buttonClasses}>
    with an extra `btn`/`mq-grow` hook so the mobile flex rules below apply. The doc's

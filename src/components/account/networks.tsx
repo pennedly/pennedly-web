@@ -182,7 +182,7 @@ export function ConnectNetworkDialog({
 }
 
 // ── mobile add-flow bottom sheet — 1:1 the эталон pickerSheet ─────────────────
-// (design-export/Pennedly-2026-07-06-evening/account-empty-mobile.js: grip →
+// (design-export/PennedlyDesign/components/account-empty-mobile.js: grip →
 // ma-pick-head title + close → ma-pick-s subtitle → the ma-prefixed picker
 // rows, inside the shared m-scrim/m-sheet chrome.)
 export function ConnectNetworkSheet({ t, nav, onClose }: { t: T; nav: Nav; onClose: () => void }) {

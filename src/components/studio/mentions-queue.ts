@@ -1,5 +1,5 @@
 // Mentions Queue — shared model for the triaged mentions screen.
-// Mirrors design-export/Pennedly-2026-07-17/mentions-queue-build.js: the 12-intent
+// Mirrors design-export/PennedlyDesign/screens/mentions/mentions-queue-build.js: the 12-intent
 // registry (three groups), the status set, the per-mention view model, a mapper
 // from the real `MentionSummary`, and the tester ?demo=1 seed (Mara Lin content,
 // em-dash-free). The screen renders these; classes are translated to Tailwind.

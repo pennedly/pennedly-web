@@ -1,7 +1,7 @@
 "use client";
 
 // Presentational parts for the triaged Mentions Queue, ported 1:1 from
-// design-export/Pennedly-2026-07-17 (mentions-queue-build.js + mentions-queue.css).
+// design-export/PennedlyDesign (mentions-queue-build.js + mentions-queue.css).
 // Pure view: the page owns data + actions and passes them down. Chrome uses the
 // mq-* classes (mentions-queue.css); action buttons use the app's buttonClasses so
 // they match the rest of the app, with a `btn`/`mq-grow` hook for the mobile layer.

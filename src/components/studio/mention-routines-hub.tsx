@@ -3,7 +3,7 @@
 // «Рутины упоминаний» hub — the list of mention routines (on_mention scenarios),
 // each a card mirroring the live scenario card (Tailwind shell + the `.rt-mode`
 // publish-mode strip) specialized for mentions. Chrome from mention-routines.css.
-// Ported from design-export/Pennedly-2026-07-17 (mention-routines-build.js `hub`).
+// Ported from design-export/PennedlyDesign (mention-routines-build.js `hub`).
 
 import { Badge, StatusBadge } from "@/components/studio/Badges";
 import { Button } from "@/components/ui/button";

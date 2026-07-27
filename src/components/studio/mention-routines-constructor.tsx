@@ -3,7 +3,7 @@
 // «Рутина упоминаний» constructor — the recipe-card editor for one on_mention
 // routine: a clickable recipe phrase (when mentioned → media → goal → mode →
 // action) that opens drawers, a safety guarantee, two depth layers, and a live
-// mention preview. Ported from design-export/Pennedly-2026-07-17
+// mention preview. Ported from design-export/PennedlyDesign
 // (mention-routines-build.js buildConstructor). Chrome from mention-routines.css
 // (.mr-*) + Tailwind; the generated-photo action is «Скоро» (Phase 4).
 
