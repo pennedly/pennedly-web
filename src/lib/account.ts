@@ -122,24 +122,3 @@ export function useSelectedAccountId(): number | null {
     () => null,
   );
 }
-
-// ── Onboarding "skip for now" ────────────────────────────────────────
-// A per-account flag set when the user skips voice setup in onboarding,
-// so the dashboard doesn't bounce them straight back into the wizard.
-// Cleared implicitly once the account has a role_book (needs_onboarding
-// goes false), so this only matters for the skipped-but-not-yet-set-up gap.
-
-function skipKey(accountId: number): string {
-  return `pennedly.onboardingSkipped.${accountId}`;
-}
-
-export function isOnboardingSkipped(accountId: number): boolean {
-  if (typeof window === "undefined") return false;
-  return window.localStorage.getItem(skipKey(accountId)) === "1";
-}
-
-export function setOnboardingSkipped(accountId: number): void {
-  if (typeof window !== "undefined") {
-    window.localStorage.setItem(skipKey(accountId), "1");
-  }
-}

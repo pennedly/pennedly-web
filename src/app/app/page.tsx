@@ -38,7 +38,7 @@ import {
 } from "@/lib/api";
 import { friendlyErrorText } from "@/lib/errors";
 import { captureEvent, identify } from "@/lib/analytics";
-import { isOnboardingSkipped, setSelectedAccountId, useSelectedAccountId } from "@/lib/account";
+import { setSelectedAccountId, useSelectedAccountId } from "@/lib/account";
 import { useTranslation } from "@/lib/i18n";
 import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
 import { Toast, ToastHost } from "@/components/ui/toast";
@@ -252,7 +252,7 @@ export default function Studio() {
         const ob = await fetchOnboardingStatus(accountId);
         setVoiceReady(!ob.needs_onboarding);
         if (ob.needs_onboarding) {
-          if (!isOnboardingSkipped(accountId)) {
+          if (!ob.onboarding_skipped) {
             router.replace("/app/onboarding");
             return;
           }

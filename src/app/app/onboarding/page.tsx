@@ -28,14 +28,11 @@ import {
   onboardingAnalyzePreview,
   onboardingFromScratch,
   onboardingFromScratchPreview,
+  skipOnboarding,
   startThreadsConnect,
 } from "@/lib/api";
 import { captureEvent } from "@/lib/analytics";
-import {
-  getSelectedAccountId,
-  setOnboardingSkipped,
-  setSelectedAccountId,
-} from "@/lib/account";
+import { getSelectedAccountId, setSelectedAccountId } from "@/lib/account";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import {
   TweaksPanel,
@@ -1494,7 +1491,12 @@ export default function OnboardingPage() {
     // hidden in that state (showSkip); this guard keeps the invariant even if
     // some future path calls onSkip directly.
     if (accountId === null) return;
-    setOnboardingSkipped(accountId);
+    // Fire-and-forget: the done screen's "Go to studio" button is the earliest
+    // the user can navigate away, giving this ample time to land server-side
+    // before /app re-checks onboarding_skipped. A failure here just means a
+    // later visit may bounce back into the wizard once more — no worse than
+    // the old localStorage-only behavior.
+    void skipOnboarding(accountId).catch(() => {});
     captureEvent("ui.onboarding_skipped", { account_id: accountId });
     setMode(null);
     setStage("done");

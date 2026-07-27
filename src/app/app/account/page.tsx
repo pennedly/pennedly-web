@@ -43,7 +43,7 @@ import {
   peekMeAccount,
 } from "@/lib/account-data";
 import { captureEvent } from "@/lib/analytics";
-import { isOnboardingSkipped, setSelectedAccountId } from "@/lib/account";
+import { setSelectedAccountId } from "@/lib/account";
 import { pluralUnit, useTranslation } from "@/lib/i18n";
 import { ErrorBanner } from "@/components/ui/error-banner";
 import { Toast, ToastHost } from "@/components/ui/toast";
@@ -154,7 +154,7 @@ export default function AccountDashboardPage() {
         }
         const ob = await fetchOnboardingStatus(justConnected.id);
         if (!alive) return;
-        if (ob.needs_onboarding && !isOnboardingSkipped(justConnected.id)) {
+        if (ob.needs_onboarding && !ob.onboarding_skipped) {
           router.replace("/app/onboarding");
           return;
         }

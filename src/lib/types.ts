@@ -161,6 +161,10 @@ export type OnboardingStatus = {
   // instead of a terminal "you only have N" verdict. Optional for the one
   // mixed-version deploy window (old API → treat as false).
   importing?: boolean;
+  // Server-side "skip for now" (replaces the old per-browser localStorage
+  // flag) — true once the user has skipped voice setup on ANY device.
+  // Optional for the one mixed-version deploy window (old API → treat as false).
+  onboarding_skipped?: boolean;
 };
 
 export type FromScratchInput = {

@@ -1215,6 +1215,18 @@ export async function onboardingFromScratch(
   );
 }
 
+// Records "skip for now" server-side (threads_accounts.onboarding_skipped_at)
+// so it survives a device/browser switch instead of living only in this
+// browser's localStorage.
+export async function skipOnboarding(
+  accountId: number,
+): Promise<{ onboarding_skipped: boolean }> {
+  return fetchApi<{ onboarding_skipped: boolean }>(
+    `/api/accounts/${accountId}/onboarding/skip`,
+    { method: "POST" },
+  );
+}
+
 // Tester-only preview variants — run for real, return the result, save
 // nothing (the account's voice/topics/prompts are untouched).
 export async function onboardingAnalyzePreview(
