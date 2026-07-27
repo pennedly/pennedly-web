@@ -17,7 +17,7 @@
 // `overflow-y-auto`), so the driver is `window.scrollY` — not a scoped
 // container's scrollTop.
 
-import { useEffect, type CSSProperties } from "react";
+import { useEffect, type CSSProperties, type RefObject } from "react";
 
 /**
  * The hero side of the crossfade (spec §4): opacity only, no transform — the
@@ -42,7 +42,36 @@ const REDUCED_STEP_PX = 16;
  * Called once from `AppTopbar`, which every affected screen already renders —
  * so no page has to opt in, and there is never more than one listener.
  */
-export function useHeaderReveal(): void {
+/**
+ * Publishes the sticky bar's REAL height as `--app-header-h` on `<html>`, so
+ * secondary sticky rows (the Replies post-switcher, any future one) can pin
+ * directly below it instead of hardcoding an offset.
+ *
+ * The bar's height is not a constant: it grows with the profile-crumb strip and
+ * again when a long-locale status pill wraps to a second line — measured at
+ * 106px on a 375px `ru` Replies screen, against the 52px the switcher assumed.
+ * That is why the switcher slid UNDER the bar while scrolling.
+ */
+function useHeaderHeightVar(ref: RefObject<HTMLElement | null>): void {
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const root = document.documentElement;
+    const publish = (): void => {
+      root.style.setProperty("--app-header-h", `${Math.round(el.getBoundingClientRect().height)}px`);
+    };
+    publish();
+    const ro = new ResizeObserver(publish);
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      root.style.removeProperty("--app-header-h");
+    };
+  }, [ref]);
+}
+
+export function useHeaderReveal(headerRef: RefObject<HTMLElement | null>): void {
+  useHeaderHeightVar(headerRef);
   useEffect(() => {
     // Belt-and-braces: effects never run during SSR, but this keeps the hook
     // safe if it is ever hoisted out of an effect.

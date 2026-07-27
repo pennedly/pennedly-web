@@ -9,7 +9,7 @@
 // content column.
 
 import Link from "next/link";
-import { type ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 
 import { cn } from "@/lib/cn";
 import { useHeaderReveal } from "@/lib/useHeaderReveal";
@@ -146,9 +146,10 @@ export function AppTopbar({
   // App-Header-SPEC §4 — publishes `--hdr-reveal` on <html>. Lives here (not in
   // each page) because every affected screen already renders this bar, so the
   // per-screen change stays a one-line opacity binding on the hero.
-  useHeaderReveal();
+  const headerRef = useRef<HTMLElement>(null);
+  useHeaderReveal(headerRef);
   return (
-    <header className="sticky top-0 z-10 border-b border-border bg-bg/85 backdrop-blur-md">
+    <header ref={headerRef} className="sticky top-0 z-10 border-b border-border bg-bg/85 backdrop-blur-md">
       <div className="mx-auto w-full px-5 md:px-6" style={{ maxWidth: maxW }}>
         {/* Nav #7 — desktop: the crumb is an eyebrow line ABOVE the title row
             (Navigation-Topbar-SPEC §2, variant B). Hidden on the phone, which

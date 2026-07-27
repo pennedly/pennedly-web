@@ -176,7 +176,15 @@ export function PostMaster({
     // top bar on every width so it stays in reach while a long comment list
     // scrolls. (Replaces the old desktop left master column.) On a phone it
     // swipes; on desktop, arrows / edge-fades / click-drag / shift-wheel / ←→.
-    <div className="sticky top-3 z-10 bg-bg/85 backdrop-blur max-md:top-13">
+    // `top` reads the bar's MEASURED height (`--app-header-h`, published by
+    // AppTopbar) instead of a hardcoded 12/52px: the bar grows with the profile
+    // crumb strip and again when a long-locale pill wraps, so the old constants
+    // let this row slide up UNDER the bar mid-scroll. The fallbacks keep the
+    // pre-fix values for the frame before the first measurement.
+    <div
+      className="sticky z-10 bg-bg/85 backdrop-blur"
+      style={{ top: "calc(var(--app-header-h, 52px) + 8px)" }}
+    >
       <div className="mb-2 text-caption font-semibold uppercase tracking-[0.06em] text-text-subtle">
         {t("replies.posts_with_comments")}
         <span className="ml-1.5 opacity-70">· {posts.length}</span>
