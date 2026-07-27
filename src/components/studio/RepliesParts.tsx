@@ -434,12 +434,17 @@ export function ReplyImage({ c, h }: { c: ReplyComment; h: ReplyHandlers }) {
         <button
           type="button"
           disabled={uploading}
-          aria-label={uploading ? t("studio.image_uploading") : undefined}
+          // Named unconditionally: the visible label is hidden on a phone.
+          aria-label={uploading ? t("studio.image_uploading") : t("studio.add_image")}
           onClick={() => fileRef.current?.click()}
-          className="inline-flex h-8 items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 text-caption text-text-muted transition-colors hover:bg-surface-2 hover:text-text disabled:opacity-60"
+          // Collapses to a 44×44 icon on a phone, like Regenerate/Edit beside
+          // it: the mobile spec allows exactly ONE labelled primary in the foot
+          // row, and this label pushed the row to 418px inside 309px — enough
+          // to drag the whole page sideways.
+          className="inline-flex h-8 items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 text-caption text-text-muted transition-colors hover:bg-surface-2 hover:text-text disabled:opacity-60 max-md:h-11 max-md:w-11 max-md:shrink-0 max-md:justify-center max-md:gap-0 max-md:rounded-md max-md:px-0"
         >
           {uploading ? <Spinner size={13} className="text-text-muted motion-reduce:animate-none" /> : <IcImage size={14} />}
-          {!uploading && t("studio.add_image")}
+          {!uploading && <span className="max-md:hidden">{t("studio.add_image")}</span>}
         </button>
       ) : (
         <div className="relative h-[76px] w-[76px] overflow-hidden rounded-md border border-border bg-surface-2">
@@ -473,7 +478,7 @@ export function ReplyImage({ c, h }: { c: ReplyComment; h: ReplyHandlers }) {
         aria-expanded={gateOpen}
         aria-label={t("replies.media_more")}
         onClick={() => { setGateOpen((v) => !v); setAltOpen(false); }}
-        className="relative grid h-8 w-8 shrink-0 place-items-center rounded-full border border-border bg-surface text-text-subtle transition-colors hover:bg-surface-2 hover:text-text"
+        className="relative grid h-8 w-8 shrink-0 place-items-center rounded-full border border-border bg-surface text-text-subtle transition-colors hover:bg-surface-2 hover:text-text max-md:h-11 max-md:w-11 max-md:rounded-md"
       >
         <IcMore size={15} />
         <span aria-hidden className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-accent" />

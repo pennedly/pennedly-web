@@ -20,8 +20,9 @@ import { Avatar, nameOf } from "@/components/ui/avatar";
 import { IcChevRight, IcSettings } from "@/components/icons";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
+// 36×36 is the desktop `.icon-btn`; the phone эталон (`.m-iconbtn`) is 40×40.
 const ICON_BTN =
-  "grid h-9 w-9 place-items-center rounded-md border border-border bg-surface text-text-muted transition-colors hover:bg-surface-2 hover:text-text";
+  "grid h-9 w-9 place-items-center rounded-md border border-border bg-surface text-text-muted transition-colors hover:bg-surface-2 hover:text-text max-md:h-10 max-md:w-10";
 
 // Nav #7 — the profile breadcrumb «Аккаунт › [Бренд ›] Профиль» (Navigation-SPEC
 // + the Navigation-Topbar addendum). Passive orientation: the «Аккаунт» segment
@@ -82,7 +83,10 @@ export function TopbarPill({
   children: ReactNode;
 }) {
   return (
-    <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-surface px-3 py-1 text-small text-text-muted">
+    // `min-w-0` + the truncating label: on a phone a long pill (the cockpit's
+    // «Аккаунтов: N · обновляется ежедневно») is wider than the row it drops
+    // onto, and without this it was cut off mid-word by the screen edge.
+    <span className="inline-flex min-w-0 max-w-full items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-surface px-3 py-1 text-small text-text-muted">
       {icon ?? (
         <span
           className={cn(
@@ -97,7 +101,7 @@ export function TopbarPill({
           )}
         />
       )}
-      {children}
+      <span className="min-w-0 truncate">{children}</span>
     </span>
   );
 }
@@ -133,13 +137,13 @@ export function AppTopbar({
           </div>
         ) : null}
 
-        <div className="flex h-13 w-full items-center gap-3 md:h-15">
+        <div className="flex h-13 w-full items-center gap-3 max-md:h-auto max-md:min-h-13 max-md:py-1.5 md:h-15">
           {/* Phone: hamburger → nav drawer (Sidebar renders the drawer). */}
           <button
             type="button"
             onClick={() => setMobileNavOpen(true)}
             aria-label={t("nav.more")}
-            className="-ml-1.5 grid h-9 w-9 shrink-0 place-items-center rounded-md text-text-muted transition-colors hover:bg-surface-2 hover:text-text md:hidden"
+            className="-ml-1.5 grid h-10 w-10 shrink-0 place-items-center rounded-md text-text-muted transition-colors hover:bg-surface-2 hover:text-text md:hidden"
           >
             <svg
               width="22"
@@ -157,10 +161,15 @@ export function AppTopbar({
             </svg>
           </button>
 
-          <h1 className="truncate text-h3 font-semibold">{title}</h1>
-          {pill}
-          <div className="flex-1" />
-          <div className="flex items-center gap-2">
+          {/* Title + pill share one flexible group so a long pill drops to a
+              second line instead of shoving the title to zero width and the
+              theme toggle off the screen (cockpit spec: «на длинных локалях
+              падает ниже»; the actions block is `flex: 0 0 auto` in the эталон). */}
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1">
+            <h1 className="truncate text-h3 font-semibold">{title}</h1>
+            {pill}
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
             {actions}
             <ThemeToggle />
             <Link href="/app/settings" aria-label={t("nav.settings")} className={cn(ICON_BTN, "hidden md:grid")}>

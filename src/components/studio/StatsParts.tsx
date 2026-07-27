@@ -49,7 +49,9 @@ export function RangeSeg({ active, onChange }: { active: StatPeriodKey; onChange
             aria-selected={on}
             onClick={() => onChange(p.key)}
             className={cn(
-              "whitespace-nowrap rounded-sm border px-3.5 text-small font-medium transition-colors max-md:h-9 max-md:shrink-0 md:h-8",
+              // The mobile spec asks for a ≥44px tap on the period row explicitly; desktop
+              // keeps the 32px segment.
+              "whitespace-nowrap rounded-sm border px-3.5 text-small font-medium transition-colors max-md:h-11 max-md:shrink-0 md:h-8",
               on ? "border-border bg-surface font-semibold text-text shadow-sm" : "border-transparent text-text-muted hover:text-text",
             )}
           >

@@ -95,7 +95,8 @@ export function FeedBar({ count, sort, onSort }: { count: number; sort: "recent"
             aria-selected={sort === k}
             onClick={() => onSort(k)}
             className={cn(
-              "h-[30px] rounded-sm border px-[13px] text-small font-medium transition-colors",
+              // 30px is the desktop `.seg-btn`; the phone эталон (`.m-seg-btn`) is 34.
+              "h-[30px] rounded-sm border px-[13px] text-small font-medium transition-colors max-md:h-[34px]",
               sort === k ? "border-border bg-surface font-semibold text-text shadow-sm" : "border-transparent text-text-muted hover:text-text",
             )}
           >

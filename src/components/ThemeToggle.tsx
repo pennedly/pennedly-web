@@ -10,8 +10,10 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "@/lib/i18n";
 import { IcMoon, IcSun } from "@/components/icons";
 
+// Same as AppTopbar's: 36×36 on desktop (`.icon-btn`), 40×40 on a phone
+// (`.m-iconbtn`).
 const ICON_BTN =
-  "grid h-9 w-9 place-items-center rounded-md border border-border bg-surface text-text-muted transition-colors hover:bg-surface-2 hover:text-text";
+  "grid h-9 w-9 place-items-center rounded-md border border-border bg-surface text-text-muted transition-colors hover:bg-surface-2 hover:text-text max-md:h-10 max-md:w-10";
 
 export function ThemeToggle({ className }: { className?: string }) {
   const { t } = useTranslation();
