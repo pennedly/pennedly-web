@@ -48,6 +48,7 @@ import { TweaksPanel, TweakSection, TweakToggle, TweakRadio, useTweaks } from "@
 import { DEMO_ACCOUNTS, DEMO_ME, SET_TWEAK_DEFAULTS } from "@/components/studio/settings-demo";
 import type { ConnectedAccount, Me } from "@/lib/types";
 import { useDemoParam } from "@/lib/query";
+import { HERO_FADE_STYLE } from "@/lib/useHeaderReveal";
 
 const IS_DEV = process.env.NODE_ENV === "development";
 const SET_STATES = ["Default", "Disconnect", "Loading"];
@@ -206,7 +207,7 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-bg text-text">
-      <AppTopbar maxW="720px" title={t("settings.title")} />
+      <AppTopbar maxW="720px" title={t("settings.title")} hasHero={loaded && !!me} />
       <main className="mx-auto max-w-[720px] space-y-4 px-3.5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4 md:space-y-5 md:px-6 md:pb-24 md:pt-7">
         {!loaded || !me ? (
           <div className="space-y-5">
@@ -221,7 +222,7 @@ export default function SettingsPage() {
               <span className="text-caption font-semibold uppercase tracking-wide text-text-subtle">
                 {t("settings.eyebrow")}
               </span>
-              <h1 className="mt-2 text-h1 font-semibold tracking-tight">{t("settings.title")}</h1>
+              <h1 style={HERO_FADE_STYLE} className="mt-2 text-h1 font-semibold tracking-tight">{t("settings.title")}</h1>
               <p className="mt-2 max-w-[60ch] text-body leading-relaxed text-text-muted">
                 {t("settings.intro_lead")}
               </p>

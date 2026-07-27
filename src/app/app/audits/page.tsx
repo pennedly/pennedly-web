@@ -28,6 +28,7 @@ import { AuditDetailRedesign } from "@/components/studio/AuditDetailRedesign";
 import { DEMO_AUDIT_DETAIL, type AuditDim, type ProposalStatus } from "@/components/studio/audits-redesign";
 import type { AuditSummary } from "@/lib/types";
 import { useDemoParam } from "@/lib/query";
+import { HERO_FADE_STYLE } from "@/lib/useHeaderReveal";
 
 const IS_DEV = process.env.NODE_ENV === "development";
 
@@ -226,7 +227,7 @@ export default function AuditsPage() {
 
   return (
     <div className="min-h-screen bg-bg text-text">
-      <AppTopbar maxW="720px" title={t("audits.title")} pill={pill} />
+      <AppTopbar maxW="720px" title={t("audits.title")} hasHero={!showDetail && !showOptIn} pill={pill} />
       <main className="mx-auto flex max-w-[720px] flex-col gap-4 px-3.5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4 md:gap-5 md:px-6 md:pb-24 md:pt-7">
         {showDetail ? (
           <AuditDetailRedesign
@@ -246,7 +247,7 @@ export default function AuditsPage() {
           <>
             <div className="flex items-start justify-between gap-3 max-md:flex-col">
               <div className="flex flex-col gap-1">
-                <h1 className="text-h1 font-semibold tracking-[-0.015em]">{t("audits.title")}</h1>
+                <h1 style={HERO_FADE_STYLE} className="text-h1 font-semibold tracking-[-0.015em]">{t("audits.title")}</h1>
                 <p className="max-w-[64ch] text-body text-text-muted">{t("audits.list_sub")}</p>
               </div>
               {!demoOn && auditEnabled === true && (

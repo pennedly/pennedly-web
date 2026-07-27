@@ -59,6 +59,7 @@ import {
 } from "@/components/studio/replies-demo";
 import type { CommentPost, CommentSummary } from "@/lib/types";
 import { useDemoParam, useQueryParam } from "@/lib/query";
+import { HERO_FADE_STYLE } from "@/lib/useHeaderReveal";
 
 const IS_DEV = process.env.NODE_ENV === "development";
 const UNDO_MS = 5000;
@@ -565,11 +566,17 @@ export default function RepliesPage() {
 
   return (
     <div className="min-h-screen bg-bg text-text">
-      <AppTopbar maxW="960px" title={t("replies.title")} pill={pill} />
+      {/* App-Header-SPEC §7 — the docked title must be the SAME string as the
+          hero, bound to one source. This screen's hero is `replies.heading`
+          («Очередь ответов»), not `replies.title` («Ответы»), so the bar echoes
+          the heading: otherwise scrolling crossfades two different words. The
+          bar title is invisible at rest, so nothing visible changes until the
+          hero docks. */}
+      <AppTopbar maxW="960px" title={t("replies.heading")} hasHero pill={pill} />
       <main className="mx-auto flex max-w-[960px] flex-col gap-4 px-3.5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4 md:gap-5 md:px-6 md:pb-24 md:pt-7">
         {!demoOn && <ImportBanner status={sync.status} summary={sync.summary} />}
         <div className="flex flex-col gap-1">
-          <h1 className="text-h1 font-semibold tracking-[-0.015em]">{t("replies.heading")}</h1>
+          <h1 style={HERO_FADE_STYLE} className="text-h1 font-semibold tracking-[-0.015em]">{t("replies.heading")}</h1>
           <p className="text-body text-text-muted">{t("replies.subtitle")}</p>
         </div>
 

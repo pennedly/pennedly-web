@@ -910,7 +910,6 @@ export const ru: Partial<Record<MessageKey, string>> = {
   // ── Replies ────────────────────────────────────────────────────
   "dashboard.nav.replies": "ответы",
   "replies.back": "← дашборд",
-  "replies.title": "Ответы",
   "replies.heading": "Очередь ответов",
   "replies.subtitle":
     "Комментарии под твоими постами. Сгенерируй ответ в своём голосе, проверь его, и он опубликуется только с твоего одобрения.",

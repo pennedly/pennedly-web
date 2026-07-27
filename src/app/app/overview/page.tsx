@@ -34,6 +34,7 @@ import {
 import { OVERVIEW_DEMO, OVERVIEW_TWEAK_DEFAULTS, type OverviewDemoState } from "@/components/studio/overview-demo";
 import type { OverviewAccount, OverviewResponse } from "@/lib/types";
 import { useDemoParam } from "@/lib/query";
+import { HERO_FADE_STYLE } from "@/lib/useHeaderReveal";
 
 const IS_DEV = process.env.NODE_ENV === "development";
 
@@ -151,6 +152,7 @@ export default function OverviewPage() {
       <AppTopbar
         maxW="960px"
         title={t("overview.title")}
+        hasHero
         pill={
           <TopbarPill tone="accent" icon={<IcOverview size={13} />}>
             {phase === "ready" && accountsCount > 0
@@ -161,7 +163,7 @@ export default function OverviewPage() {
       />
       <main className="mx-auto flex max-w-[960px] flex-col gap-[18px] px-3.5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4 md:px-6 md:pb-24 md:pt-7">
         <div className="flex flex-col gap-1">
-          <h1 className="text-h1 font-semibold tracking-[-0.015em]">{t("overview.title")}</h1>
+          <h1 style={HERO_FADE_STYLE} className="text-h1 font-semibold tracking-[-0.015em]">{t("overview.title")}</h1>
           <p className="text-body text-text-muted">{t("overview.subtitle")}</p>
         </div>
 

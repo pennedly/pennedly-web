@@ -55,6 +55,7 @@ import {
 } from "@/components/studio/mentions-queue-parts";
 import type { LanguageCode } from "@/lib/types";
 import { useDemoParam } from "@/lib/query";
+import { HERO_FADE_STYLE } from "@/lib/useHeaderReveal";
 
 const IS_DEV = process.env.NODE_ENV === "development";
 const MQ_STATES = ["Populated", "Filtered open", "Empty", "Loading", "Error", "Reconnect"];
@@ -233,13 +234,14 @@ export default function MentionsPage() {
       <AppTopbar
         maxW="960px"
         title={t("mentions.title")}
+        hasHero
         pill={
           <TopbarPill icon={<IcClock size={13} className="text-text-subtle" />}>{t("mentions.updated_hourly")}</TopbarPill>
         }
       />
       <main className="mx-auto flex max-w-[960px] flex-col gap-5 px-3.5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4 md:px-6 md:pb-24 md:pt-7">
         <div className="flex flex-col gap-1">
-          <h1 className="text-h1 font-semibold tracking-tight">{t("mentions.title")}</h1>
+          <h1 style={HERO_FADE_STYLE} className="text-h1 font-semibold tracking-tight">{t("mentions.title")}</h1>
           <p className="max-w-[64ch] text-body text-text-muted">{t("mentions.subtitle")}</p>
         </div>
 

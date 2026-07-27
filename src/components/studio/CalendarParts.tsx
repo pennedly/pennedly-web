@@ -27,6 +27,7 @@ import {
   IcX,
 } from "@/components/icons";
 import type { CalendarEntry } from "@/lib/types";
+import { HERO_FADE_STYLE } from "@/lib/useHeaderReveal";
 
 // ─────────────────────────────── helpers ────────────────────────────────────
 
@@ -89,7 +90,7 @@ export function CalendarToolbar({
   return (
     <div className="mb-4 flex flex-wrap items-center gap-3">
       <div className="min-w-0 flex-1">
-        <h1 className="text-h1 font-semibold tracking-[-0.015em]">{t("calendar.title")}</h1>
+        <h1 style={HERO_FADE_STYLE} className="text-h1 font-semibold tracking-[-0.015em]">{t("calendar.title")}</h1>
         <p className="text-body text-text-muted">{t("calendar.subtitle")}</p>
       </div>
       <Button variant="secondary" size="sm" icon={<IcPlus size={15} />} onClick={onSchedule} className="max-md:order-2">

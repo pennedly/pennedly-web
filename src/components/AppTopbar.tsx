@@ -12,6 +12,7 @@ import Link from "next/link";
 import { type ReactNode } from "react";
 
 import { cn } from "@/lib/cn";
+import { useHeaderReveal } from "@/lib/useHeaderReveal";
 import { useTranslation } from "@/lib/i18n";
 import { setMobileNavOpen } from "@/lib/mobileNav";
 import { useMe } from "@/lib/use-me";
@@ -110,11 +111,28 @@ export function AppTopbar({
   title,
   pill,
   actions,
+  hasHero = false,
   maxW = "720px",
 }: {
   title: ReactNode;
   pill?: ReactNode;
   actions?: ReactNode;
+  /**
+   * App-Header-SPEC §1 — pass this when, and only when, the screen renders an
+   * in-flow hero `<h1>` carrying THIS SAME title and styled with
+   * `HERO_FADE_STYLE`. The bar then hides its own title at rest and docks it as
+   * the hero fades out, so exactly one copy of the title is ever on screen.
+   *
+   * Default `false` keeps the bar title always visible, which is the only safe
+   * behaviour for a screen with no hero: /app (Drafts), /app/scenarios and
+   * /app/advisor would otherwise sit at rest with no page title anywhere. It is
+   * also required for /app/advisor, which scrolls an INNER container — the
+   * document never scrolls there, so the reveal would be pinned at 0 forever.
+   *
+   * Pass a boolean expression, not a constant, on screens whose hero only
+   * renders in some states (see /app/settings and /app/audits).
+   */
+  hasHero?: boolean;
   /**
    * Width of the screen's content column. The bar spans full width (border +
    * frosted bg), but its inner row is centered to this same width so the title
@@ -125,6 +143,10 @@ export function AppTopbar({
 }) {
   const { t } = useTranslation();
   const crumb = useProfileCrumb();
+  // App-Header-SPEC §4 — publishes `--hdr-reveal` on <html>. Lives here (not in
+  // each page) because every affected screen already renders this bar, so the
+  // per-screen change stays a one-line opacity binding on the hero.
+  useHeaderReveal();
   return (
     <header className="sticky top-0 z-10 border-b border-border bg-bg/85 backdrop-blur-md">
       <div className="mx-auto w-full px-5 md:px-6" style={{ maxWidth: maxW }}>
@@ -166,7 +188,28 @@ export function AppTopbar({
               theme toggle off the screen (cockpit spec: «на длинных локалях
               падает ниже»; the actions block is `flex: 0 0 auto` in the эталон). */}
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1">
-            <h1 className="truncate text-h3 font-semibold">{title}</h1>
+            {/* App-Header-SPEC §4 — with a hero on screen this is invisible at
+                rest and docks as the hero fades out. `opacity` never touches
+                layout, so the slot keeps its width and neither the pill nor the
+                action icons shift.
+
+                Reduced motion: the hook snaps the reveal 0→1 at 16px, so the
+                6px offset only ever exists while the title is fully transparent
+                — the translate is never seen, which is what the spec asks for
+                ("opacity swap only"). */}
+            <h1
+              className="truncate text-h3 font-semibold"
+              style={
+                hasHero
+                  ? {
+                      opacity: "var(--hdr-reveal, 0)",
+                      transform: "translateY(calc(6px * (1 - var(--hdr-reveal, 0))))",
+                    }
+                  : undefined
+              }
+            >
+              {title}
+            </h1>
             {pill}
           </div>
           <div className="flex shrink-0 items-center gap-2">

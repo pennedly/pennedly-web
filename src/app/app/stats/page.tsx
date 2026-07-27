@@ -39,6 +39,7 @@ import { ENGAGEMENT_DEMO, engagementThinHistory } from "@/components/studio/enga
 import { STATS_DEMO, STATS_TWEAK_DEFAULTS, type Gran, type StatBucket, type StatPeriodKey } from "@/components/studio/stats-demo";
 import type { EngagementHistory, FollowerHistory, StatsResponse } from "@/lib/types";
 import { useDemoParam } from "@/lib/query";
+import { HERO_FADE_STYLE } from "@/lib/useHeaderReveal";
 
 const IS_DEV = process.env.NODE_ENV === "development";
 
@@ -389,6 +390,7 @@ export default function StatsPage() {
       <AppTopbar
         maxW="960px"
         title={t("stats.title")}
+        hasHero
         pill={
           <TopbarPill tone="accent" icon={<IcChart size={13} />}>
             {refreshing
@@ -415,7 +417,7 @@ export default function StatsPage() {
         {!demoOn && <ImportBanner status={sync.status} summary={sync.summary} />}
         <div className="flex flex-wrap items-end justify-between gap-4 max-md:gap-3">
           <div className="flex flex-col gap-1">
-            <h1 className="text-h1 font-semibold tracking-[-0.015em]">{t("stats.title")}</h1>
+            <h1 style={HERO_FADE_STYLE} className="text-h1 font-semibold tracking-[-0.015em]">{t("stats.title")}</h1>
             <p className="text-body text-text-muted">{t("stats.subtitle")}</p>
           </div>
           {/* Hidden during loading and the first-run progressive state — First-

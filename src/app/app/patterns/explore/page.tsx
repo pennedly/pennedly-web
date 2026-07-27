@@ -34,6 +34,7 @@ import {
 import { cn } from "@/lib/cn";
 import type { Pattern, PatternStudyResult } from "@/lib/types";
 import { useDemoParam } from "@/lib/query";
+import { HERO_FADE_STYLE } from "@/lib/useHeaderReveal";
 
 const MAXW = "720px";
 const IS_DEV = process.env.NODE_ENV === "development";
@@ -205,6 +206,7 @@ export default function ExplorePage() {
       <AppTopbar
         maxW={MAXW}
         title={t("explore.title")}
+        hasHero
         pill={
           phase === "results" && result ? (
             <TopbarPill tone="accent">
@@ -215,7 +217,7 @@ export default function ExplorePage() {
       />
       <main className="mx-auto w-full max-w-[720px] space-y-4 px-3.5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4 md:space-y-5 md:px-6 md:pb-24 md:pt-7">
         <div className="flex flex-col gap-1.5">
-          <h1 className="text-h1 font-semibold tracking-tight">{t("explore.title")}</h1>
+          <h1 style={HERO_FADE_STYLE} className="text-h1 font-semibold tracking-tight">{t("explore.title")}</h1>
           <p className="max-w-[60ch] text-pretty text-body text-text-muted">{t("explore.subtitle")}</p>
         </div>
 

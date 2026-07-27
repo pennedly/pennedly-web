@@ -169,7 +169,7 @@ export default function CalendarPage() {
 
   return (
     <div className="min-h-screen bg-bg text-text">
-      <AppTopbar maxW="960px" title={t("calendar.title")} />
+      <AppTopbar maxW="960px" title={t("calendar.title")} hasHero />
       <main className="mx-auto flex max-w-[920px] flex-col px-3.5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4 md:px-6 md:pb-24 md:pt-7">
         <CalendarToolbar
           rangeLabel={rangeLabel}

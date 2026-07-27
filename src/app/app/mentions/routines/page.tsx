@@ -14,6 +14,7 @@ import { useSelectedAccountId } from "@/lib/account";
 import { useTranslation } from "@/lib/i18n";
 import { useTesterGuard } from "@/lib/tester";
 import { useDemoParam } from "@/lib/query";
+import { HERO_FADE_STYLE } from "@/lib/useHeaderReveal";
 import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
 import { buttonClasses } from "@/components/ui/button";
 import { IcAlert, IcAt, IcChevRight, IcReload } from "@/components/icons";
@@ -126,6 +127,7 @@ export default function MentionRoutinesPage() {
       <AppTopbar
         maxW="820px"
         title={t("mr.title")}
+        hasHero
         pill={<TopbarPill icon={<IcAt size={13} className="text-text-subtle" />}>{t("mr.pill")}</TopbarPill>}
       />
       <main className="mx-auto flex max-w-[820px] flex-col gap-5 px-3.5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4 md:px-6 md:pb-24 md:pt-7">
@@ -136,7 +138,7 @@ export default function MentionRoutinesPage() {
           >
             <IcChevRight size={13} className="rotate-180" /> {t("mr.back")}
           </a>
-          <h1 className="text-h1 font-semibold tracking-tight">{t("mr.title")}</h1>
+          <h1 style={HERO_FADE_STYLE} className="text-h1 font-semibold tracking-tight">{t("mr.title")}</h1>
           <p className="max-w-[60ch] text-body text-text-muted">{t("mr.subtitle")}</p>
         </div>
 
