@@ -33,15 +33,14 @@ import {
 } from "@/components/studio/OverviewParts";
 import { OVERVIEW_DEMO, OVERVIEW_TWEAK_DEFAULTS, type OverviewDemoState } from "@/components/studio/overview-demo";
 import type { OverviewAccount, OverviewResponse } from "@/lib/types";
+import { useDemoParam } from "@/lib/query";
 
 const IS_DEV = process.env.NODE_ENV === "development";
 
 export default function OverviewPage() {
   const router = useRouter();
   const { t } = useTranslation();
-  const [demoParam] = useState(() =>
-    typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("demo") === "1" : false,
-  );
+  const demoParam = useDemoParam();
   const [isTester, setIsTester] = useState(false);
   const allow = demoParam && (IS_DEV || isTester);
   const demoOn = allow;

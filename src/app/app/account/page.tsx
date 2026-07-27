@@ -48,6 +48,7 @@ import { pluralUnit, useTranslation } from "@/lib/i18n";
 import { ErrorBanner } from "@/components/ui/error-banner";
 import { Toast, ToastHost } from "@/components/ui/toast";
 import type { AdvisorData, MeAccountResponse } from "@/lib/types";
+import { useQueryParam } from "@/lib/query";
 
 type Phase = "loading" | "ready" | "error";
 
@@ -82,10 +83,8 @@ export default function AccountDashboardPage() {
   // A successful OAuth return holds the page on the loading skeleton until the
   // routing decision lands (onboarding redirect vs stay) — without this the
   // dashboard painted for a beat and THEN jumped into the wizard.
-  const [postOauthPending, setPostOauthPending] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    return new URLSearchParams(window.location.search).get("threads_connected") === "1";
-  });
+  const connectedParam = useQueryParam("threads_connected");
+  const [postOauthPending, setPostOauthPending] = useState<boolean>(() => connectedParam === "1");
   // Auto-dismiss the landing toast (the Toast component itself is inert).
   useEffect(() => {
     if (!toastMsg) return;

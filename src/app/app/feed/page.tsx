@@ -41,6 +41,7 @@ import {
 } from "@/components/studio/FeedParts";
 import { FEED_DEMO_BASELINE, FEED_DEMO_POSTS, FEED_TWEAK_DEFAULTS, type FeedDemoPost } from "@/components/studio/feed-demo";
 import type { FeedPost, FeedReference } from "@/lib/types";
+import { useDemoParam } from "@/lib/query";
 
 const IS_DEV = process.env.NODE_ENV === "development";
 
@@ -63,7 +64,7 @@ function relativeTime(iso: string | null, locale: string): string {
 export default function FeedPage() {
   const router = useRouter();
   const { t, locale } = useTranslation();
-  const [demoParam] = useState(() => (typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("demo") === "1" : false));
+  const demoParam = useDemoParam();
   const [isTester, setIsTester] = useState(false);
   const allow = demoParam && (IS_DEV || isTester);
   const demoOn = allow;

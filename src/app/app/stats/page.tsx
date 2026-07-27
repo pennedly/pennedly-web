@@ -38,6 +38,7 @@ import { EngagementPanel, type EngagementState } from "@/components/studio/Engag
 import { ENGAGEMENT_DEMO, engagementThinHistory } from "@/components/studio/engagement-demo";
 import { STATS_DEMO, STATS_TWEAK_DEFAULTS, type Gran, type StatBucket, type StatPeriodKey } from "@/components/studio/stats-demo";
 import type { EngagementHistory, FollowerHistory, StatsResponse } from "@/lib/types";
+import { useDemoParam } from "@/lib/query";
 
 const IS_DEV = process.env.NODE_ENV === "development";
 
@@ -101,7 +102,7 @@ function relTime(iso: string | null, locale: string, t: (k: MessageKey) => strin
 export default function StatsPage() {
   const router = useRouter();
   const { t, locale } = useTranslation();
-  const [demoParam] = useState(() => (typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("demo") === "1" : false));
+  const demoParam = useDemoParam();
   const [isTester, setIsTester] = useState(false);
   const allow = demoParam && (IS_DEV || isTester);
   const demoOn = allow;

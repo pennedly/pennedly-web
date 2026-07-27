@@ -57,6 +57,7 @@ import {
   type ReplyStatus,
 } from "@/components/studio/replies-demo";
 import type { CommentPost, CommentSummary } from "@/lib/types";
+import { useDemoParam, useQueryParam } from "@/lib/query";
 
 const IS_DEV = process.env.NODE_ENV === "development";
 const UNDO_MS = 5000;
@@ -103,7 +104,7 @@ const POST_COMMENTS_LIMIT = 100;
 export default function RepliesPage() {
   const router = useRouter();
   const { t, locale } = useTranslation();
-  const [demoParam] = useState(() => (typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("demo") === "1" : false));
+  const demoParam = useDemoParam();
   const [isTester, setIsTester] = useState(false);
   const allow = demoParam && (IS_DEV || isTester);
   const { checking } = useTesterGuard(allow);
@@ -124,11 +125,10 @@ export default function RepliesPage() {
   // Initial filter honours a `?filter=<key>` deep-link (e.g. the account
   // dashboard's «Ответы» quicklink lands on the needs-reply queue); ignored if
   // the value isn't a real filter key.
-  const [filter, setFilter] = useState<ReplyFilter>(() => {
-    if (typeof window === "undefined") return "all";
-    const f = new URLSearchParams(window.location.search).get("filter");
-    return (FILTER_KEYS as string[]).includes(f ?? "") ? (f as ReplyFilter) : "all";
-  });
+  const filterParam = useQueryParam("filter");
+  const [filter, setFilter] = useState<ReplyFilter>(() =>
+    (FILTER_KEYS as string[]).includes(filterParam ?? "") ? (filterParam as ReplyFilter) : "all",
+  );
   const [generatingId, setGeneratingId] = useState<number | null>(null);
   const [publishTarget, setPublishTarget] = useState<{ comment: ReplyComment; reply: string; draftId: number | null } | null>(null);
   const [publishing, setPublishing] = useState(false);

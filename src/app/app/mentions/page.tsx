@@ -54,6 +54,7 @@ import {
   ZoneHead,
 } from "@/components/studio/mentions-queue-parts";
 import type { LanguageCode } from "@/lib/types";
+import { useDemoParam } from "@/lib/query";
 
 const IS_DEV = process.env.NODE_ENV === "development";
 const MQ_STATES = ["Populated", "Filtered open", "Empty", "Loading", "Error", "Reconnect"];
@@ -77,9 +78,7 @@ function split(rows: MQMention[]): Split {
 export default function MentionsPage() {
   const router = useRouter();
   const { t, locale } = useTranslation();
-  const [demoParam] = useState(() =>
-    typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("demo") === "1" : false,
-  );
+  const demoParam = useDemoParam();
   const { checking } = useTesterGuard(demoParam);
   const [isTester, setIsTester] = useState(false);
   const demoOn = demoParam && (IS_DEV || isTester);

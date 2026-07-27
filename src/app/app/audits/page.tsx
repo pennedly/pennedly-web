@@ -26,6 +26,7 @@ import { AUDIT_TWEAK_DEFAULTS, DEMO_AUDITS, type DemoAudit } from "@/components/
 import { AuditDetailRedesign } from "@/components/studio/AuditDetailRedesign";
 import { DEMO_AUDIT_DETAIL, type AuditDim, type ProposalStatus } from "@/components/studio/audits-redesign";
 import type { AuditSummary } from "@/lib/types";
+import { useDemoParam } from "@/lib/query";
 
 const IS_DEV = process.env.NODE_ENV === "development";
 
@@ -40,7 +41,7 @@ function fmtDate(iso: string, locale: string): string {
 export default function AuditsPage() {
   const router = useRouter();
   const { t, locale } = useTranslation();
-  const [demoParam] = useState(() => (typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("demo") === "1" : false));
+  const demoParam = useDemoParam();
   const [isTester, setIsTester] = useState(false);
   const allow = demoParam && (IS_DEV || isTester);
   const demoOn = allow;

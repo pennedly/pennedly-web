@@ -40,6 +40,7 @@ import {
 } from "@/components/advisor/AdvisorParts";
 import { ADVISOR_DEMO_TURNS, advisorSourceLabel } from "@/components/advisor/advisor-demo";
 import type { AdvisorMessage, AdvisorResponse } from "@/lib/types";
+import { useDemoParam } from "@/lib/query";
 
 const IS_DEV = process.env.NODE_ENV === "development";
 
@@ -64,9 +65,7 @@ export default function AdvisorPage() {
   const router = useRouter();
   const { t } = useTranslation();
 
-  const [demoParam] = useState(() =>
-    typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("demo") === "1" : false,
-  );
+  const demoParam = useDemoParam();
   const [isTester, setIsTester] = useState(false);
   const allow = demoParam && (IS_DEV || isTester);
 

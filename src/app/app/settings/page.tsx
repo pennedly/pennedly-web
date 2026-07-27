@@ -47,6 +47,7 @@ import { IcCheck, IcEye, IcFlask, IcScan, IcStar, IcUnlink, IcVoice } from "@/co
 import { TweaksPanel, TweakSection, TweakToggle, TweakRadio, useTweaks } from "@/components/tweaks/TweaksPanel";
 import { DEMO_ACCOUNTS, DEMO_ME, SET_TWEAK_DEFAULTS } from "@/components/studio/settings-demo";
 import type { ConnectedAccount, Me } from "@/lib/types";
+import { useDemoParam } from "@/lib/query";
 
 const IS_DEV = process.env.NODE_ENV === "development";
 const SET_STATES = ["Default", "Disconnect", "Loading"];
@@ -70,9 +71,7 @@ export default function SettingsPage() {
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [demoParam] = useState(() =>
-    typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("demo") === "1" : false,
-  );
+  const demoParam = useDemoParam();
   const [isTester, setIsTester] = useState(false);
   const allow = demoParam && (IS_DEV || isTester);
   const demoOn = allow;

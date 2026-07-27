@@ -20,6 +20,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { Spinner } from "@/components/ui/feedback";
 import { fetchMe, getTokens, subscribeTokens } from "@/lib/api";
 import { adoptServerLocale, useTranslation } from "@/lib/i18n";
+import { useDemoParam } from "@/lib/query";
 import {
   refreshAccountsPresence,
   useHasConnectedAccounts,
@@ -44,9 +45,7 @@ export default function AppLayout({
   // Tester `?demo=1` review mode: render the shell standalone (mock content lives
   // in the page) without waiting on auth / a connected account — so the demo opens
   // even logged-out and with no backend, like the landing/onboarding demos.
-  const [demo] = useState(
-    () => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("demo") === "1",
-  );
+  const demo = useDemoParam();
   // Tester gate for the durable account dashboard: a tester with zero connected
   // accounts lands on /app/account (the in-dashboard empty state) instead of the
   // full-screen wizard; non-testers keep the current onboarding flow until it is

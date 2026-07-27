@@ -56,6 +56,7 @@ import {
 } from "@/components/icons";
 import { AntiRobotPanel } from "@/components/studio/AntiRobotPanel";
 import { SUPPORTED_LANGUAGES } from "@/lib/types";
+import { useDemoParam } from "@/lib/query";
 import type {
   LanguageCode,
   LintConflict,
@@ -265,12 +266,7 @@ export default function VoiceEditor() {
   // Initial tab honors ?tab=anti so the old /app/style-rules bookmark (which
   // now redirects here) lands on the right tab.
   const searchParams = useSearchParams();
-  const [tab, setTab] = useState<"voice" | "anti">(() =>
-    typeof window !== "undefined" &&
-    new URLSearchParams(window.location.search).get("tab") === "anti"
-      ? "anti"
-      : "voice",
-  );
+  const [tab, setTab] = useState<"voice" | "anti">(() => (searchParams.get("tab") === "anti" ? "anti" : "voice"));
   // A client-side redirect (from the retired /app/style-rules route) lands here
   // via the App Router; sync the tab once the ?tab= param resolves so it opens
   // on Anti-robot even when the initial render predated the URL commit.
@@ -283,11 +279,7 @@ export default function VoiceEditor() {
   const [antiCounts, setAntiCounts] = useState<{ on: number; total: number }>({ on: 0, total: 0 });
 
   // Tester ?demo=1: a tweak panel drives every state on mock content.
-  const [demoParam] = useState(() =>
-    typeof window !== "undefined"
-      ? new URLSearchParams(window.location.search).get("demo") === "1"
-      : false,
-  );
+  const demoParam = useDemoParam();
   const [isTester, setIsTester] = useState(false);
   const allow = demoParam && (IS_DEV || isTester);
   const demoOn = allow;

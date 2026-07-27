@@ -19,6 +19,7 @@ import { useSelectedAccountId } from "@/lib/account";
 import { resetAccountsPresenceForSignedOutUser } from "@/lib/accounts";
 import { setMobileNavOpen, useMobileNavOpen } from "@/lib/mobileNav";
 import { getLocale, useTranslation, type MessageKey } from "@/lib/i18n";
+import { useDemoParam } from "@/lib/query";
 import { AccountSwitcher } from "@/components/AccountSwitcher";
 import {
   BrandMark,
@@ -100,9 +101,7 @@ export function Sidebar() {
   const { t } = useTranslation();
   const [me, setMe] = useState<Me | null>(null);
   const navOpen = useMobileNavOpen();
-  const [demoParam] = useState(
-    () => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("demo") === "1",
-  );
+  const demoParam = useDemoParam();
   const accountId = useSelectedAccountId();
   // Nav count badges (§4): items waiting on the user for the active account —
   // pending POST drafts (Studio), comments needing a reply (Replies), un-reviewed

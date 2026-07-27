@@ -42,6 +42,7 @@ import { useSelectedAccountId } from "@/lib/account";
 import { cn } from "@/lib/cn";
 import { pluralKey, useTranslation, type MessageKey } from "@/lib/i18n";
 import { useTesterGuard } from "@/lib/tester";
+import { useDemoParam } from "@/lib/query";
 import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
 import { Button } from "@/components/ui/button";
 import { Toast, ToastHost } from "@/components/ui/toast";
@@ -276,9 +277,7 @@ function freshForm(preset: ScenarioPreset | null, t: (k: MessageKey) => string):
 export default function ScenariosPage() {
   const router = useRouter();
   const { t, locale } = useTranslation();
-  const [demoParam] = useState(() =>
-    typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("demo") === "1" : false,
-  );
+  const demoParam = useDemoParam();
   const { checking } = useTesterGuard(demoParam);
   const [isTester, setIsTester] = useState(false);
   const allow = demoParam && (IS_DEV || isTester);

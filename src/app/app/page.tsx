@@ -64,6 +64,7 @@ import {
 } from "@/components/studio/studio-demo";
 import { useDeferredCommit } from "@/lib/use-deferred-commit";
 import type { ComposerBoost, DraftSummary, Me } from "@/lib/types";
+import { useDemoParam } from "@/lib/query";
 
 const IS_DEV = process.env.NODE_ENV === "development";
 const UNDO_MS = 5000;
@@ -101,12 +102,15 @@ export default function Studio() {
   const [tab, setTab] = useState<StudioStatus>("ready");
   const [composerText, setComposerText] = useState("");
   const [generating, setGenerating] = useState(false);
-  const [batchCount, setBatchCount] = useState<number>(() => {
-    if (typeof window === "undefined") return 3;
+  // Starts at the default and adopts the saved choice after mount: the server
+  // has no localStorage, so reading it during render would make the first
+  // client render disagree with the server HTML (a hydration mismatch).
+  const [batchCount, setBatchCount] = useState(3);
+  useEffect(() => {
     const raw = window.localStorage.getItem("pennedly.batchCount");
     const n = raw ? Number(raw) : 3;
-    return Number.isFinite(n) && n >= 1 && n <= 4 ? n : 3;
-  });
+    if (Number.isFinite(n) && n >= 1 && n <= 4) setBatchCount(n);
+  }, []);
   const [selectedAccount, setSelectedAccount] = useState<{ name: string; handle: string | null; initials: string; avatarUrl: string | null } | null>(null);
   const [publishTarget, setPublishTarget] = useState<{ card: StudioCard; account: { name: string; handle: string | null; initials: string } | null; mode: "now" | "schedule" } | null>(null);
   const [publishing, setPublishing] = useState(false);
@@ -120,7 +124,7 @@ export default function Studio() {
   const [voiceReady, setVoiceReady] = useState<boolean | null>(null);
 
   // Demo (?demo=1, tester/dev only): Tweaks-driven mock content.
-  const [demoParam] = useState(() => (typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("demo") === "1" : false));
+  const demoParam = useDemoParam();
   const [tw, setTw] = useTweaks(STUDIO_TWEAK_DEFAULTS);
   const [demoCards, setDemoCards] = useState<StudioCard[]>(DEMO_CARDS);
   const allowTweaks = demoParam && (me?.is_tester === true || IS_DEV);

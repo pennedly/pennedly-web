@@ -23,6 +23,7 @@ import {
 } from "@/components/studio/scenarios-screens";
 import { DEMO_ACTIVITY_DRAFTS, DEMO_ACTIVITY_DONE } from "@/components/studio/scenarios-presentation";
 import type { ScenarioActivity } from "@/lib/types";
+import { useDemoParam } from "@/lib/query";
 
 const IS_DEV = process.env.NODE_ENV === "development";
 
@@ -40,7 +41,7 @@ export default function ScenarioActivityPage() {
   const params = useParams<{ id: string }>();
   const scenarioId = Number(params.id);
   const { t, locale } = useTranslation();
-  const [demo] = useState(() => (typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("demo") === "1" && IS_DEV : false));
+  const demo = useDemoParam() && IS_DEV;
 
   const [data, setData] = useState<ScenarioActivity | null>(null);
   const [loading, setLoading] = useState(!demo);

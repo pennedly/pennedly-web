@@ -12,14 +12,13 @@ import { AppliedChangesHistory, sampleAppliedChanges } from "@/components/accoun
 import { useSelectedAccountId } from "@/lib/account";
 import { fetchAppliedChanges, rollbackAppliedChange } from "@/lib/api";
 import type { AppliedChangeEntry } from "@/lib/types";
+import { useDemoParam } from "@/lib/query";
 
 const IS_DEV = process.env.NODE_ENV === "development";
 const PAGE = 50;
 
 export default function AccountHistoryPage() {
-  const [demoParam] = useState(() =>
-    typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("demo") === "1" : false,
-  );
+  const demoParam = useDemoParam();
   const demoOn = demoParam && IS_DEV;
   const accountId = useSelectedAccountId();
 

@@ -29,6 +29,7 @@ import {
 } from "@/components/studio/CalendarParts";
 import { demoCalendar } from "@/components/studio/calendar-demo";
 import type { CalendarEntry } from "@/lib/types";
+import { useDemoParam } from "@/lib/query";
 
 const IS_DEV = process.env.NEXT_PUBLIC_ENVIRONMENT !== "production";
 const CAL_TWEAKS = { dark: false, state: "Normal" }; // Normal | Empty | Loading | Error
@@ -47,7 +48,7 @@ export default function CalendarPage() {
   const { t, locale } = useTranslation();
   const accountId = useSelectedAccountId();
 
-  const [demoParam] = useState(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("demo") === "1");
+  const demoParam = useDemoParam();
   const [tw, setTw] = useTweaks(CAL_TWEAKS);
   const demoOn = demoParam && IS_DEV;
 

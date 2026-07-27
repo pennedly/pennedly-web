@@ -37,6 +37,7 @@ import {
 } from "@/components/studio/mention-routines-constructor";
 import { ensureAutopilotMaster, isMentionRoutine } from "@/components/studio/mention-routines";
 import type { Scenario, ScenarioCreate } from "@/lib/types";
+import { useDemoParam } from "@/lib/query";
 
 const IS_DEV = process.env.NODE_ENV === "development";
 const HUB = "/app/mentions/routines";
@@ -114,9 +115,7 @@ export default function MentionRoutineConstructorPage() {
   const isNew = rawId === "new";
   const scenarioId = isNew ? null : Number(rawId);
 
-  const [demoParam] = useState(() =>
-    typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("demo") === "1" : false,
-  );
+  const demoParam = useDemoParam();
   const { checking } = useTesterGuard(demoParam);
   const [isTester, setIsTester] = useState(false);
   const demoOn = demoParam && (IS_DEV || isTester);

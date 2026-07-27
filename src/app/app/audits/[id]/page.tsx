@@ -18,6 +18,7 @@ import { Spinner } from "@/components/ui/feedback";
 import { AuditDetailRedesign } from "@/components/studio/AuditDetailRedesign";
 import { apiToAuditDetail } from "@/components/studio/audits-map";
 import type { AuditDetail } from "@/lib/types";
+import { useDemoParam } from "@/lib/query";
 
 type ToastT = { id: number; title: string; description?: string };
 type Acct = { name: string; handle: string; initials: string };
@@ -34,7 +35,7 @@ export default function AuditDetailPage() {
   const auditId = Number(params.id);
   const { t, locale } = useTranslation();
 
-  const [demoParam] = useState(() => (typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("demo") === "1" : false));
+  const demoParam = useDemoParam();
   const [audit, setAudit] = useState<AuditDetail | null>(null);
   const [acct, setAcct] = useState<Acct | null>(null);
   const [loading, setLoading] = useState(true);

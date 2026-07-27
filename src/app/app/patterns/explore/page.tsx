@@ -32,6 +32,7 @@ import {
 } from "@/components/icons";
 import { cn } from "@/lib/cn";
 import type { Pattern, PatternStudyResult } from "@/lib/types";
+import { useDemoParam } from "@/lib/query";
 
 const MAXW = "720px";
 const IS_DEV = process.env.NODE_ENV === "development";
@@ -67,9 +68,7 @@ export default function ExplorePage() {
   const { t } = useTranslation();
   const accountId = useSelectedAccountId();
 
-  const [demoParam] = useState(() =>
-    typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("demo") === "1" : false,
-  );
+  const demoParam = useDemoParam();
   const [isTester, setIsTester] = useState(false);
   const allow = demoParam && (IS_DEV || isTester);
   const demoOn = allow;
