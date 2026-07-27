@@ -2042,6 +2042,18 @@ export const en = {
   "scenarios.preview_cta": "Assembled call",
   "scenarios.preview_reply": "Auto-reply",
   "scenarios.preview_sample_reply": "sample response",
+  // -- Live-preview mock dialogue (Alex/Dima/Marina) — was hardcoded Russian
+  // for every locale; localized 2026-07-27.
+  "scenarios.preview.alex_post":
+    "Today I'm digging into what's got you stuck ✍️ Tell me in the comments what you're stuck on right now — I'll send you a short, specific tip. Follow so you don't miss your answer.",
+  "scenarios.preview.dima_comment": "Stuck on my landing page, can't pick a headline 🙏",
+  "scenarios.preview.alex_reply_on":
+    "Dima, try writing the headline as an answer to \"what do I get in 10 seconds?\" — then pick the sharpest of three options. Send them over, I'll help you choose.",
+  "scenarios.preview.alex_reply_off": "Dima, thanks for writing in! I'll take a look and send a short, specific tip very soon 🙌",
+  "scenarios.preview.marina_comment": "What if you have zero energy to even start?",
+  "scenarios.preview.marina_reply_on":
+    "Marina, when you're out of energy, the goal isn't \"finish\" — it's \"start for 5 minutes.\" That's almost always enough to get pulled in. What would those five minutes look like for you?",
+  "scenarios.preview.marina_reply_off": "Marina, great question! I'll get back to you with a specific answer very soon 🙌",
   "scenarios.preview_post": "Sample post",
   "scenarios.preview_instruction": "Instruction",
   "scenarios.preview_refresh": "Refresh",

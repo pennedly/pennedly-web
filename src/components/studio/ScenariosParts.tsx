@@ -1664,9 +1664,7 @@ function PromoPreview({ cta, replyInstruction }: { cta: string; replyInstruction
           </div>
           <span className="ml-auto text-caption text-text-subtle">9:00</span>
         </div>
-        <p className="text-small leading-relaxed text-text">
-          Сегодня разбираю ваши затыки ✍️ Напишите в комментариях, над чем вы сейчас застряли — пришлю короткий конкретный совет лично вам. Подпишитесь, чтобы не пропустить свой ответ.
-        </p>
+        <p className="text-small leading-relaxed text-text">{t("scenarios.preview.alex_post")}</p>
         <div className="mt-3 flex gap-4 text-caption text-text-subtle">
           <span className="inline-flex items-center gap-1"><IcEye size={13} /> 1,2K</span>
           <span className="inline-flex items-center gap-1"><IcHeart size={13} /> 84</span>
@@ -1679,7 +1677,7 @@ function PromoPreview({ cta, replyInstruction }: { cta: string; replyInstruction
           <MockAvatar initials="Д" />
           <div className="min-w-0">
             <p className="text-caption font-semibold text-text-muted">Дима</p>
-            <p className="mt-0.5 text-small text-text-muted">Застрял на лендинге, не могу выбрать заголовок 🙏</p>
+            <p className="mt-0.5 text-small text-text-muted">{t("scenarios.preview.dima_comment")}</p>
           </div>
         </div>
         <div className="relative mt-2.5 flex gap-2.5 pl-3 before:absolute before:bottom-1.5 before:left-[3px] before:top-0.5 before:w-0.5 before:rounded before:bg-border">
@@ -1692,9 +1690,7 @@ function PromoPreview({ cta, replyInstruction }: { cta: string; replyInstruction
               </span>
             </p>
             <p className="text-small leading-relaxed text-text">
-              {replyInstruction
-                ? "Дима, попробуйте написать заголовок как ответ на вопрос «что я получу за 10 секунд?» — и выберите самый конкретный из трёх вариантов. Скиньте варианты, помогу выбрать."
-                : "Дима, спасибо, что написали! Гляну ваш случай и пришлю короткий конкретный совет совсем скоро 🙌"}
+              {replyInstruction ? t("scenarios.preview.alex_reply_on") : t("scenarios.preview.alex_reply_off")}
             </p>
           </div>
         </div>
@@ -1736,7 +1732,7 @@ function ReplyPreview({ replyOn }: { replyOn: boolean }) {
         <MockAvatar initials="М" />
         <div className="min-w-0">
           <p className="text-caption font-semibold text-text-muted">Марина</p>
-          <p className="mt-0.5 text-small text-text-muted">А если совсем нет сил начать?</p>
+          <p className="mt-0.5 text-small text-text-muted">{t("scenarios.preview.marina_comment")}</p>
         </div>
       </div>
       <div className="relative mt-2.5 flex gap-2.5 pl-3 before:absolute before:bottom-1.5 before:left-[3px] before:top-0.5 before:w-0.5 before:rounded before:bg-border">
@@ -1749,9 +1745,7 @@ function ReplyPreview({ replyOn }: { replyOn: boolean }) {
             </span>
           </p>
           <p className="text-small leading-relaxed text-text">
-            {replyOn
-              ? "Марина, когда сил нет, цель не «сделать», а «начать на 5 минут» — почти всегда этого хватает, чтобы втянуться. С чего бы вы начали эти пять минут?"
-              : "Марина, отлично, что спросили! Загляну к вам с конкретным ответом совсем скоро 🙌"}
+            {replyOn ? t("scenarios.preview.marina_reply_on") : t("scenarios.preview.marina_reply_off")}
           </p>
         </div>
       </div>

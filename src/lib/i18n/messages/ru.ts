@@ -2016,6 +2016,16 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "scenarios.preview_cta": "Собранный призыв",
   "scenarios.preview_reply": "Авто-ответ",
   "scenarios.preview_sample_reply": "пример отклика",
+  "scenarios.preview.alex_post":
+    "Сегодня разбираю ваши затыки ✍️ Напишите в комментариях, над чем вы сейчас застряли — пришлю короткий конкретный совет лично вам. Подпишитесь, чтобы не пропустить свой ответ.",
+  "scenarios.preview.dima_comment": "Застрял на лендинге, не могу выбрать заголовок 🙏",
+  "scenarios.preview.alex_reply_on":
+    "Дима, попробуйте написать заголовок как ответ на вопрос «что я получу за 10 секунд?» — и выберите самый конкретный из трёх вариантов. Скиньте варианты, помогу выбрать.",
+  "scenarios.preview.alex_reply_off": "Дима, спасибо, что написали! Гляну ваш случай и пришлю короткий конкретный совет совсем скоро 🙌",
+  "scenarios.preview.marina_comment": "А если совсем нет сил начать?",
+  "scenarios.preview.marina_reply_on":
+    "Марина, когда сил нет, цель не «сделать», а «начать на 5 минут» — почти всегда этого хватает, чтобы втянуться. С чего бы вы начали эти пять минут?",
+  "scenarios.preview.marina_reply_off": "Марина, отлично, что спросили! Загляну к вам с конкретным ответом совсем скоро 🙌",
   "scenarios.preview_post": "Пример поста",
   "scenarios.preview_instruction": "Инструкция",
   "scenarios.preview_refresh": "Обновить",

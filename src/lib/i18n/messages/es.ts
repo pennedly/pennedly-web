@@ -1757,6 +1757,16 @@ export const es: Partial<Record<MessageKey, string>> = {
   "scenarios.raw.act_reply": "Responder en comentarios",
   "scenarios.raw.act_thread": "Hilo",
   "scenarios.preview_sample_reply": "respuesta de ejemplo",
+  "scenarios.preview.alex_post":
+    "Hoy reviso tus bloqueos ✍️ Cuéntame en los comentarios en qué estás atascado ahora mismo — te mando un consejo corto y concreto. Sígueme para no perderte tu respuesta.",
+  "scenarios.preview.dima_comment": "Atascado con mi landing page, no puedo elegir un titular 🙏",
+  "scenarios.preview.alex_reply_on":
+    "Dima, prueba a escribir el titular como respuesta a «¿qué consigo en 10 segundos?» — y elige la opción más concreta de las tres. Mándamelas, te ayudo a elegir.",
+  "scenarios.preview.alex_reply_off": "¡Dima, gracias por escribir! Le echo un vistazo y te mando un consejo corto y concreto muy pronto 🙌",
+  "scenarios.preview.marina_comment": "¿Y si no tienes energía ni para empezar?",
+  "scenarios.preview.marina_reply_on":
+    "Marina, cuando falta energía, la meta no es «terminar», es «empezar 5 minutos». Casi siempre basta para engancharte. ¿Cómo serían esos cinco minutos para ti?",
+  "scenarios.preview.marina_reply_off": "¡Marina, buena pregunta! Te respondo con algo concreto muy pronto 🙌",
   "scenarios.preview_post": "Publicación de ejemplo",
   "scenarios.preview_instruction": "Instrucción",
   "scenarios.preview_refresh": "Actualizar",

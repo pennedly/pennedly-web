@@ -1794,6 +1794,16 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "scenarios.raw.act_reply": "Відповідь у коментарях",
   "scenarios.raw.act_thread": "Тред",
   "scenarios.preview_sample_reply": "приклад відповіді",
+  "scenarios.preview.alex_post":
+    "Сьогодні розбираю ваші затики ✍️ Напишіть у коментарях, на чому застрягли зараз — надішлю коротку конкретну пораду особисто вам. Підпишіться, щоб не пропустити відповідь.",
+  "scenarios.preview.dima_comment": "Застряг на лендингу, не можу вибрати заголовок 🙏",
+  "scenarios.preview.alex_reply_on":
+    "Дімо, спробуй написати заголовок як відповідь на питання «що я отримаю за 10 секунд?» — і вибери найконкретніший з трьох варіантів. Скинь варіанти, допоможу вибрати.",
+  "scenarios.preview.alex_reply_off": "Дімо, дякую, що написав! Гляну твій випадок і надішлю коротку конкретну пораду зовсім скоро 🙌",
+  "scenarios.preview.marina_comment": "А якщо зовсім немає сил почати?",
+  "scenarios.preview.marina_reply_on":
+    "Марино, коли немає сил, мета не «зробити», а «почати на 5 хвилин» — майже завжди цього достатньо, щоб втягнутися. З чого б ти почала ці п'ять хвилин?",
+  "scenarios.preview.marina_reply_off": "Марино, чудово, що запитала! Загляну з конкретною відповіддю зовсім скоро 🙌",
   "scenarios.preview_post": "Приклад допису",
   "scenarios.preview_instruction": "Інструкція",
   "scenarios.preview_refresh": "Оновити",

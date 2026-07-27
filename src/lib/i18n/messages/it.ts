@@ -1797,6 +1797,16 @@ export const it: Partial<Record<MessageKey, string>> = {
   "scenarios.raw.act_reply": "Rispondi nei commenti",
   "scenarios.raw.act_thread": "Thread",
   "scenarios.preview_sample_reply": "risposta di esempio",
+  "scenarios.preview.alex_post":
+    "Oggi analizzo i tuoi blocchi ✍️ Scrivimi nei commenti su cosa sei bloccato adesso — ti mando un consiglio breve e concreto. Seguimi per non perderti la risposta.",
+  "scenarios.preview.dima_comment": "Bloccato sulla landing page, non riesco a scegliere un titolo 🙏",
+  "scenarios.preview.alex_reply_on":
+    "Dima, prova a scrivere il titolo come risposta a «cosa ottengo in 10 secondi?» — e scegli la più precisa delle tre opzioni. Mandamele, ti aiuto a scegliere.",
+  "scenarios.preview.alex_reply_off": "Dima, grazie per aver scritto! Do un'occhiata e ti mando un consiglio breve e concreto prestissimo 🙌",
+  "scenarios.preview.marina_comment": "E se proprio non hai le energie per iniziare?",
+  "scenarios.preview.marina_reply_on":
+    "Marina, quando mancano le energie, l'obiettivo non è «finire», è «iniziare per 5 minuti». Quasi sempre basta per entrare nel flow. Come sarebbero questi cinque minuti per te?",
+  "scenarios.preview.marina_reply_off": "Marina, ottima domanda! Ti rispondo con qualcosa di concreto prestissimo 🙌",
   "scenarios.preview_post": "Post di esempio",
   "scenarios.preview_instruction": "Istruzione",
   "scenarios.preview_refresh": "Aggiorna",
