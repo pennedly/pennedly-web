@@ -13,6 +13,7 @@ import { useSelectedAccountId } from "@/lib/account";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n";
 import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
+import { ErrorBanner } from "@/components/ui/error-banner";
 import { Toast, ToastHost } from "@/components/ui/toast";
 import { TweaksPanel, TweakSection, TweakToggle, TweakRadio, useTweaks } from "@/components/tweaks/TweaksPanel";
 import {
@@ -50,6 +51,7 @@ export default function AuditsPage() {
   const [audits, setAudits] = useState<AuditSummary[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [bootError, setBootError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [view, setView] = useState<"list" | "detail">("list");
   const [openId, setOpenId] = useState<number | null>(null);
   const [toasts, setToasts] = useState<ToastT[]>([]);
@@ -85,6 +87,7 @@ export default function AuditsPage() {
     }
     if (accountId === null) return;
     setLoaded(false);
+    setBootError(null);
     (async () => {
       try {
         const [settings, list] = await Promise.all([
@@ -104,7 +107,7 @@ export default function AuditsPage() {
         setLoaded(true);
       }
     })();
-  }, [accountId, router, demoParam]);
+  }, [accountId, router, demoParam, reloadKey]);
 
   useEffect(() => {
     if (!demoOn) return;
@@ -210,7 +213,7 @@ export default function AuditsPage() {
   if (bootError) {
     return (
       <main className="mx-auto max-w-2xl px-3.5 py-16 md:px-6">
-        <div className="rounded-lg border border-danger/40 bg-danger/10 p-4 text-small text-danger">{bootError}</div>
+        <ErrorBanner onRetry={() => setReloadKey((k) => k + 1)} />
       </main>
     );
   }

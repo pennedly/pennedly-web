@@ -18,6 +18,7 @@ import {
   updateStyleRule,
   updateUserRule,
 } from "@/lib/api";
+import { friendlyErrorText } from "@/lib/errors";
 import { captureEvent } from "@/lib/analytics";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
@@ -216,7 +217,7 @@ export function AntiRobotPanel({
       setRules((rs) => rs?.map((r) => (r.key === rule.key ? updated : r)) ?? rs);
     } catch (e) {
       setRules((rs) => rs?.map((r) => (r.key === rule.key ? { ...r, enabled: rule.enabled } : r)) ?? rs);
-      toast(String(e), "error");
+      toast(friendlyErrorText(e), "error");
     } finally {
       setPending((p) => {
         const n = new Set(p);
@@ -250,7 +251,7 @@ export function AntiRobotPanel({
             : "style_rules.toast_rule_added";
       toast(t(toastKey));
     } catch (e) {
-      toast(String(e), "error");
+      toast(friendlyErrorText(e), "error");
     }
   }
 
@@ -260,7 +261,7 @@ export function AntiRobotPanel({
     try {
       await updateUserRule(id, { body });
     } catch (e) {
-      toast(String(e), "error");
+      toast(friendlyErrorText(e), "error");
     }
   }
 
@@ -272,7 +273,7 @@ export function AntiRobotPanel({
       await updateUserRule(rule.id, { enabled: next });
     } catch (e) {
       setUserRules((rs) => rs?.map((r) => (r.id === rule.id ? { ...r, enabled: rule.enabled } : r)) ?? rs);
-      toast(String(e), "error");
+      toast(friendlyErrorText(e), "error");
     }
   }
 
@@ -300,7 +301,7 @@ export function AntiRobotPanel({
           await deleteUserRule(id);
         } catch (e) {
           setUserRules((rs) => insertAt(rs ?? [], idx, rule));
-          toast(String(e), "error");
+          toast(friendlyErrorText(e), "error");
         }
       },
       UNDO_MS,

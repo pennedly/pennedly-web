@@ -38,6 +38,7 @@ import {
   updateAutopilot,
   updateScenario,
 } from "@/lib/api";
+import { friendlyErrorText } from "@/lib/errors";
 import { useSelectedAccountId } from "@/lib/account";
 import { cn } from "@/lib/cn";
 import { pluralKey, useTranslation, type MessageKey } from "@/lib/i18n";
@@ -434,7 +435,7 @@ export default function ScenariosPage() {
     } catch (e) {
       setApConfig(base);
       rollback();
-      toast(String(e), "error");
+      toast(friendlyErrorText(e), "error");
     }
   }
 
@@ -906,7 +907,7 @@ export default function ScenariosPage() {
       toast(on ? t("scenarios.toast_on") : t("scenarios.toast_off"));
     } catch (e) {
       setScenarios((xs) => xs.map((x) => (x.id === s.id ? { ...x, enabled: !on } : x)));
-      toast(String(e), "error");
+      toast(friendlyErrorText(e), "error");
     }
   }
   // Turning ON gets a confirm (the «это будет само постить/отвечать» moment);
@@ -954,7 +955,7 @@ export default function ScenariosPage() {
       // `enabled:true` + the original mode on a failed mode-change — so a transient
       // error never shows a live routine as OFF (or with the unsaved mode).
       setScenarios((xs) => xs.map((x) => (x.id === s.id ? { ...x, enabled: s.enabled, publish_mode: s.publish_mode } : x)));
-      toast(String(e), "error");
+      toast(friendlyErrorText(e), "error");
     } finally {
       setEnableBusy(false);
       setPendingEnable(null);
@@ -973,7 +974,7 @@ export default function ScenariosPage() {
       for (const id of ids) await createScenario(id, { ...body, enabled: false });
       toast(t("scenarios.apply_done").replace("{n}", String(ids.length)));
     } catch (e) {
-      toast(String(e), "error");
+      toast(friendlyErrorText(e), "error");
     }
   }
 
@@ -1115,7 +1116,7 @@ export default function ScenariosPage() {
       const r = await runScenarioNow(editing.id);
       setRunResult(r);
     } catch (e) {
-      toast(String(e), "error");
+      toast(friendlyErrorText(e), "error");
     } finally {
       setRunning(false);
     }
@@ -1190,14 +1191,14 @@ export default function ScenariosPage() {
           setScenarios((xs) => (xs.some((x) => x.id === boostSaved.id) ? xs : [...xs, boostSaved]));
           toast(t("scenarios.bo.attach_created"));
         } catch (e) {
-          toast(String(e), "error");
+          toast(friendlyErrorText(e), "error");
         }
       }
       toast(enable && !editing ? t("scenarios.toast_on") : t("scenarios.toast_saved"));
       backToList();
     } catch (e) {
       setSaveErr(true);
-      toast(String(e), "error");
+      toast(friendlyErrorText(e), "error");
     } finally {
       setSaving(false);
     }
@@ -1220,7 +1221,7 @@ export default function ScenariosPage() {
       setDelTarget(null);
       toast(t("scenarios.toast_deleted"));
     } catch (e) {
-      toast(String(e), "error");
+      toast(friendlyErrorText(e), "error");
     } finally {
       setDelBusy(false);
     }
@@ -1249,7 +1250,7 @@ export default function ScenariosPage() {
       backToList();
       toast(t("scenarios.toast_deleted"));
     } catch (e) {
-      toast(String(e), "error");
+      toast(friendlyErrorText(e), "error");
     } finally {
       setDeleting(false);
     }

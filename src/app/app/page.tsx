@@ -36,6 +36,7 @@ import {
   updateDraftText,
   uploadMedia,
 } from "@/lib/api";
+import { friendlyErrorText } from "@/lib/errors";
 import { captureEvent, identify } from "@/lib/analytics";
 import { isOnboardingSkipped, setSelectedAccountId, useSelectedAccountId } from "@/lib/account";
 import { useTranslation } from "@/lib/i18n";
@@ -321,7 +322,7 @@ export default function Studio() {
       setDrafts(list.drafts);
       setComposerText("");
     } catch (e) {
-      toast(String(e), "error");
+      toast(friendlyErrorText(e), "error");
     } finally {
       setGenerating(false);
     }
@@ -355,7 +356,7 @@ export default function Studio() {
           }
         } catch (e) {
           setDrafts((p) => p.map((d) => (d.id === card.id ? original : d)));
-          toast(String(e), "error");
+          toast(friendlyErrorText(e), "error");
         }
       },
       UNDO_MS,
@@ -385,7 +386,7 @@ export default function Studio() {
           await rejectDraft(card.id);
         } catch (e) {
           setDrafts((p) => p.map((d) => (d.id === card.id ? original : d)));
-          toast(String(e), "error");
+          toast(friendlyErrorText(e), "error");
         }
       },
       UNDO_MS,
@@ -425,7 +426,7 @@ export default function Studio() {
           await unapproveDraft(card.id);
         } catch (e) {
           setDrafts((p) => p.map((d) => (d.id === card.id ? original : d)));
-          toast(String(e), "error");
+          toast(friendlyErrorText(e), "error");
         }
       },
       UNDO_MS,
@@ -462,7 +463,7 @@ export default function Studio() {
           await deleteDraft(card.id);
         } catch (e) {
           restore();
-          toast(String(e), "error");
+          toast(friendlyErrorText(e), "error");
         }
       },
       UNDO_MS,
@@ -494,7 +495,7 @@ export default function Studio() {
       // Boost attached (entry-point B): the backend returns the new scenario id.
       if (boost && result.boost_scenario_id != null) toast(t("scenarios.bo.studio.attached"), "success");
     } catch (e) {
-      toast(String(e), "error");
+      toast(friendlyErrorText(e), "error");
     } finally {
       setPublishing(false);
     }
@@ -515,7 +516,7 @@ export default function Studio() {
       // publish) — confirm it's attached.
       if (boost) toast(t("scenarios.bo.studio.attached"), "success");
     } catch (e) {
-      toast(String(e), "error");
+      toast(friendlyErrorText(e), "error");
     } finally {
       setScheduling(false);
     }
@@ -552,7 +553,7 @@ export default function Studio() {
           return n;
         });
         if (original) setDrafts((p) => p.map((d) => (d.id === card.id ? original : d)));
-        toast(String(e), "error");
+        toast(friendlyErrorText(e), "error");
       }
     },
     onTweak: async (card, instruction) => {

@@ -1782,6 +1782,15 @@ export const en = {
   "error.subtitle":
     "Something went wrong reaching Threads. Your work is safe — try again in a moment.",
   "error.retry": "Retry",
+  "error.not_found": "We couldn't find that",
+  // ── Toast fallbacks, by HTTP status family (never the raw backend detail) ──
+  "error.toast_forbidden": "You don't have access to that",
+  "error.toast_not_found": "That's no longer there",
+  "error.toast_conflict": "That's already done",
+  "error.toast_rate_limited": "Too many requests — try again in a minute",
+  "error.toast_server": "Something broke on our end. Try again in a moment",
+  "error.toast_generic": "Something went wrong. Try again",
+  "error.toast_network": "Couldn't reach the server. Check your connection and try again",
 
   "settings.title": "Settings",
   "settings.account": "Account",

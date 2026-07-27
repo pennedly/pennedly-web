@@ -11,7 +11,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { ApiError, analyzePatterns, applyLintFix, fetchMe, getTokens } from "@/lib/api";
+import { analyzePatterns, applyLintFix, fetchMe, getTokens } from "@/lib/api";
+import { friendlyErrorText } from "@/lib/errors";
 import { captureEvent } from "@/lib/analytics";
 import { useSelectedAccountId } from "@/lib/account";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
@@ -162,12 +163,7 @@ export default function ExplorePage() {
       setRealResult(res);
       setRealPhase(res.patterns.length > 0 ? "results" : "empty");
     } catch (e) {
-      let msg = String(e);
-      if (e instanceof ApiError) {
-        const d = e.detail as { message?: string; detail?: { message?: string } } | undefined;
-        msg = d?.message ?? d?.detail?.message ?? `${e.status}`;
-      }
-      toast(msg, "error");
+      toast(friendlyErrorText(e), "error");
       setRealPhase("idle");
     }
   }
@@ -191,7 +187,7 @@ export default function ExplorePage() {
       setAddedRules((s) => new Set(s).add(p.suggested_do_rule));
       toast(t("explore.added"));
     } catch (e) {
-      toast(String(e), "error");
+      toast(friendlyErrorText(e), "error");
     } finally {
       setAddingRule(null);
     }

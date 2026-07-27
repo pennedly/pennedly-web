@@ -26,6 +26,7 @@ import {
   skipComment,
   uploadMedia,
 } from "@/lib/api";
+import { friendlyErrorText } from "@/lib/errors";
 import { captureEvent } from "@/lib/analytics";
 import { useSelectedAccountId } from "@/lib/account";
 import { useTranslation } from "@/lib/i18n";
@@ -121,6 +122,7 @@ export default function RepliesPage() {
   const [edits, setEdits] = useState<Record<number, string>>({});
   const [loaded, setLoaded] = useState(false);
   const [bootError, setBootError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [selectedPost, setSelectedPost] = useState<string | null>(null);
   // Initial filter honours a `?filter=<key>` deep-link (e.g. the account
   // dashboard's «Ответы» quicklink lands on the needs-reply queue); ignored if
@@ -190,6 +192,7 @@ export default function RepliesPage() {
     if (demoParam) return;
     if (accountId === null) return;
     setLoaded(false);
+    setBootError(null);
     loadingMoreRef.current = false;
     (async () => {
       try {
@@ -209,7 +212,7 @@ export default function RepliesPage() {
         setLoaded(true);
       }
     })();
-  }, [accountId, router, demoParam]);
+  }, [accountId, router, demoParam, reloadKey]);
 
   // real load — the selected post's thread. Refetches whenever the rail
   // selection changes; `comments` then holds only that post's comments.
@@ -398,7 +401,7 @@ export default function RepliesPage() {
       await generateReply(c.id);
       await reload();
     } catch (e) {
-      toast(String(e), "error");
+      toast(friendlyErrorText(e), "error");
     } finally {
       setGeneratingId(null);
     }
@@ -418,7 +421,7 @@ export default function RepliesPage() {
       await reload();
       toast(t("replies.toast_approved"), "success", { description: t("replies.toast_ready") });
     } catch (e) {
-      toast(String(e), "error");
+      toast(friendlyErrorText(e), "error");
     }
   }
 
@@ -432,7 +435,7 @@ export default function RepliesPage() {
       setPublishTarget(null);
       toast(t("replies.toast_published"), "success", { description: t("replies.toast_posted") });
     } catch (e) {
-      toast(String(e), "error");
+      toast(friendlyErrorText(e), "error");
     } finally {
       setPublishing(false);
     }
@@ -475,7 +478,7 @@ export default function RepliesPage() {
       await reload();
       toast(t("replies.toast_restored"));
     } catch (e) {
-      toast(String(e), "error");
+      toast(friendlyErrorText(e), "error");
     }
   }
 
@@ -555,7 +558,7 @@ export default function RepliesPage() {
   if (bootError) {
     return (
       <main className="mx-auto max-w-2xl px-6 py-16">
-        <div className="rounded-lg border border-danger/40 bg-danger/10 p-4 text-small text-danger">{bootError}</div>
+        <ErrorBanner onRetry={() => setReloadKey((k) => k + 1)} titleKey="replies.error_title" subKey="replies.error_sub" />
       </main>
     );
   }

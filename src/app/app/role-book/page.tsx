@@ -26,11 +26,13 @@ import {
   patchRoleBook,
   translateText,
 } from "@/lib/api";
+import { friendlyErrorText } from "@/lib/errors";
 import { captureEvent } from "@/lib/analytics";
 import { useSelectedAccountId } from "@/lib/account";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { TranslateButton } from "@/components/TranslateButton";
 import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
+import { ErrorBanner } from "@/components/ui/error-banner";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Skeleton, Spinner } from "@/components/ui/feedback";
 import { Toast, ToastHost } from "@/components/ui/toast";
@@ -244,6 +246,7 @@ export default function VoiceEditor() {
   const [emptyVoice, setEmptyVoice] = useState(false);
   const [sections, setSections] = useState<RoleBookSections>({});
   const [bootError, setBootError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [lintResult, setLintResult] = useState<LintResult | null>(null);
   const [checking, setChecking] = useState(false);
   const [lastRun, setLastRun] = useState<string | null>(null);
@@ -309,6 +312,7 @@ export default function VoiceEditor() {
     setBook(null);
     setLintResult(null);
     setEmptyVoice(false);
+    setBootError(null);
     transToken.current++;
     setTransLang(null);
     setTranslated(null);
@@ -331,7 +335,7 @@ export default function VoiceEditor() {
         setBootError(String(e));
       }
     })();
-  }, [accountId, router]);
+  }, [accountId, router, reloadKey]);
 
   // Demo: seed the real state vars from the tweak so the existing render paths
   // light up each phase with no backend.
@@ -410,7 +414,7 @@ export default function VoiceEditor() {
       setDismissed(new Set());
       toast(t("voice.toast_saved"));
     } catch (e) {
-      toast(String(e), "error");
+      toast(friendlyErrorText(e), "error");
       throw e;
     }
   }
@@ -456,7 +460,7 @@ export default function VoiceEditor() {
       setLintResult(result);
       setLastRun(t("voice.just_now"));
     } catch (e) {
-      toast(String(e), "error");
+      toast(friendlyErrorText(e), "error");
     } finally {
       setChecking(false);
     }
@@ -497,7 +501,7 @@ export default function VoiceEditor() {
         next.delete(idx);
         return next;
       });
-      toast(String(e), "error");
+      toast(friendlyErrorText(e), "error");
     } finally {
       setApplyingIdx(null);
       setChecking(false);
@@ -535,7 +539,7 @@ export default function VoiceEditor() {
         setLastRun(t("voice.just_now"));
         toast(t("rolebook.extract.toast_done"));
       } catch (e) {
-        toast(String(e), "error");
+        toast(friendlyErrorText(e), "error");
       } finally {
         setBusy(false);
       }
@@ -547,9 +551,7 @@ export default function VoiceEditor() {
       <div className="min-h-screen bg-bg text-text">
         <AppTopbar title={t("rolebook.title")} />
         <main className="mx-auto max-w-[720px] px-5 pb-24 pt-7 md:px-6">
-          <div className="rounded-lg border border-danger/40 bg-danger/10 p-4 text-small text-danger">
-            {bootError}
-          </div>
+          <ErrorBanner onRetry={() => setReloadKey((k) => k + 1)} />
         </main>
       </div>
     );

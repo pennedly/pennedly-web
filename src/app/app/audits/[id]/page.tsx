@@ -10,9 +10,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
 import { ApiError, clearTokens, fetchAudit, fetchMyAccounts, getTokens, submitAuditDecisions } from "@/lib/api";
+import { friendlyErrorText } from "@/lib/errors";
 import { captureEvent } from "@/lib/analytics";
 import { useTranslation } from "@/lib/i18n";
 import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
+import { ErrorBanner } from "@/components/ui/error-banner";
 import { Toast, ToastHost } from "@/components/ui/toast";
 import { Spinner } from "@/components/ui/feedback";
 import { AuditDetailRedesign } from "@/components/studio/AuditDetailRedesign";
@@ -40,6 +42,7 @@ export default function AuditDetailPage() {
   const [acct, setAcct] = useState<Acct | null>(null);
   const [loading, setLoading] = useState(true);
   const [bootError, setBootError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [toasts, setToasts] = useState<ToastT[]>([]);
 
   function toast(title: string, description?: string) {
@@ -58,6 +61,8 @@ export default function AuditDetailPage() {
       router.push("/app/login");
       return;
     }
+    setLoading(true);
+    setBootError(null);
     (async () => {
       try {
         const a = await fetchAudit(auditId);
@@ -86,7 +91,7 @@ export default function AuditDetailPage() {
         setLoading(false);
       }
     })();
-  }, [auditId, router, demoParam]);
+  }, [auditId, router, demoParam, reloadKey]);
 
   const decide = useCallback(
     async (changeId: string, approved: boolean) => {
@@ -101,7 +106,7 @@ export default function AuditDetailPage() {
         if (approved) toast(t("audits.toast_approved_title"), t("audits.toast_approved_sub"));
         else toast(t("audits.toast_rejected_title"), t("audits.toast_rejected_sub"));
       } catch (e) {
-        toast(String(e));
+        toast(friendlyErrorText(e));
       }
     },
     [auditId, t],
@@ -119,10 +124,17 @@ export default function AuditDetailPage() {
       </div>
     );
   }
-  if (bootError || !audit || !model) {
+  if (bootError) {
     return (
       <main className="mx-auto max-w-2xl px-3.5 py-16 md:px-6">
-        <div className="rounded-lg border border-danger/40 bg-danger/10 p-4 text-small text-danger">{bootError ?? "Not found"}</div>
+        <ErrorBanner onRetry={() => setReloadKey((k) => k + 1)} />
+      </main>
+    );
+  }
+  if (!audit || !model) {
+    return (
+      <main className="mx-auto max-w-2xl px-3.5 py-16 md:px-6">
+        <div className="rounded-lg border border-border bg-surface-2 p-4 text-small text-text-muted">{t("error.not_found")}</div>
       </main>
     );
   }

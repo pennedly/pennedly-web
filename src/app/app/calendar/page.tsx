@@ -14,6 +14,7 @@ import {
   scheduleDraft,
   unscheduleDraft,
 } from "@/lib/api";
+import { friendlyErrorText } from "@/lib/errors";
 import { localUtcOffsetLabel } from "@/lib/timezone";
 import { AppTopbar } from "@/components/AppTopbar";
 import { Toast, ToastHost } from "@/components/ui/toast";
@@ -112,7 +113,7 @@ export default function CalendarPage() {
       setSelected(null);
       toast(okMsg);
     } catch (e) {
-      toast(String(e), "error");
+      toast(friendlyErrorText(e), "error");
     } finally {
       setBusy(false);
     }
