@@ -612,7 +612,7 @@ export const fr: Partial<Record<MessageKey, string>> = {
   // ── Replies ────────────────────────────────────────────────────
   "dashboard.nav.replies": "réponses",
   "replies.back": "← tableau de bord",
-  "replies.heading": "File de réponses",
+  "replies.heading": "Réponses",
   "replies.subtitle":
     "Commentaires sous tes posts. Génère une réponse dans ta voix, vérifie-la, et rien n'est publié sans ton accord.",
   "replies.empty":

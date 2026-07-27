@@ -609,7 +609,7 @@ export const uk: Partial<Record<MessageKey, string>> = {
   // ── Replies ────────────────────────────────────────────────────
   "dashboard.nav.replies": "відповіді",
   "replies.back": "← дашборд",
-  "replies.heading": "Черга відповідей",
+  "replies.heading": "Відповіді",
   "replies.subtitle":
     "Коментарі під твоїми постами. Згенеруй відповідь у своєму голосі, переглянь її, і нічого не публікується без твого схвалення.",
   "replies.empty":

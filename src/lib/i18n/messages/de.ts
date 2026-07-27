@@ -615,7 +615,7 @@ export const de: Partial<Record<MessageKey, string>> = {
   // ── Replies ────────────────────────────────────────────────────
   "dashboard.nav.replies": "antworten",
   "replies.back": "← Dashboard",
-  "replies.heading": "Antwort-Warteschlange",
+  "replies.heading": "Antworten",
   "replies.subtitle":
     "Kommentare unter deinen Beiträgen. Generiere eine Antwort in deiner Stimme, prüfe sie, und veröffentlicht wird erst mit deiner Freigabe.",
   "replies.empty":

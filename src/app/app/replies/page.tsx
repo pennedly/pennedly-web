@@ -567,11 +567,11 @@ export default function RepliesPage() {
   return (
     <div className="min-h-screen bg-bg text-text">
       {/* App-Header-SPEC §7 — the docked title must be the SAME string as the
-          hero, bound to one source. This screen's hero is `replies.heading`
-          («Очередь ответов»), not `replies.title` («Ответы»), so the bar echoes
-          the heading: otherwise scrolling crossfades two different words. The
-          bar title is invisible at rest, so nothing visible changes until the
-          hero docks. */}
+          hero, bound to one source: `replies.heading`. That string is the short
+          one («Ответы» / "Replies") because the phone bar gives the title ~104px
+          once the pill takes its 132px budget, and the old «Очередь ответов»
+          needed 163px — it truncated in all 8 locales, English included. The
+          "queue" sense lives on in `replies.subtitle` and `replies.empty`. */}
       <AppTopbar maxW="960px" title={t("replies.heading")} hasHero pill={pill} />
       <main className="mx-auto flex max-w-[960px] flex-col gap-4 px-3.5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4 md:gap-5 md:px-6 md:pb-24 md:pt-7">
         {!demoOn && <ImportBanner status={sync.status} summary={sync.summary} />}

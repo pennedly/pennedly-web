@@ -910,7 +910,7 @@ export const en = {
   // ── Replies ────────────────────────────────────────────────────
   "dashboard.nav.replies": "replies",
   "replies.back": "← dashboard",
-  "replies.heading": "Reply queue",
+  "replies.heading": "Replies",
   "replies.subtitle":
     "Comments under your posts. Generate a reply in your voice, review it, and nothing goes out until you approve it.",
   "replies.empty":
