@@ -1,75 +1,113 @@
 "use client";
 
-// Advisor (/app/advisor) — the AI growth-advisor chat, built 1:1 to
-// Advisor-SPEC.html (+ the mobile spec). Tester-gated, Insight group. A
-// conversation where the author asks about Threads growth and the advisor
-// answers with concrete, data-grounded advice drawn from THIS account's own
-// data (assembled server-side from stats/voice/recent posts; see the backend
-// `api/advisor.py`). Phases: first-run (hero + starters) · ready (thread) ·
-// thinking (pulse dots + honest label) · error (inline reply row + Retry, never
-// a whole-screen banner). The only mutation is "Open in Studio" — it routes to
-// the Studio composer with a prefilled brief.
+// Agent (/app/advisor) — the per-profile growth agent, rebuilt to the CD эталон
+// `Agent-Redesign-SPEC.html`. A two-column workspace: the conversation on the
+// left (its own inner scroller + a docked composer), and on the right the rail
+// that says WHAT THE AGENT CAN READ RIGHT NOW, which past conversations exist,
+// and what it has already applied to the account.
 //
-// The live reply is prose grounded by a real "Grounded in: …" source line
-// (mapped from the backend `grounded_in`) PLUS the backend's structured data
-// chips + suggestion cards (the model returns them as JSON; see
-// `api/advisor.py`). /gallery/advisor shows the same rich design on mock data.
+// One rule runs the whole screen (§1): every claim is either a number in the
+// metric strip or a NAMED source in the grounding row. A signal that was checked
+// and came back empty is shown dashed rather than hidden. Nothing here invents a
+// figure — the briefing, the signal volumes and the action cards' «Сейчас» side
+// are all read from real endpoints (stats · role-book · autopilot · user-rules ·
+// scenarios · applied-changes), and a failed read says "unknown", never a value.
+//
+// Scroll: this screen scrolls an INNER container, so the app's --hdr-reveal
+// docking (driven by window.scrollY) can never fire here — the bar keeps
+// hasHero={false} on purpose and its title is always visible.
+//
+// Backend: POST /accounts/{id}/advisor (prose + chips + grounded_in +
+// suggestions + actions), GET .../advisor/history (persisted turns),
+// POST .../advisor/apply (one-click actions, closed catalog of 9).
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { ApiError, applyAdvisorAction, chatAdvisor, clearTokens, fetchAdvisorHistory, fetchMe, getTokens } from "@/lib/api";
+import "@/components/advisor/agent.css";
+
+import {
+  ApiError,
+  applyAdvisorAction,
+  chatAdvisor,
+  clearTokens,
+  fetchAdvisorHistory,
+  fetchAppliedChanges,
+  fetchAutopilot,
+  fetchMe,
+  fetchRoleBook,
+  fetchScenarios,
+  fetchStats,
+  fetchUserRules,
+  getTokens,
+  refreshStats,
+  rollbackAppliedChange,
+} from "@/lib/api";
 import { useSelectedAccountId } from "@/lib/account";
-import { getLocale, useTranslation } from "@/lib/i18n";
-import { formatSchedule, nextOccurrence } from "@/lib/schedule";
+import { useTranslation, type MessageKey } from "@/lib/i18n";
+import { nextOccurrence } from "@/lib/schedule";
 import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
-import { IcSparkle } from "@/components/icons";
+import { IcLayers } from "@/components/icons";
 import { SkeletonText } from "@/components/ui";
 import { TweaksPanel, TweakSection, TweakRadio, TweakToggle, useTweaks } from "@/components/tweaks/TweaksPanel";
 import {
-  AssistantReply,
+  ActionCard,
+  AgentTurn,
+  Briefing,
   Composer,
-  ErrorRow,
-  Hero,
-  Starters,
-  ThinkingRow,
-  UserBubble,
-  type AdvisorActionCardData,
-  type AdvisorReplyContent,
-  type Starter,
-} from "@/components/advisor/AdvisorParts";
-import { ADVISOR_DEMO_TURNS, advisorSourceLabel } from "@/components/advisor/advisor-demo";
-import type { AdvisorMessage, AdvisorResponse } from "@/lib/types";
+  ErrorBlock,
+  GroundingRow,
+  JumpToLatest,
+  MetricStrip,
+  Rail,
+  RailSheet,
+  ReconnectBlock,
+  SuggestionCard,
+  ThinDataBlock,
+  ThinkingSteps,
+  UserTurn,
+  type AgentActionView,
+  type RailReceipt,
+  type RailSession,
+  type StarterChip,
+} from "@/components/advisor/AgentParts";
+import {
+  buildActionDiff,
+  buildBrief,
+  buildSignals,
+  EMPTY_SNAPSHOT,
+  groundingFor,
+  groupSessions,
+  relFreshness,
+  sessionStamp,
+  turnTime,
+  type AgentSnapshot,
+  type AgentTurnData,
+} from "@/components/advisor/agent-data";
+import { AGENT_DEMO } from "@/components/advisor/agent-demo";
+import type { AdvisorActionData, AdvisorHistoryEntry, AdvisorMessage, AdvisorResponse, AppliedChangeEntry } from "@/lib/types";
 import { useDemoParam } from "@/lib/query";
 
 const IS_DEV = process.env.NODE_ENV === "development";
 
-// A rendered turn in the thread: the user's message, then the assistant's reply
-// (or a pending/errored placeholder while it generates).
-type Turn = {
-  user: string;
-  // null while thinking; an AdvisorReplyContent once answered.
-  reply: AdvisorReplyContent | null;
-  status: "thinking" | "done" | "error";
-};
-
-// Cycle the honest "what it's reading" thinking labels.
-const THINKING_KEYS = ["advisor.thinking_stats", "advisor.thinking_times", "advisor.thinking_writing"] as const;
-
-// The backend caps the transcript at 40 messages (2 per turn + the new
-// question); 18 prior turns → 37, safely under that even after history
-// hydration pre-loads a long conversation.
+// The backend caps the transcript at 40 messages (2 per turn + the new one);
+// 18 prior turns → 37, safely under it even after a long history hydration.
 const RECENT_TURNS_FOR_CONTEXT = 18;
+
+// How far from the bottom counts as "the user has scrolled away" — the jump
+// pill appears and the autoscroll stops (§2, §10.3).
+const JUMP_THRESHOLD = 240;
+
+type Turn = AgentTurnData;
 
 export default function AdvisorPage() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
 
   const demoParam = useDemoParam();
   const [isTester, setIsTester] = useState(false);
   const allow = demoParam && (IS_DEV || isTester);
 
-  // Auth gate (skipped in demo review).
   useEffect(() => {
     if (demoParam) return;
     if (!getTokens()) {
@@ -84,16 +122,31 @@ export default function AdvisorPage() {
   const accountId = useSelectedAccountId();
 
   const [turns, setTurns] = useState<Turn[]>([]);
+  const [history, setHistory] = useState<AdvisorHistoryEntry[]>([]);
+  const [sessionIdx, setSessionIdx] = useState<number | null>(null); // null = newest
   const [input, setInput] = useState("");
-  const [thinkIdx, setThinkIdx] = useState(0);
+  const [thinkStep, setThinkStep] = useState(0);
   const [historyLoaded, setHistoryLoaded] = useState(false);
-  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [showJump, setShowJump] = useState(false);
+  const [railOpen, setRailOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // ── ?demo=1 Tweaks: drive each state without a backend ──
-  const [tw, setTw] = useTweaks<{ dark: boolean; state: "first-run" | "ready" | "thinking" | "error" }>({
-    dark: false,
-    state: "first-run",
-  });
+  // What the agent can read + what the account currently looks like.
+  const [stats, setStats] = useState<Awaited<ReturnType<typeof fetchStats>> | null>(null);
+  const [roleBook, setRoleBook] = useState<Awaited<ReturnType<typeof fetchRoleBook>> | null>(null);
+  const [snapshot, setSnapshot] = useState<AgentSnapshot>(EMPTY_SNAPSHOT);
+  const [receipts, setReceipts] = useState<AppliedChangeEntry[]>([]);
+
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  // Whether the user was pinned to the bottom before the last render — the
+  // autoscroll only fires then, so reading history is never yanked (§10.3).
+  const atBottomRef = useRef(true);
+
+  // ── ?demo=1 Tweaks: drive each state with no backend ──
+  const [tw, setTw] = useTweaks<{
+    dark: boolean;
+    state: "empty" | "conversation" | "thinking" | "thin" | "error" | "disconnected";
+  }>({ dark: false, state: "empty" });
   useEffect(() => {
     if (!allow) return;
     document.documentElement.classList.toggle("dark", tw.dark);
@@ -102,277 +155,168 @@ export default function AdvisorPage() {
 
   const busy = turns.some((x) => x.status === "thinking");
 
-  // Cycle thinking labels while a reply generates.
+  // Tester review mode: one mock bundle (signals, briefing, snapshot, turns)
+  // that every derived value below reads from instead of the network.
+  const demo = useMemo(() => (allow ? AGENT_DEMO(t, locale) : null), [allow, t, locale]);
+
+  // Walk the three "reading your data" steps while a reply generates. Driven by
+  // the DEMO state too, so the tester review animates like the real thing.
+  const stepping = busy || (demo !== null && tw.state === "thinking");
   useEffect(() => {
-    if (!busy) return;
-    const id = setInterval(() => setThinkIdx((i) => (i + 1) % THINKING_KEYS.length), 1600);
+    if (!stepping) {
+      setThinkStep(0);
+      return;
+    }
+    const id = setInterval(() => setThinkStep((i) => Math.min(i + 1, 2)), 2200);
     return () => clearInterval(id);
-  }, [busy]);
+  }, [stepping]);
 
-  // Keep the thread pinned to the newest message.
+  // ── load everything the screen grounds itself in ──
+  const loadSignals = useCallback(
+    async (id: number) => {
+      const [s, rb, ap, ur, sc, ac] = await Promise.allSettled([
+        fetchStats(id, { period: "7d" }),
+        fetchRoleBook(id),
+        fetchAutopilot(id),
+        fetchUserRules(id),
+        fetchScenarios(id),
+        fetchAppliedChanges(id, { limit: 12 }),
+      ]);
+      setStats(s.status === "fulfilled" ? s.value : null);
+      setRoleBook(rb.status === "fulfilled" ? rb.value : null);
+      setSnapshot({
+        autopilot: ap.status === "fulfilled" ? ap.value : null,
+        voiceRules: ur.status === "fulfilled" ? ur.value.rules.length : null,
+        scenarios: sc.status === "fulfilled" ? sc.value.scenarios.filter((x) => x.enabled).length : null,
+      });
+      setReceipts(
+        ac.status === "fulfilled" ? ac.value.entries.filter((e) => e.source === "advisor_action") : [],
+      );
+    },
+    [],
+  );
+
   useEffect(() => {
-    const el = scrollRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [turns]);
+    if (allow || accountId === null) return;
+    void loadSignals(accountId);
+  }, [allow, accountId, loadSignals]);
 
-  const starters: Starter[] = [
-    { icon: "nib", label: t("advisor.starter_post") },
-    { icon: "chart", label: t("advisor.starter_drop") },
-    { icon: "clock", label: t("advisor.starter_time") },
-  ];
+  // Map a live (or persisted) backend reply into the action views the card
+  // renders. `accountId` is non-null at every call site.
+  const buildActions = useCallback(
+    (res: AdvisorResponse, id: number): AgentActionView[] =>
+      // Max two per turn (§5) — a third means the agent dumped a menu.
+      res.actions.slice(0, 2).map((act) => ({
+        action: act,
+        diff: buildActionDiff(act, demo?.snapshot ?? snapshot, locale, t),
+        warn: warnFor(act, t),
+        // Review mode: the card is MOCK, so Apply must resolve without writing.
+        // A signed-in tester opening ?demo=1 would otherwise change their real
+        // profile by clicking a sample card.
+        onApply: async () => {
+          if (demo) {
+            await new Promise((r) => setTimeout(r, 700));
+            return;
+          }
+          await applyAction(id, act);
+        },
+        onOpen: () => {
+          if (!demo) router.push(openTargetFor(act));
+        },
+        onApplied: async () => {
+          if (demo || accountId === null) return null;
+          const before = Date.now() - 5_000;
+          const fresh = await fetchAppliedChanges(id, { limit: 12 });
+          const mine = fresh.entries.filter((e) => e.source === "advisor_action");
+          setReceipts(mine);
+          void loadSignals(id);
+          const match = mine.find(
+            (e) => !e.rolled_back_at && new Date(e.created_at).getTime() >= before,
+          );
+          return match ?? null;
+        },
+        onUndo: async (changeId: number) => {
+          if (demo) return;
+          await rollbackAppliedChange(id, changeId);
+          const fresh = await fetchAppliedChanges(id, { limit: 12 });
+          setReceipts(fresh.entries.filter((e) => e.source === "advisor_action"));
+          void loadSignals(id);
+        },
+      })),
+    [demo, snapshot, locale, t, router, accountId, loadSignals],
+  );
 
-  // Build the API conversation from the answered turns + the new question.
-  // Capped to the RECENT window: the backend rejects >40 messages, and once
-  // history hydration can pre-load dozens of past exchanges, the untrimmed
-  // full transcript would blow that cap on the very next question (a
-  // returning conversation would get permanently stuck on a 422). The
-  // advisor's real grounding comes from the account's own data (stats/voice/
-  // posts), not the transcript, so trimming older turns is safe.
   function buildMessages(question: string): AdvisorMessage[] {
     const msgs: AdvisorMessage[] = [];
     for (const turn of turns.slice(-RECENT_TURNS_FOR_CONTEXT)) {
       msgs.push({ role: "user", content: turn.user });
-      if (turn.reply) msgs.push({ role: "assistant", content: turn.reply.paragraphs.join("\n\n") });
+      if (turn.reply) msgs.push({ role: "assistant", content: turn.reply.reply });
     }
     msgs.push({ role: "user", content: question });
     return msgs;
   }
 
-  // Map a live (or persisted-history) backend reply into the presentational
-  // shape both the chat and the hydration effect render. `accountId` is
-  // non-null at both call sites (ask()'s guard; the hydration effect only
-  // fetches once it has one).
-  function toReplyContent(res: AdvisorResponse, accountId: number): AdvisorReplyContent {
-    return {
-      // The model replies in prose; split blank-line-separated paragraphs.
-      paragraphs: res.reply.split(/\n{2,}/).map((s) => s.trim()).filter(Boolean),
-      sources: res.grounded_in.map((id) => advisorSourceLabel(id, t)),
-      // Structured extras from the backend: data chips echoing the cited
-      // numbers + suggestion cards (each wired to the Studio handoff).
-      chips: res.chips.map((c) => ({ tone: c.tone, icon: c.icon ?? undefined, label: c.label })),
-      suggestions: res.suggestions.map((s) => ({
-        icon: s.icon,
-        title: s.title,
-        why: s.why,
-        brief: s.brief,
-        onOpenStudio: () => openInStudio(s.brief),
-      })),
-      // Per-account chat: an action targets THIS profile. No profile row.
-      actions: res.actions.map((act): AdvisorActionCardData => {
-          if (act.type === "auto_replies") {
-            return {
-              type: "auto_replies",
-              title: act.title,
-              audience: act.audience,
-              repliesPerDay: act.replies_per_day,
-              skipLowValue: act.skip_low_value,
-              onApply: async () => {
-                await applyAdvisorAction(accountId, {
-                  type: "auto_replies",
-                  title: act.title,
-                  audience: act.audience,
-                  replies_per_day: act.replies_per_day,
-                  skip_low_value: act.skip_low_value,
-                });
-              },
-              onOpen: () => router.push("/app/autopilot"),
-            };
-          }
-          if (act.type === "voice_rule") {
-            return {
-              type: "voice_rule",
-              title: act.title,
-              ruleText: act.rule_text,
-              kind: act.rule_kind,
-              onApply: async () => {
-                await applyAdvisorAction(accountId, {
-                  type: "voice_rule",
-                  title: act.title,
-                  rule_text: act.rule_text,
-                  kind: act.rule_kind,
-                });
-              },
-              onOpen: () => router.push("/app/style-rules"),
-            };
-          }
-          if (act.type === "schedule_post") {
-            // Label the resolved local day/time; resolve the absolute instant FRESH
-            // in onApply (not frozen here) so a slow click can't post a stale time.
-            return {
-              type: "schedule_post",
-              title: act.title,
-              brief: act.brief,
-              whenLabel: formatSchedule(nextOccurrence(act.weekday, act.hour), getLocale()),
-              onApply: async () => {
-                await applyAdvisorAction(accountId, {
-                  type: "schedule_post",
-                  title: act.title,
-                  brief: act.brief,
-                  scheduled_at: nextOccurrence(act.weekday, act.hour).toISOString(),
-                });
-              },
-              onOpen: () => router.push("/app/calendar"),
-            };
-          }
-          if (act.type === "reactive") {
-            return {
-              type: "reactive",
-              title: act.title,
-              reactiveKind: act.reactive_kind,
-              commentText: act.comment_text,
-              onApply: async () => {
-                await applyAdvisorAction(accountId, {
-                  type: "reactive",
-                  title: act.title,
-                  kind: act.reactive_kind,
-                  comment_text: act.comment_text,
-                });
-              },
-              onOpen: () => router.push("/app/scenarios"),
-            };
-          }
-          if (act.type === "format") {
-            return {
-              type: "format",
-              title: act.title,
-              formatKind: act.format_kind,
-              topic: act.topic,
-              rubricName: act.rubric_name,
-              rubricIdea: act.rubric_idea,
-              question: act.question,
-              options: act.options,
-              onApply: async () => {
-                await applyAdvisorAction(accountId, {
-                  type: "format",
-                  title: act.title,
-                  kind: act.format_kind,
-                  topic: act.topic,
-                  rubric_name: act.rubric_name,
-                  rubric_idea: act.rubric_idea,
-                  question: act.question,
-                  options: act.options,
-                });
-              },
-              onOpen: () => router.push("/app/scenarios"),
-            };
-          }
-          if (act.type === "automation") {
-            return {
-              type: "automation",
-              title: act.title,
-              controlKind: act.control_kind,
-              quietStart: act.quiet_start,
-              quietEnd: act.quiet_end,
-              onApply: async () => {
-                await applyAdvisorAction(accountId, {
-                  type: "automation",
-                  title: act.title,
-                  kind: act.control_kind,
-                  ...(act.control_kind === "quiet_hours"
-                    ? { quiet_start: act.quiet_start ?? undefined, quiet_end: act.quiet_end ?? undefined }
-                    : {}),
-                });
-              },
-              onOpen: () => router.push("/app/autopilot"),
-            };
-          }
-          if (act.type === "best_time_routine") {
-            return {
-              type: "best_time_routine",
-              title: act.title,
-              topic: act.topic,
-              blocks: act.blocks,
-              hoursPreview: act.hours_preview,
-              timesPerDay: act.times_per_day,
-              onApply: async () => {
-                await applyAdvisorAction(accountId, {
-                  type: "best_time_routine",
-                  title: act.title,
-                  topic: act.topic,
-                  blocks: act.blocks,
-                });
-              },
-              onOpen: () => router.push("/app/scenarios"),
-            };
-          }
-          if (act.type === "topics_list") {
-            return {
-              type: "topics_list",
-              title: act.title,
-              topics: act.topics,
-              onApply: async () => {
-                await applyAdvisorAction(accountId, {
-                  type: "topics_list",
-                  title: act.title,
-                  topics: act.topics,
-                });
-              },
-              onOpen: () => router.push("/app"),
-            };
-          }
-          return {
-            type: "routine",
-            title: act.title,
-            topic: act.topic,
-            timesPerDay: act.times_per_day,
-            hoursPreview: act.hours_preview,
-            onApply: async () => {
-              await applyAdvisorAction(accountId, {
-                type: "routine",
-                title: act.title,
-                topic: act.topic,
-                times_per_day: act.times_per_day,
-              });
-            },
-            onOpen: () => router.push("/app/scenarios"),
-          };
-        }),
-      };
-  }
-
   async function ask(question: string) {
     const q = question.trim();
+    // Review mode drives the thread from mock turns; sending would fire a real,
+    // billed advisor call against whichever profile the tester has selected.
+    if (allow) {
+      setInput("");
+      return;
+    }
     if (!q || accountId === null || busy) return;
     setInput("");
-    setThinkIdx(0);
+    setThinkStep(0);
+    setSessionIdx(null);
     const messages = buildMessages(q);
-    setTurns((prev) => [...prev, { user: q, reply: null, status: "thinking" }]);
+    atBottomRef.current = true;
+    setTurns((prev) => [...prev, { user: q, reply: null, status: "thinking", createdAt: new Date().toISOString() }]);
 
     try {
       const res = await chatAdvisor(accountId, messages);
-      const content = toReplyContent(res, accountId);
       setTurns((prev) => {
         const next = [...prev];
-        next[next.length - 1] = { user: q, reply: content, status: "done" };
+        next[next.length - 1] = { user: q, reply: res, status: "done", createdAt: new Date().toISOString() };
         return next;
       });
+      // An answer may have changed nothing, but the freshness stamp and the
+      // signal volumes are what the next turn is judged against — keep them live.
+      void loadSignals(accountId);
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) {
         clearTokens();
         router.push("/app/login");
         return;
       }
+      // 409 = the profile lost its Threads connection. One fix, not a retry.
+      const disconnected = e instanceof ApiError && e.status === 409;
+      const detail =
+        e instanceof ApiError && e.status === 503 && e.retryAfter != null
+          ? t("agent.err.busy").replace("{s}", String(e.retryAfter))
+          : e instanceof ApiError && e.status >= 400 && e.status < 500
+            ? e.message
+            : null;
       setTurns((prev) => {
         const next = [...prev];
-        next[next.length - 1] = { ...next[next.length - 1], reply: null, status: "error" };
+        next[next.length - 1] = {
+          ...next[next.length - 1],
+          reply: null,
+          status: disconnected ? "disconnected" : "error",
+          errorDetail: disconnected ? null : detail,
+        };
         return next;
       });
     }
   }
 
-  // Hydrate the persisted conversation on mount / account switch. Fail-soft:
-  // a fetch error just starts empty, never blocks the chat. Demo mode (?demo=1)
-  // never hits the network — mark loaded immediately so the Tweaks-driven
-  // states render right away.
+  // Hydrate the persisted conversation. Fail-soft: an error starts empty and
+  // never blocks the chat. Demo mode never touches the network.
   useEffect(() => {
     if (allow) {
       setHistoryLoaded(true);
       return;
     }
     if (accountId === null) {
-      // No profile selected (portfolio/brand scope, or none connected yet) —
-      // nothing to hydrate. Show the normal empty/first-run state, not a
-      // skeleton stuck forever waiting for an accountId that may never come.
       setHistoryLoaded(true);
       return;
     }
@@ -381,16 +325,18 @@ export default function AdvisorPage() {
     fetchAdvisorHistory(accountId)
       .then((hist) => {
         if (cancelled) return;
+        setHistory(hist.entries);
         setTurns(
           hist.entries.map((e) => ({
             user: e.question,
-            reply: toReplyContent(e.reply, accountId),
+            reply: e.reply,
             status: "done" as const,
+            createdAt: e.created_at,
           })),
         );
       })
       .catch(() => {
-        /* fail-soft — start with an empty thread, same as before this feature */
+        /* fail-soft — an empty thread, same as before this feature */
       })
       .finally(() => {
         if (!cancelled) setHistoryLoaded(true);
@@ -398,111 +344,416 @@ export default function AdvisorPage() {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountId, allow]);
 
-  // Retry the last (errored) turn with the same question.
   function retryLast() {
     const last = turns[turns.length - 1];
-    if (!last || last.status !== "error") return;
+    if (!last || (last.status !== "error" && last.status !== "disconnected")) return;
     setTurns((prev) => prev.slice(0, -1));
     void ask(last.user);
   }
 
-  // Hand a suggestion brief to the Studio composer (the one mutation). Reused by
-  // the gallery's mock suggestion cards in the live screen if structured output
-  // lands; for now it's wired for completeness.
   function openInStudio(brief: string) {
     router.push(`/app?brief=${encodeURIComponent(brief)}`);
   }
 
-  // ── what to render in the thread ──
-  let demoTurns: Turn[] | null = null;
-  if (allow) {
-    if (tw.state === "ready") demoTurns = ADVISOR_DEMO_TURNS(t, openInStudio);
-    else if (tw.state === "thinking")
-      demoTurns = [{ user: t("advisor.starter_drop"), reply: null, status: "thinking" }];
-    else if (tw.state === "error")
-      demoTurns = [{ user: t("advisor.starter_post"), reply: null, status: "error" }];
-    else demoTurns = [];
+  // ── manual data refresh (the composer's footer + the rail header) ──
+  async function refreshData() {
+    if (accountId === null || refreshing) return;
+    setRefreshing(true);
+    try {
+      await refreshStats(accountId, true).catch(() => {});
+      await loadSignals(accountId);
+    } finally {
+      setRefreshing(false);
+    }
   }
-  const shown = demoTurns ?? turns;
-  const isFirstRun = shown.length === 0;
-  const composerEl = (
-    <Composer
-      value={input}
-      onChange={setInput}
-      onSend={() => ask(input)}
-      disabled={accountId === null && !allow}
-      busy={busy}
+
+  // ── derived view data ──
+  const signals = useMemo(
+    () => (demo ? demo.signals : buildSignals(stats, roleBook, locale, t)),
+    [demo, stats, roleBook, locale, t],
+  );
+  const brief = useMemo(() => (demo ? demo.brief : buildBrief(stats, locale, t)), [demo, stats, locale, t]);
+
+  const sessions = useMemo(() => groupSessions(history), [history]);
+  const shownTurns: Turn[] = demo
+    ? demo.turns(tw.state)
+    : sessionIdx === null
+      ? turns
+      : turns.slice(sessions[sessionIdx].start, sessions[sessionIdx].end);
+
+  const isEmpty = shownTurns.length === 0;
+  const freshness = demo ? demo.freshness : relFreshness(stats?.refreshed_at ?? null, locale, t);
+  const rangeLabel = demo ? demo.rangeLabel : `${t("agent.brief.window_7d")} · ${freshness}`;
+
+  const starters: StarterChip[] = [
+    { icon: "nib", label: t("agent.chip.today") },
+    { icon: "voice", label: t("agent.chip.voice") },
+    { icon: "replies", label: t("agent.chip.replies") },
+  ];
+
+  const railSessions: RailSession[] = demo
+    ? demo.sessions.map((s, i) => ({ key: String(i), title: s.title, stamp: s.stamp, current: i === 0, onOpen: () => {} }))
+    : sessions.map((s, i) => ({
+        key: `${s.start}-${s.end}`,
+        title: s.title,
+        stamp: sessionStamp(s.at, locale, t),
+        current: sessionIdx === null ? i === 0 : sessionIdx === i,
+        onOpen: () => {
+          setSessionIdx(i);
+          setRailOpen(false);
+          atBottomRef.current = true;
+        },
+      }));
+
+  const railReceipts: RailReceipt[] = (demo ? demo.receipts : receipts.slice(0, 6)).map((r) => ({
+    id: r.id,
+    title: r.summary,
+    meta: sessionStamp(r.created_at, locale, t),
+  }));
+
+  // ── scroll plumbing ──
+  const onScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
+    atBottomRef.current = distance <= JUMP_THRESHOLD;
+    setShowJump(distance > JUMP_THRESHOLD);
+  };
+
+  const jumpToLatest = (smooth = true) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const reduce = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    el.scrollTo({ top: el.scrollHeight, behavior: smooth && !reduce ? "smooth" : "auto" });
+    atBottomRef.current = true;
+    setShowJump(false);
+  };
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    // The empty state is a briefing that READS top-down — only a conversation
+    // gets pinned to its newest turn (and only if the user was already there).
+    if (shownTurns.length === 0) {
+      el.scrollTop = 0;
+      setShowJump(false);
+      return;
+    }
+    if (atBottomRef.current) {
+      el.scrollTop = el.scrollHeight;
+      setShowJump(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shownTurns.length, historyLoaded]);
+
+  const rail = (
+    <Rail
+      signals={signals}
+      sessions={railSessions}
+      receipts={railReceipts}
+      onRefreshSignals={demo ? undefined : refreshData}
+      refreshing={refreshing}
+      onNewConversation={() => {
+        // Clears the stream; the server history is untouched (§8).
+        setTurns([]);
+        setSessionIdx(null);
+        setRailOpen(false);
+      }}
     />
   );
 
   return (
-    <div className="min-h-screen bg-bg text-text">
+    <div className="flex h-[100dvh] flex-col overflow-hidden bg-bg text-text">
       <AppTopbar
-        maxW="720px"
+        maxW="100%"
         title={t("advisor.title")}
+        // §9: no state pill on the phone — it lives in the «Agent data» panel
+        // there. Hiding it inside the slot lets the bar's fixed 132px pill box
+        // collapse to zero, so the title gets the width back.
         pill={
-          <TopbarPill tone="accent" icon={<IcSparkle size={13} />}>
-            {t("advisor.pill")}
-          </TopbarPill>
+          <div className="ag-pill hidden md:block">
+            <TopbarPill tone="accent">{t("agent.pill")}</TopbarPill>
+          </div>
+        }
+        actions={
+          <button
+            type="button"
+            onClick={() => setRailOpen(true)}
+            aria-label={t("agent.rail.sheet_title")}
+            className="grid h-9 w-9 place-items-center rounded-md border border-border bg-surface text-text-muted transition-colors hover:bg-surface-2 hover:text-text max-md:h-10 max-md:w-10 min-[1208px]:hidden"
+          >
+            <IcLayers size={17} />
+          </button>
         }
       />
 
-      {/* Column layout: scrolling thread → docked composer (always visible). The
-          fixed offsets keep the composer pinned above the safe area while the
-          thread scrolls under the sticky topbar. */}
-      <div className="mx-auto flex h-[calc(100dvh-3.25rem)] max-w-[720px] flex-col px-3.5 md:h-[calc(100dvh-3.75rem)] md:px-6">
-        <div ref={scrollRef} className="flex-1 overflow-y-auto py-4 md:py-6">
-          {!historyLoaded ? (
-            <div className="mx-auto max-w-[640px] pt-4">
-              <SkeletonText lines={3} />
-            </div>
-          ) : isFirstRun ? (
-            <div className="mx-auto max-w-[640px]">
-              <Hero />
-              <p className="mx-auto mb-2.5 max-w-[640px] text-center text-caption font-semibold uppercase tracking-[0.04em] text-text-subtle">
-                {t("advisor.try_asking")}
-              </p>
-              <Starters starters={starters} onPick={(label) => setInput(label)} />
-              {/* First run: the composer flows right under the suggestion pills
-                  (with a gap), not docked to the bottom of the viewport. */}
-              <div className="mt-5">{composerEl}</div>
-            </div>
-          ) : (
-            <div className="mx-auto flex max-w-[640px] flex-col gap-6">
-              {shown.map((turn, i) => (
-                <div key={i} className="flex flex-col gap-6">
-                  <UserBubble text={turn.user} />
-                  {turn.status === "thinking" && <ThinkingRow label={t(THINKING_KEYS[thinkIdx])} />}
-                  {turn.status === "error" && <ErrorRow onRetry={retryLast} />}
-                  {turn.status === "done" && turn.reply && <AssistantReply content={turn.reply} />}
+      <div className="ag-shell min-h-0 flex-1">
+        <div className="ag-screen">
+          <div className="ag-main">
+            <div className={`ag-stream${showJump ? " ag-stream--jump" : ""}`}>
+              <div className="ag-scroll" ref={scrollRef} onScroll={onScroll}>
+                <div className="ag-col">
+                  {!historyLoaded ? (
+                    <SkeletonText lines={3} />
+                  ) : isEmpty ? (
+                    <Briefing
+                      cards={brief}
+                      rangeLabel={rangeLabel}
+                      chips={starters}
+                      onAsk={(q) => (allow ? setInput(q) : void ask(q))}
+                    />
+                  ) : (
+                    shownTurns.map((turn, i) => (
+                      <TurnBlock
+                        key={i}
+                        turn={turn}
+                        step={thinkStep}
+                        signals={signals}
+                        buildActions={(res) => (accountId === null ? [] : buildActions(res, accountId))}
+                        onOpenStudio={openInStudio}
+                        onRetry={retryLast}
+                        onReconnect={() => router.push("/app/settings")}
+                        locale={locale}
+                        t={t}
+                      />
+                    ))
+                  )}
                 </div>
-              ))}
+              </div>
+              {showJump && <JumpToLatest onClick={() => jumpToLatest()} />}
             </div>
-          )}
-        </div>
 
-        {/* Once the conversation starts the composer docks at the bottom. */}
-        {!isFirstRun && (
-          <div className="shrink-0 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3">{composerEl}</div>
-        )}
+            <div className="ag-dock">
+              <div className="ag-dock-inner">
+                <Composer
+                  value={input}
+                  onChange={setInput}
+                  onSend={() => void ask(input)}
+                  disabled={accountId === null && !allow}
+                  busy={busy}
+                  freshness={freshness}
+                  onRefresh={demo ? undefined : refreshData}
+                  refreshing={refreshing}
+                />
+              </div>
+            </div>
+          </div>
+
+          {rail}
+        </div>
       </div>
 
+      <RailSheet open={railOpen} onClose={() => setRailOpen(false)}>
+        {rail}
+      </RailSheet>
+
       {allow && (
-        <TweaksPanel title="Advisor">
+        <TweaksPanel title="Agent">
           <TweakSection label="Appearance" />
           <TweakToggle label="Dark mode" value={tw.dark} onChange={(v) => setTw("dark", v)} />
           <TweakSection label="State" />
           <TweakRadio
             label="Phase"
             value={tw.state}
-            options={["first-run", "ready", "thinking", "error"]}
+            options={["empty", "conversation", "thinking", "thin", "error", "disconnected"]}
             onChange={(v) => setTw("state", v as typeof tw.state)}
           />
         </TweaksPanel>
       )}
     </div>
   );
+}
+
+// ── one rendered turn — the score never reorders (§4) ────────────────────────
+
+function TurnBlock({
+  turn,
+  step,
+  signals,
+  buildActions,
+  onOpenStudio,
+  onRetry,
+  onReconnect,
+  locale,
+  t,
+}: {
+  turn: Turn;
+  step: number;
+  signals: ReturnType<typeof buildSignals>;
+  buildActions: (res: AdvisorResponse) => AgentActionView[];
+  onOpenStudio: (brief: string) => void;
+  onRetry: () => void;
+  onReconnect: () => void;
+  locale: string;
+  t: (k: MessageKey) => string;
+}) {
+  const time = turnTime(turn.createdAt, locale);
+  const res = turn.reply;
+
+  const paragraphs = res ? res.reply.split(/\n{2,}/).map((s) => s.trim()).filter(Boolean) : [];
+  const metrics = res ? res.chips.map((c) => ({ tone: c.tone, icon: c.icon ?? null, label: c.label })) : [];
+  const grounding = res ? groundingFor(res.grounded_in, signals) : [];
+  // No named source AND no cited number = the agent had nothing to stand on.
+  // That is its own turn type, not an error (§7.2).
+  const isThin = !!res && res.grounded_in.length === 0 && res.chips.length === 0;
+  const withData = signals.filter((s) => !s.thin).length;
+
+  return (
+    <>
+      <UserTurn text={turn.user} />
+      {turn.status === "thinking" && (
+        <AgentTurn time={time}>
+          <ThinkingSteps step={step} />
+        </AgentTurn>
+      )}
+      {turn.status === "disconnected" && (
+        <AgentTurn time={time}>
+          <ReconnectBlock onReconnect={onReconnect} />
+        </AgentTurn>
+      )}
+      {turn.status === "error" && (
+        <AgentTurn time={time}>
+          <ErrorBlock onRetry={onRetry} detail={turn.errorDetail ?? null} />
+        </AgentTurn>
+      )}
+      {turn.status === "done" && res && (
+        <AgentTurn time={time}>
+          {isThin ? (
+            <ThinDataBlock
+              d={{
+                title: t("agent.thin.title"),
+                body: paragraphs[0] ?? t("agent.thin.body"),
+                have: withData,
+                need: signals.length,
+                scopeLabel: t("agent.brief.window_7d"),
+              }}
+            />
+          ) : (
+            <>
+              {paragraphs[0] ? <p>{paragraphs[0]}</p> : null}
+              <MetricStrip metrics={metrics} />
+              {paragraphs.slice(1).map((p, i) => (
+                <p key={i}>{p}</p>
+              ))}
+            </>
+          )}
+          {res.suggestions.slice(0, 2).map((s, i) => (
+            <SuggestionCard
+              key={i}
+              s={{ icon: s.icon, title: s.title, why: s.why, onOpenStudio: () => onOpenStudio(s.brief) }}
+            />
+          ))}
+          {buildActions(res).map((a, i) => (
+            <ActionCard key={i} a={a} />
+          ))}
+          <GroundingRow items={grounding} />
+        </AgentTurn>
+      )}
+    </>
+  );
+}
+
+// ── action plumbing ──────────────────────────────────────────────────────────
+
+/** Only where a real side effect exists; otherwise the card has no warn line. */
+function warnFor(a: AdvisorActionData, t: (k: MessageKey) => string): string | null {
+  if (a.type === "schedule_post") return t("adv.act.sched_quota");
+  if (a.type === "automation" && a.control_kind === "pause") return t("adv.act.ctrl_pause_warn");
+  if ((a.type === "routine" || a.type === "best_time_routine") && a.times_per_day > 1) {
+    return t("adv.act.cap_warn").replace("{n}", String(a.times_per_day));
+  }
+  if (a.type === "auto_replies") return t("adv.act.mode_instant");
+  return null;
+}
+
+/** Where the change lives once applied — the card's «Изменить» / done deep link. */
+function openTargetFor(a: AdvisorActionData): string {
+  switch (a.type) {
+    case "voice_rule":
+      return "/app/style-rules";
+    case "schedule_post":
+      return "/app/calendar";
+    case "auto_replies":
+    case "automation":
+      return "/app/autopilot";
+    case "topics_list":
+      return "/app";
+    default:
+      return "/app/scenarios";
+  }
+}
+
+/** The apply call — the exact wire shape each action type expects. */
+function applyAction(accountId: number, act: AdvisorActionData): Promise<unknown> {
+  switch (act.type) {
+    case "auto_replies":
+      return applyAdvisorAction(accountId, {
+        type: "auto_replies",
+        title: act.title,
+        audience: act.audience,
+        replies_per_day: act.replies_per_day,
+        skip_low_value: act.skip_low_value,
+      });
+    case "voice_rule":
+      return applyAdvisorAction(accountId, {
+        type: "voice_rule",
+        title: act.title,
+        rule_text: act.rule_text,
+        kind: act.rule_kind,
+      });
+    case "schedule_post":
+      // Resolve the absolute instant FRESH at click time (never frozen at
+      // render) so a slow click cannot schedule a stale time.
+      return applyAdvisorAction(accountId, {
+        type: "schedule_post",
+        title: act.title,
+        brief: act.brief,
+        scheduled_at: nextOccurrence(act.weekday, act.hour).toISOString(),
+      });
+    case "reactive":
+      return applyAdvisorAction(accountId, {
+        type: "reactive",
+        title: act.title,
+        kind: act.reactive_kind,
+        comment_text: act.comment_text,
+      });
+    case "format":
+      return applyAdvisorAction(accountId, {
+        type: "format",
+        title: act.title,
+        kind: act.format_kind,
+        topic: act.topic,
+        rubric_name: act.rubric_name,
+        rubric_idea: act.rubric_idea,
+        question: act.question,
+        options: act.options,
+      });
+    case "automation":
+      return applyAdvisorAction(accountId, {
+        type: "automation",
+        title: act.title,
+        kind: act.control_kind,
+        ...(act.control_kind === "quiet_hours"
+          ? { quiet_start: act.quiet_start ?? undefined, quiet_end: act.quiet_end ?? undefined }
+          : {}),
+      });
+    case "best_time_routine":
+      return applyAdvisorAction(accountId, {
+        type: "best_time_routine",
+        title: act.title,
+        topic: act.topic,
+        blocks: act.blocks,
+      });
+    case "topics_list":
+      return applyAdvisorAction(accountId, { type: "topics_list", title: act.title, topics: act.topics });
+    case "routine":
+      return applyAdvisorAction(accountId, {
+        type: "routine",
+        title: act.title,
+        topic: act.topic,
+        times_per_day: act.times_per_day,
+      });
+  }
 }

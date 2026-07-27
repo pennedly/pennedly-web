@@ -186,6 +186,10 @@ export async function logout(): Promise<void> {
 export class ApiError extends Error {
   status: number;
   detail: unknown;
+  /** Seconds from the response's `Retry-After` header, when the server sent one
+   *  (the advisor's 503 "model busy" does). null when absent or unparseable —
+   *  callers that don't care are unaffected. */
+  retryAfter: number | null = null;
   constructor(status: number, detail: unknown) {
     // Surface the backend's reason (FastAPI returns `{detail: "..."}`) in the
     // message so a toast says *why* — e.g. "monthly reply limit reached (429)"
@@ -344,7 +348,10 @@ async function fetchApi<T>(path: string, init?: RequestInit): Promise<T> {
     } catch {
       body = null;
     }
-    throw new ApiError(res.status, body);
+    const err = new ApiError(res.status, body);
+    const after = Number(res.headers.get("Retry-After"));
+    if (Number.isFinite(after) && after >= 0) err.retryAfter = after;
+    throw err;
   }
   if (res.status === 204) {
     return undefined as T;
