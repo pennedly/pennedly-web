@@ -1119,6 +1119,7 @@ export const fr: Partial<Record<MessageKey, string>> = {
   // ── Translate widget (reste) ───────────────────────────────────
   "translate.translating": "traduction…",
   "translate.translated": "traduit",
+  "translate.failed": "traduction impossible",
   "translate.hide": "masquer",
 
   // ── Badge de statut du brouillon ───────────────────────────────
@@ -1577,8 +1578,6 @@ export const fr: Partial<Record<MessageKey, string>> = {
   "replies.publish_reply": "Publier la réponse",
   "replies.tag_replied": "répondu",
   "replies.removed_meta": "Retiré de la file · ne sera pas répondu",
-  "replies.translate_from": "Traduire depuis",
-  "replies.translated_from": "Traduit depuis",
   "replies.dialog_title": "Publier cette réponse ?",
   "replies.dialog_sub":
     "Elle est publiée publiquement sur Threads, imbriquée sous le commentaire de {name}.",

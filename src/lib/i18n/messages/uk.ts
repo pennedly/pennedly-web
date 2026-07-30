@@ -1116,6 +1116,7 @@ export const uk: Partial<Record<MessageKey, string>> = {
   // ── Translate widget (решта) ───────────────────────────────────
   "translate.translating": "перекладаю…",
   "translate.translated": "перекладено",
+  "translate.failed": "не вдалося перекласти",
   "translate.hide": "сховати",
 
   // ── Бейдж статусу чернетки ─────────────────────────────────────
@@ -1569,8 +1570,6 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "replies.publish_reply": "Опублікувати відповідь",
   "replies.tag_replied": "відповідь опубліковано",
   "replies.removed_meta": "Прибрано з черги · без відповіді",
-  "replies.translate_from": "Перекласти з",
-  "replies.translated_from": "Перекладено з",
   "replies.dialog_title": "Опублікувати цю відповідь?",
   "replies.dialog_sub":
     "Відповідь з'явиться публічно у Threads, гілкою під коментарем {name}.",

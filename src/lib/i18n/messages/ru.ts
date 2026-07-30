@@ -980,8 +980,6 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "replies.publish_reply": "Опубликовать ответ",
   "replies.tag_replied": "ответ опубликован",
   "replies.removed_meta": "Убрано из очереди · без ответа",
-  "replies.translate_from": "Перевести с",
-  "replies.translated_from": "Переведено с",
   "replies.dialog_title": "Опубликовать этот ответ?",
   "replies.dialog_sub": "Ответ появится публично в Threads, веткой под комментарием пользователя {name}.",
   "replies.media_soon": "Скоро",
@@ -1684,6 +1682,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   // ── Виджет перевода (button/cached/fresh уже заданы выше) ──────
   "translate.translating": "перевожу…",
   "translate.translated": "переведено",
+  "translate.failed": "не удалось перевести",
   "translate.hide": "скрыть",
 
   // ── Статус черновика ──────────────────────────────────────────

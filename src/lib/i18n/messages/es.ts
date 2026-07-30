@@ -1118,6 +1118,7 @@ export const es: Partial<Record<MessageKey, string>> = {
   // ── Translate widget (resto) ───────────────────────────────────
   "translate.translating": "traduciendo…",
   "translate.translated": "traducido",
+  "translate.failed": "no se pudo traducir",
   "translate.hide": "ocultar",
 
   // ── Insignia de estado del borrador ────────────────────────────
@@ -1549,8 +1550,6 @@ export const es: Partial<Record<MessageKey, string>> = {
   "replies.publish_reply": "Publicar respuesta",
   "replies.tag_replied": "respondido",
   "replies.removed_meta": "Quitado de la cola · no se responderá",
-  "replies.translate_from": "Traducir de",
-  "replies.translated_from": "Traducido de",
   "replies.dialog_title": "¿Publicar esta respuesta?",
   "replies.dialog_sub": "Se publica en público en Threads, anidada bajo el comentario de {name}.",
   "replies.media_soon": "Próximamente",

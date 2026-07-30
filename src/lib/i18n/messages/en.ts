@@ -980,8 +980,6 @@ export const en = {
   "replies.publish_reply": "Publish reply",
   "replies.tag_replied": "replied",
   "replies.removed_meta": "Removed from queue · won't be answered",
-  "replies.translate_from": "Translate from",
-  "replies.translated_from": "Translated from",
   "replies.dialog_title": "Publish this reply?",
   "replies.dialog_sub": "It posts publicly on Threads, threaded under {name}'s comment.",
   "replies.media_soon": "Soon",
@@ -1697,6 +1695,7 @@ export const en = {
   // ── Translate widget (button/cached/fresh already defined above) ──
   "translate.translating": "translating…",
   "translate.translated": "translated",
+  "translate.failed": "couldn't translate",
   "translate.hide": "hide",
 
   // ── Draft status badge ────────────────────────────────────────

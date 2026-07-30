@@ -1125,6 +1125,7 @@ export const de: Partial<Record<MessageKey, string>> = {
   // ── Translate widget (Rest) ────────────────────────────────────
   "translate.translating": "übersetze…",
   "translate.translated": "übersetzt",
+  "translate.failed": "Übersetzung fehlgeschlagen",
   "translate.hide": "verbergen",
 
   // ── Draft-Status-Badge ─────────────────────────────────────────
@@ -1565,8 +1566,6 @@ export const de: Partial<Record<MessageKey, string>> = {
   "replies.tag_replied": "geantwortet",
   "replies.removed_meta":
     "Aus der Warteschlange entfernt · wird nicht beantwortet",
-  "replies.translate_from": "Übersetzen aus",
-  "replies.translated_from": "Übersetzt aus",
   "replies.dialog_title": "Diese Antwort veröffentlichen?",
   "replies.dialog_sub":
     "Sie erscheint öffentlich auf Threads, eingehängt unter {name}s Kommentar.",

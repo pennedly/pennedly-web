@@ -189,6 +189,51 @@ test("send back: an approved draft returns to the Drafts column", async ({ page 
   await expect(page.getByText("Ready draft about coffee rituals")).toBeVisible();
 });
 
+// Replies: the translate row is the LIVE path (it used to be demo-only mock
+// data, so «Перевести с Spanish» could never appear for a real comment). Assert
+// the row calls POST /api/translate with the reading locale as target and swaps
+// the comment body for what came back.
+test("replies: translating a comment calls the API and swaps the body", async ({ page, context }) => {
+  const COMMENT = {
+    id: 501, account_id: 42, post_id: 900, threads_comment_id: "th-c-501",
+    author_username: "lucia.escribe",
+    text: "Esto es justo lo que necesitaba leer hoy.",
+    media_url: null, media_type: null, thumbnail_url: null,
+    comment_url: "https://www.threads.net/@mara_threads/post/900",
+    status: "new", published_at: null, created_at: new Date().toISOString(),
+    post_text: "Consistency beats talent.", post_published_at: new Date().toISOString(),
+    post_threads_url: "https://www.threads.net/@mara_threads/post/900",
+    ai_draft_id: null, draft_text: null, draft_status: null, draft_is_skip: null,
+    draft_media: [], replied_at: null, reply_threads_post_id: null, auto_replied: false,
+  };
+  const okJson = (data: unknown) => (route: Route) => route.fulfill({ status: 200, json: data as object });
+  await context.route(/\/api\/accounts\/\d+\/comment-posts(\?|$)/, okJson({
+    posts: [{ post_id: 900, post_text: "Consistency beats talent.", post_published_at: COMMENT.created_at, post_threads_url: COMMENT.post_threads_url, total: 1, unanswered: 1 }],
+    count: 1, status_counts: { new: 1 }, needs_attention: 1,
+  }));
+  await context.route(/\/api\/accounts\/\d+\/comments(\?|$)/, okJson({ comments: [COMMENT], count: 1, status_counts: { new: 1 } }));
+
+  // Capture the outgoing translate request so a silently-wrong target_lang fails.
+  let sent: { text?: string; target_lang?: string } = {};
+  await context.route(/\/api\/translate$/, async (route) => {
+    sent = JSON.parse(route.request().postData() ?? "{}");
+    await route.fulfill({ status: 200, json: { translated_text: "This is exactly what I needed to read today.", target_lang: "en", cached: false } });
+  });
+
+  await page.goto("/app/replies", { waitUntil: "domcontentloaded" });
+  await expect(page.getByText("Esto es justo lo que necesitaba leer hoy.")).toBeVisible({ timeout: 15_000 });
+
+  await page.getByRole("button", { name: /^translate$/i }).click();
+
+  await expect(page.getByText("This is exactly what I needed to read today.")).toBeVisible();
+  expect(sent.target_lang).toBe("en"); // ME.locale
+  expect(sent.text).toBe(COMMENT.text);
+
+  // And back: "Show original" restores the source text.
+  await page.getByRole("button", { name: /Show original/i }).click();
+  await expect(page.getByText("Esto es justo lo que necesitaba leer hoy.")).toBeVisible();
+});
+
 test("publish flow: open the dialog, confirm, see the success toast", async ({ page }) => {
   await page.goto("/app", { waitUntil: "domcontentloaded" });
 

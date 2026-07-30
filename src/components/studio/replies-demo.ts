@@ -10,13 +10,12 @@ export type ReplyComment = {
   status: ReplyStatus;
   author: { name: string; handle: string; initials: string };
   text: string;
-  // Translate-row appears only when `lang` is set (design seeds es/de). Real
-  // comments have no lang, so the row is demo-only.
-  lang?: string | null;
+  // Pre-translated copy for the `?demo=1` review only: the live screen fetches
+  // its translation from `POST /api/translate` on tap, so a tester never spends
+  // a real model call. The row itself shows on any non-empty text in live mode.
   translated?: string | null;
   // The drafted / published reply (draft / approved / replied statuses).
   reply?: string | null;
-  replyLang?: string | null;
   replyTranslated?: string | null;
   time: string;
   repliedTime?: string | null;
@@ -83,7 +82,6 @@ export const DEMO_COMMENTS: ReplyComment[] = [
     status: "new",
     author: A("Lucía Marín", "lucia.escribe", "LM"),
     text: "Esto es justo lo que necesitaba leer hoy. ¿Cómo mantienes el ritmo cuando nadie responde?",
-    lang: "Spanish",
     translated: "This is exactly what I needed to read today. How do you keep the rhythm when nobody replies?",
     time: "2h",
   },
@@ -139,7 +137,6 @@ export const DEMO_COMMENTS: ReplyComment[] = [
     status: "new",
     author: A("Felix Brandt", "felixbrandt", "FB"),
     text: "Endlich mal ein ehrlicher Tipp. Wie findet man die eigene Stimme, ohne sich zu verstellen?",
-    lang: "German",
     translated: "Finally an honest tip. How do you find your own voice without putting on an act?",
     time: "1d",
   },

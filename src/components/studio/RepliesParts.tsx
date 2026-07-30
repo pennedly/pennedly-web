@@ -8,9 +8,10 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 
-import { mediaUrl } from "@/lib/api";
+import { mediaUrl, translateText } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
+import type { LanguageCode } from "@/lib/types";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/feedback";
 import { Mono } from "@/components/ui/mono";
@@ -594,25 +595,32 @@ export function CommentCard({
   youAvatar,
   generating,
   h,
+  demo = false,
 }: {
   c: ReplyComment;
   youInitials: string;
   youAvatar?: string | null;
   generating: boolean;
   h: ReplyHandlers;
+  demo?: boolean;
 }) {
   const { t } = useTranslation();
   const [editing, setEditing] = useState(false);
   const [editBuffer, setEditBuffer] = useState(c.reply ?? "");
-  const [cmtTr, setCmtTr] = useState(false); // comment translated?
-  const [rpTr, setRpTr] = useState(false); // reply translated?
 
   const status = c.status;
   const badge = CBADGE[status];
   const hasReply = status === "draft" || status === "approved" || status === "replied";
   const showRemove = status === "new" || status === "draft" || status === "approved";
-  const commentBody = cmtTr && c.translated ? c.translated : c.text;
-  const replyBody = rpTr && c.replyTranslated ? c.replyTranslated : c.reply ?? "";
+  const cmtTr = useOnDemandTranslation(c.text, c.translated, demo);
+  const replyTr = useOnDemandTranslation(c.reply ?? "", c.replyTranslated, demo);
+  const commentBody = cmtTr.body;
+  const replyBody = replyTr.body;
+  // Live: offer the translation for any non-empty text. Demo: only where the
+  // mock actually carries a translated copy, so the review stays honest about
+  // what the row does instead of "translating" text into itself.
+  const canTranslateComment = demo ? Boolean(c.translated) : Boolean(c.text.trim());
+  const canTranslateReply = demo ? Boolean(c.replyTranslated) : Boolean((c.reply ?? "").trim());
 
   return (
     <article
@@ -661,9 +669,7 @@ export function CommentCard({
         <p className={cn("mt-[11px] max-w-[72ch] text-body leading-[1.6] text-text", status === "skipped" && "text-text-muted")}>{commentBody}</p>
       )}
       <CommentMedia media={c.commentMedia} />
-      {c.lang && (
-        <TranslateRow lang={c.lang} on={cmtTr} onToggle={() => setCmtTr((v) => !v)} className="mt-[9px]" />
-      )}
+      {canTranslateComment && <TranslateRow ctl={cmtTr} className="mt-[9px]" />}
 
       {/* reply thread */}
       {(hasReply || generating) && (
@@ -711,7 +717,7 @@ export function CommentCard({
             ) : (
               <>
                 <p className="max-w-[72ch] whitespace-pre-wrap text-small leading-[1.6] text-text">{replyBody}</p>
-                {c.replyLang && <TranslateRow lang={c.replyLang} on={rpTr} onToggle={() => setRpTr((v) => !v)} className="mt-2" />}
+                {canTranslateReply && <TranslateRow ctl={replyTr} className="mt-2" />}
               </>
             )}
           </div>
@@ -789,7 +795,7 @@ export function CommentCard({
     if (status === "draft") {
       return (
         <>
-          {meta(c.lang ? <LangMeta lang={c.lang} /> : null)}
+          {meta(null)}
           {actions(
             <>
               <ReplyImage c={c} h={h} />
@@ -810,7 +816,7 @@ export function CommentCard({
     if (status === "approved") {
       return (
         <>
-          {meta(c.lang ? <LangMeta lang={c.lang} /> : null)}
+          {meta(null)}
           {actions(
             <>
               <ReplyImage c={c} h={h} />
@@ -861,14 +867,6 @@ export function CommentCard({
   }
 }
 
-function LangMeta({ lang }: { lang: string }) {
-  return (
-    <span className="inline-flex items-center gap-1.5">
-      <IcGlobe size={13} /> {lang}
-    </span>
-  );
-}
-
 function RaTag({ status, repliedTime }: { status: ReplyStatus; repliedTime?: string | null }) {
   const { t } = useTranslation();
   if (status === "draft")
@@ -892,22 +890,89 @@ function RaTag({ status, repliedTime }: { status: ReplyStatus; repliedTime?: str
   return null;
 }
 
-function TranslateRow({ lang, on, onToggle, className }: { lang: string; on: boolean; onToggle: () => void; className?: string }) {
+// On-demand translation of one piece of text (an incoming comment, or the reply
+// drafted for it). Mirrors how the feed and mentions already do it: we never
+// detect the SOURCE language — the backend doesn't send one, and the old row's
+// «Перевести с Spanish» could only ever come from mock data. The offer is
+// "translate this into the language I read the app in", so the target is the
+// active locale and one tap is enough.
+//
+// `demoText` short-circuits the network in `?demo=1`: a tester tapping the row
+// gets the mock's pre-translated copy instead of spending a real model call
+// (same rule the Agent redesign established for its demo action cards).
+function useOnDemandTranslation(text: string, demoText: string | null | undefined, demo: boolean) {
+  const { locale } = useTranslation();
+  const [translated, setTranslated] = useState<string | null>(null);
+  const [showing, setShowing] = useState(false);
+  const [phase, setPhase] = useState<"idle" | "loading" | "error">("idle");
+
+  // A translation is only valid for the locale it was fetched for: switching
+  // the UI language mid-session must not keep showing the old target.
+  useEffect(() => {
+    setTranslated(null);
+    setShowing(false);
+    setPhase("idle");
+  }, [locale, text]);
+
+  const toggle = useCallback(async () => {
+    if (translated !== null) {
+      setShowing((v) => !v);
+      return;
+    }
+    if (demo) {
+      setTranslated(demoText ?? text);
+      setShowing(true);
+      return;
+    }
+    setPhase("loading");
+    try {
+      const r = await translateText(text, locale as LanguageCode);
+      setTranslated(r.translated_text);
+      setShowing(true);
+      setPhase("idle");
+    } catch {
+      // Keep the original on screen; the row says it failed and stays tappable.
+      setPhase("error");
+    }
+  }, [translated, demo, demoText, text, locale]);
+
+  return {
+    body: showing && translated !== null ? translated : text,
+    showing,
+    phase,
+    toggle,
+  };
+}
+
+type TranslationCtl = ReturnType<typeof useOnDemandTranslation>;
+
+function TranslateRow({ ctl, className }: { ctl: TranslationCtl; className?: string }) {
   const { t } = useTranslation();
+  const loading = ctl.phase === "loading";
   return (
     <div className={cn("flex flex-wrap items-center gap-2", className)}>
-      {on ? (
+      {ctl.showing ? (
         <>
           <span className="inline-flex items-center gap-1.5 text-caption text-text-subtle">
-            <IcGlobe size={13} /> {t("replies.translated_from")} {lang}
+            <IcGlobe size={13} /> {t("translate.translated")}
           </span>
-          <button type="button" onClick={onToggle} className="text-caption font-medium text-accent hover:underline hover:underline-offset-2">
+          <button type="button" onClick={ctl.toggle} className="text-caption font-medium text-accent hover:underline hover:underline-offset-2">
             {t("studio.show_original")}
           </button>
         </>
       ) : (
-        <button type="button" onClick={onToggle} className="inline-flex items-center gap-1.5 text-caption font-medium text-accent hover:underline hover:underline-offset-2">
-          <IcGlobe size={13} /> {t("replies.translate_from")} {lang}
+        <button
+          type="button"
+          onClick={ctl.toggle}
+          disabled={loading}
+          className={cn(
+            "inline-flex items-center gap-1.5 text-caption font-medium hover:underline hover:underline-offset-2",
+            ctl.phase === "error" ? "text-danger" : "text-accent",
+            loading && "opacity-70",
+          )}
+        >
+          <IcGlobe size={13} />
+          {loading ? t("translate.translating") : ctl.phase === "error" ? t("translate.failed") : t("translate.button")}
         </button>
       )}
     </div>

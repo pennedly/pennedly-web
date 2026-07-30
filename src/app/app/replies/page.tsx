@@ -608,7 +608,7 @@ export default function RepliesPage() {
                   <RepliesEmpty filter={filter} />
                 ) : (
                   visible.map((c) => (
-                    <CommentCard key={c.id} c={c} youInitials={youInitials} youAvatar={demoOn ? null : youAvatar} generating={generatingId === c.id} h={handlers} />
+                    <CommentCard key={c.id} c={c} youInitials={youInitials} youAvatar={demoOn ? null : youAvatar} generating={generatingId === c.id} h={handlers} demo={demoOn} />
                   ))
                 )}
               </div>
