@@ -385,6 +385,22 @@ export default function StatsPage() {
     <EngagementPanel data={engData} state={engState} onRetry={demoOn ? undefined : loadEngagement} />
   );
 
+  // One definition, two homes: the bar on desktop, the toolbar row on a phone
+  // (§7/§9.2). Only one of the two is ever rendered at a given width, so a
+  // screen reader never meets it twice.
+  const refreshButton = (
+    <Button
+      size="sm"
+      variant="secondary"
+      icon={<IcReload size={14} />}
+      loading={refreshing}
+      onClick={() => doRefresh(true)}
+      aria-label={t("stats.refresh")}
+    >
+      <span className="max-sm:hidden">{t("stats.refresh")}</span>
+    </Button>
+  );
+
   // The bar pill's payload (§8): the period's views delta, already numeric.
   // Null on a first-run account with no prior period → no pill at all.
   const viewsDelta = phase === "ready" && model ? model.deltas.views_pct : null;
@@ -414,18 +430,13 @@ export default function StatsPage() {
             />
           ) : undefined
         }
-        actions={
-          <Button
-            size="sm"
-            variant="secondary"
-            icon={<IcReload size={14} />}
-            loading={refreshing}
-            onClick={() => doRefresh(true)}
-            aria-label={t("stats.refresh")}
-          >
-            <span className="max-sm:hidden">{t("stats.refresh")}</span>
-          </Button>
-        }
+        // App-Header-Pill-Budget-SPEC §9.2 budgets the phone bar for ONE
+        // action, and this screen had two (refresh + the theme toggle every
+        // screen carries). The extra 48px is what left «Статистика» a pixel
+        // short of its slot. Per §7 a control belongs in the screen's toolbar
+        // row, so on a phone Refresh moves down next to the period segment and
+        // the bar keeps only the toggle. Desktop is unaffected — it has room.
+        actions={<span className="max-md:hidden">{refreshButton}</span>}
       />
       <main className="mx-auto flex max-w-[960px] flex-col gap-4 px-3.5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4 md:gap-5 md:px-6 md:pb-24 md:pt-7">
         {/* Import banner — top of the content column while the active account is
@@ -435,7 +446,14 @@ export default function StatsPage() {
           <div className="flex flex-col gap-1">
             <h1 style={HERO_FADE_STYLE} className="text-h1 font-semibold tracking-[-0.015em]">{t("stats.title")}</h1>
             <p className="text-body text-text-muted">{t("stats.subtitle")}</p>
-            <HeroMeta items={[freshness]} />
+            {/* Freshness + its action sit together: the line says when the data
+                was fetched, the button fetches it again. The period segment is
+                wider than a phone and scrolls horizontally, so the button can't
+                ride along with it — it would land off-screen. */}
+            <div className="flex flex-wrap items-center gap-x-3">
+              <HeroMeta items={[freshness]} />
+              <span className="mt-2 md:hidden">{refreshButton}</span>
+            </div>
           </div>
           {/* Hidden during loading and the first-run progressive state — First-
               Run-SPEC.html §3.2's progressivePage() has no period row (banner →
