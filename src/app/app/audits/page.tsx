@@ -12,7 +12,8 @@ import { ApiError, clearTokens, fetchMe, getAuditSettings, getTokens, listAudits
 import { useSelectedAccountId } from "@/lib/account";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n";
-import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
+import { AppTopbar, HeaderPill } from "@/components/AppTopbar";
+import { IcAudit } from "@/components/icons";
 import { ErrorBanner } from "@/components/ui/error-banner";
 import { Toast, ToastHost } from "@/components/ui/toast";
 import { TweaksPanel, TweakSection, TweakToggle, TweakRadio, useTweaks } from "@/components/tweaks/TweaksPanel";
@@ -204,12 +205,17 @@ export default function AuditsPage() {
 
   const openAuditData = demoAudits.find((a) => a.id === openId) ?? null;
 
-  const pill =
-    reviewCount > 0 ? (
-      <TopbarPill tone="accent">{reviewCount} {t("audits.to_review")}</TopbarPill>
-    ) : (
-      <TopbarPill tone="success">{t("audits.pill_reviewed")}</TopbarPill>
-    );
+  // App-Header-Pill-Budget-SPEC §8 — glyph + count, locale-invariant; nothing
+  // left to review is the success check rather than «Всё разобрано».
+  const pill = (
+    <HeaderPill
+      glyph={<IcAudit />}
+      tone="accent"
+      count={reviewCount}
+      zero="check"
+      label={reviewCount > 0 ? `${reviewCount} ${t("audits.to_review")}` : t("audits.pill_reviewed")}
+    />
+  );
 
   if (bootError) {
     return (

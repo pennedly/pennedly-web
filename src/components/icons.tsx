@@ -51,6 +51,9 @@ export const IcNib = (p: IconProps) => <Svg {...p}><path d="M12 4c3 0 5 3 4.8 7-
 export const IcCheck = (p: IconProps) => <Svg {...p}><path d="M4.5 12.5 9.5 17.5 19.5 6.5" /></Svg>;
 export const IcX = (p: IconProps) => <Svg {...p}><path d="M6 6 18 18M18 6 6 18" /></Svg>;
 export const IcPencil = (p: IconProps) => <Svg {...p}><path d="M4 20h4L18.5 9.5a2 2 0 0 0-2.8-2.8L5 17.2V20Z" /><path d="M14.5 8.5l1.8 1.8" /></Svg>;
+/* switch in the "on" position — the anti-robot ratio pill's glyph
+   (App-Header-Pill-Budget-SPEC §8.1, the one glyph that set didn't have). */
+export const IcToggle = (p: IconProps) => <Svg {...p}><rect x="3.5" y="8" width="17" height="8" rx="4" /><circle cx="15.5" cy="12" r="2.2" fill="currentColor" stroke="none" /></Svg>;
 
 /* voice — ported from voice-icons.jsx */
 export const IcRefresh = (p: IconProps) => <Svg {...p}><path d="M20 7a8 8 0 0 0-14.3-2M4 5v4h4" /><path d="M4 17a8 8 0 0 0 14.3 2M20 19v-4h-4" /></Svg>;

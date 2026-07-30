@@ -40,7 +40,8 @@ import { friendlyErrorText } from "@/lib/errors";
 import { captureEvent, identify } from "@/lib/analytics";
 import { setSelectedAccountId, useSelectedAccountId } from "@/lib/account";
 import { useTranslation } from "@/lib/i18n";
-import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
+import { AppTopbar, HeaderPill } from "@/components/AppTopbar";
+import { IcVoice } from "@/components/icons";
 import { Toast, ToastHost } from "@/components/ui/toast";
 import { TweaksPanel, TweakSection, TweakToggle, TweakRadio, useTweaks } from "@/components/tweaks/TweaksPanel";
 import {
@@ -712,11 +713,23 @@ export default function Studio() {
   };
   const visible = cards.filter((c) => c.status === tab);
 
-  const voicePill = demoOn ? (
-    <TopbarPill tone={firstRun ? "warning" : "success"}>{firstRun ? t("dashboard.voice_not_set") : t("dashboard.voice_active")}</TopbarPill>
-  ) : voiceReady === null ? undefined : (
-    <TopbarPill tone={voiceReady ? "success" : "warning"}>{voiceReady ? t("dashboard.voice_active") : t("dashboard.voice_not_set")}</TopbarPill>
-  );
+  // App-Header-Pill-Budget-SPEC §8 — «Voice not set up» (192px in de) becomes
+  // the IcVoice glyph in warning: the glyph names the subject, the amber tone
+  // is the alarm, and the sentence lives in aria-label. It is a <button> to the
+  // voice setup, since a pill that reports a problem should lead to the fix.
+  //
+  // «Voice active» is gone: a constant that is true on every visit forever is
+  // category C (§3) — a live-status chip promising liveness it doesn't have.
+  // A configured voice now simply shows no pill.
+  const needsVoice = demoOn ? firstRun : voiceReady === false;
+  const voicePill = needsVoice ? (
+    <HeaderPill
+      glyph={<IcVoice />}
+      tone="warning"
+      label={t("dashboard.voice_not_set")}
+      onClick={() => router.push("/app/role-book")}
+    />
+  ) : undefined;
 
   if (bootError) {
     // Friendly §3.8 error state with a real Retry — never the raw String(e)

@@ -18,7 +18,7 @@ import { setMobileNavOpen } from "@/lib/mobileNav";
 import { useMe } from "@/lib/use-me";
 import { useConnectedAccounts } from "@/components/useConnectedAccounts";
 import { Avatar, nameOf } from "@/components/ui/avatar";
-import { IcChevRight, IcSettings } from "@/components/icons";
+import { IcCheck, IcChevRight, IcSettings } from "@/components/icons";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 // 36×36 is the desktop `.icon-btn`; the phone эталон (`.m-iconbtn`) is 40×40.
@@ -69,6 +69,158 @@ function CrumbInner({ mono, handle, account }: NonNullable<ReturnType<typeof use
         <span className="truncate text-caption font-semibold text-text">{handle}</span>
       </span>
     </nav>
+  );
+}
+
+// ── HeaderPill — App-Header-Pill-Budget-SPEC ────────────────────────────────
+// A bar pill is ONE GLYPH AND ONE NUMBER. It renders no translated words, so
+// its width stops being a function of language: 36px glyph-only, 81px at the
+// widest possible shape (a 99/99 ratio), against the old prose pill's 132px
+// budget that overflowed in 58 of ~120 string×locale combinations.
+//
+// The full localized sentence is never lost — it goes to aria-label and the
+// desktop title tooltip. What it does not do is occupy a 335px row.
+
+export type HeaderPillTone = "warning" | "accent" | "success" | "idle";
+
+// Border at tone@30%, fill at tone@14% (§9.1). `idle` is the zero state of a
+// config counter: border + surface, subtle text, no colour claim.
+const HEADER_PILL_TONES: Record<HeaderPillTone, string> = {
+  warning: "border-warning/30 bg-warning/[0.14] text-warning",
+  accent: "border-accent/30 bg-accent/[0.14] text-accent",
+  success: "border-success/30 bg-success/[0.14] text-success",
+  idle: "border-border bg-surface text-text-subtle",
+};
+
+/** §5 — literal to 99, `99+` at 100 and above. Never `999+`, never `1.2k`. */
+export function capCount(n: number): string {
+  const v = Math.max(0, Math.trunc(n));
+  return v > 99 ? "99+" : String(v);
+}
+
+// What a zero should look like, per §5's table. `check` = an emptied work queue
+// (success glyph, no number). `idle` = a never-configured feature (a literal 0).
+// `hide` = zero is the normal state and needs no chrome (voice conflicts).
+export type HeaderPillZero = "check" | "idle" | "hide";
+
+export function HeaderPill({
+  glyph,
+  tone = "accent",
+  count,
+  ratio,
+  delta,
+  label,
+  zero = "idle",
+  zeroGlyph,
+  onClick,
+  className,
+}: {
+  glyph: ReactNode;
+  tone?: HeaderPillTone;
+  /** A plain counter. Mutually exclusive with `ratio` / `delta`. */
+  count?: number;
+  /** `{on}/{total}`, each operand clamped to 99 (§5). */
+  ratio?: { on: number; total: number };
+  /** Signed percentage, e.g. +18 → `+18%`, -4 → `−4%` (U+2212). */
+  delta?: number;
+  /** The full localized sentence. Required: it is the accessible name. */
+  label: string;
+  zero?: HeaderPillZero;
+  /** Glyph swapped in for the `check` zero state (defaults to the ✓ mark). */
+  zeroGlyph?: ReactNode;
+  onClick?: () => void;
+  className?: string;
+}) {
+  const isZeroCount = count !== undefined && ratio === undefined && delta === undefined && count <= 0;
+  if (isZeroCount && zero === "hide") return null;
+
+  let text: string | null = null;
+  let shownTone = tone;
+  let shownGlyph = glyph;
+  if (delta !== undefined) {
+    const v = Math.trunc(delta);
+    text = `${v < 0 ? "−" : "+"}${Math.min(999, Math.abs(v))}%`;
+  } else if (ratio) {
+    text = `${Math.min(99, Math.max(0, ratio.on))}/${Math.min(99, Math.max(0, ratio.total))}`;
+  } else if (isZeroCount && zero === "check") {
+    // An emptied work queue reads as done, not as "0 of something".
+    text = null;
+    shownTone = "success";
+    shownGlyph = zeroGlyph ?? <IcCheck />;
+  } else if (isZeroCount) {
+    text = "0";
+    shownTone = "idle";
+  } else if (count !== undefined) {
+    text = capCount(count);
+  }
+
+  // §11 — the pill must never render a word. Caught in dev, and by the CI regex.
+  if (process.env.NODE_ENV !== "production" && text !== null && !/^(\d{1,2}\+?|\d{1,2}\/\d{1,2}|[+−]\d{1,3}%)$/.test(text)) {
+    throw new Error(`HeaderPill: refusing to render non-numeric content "${text}" — pass it as \`label\` instead.`);
+  }
+
+  const body = (
+    <>
+      {/* 14×14 at stroke-width 2: the shared <Svg> wrapper is tuned at 1.8 for
+          its 18px default, which reads optically light next to 13px/600 digits.
+          Set here in CSS so the shared component stays untouched (§9.1). */}
+      <span className="grid shrink-0 place-items-center [&_svg]:h-3.5 [&_svg]:w-3.5 [&_svg]:[stroke-width:2]">{shownGlyph}</span>
+      {text !== null && <span>{text}</span>}
+    </>
+  );
+
+  // min-w 36px = a glyph-only pill; max-w 88px is a guard that must never
+  // engage (the arithmetic maximum is 81px). Never shrinks, never truncates.
+  const cls = cn(
+    "relative inline-flex h-[30px] min-w-9 max-w-[88px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 text-[13px] font-semibold leading-none tabular-nums",
+    HEADER_PILL_TONES[shownTone],
+    className,
+  );
+
+  if (onClick) {
+    return (
+      // A 36px glyph-only pill is under the 44px touch target, so the hit area
+      // is expanded with a transparent ::after that doesn't affect layout.
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={label}
+        title={label}
+        className={cn(cls, "after:absolute after:left-1/2 after:top-1/2 after:h-11 after:w-11 after:-translate-x-1/2 after:-translate-y-1/2 after:content-['']")}
+      >
+        {body}
+      </button>
+    );
+  }
+
+  return (
+    // A count that changes while the user is on the screen should be announced.
+    <span role="status" aria-live="polite" aria-label={label} title={label} className={cls}>
+      {body}
+    </span>
+  );
+}
+
+// ── HeroMeta — App-Header-Pill-Budget-SPEC §7 ───────────────────────────────
+// Where freshness metadata lands on a screen that has only a title + subtitle
+// (overview, stats). Deliberately chrome-less: it IS metadata, so it reads as
+// metadata rather than as a chip competing with the content it describes. Fades
+// with the hero, so the docked bar never carries it.
+export function HeroMeta({ items, className }: { items: ReactNode[]; className?: string }) {
+  const shown = items.filter(Boolean);
+  if (shown.length === 0) return null;
+  return (
+    <div
+      className={cn("mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] leading-[1.45] text-text-subtle", className)}
+      style={{ opacity: "calc(1 - var(--hdr-reveal, 0))" }}
+    >
+      {shown.map((item, i) => (
+        <span key={i} className="inline-flex items-center gap-x-2">
+          {i > 0 && <span className="opacity-50">·</span>}
+          {item}
+        </span>
+      ))}
+    </div>
   );
 }
 

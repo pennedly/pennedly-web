@@ -249,13 +249,6 @@
 .ag-btn:disabled,.ag-btn[aria-disabled="true"]{opacity:.5;cursor:not-allowed}
 .ag-btn svg{flex:0 0 auto}
 
-/* ───────────── bar pill ─────────────
-   The shell's pill slot is a hard 132px (App-Header-Pill-Placement-SPEC §2) and
-   the эталон measured this screen's ru label at 129.7px — 2.3px of headroom. At
-   the shared pill's 12px side padding it comes to 133px and clips by one pixel,
-   so THIS pill (only) trims 2px a side. Nothing about the shared component
-   changes; the slot, height and tone are untouched. */
-.ag-pill > span { padding-left: 9px; padding-right: 9px; }
 
 /* ───────────── rail-as-sheet (≤959px) ───────────── */
 .ag-sheet-scrim{position:fixed;inset:0;z-index:40;background:color-mix(in srgb,#000 48%,transparent);backdrop-filter:blur(2px);animation:ag-fade var(--duration-base) var(--ease-standard) both}

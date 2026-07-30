@@ -310,7 +310,6 @@ export const en = {
   "dashboard.nav.voice": "voice",
   "dashboard.nav.audits": "audits",
   "dashboard.nav.logout": "logout",
-  "dashboard.voice_active": "Voice active",
   "dashboard.voice_not_set": "Voice not set up",
   "dashboard.voice_setup_title": "Set up your voice first",
   "dashboard.voice_setup_body":
@@ -450,10 +449,8 @@ export const en = {
   "voice.empty_note": "You can rewrite or re-extract any part of it afterward.",
   "voice.check_voice": "Check voice",
   "voice.checking": "Checking…",
-  "voice.busy": "Re-extracting…",
   "voice.to_resolve": "{n} things to resolve",
   "voice.conflicts_pill": "{n} conflicts",
-  "voice.in_sync": "In sync",
   "voice.tabs.voice": "Voice",
   "voice.tabs.antiRobot": "Anti-robot",
   "voice.tabs.antiRobot.subtitle": "Switches that keep posts and replies from reading like AI.",
@@ -482,7 +479,6 @@ export const en = {
   // Q8: translate mode
   "voice.original": "Original",
   "voice.original_editable": "Editable",
-  "voice.translated_pill": "Translated · {lang}",
   "voice.translated_banner_lead": "Showing your voice in {lang}.",
   "voice.translated_banner":
     "This is a read-only translation of your original, switch back to the original to make edits.",
@@ -1099,7 +1095,6 @@ export const en = {
 
   // ── Mention routines (intent auto-scenarios) ───────────────────
   "mr.title": "Mention routines",
-  "mr.pill": "Auto-scenarios",
   "mr.back": "Mentions",
   "mr.subtitle": "Auto-scenarios for mentions, keyed to a goal you describe in your own words. Pennedly finds which mentions fit and replies in your voice, itself or with your OK.",
   "mr.hub.title": "Your routines",
@@ -3201,7 +3196,6 @@ export const en = {
   "advisor.source.voice": "Voice (role-book)",
 
   // ── Agent screen (/app/advisor) redesign — Agent-Redesign-SPEC ────────────
-  "agent.pill": "Reads your data",
   "agent.no_data": "no data",
   "agent.fresh_prefix": "updated",
   "agent.fresh_never": "not synced yet",
@@ -3432,7 +3426,6 @@ export const en = {
   "acc.deleting_note": "Revoking access and erasing data.",
   "acc.delete_failed": "Couldn't delete the account. Please try again.",
   // ── portfolio advisor chat (/app/account/advisor) ──
-  "acc.adv_pill": "Grounded in your portfolio",
   "acc.adv_pinned_cap": "Portfolio summary",
   "acc.adv_reading": "Reading your portfolio stats…",
   "acc.adv_thin_t": "Not enough portfolio data yet",

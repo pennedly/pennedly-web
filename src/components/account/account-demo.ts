@@ -273,7 +273,6 @@ const RU: Record<string, string> = {
   "acc.deleting_note": "Отзываем доступы и стираем данные.",
   "acc.delete_failed": "Не удалось удалить аккаунт. Попробуйте ещё раз.",
   // ── advisor chat ──
-  "acc.adv_pill": "На основе всего портфеля",
   "acc.adv_pinned_cap": "Сводка портфеля",
   "acc.adv_reading": "Читаю статистику портфеля…",
   "acc.adv_thin_t": "Пока мало данных по портфелю",

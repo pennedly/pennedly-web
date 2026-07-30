@@ -672,7 +672,11 @@ export function AccountAdvisorChat({
     <div className="acc-shell">
       <Sidebar data={data} t={t} nav={nav} active="advisor" />
       <div className="acc-mainwrap" style={{ minWidth: 0, display: "flex", flexDirection: "column", gap: 18 }}>
-        <ScreenTopbar page="advisor" tenantName={data.tenant.name} t={t} nav={nav} dark={dark} pill={t("acc.adv_pill")} />
+        {/* App-Header-Pill-Budget-SPEC §8/§3.1 — «На основе всего портфеля»
+            (257px in uk) is refused: a trust claim truncated to a fragment
+            builds no trust. The claim already runs full-length in the pinned
+            verdict's scope line right below, so nothing is lost. */}
+        <ScreenTopbar page="advisor" tenantName={data.tenant.name} t={t} nav={nav} dark={dark} />
         <div className="acc-chat acc-chat--page">
           <PinnedVerdict adv={adv} t={t} />
           <div ref={scrollRef} className="acc-chat-scroll">

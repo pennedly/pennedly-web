@@ -19,7 +19,7 @@ import { useRouter } from "next/navigation";
 import { ApiError, clearTokens, fetchMe, fetchOverview, getTokens } from "@/lib/api";
 import { setSelectedAccountId } from "@/lib/account";
 import { useTranslation } from "@/lib/i18n";
-import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
+import { AppTopbar, HeaderPill, HeroMeta } from "@/components/AppTopbar";
 import { IcOverview } from "@/components/icons";
 import { TweaksPanel, TweakSection, TweakToggle, TweakRadio, useTweaks } from "@/components/tweaks/TweaksPanel";
 import {
@@ -154,17 +154,26 @@ export default function OverviewPage() {
         title={t("overview.title")}
         hasHero
         pill={
-          <TopbarPill tone="accent" icon={<IcOverview size={13} />}>
-            {phase === "ready" && accountsCount > 0
-              ? `${t("overview.pill.accounts").replace("{n}", String(accountsCount))} · ${t("overview.pill.updated")}`
-              : t("overview.pill.updated")}
-          </TopbarPill>
+          // App-Header-Pill-Budget-SPEC §8 — the ·-joined string was two facts
+          // in one pill (a count and a freshness note) and needed 241px in ru.
+          // The count stays as glyph + number; the freshness moves to the hero
+          // meta line below, where it runs full-length in every locale.
+          phase === "ready" && accountsCount > 0 ? (
+            <HeaderPill
+              glyph={<IcOverview />}
+              tone="accent"
+              count={accountsCount}
+              zero="idle"
+              label={t("overview.pill.accounts").replace("{n}", String(accountsCount))}
+            />
+          ) : undefined
         }
       />
       <main className="mx-auto flex max-w-[960px] flex-col gap-[18px] px-3.5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4 md:px-6 md:pb-24 md:pt-7">
         <div className="flex flex-col gap-1">
           <h1 style={HERO_FADE_STYLE} className="text-h1 font-semibold tracking-[-0.015em]">{t("overview.title")}</h1>
           <p className="text-body text-text-muted">{t("overview.subtitle")}</p>
+          <HeroMeta items={[t("overview.pill.updated")]} />
         </div>
 
         {phase === "loading" ? (

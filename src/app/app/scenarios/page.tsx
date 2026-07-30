@@ -44,10 +44,10 @@ import { cn } from "@/lib/cn";
 import { pluralKey, useTranslation, type MessageKey } from "@/lib/i18n";
 import { useTesterGuard } from "@/lib/tester";
 import { useDemoParam } from "@/lib/query";
-import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
+import { AppTopbar, HeaderPill } from "@/components/AppTopbar";
 import { Button } from "@/components/ui/button";
 import { Toast, ToastHost } from "@/components/ui/toast";
-import { IcPlus, IcSliders } from "@/components/icons";
+import { IcBolt, IcPlus, IcSliders } from "@/components/icons";
 import { TweaksPanel, TweakSection, TweakToggle, TweakRadio, useTweaks } from "@/components/tweaks/TweaksPanel";
 import {
   ConflictBracket,
@@ -1375,11 +1375,15 @@ export default function ScenariosPage() {
         maxW="960px"
         title={t("ap.title")}
         pill={
-          activeCount > 0 ? (
-            <TopbarPill tone="success">{t("scenarios.active").replace("{n}", String(activeCount))}</TopbarPill>
-          ) : (
-            <TopbarPill tone="neutral">{t("scenarios.all_off")}</TopbarPill>
-          )
+          // App-Header-Pill-Budget-SPEC §8 — «All off» stops existing as a
+          // string: it is n = 0 on the same counter pill, in the idle tone.
+          <HeaderPill
+            glyph={<IcBolt />}
+            tone="accent"
+            count={activeCount}
+            zero="idle"
+            label={activeCount > 0 ? t("scenarios.active").replace("{n}", String(activeCount)) : t("scenarios.all_off")}
+          />
         }
         actions={
           view === "list" ? (

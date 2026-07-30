@@ -13,7 +13,8 @@ import { ApiError, clearTokens, fetchAudit, fetchMyAccounts, getTokens, submitAu
 import { friendlyErrorText } from "@/lib/errors";
 import { captureEvent } from "@/lib/analytics";
 import { useTranslation } from "@/lib/i18n";
-import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
+import { AppTopbar, HeaderPill } from "@/components/AppTopbar";
+import { IcAudit } from "@/components/icons";
 import { ErrorBanner } from "@/components/ui/error-banner";
 import { Toast, ToastHost } from "@/components/ui/toast";
 import { Spinner } from "@/components/ui/feedback";
@@ -146,7 +147,15 @@ export default function AuditDetailPage() {
       <AppTopbar
         maxW="720px"
         title={t("audits.title")}
-        pill={pending > 0 ? <TopbarPill tone="accent">{pending} {t("audits.to_review")}</TopbarPill> : <TopbarPill tone="success">{t("audits.pill_reviewed")}</TopbarPill>}
+        pill={
+          <HeaderPill
+            glyph={<IcAudit />}
+            tone="accent"
+            count={pending}
+            zero="check"
+            label={pending > 0 ? `${pending} ${t("audits.to_review")}` : t("audits.pill_reviewed")}
+          />
+        }
       />
       <main className="mx-auto flex max-w-[720px] flex-col gap-4 px-3.5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4 md:gap-5 md:px-6 md:pb-24 md:pt-7">
         <AuditDetailRedesign

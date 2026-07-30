@@ -310,7 +310,6 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "dashboard.nav.voice": "голос",
   "dashboard.nav.audits": "аудиты",
   "dashboard.nav.logout": "выйти",
-  "dashboard.voice_active": "Голос активен",
   "dashboard.voice_not_set": "Голос не настроен",
   "dashboard.voice_setup_title": "Сначала настройте голос",
   "dashboard.voice_setup_body":
@@ -452,10 +451,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "voice.empty_note": "Любую часть потом можно переписать или пересобрать.",
   "voice.check_voice": "Проверить голос",
   "voice.checking": "Проверяю…",
-  "voice.busy": "Переизвлекаю…",
   "voice.to_resolve": "К разбору: {n}",
   "voice.conflicts_pill": "Конфликтов: {n}",
-  "voice.in_sync": "В согласии",
   "voice.tabs.voice": "Голос",
   "voice.tabs.antiRobot": "Анти-робот",
   "voice.tabs.antiRobot.subtitle": "Чтобы посты и ответы не звучали как ИИ.",
@@ -484,7 +481,6 @@ export const ru: Partial<Record<MessageKey, string>> = {
   // Q8: режим перевода
   "voice.original": "Оригинал",
   "voice.original_editable": "Редактируемый",
-  "voice.translated_pill": "Перевод · {lang}",
   "voice.translated_banner_lead": "Показываю твой голос на языке {lang}.",
   "voice.translated_banner":
     "Это перевод оригинала только для чтения, вернись к оригиналу, чтобы редактировать.",
@@ -1099,7 +1095,6 @@ export const ru: Partial<Record<MessageKey, string>> = {
 
   // ── Рутины упоминаний (авто-сценарии под интент) ───────────────
   "mr.title": "Рутины упоминаний",
-  "mr.pill": "Авто-сценарии",
   "mr.back": "Упоминания",
   "mr.subtitle": "Авто-сценарии для упоминаний под цель, которую вы описываете своими словами. Пеннедли сам поймёт, какие упоминания подходят, и ответит в вашем голосе — сам или с вашего подтверждения.",
   "mr.hub.title": "Твои рутины",
@@ -3152,7 +3147,6 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "advisor.source.voice": "Голос (role-book)",
 
   // ── Экран «Агент» (/app/advisor), редизайн — Agent-Redesign-SPEC ──────────
-  "agent.pill": "Читает данные",
   "agent.no_data": "нет данных",
   "agent.fresh_prefix": "обновлено",
   "agent.fresh_never": "ещё не синхронизировано",
@@ -3377,7 +3371,6 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "acc.deleting_note": "Отзываем доступы и стираем данные.",
   "acc.delete_failed": "Не удалось удалить аккаунт. Попробуйте ещё раз.",
   // ── чат-советник по портфелю (/app/account/advisor) ──
-  "acc.adv_pill": "На основе всего портфеля",
   "acc.adv_pinned_cap": "Сводка портфеля",
   "acc.adv_reading": "Читаю статистику портфеля…",
   "acc.adv_thin_t": "Пока мало данных по портфелю",

@@ -46,7 +46,7 @@ import {
 import { useSelectedAccountId } from "@/lib/account";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { nextOccurrence } from "@/lib/schedule";
-import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
+import { AppTopbar } from "@/components/AppTopbar";
 import { IcLayers } from "@/components/icons";
 import { SkeletonText } from "@/components/ui";
 import { TweaksPanel, TweakSection, TweakRadio, TweakToggle, useTweaks } from "@/components/tweaks/TweaksPanel";
@@ -469,14 +469,11 @@ export default function AdvisorPage() {
       <AppTopbar
         maxW="100%"
         title={t("advisor.title")}
-        // §9: no state pill on the phone — it lives in the «Agent data» panel
-        // there. Hiding it inside the slot lets the bar's fixed 132px pill box
-        // collapse to zero, so the title gets the width back.
-        pill={
-          <div className="ag-pill hidden md:block">
-            <TopbarPill tone="accent">{t("agent.pill")}</TopbarPill>
-          </div>
-        }
+        // App-Header-Pill-Budget-SPEC §8 — «Reads your data» is refused, not
+        // moved: it is a constant (category C), and the right rail already
+        // LISTS the sources the agent read. Demonstrating the claim beats
+        // asserting it in a chip. The md: gate that used to hide it goes with
+        // it — no screen gates the pill by breakpoint any more (§10).
         actions={
           <button
             type="button"

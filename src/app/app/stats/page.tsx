@@ -12,11 +12,11 @@ import { useRouter } from "next/navigation";
 import { ApiError, clearTokens, fetchEngagement, fetchFollowers, fetchMe, fetchStats, getTokens, refreshStats } from "@/lib/api";
 import { useSelectedAccountId } from "@/lib/account";
 import { pluralUnit, useTranslation, type MessageKey } from "@/lib/i18n";
-import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
+import { AppTopbar, HeaderPill, HeroMeta } from "@/components/AppTopbar";
 import { BetaNotice } from "@/components/ui/beta-notice";
 import { ErrorBanner } from "@/components/ui/error-banner";
 import { Button } from "@/components/ui/button";
-import { IcChart, IcReload } from "@/components/icons";
+import { IcArrowDown, IcArrowUp, IcChart, IcReload } from "@/components/icons";
 import { TweaksPanel, TweakSection, TweakToggle, TweakRadio, useTweaks } from "@/components/tweaks/TweaksPanel";
 import { fmt } from "@/components/studio/FeedParts";
 import {
@@ -385,6 +385,14 @@ export default function StatsPage() {
     <EngagementPanel data={engData} state={engState} onRetry={demoOn ? undefined : loadEngagement} />
   );
 
+  // The bar pill's payload (§8): the period's views delta, already numeric.
+  // Null on a first-run account with no prior period → no pill at all.
+  const viewsDelta = phase === "ready" && model ? model.deltas.views_pct : null;
+  // Freshness, evicted from the bar into the hero meta line (§7).
+  const freshness = refreshing
+    ? t("stats.refreshing")
+    : relTime(demoOn ? new Date().toISOString() : (stats?.refreshed_at ?? null), locale, t);
+
   return (
     <div className="min-h-screen bg-bg text-text">
       <AppTopbar
@@ -392,11 +400,19 @@ export default function StatsPage() {
         title={t("stats.title")}
         hasHero
         pill={
-          <TopbarPill tone="accent" icon={<IcChart size={13} />}>
-            {refreshing
-              ? t("stats.refreshing")
-              : relTime(demoOn ? new Date().toISOString() : (stats?.refreshed_at ?? null), locale, t)}
-          </TopbarPill>
+          // App-Header-Pill-Budget-SPEC §8 — relTime leaves the bar for good:
+          // it changes every minute, and the pill's slot is specified as
+          // motionless. It moves to the hero meta line. What earns the slot
+          // instead is the one already-numeric fact on this screen: the
+          // period's views delta, which needs no translated word at all.
+          viewsDelta !== null && viewsDelta !== undefined ? (
+            <HeaderPill
+              glyph={viewsDelta < 0 ? <IcArrowDown /> : <IcArrowUp />}
+              tone={viewsDelta < 0 ? "warning" : "accent"}
+              delta={viewsDelta}
+              label={`${t("stats.card_views")} ${viewsDelta > 0 ? "+" : ""}${Math.trunc(viewsDelta)}% ${t("stats.vs_prev")}`}
+            />
+          ) : undefined
         }
         actions={
           <Button
@@ -419,6 +435,7 @@ export default function StatsPage() {
           <div className="flex flex-col gap-1">
             <h1 style={HERO_FADE_STYLE} className="text-h1 font-semibold tracking-[-0.015em]">{t("stats.title")}</h1>
             <p className="text-body text-text-muted">{t("stats.subtitle")}</p>
+            <HeroMeta items={[freshness]} />
           </div>
           {/* Hidden during loading and the first-run progressive state — First-
               Run-SPEC.html §3.2's progressivePage() has no period row (banner →

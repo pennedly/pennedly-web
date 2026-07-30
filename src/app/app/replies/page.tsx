@@ -31,7 +31,8 @@ import { captureEvent } from "@/lib/analytics";
 import { useSelectedAccountId } from "@/lib/account";
 import { useTranslation } from "@/lib/i18n";
 import { useTesterGuard } from "@/lib/tester";
-import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
+import { AppTopbar, HeaderPill } from "@/components/AppTopbar";
+import { IcReply } from "@/components/icons";
 import { Toast, ToastHost } from "@/components/ui/toast";
 import { Spinner } from "@/components/ui/feedback";
 import { TweaksPanel, TweakSection, TweakToggle, TweakRadio, useTweaks } from "@/components/tweaks/TweaksPanel";
@@ -540,12 +541,17 @@ export default function RepliesPage() {
 
   const handlers = demoOn ? demoHandlers : realHandlers;
 
-  const pill = needsCount > 0 ? (
-    <TopbarPill tone="accent">
-      {needsCount} {t("replies.need_reply")}
-    </TopbarPill>
-  ) : (
-    <TopbarPill tone="success">{t("replies.all_caught_up")}</TopbarPill>
+  // App-Header-Pill-Budget-SPEC §8 — a work queue: glyph + count in warning,
+  // and an emptied queue is the success check, not the sentence «Всё разобрано»
+  // (which needed 194px in uk and could never fit the bar).
+  const pill = (
+    <HeaderPill
+      glyph={<IcReply />}
+      tone="warning"
+      count={needsCount}
+      zero="check"
+      label={needsCount > 0 ? `${needsCount} ${t("replies.need_reply")}` : t("replies.all_caught_up")}
+    />
   );
 
   if (checking) {

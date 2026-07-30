@@ -16,7 +16,7 @@ import { friendlyErrorText } from "@/lib/errors";
 import { captureEvent } from "@/lib/analytics";
 import { useSelectedAccountId } from "@/lib/account";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
-import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
+import { AppTopbar, HeaderPill } from "@/components/AppTopbar";
 import { Button } from "@/components/ui/button";
 import { Toast, ToastHost } from "@/components/ui/toast";
 import { TweaksPanel, TweakSection, TweakToggle, TweakRadio, useTweaks } from "@/components/tweaks/TweaksPanel";
@@ -208,10 +208,16 @@ export default function ExplorePage() {
         title={t("explore.title")}
         hasHero
         pill={
+          // App-Header-Pill-Budget-SPEC §8 — «found» is implied by the screen
+          // being a search result, so the pill is the compass glyph + the count.
           phase === "results" && result ? (
-            <TopbarPill tone="accent">
-              {t("explore.pill").replace("{n}", String(result.patterns.length))}
-            </TopbarPill>
+            <HeaderPill
+              glyph={<IcCompass />}
+              tone="accent"
+              count={result.patterns.length}
+              zero="idle"
+              label={t("explore.pill").replace("{n}", String(result.patterns.length))}
+            />
           ) : undefined
         }
       />

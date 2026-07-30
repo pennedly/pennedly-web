@@ -15,9 +15,9 @@ import { useTranslation } from "@/lib/i18n";
 import { useTesterGuard } from "@/lib/tester";
 import { useDemoParam } from "@/lib/query";
 import { HERO_FADE_STYLE } from "@/lib/useHeaderReveal";
-import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
+import { AppTopbar, HeaderPill } from "@/components/AppTopbar";
 import { buttonClasses } from "@/components/ui/button";
-import { IcAlert, IcAt, IcChevRight, IcReload } from "@/components/icons";
+import { IcAlert, IcAt, IcChevRight, IcReload, IcRepeat } from "@/components/icons";
 import { TweaksPanel, TweakSection, TweakToggle, TweakRadio, useTweaks } from "@/components/tweaks/TweaksPanel";
 import {
   DEMO_ROUTINES,
@@ -122,13 +122,30 @@ export default function MentionRoutinesPage() {
 
   if (checking) return null;
 
+  // Feeds the bar pill (§8): the hub's own «N routines · M active» counter,
+  // with the active half as the number and the whole sentence as the label.
+  const shownRoutines = routines;
+  const activeRoutines = shownRoutines.filter((r) => r.enabled).length;
+
   return (
     <div className="min-h-screen bg-bg text-text">
       <AppTopbar
         maxW="820px"
         title={t("mr.title")}
         hasHero
-        pill={<TopbarPill icon={<IcAt size={13} className="text-text-subtle" />}>{t("mr.pill")}</TopbarPill>}
+        pill={
+          // App-Header-Pill-Budget-SPEC §8 — «Авто-сценарии» (180px in es) is
+          // refused: it restated the screen title, so the bar read the same
+          // words twice. The count of ACTIVE routines is the fact worth a
+          // permanently-visible slot; zero renders as an idle 0.
+          <HeaderPill
+            glyph={<IcRepeat />}
+            tone="accent"
+            count={activeRoutines}
+            zero="idle"
+            label={t("mr.hub.count").replace("{total}", String(shownRoutines.length)).replace("{on}", String(activeRoutines))}
+          />
+        }
       />
       <main className="mx-auto flex max-w-[820px] flex-col gap-5 px-3.5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-4 md:px-6 md:pb-24 md:pt-7">
         <div className="flex flex-col gap-1">

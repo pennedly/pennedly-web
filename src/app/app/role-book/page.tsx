@@ -31,31 +31,13 @@ import { captureEvent } from "@/lib/analytics";
 import { useSelectedAccountId } from "@/lib/account";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { TranslateButton } from "@/components/TranslateButton";
-import { AppTopbar, TopbarPill } from "@/components/AppTopbar";
+import { AppTopbar, HeaderPill } from "@/components/AppTopbar";
 import { ErrorBanner } from "@/components/ui/error-banner";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Skeleton, Spinner } from "@/components/ui/feedback";
 import { Toast, ToastHost } from "@/components/ui/toast";
 import { cn } from "@/lib/cn";
-import {
-  IcAlert,
-  IcChevDown,
-  IcCheck,
-  IcGlobe,
-  IcList,
-  IcNib,
-  IcPencil,
-  IcPlus,
-  IcQuote,
-  IcRefresh,
-  IcRobot,
-  IcScan,
-  IcShield,
-  IcTags,
-  IcTrash,
-  IcVoice,
-  IcX,
-} from "@/components/icons";
+import { IcAlert, IcCheck, IcChevDown, IcGlobe, IcList, IcNib, IcPencil, IcPlus, IcQuote, IcRefresh, IcRobot, IcScan, IcShield, IcTags, IcToggle, IcTrash, IcVoice, IcX } from "@/components/icons";
 import { AntiRobotPanel } from "@/components/studio/AntiRobotPanel";
 import { SUPPORTED_LANGUAGES } from "@/lib/types";
 import { useDemoParam } from "@/lib/query";
@@ -564,18 +546,32 @@ export default function VoiceEditor() {
   const transName = transLang
     ? (SUPPORTED_LANGUAGES.find((l) => l.code === transLang)?.name ?? transLang)
     : "";
-  const voicePill = readOnly ? (
-    <TopbarPill tone="accent">{fill(t("voice.translated_pill"), { lang: transName })}</TopbarPill>
-  ) : busy ? (
-    <TopbarPill tone="accent">{t("voice.busy")}</TopbarPill>
-  ) : lintResult && issues > 0 ? (
-    <TopbarPill tone="warning">{fill(t("voice.conflicts_pill"), { n: issues })}</TopbarPill>
-  ) : book ? (
-    <TopbarPill tone="success">{t("voice.in_sync")}</TopbarPill>
+  // App-Header-Pill-Budget-SPEC §8 — only the conflict COUNT earns the bar.
+  // Zero conflicts is the normal state and hides rather than showing a check
+  // (§8: this is the one counter that hides at 0).
+  //
+  // Three strings left the bar. «В согласии» is a constant on a healthy voice
+  // (category C). The translate-mode and re-extract states are already stated
+  // in the content, at full length and with their own controls —
+  // TranslatedBanner carries the language plus «view original», ReExtractPanel
+  // carries the running steps — so the pill was duplicating them in 132px.
+  const voicePill = !readOnly && !busy && lintResult && issues > 0 ? (
+    <HeaderPill
+      glyph={<IcAlert />}
+      tone="warning"
+      count={issues}
+      zero="hide"
+      label={fill(t("voice.conflicts_pill"), { n: issues })}
+    />
   ) : undefined;
-  // Anti-robot tab: a per-tab "N of M on" pill from the panel's live counts.
+  // Anti-robot tab: the ratio shape — the widest pill in the app at 81px.
   const antiPill = (
-    <TopbarPill>{fill(t("voice.tabs.antiRobot.pill"), antiCounts)}</TopbarPill>
+    <HeaderPill
+      glyph={<IcToggle />}
+      tone="accent"
+      ratio={{ on: antiCounts.on, total: antiCounts.total }}
+      label={fill(t("voice.tabs.antiRobot.pill"), antiCounts)}
+    />
   );
   const pill = tab === "anti" ? antiPill : voicePill;
 
