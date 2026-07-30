@@ -3039,7 +3039,7 @@ export const de: Partial<Record<MessageKey, string>> = {
   "mq.limit.more": "Mehr",
   "mq.empty.title": "Noch keine Erwähnungen",
   "mq.empty.sub": "Wenn dich jemand auf Threads erwähnt, erscheint der Beitrag hier, bereits nach Absicht sortiert. Pennedly prüft etwa stündlich.",
-  "mr.title": "Erwähnungs-Routinen",
+  "mr.title": "Routinen",
   "mr.back": "Erwähnungen",
   "mr.subtitle": "Auto-Szenarien für Erwähnungen, basierend auf einem Ziel in deinen Worten. Pennedly findet passende Erwähnungen und antwortet in deiner Stimme, allein oder mit deiner Zustimmung.",
   "mr.hub.title": "Deine Routinen",

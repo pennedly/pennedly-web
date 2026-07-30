@@ -1094,7 +1094,7 @@ export const en = {
   "mq.empty.sub": "When someone mentions you on Threads, the post shows up here, already sorted by intent. Pennedly checks about once an hour.",
 
   // ── Mention routines (intent auto-scenarios) ───────────────────
-  "mr.title": "Mention routines",
+  "mr.title": "Routines",
   "mr.back": "Mentions",
   "mr.subtitle": "Auto-scenarios for mentions, keyed to a goal you describe in your own words. Pennedly finds which mentions fit and replies in your voice, itself or with your OK.",
   "mr.hub.title": "Your routines",

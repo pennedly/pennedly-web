@@ -3029,7 +3029,7 @@ export const pt: Partial<Record<MessageKey, string>> = {
   "mq.limit.more": "Mais",
   "mq.empty.title": "Nenhuma menção ainda",
   "mq.empty.sub": "Quando alguém te menciona no Threads, o post aparece aqui, já sorted por intenção. Pennedly checa uns uma vez por hora.",
-  "mr.title": "Rotinas de menção",
+  "mr.title": "Rotinas",
   "mr.back": "Menções",
   "mr.subtitle": "Auto-cenários para menções, amarrados a um objetivo que você descreve com suas próprias palavras. Pennedly acha quais menções se encaixam e responde na sua voz, por conta própria ou com seu OK.",
   "mr.hub.title": "Suas rotinas",
