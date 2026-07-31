@@ -28,6 +28,7 @@ import {
   onboardingAnalyzePreview,
   onboardingFromScratch,
   onboardingFromScratchPreview,
+  setMyFocus,
   skipOnboarding,
   startThreadsConnect,
 } from "@/lib/api";
@@ -47,7 +48,10 @@ import {
   IcArrowLeft,
   IcArrowRight,
   IcAt,
+  IcAudit,
+  IcBolt,
   IcCheck,
+  IcChevRight,
   IcClock,
   IcEye,
   IcLock,
@@ -55,7 +59,10 @@ import {
   IcNib,
   IcPenLine,
   IcPlus,
+  IcReplies,
   IcScan,
+  IcStudio,
+  IcStudy,
   IcSun,
   IcVoice,
   IcX,
@@ -68,17 +75,19 @@ import { fmt } from "@/components/studio/FeedParts";
 import { cn } from "@/lib/cn";
 import type { ConnectedAccount, OnboardingPreview, OnboardingStatus } from "@/lib/types";
 
-type Stage = "loading" | "connect" | "choose" | "analyze" | "scratch" | "done";
+type Stage = "loading" | "connect" | "goals" | "choose" | "analyze" | "scratch" | "done";
 type Mode = "analyze" | "scratch" | null;
 type ConnectStatus = "idle" | "connecting" | "connected";
 
+// 4 nodes since the goals step landed: Connect · Personalize · Voice · Done.
 const STAGE_INDEX: Record<Stage, number> = {
   loading: 0,
   connect: 0,
-  choose: 1,
-  analyze: 1,
-  scratch: 1,
-  done: 2,
+  goals: 1,
+  choose: 2,
+  analyze: 2,
+  scratch: 2,
+  done: 3,
 };
 const ANALYZE_STEPS: MessageKey[] = [
   "onboarding.analyze_step1",
@@ -159,7 +168,12 @@ function ThemeToggle() {
 // ────────────────────────────────── Stepper ─────────────────────────────────
 function Stepper({ current }: { current: number }) {
   const { t } = useTranslation();
-  const steps: MessageKey[] = ["onboarding.step_connect", "onboarding.step_voice", "onboarding.step_done"];
+  const steps: MessageKey[] = [
+    "onboarding.step_connect",
+    "onboarding.step_personalize",
+    "onboarding.step_voice",
+    "onboarding.step_done",
+  ];
   return (
     <div className="mb-[26px] flex items-center gap-2" aria-label={t("a11y.onboarding_progress")}>
       {steps.map((s, i) => {
@@ -392,6 +406,123 @@ function ConnectStep({
 }
 
 // ───────────────────────────────── Choose ───────────────────────────────────
+// ─────────────────────────── Goals (stage 2 of 4) ───────────────────────────
+// «Что тебе важнее всего?» — per Onboarding-Goals-SPEC.html. Multi-select, so
+// checkboxes (squares, radius-sm) rather than the round indicators the choose
+// step uses for its either/or.
+//
+// This PRIORITIZES what the sidebar points at. It gates nothing: every screen
+// stays reachable whatever is ticked, which is also why picking nothing is a
+// real answer (variant B, decided 2026-07-31) — Continue stays armed and the
+// sidebar falls back to highlighting Studio + Replies.
+export const GOALS: {
+  id: string;
+  Icon: (p: IconProps) => ReactNode;
+  title: MessageKey;
+  desc: MessageKey;
+}[] = [
+  { id: "write", Icon: IcStudio, title: "onboarding.goal_write_t", desc: "onboarding.goal_write_d" },
+  { id: "replies", Icon: IcReplies, title: "onboarding.goal_replies_t", desc: "onboarding.goal_replies_d" },
+  { id: "mentions", Icon: IcAt, title: "onboarding.goal_mentions_t", desc: "onboarding.goal_mentions_d" },
+  { id: "autopilot", Icon: IcBolt, title: "onboarding.goal_autopilot_t", desc: "onboarding.goal_autopilot_d" },
+  { id: "audits", Icon: IcAudit, title: "onboarding.goal_audits_t", desc: "onboarding.goal_audits_d" },
+  { id: "patterns", Icon: IcStudy, title: "onboarding.goal_patterns_t", desc: "onboarding.goal_patterns_d" },
+];
+
+function GoalsStep({
+  picked,
+  onToggle,
+  onContinue,
+  onBack,
+  saving = false,
+}: {
+  picked: string[];
+  onToggle: (id: string) => void;
+  onContinue: () => void;
+  onBack: (() => void) | null;
+  saving?: boolean;
+}) {
+  const { t } = useTranslation();
+  const all = picked.length === GOALS.length;
+  // The hint speaks only at the two ends: nothing ticked (what we'll do
+  // instead) and everything ticked (why highlighting all of it says nothing).
+  const hint: MessageKey | null =
+    picked.length === 0 ? "onboarding.goal_hint_none" : all ? "onboarding.goal_hint_all" : null;
+
+  return (
+    <div style={RISE}>
+      <div className="text-caption font-semibold uppercase tracking-[0.06em] text-accent">
+        {t("onboarding.goals_eyebrow")}
+      </div>
+      <StepTitle>{t("onboarding.goals_title")}</StepTitle>
+      <StepSub>{t("onboarding.goals_sub")}</StepSub>
+
+      <div role="group" aria-label={t("onboarding.goals_title")} className="mt-[22px] flex flex-col gap-2.5">
+        {GOALS.map((g) => {
+          const on = picked.includes(g.id);
+          return (
+            <button
+              key={g.id}
+              type="button"
+              role="checkbox"
+              aria-checked={on}
+              onClick={() => onToggle(g.id)}
+              className={cn(
+                "flex w-full items-start gap-3.5 rounded-lg border bg-surface px-4 py-[15px] text-left transition-[border-color,background,box-shadow] duration-[120ms] ease-[cubic-bezier(0.2,0.7,0.3,1)]",
+                on
+                  ? "border-text shadow-[0_0_0_1px_var(--color-text)]"
+                  : "border-border hover:border-[color-mix(in_srgb,var(--color-text)_18%,var(--color-border))] hover:bg-surface-2",
+              )}
+            >
+              {/* A real checkbox: square, not the round indicator the choose
+                  step uses — several of these can be on at once. */}
+              <span
+                className={cn(
+                  "mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-sm border-[1.5px] transition-all duration-[120ms]",
+                  on ? "border-text bg-text" : "border-border bg-surface",
+                )}
+              >
+                <IcCheck
+                  size={13}
+                  className={cn(
+                    "text-surface transition-all duration-[120ms]",
+                    on ? "scale-100 opacity-100" : "scale-50 opacity-0",
+                  )}
+                />
+              </span>
+              {/* The tile never inverts on select — only the checkbox carries
+                  state, so a row of six doesn't turn into a wall of blocks. */}
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-border bg-surface-2 text-text">
+                <g.Icon size={19} />
+              </span>
+              <span className="min-w-0">
+                <span className="mb-[3px] block text-body font-semibold tracking-[-0.003em] text-text">{t(g.title)}</span>
+                <span className="block text-small leading-[1.5] text-text-muted">{t(g.desc)}</span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {hint && <p className="mt-3.5 text-center text-small text-text-subtle">{t(hint)}</p>}
+
+      <div className="mt-[26px] flex items-center gap-3">
+        {onBack && <BackLink onClick={onBack}>{t("onboarding.back")}</BackLink>}
+        <span className="flex-1" />
+        <button
+          type="button"
+          onClick={onContinue}
+          disabled={saving}
+          className="inline-flex h-[46px] items-center justify-center gap-2 rounded-md bg-primary px-[22px] text-body font-medium text-primary-foreground transition-[background-color,transform] duration-[180ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] hover:bg-[color-mix(in_srgb,var(--color-primary)_88%,var(--color-bg))] active:translate-y-[0.5px] disabled:opacity-50"
+        >
+          {saving ? t("onboarding.goals_saving") : t("onboarding.continue")}
+          {!saving && <IcChevRight size={17} />}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function ChooseStep({
   account,
   selected,
@@ -949,7 +1080,7 @@ function DoneStep({
 // ════════════════════════════════ Demo (tester) ═════════════════════════════
 type ObTweaks = { demo: boolean; entry: string; posts: string; preview: boolean; jump: string; dark: boolean };
 const OB_TWEAKS: ObTweaks = { demo: false, entry: "First run", posts: "Enough", preview: false, jump: "Connect", dark: false };
-const JUMP_TO_STAGE: Record<string, Stage> = { Connect: "connect", Choose: "choose", Analyze: "analyze", Scratch: "scratch", Done: "done" };
+const JUMP_TO_STAGE: Record<string, Stage> = { Connect: "connect", Goals: "goals", Choose: "choose", Analyze: "analyze", Scratch: "scratch", Done: "done" };
 const IS_DEV = process.env.NODE_ENV === "development";
 function isDemoUrl(): boolean {
   if (typeof window === "undefined") return false;
@@ -986,6 +1117,7 @@ function OnboardingDemo({ tw }: { tw: ObTweaks }) {
   const [mode, setMode] = useState<Mode>(null);
   const [chosen, setChosen] = useState<Mode>(firstRun ? null : enoughPosts ? null : "scratch");
   const [anIndex, setAnIndex] = useState(0);
+  const [demoGoals, setDemoGoals] = useState<string[]>([]);
   const [desc, setDesc] = useState("");
   const [write, setWrite] = useState<string[]>([]);
   const [avoid, setAvoid] = useState<string[]>([]);
@@ -1030,7 +1162,9 @@ function OnboardingDemo({ tw }: { tw: ObTweaks }) {
     }
     setConnectStatus("connected");
     setConnected(true);
-    if (target === "choose") {
+    if (target === "goals") {
+      setStage("goals");
+    } else if (target === "choose") {
       setChosen(enoughPosts ? "analyze" : "scratch");
       setStage("choose");
     } else if (target === "analyze") {
@@ -1100,7 +1234,21 @@ function OnboardingDemo({ tw }: { tw: ObTweaks }) {
       wide={wide}
     >
       {stage === "connect" ? (
-        <ConnectStep status={connectStatus} account={connected ? DEMO_ACCOUNT : null} onConnect={connect} onContinue={() => setStage("choose")} />
+        <ConnectStep
+          status={connectStatus}
+          account={connected ? DEMO_ACCOUNT : null}
+          onConnect={connect}
+          onContinue={() => setStage(firstRun ? "goals" : "choose")}
+        />
+      ) : stage === "goals" ? (
+        <GoalsStep
+          picked={demoGoals}
+          onToggle={(id) =>
+            setDemoGoals((g) => (g.includes(id) ? g.filter((x) => x !== id) : [...g, id]))
+          }
+          onContinue={() => setStage("choose")}
+          onBack={() => setStage("connect")}
+        />
       ) : stage === "choose" ? (
         <ChooseStep
           account={DEMO_ACCOUNT}
@@ -1302,6 +1450,29 @@ export default function OnboardingPage() {
   // Revisit = arrived already set up (came from Settings): Connect is done,
   // show "Back to Settings". First-run shows "Skip for now".
   const firstRun = !alreadySetUp;
+
+  // Goals step. Picking nothing is allowed (variant B), so nothing here blocks
+  // Continue — and a failed save doesn't either: the answer decides which
+  // sidebar entries get a badge, and holding someone at a hint over a network
+  // blip would be the wrong trade. We log it and move on.
+  const [goals, setGoals] = useState<string[]>([]);
+  const [savingGoals, setSavingGoals] = useState(false);
+  function toggleGoal(id: string) {
+    setGoals((g) => (g.includes(id) ? g.filter((x) => x !== id) : [...g, id]));
+  }
+  async function saveGoals() {
+    if (savingGoals) return;
+    setSavingGoals(true);
+    try {
+      await setMyFocus(goals);
+      captureEvent("onboarding.goals_picked", { count: goals.length, areas: goals.join(",") });
+    } catch {
+      /* cosmetic — the voice setup matters more than the badges */
+    } finally {
+      setSavingGoals(false);
+      setStage("choose");
+    }
+  }
 
   // Pre-select the recommended option once the choose step opens: analyze when
   // there are enough posts (the recommended branch), else scratch. So the user
@@ -1532,7 +1703,23 @@ export default function OnboardingPage() {
             <div className="mb-5 rounded-md border border-danger/40 bg-danger/10 p-3 text-small text-danger">{error}</div>
           )}
           {stage === "connect" ? (
-            <ConnectStep status={connectStatus} account={acct} onConnect={onConnect} onContinue={() => setStage("choose")} />
+            <ConnectStep
+              status={connectStatus}
+              account={acct}
+              onConnect={onConnect}
+              // First run meets the goals step; a revisit from Settings goes
+              // straight to the voice choice — this is a one-time introduction,
+              // not a question to re-ask every time someone edits their voice.
+              onContinue={() => setStage(firstRun ? "goals" : "choose")}
+            />
+          ) : stage === "goals" ? (
+            <GoalsStep
+              picked={goals}
+              onToggle={toggleGoal}
+              onContinue={saveGoals}
+              onBack={() => setStage("connect")}
+              saving={savingGoals}
+            />
           ) : stage === "choose" ? (
             <ChooseStep
               account={acct}
@@ -1599,7 +1786,7 @@ function ObTweaksPanel({ tw, setTw }: { tw: ObTweaks; setTw: (k: keyof ObTweaks,
       <TweakRadio label="Account posts" value={tw.posts} options={["Enough", "Too few"]} onChange={(v) => setTw("posts", v)} />
       <TweakToggle label="Preview mode" value={tw.preview} onChange={(v) => setTw("preview", v)} />
       <TweakSection label="Walkthrough" />
-      <TweakRadio label="Jump to" value={tw.jump} options={["Connect", "Choose", "Analyze", "Scratch", "Done"]} onChange={(v) => setTw("jump", v)} />
+      <TweakRadio label="Jump to" value={tw.jump} options={["Connect", "Goals", "Choose", "Analyze", "Scratch", "Done"]} onChange={(v) => setTw("jump", v)} />
       <TweakButton label="Restart flow" onClick={() => setTw("jump", "Connect")} />
       <TweakSection label="Appearance" />
       <TweakToggle label="Dark mode" value={tw.dark} onChange={(v) => setTw("dark", v)} />

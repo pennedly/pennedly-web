@@ -90,6 +90,33 @@ const GROUPS: { title: MessageKey; items: NavItem[] }[] = [
   },
 ];
 
+// Onboarding goals → the nav entry each one points at (Onboarding-Goals-SPEC
+// §4). Calendar, Feed, Stats and Voice map to nothing on purpose: not every
+// section has to be somebody's entry point.
+const FOCUS_HREF: Record<string, string> = {
+  write: "/app",
+  replies: "/app/replies",
+  mentions: "/app/mentions",
+  autopilot: "/app/scenarios",
+  audits: "/app/audits",
+  patterns: "/app/patterns/explore",
+};
+
+// A "Start here" badge is a nudge, not a decoration: once the user has actually
+// opened that section it has done its job and must go away. Kept client-side —
+// this is UI memory, not a fact about the account worth a round-trip.
+const VISITED_KEY = "pennedly.focus.visited";
+function readVisited(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(VISITED_KEY);
+    const list: unknown = raw ? JSON.parse(raw) : [];
+    return Array.isArray(list) ? list.filter((x): x is string => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
 function isActive(pathname: string, href: string, exact?: boolean): boolean {
   if (exact) return pathname === href;
   return pathname === href || pathname.startsWith(href + "/");
@@ -114,6 +141,34 @@ export function Sidebar() {
   // / gated / failed), which aren't a Studio to-do and used to leave a permanent
   // phantom "1". (`count` is the row count for the page, so the limit caps it.)
   const [counts, setCounts] = useState<Record<string, number>>({});
+
+  // "Start here" hints from the onboarding goals step.
+  const [visited, setVisited] = useState<string[]>([]);
+  useEffect(() => setVisited(readVisited()), []);
+  // Mark the current section visited, so its hint retires the moment the user
+  // takes it up.
+  useEffect(() => {
+    const hit = Object.values(FOCUS_HREF).find((h) => isActive(pathname, h, h === "/app"));
+    if (!hit) return;
+    setVisited((prev) => {
+      if (prev.includes(hit)) return prev;
+      const next = [...prev, hit];
+      try {
+        window.localStorage.setItem(VISITED_KEY, JSON.stringify(next));
+      } catch {
+        /* private mode — the hint just lingers, which is harmless */
+      }
+      return next;
+    });
+  }, [pathname]);
+
+  const picked = me?.focus_areas ?? [];
+  // Ticking everything says nothing: highlighting six of eight entries is the
+  // same as highlighting the menu (spec §4), so we highlight none.
+  const hintHrefs =
+    picked.length === 0 || picked.length >= Object.keys(FOCUS_HREF).length
+      ? []
+      : picked.map((a) => FOCUS_HREF[a]).filter(Boolean);
   useEffect(() => {
     if (!accountId || !getTokens()) return;
     let cancelled = false;
@@ -239,6 +294,11 @@ export function Sidebar() {
                     >
                       <Icon size={16} className="shrink-0" />
                       <span className="truncate">{t(it.label)}</span>
+                      {hintHrefs.includes(it.href) && !visited.includes(it.href) && (
+                        <span className="ml-auto inline-flex shrink-0 items-center rounded-full border border-accent/[0.28] bg-[color-mix(in_srgb,var(--color-accent)_12%,var(--color-surface))] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.03em] text-accent">
+                          {t("nav.start_here")}
+                        </span>
+                      )}
                       {it.badgeKey && (counts[it.badgeKey] ?? 0) > 0 && (
                         <span
                           className={`ml-auto inline-flex h-[18px] min-w-[20px] items-center justify-center rounded-full border border-border bg-surface-2 px-1.5 text-caption font-semibold tabular-nums ${

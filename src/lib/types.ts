@@ -28,6 +28,10 @@ export type Me = {
   // The signed-in user's Google profile photo URL, or null (magic-link /
   // dev-login, or a Google account without a picture).
   avatar_url: string | null;
+  // What they picked on the onboarding's "what matters to you?" step. Drives
+  // the "Start here" badges in the sidebar at first run. Empty is normal:
+  // skipped the question, or the account predates the step.
+  focus_areas?: string[];
 };
 
 // First-connect backfill status. On connect the backend pulls the account's

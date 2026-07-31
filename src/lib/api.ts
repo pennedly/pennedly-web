@@ -1318,6 +1318,16 @@ export async function voiceTest(posts: string[]): Promise<VoiceTestResponse> {
   });
 }
 
+// Onboarding goals — what the user says they came here for. Prioritizes which
+// sidebar entries get a "Start here" badge at first run; gates nothing, so an
+// empty list is a legitimate answer and unknown tags are dropped server-side.
+export async function setMyFocus(areas: string[]): Promise<{ focus_areas: string[] }> {
+  return fetchApi<{ focus_areas: string[] }>("/api/me/focus", {
+    method: "PUT",
+    body: JSON.stringify({ areas }),
+  });
+}
+
 // In-app feedback. Authed — the server resolves the tenant from the session and
 // adds the user agent itself, so the client only sends what it alone knows.
 export async function submitFeedback(
