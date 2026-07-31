@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Pennedly · App Header — Pill Placement Fix</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../ds/tokens.css"/>
+<link rel="stylesheet" href="../ds/components.css"/>
+<style>
+:root{--font-sans:"Geist",ui-sans-serif,system-ui,sans-serif;--font-mono:"Geist Mono",ui-monospace,monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--color-bg);color:var(--color-text);font-family:var(--font-sans);font-size:15px;line-height:1.6}
+a{color:var(--color-accent)}a:hover{color:var(--color-text)}
+.layout{display:grid;grid-template-columns:250px minmax(0,1fr);max-width:1340px;margin:0 auto}
+.toc{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;padding:30px 20px;border-right:1px solid var(--color-border)}
+.toc b{font-size:16px;font-weight:600}
+.toc nav{display:flex;flex-direction:column;gap:2px;margin-top:18px}
+.toc nav a{display:block;padding:6px 9px;border-radius:8px;text-decoration:none;color:var(--color-text-muted);font-size:13.5px}
+.toc nav a:hover{background:var(--color-surface-2);color:var(--color-text)}
+main{padding:38px 44px 110px;min-width:0}
+.kicker{font-family:var(--font-mono);font-size:12px;letter-spacing:.04em;color:var(--color-accent);text-transform:uppercase;margin:0 0 8px}
+h1.title{font-size:32px;font-weight:600;letter-spacing:-0.015em;margin:0 0 12px}
+.lede{color:var(--color-text-muted);max-width:78ch;font-size:15.5px}
+section{margin-top:46px}
+h2{font-size:20px;font-weight:600;letter-spacing:-0.01em;margin:0 0 6px}
+h2 .n{font-family:var(--font-mono);color:var(--color-accent);font-size:13px;margin-right:8px}
+h3{font-size:14px;font-weight:600;margin:26px 0 10px;letter-spacing:-0.005em}
+.section-note{color:var(--color-text-muted);font-size:14px;max-width:82ch;margin:4px 0 16px}
+.note{border:1px solid var(--color-border);border-left:3px solid var(--color-accent);background:var(--color-surface);border-radius:10px;padding:14px 16px;margin:14px 0;font-size:13.5px;color:var(--color-text-muted)}
+.note b{color:var(--color-text)}
+.note.rule{font-size:15px;color:var(--color-text)}
+.note.bad{border-left-color:#d8544f}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--color-border);border-radius:12px;margin:0 0 14px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--color-border);vertical-align:top}
+thead th{background:var(--color-surface-2);font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--color-text-subtle)}
+tbody tr:last-child td{border-bottom:none}
+code{font-family:var(--font-mono);font-size:.85em;background:var(--color-surface-2);border:1px solid var(--color-border);padding:1px 5px;border-radius:5px}
+.check{list-style:none;padding:0;margin:0}
+.check li{position:relative;padding:5px 0 5px 24px;border-bottom:1px dashed var(--color-border);font-size:13.5px}
+.check li::before{content:"☐";position:absolute;left:0;color:var(--color-text-subtle)}
+
+/* ============ mockup rig ============ */
+.mks{display:flex;flex-wrap:wrap;gap:20px;margin:14px 0 4px}
+.mk{display:flex;flex-direction:column;gap:8px}
+.mk-lab{font-family:var(--font-mono);font-size:11px;color:var(--color-text-subtle);letter-spacing:.02em}
+.mk-lab i{font-style:normal;color:var(--color-accent)}
+.mk-val{font-family:var(--font-mono);font-size:10.5px;line-height:1.65;color:var(--color-text-subtle);max-width:375px}
+.mk-val b{color:var(--color-text-muted);font-weight:500}
+.dev{border:1px solid var(--color-border);border-radius:12px;overflow:hidden;background:var(--color-bg);position:relative}
+.dev--375{width:375px}.dev--360{width:360px}.dev--640{width:640px}
+.dev.bad{border-color:#d8544f}
+.dev.good{border-color:color-mix(in srgb,var(--color-success) 55%,var(--color-border))}
+
+/* the header itself — production CSS, copy verbatim */
+.hb{display:flex;flex-wrap:nowrap;align-items:center;column-gap:10px;height:52px;padding:0 14px;background:color-mix(in srgb,var(--color-bg) 86%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--color-border)}
+.hb-burger{flex:0 0 32px;width:32px;height:32px;display:grid;place-items:center;color:var(--color-text-muted)}
+.hb-pill{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:9999px;font-size:12px;font-weight:500;line-height:1;white-space:nowrap;max-width:132px}
+.hb-pill .dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex:0 0 6px}
+.hb-pill svg{flex:0 0 auto}
+.hb-pill--ok{color:var(--color-success);background:color-mix(in srgb,var(--color-success) 14%,transparent);border:1px solid color-mix(in srgb,var(--color-success) 30%,transparent)}
+.hb-pill--acc{color:var(--color-accent);background:color-mix(in srgb,var(--color-accent) 14%,transparent);border:1px solid color-mix(in srgb,var(--color-accent) 30%,transparent)}
+.hb-pill--warn{color:var(--color-warning);background:color-mix(in srgb,var(--color-warning) 14%,transparent);border:1px solid color-mix(in srgb,var(--color-warning) 30%,transparent)}
+.hb-title{flex:1 1 auto;min-width:0;font-size:19px;font-weight:600;letter-spacing:-0.006em;color:var(--color-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  opacity:var(--hdr-reveal,0);transform:translateY(calc(6px * (1 - var(--hdr-reveal,0))))}
+.hb-actions{flex:0 0 auto;margin-left:auto;display:flex;gap:6px}
+.hb-icon{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;color:var(--color-text-muted)}
+.hb-crumb{display:flex;align-items:center;gap:6px;height:26px;padding:0 14px;font-size:12px;color:var(--color-text-subtle);border-bottom:1px solid var(--color-border);white-space:nowrap;overflow:hidden}
+.hb--desk{height:60px;padding:0 24px}
+.hb--desk .hb-icon{width:36px;height:36px}
+
+/* faux page body under the bar */
+.pg{padding:20px 16px 16px}
+.pg--desk{padding:28px 24px 20px}
+.pg h1{font-size:32px;font-weight:600;letter-spacing:-0.015em;line-height:1.15;margin:0;opacity:calc(1 - var(--hdr-reveal,0))}
+.pg p{font-size:15px;color:var(--color-text-muted);margin:6px 0 0;opacity:calc(1 - var(--hdr-reveal,0))}
+.tb{display:flex;align-items:center;gap:8px;padding:12px 16px;border-top:1px solid var(--color-border);border-bottom:1px solid var(--color-border);font-size:13px;color:var(--color-text-muted);margin-top:14px}
+.tb--desk{padding:12px 24px}
+.tb .seg{display:flex;gap:3px;background:var(--color-surface-2);border:1px solid var(--color-border);border-radius:8px;padding:3px;margin-left:auto}
+.tb .seg span{padding:3px 10px;border-radius:6px;font-size:12px;font-weight:500}
+.tb .seg span.on{background:var(--color-surface);font-weight:600}
+.tb .fresh{margin-left:auto;display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:9999px;font-size:12px;font-weight:500;white-space:nowrap;color:var(--color-accent);background:color-mix(in srgb,var(--color-accent) 14%,transparent);border:1px solid color-mix(in srgb,var(--color-accent) 30%,transparent)}
+.tb .fresh + .seg{margin-left:8px}
+.rows{padding:12px 16px 16px;display:flex;flex-direction:column;gap:8px}
+.rows--desk{padding:12px 24px 18px}
+.row{height:54px;border:1px solid var(--color-border);border-radius:10px;background:var(--color-surface)}
+.cut{height:14px;background:linear-gradient(var(--color-bg),transparent)}
+.ghost{outline:1px dashed #d8544f;outline-offset:0;background:color-mix(in srgb,#d8544f 10%,transparent)}
+.tag{display:inline-block;vertical-align:1px;margin-left:6px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:5px;background:var(--color-surface-2);border:1px solid var(--color-border);color:var(--color-text-subtle);z-index:9}
+.tag.no{color:#d8544f;border-color:color-mix(in srgb,#d8544f 45%,transparent)}
+.tag.yes{color:var(--color-success);border-color:color-mix(in srgb,var(--color-success) 45%,transparent)}
+/* measuring ruler */
+.mk-ruler{position:relative;height:16px;margin-top:-1px}
+.mk-ruler span{position:absolute;top:0;height:16px;border-left:1px solid var(--color-accent);border-right:1px solid var(--color-accent);font-family:var(--font-mono);font-size:9px;color:var(--color-accent);text-align:center;line-height:16px}
+.scrollable{height:300px;overflow-y:auto}
+.scrollable .hb{position:sticky;top:0;z-index:5}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside class="toc">
+  <b>Pennedly</b>
+  <nav>
+    <a href="#s1">1 · What broke</a>
+    <a href="#s2">2 · The resolution</a>
+    <a href="#s3">3 · Slot order &amp; box model</a>
+    <a href="#s4">4 · States — mockups</a>
+    <a href="#s5">5 · Long-locale stress</a>
+    <a href="#s6">6 · Freshness lines</a>
+    <a href="#s7">7 · No-hero screens</a>
+    <a href="#s8">8 · Live proof</a>
+    <a href="#s9">9 · Exact values</a>
+    <a href="#s10">10 · Per-screen</a>
+    <a href="#s11">11 · Checklist</a>
+  </nav>
+</aside>
+<main>
+  <p class="kicker">Pennedly · Regression fix · amends App-Header-SPEC §4 / §5</p>
+  <h1 class="title">Compact bar — pill placement</h1>
+  <p class="lede">The docking header shipped with the title slot <em>before</em> the pill and <code>flex: 1 1 auto</code>, so at rest the invisible title still reserved its width and shoved the pill into the middle of an empty bar — or onto a second row. Fix: <b>swap the slot order</b>. Nothing animates, nothing reflows, no new styling. <a href="App-Header-SPEC.html">← parent spec</a></p>
+
+  <section id="s1">
+    <h2><span class="n">1</span>What broke</h2>
+    <p class="section-note">Reproduced below at 375px, ru, dark — <code>/app/replies</code> at scrollTop 0. Left is what shipped; the dashed red box is the invisible-but-width-reserving title slot that pushes the pill.</p>
+    <div class="mks">
+      <div class="mk">
+        <div class="mk-lab">SHIPPED · <i>375 · ru · rest</i><span class="tag no">bug</span></div>
+        <div class="dev dev--375 bad">
+          <div class="hb" style="flex-wrap:wrap;height:auto;min-height:52px;padding-top:8px;padding-bottom:8px">
+            <span class="hb-burger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span>
+            <span class="hb-title ghost" style="opacity:0;flex:1 1 auto">Ответы</span>
+            <span class="hb-actions"><span class="hb-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg></span><span class="hb-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg></span></span>
+            <span style="flex:0 0 100%;height:0"></span>
+            <span class="hb-pill hb-pill--ok" style="margin-left:42px"><span class="dot"></span>Все разобрано</span>
+          </div>
+          <div class="pg" style="--hdr-reveal:0"><h1>Ответы</h1></div>
+          <div class="cut"></div>
+        </div>
+        <div class="mk-val"><b>bar height 106px</b> — pill wrapped to row 2<br/>pill left edge x=42px, nothing above it<br/>gap to its left: 42px of nothing</div>
+      </div>
+      <div class="mk">
+        <div class="mk-lab">FIXED · <i>375 · ru · rest</i><span class="tag yes">fix</span></div>
+        <div class="dev dev--375 good">
+          <div class="hb" style="--hdr-reveal:0">
+            <span class="hb-burger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span>
+            <span class="hb-pill hb-pill--ok"><span class="dot"></span>Все разобрано</span>
+            <span class="hb-title">Ответы</span>
+            <span class="hb-actions"><span class="hb-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg></span><span class="hb-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg></span></span>
+          </div>
+          <div class="pg" style="--hdr-reveal:0"><h1>Ответы</h1></div>
+          <div class="cut"></div>
+        </div>
+        <div class="mk-val"><b>bar height 52px</b> — one row, always<br/>pill left edge x=56px (14 pad + 32 burger + 10 gap)<br/>title slot is now <i>after</i> the pill and collapses to 0 visible width at rest</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="s2">
+    <h2><span class="n">2</span>The resolution</h2>
+    <div class="note rule"><b>The compact bar's leading slot — the exact x-position the old bar title used to start at — belongs to the status pill, permanently.</b> The docked title fades in <em>to the right of</em> the pill, into space that is empty at rest anyway. <b>Nothing ever moves horizontally</b>: at rest, mid-dock and docked, the hamburger, the pill and the action icons are at identical coordinates. Only the title changes opacity + 6px translateY on the existing <code>--hdr-reveal</code> 0→1 ramp.</div>
+    <p class="section-note">This is the brief's option (a) with the motion cost driven to zero. Reserving width was never the requirement — <em>not reflowing</em> was. Putting the growing element last achieves that without reserving anything: the title slot is <code>flex: 1 1 auto; min-width: 0</code>, so its box already spans the leftover space at every reveal value; only its ink appears.</p>
+    <div class="note"><b>Reading order when docked:</b> <code>☰ · ⬤ Все разобрано · Ответы · ⚙︎</code>. Status-before-name is deliberate — the pill is the volatile thing the user scrolled up to check, the title is the anchor they already know. It also means the pill's position is locale-independent and screen-independent: on every screen in the app the pill starts at the same x.</div>
+    <div class="note bad"><b>Rejected — pill moves on dock.</b> Sliding the pill right by the title's measured width couples a 60–120px horizontal translation to 32px of scroll (a 3:1 amplification). It needs per-locale width measurement, it re-runs on every font swap and every live pill text change ("6 ждут ответа" → "Все разобрано" would jump the title), and it makes the one element carrying live state the one element that never sits still.</div>
+    <div class="note bad"><b>Rejected — pill lives in the hero and appears in the bar only when docked.</b> Two instances of one live value, crossfading; at reveal 0.5 both read at 50% opacity, which is precisely the "unreadable at some scroll position" the constraints forbid.</div>
+    <div class="note"><b>The one composition change this forces:</b> a pill only fits the leading slot if it is short-form. Anything longer than <b>132px</b> at 12px/500 (~14 Cyrillic characters) is not a bar pill — it is a <em>freshness line</em> and lives in the screen's persistent toolbar row instead. See §6. This affects exactly two strings: Mentions' "Обновляется ежечасно" and Feed's "Обновлено только что".</div>
+  </section>
+
+  <section id="s3">
+    <h2><span class="n">3</span>Slot order &amp; box model</h2>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:34px">#</th><th style="width:150px">Slot</th><th style="width:210px">Flex</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Hamburger</td><td><code>flex:0 0 32px</code></td><td>&lt;768px only. Absent ≥768px — every downstream slot shifts left by 42px (32 + 10 gap), which is the existing breakpoint behaviour.</td></tr>
+        <tr><td>2</td><td><b>Status pill</b></td><td><code>flex:0 0 auto</code>, <code>max-width:132px</code></td><td><b>Moved here from position 3.</b> Never shrinks, never truncates, never reacts to <code>--hdr-reveal</code>. Omitted entirely on screens with no pill — slot 3 then starts at the pill's x.</td></tr>
+        <tr><td>3</td><td>Docked title</td><td><code>flex:1 1 auto; min-width:0</code></td><td><b>Moved here from position 2.</b> Ellipsis-truncates. Opacity + translateY only. Box is full-width at all reveal values, so revealing it reflows nothing.</td></tr>
+        <tr><td>4</td><td>Action icons</td><td><code>flex:0 0 auto; margin-left:auto</code></td><td>Theme, settings. <code>margin-left:auto</code> pins them right independently of slot 3's content, so an empty title never lets them drift left.</td></tr>
+      </tbody>
+    </table></div>
+    <p class="section-note">Row-level: <code>flex-wrap: nowrap</code> is mandatory and is what makes the 106px height structurally impossible — the bar is a fixed <code>height:52px</code> / <code>60px</code> box with a single non-wrapping row.</p>
+    <div class="mk" style="max-width:640px">
+      <div class="mk-lab">SLOT MAP · <i>375 · docked · reveal 1</i></div>
+      <div class="dev dev--375">
+        <div class="hb" style="--hdr-reveal:1">
+          <span class="hb-burger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span>
+          <span class="hb-pill hb-pill--ok"><span class="dot"></span>Все разобрано</span>
+          <span class="hb-title">Ответы</span>
+          <span class="hb-actions"><span class="hb-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg></span><span class="hb-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg></span></span>
+        </div>
+        <div class="mk-ruler">
+          <span style="left:0;width:14px"></span>
+          <span style="left:14px;width:32px">32</span>
+          <span style="left:56px;width:117px">pill ≤132</span>
+          <span style="left:183px;width:108px">title 1fr</span>
+          <span style="left:291px;width:70px">70</span>
+        </div>
+      </div>
+      <div class="mk-val"><b>x-coordinates @375, ru, hamburger present:</b> pad-left 14 · burger 14→46 · gap 10 · pill 56→173 · gap 10 · title 183→291 (108px avail, "Ответы" needs 62 ✓) · icons 291→361 · pad-right 14.<br/><b>Same @375 ≥768px layout (no burger):</b> subtract 42 from every x after the burger; title gains 42px.</div>
+    </div>
+  </section>
+
+  <section id="s4">
+    <h2><span class="n">4</span>States — mockups</h2>
+    <p class="section-note">Every state the rule defines. All frames are the production CSS from §3 with <code>--hdr-reveal</code> pinned to the stated value.</p>
+
+    <h3>4.1 · With pill, with hero — the dock sequence</h3>
+    <div class="mks">
+      <div class="mk">
+        <div class="mk-lab">REST · <i>reveal 0 · scrollTop 0</i></div>
+        <div class="dev dev--375">
+          <div class="hb" style="--hdr-reveal:0"><span class="hb-burger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="hb-pill hb-pill--ok"><span class="dot"></span>Все разобрано</span><span class="hb-title">Ответы</span><span class="hb-actions"><span class="hb-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/></svg></span><span class="hb-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 3v2M19 12h2"/></svg></span></span></div>
+          <div class="pg" style="--hdr-reveal:0"><h1>Ответы</h1></div><div class="rows"><div class="row"></div></div>
+        </div>
+        <div class="mk-val">title <b>opacity 0</b>, translateY 6px · hero opacity 1<br/>pill x=56 · bar 52px</div>
+      </div>
+      <div class="mk">
+        <div class="mk-lab">MID-DOCK · <i>reveal 0.5 · scrollTop 16</i></div>
+        <div class="dev dev--375">
+          <div class="hb" style="--hdr-reveal:0.5"><span class="hb-burger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="hb-pill hb-pill--ok"><span class="dot"></span>Все разобрано</span><span class="hb-title">Ответы</span><span class="hb-actions"><span class="hb-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/></svg></span><span class="hb-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 3v2M19 12h2"/></svg></span></span></div>
+          <div class="pg" style="--hdr-reveal:0.5;padding-top:4px"><h1>Ответы</h1></div><div class="rows"><div class="row"></div></div>
+        </div>
+        <div class="mk-val">title <b>opacity .5</b>, translateY 3px · hero opacity .5<br/>pill x=56 — <b>unchanged</b></div>
+      </div>
+      <div class="mk">
+        <div class="mk-lab">DOCKED · <i>reveal 1 · scrollTop ≥32</i></div>
+        <div class="dev dev--375">
+          <div class="hb" style="--hdr-reveal:1"><span class="hb-burger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="hb-pill hb-pill--ok"><span class="dot"></span>Все разобрано</span><span class="hb-title">Ответы</span><span class="hb-actions"><span class="hb-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/></svg></span><span class="hb-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 3v2M19 12h2"/></svg></span></span></div>
+          <div class="rows" style="padding-top:14px"><div class="row"></div><div class="row"></div></div>
+        </div>
+        <div class="mk-val">title <b>opacity 1</b>, translateY 0 · hero scrolled out<br/>pill x=56 — <b>unchanged</b></div>
+      </div>
+    </div>
+
+    <h3>4.2 · Short locale (en) vs longest locale (ru) — same coordinates</h3>
+    <div class="mks">
+      <div class="mk">
+        <div class="mk-lab">en · <i>docked</i></div>
+        <div class="dev dev--375"><div class="hb" style="--hdr-reveal:1"><span class="hb-burger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="hb-pill hb-pill--ok"><span class="dot"></span>All handled</span><span class="hb-title">Replies</span><span class="hb-actions"><span class="hb-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/></svg></span><span class="hb-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 3v2M19 12h2"/></svg></span></span></div></div>
+        <div class="mk-val">pill 96px · title starts x=162 · 199px avail</div>
+      </div>
+      <div class="mk">
+        <div class="mk-lab">de · <i>docked · longest</i></div>
+        <div class="dev dev--375"><div class="hb" style="--hdr-reveal:1"><span class="hb-burger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="hb-pill hb-pill--ok"><span class="dot"></span>Alles erledigt</span><span class="hb-title">Antworten</span><span class="hb-actions"><span class="hb-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/></svg></span><span class="hb-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 3v2M19 12h2"/></svg></span></span></div></div>
+        <div class="mk-val">pill 118px · title starts x=184 · 107px avail ✓</div>
+      </div>
+      <div class="mk">
+        <div class="mk-lab">ru · <i>docked · count variant</i></div>
+        <div class="dev dev--375"><div class="hb" style="--hdr-reveal:1"><span class="hb-burger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="hb-pill hb-pill--warn"><span class="dot"></span>6 ждут ответа</span><span class="hb-title">Ответы</span><span class="hb-actions"><span class="hb-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/></svg></span><span class="hb-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 3v2M19 12h2"/></svg></span></span></div></div>
+        <div class="mk-val">live text swap changes pill width only — <b>title box is 1fr, so it absorbs the delta; the pill's left edge never moves</b></div>
+      </div>
+    </div>
+
+    <h3>4.3 · No pill · icon+text pill · desktop 60px bar</h3>
+    <div class="mks">
+      <div class="mk">
+        <div class="mk-lab">NO PILL · <i>375 · Calendar · rest → docked</i></div>
+        <div class="dev dev--375">
+          <div class="hb" style="--hdr-reveal:0"><span class="hb-burger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="hb-title">Календарь</span><span class="hb-actions"><span class="hb-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/></svg></span></span></div>
+          <div class="hb" style="--hdr-reveal:1;border-top:1px dashed var(--color-border)"><span class="hb-burger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="hb-title">Календарь</span><span class="hb-actions"><span class="hb-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/></svg></span></span></div>
+        </div>
+        <div class="mk-val">pill slot absent → title box starts at x=56 (the pill's x). Bar looks empty at rest by design — that is the correct at-rest state, the hero below carries identity.</div>
+      </div>
+      <div class="mk">
+        <div class="mk-lab">ICON PILL · <i>Stats / Overview · docked</i></div>
+        <div class="dev dev--375">
+          <div class="hb" style="--hdr-reveal:1"><span class="hb-burger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="hb-pill hb-pill--acc"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 17l6-6 4 4 8-8"/></svg>+18%</span><span class="hb-title">Статистика</span><span class="hb-actions"><span class="hb-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/></svg></span></span></div>
+        </div>
+        <div class="mk-val">icon 12×12, gap 6px, replaces the 6px dot. Same 24px pill height, same x=56.</div>
+      </div>
+      <div class="mk">
+        <div class="mk-lab">DESKTOP ≥768 · <i>640 · docked · no burger</i></div>
+        <div class="dev dev--640">
+          <div class="hb hb--desk" style="--hdr-reveal:1"><span class="hb-pill hb-pill--ok"><span class="dot"></span>Все разобрано</span><span class="hb-title">Ответы</span><span class="hb-actions"><span class="hb-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/></svg></span><span class="hb-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/></svg></span></span></div>
+        </div>
+        <div class="mk-val">bar 60px, pad 24px, icons 36×36 · pill x=<b>24</b> (no hamburger) · title x=151 · identical slot order and identical reveal math</div>
+      </div>
+    </div>
+
+    <h3>4.4 · Phone with profile-crumb strip</h3>
+    <div class="mks">
+      <div class="mk">
+        <div class="mk-lab">CRUMB · <i>375 · rest · &lt;768px only</i></div>
+        <div class="dev dev--375">
+          <div class="hb" style="--hdr-reveal:0"><span class="hb-burger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="hb-pill hb-pill--ok"><span class="dot"></span>Все разобрано</span><span class="hb-title">Ответы</span><span class="hb-actions"><span class="hb-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/></svg></span><span class="hb-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/></svg></span></span></div>
+          <div class="hb-crumb">Аккаунт › @mara.lin</div>
+          <div class="pg" style="--hdr-reveal:0"><h1>Ответы</h1></div>
+        </div>
+        <div class="mk-val"><b>total sticky height 78px</b> = 52 bar + 26 crumb (was 106 + 26 = 132 with the bug).<br/>Crumb is a sibling row inside the sticky container, <code>height:26px</code>, 12px/400 <code>--color-text-subtle</code>, <code>white-space:nowrap; overflow:hidden</code>. It never holds a pill and is unaffected by reveal.</div>
+      </div>
+      <div class="mk">
+        <div class="mk-lab">CRUMB · <i>375 · docked</i></div>
+        <div class="dev dev--375">
+          <div class="hb" style="--hdr-reveal:1"><span class="hb-burger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="hb-pill hb-pill--ok"><span class="dot"></span>Все разобрано</span><span class="hb-title">Ответы</span><span class="hb-actions"><span class="hb-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/></svg></span><span class="hb-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/></svg></span></span></div>
+          <div class="hb-crumb">Аккаунт › @mara.lin</div>
+          <div class="rows" style="padding-top:14px"><div class="row"></div><div class="row"></div></div>
+        </div>
+        <div class="mk-val">78px in both states — the crumb row does not participate in the collapse.</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="s5">
+    <h2><span class="n">5</span>Long-locale stress — 360px</h2>
+    <p class="section-note">360px (Galaxy S8/S20) is the narrowest supported width. Budget: 360 − 28 padding − 32 burger − 10 − 132 pill max − 10 − 70 icons = <b>78px minimum title width</b> — enough for the longest docked title in any locale to read at least 6–8 characters before the ellipsis, and enough for every actual title (Ответы 62px, Лента 48px, Обзор 55px) to fit whole.</p>
+    <div class="mks">
+      <div class="mk">
+        <div class="mk-lab">360 · ru · <i>max-length pill + title</i></div>
+        <div class="dev dev--360"><div class="hb" style="--hdr-reveal:1"><span class="hb-burger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="hb-pill hb-pill--warn"><span class="dot"></span>6 ждут ответа</span><span class="hb-title">Упоминания</span><span class="hb-actions"><span class="hb-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/></svg></span><span class="hb-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/></svg></span></span></div></div>
+        <div class="mk-val">title truncates with ellipsis; pill never does<br/><b>truncation priority: title first, always.</b> It is redundant — the user just scrolled past a 32px hero with the same word. The pill is not redundant.</div>
+      </div>
+      <div class="mk">
+        <div class="mk-lab">360 · de · <i>compound noun</i></div>
+        <div class="dev dev--360"><div class="hb" style="--hdr-reveal:1"><span class="hb-burger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="hb-pill hb-pill--ok"><span class="dot"></span>Alles erledigt</span><span class="hb-title">Erwähnungen</span><span class="hb-actions"><span class="hb-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/></svg></span><span class="hb-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/></svg></span></span></div></div>
+        <div class="mk-val">Hero <code>&lt;h1&gt;</code> still renders the string in full (it wraps) — nothing is lost, only the docked echo abbreviates.</div>
+      </div>
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:130px">Locale</th><th>Replies pill</th><th>px @12/500</th><th>Title</th><th>px @19/600</th><th>Fits 360?</th></tr></thead>
+      <tbody>
+        <tr><td>en</td><td>All handled</td><td>96</td><td>Replies</td><td>68</td><td>✓ 113 avail</td></tr>
+        <tr><td>ru</td><td>Все разобрано</td><td>117</td><td>Ответы</td><td>62</td><td>✓ 92 avail</td></tr>
+        <tr><td>ru (alt)</td><td>6 ждут ответа</td><td>115</td><td>Ответы</td><td>62</td><td>✓ 94 avail</td></tr>
+        <tr><td>de</td><td>Alles erledigt</td><td>118</td><td>Antworten</td><td>88</td><td>✓ 91 avail</td></tr>
+        <tr><td>uk</td><td>Усе розібрано</td><td>116</td><td>Відповіді</td><td>84</td><td>✓ 93 avail</td></tr>
+        <tr><td>es</td><td>Todo resuelto</td><td>108</td><td>Respuestas</td><td>96</td><td>✓ 101 avail</td></tr>
+        <tr><td>fr</td><td>Tout traité</td><td>96</td><td>Réponses</td><td>80</td><td>✓ 113 avail</td></tr>
+        <tr><td>it</td><td>Tutto gestito</td><td>108</td><td>Risposte</td><td>76</td><td>✓ 101 avail</td></tr>
+        <tr><td>pt</td><td>Tudo resolvido</td><td>117</td><td>Respostas</td><td>86</td><td>✓ 92 avail</td></tr>
+      </tbody>
+    </table></div>
+    <p class="section-note">Widths are Geist advance-width measurements at the stated size; re-measure in CI with the shipped font, not a fallback. The <code>max-width:132px</code> guard is the contract — if a translator exceeds it the pill must be re-shortened, not allowed to truncate.</p>
+  </section>
+
+  <section id="s6">
+    <h2><span class="n">6</span>Freshness lines — the two strings that leave the bar</h2>
+    <p class="section-note">"Обновляется ежечасно" (156px) and "Обновлено только что" (152px) blow the 132px budget in ru and de. They are also categorically different from Replies' pills: they are ambient metadata about the data set, not a state the user acts on. They move to the screen's persistent toolbar row — which is full-width, scroll-independent, and already exists on both screens.</p>
+    <div class="mks">
+      <div class="mk">
+        <div class="mk-lab">BEFORE · <i>/app/feed · 375 · ru · rest</i><span class="tag no">bug</span></div>
+        <div class="dev dev--375 bad">
+          <div class="hb" style="flex-wrap:wrap;height:auto;padding-top:8px;padding-bottom:8px">
+            <span class="hb-burger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span>
+            <span class="hb-title ghost" style="opacity:0">Лента</span>
+            <span class="hb-actions"><span class="hb-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/></svg></span></span>
+            <span style="flex:0 0 100%;height:0"></span>
+            <span class="hb-pill hb-pill--acc" style="margin-left:42px;max-width:none"><span class="dot"></span>Обновлено только что</span>
+          </div>
+          <div class="pg" style="--hdr-reveal:0"><h1>Лента</h1></div>
+          <div class="tb">6 опубликованных <span class="seg"><span class="on">Недавние</span><span>Топ</span></span></div>
+        </div>
+        <div class="mk-val">106px bar, orphan pill on row 2</div>
+      </div>
+      <div class="mk">
+        <div class="mk-lab">AFTER · <i>/app/feed · 375 · ru · rest</i><span class="tag yes">fix</span></div>
+        <div class="dev dev--375 good">
+          <div class="hb" style="--hdr-reveal:0"><span class="hb-burger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="hb-title">Лента</span><span class="hb-actions"><span class="hb-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/></svg></span></span></div>
+          <div class="pg" style="--hdr-reveal:0"><h1>Лента</h1></div>
+          <div class="tb" style="flex-wrap:wrap;row-gap:8px">6 опубликованных <span class="fresh"><span class="dot" style="width:6px;height:6px;border-radius:50%;background:currentColor"></span>Обновлено только что</span></div>
+          <div class="tb" style="border-top:none;margin-top:0">Сортировка <span class="seg"><span class="on">Недавние</span><span>Топ</span></span></div>
+        </div>
+        <div class="mk-val"><b>52px bar.</b> Freshness pill right-aligned in the toolbar row, identical pill styling (24px, r 9999, 12/500, accent 14%/30%). Full text at every locale, no truncation, always visible — the toolbar row is not part of the collapse.</div>
+      </div>
+      <div class="mk">
+        <div class="mk-lab">AFTER · <i>/app/mentions · 375 · ru · docked</i></div>
+        <div class="dev dev--375 good">
+          <div class="hb" style="--hdr-reveal:1"><span class="hb-burger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="hb-title">Упоминания</span><span class="hb-actions"><span class="hb-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/></svg></span></span></div>
+          <div class="tb" style="border-top:none">Все источники <span class="fresh"><span class="dot" style="width:6px;height:6px;border-radius:50%;background:currentColor"></span>Обновляется ежечасно</span></div>
+          <div class="rows"><div class="row"></div></div>
+        </div>
+        <div class="mk-val">Mentions has no short-form pill left, so its bar has no pill slot: title starts at x=56 when docked.</div>
+      </div>
+    </div>
+    <div class="note"><b>The test, stated once:</b> if the string is a status the user acts on and measures ≤132px in all 8 locales → bar pill, leading slot. Otherwise → freshness line, right-aligned in the toolbar row. No string is ever rendered in both places, and no string ever changes place at runtime.</div>
+  </section>
+
+  <section id="s7">
+    <h2><span class="n">7</span>Screens with no hero</h2>
+    <p class="section-note"><code>/app</code>, <code>/app/scenarios</code>, <code>/app/advisor</code>, and the opt-in / detail states of <code>/app/audits</code> have no hero <code>&lt;h1&gt;</code> — their bar title is always visible. The rule degrades by pinning <code>--hdr-reveal: 1</code>: <b>the exact docked state, permanently.</b> Slot order, coordinates and pill styling are byte-identical to §4.1's third frame — there is no separate no-hero layout.</p>
+    <div class="mks">
+      <div class="mk">
+        <div class="mk-lab">NO HERO · <i>/app/scenarios · 375 · pill</i></div>
+        <div class="dev dev--375">
+          <div class="hb" style="--hdr-reveal:1"><span class="hb-burger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="hb-pill hb-pill--acc"><span class="dot"></span>4 активных</span><span class="hb-title">Сценарии</span><span class="hb-actions"><span class="hb-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/></svg></span></span></div>
+          <div class="rows" style="padding-top:14px"><div class="row"></div><div class="row"></div></div>
+        </div>
+        <div class="mk-val"><code>--hdr-reveal:1</code> set statically on the container; no scroll listener bound. translateY 0, opacity 1.</div>
+      </div>
+      <div class="mk">
+        <div class="mk-lab">NO HERO · <i>/app/audits detail · 375 · no pill</i></div>
+        <div class="dev dev--375">
+          <div class="hb" style="--hdr-reveal:1"><span class="hb-burger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 18l-6-6 6-6"/></svg></span><span class="hb-title">Аудит от 14 июля</span><span class="hb-actions"><span class="hb-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/></svg></span></span></div>
+          <div class="rows" style="padding-top:14px"><div class="row"></div></div>
+        </div>
+        <div class="mk-val">Back chevron occupies the hamburger slot (same 32px box, same x). Title starts x=56 with no pill.</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="s8">
+    <h2><span class="n">8</span>Live proof — scroll these</h2>
+    <p class="section-note">Real scroll containers running the production listener. Watch the pill's left edge: it does not move at any scroll position, in either frame.</p>
+    <div class="mks">
+      <div class="mk">
+        <div class="mk-lab">375 · ru · pill + hero</div>
+        <div class="dev dev--375"><div class="scrollable hdr-scroll" id="lp1">
+          <div class="hb"><span class="hb-burger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="hb-pill hb-pill--ok"><span class="dot"></span>Все разобрано</span><span class="hb-title">Ответы</span><span class="hb-actions"><span class="hb-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/></svg></span><span class="hb-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/></svg></span></span></div>
+          <div class="hb-crumb">Аккаунт › @mara.lin</div>
+          <div class="pg"><h1>Ответы</h1></div>
+          <div class="rows" id="lr1"></div>
+        </div></div>
+      </div>
+      <div class="mk">
+        <div class="mk-lab">640 · ≥768 layout · freshness in toolbar</div>
+        <div class="dev dev--640"><div class="scrollable hdr-scroll" id="lp2">
+          <div class="hb hb--desk"><span class="hb-title">Лента</span><span class="hb-actions"><span class="hb-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/></svg></span><span class="hb-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/></svg></span></span></div>
+          <div class="pg pg--desk"><h1>Лента</h1></div>
+          <div class="tb tb--desk">6 опубликованных <span class="fresh"><span class="dot" style="width:6px;height:6px;border-radius:50%;background:currentColor"></span>Обновлено только что</span><span class="seg"><span class="on">Недавние</span><span>Топ</span></span></div>
+          <div class="rows rows--desk" id="lr2"></div>
+        </div></div>
+      </div>
+    </div>
+    <script>
+    (function(){
+      function fill(id,n){var c=document.getElementById(id),h='';for(var i=0;i<n;i++)h+='<div class="row"></div>';c.innerHTML=h;}
+      fill('lr1',9);fill('lr2',7);
+      document.querySelectorAll('.hdr-scroll').forEach(function(el){
+        el.addEventListener('scroll',function(){
+          el.style.setProperty('--hdr-reveal',Math.max(0,Math.min(1,el.scrollTop/32)));
+        },{passive:true});
+      });
+    })();
+    </script>
+  </section>
+
+  <section id="s9">
+    <h2><span class="n">9</span>Exact values</h2>
+    <h3>9.1 · Geometry</h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:230px">Property</th><th>Mobile &lt;768px</th><th>Desktop ≥768px</th></tr></thead>
+      <tbody>
+        <tr><td>Bar height</td><td>52px (fixed)</td><td>60px (fixed)</td></tr>
+        <tr><td>Bar horizontal padding</td><td>14px</td><td>24px</td></tr>
+        <tr><td>Bar <code>flex-wrap</code></td><td colspan="2"><code>nowrap</code> — mandatory, this is the wrap fix</td></tr>
+        <tr><td>Inter-slot gap</td><td colspan="2"><code>column-gap: 10px</code> (was <code>gap: 10px</code>; column-only so a stray wrap can't add row spacing)</td></tr>
+        <tr><td>Hamburger / back box</td><td>32×32, <code>flex:0 0 32px</code>, glyph 20×20</td><td>absent</td></tr>
+        <tr><td>Pill height / padding / radius</td><td colspan="2">24px · <code>0 10px</code> · <code>9999px</code></td></tr>
+        <tr><td>Pill max-width</td><td colspan="2"><b>132px</b> — hard contract, not a truncation point; strings must be authored under it in all 8 locales</td></tr>
+        <tr><td>Pill dot / icon</td><td colspan="2">6×6 circle <code>currentColor</code>, or 12×12 stroke icon; <code>gap: 6px</code> to the label</td></tr>
+        <tr><td>Pill flex</td><td colspan="2"><code>flex: 0 0 auto</code> · <code>white-space: nowrap</code></td></tr>
+        <tr><td>Pill left edge (x)</td><td>56px with hamburger</td><td>24px</td></tr>
+        <tr><td>Title flex</td><td colspan="2"><code>flex: 1 1 auto; min-width: 0</code> · <code>overflow:hidden; text-overflow:ellipsis; white-space:nowrap</code></td></tr>
+        <tr><td>Title left edge (x)</td><td>56px (no pill) · 66 + pill width (with pill)</td><td>24px (no pill) · 34 + pill width</td></tr>
+        <tr><td>Minimum title width</td><td colspan="2">78px @360px viewport, worst case (132px pill + hamburger + 2 icons). No suppression rule needed — the title never has to disappear.</td></tr>
+        <tr><td>Action icon box</td><td>32×32, radius <code>--radius-md</code> (10px), glyph 16×16</td><td>36×36, radius <code>--radius-md</code> (10px), glyph 18×18</td></tr>
+        <tr><td>…on the phone shell</td><td colspan="2">These are the <b>responsive web shell</b>'s numbers (<code>studio.css</code>, hamburger &lt;768px). The separate <b>phone shell</b> (<code>mobile/pennedly-mobile.css</code>, ≤600px) is not this spec's surface: its <code>.m-iconbtn</code> is <b>40×40</b> in a <code>min-height:52px</code> bar, and its title is <code>nowrap + ellipsis</code>. Follow whichever shell the screen actually renders.</td></tr>
+        <tr><td>Action cluster</td><td colspan="2"><code>flex:0 0 auto; margin-left:auto; display:flex; gap:6px</code></td></tr>
+        <tr><td>Profile-crumb row</td><td>26px tall, 14px padding, 12px/400, <code>nowrap + overflow:hidden</code>; sibling row inside the sticky container</td><td>absent</td></tr>
+        <tr><td>Total sticky height</td><td><b>52px</b>, or <b>78px</b> with crumb</td><td><b>60px</b></td></tr>
+        <tr><td>Minimum supported width</td><td colspan="2">360px</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>9.2 · Motion — what moves and by how much</h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:230px">Element</th><th>Horizontal movement</th><th>Coupling to <code>--hdr-reveal</code></th></tr></thead>
+      <tbody>
+        <tr><td>Hamburger / back</td><td><b>0px</b></td><td>None</td></tr>
+        <tr><td><b>Status pill</b></td><td><b>0px — at every reveal value, every locale, every viewport</b></td><td><b>None.</b> Never reads the variable.</td></tr>
+        <tr><td>Docked title</td><td><b>0px</b> horizontal — its box is <code>1fr</code> and already occupies its final position at reveal 0</td><td><code>opacity: var(--hdr-reveal)</code>; <code>transform: translateY(calc(6px * (1 - var(--hdr-reveal))))</code> — 6px vertical only</td></tr>
+        <tr><td>Action icons</td><td><b>0px</b></td><td>None</td></tr>
+        <tr><td>Hero h1 / subtitle</td><td><b>0px</b></td><td><code>opacity: calc(1 - var(--hdr-reveal))</code> — fade only</td></tr>
+        <tr><td>Toolbar row + freshness line</td><td><b>0px</b></td><td>None — in normal flow, scrolls away with content</td></tr>
+        <tr><td>Ramp</td><td colspan="2"><code>reveal = clamp(scrollTop / 32, 0, 1)</code> — unchanged from parent spec. No transition, no easing, 1:1 with scroll.</td></tr>
+        <tr><td><code>prefers-reduced-motion</code></td><td colspan="2">Step at scrollTop 16 (0 or 1); translateY never applied. Since nothing moves horizontally, this is a pure opacity swap.</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>9.3 · Type &amp; color</h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:190px">Element</th><th style="width:210px">Type</th><th>Dark (resolved)</th><th>Light (resolved)</th></tr></thead>
+      <tbody>
+        <tr><td>Bar background</td><td>—</td><td><code>#0a0a0a</code> @86% + <code>blur(8px)</code></td><td><code>#efedea</code> @86% + <code>blur(8px)</code></td></tr>
+        <tr><td>Bar bottom border</td><td>1px solid</td><td><code>#2b2a27</code></td><td><code>#dcd9d2</code></td></tr>
+        <tr><td>Docked title</td><td>19px / 600 / −0.006em</td><td><code>#ededed</code></td><td><code>#171717</code></td></tr>
+        <tr><td>Hero h1</td><td>32px / 600 / −0.015em / lh 1.15</td><td><code>#ededed</code></td><td><code>#171717</code></td></tr>
+        <tr><td>Hero subtitle</td><td>15px / 400</td><td><code>#a2a19c</code></td><td><code>#565550</code></td></tr>
+        <tr><td>Pill label</td><td>12px / 500 / lh 1</td><td>token below</td><td>token below</td></tr>
+        <tr><td>Pill — success<br/><span style="color:var(--color-text-subtle)">"Все разобрано"</span></td><td>fg / bg 14% / border 30%</td><td><code>#5fbf8d</code> / <code>#16231c</code> / <code>#234031</code></td><td><code>#2c7350</code> / <code>#d4dcd4</code> / <code>#b5c8bc</code></td></tr>
+        <tr><td>Pill — accent<br/><span style="color:var(--color-text-subtle)">counts, "+18%", freshness</span></td><td>fg / bg 14% / border 30%</td><td><code>#9aacff</code> / <code>#1c2131</code> / <code>#31395c</code></td><td><code>#2f4cc4</code> / <code>#dbdcdf</code> / <code>#a8b2d4</code></td></tr>
+        <tr><td>Pill — warning<br/><span style="color:var(--color-text-subtle)">"6 ждут ответа"</span></td><td>fg / bg 14% / border 30%</td><td><code>#d8a754</code> / <code>#26211a</code> / <code>#443a2c</code></td><td><code>#8a5b16</code> / <code>#dfd8cc</code> / <code>#c3b3a1</code></td></tr>
+        <tr><td>Action icon glyph</td><td>1.8px stroke</td><td><code>#a2a19c</code></td><td><code>#565550</code></td></tr>
+        <tr><td>Profile crumb</td><td>12px / 400</td><td><code>#898882</code></td><td><code>#6f6e69</code></td></tr>
+      </tbody>
+    </table></div>
+    <p class="section-note">Resolved hexes are the flat computed result of <code>color-mix(in srgb, &lt;token&gt; N%, transparent)</code> composited over the theme's <code>--color-bg</code>. Ship the <code>color-mix()</code> expressions, not the flat values — the hexes are here so you can diff a screenshot against the spec.</p>
+  </section>
+
+  <section id="s10">
+    <h2><span class="n">10</span>Per-screen result</h2>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:180px">Screen</th><th style="width:210px">Bar pill (leading slot)</th><th>Freshness line (toolbar)</th><th style="width:80px">Change</th></tr></thead>
+      <tbody>
+        <tr><td><code>/app/replies</code></td><td>Все разобрано · 6 ждут ответа</td><td>—</td><td>slot order</td></tr>
+        <tr><td><code>/app/feed</code></td><td>—</td><td>Обновлено только что</td><td>relocate</td></tr>
+        <tr><td><code>/app/mentions</code></td><td>—</td><td>Обновляется ежечасно</td><td>relocate</td></tr>
+        <tr><td><code>/app/stats</code></td><td>↗ +18% (icon+text, ≤132px)</td><td>period note, if any</td><td>slot order</td></tr>
+        <tr><td><code>/app/overview</code></td><td>existing icon+text pill, if ≤132px</td><td>otherwise relocate</td><td>slot order</td></tr>
+        <tr><td><code>/app/calendar</code></td><td>—</td><td>—</td><td>none</td></tr>
+        <tr><td><code>/app/settings</code></td><td>—</td><td>—</td><td>none</td></tr>
+        <tr><td><code>/app/role-book</code></td><td>existing, if any</td><td>—</td><td>slot order</td></tr>
+        <tr><td><code>/app/patterns/explore</code></td><td>existing, if any</td><td>—</td><td>slot order</td></tr>
+        <tr><td><code>/app/mentions/routines</code></td><td>existing, if any</td><td>—</td><td>slot order</td></tr>
+        <tr><td><code>/app/audits</code> (list)</td><td>existing, if any</td><td>—</td><td>slot order</td></tr>
+        <tr><td><code>/app/audits/[id]</code></td><td>—</td><td>—</td><td>reveal:1</td></tr>
+        <tr><td><code>/app</code>, <code>/app/scenarios</code>, <code>/app/advisor</code></td><td>existing, if any</td><td>—</td><td>reveal:1</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note">"slot order" = a two-line DOM change (move the pill element before the title element) plus the three flex declarations in §3. No screen needs new markup, new components, or restyled pills. "relocate" = move one element from the bar into the existing toolbar row.</div>
+  </section>
+
+  <section id="s11">
+    <h2><span class="n">11</span>Checklist</h2>
+    <ul class="check">
+      <li>Pill element moved <b>before</b> the title element in the shared header's DOM — one change, all 12 screens.</li>
+      <li><code>.hdr-compact { flex-wrap: nowrap; column-gap: 10px }</code> — verify no screen overrides it.</li>
+      <li><code>.hdr-compact-title { flex: 1 1 auto; min-width: 0 }</code> · <code>.hdr-pill { flex: 0 0 auto; max-width: 132px }</code> · <code>.hdr-actions { margin-left: auto }</code>.</li>
+      <li>Feed and Mentions freshness pills moved out of the bar into their existing toolbar rows, right-aligned.</li>
+      <li>Every remaining bar pill string measured ≤132px at 12px/500 in all 8 locales — add a CI assertion, not a manual pass.</li>
+      <li>Regression test: bar <code>offsetHeight</code> === 52 (mobile, no crumb) / 78 (with crumb) / 60 (desktop) at scrollTop 0 <b>and</b> 200, in ru + de.</li>
+      <li>Regression test: pill's <code>getBoundingClientRect().left</code> identical at scrollTop 0 and 200 on every screen.</li>
+      <li>No-hero screens set <code>--hdr-reveal: 1</code> statically and bind no scroll listener.</li>
+      <li>Audit-detail back chevron uses the hamburger's 32×32 slot — title x unchanged.</li>
+      <li>Verified dark + light, ru/de longest strings, 360 / 375 / 768 / 1440.</li>
+    </ul>
+  </section>
+</main>
+</div>
+</body>
+</html>

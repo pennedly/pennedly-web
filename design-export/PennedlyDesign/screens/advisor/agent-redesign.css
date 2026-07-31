@@ -1,0 +1,244 @@
+/* agent-redesign.css — Pennedly · /app/advisor (Agent) component layer.
+   Ships as-is. Every colour is a semantic token, so light/dark come free.
+   Prefix .ag- . Depends on ds/tokens.css + ds/components.css. */
+
+/* ───────────── screen frame ─────────────
+   The screen owns an INNER scroller. .ag-screen is the flex/grid parent that
+   fills the shell's main area; .ag-scroll is the only thing that scrolls. */
+/* The container must be an ANCESTOR of the queried element — an element cannot
+   match its own @container. .ag-shell is the shell's main slot; it is the only
+   thing that needs to exist around the screen. */
+.ag-shell{container:ag / inline-size;height:100%;min-height:0}
+.ag-screen{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:28px;min-height:0;height:100%;padding:0 24px}
+.ag-main{display:flex;flex-direction:column;min-width:0;min-height:0}
+/* .ag-stream exists purely to be the containing block for .ag-jump: it ends where
+   the conversation ends, so bottom:14px cannot land inside the dock (whose height
+   varies with env(safe-area-inset-bottom)). */
+.ag-stream{position:relative;flex:1 1 auto;min-height:0;min-width:0;display:flex;flex-direction:column}
+/* while the jump pill is mounted the scroller reserves its 48px band (14 inset +
+   34 height) + the usual 8px, so the last turn can still be read in full … */
+.ag-stream--jump .ag-scroll{padding-bottom:56px}
+/* … and a scrim fades mid-scroll content out beneath the pill instead of letting
+   an opaque pill slice a line of text. Right inset clears the scrollbar gutter. */
+.ag-stream--jump::after{content:"";position:absolute;left:0;right:9px;bottom:0;height:72px;pointer-events:none;z-index:1;background:linear-gradient(to top,var(--color-bg) 34%,color-mix(in srgb,var(--color-bg) 55%,transparent) 68%,transparent)}
+.ag-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:22px 0 8px;scrollbar-gutter:stable}
+.ag-scroll::-webkit-scrollbar{width:9px}
+.ag-scroll::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--color-text) 14%,transparent);border-radius:9999px}
+.ag-col{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:30px}
+.ag-dock{flex:0 0 auto;padding:10px 0 18px}
+.ag-dock-inner{max-width:760px;margin:0 auto}
+
+/* ───────────── right rail ───────────── */
+.ag-rail{display:flex;flex-direction:column;gap:14px;min-height:0;overflow-y:auto;padding:22px 0 22px;scrollbar-width:thin}
+.ag-panel{flex:0 0 auto;border:1px solid var(--color-border);border-radius:var(--radius-lg);background:var(--color-surface);overflow:hidden}
+.ag-panel-hd{display:flex;align-items:center;gap:8px;padding:11px 14px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--color-text-subtle);border-bottom:1px solid var(--color-border)}
+.ag-panel-hd svg{width:13px;height:13px;opacity:.8}
+.ag-panel-hd .act{margin-left:auto;font-size:11px;font-weight:500;text-transform:none;letter-spacing:0;color:var(--color-accent);text-decoration:none;cursor:pointer}
+
+/* signal rows — what the agent can actually read right now */
+.ag-sig{display:flex;align-items:center;gap:10px;padding:9px 14px;font-size:13px;color:var(--color-text);border-bottom:1px solid var(--color-border)}
+.ag-sig:last-child{border-bottom:none}
+.ag-sig svg{width:15px;height:15px;color:var(--color-text-subtle);flex:0 0 15px}
+.ag-sig-n{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ag-sig-v{flex:0 0 auto;font-variant-numeric:tabular-nums;font-weight:600;font-size:12.5px;color:var(--color-text-muted)}
+.ag-sig--thin{color:var(--color-text-subtle)}
+.ag-sig--thin .ag-sig-v{color:var(--color-warning);font-weight:500}
+
+/* conversation history */
+.ag-conv{display:block;width:100%;text-align:left;padding:9px 14px;border:none;border-bottom:1px solid var(--color-border);background:transparent;cursor:pointer;font-family:inherit}
+.ag-conv:last-of-type{border-bottom:none}
+.ag-conv:hover{background:var(--color-surface-2)}
+.ag-conv-t{display:block;font-size:13px;color:var(--color-text);line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ag-conv-m{display:block;font-size:11.5px;color:var(--color-text-subtle);margin-top:2px;font-variant-numeric:tabular-nums}
+.ag-conv[aria-current="true"]{background:color-mix(in srgb,var(--color-accent) 8%,transparent);box-shadow:inset 3px 0 0 var(--color-accent)}
+.ag-conv[aria-current="true"] .ag-conv-t{font-weight:600}
+
+/* applied-changes receipts */
+.ag-receipt{display:flex;gap:9px;align-items:flex-start;padding:9px 14px;font-size:12.5px;border-bottom:1px solid var(--color-border)}
+.ag-receipt:last-child{border-bottom:none}
+.ag-receipt svg{width:14px;height:14px;color:var(--color-success);flex:0 0 14px;margin-top:2px}
+.ag-receipt-t{display:block;color:var(--color-text);line-height:1.45}
+.ag-receipt-m{display:block;color:var(--color-text-subtle);font-size:11.5px;margin-top:1px}
+
+/* ───────────── turns ───────────── */
+.ag-turn{display:flex;gap:13px;align-items:flex-start;animation:ag-in var(--duration-slow) var(--ease-entrance) both}
+@keyframes ag-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.ag-turn--user{justify-content:flex-end}
+.ag-bubble{max-width:78%;background:color-mix(in srgb,var(--color-accent) 12%,var(--color-surface));border:1px solid color-mix(in srgb,var(--color-accent) 22%,transparent);border-radius:16px 16px 6px 16px;padding:11px 15px;font-size:var(--text-body);line-height:1.55;color:var(--color-text)}
+.ag-mark{width:32px;height:32px;border-radius:10px;flex:0 0 32px;display:grid;place-items:center;margin-top:1px;background:color-mix(in srgb,var(--color-accent) 12%,var(--color-surface));border:1px solid color-mix(in srgb,var(--color-accent) 24%,transparent);color:var(--color-accent)}
+.ag-body{flex:1 1 auto;min-width:0}
+.ag-who{display:flex;align-items:baseline;gap:8px;margin:4px 0 9px}
+.ag-who b{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--color-text-subtle)}
+.ag-who time{font-size:11px;color:var(--color-text-subtle);font-variant-numeric:tabular-nums}
+.ag-body p{margin:0 0 12px;font-size:var(--text-body);line-height:1.62;color:var(--color-text);max-width:68ch;text-wrap:pretty}
+.ag-body p:last-child{margin-bottom:0}
+.ag-body strong{font-weight:600}
+
+/* metric strip — cited numbers. Hairlines come from the 1px grid gap, so it
+   wraps cleanly at any width and in any locale. */
+.ag-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(152px,1fr));gap:1px;background:var(--color-border);border:1px solid var(--color-border);border-radius:12px;overflow:hidden;margin:0 0 14px}
+.ag-metric{background:var(--color-surface);padding:11px 14px 12px;min-width:0}
+.ag-metric-v{display:flex;align-items:center;gap:5px;font-size:18px;font-weight:600;letter-spacing:-0.012em;line-height:1.2;font-variant-numeric:tabular-nums;color:var(--color-text)}
+.ag-metric-v svg{width:14px;height:14px;flex:0 0 14px}
+.ag-metric-l{font-size:12px;line-height:1.35;color:var(--color-text-muted);margin-top:3px;overflow-wrap:anywhere}
+.ag-metric--up .ag-metric-v{color:var(--color-success)}
+.ag-metric--down .ag-metric-v{color:var(--color-danger)}
+.ag-metric--note .ag-metric-v{color:var(--color-accent)}
+
+/* grounding footer — named, navigable signals. The honesty mechanism. */
+.ag-grounded{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin-top:16px;padding-top:13px;border-top:1px solid var(--color-border)}
+.ag-grounded-lab{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--color-text-muted);margin-right:2px}
+.ag-grounded-lab svg{width:14px;height:14px;color:var(--color-text-subtle)}
+.ag-src{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:7px;border:1px solid var(--color-border);background:var(--color-surface-2);color:var(--color-text-muted);font-size:12px;line-height:1.5;text-decoration:none;font-variant-numeric:tabular-nums;transition:border-color var(--duration-fast) var(--ease-standard),color var(--duration-fast) var(--ease-standard)}
+.ag-src b{font-weight:500;color:var(--color-text)}
+.ag-src:hover{border-color:color-mix(in srgb,var(--color-accent) 45%,var(--color-border));color:var(--color-accent)}
+.ag-src:hover b{color:var(--color-accent)}
+.ag-src--empty{border-style:dashed;opacity:.62;cursor:default}
+.ag-src--empty:hover{border-color:var(--color-border);color:var(--color-text-muted)}
+
+/* ───────────── suggestion card (hands off to composer) ───────────── */
+.ag-sug{display:flex;gap:13px;align-items:flex-start;padding:13px 15px;border:1px solid var(--color-border);border-radius:var(--radius-lg);background:var(--color-surface);box-shadow:var(--shadow-sm)}
+.ag-sug + .ag-sug,.ag-act + .ag-sug,.ag-sug + .ag-act,.ag-act + .ag-act{margin-top:10px}
+.ag-sug-ico{width:34px;height:34px;border-radius:10px;flex:0 0 34px;display:grid;place-items:center;background:var(--color-surface-2);border:1px solid var(--color-border);color:var(--color-text-muted)}
+.ag-sug-b{flex:1 1 auto;min-width:0}
+.ag-sug-t{font-size:var(--text-small);font-weight:600;color:var(--color-text);line-height:1.45}
+.ag-sug-s{font-size:var(--text-caption);color:var(--color-text-muted);margin-top:3px;line-height:1.5}
+.ag-sug-a{display:flex;flex-wrap:wrap;gap:8px;margin-top:11px}
+
+/* ───────────── action card (writes to the account) ───────────── */
+.ag-act{border:1px solid var(--color-border);border-left:3px solid var(--color-accent);border-radius:var(--radius-lg);background:var(--color-surface);box-shadow:var(--shadow-sm);overflow:hidden}
+.ag-act-hd{display:flex;align-items:flex-start;gap:11px;padding:14px 16px 0}
+.ag-act-ico{width:36px;height:36px;border-radius:10px;flex:0 0 36px;display:grid;place-items:center;background:color-mix(in srgb,var(--color-accent) 12%,var(--color-surface));border:1px solid color-mix(in srgb,var(--color-accent) 22%,transparent);color:var(--color-accent)}
+.ag-act-hb{flex:1 1 auto;min-width:0}
+.ag-act-kind{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--color-text-subtle)}
+.ag-act-t{font-size:15px;font-weight:600;letter-spacing:-0.004em;line-height:1.4;color:var(--color-text);margin-top:2px;text-wrap:pretty}
+.ag-mode{flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 8px;border-radius:var(--radius-full);font-size:11px;font-weight:500;white-space:nowrap;border:1px solid var(--color-border);background:var(--color-surface-2);color:var(--color-text-muted)}
+.ag-mode svg{width:11px;height:11px}
+.ag-mode--review{color:var(--color-accent);border-color:color-mix(in srgb,var(--color-accent) 30%,var(--color-border))}
+.ag-mode--live{color:var(--color-warning);border-color:color-mix(in srgb,var(--color-warning) 32%,var(--color-border))}
+
+/* before → after. The whole point of the card: what changes, stated. */
+.ag-act-body{padding:12px 16px 0}
+.ag-diff{display:grid;grid-template-columns:auto minmax(0,1fr);gap:7px 14px;margin:0;padding:11px 13px;border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface-2);font-size:13px;line-height:1.5}
+.ag-diff dt{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--color-text-subtle);padding-top:2px;white-space:nowrap}
+.ag-diff dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.ag-diff .now{color:var(--color-text-muted)}
+.ag-diff .next{color:var(--color-text)}
+.ag-diff mark{background:color-mix(in srgb,var(--color-accent) 16%,transparent);color:var(--color-accent);font-weight:600;padding:0 4px;border-radius:4px}
+.ag-act-warn{display:flex;gap:8px;align-items:flex-start;margin-top:10px;font-size:12.5px;line-height:1.5;color:var(--color-warning)}
+.ag-act-warn svg{width:14px;height:14px;flex:0 0 14px;margin-top:2px}
+.ag-act-ft{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:13px 16px 14px}
+.ag-act-ft .sp{flex:1 1 auto}
+
+/* action card — applying / applied / failed */
+.ag-act--busy{opacity:.72;pointer-events:none}
+.ag-act--done{border-left-color:var(--color-success);background:color-mix(in srgb,var(--color-success) 5%,var(--color-surface))}
+.ag-act--done .ag-act-ico{background:color-mix(in srgb,var(--color-success) 12%,var(--color-surface));border-color:color-mix(in srgb,var(--color-success) 24%,transparent);color:var(--color-success)}
+.ag-act--fail{border-left-color:var(--color-danger)}
+.ag-done-row{display:flex;align-items:center;gap:11px;padding:13px 16px;font-size:13.5px;color:var(--color-text)}
+.ag-done-row svg{width:16px;height:16px;color:var(--color-success);flex:0 0 16px}
+.ag-done-t{display:block;font-weight:600}
+.ag-done-m{display:block;color:var(--color-text-subtle);font-size:12.5px;margin-top:1px}
+.ag-done-row .un{margin-left:auto}
+.ag-spin{width:14px;height:14px;border:2px solid color-mix(in srgb,currentColor 28%,transparent);border-top-color:currentColor;border-radius:50%;animation:ag-spin .7s linear infinite}
+@keyframes ag-spin{to{transform:rotate(360deg)}}
+
+/* ───────────── thinking · thin-data · error turns ───────────── */
+.ag-steps{display:flex;flex-direction:column;gap:7px;font-size:13.5px}
+.ag-step{display:flex;align-items:center;gap:9px;color:var(--color-text-subtle)}
+.ag-step svg{width:15px;height:15px;flex:0 0 15px}
+.ag-step--done{color:var(--color-text-muted)}
+.ag-step--done svg{color:var(--color-success)}
+.ag-step--now{color:var(--color-text)}
+.ag-step--now .ag-step-g{width:15px;height:15px;flex:0 0 15px;border-radius:50%;border:2px solid color-mix(in srgb,var(--color-accent) 30%,transparent);border-top-color:var(--color-accent);animation:ag-spin .7s linear infinite}
+.ag-step--wait .ag-step-g{width:15px;height:15px;flex:0 0 15px;display:grid;place-items:center}
+.ag-step--wait .ag-step-g::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.45}
+
+.ag-thin{border:1px solid color-mix(in srgb,var(--color-warning) 32%,var(--color-border));border-left-width:3px;border-left-color:var(--color-warning);border-radius:var(--radius-lg);background:color-mix(in srgb,var(--color-warning) 6%,var(--color-surface));padding:14px 16px}
+.ag-thin-t{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--color-text)}
+.ag-thin-t svg{width:16px;height:16px;color:var(--color-warning)}
+.ag-thin p{font-size:13.5px;line-height:1.55;color:var(--color-text-muted);margin:8px 0 0;max-width:62ch}
+.ag-gauge{display:flex;align-items:center;gap:10px;margin-top:11px;font-size:12.5px;color:var(--color-text-muted);font-variant-numeric:tabular-nums}
+.ag-gauge-bar{flex:1 1 auto;max-width:200px;height:6px;border-radius:9999px;background:color-mix(in srgb,var(--color-text) 10%,transparent);overflow:hidden}
+.ag-gauge-bar i{display:block;height:100%;border-radius:9999px;background:var(--color-warning)}
+
+.ag-err{border:1px solid color-mix(in srgb,var(--color-danger) 30%,var(--color-border));border-left-width:3px;border-left-color:var(--color-danger);border-radius:var(--radius-lg);background:color-mix(in srgb,var(--color-danger) 6%,var(--color-surface));padding:14px 16px}
+.ag-err-t{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--color-text)}
+.ag-err-t svg{width:16px;height:16px;color:var(--color-danger)}
+.ag-err p{font-size:13.5px;line-height:1.55;color:var(--color-text-muted);margin:7px 0 0}
+.ag-err-a{display:flex;gap:8px;margin-top:11px}
+
+/* ───────────── empty / first-run: a briefing, not a hero ───────────── */
+.ag-open{display:flex;flex-direction:column;gap:14px}
+.ag-open-hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.ag-open-hd h2{font-size:var(--text-h3);font-weight:600;letter-spacing:-0.006em;color:var(--color-text);margin:0}
+.ag-open-hd span{font-size:12.5px;color:var(--color-text-subtle);font-variant-numeric:tabular-nums}
+.ag-brief{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:10px}
+.ag-card{display:flex;flex-direction:column;gap:0;text-align:left;padding:14px 15px 13px;border:1px solid var(--color-border);border-radius:12px;background:var(--color-surface);cursor:pointer;font-family:inherit;transition:border-color var(--duration-fast) var(--ease-standard),background var(--duration-fast) var(--ease-standard)}
+.ag-card:hover{border-color:color-mix(in srgb,var(--color-accent) 45%,var(--color-border));background:var(--color-surface-2)}
+.ag-card-v{display:flex;align-items:center;gap:6px;font-size:20px;font-weight:600;letter-spacing:-0.015em;line-height:1.15;font-variant-numeric:tabular-nums;color:var(--color-text)}
+.ag-card-v svg{width:15px;height:15px}
+.ag-card--up .ag-card-v{color:var(--color-success)}
+.ag-card--down .ag-card-v{color:var(--color-danger)}
+.ag-card-l{font-size:12.5px;color:var(--color-text-muted);margin-top:3px;line-height:1.4}
+.ag-card-q{display:flex;align-items:center;gap:6px;margin-top:10px;padding-top:9px;border-top:1px solid var(--color-border);font-size:12.5px;font-weight:500;color:var(--color-accent);line-height:1.4;text-wrap:pretty}
+.ag-card-q svg{width:13px;height:13px;flex:0 0 13px}
+.ag-open-more{display:flex;flex-wrap:wrap;gap:8px}
+.ag-chipq{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 13px;border-radius:var(--radius-full);border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text);font-family:inherit;font-size:var(--text-small);font-weight:500;cursor:pointer;white-space:nowrap}
+.ag-chipq svg{width:14px;height:14px;color:var(--color-text-subtle)}
+.ag-chipq:hover{background:var(--color-surface-2);border-color:color-mix(in srgb,var(--color-accent) 40%,var(--color-border))}
+.ag-lab{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--color-text-subtle)}
+
+/* ───────────── composer ───────────── */
+.ag-composer{border:1px solid var(--color-border);border-radius:16px;background:var(--color-surface);box-shadow:var(--shadow-md);padding:12px 12px 9px 16px;transition:border-color var(--duration-fast) var(--ease-standard),box-shadow var(--duration-fast) var(--ease-standard)}
+.ag-composer:focus-within{border-color:var(--color-accent);box-shadow:var(--shadow-md),0 0 0 3px color-mix(in srgb,var(--color-accent) 18%,transparent)}
+.ag-composer-row{display:flex;align-items:flex-end;gap:12px}
+.ag-input{flex:1 1 auto;min-width:0;border:none;background:transparent;resize:none;outline:none;font-family:inherit;font-size:var(--text-body);line-height:1.55;color:var(--color-text);padding:4px 0 2px;max-height:132px}
+.ag-input::placeholder{color:var(--color-text-subtle)}
+.ag-send{width:40px;height:40px;border-radius:12px;flex:0 0 40px;display:grid;place-items:center;border:none;cursor:pointer;background:var(--color-primary);color:var(--color-primary-foreground);transition:opacity var(--duration-fast) var(--ease-standard)}
+.ag-send:disabled{opacity:.35;cursor:not-allowed}
+.ag-composer-ft{display:flex;align-items:center;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid var(--color-border);font-size:12px;color:var(--color-text-subtle)}
+.ag-composer-ft svg{width:13px;height:13px;flex:0 0 13px}
+.ag-composer-ft .sp{flex:1 1 auto}
+.ag-composer-ft button{border:none;background:transparent;font-family:inherit;font-size:12px;color:var(--color-text-subtle);cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:2px}
+.ag-composer-ft button:hover{color:var(--color-text-muted)}
+
+/* scroll-to-latest. Own keyframe: reusing ag-in would end on transform:none and
+   permanently drop the translateX(-50%) centering. */
+.ag-jump{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:2;display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 14px;border-radius:var(--radius-full);border:1px solid var(--color-border);background:var(--color-surface);box-shadow:var(--shadow-md);color:var(--color-text);font-size:12.5px;font-weight:500;cursor:pointer;font-family:inherit;animation:ag-jump-in var(--duration-base) var(--ease-entrance) both}
+@keyframes ag-jump-in{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
+.ag-jump svg{width:14px;height:14px}
+
+/* ───────────── responsive ─────────────
+   Container queries, not media queries: the screen lives inside a shell with a
+   fixed sidebar, so its own inline size — not the window — is what decides
+   whether the rail fits. Same numbers as the viewport widths they replace,
+   measured on .ag-shell. */
+@container ag (max-width:1199px){.ag-screen{grid-template-columns:minmax(0,1fr) 280px;gap:22px;padding:0 20px}}
+@container ag (max-width:959px){.ag-screen{grid-template-columns:minmax(0,1fr);padding:0 20px}.ag-rail{display:none}}
+@container ag (max-width:767px){
+  .ag-screen{padding:0 14px}
+  .ag-scroll{padding:14px 0 4px}
+  .ag-col{gap:24px}
+  .ag-bubble{max-width:86%}
+  .ag-metrics{grid-template-columns:1fr 1fr}
+  .ag-metric{padding:10px 12px 11px}
+  .ag-metric-v{font-size:17px}
+  .ag-brief{grid-template-columns:1fr}
+  .ag-act-hd{flex-wrap:wrap}
+  .ag-mode{order:-1;margin-left:auto}
+  .ag-act-ft .btn{flex:1 1 auto;min-width:44%}
+  .ag-dock{padding:8px 0 max(12px,env(safe-area-inset-bottom))}
+  .ag-composer{border-radius:14px;padding:10px 10px 8px 14px}
+  .ag-send{width:44px;height:44px;flex:0 0 44px}
+  .ag-chipq{height:36px}
+}
+/* the phone shell has no sidebar, so its safe-area inset keys off the viewport */
+@media (max-width:767px){.ag-dock{padding-bottom:max(12px,env(safe-area-inset-bottom))}}
+
+@media (prefers-reduced-motion:reduce){
+  .ag-turn{animation:none}
+  .ag-jump{animation:none;transform:translateX(-50%)}
+  .ag-spin,.ag-step--now .ag-step-g{animation-duration:1.6s}
+  .ag-card,.ag-src,.ag-composer,.ag-send{transition:none}
+}

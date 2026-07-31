@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Pennedly · App Header — Pill Budget</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../ds/tokens.css"/>
+<link rel="stylesheet" href="../ds/components.css"/>
+<style>
+:root{--font-sans:"Geist",ui-sans-serif,system-ui,sans-serif;--font-mono:"Geist Mono",ui-monospace,monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--color-bg);color:var(--color-text);font-family:var(--font-sans);font-size:15px;line-height:1.6}
+a{color:var(--color-accent)}a:hover{color:var(--color-text)}
+.layout{display:grid;grid-template-columns:250px minmax(0,1fr);max-width:1340px;margin:0 auto}
+.toc{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;padding:30px 20px;border-right:1px solid var(--color-border)}
+.toc b{font-size:16px;font-weight:600}
+.toc nav{display:flex;flex-direction:column;gap:2px;margin-top:18px}
+.toc nav a{display:block;padding:6px 9px;border-radius:8px;text-decoration:none;color:var(--color-text-muted);font-size:13.5px}
+.toc nav a:hover{background:var(--color-surface-2);color:var(--color-text)}
+main{padding:38px 44px 110px;min-width:0}
+.kicker{font-family:var(--font-mono);font-size:12px;letter-spacing:.04em;color:var(--color-accent);text-transform:uppercase;margin:0 0 8px}
+h1.title{font-size:32px;font-weight:600;letter-spacing:-0.015em;margin:0 0 12px}
+.lede{color:var(--color-text-muted);max-width:78ch;font-size:15.5px}
+section{margin-top:46px}
+h2{font-size:20px;font-weight:600;letter-spacing:-0.01em;margin:0 0 6px}
+h2 .n{font-family:var(--font-mono);color:var(--color-accent);font-size:13px;margin-right:8px}
+h3{font-size:14px;font-weight:600;margin:26px 0 10px;letter-spacing:-0.005em}
+.section-note{color:var(--color-text-muted);font-size:14px;max-width:82ch;margin:4px 0 16px}
+.note{border:1px solid var(--color-border);border-left:3px solid var(--color-accent);background:var(--color-surface);border-radius:10px;padding:14px 16px;margin:14px 0;font-size:13.5px;color:var(--color-text-muted)}
+.note b{color:var(--color-text)}
+.note.rule{font-size:15px;color:var(--color-text)}
+.note.bad{border-left-color:#d8544f}
+.note.ok{border-left-color:var(--color-success)}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--color-border);border-radius:12px;margin:0 0 14px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--color-border);vertical-align:top}
+thead th{background:var(--color-surface-2);font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--color-text-subtle)}
+tbody tr:last-child td{border-bottom:none}
+code{font-family:var(--font-mono);font-size:.85em;background:var(--color-surface-2);border:1px solid var(--color-border);padding:1px 5px;border-radius:5px}
+.mono{font-family:var(--font-mono);font-size:12px}
+.check{list-style:none;padding:0;margin:0}
+.check li{position:relative;padding:5px 0 5px 24px;border-bottom:1px dashed var(--color-border);font-size:13.5px}
+.check li::before{content:"☐";position:absolute;left:0;color:var(--color-text-subtle)}
+.v{font-family:var(--font-mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:5px;border:1px solid var(--color-border);white-space:nowrap;display:inline-block}
+.v.stay{color:var(--color-success);border-color:color-mix(in srgb,var(--color-success) 45%,transparent)}
+.v.move{color:var(--color-warning);border-color:color-mix(in srgb,var(--color-warning) 45%,transparent)}
+.v.drop{color:#d8544f;border-color:color-mix(in srgb,#d8544f 45%,transparent)}
+
+/* ============ mockup rig ============ */
+.mks{display:flex;flex-wrap:wrap;gap:20px;margin:14px 0 4px}
+.mk{display:flex;flex-direction:column;gap:8px}
+.mk-lab{font-family:var(--font-mono);font-size:11px;color:var(--color-text-subtle);letter-spacing:.02em}
+.mk-lab i{font-style:normal;color:var(--color-accent)}
+.mk-val{font-family:var(--font-mono);font-size:10.5px;line-height:1.65;color:var(--color-text-subtle);max-width:375px}
+.mk-val b{color:var(--color-text-muted);font-weight:500}
+.dev{border:1px solid var(--color-border);border-radius:12px;overflow:hidden;background:var(--color-bg);position:relative}
+.dev--375{width:375px}.dev--360{width:360px}
+.dev.bad{border-color:#d8544f}
+.dev.good{border-color:color-mix(in srgb,var(--color-success) 55%,var(--color-border))}
+.scale-box{width:100%;max-width:998px;overflow:hidden;position:relative;height:266px}
+.dev--1280{width:1280px;transform:scale(.78);transform-origin:0 0}
+.scale-box .dev--1280{height:340px}
+
+/* ---- header bar: production CSS ---- */
+.hb{display:flex;flex-wrap:nowrap;align-items:center;column-gap:10px;height:52px;padding:0 20px;background:color-mix(in srgb,var(--color-bg) 86%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--color-border)}
+.hb-burger{flex:0 0 40px;width:40px;height:40px;display:grid;place-items:center;color:var(--color-text-muted)}
+.hb-title{flex:1 1 auto;min-width:0;font-size:19px;font-weight:600;letter-spacing:-0.006em;color:var(--color-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:var(--hdr-reveal,1);transform:translateY(calc(6px * (1 - var(--hdr-reveal,1))))}
+.hb-actions{flex:0 0 auto;margin-left:auto;display:flex;gap:6px}
+.hb-icon{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;color:var(--color-text-muted)}
+.hb--desk{height:60px;padding:0 24px}
+
+/* ---- OLD prose pill (for the before frames) ---- */
+.pill-old{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:9999px;font-size:13px;line-height:19.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:132px;color:var(--color-text-muted);background:var(--color-surface);border:1px solid var(--color-border)}
+.pill-old .dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex:0 0 7px}
+
+/* ---- NEW glyph+number pill ---- */
+.pill{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:6px;height:30px;padding:0 10px;border-radius:9999px;border:1px solid;background:transparent;font-size:13px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1;white-space:nowrap;max-width:88px;position:relative}
+.pill svg{flex:0 0 14px;width:14px;height:14px;display:block;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.pill .n{display:block}
+.pill::after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:100%;min-width:44px;height:44px}
+.pill--acc{color:var(--color-accent);border-color:color-mix(in srgb,var(--color-accent) 30%,transparent);background:color-mix(in srgb,var(--color-accent) 14%,transparent)}
+.pill--warn{color:var(--color-warning);border-color:color-mix(in srgb,var(--color-warning) 30%,transparent);background:color-mix(in srgb,var(--color-warning) 14%,transparent)}
+.pill--ok{color:var(--color-success);border-color:color-mix(in srgb,var(--color-success) 30%,transparent);background:color-mix(in srgb,var(--color-success) 14%,transparent)}
+.pill--idle{color:var(--color-text-subtle);border-color:var(--color-border);background:var(--color-surface)}
+
+/* ---- page body ---- */
+.pg{padding:18px 20px 14px}
+.pg--desk{padding:26px 24px 18px}
+.pg h1{font-size:32px;font-weight:600;letter-spacing:-0.015em;line-height:1.15;margin:0}
+.pg p{font-size:15px;color:var(--color-text-muted);margin:6px 0 0;text-wrap:pretty}
+.meta{margin:8px 0 0;font-size:13px;line-height:1.45;color:var(--color-text-subtle);display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px}
+.meta .sep{opacity:.5}
+.tb{display:flex;align-items:center;gap:8px;padding:12px 20px;border-top:1px solid var(--color-border);border-bottom:1px solid var(--color-border);font-size:13px;color:var(--color-text-muted);margin-top:12px}
+.tb--desk{padding:12px 24px}
+.tb .fresh{margin-left:auto;display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:9999px;font-size:12px;font-weight:500;white-space:nowrap;color:var(--color-accent);background:color-mix(in srgb,var(--color-accent) 14%,transparent);border:1px solid color-mix(in srgb,var(--color-accent) 30%,transparent)}
+.rows{padding:12px 20px 16px;display:flex;flex-direction:column;gap:8px}
+.rows--desk{padding:14px 24px 18px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.row{height:54px;border:1px solid var(--color-border);border-radius:10px;background:var(--color-surface)}
+.row--tall{height:96px}
+.cut{height:14px;background:linear-gradient(var(--color-bg),transparent)}
+.ghost{outline:1px dashed #d8544f;background:color-mix(in srgb,#d8544f 10%,transparent)}
+.tag{display:inline-block;vertical-align:1px;margin-left:6px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:5px;background:var(--color-surface-2);border:1px solid var(--color-border);color:var(--color-text-subtle)}
+.tag.no{color:#d8544f;border-color:color-mix(in srgb,#d8544f 45%,transparent)}
+.tag.yes{color:var(--color-success);border-color:color-mix(in srgb,var(--color-success) 45%,transparent)}
+.mk-ruler{position:relative;height:16px}
+.mk-ruler span{position:absolute;top:0;height:16px;border-left:1px solid var(--color-accent);border-right:1px solid var(--color-accent);font-family:var(--font-mono);font-size:9px;color:var(--color-accent);text-align:center;line-height:16px}
+.strip{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:14px;border:1px solid var(--color-border);border-radius:12px;background:var(--color-surface);margin:12px 0}
+.strip .cell{display:flex;flex-direction:column;align-items:center;gap:6px}
+.strip .cell em{font-style:normal;font-family:var(--font-mono);font-size:10px;color:var(--color-text-subtle)}
+.scrollable{height:300px;overflow-y:auto}
+.scrollable .hb{position:sticky;top:0;z-index:5}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside class="toc">
+  <b>Pennedly</b>
+  <nav>
+    <a href="#s1">1 · Why trimming fails</a>
+    <a href="#s2">2 · The rule</a>
+    <a href="#s3">3 · Three categories</a>
+    <a href="#s4">4 · Geometry &amp; the 88px guard</a>
+    <a href="#s5">5 · Counters: 1–3 digits, 99+</a>
+    <a href="#s6">6 · Live demo — 375 &amp; 1280</a>
+    <a href="#s7">7 · Where evicted strings land</a>
+    <a href="#s8">8 · Per-pill verdicts</a>
+    <a href="#s9">9 · Exact values</a>
+    <a href="#s10">10 · Phone vs desktop</a>
+    <a href="#s11">11 · Checklist</a>
+  </nav>
+</aside>
+<main>
+  <p class="kicker">Pennedly · amends App-Header-Pill-Placement-SPEC §6 &amp; §9.1</p>
+  <h1 class="title">Bar pill — the length contract</h1>
+  <p class="lede">132px was a budget for a <em>sentence</em>, and no sentence budget survives eight locales plus an unbounded counter. The fix is not a smaller budget — it is a <b>different shape</b>. A bar pill is a glyph and a number; it carries no translated words at all, so its width stops being a function of language. The ceiling drops from 132px to <b>81px</b> and holds in every locale at every counter, forever. <a href="App-Header-Pill-Placement-SPEC.html">← placement spec</a></p>
+
+  <section id="s1">
+    <h2><span class="n">1</span>Why trimming fails</h2>
+    <p class="section-note">Your 58/120 failure rate is not a translation-quality problem. It is arithmetic: the pill has ~93px of text room, and the shape <code>count + verb phrase</code> needs a verb phrase. Even English "6 need a reply" is 136px once the counter reaches three digits. Every trim you pick today is a bet that no account ever crosses 99.</p>
+    <div class="mks">
+      <div class="mk">
+        <div class="mk-lab">TODAY · <i>375 · uk · /app/replies · 3-digit</i><span class="tag no">truncates</span></div>
+        <div class="dev dev--375 bad">
+          <div class="hb">
+            <span class="hb-burger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span>
+            <span class="pill-old"><span class="dot"></span>128 потребують від…</span>
+            <span class="hb-title ghost">Відповіді</span>
+            <span class="hb-actions"><span class="hb-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg></span></span>
+          </div>
+          <div class="pg"><h1>Відповіді</h1></div><div class="cut"></div>
+        </div>
+        <div class="mk-val">pill needs <b>194px</b>, has 132 → label cut mid-word<br/>title box <b>93px</b> → "Відповіді" (84px) survives by 9px<br/>the number is intact but the verb is gone — the pill now says "128 something"</div>
+      </div>
+      <div class="mk">
+        <div class="mk-lab">TODAY · <i>375 · de · /app/overview</i><span class="tag no">truncates</span></div>
+        <div class="dev dev--375 bad">
+          <div class="hb">
+            <span class="hb-burger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span>
+            <span class="pill-old"><span class="dot"></span>4 Konten · täglic…</span>
+            <span class="hb-title ghost">Übersicht</span>
+            <span class="hb-actions"><span class="hb-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg></span></span>
+          </div>
+          <div class="pg"><h1>Übersicht</h1></div><div class="cut"></div>
+        </div>
+        <div class="mk-val">needs <b>238px</b>, has 132<br/>this string is <b>two facts joined by a middot</b> — a count and a freshness note. It was never one pill.</div>
+      </div>
+    </div>
+    <div class="note bad"><b>Why §6 taken literally is the wrong read.</b> §6 says "longer than 132px is not a bar pill". Applied to this data it evicts 10 of 10 pills and leaves the leading slot — the slot the placement spec exists to defend — permanently empty. §6's <em>test</em> was right (is it acted-on state?) but it bound that test to a <em>prose</em> pill. Unbind them: keep the eviction test for what the pill <em>means</em>, and change what the pill <em>contains</em> so length stops being the deciding variable.</div>
+  </section>
+
+  <section id="s2">
+    <h2><span class="n">2</span>The rule</h2>
+    <div class="note rule"><b>A bar pill is one glyph and one number. It contains no translated words.</b><br/>The glyph carries the noun. The number carries the payload. The full localized sentence lives in <code>aria-label</code> and in the desktop tooltip, so nothing is lost — it is simply not <em>rendered</em> in a 335px row. A pill with no number to show is a glyph alone. A pill with neither is <b>not a pill</b> and does not appear.</div>
+    <p class="section-note">The reason this works — and the reason it is not information loss — is the slot order the placement spec already shipped. The pill sits <em>immediately before</em> the title, so pill and title are read as one phrase:</p>
+    <div class="strip" style="justify-content:center;gap:20px">
+      <div class="cell">
+        <div class="hb" style="height:auto;padding:0;border:none;background:none;column-gap:10px">
+          <span class="pill pill--warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 7 4 12l5 5M4 12h9a6 6 0 0 1 6 6v1"/></svg><span class="n">128</span></span>
+          <span class="hb-title" style="flex:0 0 auto">Відповіді</span>
+        </div>
+        <em>uk · reads "128 · Replies"</em>
+      </div>
+      <div class="cell">
+        <div class="hb" style="height:auto;padding:0;border:none;background:none;column-gap:10px">
+          <span class="pill pill--warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 7 4 12l5 5M4 12h9a6 6 0 0 1 6 6v1"/></svg><span class="n">128</span></span>
+          <span class="hb-title" style="flex:0 0 auto">Antworten</span>
+        </div>
+        <em>de · identical width</em>
+      </div>
+      <div class="cell">
+        <div class="hb" style="height:auto;padding:0;border:none;background:none;column-gap:10px">
+          <span class="pill pill--warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 7 4 12l5 5M4 12h9a6 6 0 0 1 6 6v1"/></svg><span class="n">128</span></span>
+          <span class="hb-title" style="flex:0 0 auto">Replies</span>
+        </div>
+        <em>en · identical width</em>
+      </div>
+    </div>
+    <p class="section-note">"128 need a reply" was restating the screen the user is already on. The screen name is 10px to the right, at 19px/600, in their language. The pill only ever had to supply the number and the alarm level — which is exactly what a coloured glyph and a numeral do.</p>
+    <div class="note ok"><b>What this buys, in numbers.</b> Widest possible pill drops <b>132 → 81px</b>. Typical pill 58px. The docked title's slot at 375px grows from <b>93px → 137px worst case, 167px typical</b> — so titles that truncate today ("Відповіді", "Erwähnungen", "Übersicht") render whole. And the CI assertion becomes trivial: pill content must match <code>/^(\d{1,2}\+?|\d{1,2}\/\d{1,2}|[+−]\d{1,3}%)?$/</code> — a regex, not a font measurement in 8 locales.</div>
+    <div class="note bad"><b>Rejected — shrink type to 11px and keep prose.</b> Buys ~15%; uk still overflows on 6 of 10 pills, and 11px sits below the app's smallest shipped size. It also fails again the first time a counter gains a digit, which is the failure mode you already have.</div>
+    <div class="note bad"><b>Rejected — per-locale short strings ("6 unans.", "6 offen").</b> Abbreviated Cyrillic and German are unreadable, the abbreviations need review in 8 languages on every copy change, and the shape still scales with the counter. It converts a structural problem into permanent translation debt.</div>
+  </section>
+
+  <section id="s3">
+    <h2><span class="n">3</span>Three categories, one test</h2>
+    <p class="section-note">The ten pills are not one kind of thing. Sort them first, then apply the shape rule to whatever survives.</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:150px">Category</th><th style="width:230px">Test</th><th style="width:150px">Renders as</th><th>Rationale</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>A · Acted-on state</b></td>
+          <td>Does a number in it change, and does a change mean the user should <em>do</em> something?</td>
+          <td><b>Bar pill</b> — glyph + number</td>
+          <td>The only category worth a permanently-visible, scroll-independent slot. "6 need a reply", "4 to review", "4 active", "2 conflicts", "4/6 on".</td>
+        </tr>
+        <tr>
+          <td><b>B · Freshness metadata</b></td>
+          <td>Is it about <em>when the data was fetched</em> rather than what is in it?</td>
+          <td><b>Never a pill.</b> Toolbar row, or hero meta line (§7)</td>
+          <td>Ambient. Nobody scrolls up to check it, so it does not need the sticky slot — which is the entire justification for being in the bar. This generalises §6 from two strings to all of them.</td>
+        </tr>
+        <tr>
+          <td><b>C · Static screen labels</b></td>
+          <td>Is the string identical on every visit, for every account, forever?</td>
+          <td><b>No pill at all.</b> Hero subtitle or body copy</td>
+          <td>A pill's visual grammar promises liveness. A constant in a live-status chip is a lie the user learns to ignore — and it costs the most width of any category ("Grounded in your portfolio": 257px in uk).</td>
+        </tr>
+      </tbody>
+    </table></div>
+    <div class="note"><b>The one-line test, for anyone adding a pill later:</b> <em>"Can I write it as a glyph and a number, and would a change in that number make the user act?"</em> Yes → bar pill. No → it is copy, and copy belongs in the hero or the toolbar, where it has a full row and never truncates.</div>
+    <h3>3.1 · Category C is the biggest win, and it is free</h3>
+    <div class="mks">
+      <div class="mk">
+        <div class="mk-lab">BEFORE · <i>375 · uk · /app/advisor</i><span class="tag no">257px needed</span></div>
+        <div class="dev dev--375 bad">
+          <div class="hb"><span class="hb-burger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="pill-old"><span class="dot"></span>Спирається на ваш…</span><span class="hb-title">Радник</span><span class="hb-actions"><span class="hb-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/></svg></span></span></div>
+          <div class="pg"><h1>Радник</h1><p>Питайте про будь-що у ваших даних.</p></div><div class="cut"></div>
+        </div>
+        <div class="mk-val">A trust claim, truncated to a fragment. Worst possible place for the one string whose job is to build confidence.</div>
+      </div>
+      <div class="mk">
+        <div class="mk-lab">AFTER · <i>375 · uk · /app/advisor</i><span class="tag yes">full text</span></div>
+        <div class="dev dev--375 good">
+          <div class="hb"><span class="hb-burger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="hb-title">Радник</span><span class="hb-actions"><span class="hb-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/></svg></span></span></div>
+          <div class="pg"><h1>Радник</h1><p>Питайте про будь-що у ваших даних — відповіді спираються на ваш портфель, а не на загальні поради.</p></div><div class="cut"></div>
+        </div>
+        <div class="mk-val">Same claim, <b>full sentence, every locale, no ceiling.</b> The bar keeps a clean leading slot for the day this screen gets a real counter.</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="s4">
+    <h2><span class="n">4</span>Geometry &amp; the 88px guard</h2>
+    <p class="section-note">Chrome is fixed at <b>42px</b>: 10 + 10 padding, 1 + 1 border, 14px glyph, 6px gap. Everything else is digits at Geist 13px/600 with <code>font-variant-numeric: tabular-nums</code> — <b>8px per digit, identical in all 8 locales</b> because digits are not translated.</p>
+    <div class="strip">
+      <div class="cell"><span class="pill pill--ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4.5 12.5 9.5 17.5 19.5 6.5"/></svg></span><em>36px · glyph only</em></div>
+      <div class="cell"><span class="pill pill--warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 7 4 12l5 5M4 12h9a6 6 0 0 1 6 6v1"/></svg><span class="n">6</span></span><em>50px · 1 digit</em></div>
+      <div class="cell"><span class="pill pill--warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 7 4 12l5 5M4 12h9a6 6 0 0 1 6 6v1"/></svg><span class="n">42</span></span><em>58px · 2 digits</em></div>
+      <div class="cell"><span class="pill pill--warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 7 4 12l5 5M4 12h9a6 6 0 0 1 6 6v1"/></svg><span class="n">99+</span></span><em>66px · overflow</em></div>
+      <div class="cell"><span class="pill pill--acc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19V6M6 11l6-6 6 6"/></svg><span class="n">+18%</span></span><em>76px · delta</em></div>
+      <div class="cell"><span class="pill pill--acc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3.5" y="8" width="17" height="8" rx="4"/><circle cx="15.5" cy="12" r="2.2" fill="currentColor" stroke="none"/></svg><span class="n">99/99</span></span><em>81px · worst case</em></div>
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:200px">Content</th><th style="width:120px">Glyph run</th><th style="width:110px">Text width</th><th style="width:110px">Total</th><th>Where it occurs</th></tr></thead>
+      <tbody>
+        <tr><td>Glyph only</td><td>0</td><td>0</td><td><b>36px</b></td><td>Zero/empty states, alert states</td></tr>
+        <tr><td>1 digit <code>6</code></td><td>1</td><td>8</td><td><b>50px</b></td><td>Typical</td>
+        </tr><tr><td>2 digits <code>42</code></td><td>2</td><td>16</td><td><b>58px</b></td><td>Typical-high</td></tr>
+        <tr><td>Overflow <code>99+</code></td><td>3</td><td>24</td><td><b>66px</b></td><td>Any counter ≥ 100</td></tr>
+        <tr><td>Delta <code>+18%</code></td><td>4</td><td>34</td><td><b>76px</b></td><td><code>/app/stats</code> only</td></tr>
+        <tr><td>Ratio <code>99/99</code></td><td>5</td><td>39</td><td><b>81px</b></td><td><code>voice.tabs.antiRobot</code> only</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note"><b><code>max-width: 88px</code> is a guard, not a truncation point.</b> Content is bounded by construction — the abbreviation rules in §5 make <b>81px</b> the arithmetic maximum, so the guard sits <b>7px clear</b> of the widest possible pill and should never engage. That headroom is deliberate: it absorbs font-metric drift (a CI fallback face, a different Geist subset) without clipping. If it engages, a pill is rendering a word: that is a bug, and the CI regex in §11 catches it before layout does.</div>
+    <h3>4.1 · Slot arithmetic at 375px</h3>
+    <div class="mk">
+      <div class="dev dev--375">
+        <div class="hb"><span class="hb-burger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="pill pill--warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 7 4 12l5 5M4 12h9a6 6 0 0 1 6 6v1"/></svg><span class="n">99+</span></span><span class="hb-title">Відповіді</span><span class="hb-actions"><span class="hb-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/></svg></span></span></div>
+        <div class="mk-ruler">
+          <span style="left:20px;width:40px">40</span>
+          <span style="left:70px;width:66px">66</span>
+          <span style="left:146px;width:169px">title 157</span>
+          <span style="left:315px;width:40px">40</span>
+        </div>
+      </div>
+      <div class="mk-val"><b>375 viewport · row inner 335px</b> (20px padding each side)<br/>fixed: burger 40 + actions 40 + 3 gaps ×10 = <b>110px</b> · free: <b>225px</b><br/>was: pill 132 → title <b>93px</b> · now: pill 66 → title <b>157px measured</b> (159 arithmetic — the 2px is sub-pixel icon-box rounding) · pill at the 88 guard → title <b>135px</b><br/>longest docked title in any locale ("Erwähnungen" 118px, "Відповіді" 84px, "Übersicht" 88px) now fits <b>whole</b>.</div>
+    </div>
+  </section>
+
+  <section id="s5">
+    <h2><span class="n">5</span>Counters — 1, 2 and 3 digits</h2>
+    <div class="note rule"><b>Abbreviation threshold: literal to 99, <code>99+</code> at 100 and above.</b> Never <code>999+</code>, never <code>1.2k</code>. Three glyphs is the cap, so the widest counter pill is 66px, permanently.</div>
+    <p class="section-note">The threshold is not arbitrary. Past ~99 these counters stop being quantities and become "a lot" — a user with 128 unanswered comments and one with 340 take the same action, and neither counts them. Capping at two digits keeps the number in the range where it changes behaviour, and it is what makes a fixed budget survivable rather than a bet on your users staying small.</p>
+    <div class="mks">
+      <div class="mk">
+        <div class="mk-lab">COUNTER RAMP · <i>/app/replies · de</i></div>
+        <div class="dev dev--375">
+          <div class="hb"><span class="hb-burger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="pill pill--warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 7 4 12l5 5M4 12h9a6 6 0 0 1 6 6v1"/></svg><span class="n">6</span></span><span class="hb-title">Antworten</span><span class="hb-actions"><span class="hb-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/></svg></span></span></div>
+          <div class="hb" style="border-top:1px dashed var(--color-border)"><span class="hb-burger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="pill pill--warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 7 4 12l5 5M4 12h9a6 6 0 0 1 6 6v1"/></svg><span class="n">42</span></span><span class="hb-title">Antworten</span><span class="hb-actions"><span class="hb-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/></svg></span></span></div>
+          <div class="hb" style="border-top:1px dashed var(--color-border)"><span class="hb-burger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="pill pill--warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 7 4 12l5 5M4 12h9a6 6 0 0 1 6 6v1"/></svg><span class="n">99+</span></span><span class="hb-title">Antworten</span><span class="hb-actions"><span class="hb-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/></svg></span></span></div>
+          <div class="hb" style="border-top:1px dashed var(--color-border)"><span class="hb-burger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="pill pill--ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4.5 12.5 9.5 17.5 19.5 6.5"/></svg></span><span class="hb-title">Antworten</span><span class="hb-actions"><span class="hb-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/></svg></span></span></div>
+        </div>
+        <div class="mk-val">6 → 50px · 42 → 58px · 99+ → 66px · <b>0 → check glyph, 36px</b><br/>Title x moves by at most 16px across the whole range and never reflows anything else — the actions are <code>margin-left:auto</code>.</div>
+      </div>
+      <div class="mk">
+        <div class="mk-lab">ZERO STATES · <i>the three shapes</i></div>
+        <div class="dev dev--375" style="padding:14px 20px">
+          <div class="strip" style="margin:0;border:none;background:none;padding:0;flex-direction:column;align-items:flex-start;gap:12px">
+            <div style="display:flex;align-items:center;gap:10px"><span class="pill pill--ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4.5 12.5 9.5 17.5 19.5 6.5"/></svg></span><span class="mono" style="color:var(--color-text-subtle)">work queue emptied → success check</span></div>
+            <div style="display:flex;align-items:center;gap:10px"><span class="pill pill--idle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 3 5 13h6l-1 8 8-10h-6l1-8Z"/></svg><span class="n">0</span></span><span class="mono" style="color:var(--color-text-subtle)">nothing configured → idle 0</span></div>
+            <div style="display:flex;align-items:center;gap:10px"><span class="pill pill--warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span><span class="mono" style="color:var(--color-text-subtle)">setup missing → warning glyph, tappable</span></div>
+          </div>
+        </div>
+        <div class="mk-val"><b>"All handled" and "All off" stop being strings.</b> An emptied work queue is a success check (36px). A never-configured feature is an idle <code>0</code> — honest, locale-free, and it keeps the pill's position stable as the count climbs off zero.</div>
+      </div>
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:170px">Value</th><th style="width:120px">Renders</th><th style="width:90px">Width</th><th style="width:130px">Tone</th><th><code>aria-label</code></th></tr></thead>
+      <tbody>
+        <tr><td><code>n = 0</code>, queue type</td><td>✓ glyph</td><td>36px</td><td><code>--color-success</code></td><td>full localized "All handled"</td></tr>
+        <tr><td><code>n = 0</code>, config type</td><td><code>0</code></td><td>50px</td><td><code>--color-text-subtle</code></td><td>full localized "All off" / "None active"</td></tr>
+        <tr><td><code>1 ≤ n ≤ 9</code></td><td><code>n</code></td><td>50px</td><td>per screen</td><td>full localized "{n} need a reply"</td></tr>
+        <tr><td><code>10 ≤ n ≤ 99</code></td><td><code>n</code></td><td>58px</td><td>per screen</td><td>full localized</td></tr>
+        <tr><td><code>n ≥ 100</code></td><td><code>99+</code></td><td>66px</td><td>per screen</td><td>full localized with the <b>real</b> n, not 99+</td></tr>
+        <tr><td>Ratio <code>{on}/{total}</code></td><td><code>4/6</code></td><td>65–81px</td><td><code>--color-accent</code></td><td>full localized "{on} of {total} on"</td></tr>
+        <tr><td>Delta</td><td><code>+18%</code></td><td>76px</td><td>accent ↑ / warning ↓</td><td>full localized, with period</td></tr>
+        <tr><td>Alert, no count</td><td>△ glyph</td><td>36px</td><td><code>--color-warning</code></td><td>full localized "Voice not set up"</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note"><b>Tone is the second channel and it is not decorative.</b> Success / warning / accent / idle are the four allowed tones, and the pill is the only element in the bar that carries colour — so a glance answers "is anything wrong?" without reading anything. Ratios and deltas never use warning unless the delta is negative. No new tokens.</div>
+  </section>
+
+  <section id="s6">
+    <h2><span class="n">6</span>Live demo — worst case, both viewports</h2>
+    <p class="section-note">Ukrainian, 3-digit counters, dark. Scroll the phone frame: the pill's left edge stays at x=70 at every scroll position, per the placement spec's constraint. Toggle the counter and the locale to prove the width is language-invariant.</p>
+    <div class="strip" style="gap:8px">
+      <button id="btn-loc" style="font:500 13px var(--font-sans);padding:7px 14px;border-radius:8px;border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text);cursor:pointer">Locale: <b id="loc-name">uk</b></button>
+      <button id="btn-n" style="font:500 13px var(--font-sans);padding:7px 14px;border-radius:8px;border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text);cursor:pointer">Counter: <b id="n-name">128 → 99+</b></button>
+      <span class="mono" style="color:var(--color-text-subtle);margin-left:6px">pill width: <b id="pw" style="color:var(--color-accent)">—</b> · title slot: <b id="tw" style="color:var(--color-accent)">—</b></span>
+    </div>
+    <div class="mks">
+      <div class="mk">
+        <div class="mk-lab">375 · <i>/app/replies · scroll me</i></div>
+        <div class="dev dev--375">
+          <div class="scrollable hdr-scroll" id="lp1">
+            <div class="hb">
+              <span class="hb-burger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span>
+              <span class="pill pill--warn" id="d-pill" title="128 потребують відповіді" aria-label="128 потребують відповіді"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 7 4 12l5 5M4 12h9a6 6 0 0 1 6 6v1"/></svg><span class="n" id="d-n">99+</span></span>
+              <span class="hb-title" id="d-title" style="opacity:var(--hdr-reveal,0)">Відповіді</span>
+              <span class="hb-actions"><span class="hb-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg></span></span>
+            </div>
+            <div class="pg" style="opacity:calc(1 - var(--hdr-reveal,0))"><h1 id="d-h1">Відповіді</h1><p id="d-sub">128 коментарів чекають на вашу відповідь.</p></div>
+            <div class="rows" id="lr1"></div>
+          </div>
+        </div>
+        <div class="mk-val">pill left edge <b>x=70</b> at scrollTop 0 and 200 · bar 52px in both states<br/>full string is on the pill as <code>aria-label</code> + <code>title</code></div>
+      </div>
+      <div class="mk">
+        <div class="mk-lab">375 · <i>/app/voice · ratio + alert, no hero</i></div>
+        <div class="dev dev--375">
+          <div class="hb" style="--hdr-reveal:1">
+            <span class="hb-burger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span>
+            <span class="pill pill--acc" title="4 з 6 увімкнено" aria-label="4 з 6 увімкнено"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3.5" y="8" width="17" height="8" rx="4"/><circle cx="15.5" cy="12" r="2.2" fill="currentColor" stroke="none"/></svg><span class="n">4/6</span></span>
+            <span class="hb-title">Голос бренду</span>
+            <span class="hb-actions"><span class="hb-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/></svg></span></span>
+          </div>
+          <div class="tb">Анти-робот <span class="fresh"><span style="width:6px;height:6px;border-radius:50%;background:currentColor"></span>Перевірено щойно</span></div>
+          <div class="rows"><div class="row"></div><div class="row"></div><div class="row"></div></div>
+        </div>
+        <div class="mk-val">Ratio pill 65px here; 81px at its <code>99/99</code> maximum — the widest shape in the app, still 51px under the old ceiling.<br/>Freshness sits in the toolbar row at full length (§7).</div>
+      </div>
+    </div>
+    <h3>6.1 · 1280px · desktop, no hamburger</h3>
+    <div class="scale-box">
+      <div class="dev dev--1280">
+        <div class="hb hb--desk" style="--hdr-reveal:1">
+          <span class="pill pill--warn" title="128 потребують відповіді" aria-label="128 потребують відповіді"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 7 4 12l5 5M4 12h9a6 6 0 0 1 6 6v1"/></svg><span class="n">99+</span></span>
+          <span class="hb-title">Відповіді</span>
+          <span class="hb-actions"><span class="hb-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg></span><span class="hb-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 3v2M19 12h2"/></svg></span></span>
+        </div>
+        <div class="pg pg--desk"><h1>Відповіді</h1><p>128 коментарів чекають на вашу відповідь.</p><div class="meta">Оновлено щойно<span class="sep">·</span>4 акаунти<span class="sep">·</span>оновлюється щогодини</div></div>
+        <div class="rows rows--desk"><div class="row row--tall"></div><div class="row row--tall"></div><div class="row row--tall"></div></div>
+      </div>
+    </div>
+    <div class="mk-val" style="max-width:none">Pill x = <b>24px</b>, identical to the placement spec. Desktop hovers the pill for the full localized string via <code>title</code>; the hero meta line carries freshness in full. Frame is 1280px scaled to 78% to fit this page.</div>
+  </section>
+
+  <section id="s7">
+    <h2><span class="n">7</span>Where the evicted strings land</h2>
+    <p class="section-note">Two destinations, chosen by what the screen already has. Neither is a new component in the sense of new chrome — the toolbar row exists, and the meta line is four declarations.</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:220px">Screen has…</th><th style="width:200px">Destination</th><th>Spec</th></tr></thead>
+      <tbody>
+        <tr><td>A persistent toolbar row<br/><span class="mono" style="color:var(--color-text-subtle)">/app/feed, /app/mentions, /app/mentions/routines, /app/voice</span></td><td><b>Toolbar row</b>, right-aligned</td><td>Unchanged from placement spec §6: 24px chip, <code>0 10px</code>, 12px/500, accent 14%/30%, <code>margin-left:auto</code>. Full text, never truncates, not part of the collapse.</td></tr>
+        <tr><td>Only a title + subtitle<br/><span class="mono" style="color:var(--color-text-subtle)">/app/overview, /app/stats, /app/advisor</span></td><td><b>Hero meta line</b></td><td>New, minimal: a flex row directly below the subtitle. <code>margin-top:8px; font-size:13px; line-height:1.45; color:var(--color-text-subtle); gap:4px 8px; flex-wrap:wrap</code>. Middot separators at <code>opacity:.5</code>. Fades with the hero: <code>opacity: calc(1 - var(--hdr-reveal))</code>. <b>No chip, no border, no background</b> — it is metadata, so it reads as metadata.</td></tr>
+      </tbody>
+    </table></div>
+    <div class="mks">
+      <div class="mk">
+        <div class="mk-lab">HERO META · <i>375 · de · /app/overview</i><span class="tag yes">fix</span></div>
+        <div class="dev dev--375 good">
+          <div class="hb" style="--hdr-reveal:0"><span class="hb-burger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="pill pill--acc" title="4 Konten" aria-label="4 Konten"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg><span class="n">4</span></span><span class="hb-title">Übersicht</span><span class="hb-actions"><span class="hb-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/></svg></span></span></div>
+          <div class="pg"><h1>Übersicht</h1><p>Alle Konten auf einen Blick.</p><div class="meta">Täglich aktualisiert<span class="sep">·</span>zuletzt heute 09:14</div></div>
+          <div class="rows"><div class="row row--tall"></div></div>
+        </div>
+        <div class="mk-val">The <code>·</code>-joined string is <b>split back into its two facts</b>: the count becomes the pill, the freshness becomes the meta line — at full length, in German, with room for the timestamp the old string had no space for.</div>
+      </div>
+      <div class="mk">
+        <div class="mk-lab">HERO META · <i>375 · de · /app/stats</i><span class="tag yes">fix</span></div>
+        <div class="dev dev--375 good">
+          <div class="hb" style="--hdr-reveal:0"><span class="hb-burger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="pill pill--acc" title="+18 % gegenüber den letzten 30 Tagen" aria-label="+18 Prozent gegenüber den letzten 30 Tagen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19V6M6 11l6-6 6 6"/></svg><span class="n">+18%</span></span><span class="hb-title">Statistik</span><span class="hb-actions"><span class="hb-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/></svg></span></span></div>
+          <div class="pg"><h1>Statistik</h1><p>Letzte 30 Tage.</p><div class="meta">Gerade aktualisiert<span class="sep">·</span>stündlich</div></div>
+          <div class="rows"><div class="row row--tall"></div></div>
+        </div>
+        <div class="mk-val"><code>relTime</code> leaves the bar for good. It changes every minute — the one thing that should never occupy a slot the user is told never moves.</div>
+      </div>
+    </div>
+    <div class="note"><b>Why not a toolbar row on Overview and Stats?</b> A toolbar row is for controls — filters, sorts, segmented switches. Adding a full-width bordered row to carry one timestamp gives ambient metadata more visual weight than the content it describes, and costs 45px of vertical on a 52px-bar phone. The meta line costs 19px and no chrome.</div>
+  </section>
+
+  <section id="s8">
+    <h2><span class="n">8</span>Per-pill verdicts</h2>
+    <p class="section-note">All ten pills from the audit, plus the two strings the <code>·</code>-joined Overview pill decomposes into. <b>Six stay</b> (as glyph + number), <b>three move</b>, <b>three are refused</b>.</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:170px">Key</th><th style="width:100px">Category</th><th style="width:96px">Verdict</th><th style="width:150px">Renders as</th><th style="width:70px">Max px</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>replies.need_reply</code></td><td>A</td><td><span class="v stay">stays</span></td>
+          <td>↩ + count · warning<br/>0 → ✓ success</td><td>66</td>
+          <td>Was 194px in uk. Zero state replaces "All handled" / "Все разобрано" entirely.</td>
+        </tr>
+        <tr>
+          <td><code>audits.to_review</code></td><td>A</td><td><span class="v stay">stays</span></td>
+          <td>▤ + count · accent<br/>0 → ✓ success</td><td>66</td>
+          <td>Was 146px in uk at 3 digits. Now locale-invariant.</td>
+        </tr>
+        <tr>
+          <td><code>scenarios.all_off</code><br/>+ <code>scenarios.active</code></td><td>A</td><td><span class="v stay">stays</span></td>
+          <td>⚡ + count · accent<br/>0 → <code>0</code> idle</td><td>58</td>
+          <td><b>"All off" stops existing as a string.</b> It is <code>n = 0</code> on the same pill, in <code>--color-text-subtle</code>. Was 142px in pt.</td>
+        </tr>
+        <tr>
+          <td><code>voice.conflicts_pill</code></td><td>A</td><td><span class="v stay">stays</span></td>
+          <td>⚠ + count · warning<br/>0 → pill hidden</td><td>66</td>
+          <td>Zero conflicts is the normal state and needs no chrome — this is the one counter that hides at 0 rather than showing a check.</td>
+        </tr>
+        <tr>
+          <td><code>voice.tabs.antiRobot.pill</code></td><td>A</td><td><span class="v stay">stays</span></td>
+          <td>◉ + <code>{on}/{total}</code> · accent</td><td><b>81</b></td>
+          <td>Widest shape in the app. Operands capped at 99 each. Was 154px in es.</td>
+        </tr>
+        <tr>
+          <td><code>explore.pill</code></td><td>A</td><td><span class="v stay">stays</span></td>
+          <td>⌕ + count · accent</td><td>66</td>
+          <td>Was 191px in pt. "found" is implied by the screen being a search result.</td>
+        </tr>
+        <tr>
+          <td><code>overview</code> — count half<br/><span class="mono" style="color:var(--color-text-subtle)">"{n} accounts"</span></td><td>A</td><td><span class="v stay">stays</span></td>
+          <td>◍ + count · accent</td><td>58</td>
+          <td><b>Split from the <code>·</code> string.</b> Counts here are 1–2 digits by nature; 99+ still applies.</td>
+        </tr>
+        <tr>
+          <td><code>stats</code> — delta<br/><span class="mono" style="color:var(--color-text-subtle)">"+18%"</span></td><td>A</td><td><span class="v stay">stays</span></td>
+          <td>↗ + signed % · accent<br/>negative → ↘ warning</td><td>76</td>
+          <td>Already numeric. Period ("last 30 days") moves to the hero subtitle, which already states it.</td>
+        </tr>
+        <tr>
+          <td><code>dashboard.voice_not_set</code></td><td>A (alert)</td><td><span class="v stay">stays</span></td>
+          <td><code>IcVoice</code> glyph only · warning<br/>tappable → voice setup</td><td><b>36</b></td>
+          <td>Was 192px in de. The glyph is the alarm; the <em>actionable</em> version of this string stays as a full dashboard card with a button, which is where a user can actually resolve it. Pill is <code>&lt;button&gt;</code>, <code>aria-label</code> carries the sentence.</td>
+        </tr>
+        <tr>
+          <td><code>overview</code> — freshness half<br/><span class="mono" style="color:var(--color-text-subtle)">"updated daily"</span></td><td>B</td><td><span class="v move">moves</span></td>
+          <td>Hero meta line</td><td>—</td>
+          <td>No toolbar row on this screen. Gains room for the actual timestamp.</td>
+        </tr>
+        <tr>
+          <td><code>stats</code> — <code>relTime</code></td><td>B</td><td><span class="v move">moves</span></td>
+          <td>Hero meta line</td><td>—</td>
+          <td>Was 116px in ru against 90 available. Changes every minute; must not live in a slot specified as motionless.</td>
+        </tr>
+        <tr>
+          <td><code>mr.pill</code> "Auto-scenarios"<br/><span class="mono" style="color:var(--color-text-subtle)">/app/mentions/routines</span></td><td>C</td><td><span class="v drop">refused</span></td>
+          <td>—<br/>replaced by <code>IcRepeat</code> + active count</td><td>58</td>
+          <td>Was 180px in es, and it <b>restates the screen title</b> — the bar would read "Auto-scenarios · Auto-scenarios". If an active-routine count exists, use it; otherwise no pill. This screen has a toolbar row for anything else.</td>
+        </tr>
+        <tr>
+          <td><code>acc.adv_pill</code><br/><span class="mono" style="color:var(--color-text-subtle)">"Grounded in your portfolio"</span></td><td>C</td><td><span class="v drop">refused</span></td>
+          <td>Hero subtitle sentence</td><td>—</td>
+          <td>257px in uk. A trust claim truncated to a fragment builds no trust; merged into the subtitle it runs full-length in every locale. See §3.1.</td>
+        </tr>
+        <tr>
+          <td><code>agent.pill</code> "Reads your data"</td><td>C</td><td><span class="v drop">refused</span></td>
+          <td>Agent rail — data-source list</td><td>—</td>
+          <td>Already hidden below md, which was the right instinct for the wrong reason. The Agent screen's right rail lists the actual sources it reads; that <em>demonstrates</em> the claim instead of asserting it. Delete the string. See <a href="../screens/advisor/Agent-Redesign-SPEC.html">Agent-Redesign-SPEC</a>.</td>
+        </tr>
+      </tbody>
+    </table></div>
+    <div class="note ok"><b>Net effect on the leading slot:</b> 9 of 14 rows render a bar pill, up from "nearly zero" under a literal §6 reading. The slot the placement spec defends is occupied on the screens where occupancy means something, and empty on the ones where it never had content worth pinning.</div>
+    <h3>8.1 · Glyph assignment</h3>
+    <p class="section-note">Every glyph is an <b>existing export from <code>system/studio-icons.jsx</code></b>, cited by name below — do not substitute a same-named icon from another set, since the 14px distinctness argument depends on these exact paths. Exactly one glyph is <b>new</b> and must be added to that file before this ships: <code>IcToggle</code>. All are drawn on the shared 24 viewBox, <code>currentColor</code>, no fills except the two dots.</p>
+    <div class="note"><b>One permitted override.</b> The set's shared <code>&lt;Svg&gt;</code> wrapper hard-codes <code>stroke-width="1.8"</code>, tuned for its 18px default. At 14px that reads optically lighter than the rest of the bar, so the pill sets <code>stroke-width: 2</code> in CSS (a presentation attribute, so the stylesheet wins without touching the components). Round caps and joins are inherited unchanged.</div>
+    <div class="strip">
+      <div class="cell"><span class="pill pill--warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 7 4 12l5 5M4 12h9a6 6 0 0 1 6 6v1"/></svg><span class="n">6</span></span><em>replies · <code>IcReply</code></em></div>
+      <div class="cell"><span class="pill pill--acc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M8 4h8a1 1 0 0 1 1 1v1h1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h1V5a1 1 0 0 1 1-1Z"/><path d="M8.5 13.5l2.2 2.2 4.3-4.6"/></svg><span class="n">4</span></span><em>audits · <code>IcAudit</code></em></div>
+      <div class="cell"><span class="pill pill--acc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 3 5 13h6l-1 8 8-10h-6l1-8Z"/></svg><span class="n">4</span></span><em>scenarios · <code>IcBolt</code></em></div>
+      <div class="cell"><span class="pill pill--warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4 2.5 20.5h19L12 4Z"/><path d="M12 10v4.5"/><circle cx="12" cy="17.6" r=".8" fill="currentColor" stroke="none"/></svg><span class="n">2</span></span><em>conflicts · <code>IcAlert</code></em></div>
+      <div class="cell"><span class="pill pill--acc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3.5" y="8" width="17" height="8" rx="4"/><circle cx="15.5" cy="12" r="2.2" fill="currentColor" stroke="none"/></svg><span class="n">4/6</span></span><em>anti-robot · <code>IcToggle</code> ✦ new</em></div>
+      <div class="cell"><span class="pill pill--acc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8.5"/><path d="M15.2 8.8 13.4 13.4 8.8 15.2 10.6 10.6Z"/></svg><span class="n">12</span></span><em>explore · <code>IcCompass</code></em></div>
+      <div class="cell"><span class="pill pill--acc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg><span class="n">4</span></span><em>overview · <code>IcOverview</code></em></div>
+      <div class="cell"><span class="pill pill--acc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19V6M6 11l6-6 6 6"/></svg><span class="n">+18%</span></span><em>stats · <code>IcArrowUp</code> / <code>IcArrowDown</code></em></div>
+      <div class="cell"><span class="pill pill--warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span><em>voice not set · <code>IcVoice</code></em></div>
+      <div class="cell"><span class="pill pill--ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4.5 12.5 9.5 17.5 19.5 6.5"/></svg></span><em>zero state · <code>IcCheck</code></em></div>
+    </div>
+    <div class="note"><b>Where the assignments come from.</b> <code>IcCompass</code> is already the Explore-patterns nav mark and <code>IcOverview</code> the all-accounts mark, so those pills reuse the glyph the user's own sidebar taught them. <code>IcRepeat</code> — the Scenarios recurring mark — carries the routines count, keeping it distinct from <code>IcBolt</code> on <code>/app/scenarios</code>. <code>IcVoice</code> rather than <code>IcAlert</code> on <code>voice_not_set</code>: the glyph names the subject, the amber tone supplies the alarm, and nothing in the app then shares a glyph. <b><code>IcToggle</code> is the one addition</b> — <code>&lt;rect x="3.5" y="8" width="17" height="8" rx="4"/&gt;&lt;circle cx="15.5" cy="12" r="2.2" fill="currentColor" stroke="none"/&gt;</code> — add it to <code>studio-icons.jsx</code> and export it alongside the rest.</div>
+  </section>
+
+  <section id="s9">
+    <h2><span class="n">9</span>Exact values</h2>
+    <h3>9.1 · Pill box — replaces placement spec §9.1's pill rows</h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:230px">Property</th><th style="width:250px">Value</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td>Height</td><td><b>30px</b>, both breakpoints</td><td>Unchanged from shipped. 13px/19.5 line + 4px padding + 1px borders.</td></tr>
+        <tr><td>Padding</td><td><b><code>0 10px</code></b></td><td>Was <code>4px 12px</code>. Vertical padding replaced by a fixed height so the box does not depend on the glyph's line box.</td></tr>
+        <tr><td>Border / radius</td><td><code>1px solid</code> tone@30% · <code>9999px</code></td><td>Unchanged.</td></tr>
+        <tr><td>Background</td><td>tone@14%</td><td>Was <code>--surface</code>. Colour now carries meaning (§5), so the neutral fill goes.</td></tr>
+        <tr><td>Type</td><td>Geist <b>13px / 600 / lh 1</b></td><td>Weight up from 500: digits at 13px need it, and there is no longer a word to over-emphasise.</td></tr>
+        <tr><td>Numerals</td><td><b><code>font-variant-numeric: tabular-nums</code></b></td><td>Mandatory. Without it a ticking counter changes width between 1 and 7.</td></tr>
+        <tr><td>Glyph</td><td><b>14×14</b>, 24 viewBox, <code>stroke-width: 2</code>, round caps/joins, <code>currentColor</code></td><td>Was a 7px dot. <code>flex: 0 0 14px</code>. Paths come from <code>studio-icons.jsx</code> by name (§8.1); the stroke bump from the set's 1.8 is the only override.</td></tr>
+        <tr><td>Gap</td><td><b>6px</b></td><td>Unchanged. Omitted when there is no number (glyph-only pill).</td></tr>
+        <tr><td>Chrome total</td><td><b>42px</b></td><td>10 + 10 + 1 + 1 + 14 + 6.</td></tr>
+        <tr><td>Glyph advance</td><td><b>8px</b> per digit @13px/600 tabular · <code>+</code> 8 · <code>/</code> 7 · <code>%</code> 10</td><td>Geist. Measured in-browser, not estimated. Re-measure in CI with the shipped font, never a fallback.</td></tr>
+        <tr><td><b>max-width</b></td><td><b>88px</b></td><td><b>Guard only.</b> Arithmetic max is <b>81px</b> (<code>99/99</code> ratio), so the guard sits 7px clear and must never engage. If it does, a word is being rendered — that is a bug.</td></tr>
+        <tr><td>min-width</td><td><b>36px</b></td><td>= glyph-only pill. Prevents a mid-fetch empty pill collapsing to 22px and re-widening.</td></tr>
+        <tr><td>Flex</td><td><code>flex: 0 0 auto; white-space: nowrap</code></td><td>Never shrinks, never truncates, never wraps.</td></tr>
+        <tr><td>Hit area</td><td><b>44×44 minimum</b> via <code>::after</code></td><td>A 36px glyph-only pill is below target. Transparent, centred, <code>position:absolute</code>; does not affect layout.</td></tr>
+        <tr><td>Pill left edge (x)</td><td><b>70px</b> phone (20 pad + 40 burger + 10 gap) · <b>24px</b> desktop</td><td>Unchanged by this spec. Identical at every scroll position.</td></tr>
+        <tr><td><code>--hdr-reveal</code></td><td><b>Never read</b></td><td>Unchanged. The pill does not fade, move or resize on scroll.</td></tr>
+        <tr><td>Accessibility</td><td><code>aria-label</code> = full localized string, always</td><td>Plus <code>title</code> for desktop hover. Interactive pills are <code>&lt;button&gt;</code>; static ones <code>&lt;span role="status"&gt;</code> so a changing count is announced.</td></tr>
+      </tbody>
+    </table></div>
+    <h3>9.2 · Resulting title budget</h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:170px">Viewport</th><th style="width:150px">Row inner</th><th style="width:170px">Title before (132px pill)</th><th style="width:170px">Title after (66px typical)</th><th>At the 88px guard</th></tr></thead>
+      <tbody>
+        <tr><td>360px</td><td>320px</td><td>78px</td><td><b>142px</b></td><td>120px</td></tr>
+        <tr><td>375px</td><td>335px</td><td>93px</td><td><b>157px</b></td><td>135px</td></tr>
+        <tr><td>768px (no burger)</td><td>720px</td><td>482px</td><td><b>548px</b></td><td>526px</td></tr>
+        <tr><td>1280px (no burger)</td><td>1232px</td><td>994px</td><td><b>1060px</b></td><td>1038px</td></tr>
+      </tbody>
+    </table></div>
+    <p class="section-note">Phone rows are measured in-browser and run ~2px under the arithmetic (sub-pixel icon-box rounding); desktop rows are arithmetic. Phone fixed cost 110px (burger 40 + 1 action 40 + 3 gaps); desktop fixed cost 106px (2 actions 40+40 + 6px inner gap + 2 gaps, no burger). Longest docked titles @19px/600: "Erwähnungen" 118 · "Відповіді" 84 · "Übersicht" 88 · "Auto-Szenarien" 142 · "Голос бренду" 122. <b>All fit whole at 360px after this change</b>, including "Auto-Szenarien", which truncated at every width before it.</p>
+    <h3>9.3 · Tone map</h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:130px">Tone</th><th style="width:170px">Token</th><th style="width:230px">Dark fg / bg / border</th><th>Used for</th></tr></thead>
+      <tbody>
+        <tr><td><b>warning</b></td><td><code>--color-warning</code></td><td><code>#d8a754</code> / <code>#26211a</code> / <code>#443a2c</code></td><td>A queue with work in it; conflicts; setup missing; negative delta</td></tr>
+        <tr><td><b>accent</b></td><td><code>--color-accent</code></td><td><code>#9aacff</code> / <code>#1c2131</code> / <code>#31395c</code></td><td>Neutral quantities: accounts, results, active scenarios, ratios, positive delta</td></tr>
+        <tr><td><b>success</b></td><td><code>--color-success</code></td><td><code>#5fbf8d</code> / <code>#16231c</code> / <code>#234031</code></td><td>Zero state of a work queue only — the ✓ glyph</td></tr>
+        <tr><td><b>idle</b></td><td><code>--color-text-subtle</code> on <code>--color-surface</code> / <code>--color-border</code></td><td><code>#898882</code> / <code>#171717</code> / <code>#2b2a27</code></td><td>Zero state of a config counter — the <code>0</code></td></tr>
+      </tbody>
+    </table></div>
+    <p class="section-note">Light-theme resolutions are the same <code>color-mix()</code> expressions over the light <code>--color-bg</code>: warning <code>#8a5b16</code>, accent <code>#2f4cc4</code>, success <code>#2c7350</code>, idle <code>#6f6e69</code>. Ship the expressions, not the hexes. No new tokens, no new colours, no shadows.</p>
+  </section>
+
+  <section id="s10">
+    <h2><span class="n">10</span>Phone vs desktop</h2>
+    <div class="note rule"><b>The pill ships on the phone. There is no <code>md:</code> gate, on any screen.</b> Remove the existing one on <code>/app/advisor</code> — which is moot anyway, since that pill is refused outright (§8).</div>
+    <p class="section-note">The precedent for hiding it below md was a 135px prose pill against 93px of room; the pill was hidden because it did not fit, not because the phone did not want it. At 50–66px it fits with 157px left for the title — more than the phone has today <em>without</em> a pill under the old geometry. And the phone is where the pill matters most: it is the only place a user cannot see the sidebar's badge counts, so the bar is their sole ambient signal that something needs attention.</p>
+    <div class="mks">
+      <div class="mk">
+        <div class="mk-lab">360 · <i>narrowest supported · uk · worst pill</i></div>
+        <div class="dev dev--360">
+          <div class="hb" style="--hdr-reveal:1;padding:0 16px"><span class="hb-burger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="pill pill--acc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3.5" y="8" width="17" height="8" rx="4"/><circle cx="15.5" cy="12" r="2.2" fill="currentColor" stroke="none"/></svg><span class="n">99/99</span></span><span class="hb-title">Голос бренду</span><span class="hb-actions"><span class="hb-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/></svg></span></span></div>
+          <div class="rows"><div class="row"></div><div class="row"></div></div>
+        </div>
+        <div class="mk-val">81px pill + 129px of title slot in 320px of row. <b>The worst case in the app fits the narrowest device</b>, with the 88px guard still 7px clear.</div>
+      </div>
+      <div class="mk">
+        <div class="mk-lab">360 · <i>same bar, old geometry</i><span class="tag no">before</span></div>
+        <div class="dev dev--360 bad">
+          <div class="hb" style="--hdr-reveal:1;padding:0 16px"><span class="hb-burger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="pill-old"><span class="dot"></span>99 з 99 увімк…</span><span class="hb-title">Голос бренд…</span><span class="hb-actions"><span class="hb-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/></svg></span></span></div>
+          <div class="rows"><div class="row"></div><div class="row"></div></div>
+        </div>
+        <div class="mk-val">Both slots truncate simultaneously — the state is unreadable <b>and</b> the screen name is unreadable.</div>
+      </div>
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:220px">Surface</th><th style="width:180px">Bar height</th><th style="width:150px">Pill x</th><th>Difference</th></tr></thead>
+      <tbody>
+        <tr><td>Responsive web shell &lt;768px<br/><span class="mono" style="color:var(--color-text-subtle)">studio.css</span></td><td>52px</td><td>70px</td><td>Hamburger 40×40, 20px padding. Pill identical.</td></tr>
+        <tr><td>Responsive web shell ≥768px</td><td>60px</td><td>24px</td><td>No hamburger. Pill identical; <code>title</code> tooltip becomes reachable.</td></tr>
+        <tr><td>Phone shell ≤600px<br/><span class="mono" style="color:var(--color-text-subtle)">mobile/pennedly-mobile.css</span></td><td>min-height 52px</td><td>70px</td><td><code>.m-iconbtn</code> is 40×40 — same arithmetic. Pill markup and CSS are <b>identical</b>; that is the point of removing the words.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section id="s11">
+    <h2><span class="n">11</span>Checklist</h2>
+    <ul class="check">
+      <li>One shared <code>&lt;HeaderPill glyph tone count label&gt;</code> component; <code>label</code> is required and goes only to <code>aria-label</code> + <code>title</code>, never to the DOM text.</li>
+      <li>Component throws in dev if its rendered text contains a non-<code>[0-9+/%−]</code> character.</li>
+      <li>CI assertion, all 8 locales: <code>/^(\d{1,2}\+?|\d{1,2}\/\d{1,2}|[+−]\d{1,3}%)?$/.test(pill.textContent.trim())</code> — replaces per-locale width measurement.</li>
+      <li>CI assertion: <code>pill.offsetWidth ≤ 88</code> on every screen, en + de + uk, counters forced to 1 / 42 / 128 / 99&#47;99.</li>
+      <li>Counter formatter: <code>n &gt; 99 ? "99+" : String(n)</code>. Ratio operands clamped to 99 each. No <code>k</code>/<code>M</code> abbreviations anywhere.</li>
+      <li><code>font-variant-numeric: tabular-nums</code> on the pill — verify the shipped Geist subset includes tnum.</li>
+      <li><code>IcToggle</code> added to <code>system/studio-icons.jsx</code> and exported; every other pill glyph references an existing name from that file (§8.1) — no inlined one-off paths.</li>
+      <li>Pill glyphs render at 14×14 with <code>stroke-width: 2</code> via CSS, not by editing the shared <code>&lt;Svg&gt;</code> wrapper.</li>
+      <li>Three refusals deleted from the string catalogue: <code>acc.adv_pill</code>, <code>agent.pill</code>, <code>mr.pill</code> — remove the keys in all 8 locales, do not leave them orphaned.</li>
+      <li><code>scenarios.all_off</code> and <code>replies.all_handled</code> deleted; both become states of their counter pill.</li>
+      <li>Freshness strings removed from every bar. Toolbar row on feed / mentions / routines / voice; hero meta line on overview / stats.</li>
+      <li>Hero meta line added: <code>margin-top:8px; font-size:13px; color:var(--color-text-subtle); display:flex; flex-wrap:wrap; gap:4px 8px; opacity:calc(1 - var(--hdr-reveal))</code>.</li>
+      <li><code>md:</code> visibility gate removed from the advisor pill; no screen gates the pill by breakpoint.</li>
+      <li>Interactive pills (<code>voice_not_set</code>) are <code>&lt;button&gt;</code> with a 44×44 hit area; static pills are <code>&lt;span role="status" aria-live="polite"&gt;</code>.</li>
+      <li>Regression: pill <code>getBoundingClientRect().left</code> === 70 (phone) / 24 (desktop) at scrollTop 0 and 200, every screen.</li>
+      <li>Regression: bar <code>offsetHeight</code> === 52 / 60 with the counter at 1, 42 and 128.</li>
+      <li>Verified dark + light, en/de/uk, 360 / 375 / 768 / 1280.</li>
+    </ul>
+  </section>
+</main>
+</div>
+<script>
+(function(){
+  var rows=document.getElementById('lr1');
+  if(rows){var h='';for(var i=0;i<9;i++)h+='<div class="row"></div>';rows.innerHTML=h;}
+  document.querySelectorAll('.hdr-scroll').forEach(function(el){
+    el.addEventListener('scroll',function(){
+      el.style.setProperty('--hdr-reveal',Math.max(0,Math.min(1,el.scrollTop/32)));
+    },{passive:true});
+  });
+  var L=[
+    {k:'uk',t:'Відповіді',s:'коментарів чекають на вашу відповідь.',a:'потребують відповіді'},
+    {k:'de',t:'Antworten',s:'Kommentare warten auf Ihre Antwort.',a:'brauchen eine Antwort'},
+    {k:'ru',t:'Ответы',s:'комментариев ждут вашего ответа.',a:'ждут ответа'},
+    {k:'en',t:'Replies',s:'comments are waiting for your reply.',a:'need a reply'}
+  ];
+  var N=[{v:128,d:'99+',lab:'128 → 99+'},{v:42,d:'42',lab:'42'},{v:6,d:'6',lab:'6'},{v:0,d:'',lab:'0 → ✓'}];
+  var li=0,ni=0;
+  var pill=document.getElementById('d-pill'),num=document.getElementById('d-n');
+  function render(){
+    var l=L[li],n=N[ni];
+    document.getElementById('loc-name').textContent=l.k;
+    document.getElementById('n-name').textContent=n.lab;
+    document.getElementById('d-title').textContent=l.t;
+    document.getElementById('d-h1').textContent=l.t;
+    document.getElementById('d-sub').textContent=n.v+' '+l.s;
+    num.textContent=n.d;
+    num.style.display=n.d?'block':'none';
+    pill.classList.toggle('pill--warn',n.v>0);
+    pill.classList.toggle('pill--ok',n.v===0);
+    var full=n.v>0?(n.v+' '+l.a):'—';
+    pill.setAttribute('aria-label',full);pill.setAttribute('title',full);
+    document.getElementById('pw').textContent=Math.round(pill.getBoundingClientRect().width)+'px';
+    document.getElementById('tw').textContent=Math.round(document.getElementById('d-title').getBoundingClientRect().width)+'px';
+  }
+  document.getElementById('btn-loc').addEventListener('click',function(){li=(li+1)%L.length;render();});
+  document.getElementById('btn-n').addEventListener('click',function(){ni=(ni+1)%N.length;render();});
+  render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Pennedly · Unified App Header — Spec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../ds/tokens.css"/>
+<link rel="stylesheet" href="../ds/components.css"/>
+<style>
+:root{--font-sans:"Geist",ui-sans-serif,system-ui,sans-serif;--font-mono:"Geist Mono",ui-monospace,monospace;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--color-bg);color:var(--color-text);font-family:var(--font-sans);font-size:15px;line-height:1.6}
+.layout{display:grid;grid-template-columns:260px minmax(0,1fr);max-width:1280px;margin:0 auto}
+.toc{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;padding:30px 20px;border-right:1px solid var(--color-border)}
+.toc b{font-size:16px;font-weight:600}
+.toc nav{display:flex;flex-direction:column;gap:2px;margin-top:18px}
+.toc nav a{display:block;padding:6px 9px;border-radius:8px;text-decoration:none;color:var(--color-text-muted);font-size:13.5px}
+.toc nav a:hover{background:var(--color-surface-2);color:var(--color-text)}
+main{padding:38px 48px 100px;min-width:0}
+.kicker{font-family:var(--font-mono);font-size:12px;letter-spacing:.04em;color:var(--color-accent);text-transform:uppercase;margin:0 0 8px}
+h1.title{font-size:32px;font-weight:600;letter-spacing:-0.015em;margin:0 0 12px}
+.lede{color:var(--color-text-muted);max-width:76ch;font-size:15.5px}
+section{margin-top:44px}
+h2{font-size:20px;font-weight:600;letter-spacing:-0.01em;margin:0 0 6px}
+h2 .n{font-family:var(--font-mono);color:var(--color-accent);font-size:13px;margin-right:8px}
+.section-note{color:var(--color-text-muted);font-size:14px;max-width:80ch;margin:4px 0 16px}
+.note{border:1px solid var(--color-border);border-left:3px solid var(--color-accent);background:var(--color-surface);border-radius:10px;padding:14px 16px;margin:14px 0;font-size:13.5px;color:var(--color-text-muted)}
+.note b{color:var(--color-text)}
+.note.rule{border-left-color:var(--color-accent);font-size:15px;color:var(--color-text)}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--color-border);border-radius:12px;margin:0 0 14px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--color-border);vertical-align:top}
+thead th{background:var(--color-surface-2);font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--color-text-subtle)}
+tbody tr:last-child td{border-bottom:none}
+code{font-family:var(--font-mono);font-size:.85em;background:var(--color-surface-2);border:1px solid var(--color-border);padding:1px 5px;border-radius:5px}
+.check{list-style:none;padding:0;margin:0}
+.check li{position:relative;padding:5px 0 5px 24px;border-bottom:1px dashed var(--color-border);font-size:13.5px}
+.check li::before{content:"☐";position:absolute;left:0;color:var(--color-text-subtle)}
+
+/* ---------------- live demo ---------------- */
+.demos{display:flex;gap:22px;flex-wrap:wrap;margin:16px 0}
+.demo{width:340px}
+.demo-label{font-family:var(--font-mono);font-size:11px;color:var(--color-text-subtle);margin-bottom:8px}
+.demo-frame{width:340px;height:560px;border:8px solid #111;border-radius:32px;overflow:hidden;position:relative;background:var(--color-bg)}
+.demo-scroll{height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.hdr-compact{position:sticky;top:0;z-index:5;height:52px;display:flex;align-items:center;gap:10px;padding:0 14px;background:color-mix(in srgb,var(--color-bg) 86%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--color-border)}
+.hdr-compact svg{flex:0 0 auto;color:var(--color-text-muted)}
+.hdr-compact-title{flex:1 1 auto;min-width:0;font-size:19px;font-weight:600;letter-spacing:-0.006em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  opacity:var(--hdr-reveal,0);transform:translateY(calc(6px * (1 - var(--hdr-reveal,0))))}
+.hdr-pill{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;padding:4px 10px 4px 8px;border-radius:9999px;border:1px solid color-mix(in srgb,var(--color-accent) 30%,var(--color-border));background:var(--color-surface);color:var(--color-accent);font-size:12px;font-weight:500}
+.hdr-actions{flex:0 0 auto;display:flex;gap:6px;margin-left:auto}
+.hdr-icon{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;color:var(--color-text-muted)}
+.hdr-hero{padding:20px 16px 4px;opacity:calc(1 - var(--hdr-reveal,0))}
+.hdr-hero h1{font-size:28px;font-weight:600;letter-spacing:-0.015em;margin:0;line-height:1.15}
+.hdr-hero p{font-size:14px;color:var(--color-text-muted);margin:6px 0 0}
+.hdr-toolbar{display:flex;align-items:center;gap:8px;padding:14px 16px;border-bottom:1px solid var(--color-border);font-size:13px;color:var(--color-text-muted)}
+.hdr-toolbar .seg{margin-left:auto;display:flex;gap:3px;background:var(--color-surface-2);border:1px solid var(--color-border);border-radius:8px;padding:3px}
+.hdr-toolbar .seg span{padding:4px 10px;border-radius:6px;font-weight:500}
+.hdr-toolbar .seg span.on{background:var(--color-surface);font-weight:600;box-shadow:var(--shadow-sm)}
+.demo-cards{padding:14px 16px}
+.demo-card{height:76px;border:1px solid var(--color-border);border-radius:12px;background:var(--color-surface);margin-bottom:10px}
+.demo-scroll.dark{background:#0a0a0a;color:#ededed}
+.demo-frame--desktop{width:640px;height:420px;border:1px solid var(--color-border);border-radius:10px}
+.demo-frame--desktop .hdr-compact{height:60px;padding:0 24px}
+.demo-frame--desktop .hdr-hero{padding:28px 24px 4px}
+.demo-frame--desktop .hdr-toolbar{padding:14px 24px}
+.demo-frame--desktop .demo-cards{padding:14px 24px}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside class="toc">
+  <b>Pennedly</b>
+  <nav>
+    <a href="#s1">1 · The rule</a>
+    <a href="#s2">2 · Anatomy</a>
+    <a href="#s3">3 · Live demo — scroll it</a>
+    <a href="#s4">4 · Exact values</a>
+    <a href="#s5">5 · States</a>
+    <a href="#s6">6 · Per-screen migration</a>
+    <a href="#s7">7 · Checklist</a>
+  </nav>
+</aside>
+<main>
+  <p class="kicker">Pennedly · Shared component spec</p>
+  <h1 class="title">Unified App Header</h1>
+  <p class="lede">Fixes the duplicate-title bug (compact top bar + hero <code>&lt;h1&gt;</code> showing the same text at once, on every authenticated screen). One shared header component, one rule, applied app-wide.</p>
+
+  <section id="s1">
+    <h2><span class="n">1</span>The rule</h2>
+    <div class="note rule"><b>Page identity (title + optional subtitle) renders once</b> — as an in-flow hero at the top of the scrollable content. The sticky top bar never shows identity text at rest. As the hero scrolls up and out from under the bar, the bar docks the <em>exact same</em> title string — so at any scroll position exactly one instance of the title is ever visible. Functional chrome (hamburger, status pill, theme/settings icons, and any persistent toolbar row like a sort bar or a range‑stepper) always lives below/in the bar and is scroll‑independent — it never disappears and never duplicates.</div>
+    <div class="note">This is <b>one mechanism at every viewport width</b> — desktop and phone are not two separate fixes. The only breakpoint-gated piece is the hamburger icon itself (hidden ≥768px, where the persistent sidebar nav takes over) — that already exists today and is unrelated to this bug. The collapse distance, the reveal formula, the docked-title typography and the hero typography are identical numbers whether the viewport is 360px or 1440px; only horizontal padding and the compact bar's 52→60px height step (both already existing, pre-this-fix values) scale with the existing breakpoint.</div>
+    <p class="section-note">Why this over the two obvious shortcuts: deleting the hero would silently drop real subtitle content (Calendar's account line, an audit's specific name) that the brief says must keep a home; deleting the compact title would leave the bar looking broken once the hero scrolls away with nothing to anchor the user. Docking is the one move that keeps both jobs — bar owns wayfinding at all times, hero owns identity at rest — without ever showing the word twice.</p>
+  </section>
+
+  <section id="s2">
+    <h2><span class="n">2</span>Anatomy</h2>
+    <div class="tbl-wrap"><table><tbody>
+      <tr><th style="width:190px">Order (top → bottom)</th><td><code>.hdr-compact</code> (sticky) → scrollable content starts with <code>.hdr-hero</code> (title + subtitle) → optional <code>.hdr-toolbar</code> (sort bar / segmented control / range‑stepper — unchanged from what each screen has today) → page content.</td></tr>
+      <tr><th>.hdr-compact</th><td>Sticky, <code>top:0</code>. Holds: hamburger (mobile only) → optional status pill (always opacity 1, leading slot) → title slot (opacity/translate driven by scroll, see §4) → action icons (theme, settings — always opacity 1, <code>margin-left:auto</code>). <b>Pill before title</b> — see <a href="App-Header-Pill-Placement-SPEC.html">Pill Placement</a> §3.</td></tr>
+      <tr><th>.hdr-hero</th><td>In‑flow, first thing in scrollable content. <code>&lt;h1&gt;</code> + optional <code>&lt;p&gt;</code> subtitle. Fades out (opacity only) as the bar's docked title fades in — never truncates, wraps instead.</td></tr>
+      <tr><th>.hdr-toolbar</th><td>Whatever functional row that screen already has (Feed's sort bar, Calendar's range‑stepper, a filter bar). Not part of the collapse — stays in‑flow exactly where it is today. This spec only touches the title, not this row.</td></tr>
+    </tbody></table></div>
+  </section>
+
+  <section id="s3">
+    <h2><span class="n">3</span>Live demo — scroll each frame</h2>
+    <p class="section-note">All three frames are real, scrollable, and share the same header component and the same 32px collapse math. Left/middle = phone width (Calendar-style, Feed-style). Right = desktop width — no hamburger (nav lives in the sidebar ≥768px), wider paddings, otherwise byte-for-byte the same reveal logic.</p>
+    <div class="demos">
+      <div class="demo">
+        <div class="demo-label">Calendar · subtitle + toolbar, no pill</div>
+        <div class="demo-frame"><div class="demo-scroll" id="dsA">
+          <div class="hdr-compact"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+            <span class="hdr-compact-title">Calendar</span>
+            <span class="hdr-actions"><span class="hdr-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/></svg></span></span></div>
+          <div class="hdr-hero"><h1>Calendar</h1><p>Everything scheduled for @mara.lin</p></div>
+          <div class="hdr-toolbar">‹ Jun 15 – 21 › <span class="seg"><span class="on">Week</span></span></div>
+          <div class="demo-cards" id="cardsA"></div>
+        </div></div>
+      </div>
+      <div class="demo">
+        <div class="demo-label">Feed · status pill, no subtitle</div>
+        <div class="demo-frame"><div class="demo-scroll" id="dsB">
+          <div class="hdr-compact"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+            <span class="hdr-compact-title">My Feed</span>
+            <span class="hdr-pill">Updated just now</span></div>
+          <div class="hdr-hero"><h1>My Feed</h1></div>
+          <div class="hdr-toolbar">6 published posts <span class="seg"><span class="on">Recent</span><span>Top</span></span></div>
+          <div class="demo-cards" id="cardsB"></div>
+        </div></div>
+      </div>
+      <div class="demo">
+        <div class="demo-label">Desktop ≥768px · no hamburger, same math</div>
+        <div class="demo-frame demo-frame--desktop"><div class="demo-scroll" id="dsC">
+          <div class="hdr-compact"><span class="hdr-compact-title">Calendar</span>
+            <span class="hdr-actions"><span class="hdr-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/></svg></span></span></div>
+          <div class="hdr-hero"><h1>Calendar</h1><p>Everything scheduled for @mara.lin</p></div>
+          <div class="hdr-toolbar">‹ Jun 15 – 21 › <span class="seg"><span class="on">Week</span></span></div>
+          <div class="demo-cards" id="cardsC"></div>
+        </div></div>
+      </div>
+    </div>
+    <script>
+      function fill(id,n){var c=document.getElementById(id),h='';for(var i=0;i<n;i++)h+='<div class="demo-card"></div>';c.innerHTML=h;}
+      function bind(id){var el=document.getElementById(id);el.addEventListener('scroll',function(){
+        var r=Math.max(0,Math.min(1,el.scrollTop/32));el.style.setProperty('--hdr-reveal',r);
+      },{passive:true});}
+      fill('cardsA',10);fill('cardsB',10);fill('cardsC',8);bind('dsA');bind('dsB');bind('dsC');
+    </script>
+  </section>
+
+  <section id="s4">
+    <h2><span class="n">4</span>Exact values</h2>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:210px">Property</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td>Compact bar height</td><td>52px mobile · 60px desktop (unchanged from current top bars)</td></tr>
+        <tr><td>Compact bar bg / blur / border</td><td><code>color-mix(in srgb, var(--color-bg) 86%, transparent)</code>; <code>backdrop-filter: blur(8px)</code>; <code>border-bottom: 1px solid var(--color-border)</code>; <code>position: sticky; top: 0; z-index: 10</code></td></tr>
+        <tr><td>Compact title type</td><td><code>--text-h3</code> (19px / 1.1875rem), weight 600, letter-spacing -0.006em, color <code>--color-text</code>, single line, <code>text-overflow: ellipsis</code></td></tr>
+        <tr><td>Hero title type</td><td><code>--text-h1</code> (32px / 2rem), weight 600, letter-spacing -0.015em, line-height 1.15, wraps (no truncation, no line clamp)</td></tr>
+        <tr><td>Hero subtitle type</td><td><code>--text-body</code> (15px), color <code>--color-text-muted</code>, margin-top 6px</td></tr>
+        <tr><td>Hero block spacing</td><td>padding 20px 16px 4px (mobile) · matches existing content padding on desktop; unchanged page-content padding below it</td></tr>
+        <tr><td>Collapse distance</td><td><b>32px</b> of scrollTop, same value mobile and desktop</td></tr>
+        <tr><td>Reveal formula</td><td><code>reveal = clamp(scrollTop / 32, 0, 1)</code>, written to <code>--hdr-reveal</code> on the scroll container via a passive scroll listener (or <code>animation-timeline: scroll()</code> where supported, JS as fallback)</td></tr>
+        <tr><td>Compact title reaction</td><td><code>opacity: var(--hdr-reveal)</code>; <code>transform: translateY(calc(6px * (1 - var(--hdr-reveal))))</code></td></tr>
+        <tr><td>Hero reaction</td><td><code>opacity: calc(1 - var(--hdr-reveal))</code> — fade only, no transform (it's already leaving via normal scroll)</td></tr>
+        <tr><td>Transition curve</td><td>None — directly scroll-coupled, 1:1 with finger/wheel, no easing/duration lag</td></tr>
+        <tr><td>Status pill</td><td>Existing <code>.status-pill</code> styles, unchanged; always <code>opacity: 1</code>, never reacts to scroll; sits <b>before</b> the title slot, at the leading edge (x=56 mobile / 24 desktop). The title slot is <code>flex:1 1 auto; min-width:0</code> and follows it, so revealing the title reflows nothing and the pill never moves. <code>max-width:132px</code>; longer strings become toolbar freshness lines. Full spec: <a href="App-Header-Pill-Placement-SPEC.html">Pill Placement</a></td></tr>
+        <tr><td>Action icons</td><td>36×36 desktop / 32×32 mobile, unchanged existing icon-button styles; flex <code>0 0 auto</code>, never shrink</td></tr>
+        <tr><td>Hamburger visibility</td><td>&lt;768px only (existing app-shell breakpoint, unchanged); ≥768px it is absent and the persistent sidebar nav owns wayfinding instead — this is the <b>only</b> breakpoint-gated part of the header; the collapse mechanism above applies identically on both sides of it</td></tr>
+        <tr><td>prefers-reduced-motion</td><td><code>reveal</code> becomes a step function at scrollTop 16px (0 or 1) — opacity swap only, translate never applied</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section id="s5">
+    <h2><span class="n">5</span>States to support</h2>
+    <ul class="check">
+      <li>At-rest (scrollTop 0): hero fully visible; compact bar shows hamburger + pill (if any, at the leading edge) + actions only. The title slot follows the pill and is invisible — its box spans the leftover width, but it reserves nothing ahead of the pill.</li>
+      <li>Collapsed (scrollTop ≥ 32px): hero at opacity 0 (scrolled out of view in normal flow anyway); compact title fully docked.</li>
+      <li>Mid-scroll: linear crossfade, no jump, no double-render — never both at full opacity simultaneously.</li>
+      <li>With status pill: pill present in both states at the leading edge, identical x at every reveal value, unaffected by reveal.</li>
+      <li>Without status pill: the title slot starts at the pill's x; no layout change elsewhere.</li>
+      <li>With hero subtitle: subtitle fades with the hero, has no docked equivalent — it is supplementary, not identity, so it is allowed to simply scroll away.</li>
+      <li>With a persistent toolbar row: unaffected by reveal, stays exactly where it is today.</li>
+      <li>360–390px width, long locale (ru/de): compact title ellipsis-truncates before ever pushing into the pill or action icons; hero title wraps to 2 lines instead of truncating.</li>
+      <li>Audit detail: hero renders the specific audit's title verbatim; compact bar docks that same string (single source — never a separate hardcoded section label).</li>
+    </ul>
+  </section>
+
+  <section id="s6">
+    <h2><span class="n">6</span>Per-screen migration</h2>
+    <p class="section-note">What each screen's hero keeps and what stays in the toolbar row. Toolbar contents below are each screen's <em>existing</em> functional row — nothing new is being designed there, it just stops sitting under a duplicated title.</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:170px">Screen</th><th>Hero title</th><th>Subtitle</th><th>Pill</th><th>Toolbar row</th></tr></thead>
+      <tbody>
+        <tr><td><code>/app/calendar</code></td><td>Calendar</td><td>Everything scheduled for @handle</td><td>—</td><td>Range stepper + Today + legend + "+ Schedule a post"</td></tr>
+        <tr><td><code>/app/feed</code></td><td>My Feed</td><td>—</td><td>Updated just now / hourly</td><td>Sort bar (Recent / Top + count)</td></tr>
+        <tr><td><code>/app/mentions</code></td><td>Mentions</td><td>—</td><td>Refreshes hourly</td><td>Existing filter bar</td></tr>
+        <tr><td><code>/app/mentions/routines</code></td><td>existing title</td><td>existing, if any</td><td>existing, if any</td><td>existing controls</td></tr>
+        <tr><td><code>/app/audits</code></td><td>Audits</td><td>existing, if any</td><td>existing, if any</td><td>existing controls</td></tr>
+        <tr><td><code>/app/audits/[id]</code></td><td><b>the specific audit's title</b> (verbatim)</td><td>existing meta line, if any</td><td>—</td><td>existing controls</td></tr>
+        <tr><td><code>/app/overview</code></td><td>Overview</td><td>existing, if any</td><td>existing, if any</td><td>existing controls</td></tr>
+        <tr><td><code>/app/replies</code></td><td>Replies</td><td>existing, if any</td><td>existing, if any</td><td>existing filter bar</td></tr>
+        <tr><td><code>/app/patterns/explore</code></td><td>Explore patterns</td><td>existing, if any</td><td>existing, if any</td><td>existing filter chips</td></tr>
+        <tr><td><code>/app/settings</code></td><td>Settings</td><td>existing, if any</td><td>—</td><td>—</td></tr>
+        <tr><td><code>/app/role-book</code> (Voice)</td><td>Voice</td><td>existing, if any</td><td>existing, if any</td><td>existing tabs</td></tr>
+        <tr><td><code>/app/stats</code></td><td>Stats</td><td>existing, if any</td><td>existing, if any</td><td>existing period selector</td></tr>
+        <tr><td><code>/app/scenarios</code></td><td>Scenarios</td><td>existing, if any</td><td>existing, if any</td><td>existing gallery controls</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note">Rows marked "existing" mean: keep exactly what that screen already renders in that slot today — this migration only removes the duplicate title text, it does not invent new subtitles, pills, or toolbar content for screens not specified in the original bug report.</div>
+  </section>
+
+  <section id="s7">
+    <h2><span class="n">7</span>Implementation checklist</h2>
+    <ul class="check">
+      <li>One shared header component (<code>.hdr-compact</code> + <code>.hdr-hero</code>) used by all 12 screens — no per-screen forks.</li>
+      <li>Compact bar title text is always identical to the hero's <code>&lt;h1&gt;</code> text — bound to one source, never a second hardcoded string.</li>
+      <li>Reveal driven by <code>scrollTop</code> of the screen's own scroll container, clamped 0–1 over 32px, written to <code>--hdr-reveal</code>.</li>
+      <li>Compact title: opacity + 6px translateY only; hero: opacity only. No layout shift, no width change, no reflow of pill/icons — and <code>flex-wrap:nowrap</code> on the bar so the pill can never drop to a second row.</li>
+      <li>Status pill and action icons never react to scroll; hamburger/back nav never disappears.</li>
+      <li>Toolbar rows (sort bar, range-stepper, filters) untouched — still in-flow, still exactly where they are today.</li>
+      <li>360–390px: compact title ellipsis-truncates; hero wraps; verified in ru/de (longest locales).</li>
+      <li><code>prefers-reduced-motion</code>: reveal snaps at 16px scrollTop, opacity-only.</li>
+      <li>Audit detail binds hero + docked title to the specific audit's title, not a generic "Audits" label.</li>
+    </ul>
+  </section>
+</main>
+</div>
+</body>
+</html>

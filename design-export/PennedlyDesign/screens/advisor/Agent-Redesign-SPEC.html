@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Pennedly · Агент /app/advisor — редизайн</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../../ds/tokens.css"/>
+<link rel="stylesheet" href="../../ds/components.css"/>
+<link rel="stylesheet" href="agent-redesign.css"/>
+<style>
+:root{--font-sans:"Geist",ui-sans-serif,system-ui,sans-serif;--font-mono:"Geist Mono",ui-monospace,monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--color-bg);color:var(--color-text);font-family:var(--font-sans);font-size:15px;line-height:1.62}
+a{color:var(--color-accent)}a:hover{color:var(--color-text)}
+.layout{display:grid;grid-template-columns:266px minmax(0,1fr);max-width:1460px;margin:0 auto}
+.toc{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;padding:32px 20px 40px 28px;border-right:1px solid var(--color-border)}
+.toc b.mk{font-size:16px;font-weight:600}
+.toc .sub{font-size:11.5px;color:var(--color-text-subtle);text-transform:uppercase;letter-spacing:.04em;margin:2px 0 20px}
+.toc nav{display:flex;flex-direction:column;gap:1px}
+.toc nav a{display:block;padding:6px 9px;border-radius:8px;text-decoration:none;color:var(--color-text-muted);font-size:13.5px;line-height:1.35}
+.toc nav a:hover{background:var(--color-surface-2);color:var(--color-text)}
+.toc nav a.s{padding-left:26px;font-size:12.5px;color:var(--color-text-subtle)}
+.toc .meta{margin-top:22px;padding-top:16px;border-top:1px solid var(--color-border);font-size:12px;color:var(--color-text-subtle);line-height:1.75}
+.toc .meta b{color:var(--color-text)}
+main{padding:38px 46px 120px;min-width:0}
+.kicker{font-family:var(--font-mono);font-size:12px;letter-spacing:.04em;color:var(--color-accent);text-transform:uppercase;margin:0 0 9px}
+h1.title{font-size:34px;line-height:1.1;letter-spacing:-0.022em;font-weight:600;margin:0 0 13px}
+h1.title span{color:var(--color-text-subtle);font-weight:500}
+.lede{font-size:16px;color:var(--color-text-muted);max-width:80ch;margin:0 0 8px;text-wrap:pretty}
+section{margin-top:54px;scroll-margin-top:16px}
+h2{font-size:21px;font-weight:600;letter-spacing:-0.012em;margin:0 0 5px}
+h2 .n{font-family:var(--font-mono);font-size:14px;color:var(--color-accent);margin-right:10px;font-weight:500}
+h3{font-size:15.5px;font-weight:600;margin:32px 0 10px;padding-bottom:7px;border-bottom:1px solid var(--color-border)}
+.section-note{color:var(--color-text-muted);font-size:14px;max-width:84ch;margin:6px 0 18px;text-wrap:pretty}
+p{margin:0 0 12px;text-wrap:pretty}
+ul{margin:0 0 12px;padding-left:20px}li{margin:4px 0}
+code{font-family:var(--font-mono);font-size:.85em;background:var(--color-surface-2);border:1px solid var(--color-border);padding:1px 5px;border-radius:5px}
+.note{border:1px solid var(--color-border);border-left:3px solid var(--color-accent);background:var(--color-surface);border-radius:10px;padding:13px 16px;margin:14px 0;font-size:13.5px;color:var(--color-text-muted)}
+.note b{color:var(--color-text)}
+.note.hero{font-size:15px;color:var(--color-text)}
+.note.warn{border-left-color:var(--color-warning)}
+.note.bad{border-left-color:var(--color-danger)}
+.note.good{border-left-color:var(--color-success)}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--color-border);border-radius:12px;margin:0 0 15px;background:var(--color-surface)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:9px 13px;border-bottom:1px solid var(--color-border);vertical-align:top}
+thead th{background:var(--color-surface-2);font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--color-text-subtle)}
+tbody tr:last-child td{border-bottom:none}
+td.v{font-family:var(--font-mono);font-size:12px}
+.sw{display:inline-block;width:11px;height:11px;border-radius:3px;border:1px solid rgb(0 0 0/.2);vertical-align:-1px;margin-right:6px}
+.check{list-style:none;padding:0;margin:0}
+.check li{position:relative;padding:5px 0 5px 24px;border-bottom:1px dashed var(--color-border);font-size:13.5px}
+.check li::before{content:"☐";position:absolute;left:1px;color:var(--color-text-subtle)}
+/* frame chrome */
+.fcell{display:flex;flex-direction:column;gap:8px;min-width:0;margin:0 0 20px}
+.fr-lab{display:inline-flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:11px;color:var(--color-text-subtle)}
+.fr-lab .dh{width:8px;height:8px;border-radius:9999px;background:var(--color-border)}
+.fr-lab .dh--dark{background:#0a0a0a;border:1px solid #3a3a3a}
+.fr{background:var(--color-bg);color:var(--color-text);border:1px solid var(--color-border);border-radius:16px;overflow:hidden}
+.fscale{overflow:hidden;position:relative}
+.fstage{transform-origin:top left}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.fgrid--m{grid-template-columns:repeat(auto-fit,minmax(300px,1fr));align-items:start}
+@media(max-width:1180px){.fgrid{grid-template-columns:1fr}}
+/* Shell bar — copied VERBATIM from studio.css:122-155, the real component.
+   NOT redesigned by this doc. Only change: position:sticky/z-index dropped,
+   since inside a doc frame there is nothing to stick to. */
+.topbar{flex:0 0 auto;display:flex;align-items:center;gap:16px;height:60px;padding:0 24px;border-bottom:1px solid var(--color-border);background:color-mix(in srgb,var(--color-bg) 86%,transparent);backdrop-filter:saturate(1.1) blur(8px)}
+.topbar-title{font-size:var(--text-h3);font-weight:600;letter-spacing:-0.006em}
+.topbar-spacer{flex:1 1 auto}
+.topbar-actions{display:flex;align-items:center;gap:8px}
+.icon-btn{width:36px;height:36px;flex:0 0 auto;display:grid;place-items:center;border-radius:var(--radius-md);border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text-muted);cursor:pointer;transition:background var(--duration-fast) var(--ease-standard),color var(--duration-fast) var(--ease-standard)}
+.icon-btn:hover{background:var(--color-surface-2);color:var(--color-text)}
+/* Phone bar — copied VERBATIM from mobile/pennedly-mobile.css:45-77, plus its
+   --topbar-h token from that file's :root. A different shell from studio.css's:
+   40px touch buttons, asymmetric padding, min-height instead of fixed height. */
+.mob{--topbar-h:52px}
+.mob .m-top{flex:0 0 auto;min-height:var(--topbar-h);display:flex;align-items:center;gap:10px;padding:8px 12px 8px 16px;border-bottom:1px solid var(--color-border);background:color-mix(in srgb,var(--color-bg) 84%,transparent);backdrop-filter:saturate(1.1) blur(8px);position:relative;z-index:20}
+.mob .m-top-title{font-size:var(--text-h3);font-weight:600;letter-spacing:-0.006em;line-height:1.2;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mob .m-top-spacer{flex:1 1 auto}
+.mob .m-top-actions{display:flex;align-items:center;gap:6px;flex:0 0 auto}
+.mob .m-iconbtn{width:40px;height:40px;flex:0 0 auto;display:grid;place-items:center;border-radius:var(--radius-md);border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text-muted);cursor:pointer}
+.mob .m-iconbtn--plain{border-color:transparent;background:transparent}
+.is-focus .ag-composer{border-color:var(--color-accent);box-shadow:var(--shadow-md),0 0 0 3px color-mix(in srgb,var(--color-accent) 18%,transparent)}
+@media(max-width:1000px){.layout{grid-template-columns:1fr}.toc{position:static;height:auto;border-right:none;border-bottom:1px solid var(--color-border)}main{padding:26px 20px 90px}}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside class="toc">
+  <b class="mk">Pennedly</b>
+  <div class="sub">Редизайн · Агент</div>
+  <nav>
+    <a href="#s1">1 · Диагноз и решение</a>
+    <a href="#s2">2 · Раскладка экрана</a>
+    <a href="#s3">3 · Пустой экран</a>
+    <a href="#s4">4 · Активный диалог</a>
+    <a class="s" href="#s4-user">— реплика пользователя</a>
+    <a class="s" href="#s4-metrics">— полоса метрик</a>
+    <a class="s" href="#s4-grounded">— строка привязки</a>
+    <a href="#s5">5 · Карточка-действие</a>
+    <a class="s" href="#s5-cat">— каталог из 9</a>
+    <a class="s" href="#s5-states">— состояния</a>
+    <a href="#s6">6 · Подсказки</a>
+    <a href="#s7">7 · Думает · мало данных · ошибка</a>
+    <a href="#s8">8 · Правая колонка и история</a>
+    <a href="#s9">9 · Мобильный</a>
+    <a href="#s10">10 · Значения</a>
+    <a class="s" href="#s10-geo">— геометрия</a>
+    <a class="s" href="#s10-type">— типографика и цвет</a>
+    <a class="s" href="#s10-motion">— движение</a>
+    <a href="#s11">11 · Локали</a>
+    <a href="#s12">12 · Чек-лист</a>
+  </nav>
+  <div class="meta">
+    Экран: <b>Агент</b><br/>
+    Маршрут: <code>/app/advisor</code><br/>
+    Тип: полный app-shell, <b>без hero</b><br/>
+    Скролл: <b>внутренний контейнер</b><br/>
+    Новые файлы:<br/><code>agent-redesign.css</code><br/><code>agent-redesign-frames.js</code><br/>
+    Заменяет: <a href="Advisor-SPEC.html">Advisor-SPEC</a>, <a href="Advisor-Mobile-SPEC.html">Advisor-Mobile-SPEC</a><br/>
+    Хэдер: <a href="../../system/App-Header-Pill-Placement-SPEC.html">Pill Placement</a>
+  </div>
+</aside>
+<main>
+  <p class="kicker">Pennedly · Редизайн экрана</p>
+  <h1 class="title">Агент <span>/app/advisor</span></h1>
+  <p class="lede">Экран знает цифры пользователя, но показывал пустую форму по центру. Редизайн разворачивает его в <b>рабочее место в две колонки</b>: слева диалог, справа — то, что агент реально может прочитать прямо сейчас. Пустое состояние заменено <b>сводкой за неделю</b>, каждый ответ несёт <b>полосу метрик</b> и <b>навигируемую строку привязки</b>, а действия показывают <b>что изменится</b> до нажатия. Все живые фреймы ниже собраны на <code>agent-redesign.css</code> — это тот же CSS, что уходит в продукт.</p>
+
+  <section id="s1">
+    <h2><span class="n">1</span>Диагноз и решение</h2>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:270px">Что не так сейчас</th><th>Почему</th><th style="width:300px">Решение</th></tr></thead>
+      <tbody>
+        <tr><td>«Скукоженный, узкий»</td><td>640px колонка по центру внутри 1280+ вьюпорта — две трети экрана пустые.</td><td>Сетка <code>1fr / 320px</code>: диалог до 760px + постоянная правая колонка с реальным содержимым. Мёртвого поля не остаётся.</td></tr>
+        <tr><td>H1 ломается на две рваные строки</td><td>«Спросите агента по росту: он и подскажет, и настроит» — 47 символов в ru, 52 в de.</td><td>H1 <b>убран целиком</b>. Заголовок экрана уже живёт в баре (экран без hero — см. App-Header-SPEC). Вместо него — рабочий подзаголовок «Что изменилось за неделю».</td></tr>
+        <tr><td>Пустое состояние ничего не показывает</td><td>Иконка + абзац + три общих чипа. Экран, который знает цифры аккаунта, показывает placeholder.</td><td>Сводка из 4 карточек с <b>настоящими показателями за неделю</b>; у каждой снизу пришит вопрос, который она порождает. Тап = вопрос уходит в диалог.</td></tr>
+        <tr><td>Чипы 2+1 — несбалансированы</td><td>Три пилюли разной длины во flex-wrap — последняя сиротеет на второй строке.</td><td>Сетка <code>auto-fit minmax(340px,1fr)</code> при мере чтения 760px даёт <b>ровно 2 колонки</b> → четыре карточки встают блоком 2×2, без сироты. На телефоне — столбик.</td></tr>
+        <tr><td>Тонкая форма вместо инструмента</td><td>Однострочный input + маленькая круглая кнопка + серая сноска.</td><td>Композер с телом: 16px радиус, тень <code>--shadow-md</code>, кнопка 40×40 и <b>функциональная нижняя строка</b> — что читается и когда обновлялось.</td></tr>
+        <tr><td>Ответ агента не спроектирован</td><td>Проза + пилюли вперемешку.</td><td>Жёсткая вертикальная партитура ответа: проза → полоса метрик → проза → карточки → строка привязки под хайрлайном.</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note hero"><b>Одно правило на весь экран.</b> Всё, что агент утверждает, должно быть либо <b>цифрой из полосы метрик</b>, либо <b>названным источником в строке привязки</b>. Нет источника — нет утверждения; вместо него честное «данных мало» с указанием, сколько не хватает. Это не декоративная подпись, а контракт: источники кликабельны и ведут на экран, откуда взята цифра.</div>
+  </section>
+
+  <section id="s2">
+    <h2><span class="n">2</span>Раскладка экрана</h2>
+    <p class="section-note">Экран занимает область <code>main</code> шелла и держит <b>собственный внутренний скролл</b>. Скроллится только <code>.ag-scroll</code>; композер — сосед по флексу, не sticky, поэтому не всплывает над контентом и не требует компенсации отступов.</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:180px">Слой</th><th>Класс</th><th>Поведение</th></tr></thead>
+      <tbody>
+        <tr><td>Оболочка</td><td><code>.ag-shell</code></td><td><code>container:ag / inline-size; height:100%; min-height:0</code>. Слот <code>main</code> шелла. Существует только ради контейнерных запросов: элемент не может отвечать на собственный <code>@container</code>, поэтому контейнер — родитель, а не сам <code>.ag-screen</code>.</td></tr>
+        <tr><td>Сетка экрана</td><td><code>.ag-screen</code></td><td><code>display:grid; grid-template-columns:minmax(0,1fr) 320px; gap:28px; height:100%; padding:0 28px</code>. Обе колонки — независимые скроллеры.</td></tr>
+        <tr><td>Левая колонка</td><td><code>.ag-main</code></td><td><code>flex-column; min-height:0</code> — <code>min-height:0</code> обязателен, иначе скроллер распирает грид.</td></tr>
+        <tr><td>Лента</td><td><code>.ag-stream</code> → <code>.ag-scroll</code> → <code>.ag-col</code></td><td><code>.ag-stream</code>: <code>position:relative; flex:1 1 auto; min-height:0; flex-column</code> — существует только чтобы быть контейнером для кнопки «вниз». <code>.ag-scroll</code>: <code>overflow-y:auto; overscroll-behavior:contain; scrollbar-gutter:stable</code>. Внутри — колонка <code>max-width:760px</code>, <code>gap:30px</code> между ходами.</td></tr>
+        <tr><td>Док композера</td><td><code>.ag-dock</code></td><td><code>flex:0 0 auto</code>, всегда виден, шириной как лента (760 по центру).</td></tr>
+        <tr><td>Правая колонка</td><td><code>.ag-rail</code></td><td>320px (280 на 960–1199), свой <code>overflow-y:auto</code>, <code>gap:14px</code>. Скрывается ниже 960.</td></tr>
+        <tr><td>Кнопка «вниз»</td><td><code>.ag-jump</code></td><td><code>position:absolute</code> внутри <b><code>.ag-stream</code></b>, не <code>.ag-main</code>: <code>.ag-main</code> содержит и ленту, и док, поэтому <code>bottom:14px</code> от него приходится на композер. Появляется когда <code>scrollHeight − scrollTop − clientHeight &gt; 240</code>. <b>Пока кнопка смонтирована, на <code>.ag-stream</code> вешается <code>.ag-stream--jump</code></b>, и появляются две вещи: скроллер берёт <code>padding-bottom:56px</code> (14 отступ + 34 высота + 8 базовых), чтобы последний ход можно было дочитать; и снизу ложится <b>градиент-скрим 72px</b> (<code>::after</code>, <code>pointer-events:none</code>, справа отступ 9px под скроллбар), потому что одного паддинга недостаточно: на середине ленты под непрозрачной кнопкой всё равно проезжает текст, и он должен <b>угасать</b>, а не обрезаться. Кнопка <code>z-index:2</code>, скрим <code>1</code>. Центрируется <code>left:50%</code> + <code>translateX(-50%)</code>, поэтому у неё <b>свой</b> кейфрейм <code>ag-jump-in</code>: общий <code>ag-in</code> заканчивается на <code>transform:none</code> и при <code>fill-mode:both</code> навсегда стёр бы центровку.</td></tr>
+        <tr><td>Бар шелла</td><td><code>.topbar</code></td><td><b>Не перерисовывается этим редизайном — берётся как есть из <code>studio.css:122-155</code></b> (<code>.topbar</code> · <code>.topbar-title</code> · <code>.topbar-spacer</code> · <code>.topbar-actions</code> · <code>.icon-btn</code>): высота 60, <code>gap:16</code>, <code>padding:0 24</code>, <code>backdrop-filter:saturate(1.1) blur(8px)</code>, иконки 36×36 с <code>--radius-md</code>. Порядок слотов задан <a href="../../system/App-Header-Pill-Placement-SPEC.html">App-Header-Pill-Placement</a>: <b>пилюля первой</b>, затем заголовок, затем иконки. Экран без hero → <code>--hdr-reveal:1</code>, заголовок виден всегда. Пилюля «Читает данные» — <b>129.7px в ru</b>, то есть у самого потолка контракта 132px: запас 2.3px. Любая локаль длиннее этой строки по тому же правилу пилюли не получает вовсе — состояние читается в панели «Данные агента» и в нижней строке композера.</td></tr>
+        <tr><td>К чему выравнен бар</td><td>—</td><td><b><code>.topbar-inner</code> больше не используется.</b> Старый экран центрировал ряд бара по <code>--content-reading</code>; здесь главный трек шире меры чтения и рядом есть рейл, так что центровка дала бы кривой бар. Бар занимает всю ширину и выровнен по <b>тому же боковому отступу, что и <code>.ag-screen</code></b>: 24px на десктопе (значение из studio.css, под него подогнан экран, а не наоборот) и 14px на телефоне. Пилюля начинается на x=24 — там же, где граница главного трека. <b>С лентой она не совпадает и не должна</b>: бар перекрывает оба трека, а лента — мера чтения 760px, центрированная в своём треке (на 1280 её левый край — x≈81).</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note good"><b>Брейкпоинты — контейнерные, не вьюпортные.</b> <code>.ag-shell</code> объявлен <code>container:ag / inline-size</code>, а все три порога написаны как <code>@container ag (max-width:…)</code>. Экран живёт в шелле с фиксированным сайдбаром, поэтому решать, влезает ли рейл, должна <b>его собственная ширина</b>, а не ширина окна: при развёрнутом сайдбаре 1280px окна дают меньше 1000px самому экрану. Числа те же, но меряются по <code>.ag-shell</code>. Единственное исключение — <code>env(safe-area-inset-bottom)</code> в доке: это свойство устройства, и оно осталось в <code>@media</code>.<br/><br/>Фреймы ниже рендерятся в свою настоящую ширину и масштабируются под колонку документа — то, что вы видите, не зависит от ширины вашего окна. <b>Подписи даны в ширине контейнера, не окна</b>: <code>studio.css:30</code> задаёт <code>.sidebar{flex:0 0 248px}</code>, так что контейнер = окно − 248. Поэтому реальный десктоп 1280 — это <b>контейнер 1032</b> и рейл <b>280</b>, а не 320; рейл 320 начинается с окна ≈1448.</div>
+    <div id="f-wide"></div>
+    <div class="note"><b>Пороги.</b> ≥1200 рейл 320 · 960–1199 рейл 280, паддинг 22 · 768–959 рейл скрыт, его содержимое доступно кнопкой <code>слои</code> в баре · ≤767 телефонный слой (см. §9). Ниже — фрейм на 900: рейл схлопнут, лента разворачивается во всю ширину, ничего не ломается.</div>
+    <div id="f-narrow"></div>
+  </section>
+
+  <section id="s3">
+    <h2><span class="n">3</span>Пустой экран — сводка, а не hero</h2>
+    <p class="section-note">Первый запуск и любой новый диалог. Ни иконки-заглушки, ни H1, ни «Elevate your growth» — экран сразу показывает четыре настоящих показателя за неделю и вопрос, который каждый из них ставит. Тап по карточке отправляет этот вопрос в диалог, поэтому «стартовые промпты» перестают быть общими: они выведены из данных.</p>
+    <div id="f-empty"></div>
+    <div id="f-empty-l"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:200px">Элемент</th><th>Значения</th></tr></thead>
+      <tbody>
+        <tr><td><code>.ag-open-hd h2</code></td><td>«Что изменилось за неделю» — <code>--text-h3</code> 19px / 600 / −0.006em. Рядом <code>span</code> 12.5px subtle: диапазон дат + свежесть данных.</td></tr>
+        <tr><td><code>.ag-brief</code></td><td><code>grid; repeat(auto-fit,minmax(340px,1fr)); gap:10px</code>. При капе ленты 760px это <b>всегда 2 колонки</b> (2×340+10 = 690 ≤ 760, а третьей дорожке нужно 1040) и <b>1 колонка</b> ниже 767 — 2×2 на десктопе, столбик на телефоне. Промежуточного 3+1 не бывает ни на одной ширине.</td></tr>
+        <tr><td><code>.ag-card</code></td><td>padding 14/15/13; <code>border:1px solid --color-border; radius:12px; bg --color-surface</code>. Hover: бордер <code>mix(accent 45%, border)</code> + фон surface-2, 120ms.</td></tr>
+        <tr><td><code>.ag-card-v</code></td><td>20px / 600 / −0.015em / tabular. Тон: <code>--up</code> success, <code>--down</code> danger, нейтраль — <code>--color-text</code>. Глиф 15px того же цвета.</td></tr>
+        <tr><td><code>.ag-card-l</code></td><td>12.5px / <code>--color-text-muted</code> / lh 1.4, margin-top 3.</td></tr>
+        <tr><td><code>.ag-card-q</code></td><td>Вопрос: 12.5px / 500 / <code>--color-accent</code>, над ним хайрлайн <code>border-top</code> + padding-top 9, margin-top 10. Глиф агента 13px.</td></tr>
+        <tr><td>Ряд «Или спросите иначе»</td><td><code>.ag-lab</code> 11px / 600 / uppercase / .05em subtle, затем <code>.ag-chipq</code> — высота 34 (36 на телефоне), radius full, 13px / 500.</td></tr>
+      </tbody>
+    </table></div>
+    <h3>3.1 · Композер</h3>
+    <p class="section-note">Нижняя строка композера — не сноска, а состояние: что именно читается и когда данные обновлялись, с кнопкой обновления. Она же снимает прежний висячий дисклеймер под формой.</p>
+    <div id="f-composer"></div>
+    <div class="note good"><b>Почему это не слоп.</b> Каждая карточка — реальная метрика, которая и так есть в Stats, и вопрос к ней ровно один. Нет трёх одинаковых «фич», нет иконок ради иконок, нет обещаний. Если данных на карточку не хватает — карточка не рендерится. <b>Карточек всегда чётное число — 2 или 4</b>, иначе в сетке 2×2 останется дыра; при трёх доступных метриках показываются две сильнейшие.</div>
+  </section>
+
+  <section id="s4">
+    <h2><span class="n">4</span>Активный диалог</h2>
+    <p class="section-note">Партитура хода агента фиксирована и не меняется от ответа к ответу: <b>проза → полоса метрик → проза → карточки → строка привязки</b>. Любой блок может отсутствовать; порядок — никогда. Расстояние между ходами 30px, внутри хода 12–16px.</p>
+    <div id="f-active"></div>
+    <div id="f-active-l"></div>
+
+    <h3 id="s4-user">4.1 · Реплика пользователя</h3>
+    <div id="f-user"></div>
+    <div class="tbl-wrap"><table><tbody>
+      <tr><th style="width:200px"><code>.ag-bubble</code></th><td><code>max-width:78%</code> (86% ≤767); <code>bg mix(accent 12%, surface)</code>; <code>border 1px mix(accent 22%)</code>; <code>radius 16/16/6/16</code>; padding 11/15; 15px / lh 1.55. Асимметричный нижний-правый угол = исходящее. Аватара нет.</td></tr>
+      <tr><th><code>.ag-mark</code></th><td>32×32, radius 10, <code>bg mix(accent 12%, surface)</code>, бордер <code>mix(accent 24%)</code>, глиф <code>IcAgent</code> 18px accent.</td></tr>
+      <tr><th><code>.ag-who</code></th><td>«Агент» 11px / 600 / uppercase / .05em subtle + время 11px tabular subtle. Отбивка 4/9.</td></tr>
+    </tbody></table></div>
+
+    <h3 id="s4-metrics">4.2 · Полоса метрик — процитированные цифры</h3>
+    <p class="section-note">Заменяет россыпь пилюль. Хайрлайны берутся из <code>gap:1px</code> на фоне <code>--color-border</code>, поэтому сетка корректно переносится при любой ширине и в любой локали — рваного «чип-супа» в ru/de не возникает.</p>
+    <div id="f-metrics"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:200px">Свойство</th><th>Значение</th></tr></thead>
+      <tbody>
+        <tr><td>Контейнер</td><td><code>grid; repeat(auto-fit,minmax(152px,1fr)); gap:1px; background:--color-border; border:1px; radius:12px; overflow:hidden</code>. ≤767 → ровно 2 колонки.</td></tr>
+        <tr><td>Ячейка</td><td><code>bg --color-surface; padding:11px 14px 12px</code> (10/12/11 на телефоне).</td></tr>
+        <tr><td>Значение</td><td>18px / 600 / −0.012em / tabular (17px ≤767). Глиф 14px слева, gap 5.</td></tr>
+        <tr><td>Подпись</td><td>12px / lh 1.35 / <code>--color-text-muted</code>, margin-top 3, <code>overflow-wrap:anywhere</code>.</td></tr>
+        <tr><td>Тон</td><td><span class="sw" style="background:#5fbf8d"></span><code>--up</code> success · <span class="sw" style="background:#ef8a80"></span><code>--down</code> danger · <span class="sw" style="background:#9aacff"></span><code>--note</code> accent · без модификатора — <code>--color-text</code>. Красится <b>только значение</b>, не фон ячейки.</td></tr>
+        <tr><td>Сколько ячеек</td><td>2–4. Одна метрика — не полоса, её место в прозе. Пять и больше — признак, что ответ надо разбить.</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 id="s4-grounded">4.3 · Строка привязки</h3>
+    <p class="section-note">Механизм честности. Не сноска: источники — <b>кликабельные</b> и ведут на экран, откуда взята цифра, а рядом с именем стоит объём («Полученные ответы · 148»). Проверенные, но пустые источники показываются <b>пунктиром и приглушённо</b> — видно, что агент туда заглядывал и там ничего не было.</p>
+    <div id="f-grounded"></div>
+    <div class="tbl-wrap"><table><tbody>
+      <tr><th style="width:200px">Контейнер</th><td><code>flex-wrap; gap:7px; margin-top:16px; padding-top:13px; border-top:1px solid --color-border</code>.</td></tr>
+      <tr><th>Лейбл</th><td>«На основе» + глиф слоёв 14px — 12px / 500 / <code>--color-text-muted</code>.</td></tr>
+      <tr><th><code>.ag-src</code></th><td><code>padding:3px 9px; radius:7px; border 1px; bg --color-surface-2</code>; 12px; имя — <code>--color-text</code> / 500, объём — muted. Hover: бордер и текст → accent, 120ms.</td></tr>
+      <tr><th><code>.ag-src--empty</code></th><td><code>border-style:dashed; opacity:.62</code>, без hover, курсор обычный. Текст «нет данных».</td></tr>
+      <tr><th>Куда ведёт</th><td>Статистика → <code>/app/stats</code> · Карта времени → <code>/app/stats#best-times</code> · Посты → <code>/app/feed</code> · Полученные ответы → <code>/app/replies</code> · Профиль голоса → <code>/app/role-book</code> · Топ-посты → <code>/app/stats#top</code>.</td></tr>
+    </tbody></table></div>
+    <div class="note good"><b>Шесть источников — закрытый список.</b> Статистика · карта лучшего времени · ваши посты · топ-посты · полученные ответы · профиль голоса. Он совпадает со списком в правой колонке (§8), поэтому пользователь заранее видит, из чего вообще может быть собран ответ.</div>
+  </section>
+
+  <section id="s5">
+    <h2><span class="n">5</span>Карточка-действие — что именно изменится</h2>
+    <p class="section-note">Действия пишут в аккаунт, поэтому карточка обязана показать результат <b>до</b> нажатия. Ядро карточки — блок <code>Сейчас → Станет</code>: две строки, в нижней подсвечены <mark style="background:color-mix(in srgb,var(--color-accent) 16%,transparent);color:var(--color-accent);font-weight:600;padding:0 4px;border-radius:4px">именно те значения</mark>, которые меняются. Ни одна карточка не применяется без этого блока.</p>
+    <div id="f-act"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:190px">Часть</th><th>Значения</th></tr></thead>
+      <tbody>
+        <tr><td>Корпус</td><td><code>border:1px solid --color-border; border-left:3px solid --color-accent; radius:14px; bg --color-surface; shadow-sm</code>. Левая кромка — единственный признак «это пишет в аккаунт».</td></tr>
+        <tr><td>Шапка</td><td>Иконка 36×36 (radius 10, <code>mix(accent 12%)</code>) + надтип 11/600/uppercase subtle + заголовок 15/600/−0.004em + плашка режима справа. padding 14/16/0, gap 11.</td></tr>
+        <tr><td>Плашка режима</td><td>Высота 22, radius full, 11px/500. <b>Сразу · можно отменить</b> — <code>--color-warning</code>, глиф молнии. <b>На ревью</b> — <code>--color-accent</code>, галочка. Больше режимов нет.</td></tr>
+        <tr><td>Блок диффа</td><td><code>dl; grid auto / 1fr; gap 7/14; padding 11/13; bg --color-surface-2; border 1px; radius 10</code>. <code>dt</code> 11/600/uppercase subtle. «Сейчас» — muted, «Станет» — <code>--color-text</code>. <code>mark</code>: <code>bg mix(accent 16%)</code>, accent, 600, radius 4.</td></tr>
+        <tr><td>Предупреждение</td><td><code>.ag-act-warn</code> — 12.5px <code>--color-warning</code> + треугольник 14px. Только когда есть реальный побочный эффект; иначе строки нет.</td></tr>
+        <tr><td>Кнопки</td><td>padding 13/16/14, gap 8. Главная <code>.btn--primary.btn--sm</code> с глаголом по типу; «Изменить» — secondary; «Не сейчас» — ghost, прижата вправо через <code>.sp</code>. На телефоне кнопки растягиваются <code>flex:1 1 auto; min-width:44%</code>.</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 id="s5-cat">5.1 · Каталог из 9 действий</h3>
+    <p class="section-note">Список закрытый. Глагол кнопки и режим заданы типом — не сочиняются под ответ.</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:150px">Тип</th><th style="width:135px">Надтип</th><th style="width:115px">Кнопка</th><th style="width:145px">Режим</th><th>Что показывает дифф</th></tr></thead>
+      <tbody>
+        <tr><td><code>routine</code></td><td>Рутина</td><td>Создать</td><td>На ревью</td><td>Дни и часы окна · сколько постов в неделю добавится</td></tr>
+        <tr><td><code>auto_replies</code></td><td>Автоответы</td><td>Включить</td><td>Сразу · откат</td><td>Было выкл. → вкл. + фильтр (только вопросы) + часы</td></tr>
+        <tr><td><code>voice_rule</code></td><td>Правило голоса</td><td>Добавить</td><td>Сразу · откат</td><td>Текущее число правил → +1, текст правила целиком</td></tr>
+        <tr><td><code>schedule_post</code></td><td>Публикация</td><td>Запланировать</td><td>На ревью</td><td>Пусто в слоте → черновик + точные дата и время</td></tr>
+        <tr><td><code>trigger</code></td><td>Реактивный триггер</td><td>Настроить</td><td>Сразу · откат</td><td>Условие («упоминание с вопросом») → действие → лимит в сутки</td></tr>
+        <tr><td><code>post_format</code></td><td>Формат постов</td><td>Применить</td><td>Сразу · откат</td><td>Текущий формат по умолчанию → новый (длина, разбивка, хук)</td></tr>
+        <tr><td><code>automation</code></td><td>Автоматизация</td><td>Поставить на паузу / Возобновить</td><td>Сразу · откат</td><td>Что активно сейчас → до какой даты пауза и что переживёт её</td></tr>
+        <tr><td><code>best_time</code></td><td>Лучшее время</td><td>Перенести</td><td>На ревью</td><td>Текущее время поста → рекомендованное окно + множитель</td></tr>
+        <tr><td><code>topics</code></td><td>Темы</td><td>Добавить</td><td>Сразу · откат</td><td>Текущий список тем → добавленные, перечислены поимённо</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note warn"><b>Максимум две карточки-действия на ход</b> (и максимум две подсказки). Три и больше — признак, что агент вываливает меню вместо совета; бэкенд обрезает, фронт не рендерит третью.</div>
+
+    <h3 id="s5-states">5.2 · Состояния</h3>
+    <div id="f-act-states"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:170px">Состояние</th><th>Вид</th></tr></thead>
+      <tbody>
+        <tr><td>Предложено</td><td>Полная карточка. Дифф раскрыт всегда — не за «показать подробности».</td></tr>
+        <tr><td>Применяется</td><td><code>.ag-act--busy</code>: <code>opacity:.72; pointer-events:none</code>; в главной кнопке спиннер 14px и глагол в процессе («Включаю…»). Дифф остаётся на месте.</td></tr>
+        <tr><td>Применено</td><td>Карточка схлопывается в чек-строку 48px: галочка success, что сделано, когда, и «Отменить» справа. Кромка и иконка перекрашиваются в success, фон <code>mix(success 5%)</code>. Отмена доступна 24 часа.</td></tr>
+        <tr><td>Ошибка</td><td><code>.ag-act--fail</code>: кромка danger, «Повторить» secondary + строка «Не удалось применить — настройки не изменились». Ключевое — сказать, что изменений не произошло.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section id="s6">
+    <h2><span class="n">6</span>Карточка-подсказка</h2>
+    <p class="section-note">Легче действия: ничего не меняет, только передаёт бриф в композер Studio. Поэтому <b>нет акцентной кромки, нет диффа, нет плашки режима</b>, а иконка нейтральная (surface-2, не accent). Разница читается с одного взгляда — это и есть смысл двух разных карточек.</p>
+    <div id="f-sug"></div>
+    <div class="tbl-wrap"><table><tbody>
+      <tr><th style="width:200px">Корпус</th><td><code>flex; gap:13; padding:13/15; border 1px; radius:14; bg surface; shadow-sm</code> — без цветной кромки.</td></tr>
+      <tr><th>Иконка</th><td>34×34, radius 10, <code>bg --color-surface-2</code>, бордер border, глиф <code>--color-text-muted</code> 17px.</td></tr>
+      <tr><th>Текст</th><td>Заголовок 13px/600, «почему» 12px/muted/lh 1.5, отбивка 3.</td></tr>
+      <tr><th>Кнопки</th><td>Главная — <code>.btn--secondary.btn--sm</code> (не primary: подсказка не главное действие хода), вторая — ghost.</td></tr>
+    </tbody></table></div>
+  </section>
+
+  <section id="s7">
+    <h2><span class="n">7</span>Думает · мало данных · ошибка</h2>
+
+    <h3>7.1 · Читает данные</h3>
+    <p class="section-note">Вместо трёх точек — список источников, которые агент открывает по очереди. Честно, привязано к тому же закрытому списку из шести и заодно объясняет задержку. Максимум 3 шага; готовый — галочка success, текущий — кольцевой спиннер accent, будущий — точка 5px opacity .45.</p>
+    <div id="f-think"></div>
+
+    <h3>7.2 · Данных не хватает</h3>
+    <p class="section-note">Отдельный тип хода, не ошибка. Тон <code>--color-warning</code>. Обязательны три вещи: <b>сколько данных нужно и сколько есть</b> (шкала), <b>почему цифра не будет показана</b>, и <b>какой вопрос агент может закрыть уже сейчас</b> — иначе это тупик.</p>
+    <div id="f-thin"></div>
+    <div class="tbl-wrap"><table><tbody>
+      <tr><th style="width:200px"><code>.ag-thin</code></th><td><code>border 1px mix(warning 32%, border); border-left:3px solid --color-warning; radius:14; bg mix(warning 6%, surface); padding:14/16</code>.</td></tr>
+      <tr><th>Шкала</th><td><code>.ag-gauge-bar</code> — высота 6, radius full, трек <code>mix(text 10%)</code>, заливка <code>--color-warning</code>, максимум 200px. Подписи 12.5px tabular по бокам.</td></tr>
+      <tr><th>Строка привязки</th><td>Остаётся — и показывает пустые источники пунктиром. Пользователь видит, что было проверено.</td></tr>
+    </tbody></table></div>
+
+    <h3>7.3 · Ошибка</h3>
+    <p class="section-note">Падает <b>только последний ход</b>, вся история выше остаётся читаемой. Никакого баннера на весь экран. Формулировка обязана снять главный страх: «Ваши данные не затронуты».</p>
+    <div id="f-err"></div>
+  </section>
+
+  <section id="s8">
+    <h2><span class="n">8</span>Правая колонка · история и возврат в диалог</h2>
+    <p class="section-note">Три панели. Это то содержимое, ради которого колонка вообще существует — не декоративный сайдбар: «Данные агента» объясняет строку привязки заранее, «Диалоги» решают заданный вопрос возврата к прошлым разговорам, «Применено агентом» — журнал записей в аккаунт, который иначе негде посмотреть.</p>
+    <div id="f-rail"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:190px">Панель</th><th>Содержимое и значения</th></tr></thead>
+      <tbody>
+        <tr><td>Данные агента</td><td>Шесть строк закрытого списка источников с объёмом. Источник с недостатком данных — <code>.ag-sig--thin</code>: имя subtle, значение <code>--color-warning</code> / 500. Строка 9/14, шрифт 13, иконка 15 subtle. «Обновить» в шапке — 11px accent.</td></tr>
+        <tr><td>Диалоги</td><td>История хранится на сервере, поэтому список переживает навигацию. Активный — <code>aria-current="true"</code>: фон <code>mix(accent 8%)</code> + <code>inset 3px 0 0 accent</code>, заголовок 600. Заголовок диалога = первый вопрос пользователя, обрезается в одну строку. «+ Новый» в шапке очищает ленту, не удаляя историю.</td></tr>
+        <tr><td>Применено агентом</td><td>Только реально применённые действия: что, с какими параметрами, когда. Галочка 14px success. Строка ведёт на экран, где это изменение живёт.</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note"><b>Возврат в прошлый диалог.</b> Клик по строке загружает ход-за-ходом ту же ленту; лента скроллится в конец без анимации. Карточки-действия из прошлых диалогов приходят уже в состоянии «применено» или «предложено» — предложенные остаются нажимаемыми, если условие ещё в силе; если нет, вместо кнопок строка «Условие изменилось» 12.5px subtle.</div>
+    <div class="note"><b>Ниже 960px</b> колонка скрыта, а её три панели открываются как лист снизу по кнопке слоёв в баре — тот же разметочный блок, ничего не дублируется.</div>
+  </section>
+
+  <section id="s9">
+    <h2><span class="n">9</span>Мобильный</h2>
+    <p class="section-note">Одна колонка, тот же CSS. Всё, что меняется, — в одном медиа-блоке <code>≤767px</code>: сетка метрик фиксируется в 2 колонки, сводка — в 1, пузырь до 86%, кнопки действий растягиваются, док получает <code>env(safe-area-inset-bottom)</code>, кнопка Send и чипы вырастают до 44/36px под палец.</p>
+    <div id="f-mob"></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:220px">Что меняется ≤767</th><th>Значение</th></tr></thead>
+      <tbody>
+        <tr><td>Горизонтальные поля</td><td>14px (<code>.ag-screen padding</code>)</td></tr>
+        <tr><td>Полоса метрик</td><td><code>grid-template-columns:1fr 1fr</code>; ячейка 10/12/11; значение 17px</td></tr>
+        <tr><td>Сводка</td><td><code>grid-template-columns:1fr</code> — карточки в столбик, вопрос всегда виден</td></tr>
+        <tr><td>Шапка действия</td><td><code>flex-wrap</code>; плашка режима уходит в первую строку (<code>order:-1; margin-left:auto</code>), заголовок — во вторую</td></tr>
+        <tr><td>Кнопки действия</td><td><code>flex:1 1 auto; min-width:44%</code> — две в ряд, третья переносится</td></tr>
+        <tr><td>Композер</td><td>radius 14, padding 10/10/8/14, Send 44×44; док <code>padding-bottom:max(12px, env(safe-area-inset-bottom))</code></td></tr>
+        <tr><td>Бар</td><td><b>Не перерисовывается — берётся как есть из <code>mobile/pennedly-mobile.css:45-77</code></b> (<code>.mob .m-top</code> · <code>.m-top-title</code> · <code>.m-top-spacer</code> · <code>.m-top-actions</code> · <code>.m-iconbtn</code>). Это <b>другой шелл</b>, не адаптив десктопного: <code>min-height:52px</code> (растёт под контент, не фиксирован), <code>padding:8px 12px 8px 16px</code>, <code>gap:10</code>, фон <code>--color-bg 84%</code>, действия <code>gap:6</code>, кнопки <b>40×40</b> (не 32 — это тач-слой, хит-зона ≥ 44 за счёт высоты бара). Заголовок — <code>nowrap + ellipsis</code>. Гамбургер — <code>.m-iconbtn--plain</code>, далее слои (панели рейла) и история. Пилюля состояния на телефоне не показывается — она есть в панели «Данные агента».</td></tr>
+        <tr><td>Порог срабатывания</td><td><code>@container ag (max-width:767px)</code> — по ширине <code>.ag-shell</code>. На телефоне сайдбара нет, поэтому это совпадает с шириной вьюпорта; <code>env(safe-area-inset-bottom)</code> остаётся на <code>@media</code>.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section id="s10">
+    <h2><span class="n">10</span>Значения</h2>
+
+    <h3 id="s10-geo">10.1 · Геометрия</h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:250px">Элемент</th><th>≥1200</th><th>≤767</th></tr></thead>
+      <tbody>
+        <tr><td>Поля экрана</td><td>24px — равно <code>.topbar</code> из studio.css</td><td>14px</td></tr>
+        <tr><td>Пороги в окнах</td><td colspan="2">Контейнерные 1200 / 960 / 768 — это окна <b>1448 / 1208 / 1016</b> при развёрнутом сайдбаре 248px. На телефонном шелле сайдбара нет, и контейнер равен вьюпорту.</td></tr>
+        <tr><td>Колонки</td><td><code>minmax(0,1fr) 320px</code>, gap 28</td><td>одна</td></tr>
+        <tr><td>Ширина ленты</td><td>760px max, по центру</td><td>во всю</td></tr>
+        <tr><td>Сводка</td><td>2×2 (auto-fit min 340 при капе 760)</td><td>1 колонка</td></tr>
+        <tr><td>Мера прозы</td><td colspan="2"><code>max-width:68ch</code> на <code>.ag-body p</code></td></tr>
+        <tr><td>Между ходами</td><td>30px</td><td>24px</td></tr>
+        <tr><td>Аватар агента</td><td colspan="2">32×32, radius 10, gap до текста 13</td></tr>
+        <tr><td>Полоса метрик</td><td>auto-fit min 152</td><td>2 колонки</td></tr>
+        <tr><td>Карточка-действие</td><td colspan="2">radius 14, левая кромка 3px, шапка 14/16, дифф 11/13, кнопки 13/16/14</td></tr>
+        <tr><td>Композер</td><td>radius 16, padding 12/12/9/16, Send 40</td><td>radius 14, 10/10/8/14, Send 44</td></tr>
+        <tr><td>Панели рейла</td><td>radius 14, шапка 11/14, строка 9/14</td><td>лист снизу</td></tr>
+        <tr><td>Кнопка «вниз»</td><td colspan="2">высота 34, radius full, <code>bottom:14px</code>, <code>--shadow-md</code></td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 id="s10-type">10.2 · Типографика и цвет</h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:230px">Роль</th><th style="width:190px">Тип</th><th>Тёмная</th><th>Светлая</th></tr></thead>
+      <tbody>
+        <tr><td>Заголовок сводки</td><td>19 / 600 / −0.006em</td><td><code>#ededed</code></td><td><code>#171717</code></td></tr>
+        <tr><td>Проза ответа</td><td>15 / 400 / lh 1.62</td><td><code>#ededed</code></td><td><code>#171717</code></td></tr>
+        <tr><td>Метка «Агент», надтипы</td><td>11 / 600 / .05em / uppercase</td><td><code>#898882</code></td><td><code>#6f6e69</code></td></tr>
+        <tr><td>Значение метрики</td><td>18 / 600 / tabular</td><td>по тону ↓</td><td>по тону ↓</td></tr>
+        <tr><td>Подпись метрики</td><td>12 / 400 / lh 1.35</td><td><code>#a2a19c</code></td><td><code>#565550</code></td></tr>
+        <tr><td>Тон · рост</td><td>—</td><td><code>#5fbf8d</code></td><td><code>#2c7350</code></td></tr>
+        <tr><td>Тон · падение</td><td>—</td><td><code>#ef8a80</code></td><td><code>#b23b30</code></td></tr>
+        <tr><td>Тон · нейтральный акцент</td><td>—</td><td><code>#9aacff</code></td><td><code>#2f4cc4</code></td></tr>
+        <tr><td>Предупреждение</td><td>12.5 / 400</td><td><code>#d8a754</code></td><td><code>#8a5b16</code></td></tr>
+        <tr><td>Источник в привязке</td><td>12 / 400, имя 500</td><td>текст <code>#ededed</code>, объём <code>#a2a19c</code>, фон <code>#201f1d</code></td><td>текст <code>#171717</code>, объём <code>#565550</code>, фон <code>#f6f5f2</code></td></tr>
+        <tr><td>Поверхность карточки</td><td>—</td><td><code>#171717</code> на <code>#0a0a0a</code>, бордер <code>#2b2a27</code></td><td><code>#ffffff</code> на <code>#efedea</code>, бордер <code>#dcd9d2</code></td></tr>
+        <tr><td>Подсветка в диффе</td><td>600</td><td><code>#9aacff</code> на <code>#232839</code></td><td><code>#2f4cc4</code> на <code>#dbdde9</code></td></tr>
+        <tr><td>Пузырь пользователя</td><td>15 / lh 1.55</td><td>фон <code>#1b2033</code>, бордер <code>#2f3854</code></td><td>фон <code>#e5e8f5</code>, бордер <code>#c3cae8</code></td></tr>
+      </tbody>
+    </table></div>
+    <p class="section-note">Плоские hex — результат <code>color-mix()</code> поверх фона темы, приведены для сверки скриншотов. В код идут выражения <code>color-mix</code>, а не эти значения. Ни одного цвета вне токенов; ни одного градиента.</p>
+
+    <h3 id="s10-motion">10.3 · Движение</h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:230px">Что</th><th style="width:200px">Как</th><th>Длительность и кривая</th></tr></thead>
+      <tbody>
+        <tr><td>Появление хода</td><td><code>opacity 0→1</code> + <code>translateY 8px→0</code></td><td>240ms <code>--ease-entrance</code>, без задержек и каскада</td></tr>
+        <tr><td>Шаг «читает данные» завершён</td><td>подмена глифа на галочку</td><td>мгновенно — без масштабирования, чтобы список не «дышал»</td></tr>
+        <tr><td>Спиннеры (шаг, кнопка)</td><td>вращение кольца 14–15px</td><td>700ms linear, бесконечно</td></tr>
+        <tr><td>Применение действия</td><td>карточка → чек-строка: высота 200ms, содержимое 140ms кроссфейд</td><td>200 / 140ms <code>--ease-standard</code></td></tr>
+        <tr><td>Hover карточки сводки, источника</td><td>цвет бордера и текста</td><td>120ms <code>--ease-standard</code></td></tr>
+        <tr><td>Фокус композера</td><td>бордер + кольцо 3px</td><td>120ms <code>--ease-standard</code></td></tr>
+        <tr><td>Кнопка «вниз»</td><td>появление <code>opacity</code> + 8px по Y</td><td>180ms <code>--ease-entrance</code>, кейфрейм <code>ag-jump-in</code> (сохраняет <code>translateX(-50%)</code>); порог 240px от низа; вместе с кнопкой — резерв <code>padding-bottom:56px</code> и скрим 72px, оба без анимации, чтобы лента не дёргалась</td></tr>
+        <tr><td>Автоскролл к новому ходу</td><td><code>scrollTo({top, behavior:'smooth'})</code> на <code>.ag-scroll</code></td><td>только если пользователь уже был внизу (запас 240px)</td></tr>
+        <tr><td><code>prefers-reduced-motion</code></td><td colspan="2">Появление ходов и кнопки «вниз» — без анимации (у кнопки при этом восстанавливается <code>transform:translateX(-50%)</code>, иначе она съедет); спиннеры замедляются до 1.6s; hover/фокус — без transition; автоскролл <code>behavior:'auto'</code>.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section id="s11">
+    <h2><span class="n">11</span>Локали</h2>
+    <p class="section-note">ru и de — эталон длины. Ключевое отличие от прежнего экрана: <b>нет ни одной строки, которая обязана уместиться в одну линию</b>. H1 убран, заголовки карточек переносятся, подписи метрик получают <code>overflow-wrap:anywhere</code>, кнопки действий на телефоне растягиваются. Обрезается ellipsis только там, где это безопасно: заголовок диалога в рейле и имя источника в строке рейла.</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:200px">Строка</th><th>ru</th><th>de</th><th>en</th></tr></thead>
+      <tbody>
+        <tr><td>Заголовок сводки</td><td>Что изменилось за неделю</td><td>Was sich diese Woche geändert hat</td><td>What changed this week</td></tr>
+        <tr><td>Подпись метрики</td><td>Просмотры за 7 дней</td><td>Aufrufe (7 Tage)</td><td>Views, 7 days</td></tr>
+        <tr><td>Лейбл привязки</td><td>На основе</td><td>Basis</td><td>Grounded in</td></tr>
+        <tr><td>Пустой источник</td><td>нет данных</td><td>keine Daten</td><td>no data</td></tr>
+        <tr><td>Режим · сразу</td><td>Сразу · можно отменить</td><td>Sofort · widerrufbar</td><td>Applies now · undoable</td></tr>
+        <tr><td>Режим · ревью</td><td>На ревью</td><td>Zur Freigabe</td><td>Needs review</td></tr>
+        <tr><td>Дифф</td><td>Сейчас / Станет</td><td>Jetzt / Danach</td><td>Now / After</td></tr>
+        <tr><td>Мало данных</td><td>Данных пока мало для честного ответа</td><td>Zu wenig Daten für eine ehrliche Antwort</td><td>Not enough data for an honest answer</td></tr>
+        <tr><td>Пилюля бара</td><td>Читает данные · <b>129.7px — потолок</b></td><td>Liest Daten · ~92px</td><td>Reads your data · ~118px</td></tr>
+        <tr><td>Плейсхолдер</td><td>Спросите про рост — или поручите настроить</td><td>Frag nach Wachstum — oder lass es einrichten</td><td>Ask about growth — or have it set up</td></tr>
+        <tr><td>Строка композера</td><td>Читает вашу статистику, голос, посты и полученные ответы</td><td>Liest Statistiken, Stimme, Beiträge und Antworten</td><td>Reads your stats, voice, posts and replies</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note"><b>Числа.</b> Везде <code>font-variant-numeric:tabular-nums</code>: значения метрик и карточек, объёмы в привязке, шкала, время в шапке хода, даты в рейле. Разделитель разрядов и знак процента — по локали; знак минуса — U+2212, не дефис.</div>
+  </section>
+
+  <section id="s12">
+    <h2><span class="n">12</span>Чек-лист</h2>
+    <ul class="check">
+      <li>Иконки — только из <code>system/studio-icons.jsx</code> (десктоп) и <code>mobile/sprite.js</code> (<code>&lt;use href="#i-…"&gt;</code> в телефонном баре). Ни одного нарисованного глифа: где в наборах нет нужного (история, пауза, обновление), берётся ближайший реальный — <code>IcBubble</code>, <code>IcBolt</code>, <code>IcTweak</code> — и это помечено в комментарии рядом с путём.</li>
+      <li>Бары обоих шеллов не трогаем: десктоп — <code>.topbar / .topbar-title / .topbar-spacer / .topbar-actions / .icon-btn</code> из <code>studio.css</code>; телефон — <code>.mob .m-top / .m-top-title / .m-top-spacer / .m-top-actions / .m-iconbtn</code> из <code>mobile/pennedly-mobile.css</code>. Пилюля в ведущем слоте по <a href="../../system/App-Header-Pill-Placement-SPEC.html">App-Header-Pill-Placement</a>. Никаких локальных алиасов бара.</li>
+      <li>Сетка <code>1fr / 320px</code>; <code>min-height:0</code> на <code>.ag-main</code>; скроллится только <code>.ag-scroll</code>; композер — сосед по флексу, не sticky.</li>
+      <li>Адаптив на <code>@container</code> от оболочки <code>.ag-shell</code> (не от <code>.ag-screen</code> — элемент не матчит собственный контейнер) и не на <code>@media</code> — иначе рейл схлопывается не тогда, когда ему тесно.</li>
+      <li>H1 экрана удалён; заголовок «Агент» живёт только в баре (экран без hero, <code>--hdr-reveal:1</code>).</li>
+      <li>Пустое состояние строится из настоящих метрик; карточка без данных не рендерится.</li>
+      <li>Партитура хода агента: проза → метрики → проза → карточки → привязка. Порядок не меняется.</li>
+      <li>Полоса метрик — 2–4 ячейки, хайрлайны из <code>gap:1px</code>, красится только значение.</li>
+      <li>Каждый содержательный ход несёт строку привязки; источники кликабельны; проверенные пустые показаны пунктиром.</li>
+      <li>Ни одной цифры без источника. Нет данных → ход «мало данных» со шкалой и встречным вопросом.</li>
+      <li>Карточка-действие всегда с блоком <code>Сейчас → Станет</code>; изменяемые значения в <code>&lt;mark&gt;</code>.</li>
+      <li>Девять типов действий, глагол и режим заданы типом; максимум 2 действия и 2 подсказки на ход.</li>
+      <li>Состояния действия: предложено / применяется / применено (чек-строка + отмена 24 ч) / ошибка «настройки не изменились».</li>
+      <li>Подсказка отличается от действия визуально: нет кромки, нет диффа, нет режима, иконка нейтральная.</li>
+      <li>Ошибка валит только последний ход; глобального баннера нет.</li>
+      <li>Рейл: источники, диалоги (сервер, <code>aria-current</code>), журнал применённого. Ниже 960 — лист снизу.</li>
+      <li>≤767: метрики 2 колонки, сводка 1, Send 44, safe-area в доке.</li>
+      <li>Светлая и тёмная; только семантические токены; ни одного градиента и свечения.</li>
+      <li>ru/de без клиппинга на 360; tabular-nums везде, где есть цифры; минус U+2212.</li>
+      <li><code>prefers-reduced-motion</code> отключает появление ходов, замедляет спиннеры, делает автоскролл мгновенным.</li>
+    </ul>
+  </section>
+</main>
+</div>
+<script src="../../mobile/sprite.js"></script>
+<script src="agent-redesign-frames.js"></script>
+</body>
+</html>
