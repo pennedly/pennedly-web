@@ -978,6 +978,17 @@ export type VoiceTestResponse = { samples: VoiceSample[] };
 // shape exists to keep the call typed like every other one.
 export type WaitlistResponse = { status: string };
 
+// In-app feedback. The context (screen / account / locale / version) is
+// attached by the caller so a two-sentence report is already actionable.
+export type FeedbackInput = {
+  message: string;
+  screen?: string;
+  account_id?: number;
+  locale?: string;
+  app_version?: string;
+};
+export type FeedbackResponse = { id: number };
+
 // Per-account autopilot config. Default off; the user assembles their own
 // from a few clear controls. The autopilot worker reads this to decide
 // what to post / reply automatically.

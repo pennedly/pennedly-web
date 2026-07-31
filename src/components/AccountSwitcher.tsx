@@ -18,18 +18,36 @@ import { useTranslation } from "@/lib/i18n";
 import { useConnectedAccounts } from "@/components/useConnectedAccounts";
 import { ConnectThreadsButton } from "@/components/ConnectThreadsButton";
 import { Avatar, nameOf } from "@/components/ui/avatar";
-import { IcCheck, IcChevDown, IcChevRight, IcLogout, IcOverview, IcSettings } from "@/components/icons";
+import { IcCheck, IcChevDown, IcChevRight, IcLogout, IcMail, IcOverview, IcSettings } from "@/components/icons";
+import { FeedbackDialog } from "@/components/FeedbackDialog";
 import type { Me } from "@/lib/types";
 
 export function AccountSwitcher({ me, onLogout }: { me?: Me | null; onLogout?: () => void }) {
   const { accounts, loaded, selectedAccount, effMe } = useConnectedAccounts(me);
   const [open, setOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const { t } = useTranslation();
 
   if (!loaded) return null;
-  // Brand-new user / fresh Meta reviewer with nothing connected yet.
-  if (accounts.length === 0) return <ConnectThreadsButton variant="primary" />;
-  if (!selectedAccount) return null;
+  // Brand-new user / fresh Meta reviewer with nothing connected yet. Feedback
+  // has to reach them TOO — someone who can't connect an account is exactly the
+  // person with something to tell us, and the full menu below never renders for
+  // them. Same for `!selectedAccount`.
+  if (accounts.length === 0 || !selectedAccount) {
+    return (
+      <div className="flex flex-col gap-1.5">
+        {accounts.length === 0 && <ConnectThreadsButton variant="primary" />}
+        <button
+          type="button"
+          onClick={() => setFeedbackOpen(true)}
+          className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-small text-text-muted transition-colors hover:bg-surface-2 hover:text-text"
+        >
+          <IcMail size={16} className="text-text-subtle" /> {t("feedback.menu")}
+        </button>
+        <FeedbackDialog open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
+      </div>
+    );
+  }
 
   // «All accounts» → the account home. Testers get the new account DASHBOARD
   // (/app/account, Account → Brands → Profiles); everyone else keeps the current
@@ -133,6 +151,19 @@ export function AccountSwitcher({ me, onLogout }: { me?: Me | null; onLogout?: (
             >
               <IcSettings size={16} className="text-text-subtle" /> {t("nav.settings")}
             </Link>
+            {/* Feedback sits next to Settings rather than floating over every
+                screen: no spec draws a floating button, and on a phone it would
+                cover a corner of the content on all of them. */}
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                setFeedbackOpen(true);
+              }}
+              className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-small text-text transition-colors hover:bg-surface-2"
+            >
+              <IcMail size={16} className="text-text-subtle" /> {t("feedback.menu")}
+            </button>
             {onLogout && (
               <button
                 type="button"
@@ -148,6 +179,8 @@ export function AccountSwitcher({ me, onLogout }: { me?: Me | null; onLogout?: (
           </div>
         </>
       )}
+
+      <FeedbackDialog open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
     </div>
   );
 }

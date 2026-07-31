@@ -46,6 +46,8 @@ import type {
   FromScratchInput,
   VoiceTestResponse,
   WaitlistResponse,
+  FeedbackInput,
+  FeedbackResponse,
   GeneratedDraft,
   IdeasResult,
   LinkPreview,
@@ -1313,6 +1315,17 @@ export async function voiceTest(posts: string[]): Promise<VoiceTestResponse> {
   return fetchApi<VoiceTestResponse>("/api/voice-test", {
     method: "POST",
     body: JSON.stringify({ posts }),
+  });
+}
+
+// In-app feedback. Authed — the server resolves the tenant from the session and
+// adds the user agent itself, so the client only sends what it alone knows.
+export async function submitFeedback(
+  input: FeedbackInput,
+): Promise<FeedbackResponse> {
+  return fetchApi<FeedbackResponse>("/api/feedback", {
+    method: "POST",
+    body: JSON.stringify(input),
   });
 }
 
