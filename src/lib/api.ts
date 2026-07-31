@@ -45,6 +45,7 @@ import type {
   FollowerHistory,
   FromScratchInput,
   VoiceTestResponse,
+  WaitlistResponse,
   GeneratedDraft,
   IdeasResult,
   LinkPreview,
@@ -1312,6 +1313,20 @@ export async function voiceTest(posts: string[]): Promise<VoiceTestResponse> {
   return fetchApi<VoiceTestResponse>("/api/voice-test", {
     method: "POST",
     body: JSON.stringify({ posts }),
+  });
+}
+
+// Landing waitlist. `locale` decides which language the "we're open" email is
+// written in; `source` records which CTA was used, so we can tell whether the
+// hero or the footer form is doing the work.
+export async function joinWaitlist(
+  email: string,
+  locale: string,
+  source: "hero" | "footer" = "hero",
+): Promise<WaitlistResponse> {
+  return fetchApi<WaitlistResponse>("/api/waitlist", {
+    method: "POST",
+    body: JSON.stringify({ email, locale, source }),
   });
 }
 

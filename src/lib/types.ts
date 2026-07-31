@@ -973,6 +973,11 @@ export type AdvisorData = {
 export type VoiceSample = { comment: string; reply: string };
 export type VoiceTestResponse = { samples: VoiceSample[] };
 
+// Landing waitlist capture. The server answers `ok` whether the address was
+// new or already on the list, so there is nothing here to branch on — the
+// shape exists to keep the call typed like every other one.
+export type WaitlistResponse = { status: string };
+
 // Per-account autopilot config. Default off; the user assembles their own
 // from a few clear controls. The autopilot worker reads this to decide
 // what to post / reply automatically.

@@ -24,7 +24,8 @@
 import Link from "next/link";
 import { Fragment, useEffect, useState, type ReactNode } from "react";
 
-import { fetchMe, getTokens, voiceTest } from "@/lib/api";
+import { fetchMe, getTokens, joinWaitlist, voiceTest } from "@/lib/api";
+import { captureEvent } from "@/lib/analytics";
 import { cn } from "@/lib/cn";
 import {
   TweaksPanel,
@@ -428,6 +429,89 @@ function WhyPennedlySection() {
   );
 }
 
+// Hero CTA — collects an email instead of walking the visitor into the product.
+// Until Meta clears business verification, `/app/login` leads to a door that
+// only listed testers can open, so sending a stranger there spends the one
+// moment they were interested. The address lets us tell them when it opens.
+//
+// `locale` rides along so the announcement email is written in the language
+// they read the page in; `source` records which CTA earned the signup.
+function WaitlistForm({ source = "hero" }: { source?: "hero" | "footer" }) {
+  const { t, locale } = useTranslation();
+  const [email, setEmail] = useState("");
+  const [state, setState] = useState<"idle" | "busy" | "ok" | "error">("idle");
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    const value = email.trim();
+    if (!value || state === "busy") return;
+    setState("busy");
+    try {
+      await joinWaitlist(value, locale, source);
+      setState("ok");
+      // Closes the landing funnel: PostHog already captures the pageview, so
+      // this is the other half — how many of those views turned into an
+      // address. Deliberately carries no email; the server holds that, and the
+      // analytics store has no business with it.
+      captureEvent("waitlist.submitted", { source, locale });
+    } catch {
+      setState("error");
+    }
+  }
+
+  // Success replaces the form outright: leaving a filled field next to a
+  // confirmation invites a second submit that does nothing visible.
+  if (state === "ok") {
+    return (
+      <p className="inline-flex items-center gap-2.5 rounded-lg border border-success/30 bg-success/[0.08] px-4 py-3 text-body text-text">
+        <IcCheck size={17} className="shrink-0 text-success" />
+        {t("landing.wl_ok")}
+      </p>
+    );
+  }
+
+  return (
+    <form onSubmit={submit} className="w-full max-w-[440px]">
+      <div className="flex flex-col gap-2.5 min-[520px]:flex-row">
+        <label className="sr-only" htmlFor={`wl-${source}`}>
+          {t("landing.wl_label")}
+        </label>
+        <input
+          id={`wl-${source}`}
+          type="email"
+          required
+          autoComplete="email"
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            if (state === "error") setState("idle");
+          }}
+          placeholder={t("landing.wl_placeholder")}
+          // 16px keeps iOS Safari from zooming the page on focus.
+          className="h-12 min-w-0 flex-1 rounded-md border border-border bg-surface px-3.5 text-[16px] leading-[1.55] text-text placeholder:text-text-subtle focus:border-accent focus:outline-none focus:ring-[3px] focus:ring-accent/[0.18]"
+        />
+        <button
+          type="submit"
+          disabled={state === "busy"}
+          data-fx="btnprimary"
+          className="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-md bg-primary px-[22px] text-body font-medium text-primary-foreground transition-[background-color,transform] duration-[180ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] hover:bg-[color-mix(in_srgb,var(--color-primary)_88%,var(--color-bg))] active:translate-y-[0.5px] disabled:opacity-50"
+        >
+          {state === "busy" ? t("landing.wl_sending") : t("landing.cta")}
+          {state === "busy" ? null : <IcArrowRight size={17} />}
+        </button>
+      </div>
+      <p
+        className={cn(
+          "mt-2.5 text-small",
+          state === "error" ? "text-danger" : "text-text-subtle",
+        )}
+      >
+        {state === "error" ? t("landing.wl_error") : t("landing.wl_hint")}
+      </p>
+    </form>
+  );
+}
+
 // The full marketing page (no shell wrapper). `showSample` toggles the hero
 // product peek. Used both for the live page and inside the viewport-preview iframe.
 function LandingContent({ showSample }: { showSample: boolean }) {
@@ -506,17 +590,11 @@ function LandingContent({ showSample }: { showSample: boolean }) {
             </p>
             <div
               className={cn(
-                "mt-7 flex flex-wrap items-center gap-4",
-                !showSample && "min-[881px]:justify-center",
+                "mt-7 flex flex-col items-start gap-4",
+                !showSample && "min-[881px]:items-center",
               )}
             >
-              <Link
-                href="/app/login"
-                data-fx="btnprimary"
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-primary px-[22px] text-body font-medium text-primary-foreground transition-[background-color,transform] duration-[180ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] hover:bg-[color-mix(in_srgb,var(--color-primary)_88%,var(--color-bg))] active:translate-y-[0.5px]"
-              >
-                {t("landing.cta")} <IcArrowRight size={17} />
-              </Link>
+              <WaitlistForm />
               <a
                 href={`mailto:${CONTACT_EMAIL}`}
                 data-fx="link"
