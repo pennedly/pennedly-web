@@ -434,21 +434,43 @@ function WhyPennedlySection() {
 // only listed testers can open, so sending a stranger there spends the one
 // moment they were interested. The address lets us tell them when it opens.
 //
+// Built to Landing-Waitlist-SPEC.html. Three of its calls are deliberate and
+// easy to undo by accident:
+//  • The button is NEVER disabled. A one-field form gains nothing from a grey
+//    button — it only defers the single error we can show on click.
+//  • Success collapses the row into a line of the SAME 48px height instead of
+//    swapping in a card, so the page never jumps and the calm tone holds.
+//  • The mailto link left the hero for the footer: "leave your address" and
+//    "write to us" were competing for one intent side by side.
+//
 // `locale` rides along so the announcement email is written in the language
 // they read the page in; `source` records which CTA earned the signup.
 function WaitlistForm({ source = "hero" }: { source?: "hero" | "footer" }) {
   const { t, locale } = useTranslation();
   const [email, setEmail] = useState("");
-  const [state, setState] = useState<"idle" | "busy" | "ok" | "error">("idle");
+  const [state, setState] = useState<"idle" | "busy" | "sent" | "error">("idle");
+  const [sentTo, setSentTo] = useState("");
+
+  // Same structural check the backend runs. Kept here so the click can answer
+  // immediately rather than spending a round-trip to say "that's not an email".
+  function looksLikeEmail(v: string): boolean {
+    const at = v.indexOf("@");
+    return at > 0 && at < v.length - 1 && !/\s/.test(v);
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     const value = email.trim();
-    if (!value || state === "busy") return;
+    if (state === "busy") return;
+    if (!looksLikeEmail(value)) {
+      setState("error");
+      return;
+    }
     setState("busy");
     try {
       await joinWaitlist(value, locale, source);
-      setState("ok");
+      setSentTo(value);
+      setState("sent");
       // Closes the landing funnel: PostHog already captures the pageview, so
       // this is the other half — how many of those views turned into an
       // address. Deliberately carries no email; the server holds that, and the
@@ -459,54 +481,64 @@ function WaitlistForm({ source = "hero" }: { source?: "hero" | "footer" }) {
     }
   }
 
-  // Success replaces the form outright: leaving a filled field next to a
-  // confirmation invites a second submit that does nothing visible.
-  if (state === "ok") {
+  // Success sits in the row's place at the same height — nothing reflows.
+  if (state === "sent") {
     return (
-      <p className="inline-flex items-center gap-2.5 rounded-lg border border-success/30 bg-success/[0.08] px-4 py-3 text-body text-text">
-        <IcCheck size={17} className="shrink-0 text-success" />
-        {t("landing.wl_ok")}
+      <p className="flex h-12 w-full max-w-[440px] items-center gap-2.5 text-small text-text">
+        <span className="grid h-[22px] w-[22px] shrink-0 place-items-center rounded-full border border-success/30 bg-success/[0.14] text-success">
+          <IcCheck size={13} />
+        </span>
+        <span className="min-w-0 truncate">
+          {t("landing.waitlist_success").replace("{email}", sentTo)}
+        </span>
       </p>
     );
   }
 
+  const failed = state === "error";
   return (
-    <form onSubmit={submit} className="w-full max-w-[440px]">
-      <div className="flex flex-col gap-2.5 min-[520px]:flex-row">
+    <form onSubmit={submit} noValidate className="w-full">
+      <div className="flex max-w-[440px] items-stretch gap-2.5 max-[560px]:flex-col">
         <label className="sr-only" htmlFor={`wl-${source}`}>
-          {t("landing.wl_label")}
+          {t("landing.waitlist_label")}
         </label>
         <input
           id={`wl-${source}`}
           type="email"
-          required
+          inputMode="email"
           autoComplete="email"
           value={email}
+          disabled={state === "busy"}
           onChange={(e) => {
             setEmail(e.target.value);
-            if (state === "error") setState("idle");
+            if (failed) setState("idle");
           }}
-          placeholder={t("landing.wl_placeholder")}
-          // 16px keeps iOS Safari from zooming the page on focus.
-          className="h-12 min-w-0 flex-1 rounded-md border border-border bg-surface px-3.5 text-[16px] leading-[1.55] text-text placeholder:text-text-subtle focus:border-accent focus:outline-none focus:ring-[3px] focus:ring-accent/[0.18]"
+          placeholder="you@email.com"
+          aria-invalid={failed || undefined}
+          // 16px hard, not the 15px body token: anything smaller and Safari on
+          // iPhone zooms the page on focus.
+          className={cn(
+            "h-12 min-w-0 flex-[1_1_160px] rounded-md border bg-surface px-3.5 text-[16px] leading-[1.55] text-text placeholder:text-text-subtle focus:outline-none focus:ring-[3px] focus:ring-accent/[0.18] disabled:opacity-65 max-[560px]:w-full max-[560px]:flex-none",
+            failed ? "border-danger focus:border-danger" : "border-border focus:border-accent",
+          )}
         />
         <button
           type="submit"
           disabled={state === "busy"}
           data-fx="btnprimary"
-          className="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-md bg-primary px-[22px] text-body font-medium text-primary-foreground transition-[background-color,transform] duration-[180ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] hover:bg-[color-mix(in_srgb,var(--color-primary)_88%,var(--color-bg))] active:translate-y-[0.5px] disabled:opacity-50"
+          className="inline-flex h-12 shrink-0 items-center justify-center rounded-md bg-primary px-[22px] text-body font-medium text-primary-foreground max-[560px]:w-full transition-[background-color,transform] duration-[180ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] hover:bg-[color-mix(in_srgb,var(--color-primary)_88%,var(--color-bg))] active:translate-y-[0.5px] disabled:opacity-50"
         >
-          {state === "busy" ? t("landing.wl_sending") : t("landing.cta")}
-          {state === "busy" ? null : <IcArrowRight size={17} />}
+          {state === "busy" ? t("landing.waitlist_sending") : t("landing.cta")}
         </button>
       </div>
       <p
         className={cn(
-          "mt-2.5 text-small",
-          state === "error" ? "text-danger" : "text-text-subtle",
+          "mt-2.5 max-w-[440px] text-caption",
+          failed ? "text-danger" : "text-text-subtle",
         )}
+        aria-live="polite"
       >
-        {state === "error" ? t("landing.wl_error") : t("landing.wl_hint")}
+        {failed ? t("landing.waitlist_error") : t("landing.waitlist_hint")}
       </p>
     </form>
   );
@@ -588,20 +620,16 @@ function LandingContent({ showSample }: { showSample: boolean }) {
             >
               {t("landing.lead_body")} <span className="text-accent">{t("landing.lead_emph")}</span>
             </p>
+            {/* Spec §4: the mailto link moved to the footer. Side by side, "leave
+                your address" and "write to us" competed for one intent; the form
+                already answers it, and a separate question is a footer errand. */}
             <div
               className={cn(
-                "mt-7 flex flex-col items-start gap-4",
+                "mt-7 flex flex-col items-start",
                 !showSample && "min-[881px]:items-center",
               )}
             >
               <WaitlistForm />
-              <a
-                href={`mailto:${CONTACT_EMAIL}`}
-                data-fx="link"
-                className="inline-flex items-center gap-[7px] text-small text-text-muted transition-colors duration-[120ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] hover:text-text"
-              >
-                <IcMail size={15} className="text-text-subtle" /> {CONTACT_EMAIL}
-              </a>
             </div>
             {/* Trust strip — lift the reassurances that otherwise hide behind login */}
             <ul
@@ -695,6 +723,13 @@ function LandingContent({ showSample }: { showSample: boolean }) {
           </span>
           <span className="flex-1" />
           <nav aria-label={t("a11y.legal_nav")} className="flex flex-wrap items-center gap-x-[18px] gap-y-1.5">
+            <a
+              href={`mailto:${CONTACT_EMAIL}`}
+              data-fx="link"
+              className="inline-flex items-center gap-[7px] text-small text-text-muted transition-colors duration-[120ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] hover:text-text"
+            >
+              <IcMail size={15} className="text-text-subtle" /> {CONTACT_EMAIL}
+            </a>
             {FOOTER_LINKS.map((l) => (
               <Link
                 key={l.labelKey}

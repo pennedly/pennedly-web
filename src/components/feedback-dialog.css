@@ -1,0 +1,91 @@
+/* feedback-dialog.css — the phone form of the "Написать нам" dialog, per
+   Feedback-Dialog-SPEC.html §6.
+
+   WHY A SHEET AND NOT THE CENTRED MODAL. Every other modal in the product
+   already becomes a bottom sheet on a phone (delete post, publish reply,
+   disconnect account, enable autopilot). This one is the only one with a text
+   field, and it needs the sheet most: pinned to the bottom edge, the content
+   rides above the keyboard instead of being pushed off-screen, and the buttons
+   land in the bottom third under the thumb rather than mid-screen.
+
+   The primitives are the same ones `account/account-mobile-shell.css` lifted
+   from the эталон mobile shell — scrim, sheet, grip, safe-area padding, and the
+   same values (max-height 88%, radius-xl top, grip 36x4, scrim ink-950 52% +
+   blur 2px). They are re-declared here rather than imported because that file
+   scopes everything under `.acc-mob`, the account dashboard's root, which this
+   dialog is not inside. Keep the two in sync by value, not by selector.
+
+   Desktop is untouched: above 768px this file contributes nothing. */
+
+.fb-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: color-mix(in srgb, var(--color-ink-950) 52%, transparent);
+  backdrop-filter: blur(2px);
+  animation: fb-scrim-in var(--duration-base) var(--ease-standard);
+}
+@keyframes fb-scrim-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.fb-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 41;
+  max-height: 88%;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  box-shadow: var(--shadow-lg);
+  animation: fb-sheet-in var(--duration-slow) var(--ease-entrance);
+  /* The эталон defines this on the device-mock root; here it comes from the
+     real device. */
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+@keyframes fb-sheet-in {
+  from { transform: translateY(14px); }
+  to { transform: none; }
+}
+
+.fb-sheet-grip {
+  width: 36px;
+  height: 4px;
+  flex: 0 0 auto;
+  margin: 4px auto 10px;
+  border-radius: 9999px;
+  background: var(--color-border);
+}
+
+/* The body scrolls when the message runs long; the safe-area inset lives here
+   so the last button never sits under the home indicator. */
+.fb-sheet-body {
+  overflow-y: auto;
+  min-height: 0;
+  padding: 0 14px calc(16px + var(--safe-bottom, 0px));
+}
+
+/* Spec §6: on a phone the actions stack full-width with primary on top —
+   the same shape as the existing `.m-csheet-actions`. */
+.fb-sheet-actions {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 10px;
+  margin-top: 18px;
+}
+.fb-sheet-actions > * {
+  width: 100%;
+  height: 48px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fb-scrim,
+  .fb-sheet {
+    animation: none;
+  }
+}

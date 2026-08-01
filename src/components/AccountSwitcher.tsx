@@ -180,7 +180,11 @@ export function AccountSwitcher({ me, onLogout }: { me?: Me | null; onLogout?: (
         </>
       )}
 
-      <FeedbackDialog open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
+      <FeedbackDialog
+        open={feedbackOpen}
+        onClose={() => setFeedbackOpen(false)}
+        accountHandle={selectedAccount.username}
+      />
     </div>
   );
 }
