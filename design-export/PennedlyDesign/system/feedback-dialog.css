@@ -1,0 +1,63 @@
+/* feedback-dialog.css — «Написать нам» from the profile menu (sidebar foot on
+   desktop, drawer foot on phone). Desktop = the existing `.overlay` + `.dialog`
+   (ds/components.css) with a width modifier; phone = the product's established
+   "desktop modal → bottom sheet" pattern (`.m-sheet.m-dialogsheet`,
+   mobile/pennedly-mobile.css). Only existing tokens; correct in light + dark. */
+
+/* --------------------------------- Desktop -------------------------------- */
+.dialog--feedback { max-width: 448px; }
+
+.fb-body { margin-top: 18px; }
+.fb-ta {
+  display: block; width: 100%; min-height: 132px; max-height: 300px; resize: vertical;
+  font-family: var(--font-sans); font-size: 16px; line-height: 1.55; color: var(--color-text);
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-md); padding: 12px 14px; outline: none;
+  transition: border-color var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard);
+}
+.fb-ta::placeholder { color: var(--color-text-subtle); }
+.fb-ta:focus { border-color: var(--color-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 18%, transparent); }
+.fb-ta:disabled { opacity: 0.65; resize: none; }
+.fb-ta--error { border-color: var(--color-danger); }
+.fb-ta--error:focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-danger) 18%, transparent); }
+
+/* counter — rendered only inside the last 400 characters */
+.fb-count { margin-top: 6px; text-align: right; font-size: var(--text-caption); font-variant-numeric: tabular-nums; color: var(--color-text-subtle); }
+.fb-count--none { color: var(--color-danger); }
+
+/* what travels with the message — visible by default, never collapsed */
+.fb-ctx { margin-top: 14px; padding: 12px 13px; background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+.fb-ctx-t { display: flex; align-items: center; gap: 8px; font-size: var(--text-small); color: var(--color-text-muted); line-height: 1.45; }
+.fb-ctx-t svg { flex: 0 0 auto; color: var(--color-text-subtle); }
+.fb-ctx-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.fb-pill {
+  display: inline-flex; align-items: center; gap: 6px; max-width: 100%;
+  font-size: var(--text-caption); color: var(--color-text-muted);
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-full); padding: 4px 10px;
+}
+.fb-pill b { font-family: var(--font-mono); font-size: 11.5px; font-weight: 500; color: var(--color-text); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.fb-error { display: flex; align-items: flex-start; gap: 8px; margin-top: 12px; font-size: var(--text-small); color: var(--color-danger); line-height: 1.5; }
+.fb-error svg { flex: 0 0 auto; margin-top: 2px; }
+
+.fb-spin { width: 14px; height: 14px; border-radius: var(--radius-full); border: 2px solid currentColor; border-top-color: transparent; animation: fb-spin 0.6s linear infinite; }
+@keyframes fb-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .fb-spin { animation-duration: 1.6s; } }
+
+/* success — the same 38×38 dialog mark, success-tinted (recipe mirrors
+   `.dialog-mark--danger` in feed.css). No oversized decorative circle. */
+.dialog-mark--success {
+  background: color-mix(in srgb, var(--color-success) 13%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--color-success) 30%, transparent);
+  color: var(--color-success);
+}
+
+/* ------------------------------ Phone sheet ------------------------------- */
+/* `.m-fbsheet` extends `.m-dialogsheet`: same head, a text field, and stacked
+   full-width actions (primary on top) as in `.m-csheet-actions`. */
+.mob .m-fbsheet .fb-body { margin-top: 14px; }
+.mob .m-fbsheet .fb-ta { min-height: 116px; max-height: 40vh; border-radius: var(--radius-md); }
+.mob .m-fbsheet .fb-ctx { margin-top: 12px; }
+.mob .m-fbsheet .fb-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+.mob .m-fbsheet .fb-actions .btn { width: 100%; min-height: 48px; height: auto; }

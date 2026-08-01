@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pennedly · Диалог «Написать нам» — Спецификация</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../../ds/tokens.css" />
+<link rel="stylesheet" href="../../ds/components.css" />
+<link rel="stylesheet" href="../../system/shell.css" />
+<link rel="stylesheet" href="../../mobile/pennedly-mobile.css" />
+<link rel="stylesheet" href="../../mobile/frame.css" />
+<link rel="stylesheet" href="../../system/feedback-dialog.css" />
+<style>
+:root{
+  --font-sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --font-mono:"Geist Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --bg:#efedea; --surface:#ffffff; --surface-2:#f6f5f2; --border:#dcd9d2;
+  --text:#171717; --muted:#565550; --subtle:#6f6e69; --accent:#2f4cc4;
+  --code-bg:#f6f5f2; --good:#2c7350; --warn:#8a5b16; --danger:#b23b30; --radius:14px;
+}
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%; scroll-behavior:smooth;}
+body{margin:0; background:var(--bg); color:var(--text); font-family:var(--font-sans); font-size:15px; line-height:1.62; -webkit-font-smoothing:antialiased;}
+.layout{display:grid; grid-template-columns:272px minmax(0,1fr); gap:0; max-width:1360px; margin:0 auto;}
+.toc{position:sticky; top:0; align-self:start; height:100vh; overflow-y:auto; padding:34px 22px 40px 32px; border-right:1px solid var(--border);}
+.toc .doc-mark{display:flex; align-items:center; gap:10px; margin-bottom:6px;}
+.toc .doc-mark .nib{width:30px; height:30px; border-radius:8px; background:var(--text); display:grid; place-items:center; flex:0 0 auto;}
+.toc .doc-mark b{font-size:16px; font-weight:600; letter-spacing:-0.01em;}
+.toc .doc-sub{font-size:12px; color:var(--subtle); letter-spacing:0.02em; margin:0 0 22px 40px; text-transform:uppercase;}
+.toc nav{display:flex; flex-direction:column; gap:1px;}
+.toc nav a{display:flex; gap:9px; padding:6px 10px; border-radius:8px; text-decoration:none; color:var(--muted); font-size:13.5px; line-height:1.35; transition:background .12s, color .12s;}
+.toc nav a:hover{background:var(--surface-2); color:var(--text);}
+.toc nav a .n{font-variant-numeric:tabular-nums; color:var(--subtle); font-weight:600; flex:0 0 16px;}
+.toc .meta{margin-top:24px; padding-top:18px; border-top:1px solid var(--border); font-size:12px; color:var(--subtle); line-height:1.7;}
+.toc .meta code{font-family:var(--font-mono); font-size:11px;} .toc .meta b{color:var(--text);}
+
+main{padding:40px 52px 120px; min-width:0;}
+.kicker{font-family:var(--font-mono); font-size:12px; letter-spacing:0.04em; color:var(--accent); text-transform:uppercase; margin:0 0 10px;}
+h1.title{font-size:33px; line-height:1.12; letter-spacing:-0.025em; font-weight:600; margin:0 0 14px; text-wrap:balance;}
+h1.title span{color:var(--subtle); font-weight:500;}
+.lede{font-size:16px; color:var(--muted); max-width:78ch; margin:0 0 14px; text-wrap:pretty;}
+section{margin-top:52px; scroll-margin-top:20px;}
+h2{font-size:21px; line-height:1.25; letter-spacing:-0.012em; font-weight:600; margin:0 0 4px; padding-top:10px;}
+h2 .h2n{font-family:var(--font-mono); font-size:14px; color:var(--accent); margin-right:10px; font-weight:500;}
+.section-note{color:var(--muted); font-size:14px; max-width:80ch; margin:6px 0 18px; text-wrap:pretty;}
+h3{font-size:15.5px; font-weight:600; letter-spacing:-0.005em; margin:26px 0 10px; padding-bottom:7px; border-bottom:1px solid var(--border);}
+h4{font-size:13px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.04em; margin:22px 0 8px;}
+p{margin:0 0 12px; text-wrap:pretty;}
+code{font-family:var(--font-mono); font-size:0.86em; background:var(--code-bg); border:1px solid var(--border); padding:1px 5px; border-radius:5px;}
+strong{font-weight:600;}
+.tbl-wrap{overflow-x:auto; margin:0 0 16px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface);}
+table{width:100%; border-collapse:collapse; font-size:13px;}
+th,td{text-align:left; padding:9px 13px; border-bottom:1px solid var(--border); vertical-align:top;}
+thead th{font-size:11px; text-transform:uppercase; letter-spacing:0.04em; color:var(--subtle); font-weight:600; background:var(--surface-2);}
+tbody tr:last-child td{border-bottom:none;}
+td code, th code, li code, p code{white-space:normal; overflow-wrap:anywhere;}
+td.val{font-family:var(--font-mono); font-size:12px;}
+.note{border:1px solid var(--border); border-left:3px solid var(--accent); background:var(--surface); border-radius:10px; padding:12px 16px; margin:14px 0; font-size:13.5px; color:var(--muted);}
+.note.warn{border-left-color:var(--warn);} .note.good{border-left-color:var(--good);} .note.danger{border-left-color:var(--danger);}
+.note b{color:var(--text);}
+.check{list-style:none; padding:0; margin:0 0 8px;}
+.check li{position:relative; padding:5px 0 5px 26px; border-bottom:1px dashed var(--border); font-size:13.5px;}
+.check li:last-child{border-bottom:none;}
+.check li::before{content:"☐"; position:absolute; left:2px; top:4px; color:var(--subtle); font-size:14px;}
+.sw{display:inline-block; width:12px; height:12px; border-radius:3px; border:1px solid rgba(0,0,0,.18); vertical-align:-1px; margin-right:6px;}
+
+/* ---- dialog primitives (значения 1-в-1 из studio.css §dialog) ---- */
+.dlg-scope .dialog-head{display:flex; align-items:flex-start; gap:12px;}
+.dlg-scope .dialog-title{font-size:var(--text-h3); font-weight:600; line-height:1.3; color:var(--color-text);}
+.dlg-scope .dialog-sub{font-size:var(--text-small); color:var(--color-text-muted); margin-top:4px; line-height:1.55;}
+.dlg-scope .dialog-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:22px;}
+.dlg-scope .dialog-mark{flex:0 0 auto; width:38px; height:38px; border-radius:var(--radius-md); display:grid; place-items:center; background:var(--color-surface-2); border:1px solid var(--color-border); color:var(--color-text);}
+
+/* ---- frames ---- */
+.frames{display:flex; flex-wrap:wrap; gap:22px; margin:18px 0 6px;}
+.fr{display:flex; flex-direction:column; gap:9px; min-width:0;}
+.fr-head{display:inline-flex; align-items:center; gap:7px; font-family:var(--font-mono); font-size:11px; letter-spacing:.02em; color:var(--subtle);}
+.fr-cap{font-size:12.5px; color:var(--subtle); max-width:420px; line-height:1.45;}
+/* stage that hosts the absolutely-positioned .overlay, like a real screen */
+.dlg-stage{position:relative; width:560px; max-width:100%; min-height:560px; border:1px solid var(--color-border); border-radius:20px; overflow:hidden; background:var(--color-bg);}
+.dlg-stage .stage-bg{position:absolute; inset:0; padding:20px; display:flex; flex-direction:column; gap:10px;}
+.dlg-stage .bg-bar{height:38px; border-radius:10px; background:var(--color-surface); border:1px solid var(--color-border);}
+.dlg-stage .bg-block{flex:1 1 auto; border-radius:14px; background:var(--color-surface); border:1px solid var(--color-border);}
+.dlg-stage--sm{min-height:340px;}
+
+/* menu mock stage */
+.menu-stage{position:relative; width:300px; padding:16px; border:1px solid var(--color-border); border-radius:18px; background:var(--color-bg);}
+.menu-stage .sidebar-foot{position:relative; padding-top:0;}
+.menu-stage .acct-menu{position:static; left:auto; right:auto; bottom:auto; animation:none; margin-bottom:8px;}
+.menu-stage .account{display:flex; align-items:center; gap:10px; width:100%; padding:8px; border-radius:var(--radius-md); border:1px solid var(--color-border); background:var(--color-surface); cursor:pointer; text-align:left;}
+.menu-stage .account .who{min-width:0; flex:1 1 auto;}
+.menu-stage .account .nm{display:block; font-size:var(--text-small); font-weight:600; line-height:1.2;}
+.menu-stage .account .hd{display:block; font-size:var(--text-caption); color:var(--color-text-subtle);}
+.menu-stage .av{width:32px; height:32px; flex:0 0 auto; border-radius:9999px; display:grid; place-items:center; background:var(--color-text); color:var(--color-bg); font-family:var(--font-mono); font-size:13px; font-weight:600;}
+
+/* demo controls */
+.demo-ctl{display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:12px; font-size:12.5px; color:var(--subtle);}
+.demo-ctl button{font-family:var(--font-sans); font-size:12.5px; padding:6px 12px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--text); cursor:pointer;}
+.demo-ctl button:hover{background:var(--surface-2);}
+.demo-ctl label{display:inline-flex; align-items:center; gap:7px; cursor:pointer;}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<aside class="toc">
+  <div class="doc-mark">
+    <span class="nib"><svg width="18" height="18" viewBox="0 0 512 512"><g fill="#ededed"><g transform="rotate(42 256 256)"><path d="M236 150 Q236 128 256 128 Q276 128 276 150 L276 300 L256 360 L236 300 Z"/><rect x="236" y="206" width="40" height="7"/></g></g></svg></span>
+    <b>Pennedly</b>
+  </div>
+  <div class="doc-sub">Диалог · обратная связь</div>
+  <nav>
+    <a href="#s1"><span class="n">1</span> Точка входа</a>
+    <a href="#s2"><span class="n">2</span> Анатомия</a>
+    <a href="#s3"><span class="n">3</span> Строка контекста</a>
+    <a href="#s4"><span class="n">4</span> Все состояния</a>
+    <a href="#s5"><span class="n">5</span> Счётчик знаков</a>
+    <a href="#s6"><span class="n">6</span> Телефон: лист, не модалка</a>
+    <a href="#s7"><span class="n">7</span> Точные значения</a>
+    <a href="#s8"><span class="n">8</span> Копирайт</a>
+    <a href="#s9"><span class="n">9</span> Чек-лист</a>
+  </nav>
+  <div class="meta">
+    Компонент: <b style="color:var(--text)">Диалог «Написать нам»</b><br>
+    Вход: меню профиля (<code>.acct-menu</code>)<br>
+    Десктоп: <code>.overlay</code> + <code>.dialog--feedback</code><br>
+    Телефон: <code>.m-sheet.m-dialogsheet.m-fbsheet</code><br>
+    Новый слой: <code>system/feedback-dialog.css</code><br>
+    Токены: <code>ds/tokens.css</code>, <code>ds/components.css</code>
+  </div>
+</aside>
+
+<main>
+  <div class="doc-head">
+    <p class="kicker">Pennedly · Спецификация · Системный компонент</p>
+    <h1 class="title">Диалог обратной связи <span>— «Написать нам»</span></h1>
+    <p class="lede">Раньше единственным способом сообщить о проблеме был <code>hello@pennedly.com</code>: выйти из продукта, открыть почту, по памяти описать, на каком ты был экране. Теперь это пункт меню профиля и диалог, который отправляет сообщение <b>вместе с контекстом экрана</b>. Контекст перечислен под полем открыто — это главное требование к экрану, а не мелкая сноска.</p>
+  </div>
+
+  <!-- ============ 1 ============ -->
+  <section id="s1">
+    <h2><span class="h2n">1</span>Точка входа</h2>
+    <p class="section-note">Пункт <b>«Написать нам»</b> живёт в меню профиля — том самом <code>.acct-menu</code> из <code>system/shell.css</code>, которое на десктопе раскрывается вверх из подвала боковой панели, а на телефоне — из подвала выезжающего ящика. Это один компонент, поэтому пункт добавляется один раз.</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:200px">Параметр</th><th>Значение</th></tr></thead>
+      <tbody>
+        <tr><td><b>Класс пункта</b></td><td><code>.acct-link</code> — та же строка, что «Settings» и «Log out». Иконка <code>.al-ico</code> (message, 16), цвет subtle.</td></tr>
+        <tr><td><b>Место в меню</b></td><td>После разделителя <code>.acct-sep</code>, между «Settings» и «Log out». Не danger-строка, обычный <code>.acct-link</code>.</td></tr>
+        <tr><td><b>Что делает</b></td><td>Закрывает меню, открывает диалог поверх текущего экрана. Маршрут не меняется — контекст собирается с того экрана, где человек находится.</td></tr>
+        <tr><td><b>Закрытие</b></td><td>Клик по подложке, <kbd>Esc</kbd>, кнопка «Отмена». Во время отправки подложка и <kbd>Esc</kbd> не закрывают (см. §4).</td></tr>
+        <tr><td><b>Фокус</b></td><td>При открытии фокус в поле ввода; фокус-ловушка внутри диалога; при закрытии возвращается на пункт меню.</td></tr>
+      </tbody>
+    </table></div>
+    <div class="frames" id="menu-frames"></div>
+  </section>
+
+  <!-- ============ 2 ============ -->
+  <section id="s2">
+    <h2><span class="h2n">2</span>Анатомия</h2>
+    <p class="section-note">Существующий компонент диалога без изменений: подложка с размытием, карточка 448px, радиус 28, отступы 24, тень lg. Новое — только внутренности.</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:210px">Элемент / класс</th><th>Описание</th></tr></thead>
+      <tbody>
+        <tr><td><code>.overlay</code></td><td>Из <code>ds/components.css</code>: <code>inset:0; place-items:center; padding:24; bg mix(ink-950 55%); backdrop-filter blur(3px); z-index:30</code>. Без изменений.</td></tr>
+        <tr><td><code>.dialog.dialog--feedback</code></td><td><code>.dialog</code> как есть + модификатор ширины <code>max-width:448px</code> (базовый — 420; тот же приём, что <code>.dialog--studio</code> 460 в календаре). <code>role="dialog" aria-modal="true"</code>.</td></tr>
+        <tr><td><code>.dialog-head</code></td><td><code>.dialog-mark</code> 38×38 (иконка message 18) + <code>.dialog-title</code> «Написать нам» + <code>.dialog-sub</code>.</td></tr>
+        <tr><td><code>textarea.fb-ta</code></td><td>Поле сообщения. min-height 132, resize vertical, <b>font-size 16px жёстко</b> (иначе Safari на iPhone зумит), <code>maxlength="4000"</code>, placeholder.</td></tr>
+        <tr><td><code>.fb-count</code></td><td>Счётчик — <b>появляется только на последних 400 знаках</b> (§5). В остальное время элемента нет в DOM.</td></tr>
+        <tr><td><code>.fb-ctx</code></td><td>Блок контекста: строка-объяснение + пилюли «поле: значение» (§3). Всегда виден.</td></tr>
+        <tr><td><code>.fb-error</code></td><td>Строка ошибки под блоком контекста, цвет danger, с иконкой. Появляется только в состоянии ошибки.</td></tr>
+        <tr><td><code>.dialog-actions</code></td><td>Из <code>studio.css</code>: <code>flex; justify-content:flex-end; gap:10; margin-top:22</code>. «Отмена» (<code>.btn--ghost</code>) + «Отправить» (<code>.btn--primary</code>).</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- ============ 3 ============ -->
+  <section id="s3">
+    <h2><span class="h2n">3</span>Строка контекста — как подаём</h2>
+    <p class="section-note">Требование: человек должен видеть, что уходит вместе с сообщением, и не узнать об этом потом. Из трёх вариантов подачи (строка текста · свёрнутый список · пилюли) выбраны <b>пилюли с парами «поле: значение»</b> внутри блока <code>surface-2</code>.</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:190px">Вариант</th><th>Почему не он / почему он</th></tr></thead>
+      <tbody>
+        <tr><td>Строка текста через запятую</td><td>Читается как юридическая сноска и на 375px превращается в четыре строки серого текста. Названия полей есть, значений нет — «версия сборки» ничего не сообщает.</td></tr>
+        <tr><td>Свёрнутый список</td><td><b>Отклонён по сути задачи:</b> контекст, который надо раскрыть, — это и есть «молча собираем». Клик, чтобы узнать, что о тебе отправляют, — ровно то, на что потом обижаются.</td></tr>
+        <tr><td><b>Пилюли «поле: значение»</b> ✓</td><td>Видно и что за поле, и что конкретно уйдёт (<code>/app/studio</code>, <code>@mara.lin</code>). Компактно, переносится по строкам, читается сканированием. Значения — моно-шрифтом, как код: это данные, а не проза.</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note"><b>Пять полей, ни одного скрытого.</b> Экран (маршрут) · Аккаунт (активный хэндл) · Язык интерфейса · Сборка · Браузер. Если в будущем добавится шестое — оно обязано появиться в пилюлях, иначе блок перестаёт быть честным. Размер текста в блоке — <code>--text-small</code> 13 для строки-объяснения и <code>--text-caption</code> 12 для пилюль, цвет muted, не subtle: это содержимое, а не мелкий шрифт.</div>
+    <div class="frames" id="ctx-frames"></div>
+  </section>
+
+  <!-- ============ 4 ============ -->
+  <section id="s4">
+    <h2><span class="h2n">4</span>Все состояния</h2>
+    <p class="section-note">Живой диалог — печатайте и отправляйте по-настоящему. Кнопка «Отправить» неактивна, пока поле пустое (в отличие от формы на лендинге: здесь отправлять буквально нечего). Тумблер ниже переключает исход следующей отправки.</p>
+
+    <h3>4.1 — Живой диалог</h3>
+    <div class="dlg-stage dlg-scope" id="live-stage"></div>
+    <div class="demo-ctl">
+      <label><input type="checkbox" id="force-error"> Следующая отправка завершится ошибкой</label>
+      <button type="button" id="fill-near-cap">Вставить 3 900 знаков</button>
+      <button type="button" id="reset-demo">Сбросить</button>
+    </div>
+
+    <h3>4.2 — Галерея, светлая / тёмная</h3>
+    <div class="frames" id="state-frames"></div>
+
+    <h3>4.3 — Поведение по состояниям</h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:130px">Состояние</th><th>Поле</th><th>Кнопки</th><th>Прочее</th></tr></thead>
+      <tbody>
+        <tr><td><b>Пусто</b></td><td>Плейсхолдер, фокус при открытии</td><td>«Отправить» <code>disabled</code> (opacity .5), «Отмена» активна</td><td>Счётчика нет, ошибки нет</td></tr>
+        <tr><td><b>Введено</b></td><td>Текст, resize по вертикали до 300px, дальше скролл</td><td>Обе активны</td><td>Счётчик — только после 3 600 знаков</td></tr>
+        <tr><td><b>Отправка</b></td><td><code>disabled</code>, opacity .65, resize off — текст виден, но не правится</td><td>«Отправляем…» со спиннером 14px, обе <code>disabled</code></td><td>Подложка и <kbd>Esc</kbd> не закрывают; блок контекста без изменений</td></tr>
+        <tr><td><b>Успех</b></td><td>Форма убирается целиком</td><td>Одна «Закрыть» (<code>.btn--primary</code>)</td><td>Марка 38×38 в success-тоне, заголовок «Спасибо, получили», строка про почту. <b>Автозакрытия нет</b> — человек уходит сам</td></tr>
+        <tr><td><b>Ошибка</b></td><td>Текст сохранён, поле активно, border danger</td><td>«Отправить» активна — повтор без потерь</td><td><code>.fb-error</code> под блоком контекста; <code>aria-live="polite"</code></td></tr>
+      </tbody>
+    </table></div>
+    <div class="note good"><b>Успех оставляем как есть — но в габаритах системы.</b> Форма исчезает целиком (сообщение уже ушло, править нечего), а «галочка в зелёном круге» — это существующая марка диалога <code>38×38</code> в success-тоне, рецепт один в один как <code>.dialog-mark--danger</code> у диалога удаления. Отдельной крупной иллюстрации нет, диалог не прыгает в размерах.</div>
+  </section>
+
+  <!-- ============ 5 ============ -->
+  <section id="s5">
+    <h2><span class="h2n">5</span>Счётчик знаков</h2>
+    <p class="section-note">Предел 4 000. Постоянный счётчик на форме обратной связи давит: человек пишет о поломке, а ему считают слова. Решение: <b>счётчик появляется на последних 400 знаках</b> (от 3 600) и до этого момента отсутствует в разметке.</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:220px">Диапазон</th><th>Что видно</th></tr></thead>
+      <tbody>
+        <tr><td class="val">0 – 3 599</td><td>Ничего. Элемента <code>.fb-count</code> нет в DOM.</td></tr>
+        <tr><td class="val">3 600 – 3 999</td><td>«Осталось 312 знаков», caption 12, color subtle, справа под полем, tabular-nums.</td></tr>
+        <tr><td class="val">4 000 (потолок)</td><td>«Осталось 0 знаков», color danger. Ввод дальше не проходит (<code>maxlength</code>), обрезки текста и алерта нет.</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note"><b>Почему жёсткий <code>maxlength</code>, а не «можно писать дальше, но не отправится».</b> Второе рвёт длинное сообщение уже после того, как человек его написал, и это худший момент. Потолок с видимым остатком предупреждает заранее и не теряет ни строчки.</div>
+    <div class="frames" id="count-frames"></div>
+  </section>
+
+  <!-- ============ 6 ============ -->
+  <section id="s6">
+    <h2><span class="h2n">6</span>Телефон, 375px: нижний лист, не модалка</h2>
+    <p class="section-note">Решение: <b>нижний лист</b>. Это не новый паттерн, а действующая конвенция продукта — <code>.m-dialogsheet</code> в <code>mobile/pennedly-mobile.css</code> уже превращает в лист все десктопные модалки (удаление поста, публикация ответа, отключение аккаунта, включение автопилота). Диалог обратной связи — единственный из них с полем ввода, и именно ему лист нужнее всего.</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:200px">Довод</th><th>Разбор</th></tr></thead>
+      <tbody>
+        <tr><td><b>Клавиатура</b></td><td>Лист прижат к нижней кромке: когда открывается клавиатура, содержимое поднимается над ней целиком. Центрированную модалку клавиатура перекрывает снизу и выталкивает — на 375×667 (SE) поле и кнопки оказываются за краем.</td></tr>
+        <tr><td><b>Большой палец</b></td><td>«Отправить» и «Отмена» — в нижней трети экрана, а не по центру. Кнопки на всю ширину, стопкой, primary сверху — как в <code>.m-csheet-actions</code>.</td></tr>
+        <tr><td><b>Консистентность</b></td><td>Все прочие модалки на телефоне — листы. Оставить одну модалку по центру значит завести исключение ради одного экрана.</td></tr>
+        <tr><td><b>Что теряем</b></td><td>Лист выше при длинном тексте: <code>max-height:88%</code> у <code>.m-sheet</code>, поле ограничено <code>40vh</code> и скроллится внутри. Приемлемо.</td></tr>
+      </tbody>
+    </table></div>
+    <h3>Выбранный вариант, живьём на 375</h3>
+    <div class="stage" id="phone-frames"></div>
+    <div class="note"><b>Отличия листа от десктопа — только в габаритах:</b> радиус <code>--radius-xl</code> 20 сверху (лист), grip 36×4, отступы <code>8 / 14 / 16 + safe-area</code>, поле min-height 116, кнопки на всю ширину стопкой (primary сверху), высота кнопки 48. Состав и копирайт совпадают один в один, включая блок контекста.</div>
+  </section>
+
+  <!-- ============ 7 ============ -->
+  <section id="s7">
+    <h2><span class="h2n">7</span>Точные значения</h2>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:190px">Элемент</th><th class="val">Значения</th></tr></thead>
+      <tbody>
+        <tr><td><code>.overlay</code></td><td class="val">inset 0; padding 24; bg <code>mix(ink-950 55%, transparent)</code>; blur 3px; z-index 30</td></tr>
+        <tr><td><code>.dialog--feedback</code></td><td class="val">max-width 448; radius-2xl 28; padding 24; bg surface; border 1px border; shadow-lg; анимация <code>dialog-in</code> 240ms entrance</td></tr>
+        <tr><td><code>.dialog-mark</code></td><td class="val">38×38; radius-md 10; bg surface-2; border; иконка 18. Успех: bg <code>mix(success 13%, surface)</code>, border <code>mix(success 30%)</code>, color success</td></tr>
+        <tr><td><code>.dialog-title</code> / <code>.dialog-sub</code></td><td class="val">h3 19 / w600 / lh 1.3 · small 13 / muted / lh 1.55 / margin-top 4</td></tr>
+        <tr><td><code>.fb-body</code></td><td class="val">margin-top 18 (телефон: 14)</td></tr>
+        <tr><td><code>.fb-ta</code></td><td class="val">min-height 132 (телефон 116); max-height 300 (телефон 40vh); padding 12 14; radius-md 10; <b>font-size 16</b>; lh 1.55; focus → border accent + ring 3px <code>mix(accent 18%)</code>; disabled opacity .65 + resize none; error → border danger</td></tr>
+        <tr><td><code>.fb-count</code></td><td class="val">margin-top 6; text-align right; caption 12; tabular-nums; subtle → danger на нуле</td></tr>
+        <tr><td><code>.fb-ctx</code></td><td class="val">margin-top 14 (телефон 12); padding 12 13; bg surface-2; border 1px; radius-md 10</td></tr>
+        <tr><td><code>.fb-ctx-t</code> / <code>.fb-pill</code></td><td class="val">small 13 / muted / gap 8 + иконка 15 subtle · пилюля: caption 12, padding 4 10, radius-full, bg surface, border; значение — моно 11.5 / w500 / color text</td></tr>
+        <tr><td><code>.fb-error</code></td><td class="val">margin-top 12; gap 8; small 13; color danger; иконка 15</td></tr>
+        <tr><td><code>.dialog-actions</code></td><td class="val">flex-end; gap 10; margin-top 22. Кнопки — базовый размер <code>.btn</code> h40; спиннер 14×14, 0.6s linear</td></tr>
+        <tr><td>Лист (телефон)</td><td class="val"><code>.m-sheet</code>: bottom 0; max-height 88%; radius-xl 20 сверху; padding 8 / 14 / <code>16 + safe-bottom</code>; grip 36×4; scrim <code>mix(ink-950 52%)</code> + blur 2px; <code>.fb-actions</code> — колонка, gap 10, кнопки 100% × 48, primary сверху</td></tr>
+      </tbody>
+    </table></div>
+    <p class="section-note">Палитра — только токены: surface <code>#ffffff</code> · surface-2 <code>#f6f5f2</code> · border <code>#dcd9d2</code> · text <code>#171717</code> · muted <code>#565550</code> · subtle <code>#6f6e69</code> · accent <code>#2f4cc4</code> · success <code>#2c7350</code> · danger <code>#b23b30</code>. Тёмная: surface <code>#171717</code> · border <code>#2b2a27</code> · accent <code>#9aacff</code> · success <code>#5fbf8d</code> · danger <code>#ef8a80</code>. Ни одного нового оттенка и радиуса.</p>
+  </section>
+
+  <!-- ============ 8 ============ -->
+  <section id="s8">
+    <h2><span class="h2n">8</span>Копирайт</h2>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th style="width:180px">Строка</th><th>Текст</th><th>Ключ i18n</th></tr></thead>
+      <tbody>
+        <tr><td>Пункт меню</td><td>Написать нам</td><td><code>menu.feedback</code></td></tr>
+        <tr><td>Заголовок</td><td>Написать нам</td><td><code>feedback.title</code></td></tr>
+        <tr><td>Подзаголовок</td><td>Опишите, что случилось. Мы читаем всё сами.</td><td><code>feedback.sub</code></td></tr>
+        <tr><td>Плейсхолдер</td><td>Что пошло не так и на каком шаге</td><td><code>feedback.placeholder</code></td></tr>
+        <tr><td>Строка контекста</td><td>Вместе с сообщением уйдёт:</td><td><code>feedback.ctx</code></td></tr>
+        <tr><td>Названия полей</td><td>Экран · Аккаунт · Язык · Сборка · Браузер</td><td><code>feedback.ctx.screen|account|lang|build|browser</code></td></tr>
+        <tr><td>Счётчик</td><td>Осталось {n} знаков</td><td><code>feedback.count</code> (плюрализация по локали)</td></tr>
+        <tr><td>Кнопка</td><td>Отправить → Отправляем…</td><td><code>feedback.send</code> / <code>feedback.sending</code></td></tr>
+        <tr><td>Отмена</td><td>Отмена</td><td><code>common.cancel</code></td></tr>
+        <tr><td>Ошибка</td><td>Не удалось отправить. Проверьте соединение и попробуйте ещё раз.</td><td><code>feedback.error</code></td></tr>
+        <tr><td>Успех · заголовок</td><td>Спасибо, получили</td><td><code>feedback.done.title</code></td></tr>
+        <tr><td>Успех · строка</td><td>Если нужен ответ, напишем вам на почту.</td><td><code>feedback.done.sub</code></td></tr>
+        <tr><td>Успех · кнопка</td><td>Закрыть</td><td><code>common.close</code></td></tr>
+      </tbody>
+    </table></div>
+    <div class="note warn"><b>Немецкий — самые длинные строки.</b> «Nachricht senden» / «Wird gesendet…» (кнопки), «Zusammen mit der Nachricht wird gesendet:» (строка контекста, 41 символ), «Das Senden ist fehlgeschlagen. Prüfen Sie die Verbindung und versuchen Sie es erneut.» (ошибка, 2 строки). Все три переносятся внутри своих блоков: строка контекста — <code>line-height 1.45</code>, ошибка — <code>line-height 1.5</code> с иконкой на первой строке, кнопки на телефоне на всю ширину. Проверочный кадр — ниже.</div>
+    <div class="stage" id="de-frames"></div>
+  </section>
+
+  <!-- ============ 9 ============ -->
+  <section id="s9">
+    <h2><span class="h2n">9</span>Чек-лист проверки</h2>
+    <ul class="check">
+      <li>Пункт «Написать нам» — <code>.acct-link</code> в <code>.acct-menu</code>, между «Settings» и «Log out», не danger.</li>
+      <li>Диалог — существующий <code>.overlay</code> + <code>.dialog</code>, единственное отличие <code>max-width:448px</code>.</li>
+      <li>Блок контекста виден всегда, без раскрытия; пять пилюль с реальными значениями, шрифт не мельче caption 12 / muted.</li>
+      <li>Поле <code>font-size:16px</code> жёстко — Safari на iPhone не зумит при фокусе.</li>
+      <li>«Отправить» неактивна при пустом поле; при отправке обе кнопки заблокированы, поле disabled, текст виден.</li>
+      <li>Во время отправки клик по подложке и <kbd>Esc</kbd> не закрывают диалог.</li>
+      <li>Ошибка: текст сохранён, повтор отправки без потерь, строка <code>aria-live="polite"</code>.</li>
+      <li>Успех: форма убрана, марка 38×38 в success-тоне (не крупная иллюстрация), автозакрытия нет.</li>
+      <li>Счётчик отсутствует в DOM до 3 600 знаков; на 4 000 — danger и жёсткий <code>maxlength</code>.</li>
+      <li>Телефон ≤600: нижний лист <code>.m-sheet.m-dialogsheet.m-fbsheet</code>, grip, кнопки на всю ширину стопкой, primary сверху, отступ снизу с учётом safe-area.</li>
+      <li>Светлая и тёмная — только токены; success и danger — существующие, без новых оттенков.</li>
+      <li>Копирайт без восклицательных знаков и бодрого тона; в тексте нет «мы будем рады».</li>
+    </ul>
+  </section>
+</main>
+</div>
+
+<template id="__bundler_thumbnail">
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100" height="100" rx="20" fill="#2f4cc4"/>
+    <rect x="22" y="28" width="56" height="34" rx="10" fill="#ffffff"/>
+    <path d="M34 62 L34 74 L46 62 Z" fill="#ffffff"/>
+    <rect x="30" y="38" width="34" height="5" rx="2.5" fill="#2f4cc4"/>
+    <rect x="30" y="48" width="22" height="5" rx="2.5" fill="#9aacff"/>
+  </svg>
+</template>
+
+<script>
+(function(){
+  var ICONS = {
+    msg:   '<path d="M20.5 12.5a7.5 7.5 0 0 1-10.7 6.8L4.5 20.5l1.3-4.6A7.5 7.5 0 1 1 20.5 12.5Z"/>',
+    check: '<path d="M4.5 12.5 9.5 17.5 19.5 6.5"/>',
+    alert: '<circle cx="12" cy="12" r="8.5"/><path d="M12 8v4.5M12 16h.01"/>',
+    info:  '<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8h.01"/>',
+    gear:  '<circle cx="12" cy="12" r="3"/><path d="M12 3.5v2M12 18.5v2M20.5 12h-2M5.5 12h-2M17.9 6.1l-1.4 1.4M7.5 16.5l-1.4 1.4M17.9 17.9l-1.4-1.4M7.5 7.5 6.1 6.1"/>',
+    out:   '<path d="M15 4h3.5A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5H15"/><path d="M10 8l-4 4 4 4M6 12h10"/>',
+    chev:  '<path d="M6 15l6-6 6 6"/>'
+  };
+  function svg(n,s){ return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+ICONS[n]+'</svg>'; }
+
+  var MAX = 4000, SHOW_FROM = 3600;
+  var CTX = [
+    ['Экран','/app/studio'], ['Аккаунт','@mara.lin'], ['Язык','RU'],
+    ['Сборка','2026.7.14'], ['Браузер','Chrome 127']
+  ];
+  var COPY = {
+    title:'Написать нам',
+    sub:'Опишите, что случилось. Мы читаем всё сами.',
+    ph:'Что пошло не так и на каком шаге',
+    ctx:'Вместе с сообщением уйдёт:',
+    send:'Отправить', sending:'Отправляем…', cancel:'Отмена', close:'Закрыть',
+    error:'Не удалось отправить. Проверьте соединение и попробуйте ещё раз.',
+    doneT:'Спасибо, получили',
+    doneS:'Если нужен ответ, напишем вам на почту.',
+    count:function(n){ return 'Осталось '+n+' '+(n%10===1&&n%100!==11?'знак':(n%10>=2&&n%10<=4&&(n%100<10||n%100>=20)?'знака':'знаков')); }
+  };
+  var DE = {
+    title:'Schreiben Sie uns',
+    sub:'Beschreiben Sie, was passiert ist. Wir lesen alles selbst.',
+    ph:'Was ist schiefgelaufen und in welchem Schritt',
+    ctx:'Zusammen mit der Nachricht wird gesendet:',
+    send:'Nachricht senden', sending:'Wird gesendet…', cancel:'Abbrechen', close:'Schließen',
+    error:'Das Senden ist fehlgeschlagen. Prüfen Sie die Verbindung und versuchen Sie es erneut.',
+    doneT:'Danke, angekommen',
+    doneS:'Wenn eine Antwort nötig ist, schreiben wir Ihnen per E-Mail.',
+    count:function(n){ return 'Noch '+n+' Zeichen'; }
+  };
+  var CTX_DE = [['Bildschirm','/app/studio'],['Konto','@mara.lin'],['Sprache','DE'],['Build','2026.7.14'],['Browser','Chrome 127']];
+
+  function ctxBlock(c, cx){
+    var pills = (cx||CTX).map(function(p){ return '<span class="fb-pill">'+p[0]+' <b>'+p[1]+'</b></span>'; }).join('');
+    return '<div class="fb-ctx"><div class="fb-ctx-t">'+svg('info',15)+'<span>'+c.ctx+'</span></div>'
+      + '<div class="fb-ctx-pills">'+pills+'</div></div>';
+  }
+
+  // state: empty | typed | sending | success | error
+  function body(state, opts){
+    opts = opts || {};
+    var c = opts.copy || COPY, cx = opts.ctx;
+    var text = opts.text || '';
+    if (state === 'success') {
+      return '<div class="dialog-head"><div class="dialog-mark dialog-mark--success">'+svg('check',18)+'</div>'
+        + '<div><div class="dialog-title">'+c.doneT+'</div><div class="dialog-sub">'+c.doneS+'</div></div></div>'
+        + '<div class="dialog-actions"><button class="btn btn--primary" type="button">'+c.close+'</button></div>';
+    }
+    var sending = state === 'sending';
+    var errored = state === 'error';
+    var left = MAX - text.length;
+    var count = text.length >= SHOW_FROM
+      ? '<div class="fb-count'+(left===0?' fb-count--none':'')+'">'+c.count(left)+'</div>' : '';
+    return '<div class="dialog-head"><div class="dialog-mark">'+svg('msg',18)+'</div>'
+      + '<div><div class="dialog-title">'+c.title+'</div><div class="dialog-sub">'+c.sub+'</div></div></div>'
+      + '<div class="fb-body">'
+      + '<textarea class="fb-ta'+(errored?' fb-ta--error':'')+'" maxlength="'+MAX+'" placeholder="'+c.ph+'"'+(sending?' disabled':'')+'>'+text+'</textarea>'
+      + count + ctxBlock(c, cx)
+      + (errored ? '<div class="fb-error" role="status">'+svg('alert',15)+'<span>'+c.error+'</span></div>' : '')
+      + '</div>'
+      + '<div class="dialog-actions">'
+      + '<button class="btn btn--ghost" type="button"'+(sending?' disabled':'')+'>'+c.cancel+'</button>'
+      + '<button class="btn btn--primary" type="button"'+((sending||!text)?' disabled':'')+'>'
+      + (sending ? '<span class="fb-spin"></span>'+c.sending : c.send) + '</button></div>';
+  }
+
+  function dialog(state, opts){
+    return '<div class="stage-bg"><div class="bg-bar"></div><div class="bg-block"></div></div>'
+      + '<div class="overlay"><div class="dialog dialog--feedback" role="dialog" aria-modal="true">'
+      + body(state, opts) + '</div></div>';
+  }
+
+  function frame(label, cap, inner, dark, cls){
+    return '<div class="fr"><div class="fr-head"><span class="sw" style="background:var(--surface-2);border-color:var(--border)"></span>'+label+'</div>'
+      + '<div class="dlg-stage dlg-scope'+(dark?' dark':'')+(cls?' '+cls:'')+'">'+inner+'</div>'
+      + (cap ? '<div class="fr-cap">'+cap+'</div>' : '') + '</div>';
+  }
+
+  var SAMPLE = 'Второй день не сохраняется черновик: жму «Сохранить», он мигает и текст возвращается к прошлой версии. Пробовала в двух аккаунтах, одинаково.';
+
+  // ---- §1 menu ----
+  function menuMock(){
+    return '<div class="menu-stage"><div class="sidebar-foot">'
+      + '<div class="acct-menu" role="menu">'
+      + '<div class="acct-cap">Аккаунт</div>'
+      + '<div class="acct-id"><div class="ai-em">mara@pennedly.com</div><div class="ai-plan"><span class="ai-dot"></span>Invite-only beta</div></div>'
+      + '<div class="acct-sep"></div>'
+      + '<button class="acct-link" type="button"><span class="al-ico">'+svg('gear',16)+'</span>Settings</button>'
+      + '<button class="acct-link" type="button" style="background:var(--color-surface-2)"><span class="al-ico">'+svg('msg',16)+'</span>Написать нам</button>'
+      + '<button class="acct-link acct-link--danger" type="button"><span class="al-ico">'+svg('out',16)+'</span>Log out</button>'
+      + '</div>'
+      + '<button class="account" type="button" aria-expanded="true"><span class="av">ML</span><span class="who"><span class="nm">Mara Lin</span><span class="hd">@mara.lin</span></span><span class="chev">'+svg('chev',16)+'</span></button>'
+      + '</div></div>';
+  }
+  document.getElementById('menu-frames').innerHTML =
+    '<div class="fr"><div class="fr-head"><span class="sw" style="background:var(--surface-2);border-color:var(--border)"></span>Меню профиля · светлая</div>'+menuMock()+'<div class="fr-cap">Новый пункт — между «Settings» и «Log out», обычный <code>.acct-link</code>, иконка message.</div></div>'
+    + '<div class="fr dark"><div class="fr-head" style="color:var(--subtle)"><span class="sw" style="background:#201f1d;border-color:#2b2a27"></span>Меню профиля · тёмная</div>'+menuMock()+'</div>';
+
+  // ---- §3 context block, standalone ----
+  document.getElementById('ctx-frames').innerHTML =
+    '<div class="fr"><div class="fr-head"><span class="sw" style="background:var(--surface-2);border-color:var(--border)"></span>Блок контекста · светлая</div>'
+    + '<div class="dlg-scope" style="width:400px;max-width:100%;padding:18px;border:1px solid var(--color-border);border-radius:18px;background:var(--color-surface);">'+ctxBlock(COPY)+'</div>'
+    + '<div class="fr-cap">Пять пилюль «поле: значение». Значения — моно 11.5, чтобы читались как данные.</div></div>'
+    + '<div class="fr dark"><div class="fr-head"><span class="sw" style="background:#201f1d;border-color:#2b2a27"></span>Блок контекста · тёмная</div>'
+    + '<div class="dlg-scope" style="width:400px;max-width:100%;padding:18px;border:1px solid var(--color-border);border-radius:18px;background:var(--color-surface);">'+ctxBlock(COPY)+'</div></div>';
+
+  // ---- §4.2 gallery ----
+  document.getElementById('state-frames').innerHTML =
+    frame('1 · Пусто · светлая', 'Кнопка «Отправить» неактивна, счётчика нет.', dialog('empty'), false)
+    + frame('1 · Пусто · тёмная', '', dialog('empty'), true)
+    + frame('2 · Введено · светлая', 'Обе кнопки активны.', dialog('typed',{text:SAMPLE}), false)
+    + frame('3 · Отправка · тёмная', 'Поле disabled, спиннер, подложка не закрывает.', dialog('sending',{text:SAMPLE}), true)
+    + frame('4 · Успех · светлая', 'Форма убрана, марка в success-тоне, одна кнопка.', dialog('success'), false, 'dlg-stage--sm')
+    + frame('4 · Успех · тёмная', '', dialog('success'), true, 'dlg-stage--sm')
+    + frame('5 · Ошибка · светлая', 'Текст сохранён, поле в danger, повтор доступен.', dialog('error',{text:SAMPLE}), false)
+    + frame('5 · Ошибка · тёмная', '', dialog('error',{text:SAMPLE}), true);
+
+  // ---- §5 counter ----
+  var near = new Array(3712).join('т') + ' конец';
+  var full = new Array(MAX + 1).join('т');
+  document.getElementById('count-frames').innerHTML =
+    frame('3 717 знаков', 'Счётчик появился: «Осталось 283 знака», subtle.', dialog('typed',{text:near}), false)
+    + frame('4 000 знаков — потолок', 'Остаток 0, цвет danger, ввод дальше не проходит.', dialog('typed',{text:full}), false);
+
+  // ---- §6 phone sheet ----
+  function sheetBody(state, opts){
+    opts = opts || {};
+    var c = opts.copy || COPY, cx = opts.ctx, text = opts.text || '';
+    if (state === 'success') {
+      return '<div class="dialog-head"><div class="dialog-mark dialog-mark--success">'+svg('check',18)+'</div>'
+        + '<div><div class="dialog-title">'+c.doneT+'</div><div class="dialog-sub">'+c.doneS+'</div></div></div>'
+        + '<div class="fb-actions"><button class="btn btn--primary" type="button">'+c.close+'</button></div>';
+    }
+    var sending = state === 'sending', errored = state === 'error';
+    return '<div class="dialog-head"><div class="dialog-mark">'+svg('msg',18)+'</div>'
+      + '<div><div class="dialog-title">'+c.title+'</div><div class="dialog-sub">'+c.sub+'</div></div></div>'
+      + '<div class="fb-body">'
+      + '<textarea class="fb-ta'+(errored?' fb-ta--error':'')+'" maxlength="'+MAX+'" placeholder="'+c.ph+'"'+(sending?' disabled':'')+'>'+text+'</textarea>'
+      + ctxBlock(c, cx)
+      + (errored ? '<div class="fb-error" role="status">'+svg('alert',15)+'<span>'+c.error+'</span></div>' : '')
+      + '</div>'
+      + '<div class="fb-actions">'
+      + '<button class="btn btn--primary" type="button"'+((sending||!text)?' disabled':'')+'>'
+      + (sending ? '<span class="fb-spin"></span>'+c.sending : c.send) + '</button>'
+      + '<button class="btn btn--ghost" type="button"'+(sending?' disabled':'')+'>'+c.cancel+'</button></div>';
+  }
+  function phone(state, opts, dark, cap){
+    opts = opts || {};
+    var inner = '<div class="mob">'
+      + '<div class="m-status"><span>9:41</span><span class="m-status-r"></span></div>'
+      + '<div class="m-top"><div class="m-top-title">Студия</div></div>'
+      + '<div class="m-scrim"></div>'
+      + '<div class="m-sheet m-dialogsheet m-fbsheet"><div class="m-sheet-grip"></div>'
+      + sheetBody(state, opts) + '</div></div>';
+    return '<div class="devcol"><div class="devhead"><span class="dh-dot'+(dark?' dh-dot--dark':'')+'"></span>375px · '+(dark?'тёмная':'светлая')+'</div>'
+      + '<div class="device" style="--screen-w:397px"><div class="device-screen'+(dark?' dark':'')+'"><span class="device-island"></span>'+inner+'</div></div>'
+      + (cap ? '<div class="devcap">'+cap+'</div>' : '') + '</div>';
+  }
+  document.getElementById('phone-frames').innerHTML =
+    phone('empty', {}, false, '<b>Пусто.</b> Лист прижат к нижней кромке, кнопки под большим пальцем, «Отправить» неактивна.')
+    + phone('typed', {text:SAMPLE}, false, '<b>Введено.</b> Кнопки на всю ширину стопкой, primary сверху.')
+    + phone('sending', {text:SAMPLE}, true, '<b>Отправка.</b> Поле недоступно, обе кнопки заблокированы.')
+    + phone('error', {text:SAMPLE}, false, '<b>Ошибка.</b> Текст сохранён, строка danger под блоком контекста.')
+    + phone('success', {}, true, '<b>Успех.</b> Форма убрана, остаётся «Закрыть».');
+
+  // ---- §8 German ----
+  document.getElementById('de-frames').innerHTML =
+    phone('typed', {text:'Der Entwurf wird seit zwei Tagen nicht gespeichert.', copy:DE, ctx:CTX_DE}, false, '<b>Deutsch, 375px.</b> Самые длинные строки: кнопка «Nachricht senden», строка контекста в две строки — блок держит.')
+    + phone('error', {text:'Der Entwurf wird seit zwei Tagen nicht gespeichert.', copy:DE, ctx:CTX_DE}, false, '<b>Deutsch · ошибка.</b> Двухстрочная ошибка с иконкой на первой строке.');
+
+  // ---- §4.1 live ----
+  var live = document.getElementById('live-stage');
+  var st = { state:'empty', text:'' };
+  function renderLive(){
+    live.innerHTML = dialog(st.state, {text:st.text});
+    var ta = live.querySelector('.fb-ta');
+    var btns = live.querySelectorAll('.dialog-actions .btn');
+    if (ta) ta.addEventListener('input', function(e){
+      var was = st.text.length >= SHOW_FROM, now = e.target.value.length >= SHOW_FROM;
+      st.text = e.target.value;
+      if (st.state === 'error' || was !== now) { renderLive(); live.querySelector('.fb-ta').focus(); }
+      else { var p = live.querySelector('.btn--primary'); if (p) p.disabled = !st.text; }
+    });
+    if (st.state === 'success') {
+      btns[0].addEventListener('click', function(){ st = {state:'empty', text:''}; renderLive(); });
+      return;
+    }
+    btns[0].addEventListener('click', function(){ st = {state:'empty', text:''}; renderLive(); });
+    btns[1].addEventListener('click', function(){
+      if (!st.text) return;
+      st.state = 'sending'; renderLive();
+      setTimeout(function(){
+        st.state = document.getElementById('force-error').checked ? 'error' : 'success';
+        renderLive();
+      }, 900);
+    });
+  }
+  document.getElementById('force-error');
+  document.getElementById('fill-near-cap').addEventListener('click', function(){
+    st.text = new Array(3901).join('т'); st.state = 'typed'; renderLive();
+  });
+  document.getElementById('reset-demo').addEventListener('click', function(){ st = {state:'empty', text:''}; renderLive(); });
+  renderLive();
+})();
+</script>
+</body>
+</html>

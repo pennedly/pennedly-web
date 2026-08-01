@@ -73,7 +73,8 @@ a.btn, a.contact { text-decoration: none; }
 .hero-lead { font-size: var(--text-h3); font-weight: 450; color: var(--color-text-muted); line-height: 1.5; margin: 20px 0 0; max-width: 46ch; text-wrap: pretty; }
 .hero-approve { font-size: var(--text-h3); font-weight: 500; color: var(--color-text); margin: 14px 0 0; max-width: 46ch; }
 .hero-approve .emph { color: var(--color-accent); }
-.hero-cta { display: flex; align-items: center; gap: 16px; margin-top: 28px; flex-wrap: wrap; }
+.hero-cta { display: flex; flex-direction: column; align-items: flex-start; margin-top: 28px; }
+.hero-grid--solo .hero-cta { align-items: center; }
 .btn--lg { height: 48px; padding-inline: 22px; font-size: var(--text-body); border-radius: var(--radius-md); }
 .contact { display: inline-flex; align-items: center; gap: 7px; font-size: var(--text-small); color: var(--color-text-muted); text-decoration: none; transition: color var(--duration-fast) var(--ease-standard); }
 .contact:hover { color: var(--color-text); }

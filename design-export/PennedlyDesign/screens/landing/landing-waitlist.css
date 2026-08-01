@@ -1,0 +1,49 @@
+/* landing-waitlist.css — hero CTA replacement: an email-capture form instead of
+   "Sign in" (dev-mode Meta review blocks real login anyway). Nests inside the
+   existing `.hero-cta` slot (see landing.css edit: column layout, no children
+   gap — the row and hint carry their own spacing). No new tokens; @container
+   breakpoints match the rest of `.land`. Correct in light + dark. */
+
+.wf-row { display: flex; gap: 10px; align-items: stretch; width: 100%; max-width: 440px; }
+.hero-grid--solo .hero-cta { align-items: center; }
+.hero-grid--solo .wf-row { margin: 0 auto; }
+
+.wf-input {
+  flex: 1 1 160px; min-width: 0; height: 48px; padding: 0 14px;
+  font-family: var(--font-sans); font-size: 16px; color: var(--color-text);
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-md); outline: none;
+  transition: border-color var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard);
+}
+.wf-input::placeholder { color: var(--color-text-subtle); }
+.wf-input:focus { border-color: var(--color-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 18%, transparent); }
+.wf-input--error { border-color: var(--color-danger); }
+.wf-input--error:focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-danger) 18%, transparent); }
+.wf-input:disabled { opacity: 0.65; }
+
+.wf-btn { flex: 0 0 auto; white-space: nowrap; }
+.wf-spin { width: 14px; height: 14px; border-radius: var(--radius-full); border: 2px solid currentColor; border-top-color: transparent; animation: wf-spin 0.6s linear infinite; }
+@keyframes wf-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .wf-spin { animation-duration: 1.6s; } }
+
+.wf-hint { font-size: var(--text-caption); color: var(--color-text-subtle); margin: 10px 0 0; }
+.hero-grid--solo .wf-hint { text-align: center; }
+.wf-hint--error { color: var(--color-danger); display: flex; align-items: center; gap: 6px; }
+.wf-hint--error svg { flex: 0 0 auto; }
+
+.wf-success { display: flex; align-items: center; gap: 10px; height: 48px; max-width: 440px; }
+.hero-grid--solo .wf-success { margin: 0 auto; }
+.wf-success-ico {
+  flex: 0 0 auto; width: 22px; height: 22px; border-radius: var(--radius-full); display: grid; place-items: center;
+  color: var(--color-success); background: color-mix(in srgb, var(--color-success) 14%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--color-success) 30%, transparent);
+}
+.wf-success-text { font-size: var(--text-small); color: var(--color-text); line-height: 1.4; }
+.wf-success-text b { font-weight: 600; }
+
+@container (max-width: 560px) {
+  .wf-row, .wf-success { max-width: none; }
+  .wf-row { flex-direction: column; }
+  .wf-input { flex: 0 0 auto; width: 100%; height: 48px; }
+  .wf-btn { width: 100%; height: 48px; }
+}
