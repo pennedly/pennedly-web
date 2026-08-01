@@ -41,7 +41,6 @@ import {
   fetchUserRules,
   getTokens,
   refreshStats,
-  rollbackAppliedChange,
 } from "@/lib/api";
 import { useSelectedAccountId } from "@/lib/account";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
@@ -67,8 +66,8 @@ import {
   ThinkingSteps,
   UserTurn,
   type AgentActionView,
+  type RailConversation,
   type RailReceipt,
-  type RailSession,
   type StarterChip,
 } from "@/components/advisor/AgentParts";
 import {
@@ -77,7 +76,6 @@ import {
   buildSignals,
   EMPTY_SNAPSHOT,
   groundingFor,
-  groupSessions,
   relFreshness,
   sessionStamp,
   turnTime,
@@ -123,7 +121,6 @@ export default function AdvisorPage() {
 
   const [turns, setTurns] = useState<Turn[]>([]);
   const [history, setHistory] = useState<AdvisorHistoryEntry[]>([]);
-  const [sessionIdx, setSessionIdx] = useState<number | null>(null); // null = newest
   const [input, setInput] = useState("");
   const [thinkStep, setThinkStep] = useState(0);
   const [historyLoaded, setHistoryLoaded] = useState(false);
@@ -223,27 +220,16 @@ export default function AdvisorPage() {
         onOpen: () => {
           if (!demo) router.push(openTargetFor(act));
         },
+        // The change just landed — pull the journal and the signal volumes so
+        // the rail reflects it without a reload.
         onApplied: async () => {
-          if (demo || accountId === null) return null;
-          const before = Date.now() - 5_000;
-          const fresh = await fetchAppliedChanges(id, { limit: 12 });
-          const mine = fresh.entries.filter((e) => e.source === "advisor_action");
-          setReceipts(mine);
-          void loadSignals(id);
-          const match = mine.find(
-            (e) => !e.rolled_back_at && new Date(e.created_at).getTime() >= before,
-          );
-          return match ?? null;
-        },
-        onUndo: async (changeId: number) => {
           if (demo) return;
-          await rollbackAppliedChange(id, changeId);
           const fresh = await fetchAppliedChanges(id, { limit: 12 });
           setReceipts(fresh.entries.filter((e) => e.source === "advisor_action"));
           void loadSignals(id);
         },
       })),
-    [demo, snapshot, locale, t, router, accountId, loadSignals],
+    [demo, snapshot, locale, t, router, loadSignals],
   );
 
   function buildMessages(question: string): AdvisorMessage[] {
@@ -267,7 +253,6 @@ export default function AdvisorPage() {
     if (!q || accountId === null || busy) return;
     setInput("");
     setThinkStep(0);
-    setSessionIdx(null);
     const messages = buildMessages(q);
     atBottomRef.current = true;
     setTurns((prev) => [...prev, { user: q, reply: null, status: "thinking", createdAt: new Date().toISOString() }]);
@@ -376,12 +361,7 @@ export default function AdvisorPage() {
   );
   const brief = useMemo(() => (demo ? demo.brief : buildBrief(stats, locale, t)), [demo, stats, locale, t]);
 
-  const sessions = useMemo(() => groupSessions(history), [history]);
-  const shownTurns: Turn[] = demo
-    ? demo.turns(tw.state)
-    : sessionIdx === null
-      ? turns
-      : turns.slice(sessions[sessionIdx].start, sessions[sessionIdx].end);
+  const shownTurns: Turn[] = demo ? demo.turns(tw.state) : turns;
 
   const isEmpty = shownTurns.length === 0;
   const freshness = demo ? demo.freshness : relFreshness(stats?.refreshed_at ?? null, locale, t);
@@ -393,19 +373,20 @@ export default function AdvisorPage() {
     { icon: "replies", label: t("agent.chip.replies") },
   ];
 
-  const railSessions: RailSession[] = demo
-    ? demo.sessions.map((s, i) => ({ key: String(i), title: s.title, stamp: s.stamp, current: i === 0, onOpen: () => {} }))
-    : sessions.map((s, i) => ({
-        key: `${s.start}-${s.end}`,
-        title: s.title,
-        stamp: sessionStamp(s.at, locale, t),
-        current: sessionIdx === null ? i === 0 : sessionIdx === i,
-        onOpen: () => {
-          setSessionIdx(i);
-          setRailOpen(false);
-          atBottomRef.current = true;
-        },
-      }));
+  // ONE conversation per account (§8, phase 1): titled by its first question,
+  // stamped with when that question was asked. `turns` covers a question asked
+  // in this session too, before the history endpoint has it.
+  const firstTurn = history[0] ?? null;
+  const railConversation: RailConversation | null = demo
+    ? demo.conversation
+    : firstTurn
+      ? { title: firstTurn.question, stamp: sessionStamp(firstTurn.created_at, locale, t) }
+      : turns.length > 0
+        ? {
+            title: turns[0].user,
+            stamp: turns[0].createdAt ? sessionStamp(turns[0].createdAt, locale, t) : "",
+          }
+        : null;
 
   const railReceipts: RailReceipt[] = (demo ? demo.receipts : receipts.slice(0, 6)).map((r) => ({
     id: r.id,
@@ -451,16 +432,10 @@ export default function AdvisorPage() {
   const rail = (
     <Rail
       signals={signals}
-      sessions={railSessions}
+      conversation={railConversation}
       receipts={railReceipts}
       onRefreshSignals={demo ? undefined : refreshData}
       refreshing={refreshing}
-      onNewConversation={() => {
-        // Clears the stream; the server history is untouched (§8).
-        setTurns([]);
-        setSessionIdx(null);
-        setRailOpen(false);
-      }}
     />
   );
 
@@ -591,10 +566,16 @@ function TurnBlock({
 
   const paragraphs = res ? res.reply.split(/\n{2,}/).map((s) => s.trim()).filter(Boolean) : [];
   const metrics = res ? res.chips.map((c) => ({ tone: c.tone, icon: c.icon ?? null, label: c.label })) : [];
-  const grounding = res ? groundingFor(res.grounded_in, signals) : [];
+  const grounding = res ? groundingFor(res, signals, t) : [];
   // No named source AND no cited number = the agent had nothing to stand on.
-  // That is its own turn type, not an error (§7.2).
-  const isThin = !!res && res.grounded_in.length === 0 && res.chips.length === 0;
+  // That is its own turn type, not an error (§7.2). A structured `grounded`
+  // list counts only when at least one of its sources came back non-empty.
+  const named = res
+    ? res.grounded && res.grounded.length > 0
+      ? res.grounded.some((g) => !g.empty)
+      : res.grounded_in.length > 0
+    : false;
+  const isThin = !!res && !named && res.chips.length === 0;
   const withData = signals.filter((s) => !s.thin).length;
 
   return (

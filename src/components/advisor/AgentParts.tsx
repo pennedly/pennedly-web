@@ -42,14 +42,15 @@ import {
   IcVoice,
   type IconProps,
 } from "@/components/icons";
-import type { AdvisorActionData, AppliedChangeEntry } from "@/lib/types";
+import type { AdvisorActionData } from "@/lib/types";
 import {
-  SIGNAL_HREF,
   splitMetric,
   type ActionDiff,
   type AgentSignal,
   type BriefCard,
   type DiffRun,
+  type GroundedIcon,
+  type GroundingItem,
 } from "@/components/advisor/agent-data";
 
 type IconCmp = (p: IconProps) => React.ReactElement;
@@ -129,15 +130,16 @@ export function MetricStrip({ metrics }: { metrics: AgentMetric[] }) {
 
 // ── grounding row (§4.3) — the honesty mechanism ─────────────────────────────
 
-const SIGNAL_ICON: Record<AgentSignal["id"], IconCmp> = {
+const SIGNAL_ICON: Record<GroundedIcon, IconCmp> = {
   stats: IcChart,
   heatmap: IcClock,
   posts: IcNib,
   replies: IcReply,
   voice: IcVoice,
+  top_posts: IcOverview,
 };
 
-export function GroundingRow({ items }: { items: { signal: AgentSignal; used: boolean }[] }) {
+export function GroundingRow({ items }: { items: GroundingItem[] }) {
   const { t } = useTranslation();
   if (items.length === 0) return null;
   return (
@@ -146,22 +148,22 @@ export function GroundingRow({ items }: { items: { signal: AgentSignal; used: bo
         <IcLayers size={14} />
         {t("advisor.grounded_in")}
       </span>
-      {items.map(({ signal, used }) => {
-        const Icon = SIGNAL_ICON[signal.id];
+      {items.map((item) => {
+        const Icon = SIGNAL_ICON[item.icon];
         const body = (
           <>
             <Icon size={12} />
-            <b>{signal.name}</b> · {signal.volume}
+            <b>{item.name}</b> · {item.volume}
           </>
         );
         // A checked-but-empty signal is shown, dashed and quiet — it is proof the
         // agent looked, not a link worth following.
-        return used ? (
-          <Link key={signal.id} href={SIGNAL_HREF[signal.id]} className="ag-src">
+        return item.href ? (
+          <Link key={item.key} href={item.href} className="ag-src">
             {body}
           </Link>
         ) : (
-          <span key={signal.id} className="ag-src ag-src--empty">
+          <span key={item.key} className="ag-src ag-src--empty">
             {body}
           </span>
         );
@@ -235,6 +237,12 @@ const CTRL_META: Record<string, { kind: MessageKey; cta: MessageKey; done: Messa
 // takes effect immediately. (This inverts the эталон's table for three types —
 // schedule_post auto-publishes, reactive/format land as drafts. The pill has to
 // tell the truth about the code, so the code wins.)
+//
+// The эталон's live pill reads «Сразу · можно отменить». Phase 1 has NO
+// rollback: applied_changes_rollback.py gives `advisor_action` no safe inverse,
+// so `rollbackable` is false for every card this screen can apply. The pill
+// says «Сразу» only, and the applied row offers the deep link, not an Undo that
+// could never run.
 const ACT_MODE: Record<ActionType, "review" | "live"> = {
   routine: "review",
   best_time_routine: "review",
@@ -254,10 +262,9 @@ export type AgentActionView = {
   warn?: string | null;
   onApply: () => Promise<void>;
   onOpen: () => void;
-  /** Runs after a successful apply; resolves the fresh applied-changes receipt
-   *  (so the done row can offer a REAL undo) or null when there is none. */
-  onApplied?: () => Promise<AppliedChangeEntry | null>;
-  onUndo?: (changeId: number) => Promise<void>;
+  /** Runs after a successful apply — refreshes the rail's receipts and signals
+   *  so the journal shows the change that just landed. */
+  onApplied?: () => Promise<void>;
   /** A card replayed from an older conversation whose condition no longer holds. */
   stale?: boolean;
   /** Review-only: open the card straight into one state so /gallery can show all
@@ -281,9 +288,6 @@ export function ActionCard({ a }: { a: AgentActionView }) {
   // reason and drops Retry — retrying cannot succeed. A 5xx / dropped connection
   // keeps the generic line + Retry. `errText` non-null ⇒ not retryable.
   const [errText, setErrText] = useState<string | null>(null);
-  const [receipt, setReceipt] = useState<AppliedChangeEntry | null>(null);
-  const [undoing, setUndoing] = useState(false);
-  const [undone, setUndone] = useState(false);
   const [doneAt, setDoneAt] = useState<string>(
     a.initialState === "applied" ? new Date().toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }) : "",
   );
@@ -303,10 +307,7 @@ export function ActionCard({ a }: { a: AgentActionView }) {
       await a.onApply();
       setDoneAt(new Date().toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }));
       setState("applied");
-      if (a.onApplied) {
-        const entry = await a.onApplied().catch(() => null);
-        setReceipt(entry);
-      }
+      if (a.onApplied) await a.onApplied().catch(() => {});
     } catch (e) {
       const client = e instanceof ApiError && e.status >= 400 && e.status < 500;
       setErrText(client ? (e as ApiError).message : null);
@@ -314,44 +315,22 @@ export function ActionCard({ a }: { a: AgentActionView }) {
     }
   };
 
-  const undo = async () => {
-    if (!receipt || !a.onUndo) return;
-    setUndoing(true);
-    try {
-      await a.onUndo(receipt.id);
-      setUndone(true);
-    } catch {
-      setReceipt(null); // undo no longer possible — fall back to the deep link
-    } finally {
-      setUndoing(false);
-    }
-  };
-
-  // Applied → the card collapses into a 48px check row (§5.2).
+  // Applied → the card collapses into a 48px check row (§5.2). The trailing
+  // slot is the deep link to where the change now lives: phase 1 has no undo.
   if (state === "applied") {
-    const canUndo = !!receipt && receipt.rollbackable && !receipt.rolled_back_at && !!a.onUndo && !undone;
     return (
       <div className="ag-act ag-act--done">
         <div className="ag-done-row">
           <IcCheck size={16} />
           <span>
             <span className="ag-done-t">{t(ctrl?.done ?? meta.done)}</span>
-            <span className="ag-done-m">
-              {undone ? t("agent.act.undone") : doneAt ? `${t("agent.act.applied_at")} ${doneAt}` : ""}
-            </span>
+            <span className="ag-done-m">{doneAt ? `${t("agent.act.applied_at")} ${doneAt}` : ""}</span>
           </span>
           <span className="un">
-            {canUndo ? (
-              <button type="button" className="ag-btn ag-btn--ghost ag-btn--sm" onClick={undo} disabled={undoing}>
-                {undoing ? <span className="ag-spin" /> : <IcUndo size={14} />}
-                {t("agent.act.undo")}
-              </button>
-            ) : (
-              <button type="button" className="ag-btn ag-btn--ghost ag-btn--sm" onClick={a.onOpen}>
-                {t(meta.link)}
-                <IcExternal size={14} />
-              </button>
-            )}
+            <button type="button" className="ag-btn ag-btn--ghost ag-btn--sm" onClick={a.onOpen}>
+              {t(meta.link)}
+              <IcExternal size={14} />
+            </button>
           </span>
         </div>
       </div>
@@ -684,7 +663,10 @@ export function Composer({
 
 // ── right rail (§8) ──────────────────────────────────────────────────────────
 
-export type RailSession = { key: string; title: string; stamp: string; current: boolean; onOpen: () => void };
+/** The one live conversation, or null before the first question. Phase 1 keeps
+ *  a single server-side conversation per account, so there is nothing to switch
+ *  between and no «+ New» — the row exists to name what the agent is reading. */
+export type RailConversation = { title: string; stamp: string };
 export type RailReceipt = {
   id: number;
   title: string;
@@ -694,18 +676,16 @@ export type RailReceipt = {
 
 export function Rail({
   signals,
-  sessions,
+  conversation,
   receipts,
   onRefreshSignals,
   refreshing,
-  onNewConversation,
 }: {
   signals: AgentSignal[];
-  sessions: RailSession[];
+  conversation: RailConversation | null;
   receipts: RailReceipt[];
   onRefreshSignals?: () => void;
   refreshing?: boolean;
-  onNewConversation?: () => void;
 }) {
   const { t } = useTranslation();
   return (
@@ -736,28 +716,16 @@ export function Rail({
         <div className="ag-panel-hd">
           <IcBubble size={13} />
           {t("agent.rail.conversations")}
-          {onNewConversation ? (
-            <button type="button" className="act" onClick={onNewConversation}>
-              <IcPlus size={12} />
-              {t("agent.rail.new")}
-            </button>
-          ) : null}
         </div>
-        {sessions.length === 0 ? (
+        {conversation === null ? (
           <div className="ag-panel-empty">{t("agent.rail.no_conversations")}</div>
         ) : (
-          sessions.map((s) => (
-            <button
-              key={s.key}
-              type="button"
-              className="ag-conv"
-              aria-current={s.current ? "true" : undefined}
-              onClick={s.onOpen}
-            >
-              <span className="ag-conv-t">{s.title}</span>
-              <span className="ag-conv-m">{s.stamp}</span>
-            </button>
-          ))
+          // Not a button: there is nowhere else to go. aria-current still marks
+          // it as the one in view, per the эталон's active row.
+          <div className="ag-conv" aria-current="true">
+            <span className="ag-conv-t">{conversation.title}</span>
+            <span className="ag-conv-m">{conversation.stamp}</span>
+          </div>
         )}
       </div>
 

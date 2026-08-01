@@ -344,11 +344,40 @@ export type AdvisorSuggestionData = {
   account?: string | null;
 };
 
+// ── the action card's «Now» side ─────────────────────────────────────────────
+// Every action card must state what the account looks like BEFORE it applies
+// (Agent-Redesign-SPEC §5). The frontend derives what it can from live config
+// reads (autopilot · user-rules · scenarios); these OPTIONAL fields let the
+// backend hand back the readings the frontend cannot make — the recurring
+// format, the topic list, the reactive trigger, the calendar slot. Absent ⇒ the
+// card falls back to its derived «Now», and to «—» when there is none. They are
+// optional on purpose: they ship independently of this screen.
+export type AdvisorActionCurrent = {
+  /** auto_replies / automation: is the thing on right now. */
+  current_enabled?: boolean | null;
+  /** auto_replies: the account's daily reply cap today. */
+  current_replies_per_day?: number | null;
+  /** auto_replies: the audience the account replies to today. */
+  current_audience?: string | null;
+  /** voice_rule: how many standing voice rules already exist. */
+  current_rules_count?: number | null;
+  /** format: the recurring format running today (null = none). */
+  current_format_kind?: string | null;
+  /** topics_list: the topics already on the list. */
+  current_topics?: string[] | null;
+  /** automation: whether automation is paused right now. */
+  current_paused?: boolean | null;
+  /** automation (quiet_hours): the quiet window in local hours, [start, end]. */
+  current_hours?: number[] | null;
+  /** routine / best_time_routine: how many routines already run. */
+  current_routines_count?: number | null;
+};
+
 // A one-click advisor ACTION (the "apply-in-one-click" layer). `type` is a CLOSED
 // catalog. Each variant maps to an existing per-account operation the FE renders
 // as a typed card; Apply → POST /accounts/{id}/advisor/apply. Portfolio chat sets
 // `account` (bare @handle of the target profile; null = current/only).
-export type AdvisorRoutineAction = {
+export type AdvisorRoutineAction = AdvisorActionCurrent & {
   type: "routine";
   title: string;
   topic: string;
@@ -361,7 +390,7 @@ export type AdvisorRoutineAction = {
 
 // Turn ON the account's auto-reply policy (audience / daily cap / low-value skip).
 // Applies immediately — the separate POST automation is untouched.
-export type AdvisorAutoRepliesAction = {
+export type AdvisorAutoRepliesAction = AdvisorActionCurrent & {
   type: "auto_replies";
   title: string;
   audience: "questions" | "fans" | "all_except_trolls";
@@ -373,7 +402,7 @@ export type AdvisorAutoRepliesAction = {
 // Add one standing freeform rule to the account's voice (a user_rules row).
 // Strictly additive — never edits/removes an existing rule. `rule_kind` = which
 // surface it steers (field name matches the backend AdvisorActionOut wire key).
-export type AdvisorVoiceRuleAction = {
+export type AdvisorVoiceRuleAction = AdvisorActionCurrent & {
   type: "voice_rule";
   title: string;
   rule_text: string;
@@ -384,7 +413,7 @@ export type AdvisorVoiceRuleAction = {
 // Generate ONE post in the account's voice and schedule it to AUTO-PUBLISH at a
 // target day/hour. The model emits weekday (1=Mon..7=Sun) + local hour; the FE
 // resolves that to the next future occurrence → an absolute scheduled_at.
-export type AdvisorSchedulePostAction = {
+export type AdvisorSchedulePostAction = AdvisorActionCurrent & {
   type: "schedule_post";
   title: string;
   brief: string;
@@ -396,7 +425,7 @@ export type AdvisorSchedulePostAction = {
 // Enable ONE reactive scenario preset in one click. amplify = draft a follow-up
 // when a post takes off; milestone = draft a thank-you at a follower milestone;
 // booster = append a comment when a post grows (comment_text). All land as drafts.
-export type AdvisorReactiveAction = {
+export type AdvisorReactiveAction = AdvisorActionCurrent & {
   type: "reactive";
   reactive_kind: "amplify" | "milestone" | "booster";
   title: string;
@@ -407,7 +436,7 @@ export type AdvisorReactiveAction = {
 // Enable ONE recurring posting-format scenario preset in one click. daily_question
 // = a daily question post (needs a topic); rubric = a named weekly column (needs a
 // name + a one-line idea). All land as drafts for review.
-export type AdvisorFormatAction = {
+export type AdvisorFormatAction = AdvisorActionCurrent & {
   type: "format";
   format_kind: "daily_question" | "rubric" | "poll";
   title: string;
@@ -424,7 +453,7 @@ export type AdvisorFormatAction = {
 // resume = turn it back on; quiet_hours = a nightly window (account-local hours,
 // wrap-aware past midnight) when it neither posts nor auto-replies. quiet_start/
 // quiet_end are present only for quiet_hours.
-export type AdvisorAutomationAction = {
+export type AdvisorAutomationAction = AdvisorActionCurrent & {
   type: "automation";
   control_kind: "pause" | "quiet_hours" | "resume";
   title: string;
@@ -436,7 +465,7 @@ export type AdvisorAutomationAction = {
 // Like a routine, but the posting hours come from the account's strongest time
 // BLOCKS (morning/daytime/evening/night, chosen from the best-time heatmap). The
 // backend resolves the blocks → account-local hours; hours_preview echoes them.
-export type AdvisorBestTimeRoutineAction = {
+export type AdvisorBestTimeRoutineAction = AdvisorActionCurrent & {
   type: "best_time_routine";
   title: string;
   topic?: string;
@@ -446,7 +475,7 @@ export type AdvisorBestTimeRoutineAction = {
   account?: string | null;
 };
 
-export type AdvisorTopicsListAction = {
+export type AdvisorTopicsListAction = AdvisorActionCurrent & {
   type: "topics_list";
   title: string;
   topics: string[];
@@ -464,12 +493,29 @@ export type AdvisorActionData =
   | AdvisorBestTimeRoutineAction
   | AdvisorTopicsListAction;
 
+// The closed set of signals an advisor reply can stand on (Agent-Redesign-SPEC
+// §4.3) — each one navigates to the screen its number lives on.
+export type AdvisorGroundedId = "stats" | "best_times" | "posts" | "top_posts" | "replies" | "voice";
+
+// One entry of the structured grounding row: the signal, how much of it there
+// was ("148", "7 days"), and whether it came back EMPTY. An empty source is
+// still listed — dashed and quiet — because it is proof the agent looked.
+export type AdvisorGroundedSource = {
+  id: AdvisorGroundedId;
+  volume: string;
+  empty: boolean;
+};
+
 export type AdvisorResponse = {
   reply: string;
   model: string;
   // Which real account signals the reply was grounded in — drives the
   // "Grounded in: …" line in the UI.
   grounded_in: string[];
+  // The same thing, structured: ids from the closed set + real volumes, so the
+  // row can navigate and mark empty sources. OPTIONAL — it ships independently
+  // of this screen, and every reply predating it only carries `grounded_in`.
+  grounded?: AdvisorGroundedSource[];
   // Structured extras rendered under the prose. Any may be empty.
   chips: AdvisorChipData[];
   suggestions: AdvisorSuggestionData[];

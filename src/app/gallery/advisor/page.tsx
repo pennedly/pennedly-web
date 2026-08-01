@@ -85,8 +85,8 @@ export default function AgentGallery() {
   ];
 
   // A never-applied card: apply resolves after a beat so the busy → done
-  // transition is reviewable; the receipt is null so the done row shows the
-  // deep link rather than a fake undo.
+  // transition is reviewable; the done row then shows the deep link (phase 1
+  // has no undo — advisor actions have no safe inverse in the backend).
   const view = (a: AdvisorActionData, extra?: Partial<AgentActionView>): AgentActionView => ({
     action: a,
     diff: buildActionDiff(a, demo.snapshot, locale, t),
@@ -98,13 +98,20 @@ export default function AgentGallery() {
           : null,
     onApply: () => new Promise<void>((r) => setTimeout(r, 700)),
     onOpen: () => {},
-    onApplied: async () => null,
+    onApplied: async () => {},
     ...extra,
   });
 
   const signals = demo.signals;
-  const groundedFull = groundingFor(["Stats · 7 days", "recent posts", "replies"], signals);
-  const groundedThin = groundingFor([], thinSignals(signals, t("agent.no_data")));
+  // Legacy path: the backend NAMED these sources, we pair them with the live
+  // signal volumes. Structured path: ids + volumes straight off the reply.
+  const groundedFull = groundingFor({ grounded_in: ["Stats · 7 days", "recent posts", "replies"] }, signals, t);
+  const groundedThin = groundingFor({ grounded_in: [] }, thinSignals(signals, t("agent.no_data")), t);
+  const groundedStructured = groundingFor(
+    { grounded_in: [], grounded: turn2.reply!.grounded },
+    signals,
+    t,
+  );
 
   return (
     <div className="min-h-screen bg-bg p-6 text-text">
@@ -179,7 +186,7 @@ export default function AgentGallery() {
                 <p>{turn2.reply!.reply}</p>
                 <MetricStrip metrics={turn2.reply!.chips.map((c) => ({ tone: c.tone, icon: c.icon ?? null, label: c.label }))} />
                 <ActionCard a={view(turn2.reply!.actions[0])} />
-                <GroundingRow items={groundingFor(turn2.reply!.grounded_in, signals)} />
+                <GroundingRow items={groundedStructured} />
               </AgentTurn>
             </Col>
             <JumpToLatest onClick={() => {}} />
@@ -203,9 +210,10 @@ export default function AgentGallery() {
             />
           </div>
         </Section>
-        <Section title="grounding row: named sources (solid, navigable) vs checked-and-empty (dashed) (§4.3)">
+        <Section title="grounding row: legacy · structured (with an empty top-posts source) · thin (§4.3)">
           <div className="flex flex-col gap-4">
             <GroundingRow items={groundedFull} />
+            <GroundingRow items={groundedStructured} />
             <GroundingRow items={groundedThin} />
           </div>
         </Section>
@@ -309,32 +317,25 @@ export default function AgentGallery() {
         </Section>
 
         <h2 className="mb-3 mt-8 text-h3 font-semibold">Right rail (§8)</h2>
-        <Section title="signals · conversations · applied — 320px">
+        <Section title="signals · the one conversation · applied — 320px">
           <div className="max-w-[320px]">
             <div style={{ display: "contents" }}>
               <Rail
                 signals={signals}
-                sessions={demo.sessions.map((s, i) => ({
-                  key: String(i),
-                  title: s.title,
-                  stamp: s.stamp,
-                  current: i === 0,
-                  onOpen: () => {},
-                }))}
+                conversation={demo.conversation}
                 receipts={demo.receipts.map((r) => ({
                   id: r.id,
                   title: r.summary,
                   meta: sessionStamp(r.created_at, locale, t),
                 }))}
                 onRefreshSignals={() => {}}
-                onNewConversation={() => {}}
               />
             </div>
           </div>
         </Section>
         <Section title="empty rail — no conversations, nothing applied">
           <div className="max-w-[320px]">
-            <Rail signals={signals} sessions={[]} receipts={[]} onNewConversation={() => {}} />
+            <Rail signals={signals} conversation={null} receipts={[]} />
           </div>
         </Section>
       </div>

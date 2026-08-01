@@ -36,8 +36,8 @@ export type AgentDemo = {
   receipts: AppliedChangeEntry[];
   /** The account state the action-card diffs read their «Now» side from. */
   snapshot: AgentSnapshot;
-  /** Sample sittings for the rail's conversation list. */
-  sessions: { title: string; stamp: string }[];
+  /** The one live conversation the rail names (phase 1 has no second one). */
+  conversation: { title: string; stamp: string };
   freshness: string;
   rangeLabel: string;
   turns: (state: AgentDemoState) => AgentTurnData[];
@@ -164,6 +164,9 @@ export function AGENT_DEMO(t: T, locale: LocaleCode): AgentDemo {
     }),
   };
 
+  // Turn 1 carries only the legacy `grounded_in` (the fallback path); turn 2
+  // carries the structured `grounded`, including an empty source and the
+  // top-posts id the legacy map has no string for. Both render in the gallery.
   const turn2: AgentTurnData = {
     user: t("agent.demo.q2"),
     status: "done",
@@ -171,6 +174,11 @@ export function AGENT_DEMO(t: T, locale: LocaleCode): AgentDemo {
     reply: reply({
       reply: t("agent.demo.a2p1"),
       grounded_in: ["replies", "Voice (role-book)"],
+      grounded: [
+        { id: "replies", volume: `30 ${pluralUnit(locale, "days", 30)}`, empty: false },
+        { id: "voice", volume: `14 ${t("agent.sig.rules_unit")}`, empty: false },
+        { id: "top_posts", volume: "", empty: true },
+      ],
       chips: [
         { tone: "accent", icon: "reply", label: t("agent.demo.chip_q30") },
         { tone: "down", icon: null, label: t("agent.demo.chip_unanswered") },
@@ -200,11 +208,7 @@ export function AGENT_DEMO(t: T, locale: LocaleCode): AgentDemo {
     brief,
     receipts,
     snapshot,
-    sessions: [
-      { title: t("agent.demo.q1"), stamp: `${t("appliedChanges.today")}, 14:32` },
-      { title: t("agent.demo.q2"), stamp: `${t("appliedChanges.yesterday")}, 19:04` },
-      { title: t("agent.demo.q4"), stamp: new Date(Date.now() - 5 * 86400_000).toLocaleDateString(locale, { day: "numeric", month: "long" }) },
-    ],
+    conversation: { title: t("agent.demo.q1"), stamp: `${t("appliedChanges.today")}, 14:32` },
     freshness: t("agent.demo.fresh"),
     rangeLabel: `${t("agent.brief.window_7d")} · ${t("agent.demo.fresh")}`,
     turns: (state) => {

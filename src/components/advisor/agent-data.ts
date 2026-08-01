@@ -21,7 +21,7 @@ import { pluralUnit } from "@/lib/i18n";
 import type { LocaleCode } from "@/lib/i18n";
 import type {
   AdvisorActionData,
-  AdvisorHistoryEntry,
+  AdvisorGroundedId,
   AdvisorResponse,
   AutopilotConfig,
   RoleBook,
@@ -112,16 +112,6 @@ const SIGNAL_NAME: Record<AgentSignalId, MessageKey> = {
   voice: "agent.sig.voice",
 };
 
-// Where each signal's number actually lives — the grounding chips navigate here
-// (§4.3), which is what makes them a check rather than a footnote.
-export const SIGNAL_HREF: Record<AgentSignalId, string> = {
-  stats: "/app/stats",
-  heatmap: "/app/stats#best-times",
-  posts: "/app/feed",
-  replies: "/app/replies",
-  voice: "/app/role-book",
-};
-
 export type AgentSignal = {
   id: AgentSignalId;
   name: string;
@@ -172,22 +162,101 @@ export function buildSignals(
   ];
 }
 
-/** The grounding row for one turn: the signals the backend NAMED (solid, with
- *  their real volume) plus the ones it checked and found empty (dashed). A
- *  signal that holds data but wasn't cited is left out — it wasn't used. */
+// ── the structured grounding row (§4.3) ──────────────────────────────────────
+// The closed six the spec names. `best_times` is the same signal the rail calls
+// `heatmap`; `top_posts` has no rail row on this endpoint (the per-profile
+// advisor never reads it — only the account-level one does), so it appears here
+// only if a reply actually names it.
+export const GROUNDED_HREF: Record<AdvisorGroundedId, string> = {
+  stats: "/app/stats",
+  best_times: "/app/stats#best-times",
+  posts: "/app/feed",
+  top_posts: "/app/stats#top",
+  replies: "/app/replies",
+  voice: "/app/role-book",
+};
+
+const GROUNDED_NAME: Record<AdvisorGroundedId, MessageKey> = {
+  stats: "agent.sig.stats",
+  best_times: "agent.sig.heatmap",
+  posts: "agent.sig.posts",
+  top_posts: "agent.sig.top_posts",
+  replies: "agent.sig.replies",
+  voice: "agent.sig.voice",
+};
+
+/** Which glyph a grounding chip carries — the rail's icon set plus top-posts. */
+export type GroundedIcon = AgentSignalId | "top_posts";
+
+const SIGNAL_TO_GROUNDED: Record<AgentSignalId, AdvisorGroundedId> = {
+  stats: "stats",
+  heatmap: "best_times",
+  posts: "posts",
+  replies: "replies",
+  voice: "voice",
+};
+
+/** One chip of the grounding row, already resolved to what it renders. */
+export type GroundingItem = {
+  key: string;
+  icon: GroundedIcon;
+  name: string;
+  volume: string;
+  /** Where the number lives. null ⇒ dashed, quiet, not a link (§4.3). */
+  href: string | null;
+};
+
+/** The grounding row for one turn.
+ *
+ *  Preferred path: the reply's structured `grounded` — ids from the closed six,
+ *  each with its real volume and an `empty` flag. Empty ⇒ dashed and inert.
+ *
+ *  Fallback (a reply that predates that field): the NAMED `grounded_in` strings
+ *  paired with the signals this screen fetched itself. Those chips stay
+ *  navigable — the id→screen map is verified against the backend's own
+ *  `sources.append` values (generation/advisor.py), so the link is known-good;
+ *  degrading them to inert text would drop working navigation for nothing. */
 export function groundingFor(
-  groundedIn: string[],
+  res: Pick<AdvisorResponse, "grounded_in" | "grounded">,
   signals: AgentSignal[],
-): { signal: AgentSignal; used: boolean }[] {
+  t: T,
+): GroundingItem[] {
+  const noData = t("agent.no_data");
+
+  if (res.grounded && res.grounded.length > 0) {
+    const out: GroundingItem[] = [];
+    for (const g of res.grounded) {
+      const name = GROUNDED_NAME[g.id];
+      if (!name) continue; // an id outside the closed set is not rendered
+      out.push({
+        key: g.id,
+        icon: g.id === "best_times" ? "heatmap" : g.id,
+        name: t(name),
+        volume: g.empty ? noData : g.volume,
+        href: g.empty ? null : GROUNDED_HREF[g.id],
+      });
+    }
+    return out;
+  }
+
   const cited = new Set<AgentSignalId>();
-  for (const id of groundedIn) {
+  for (const id of res.grounded_in) {
     const sig = signalOfGroundedId(id);
     if (sig) cited.add(sig);
   }
-  const out: { signal: AgentSignal; used: boolean }[] = [];
+  const out: GroundingItem[] = [];
   for (const s of signals) {
-    if (cited.has(s.id)) out.push({ signal: s, used: true });
-    else if (s.thin) out.push({ signal: s, used: false });
+    const used = cited.has(s.id);
+    // A signal holding data that wasn't cited is left out — it wasn't used.
+    // One that came back empty is shown anyway: proof the agent looked.
+    if (!used && !s.thin) continue;
+    out.push({
+      key: s.id,
+      icon: s.id,
+      name: s.name,
+      volume: s.volume,
+      href: used ? GROUNDED_HREF[SIGNAL_TO_GROUNDED[s.id]] : null,
+    });
   }
   return out;
 }
@@ -348,8 +417,20 @@ const REACT_KEY: Record<string, MessageKey> = {
   booster: "adv.act.react_booster",
 };
 
+const FORMAT_KEY: Record<string, MessageKey> = {
+  daily_question: "adv.act.fmt_dq",
+  rubric: "adv.act.fmt_rubric",
+  poll: "adv.act.fmt_poll",
+};
+
 const hh = (n: number) => `${String(n).padStart(2, "0")}:00`;
 const hours = (hs: number[]) => hs.map(hh).join(", ");
+
+/** A `current_*` reading the backend actually sent. `null`/absent both mean "not
+ *  sent" — the card then falls back to what this screen read for itself. */
+function sent<V>(v: V | null | undefined): v is V {
+  return v !== null && v !== undefined;
+}
 
 export function buildActionDiff(
   a: AdvisorActionData,
@@ -360,14 +441,18 @@ export function buildActionDiff(
   const unknown = t("agent.diff.unknown");
   const ap = snap.autopilot;
 
+  // How many routines run right now: the backend's own reading wins over the
+  // one derived from the scenarios list, because it is what apply() will act on.
+  const routinesNow = sent(a.current_routines_count) ? a.current_routines_count : snap.scenarios;
+
   switch (a.type) {
     case "routine": {
       const now =
-        snap.scenarios === null
+        routinesNow === null
           ? unknown
-          : snap.scenarios === 0
+          : routinesNow === 0
             ? t("agent.diff.routine_none")
-            : t("agent.diff.routine_n").replace("{n}", fmtInt(snap.scenarios, locale));
+            : t("agent.diff.routine_n").replace("{n}", fmtInt(routinesNow, locale));
       const topic = a.topic.trim();
       return {
         now: [{ text: now }],
@@ -378,15 +463,26 @@ export function buildActionDiff(
       };
     }
     case "auto_replies": {
+      // The backend's readings win when it sends them; otherwise the live
+      // autopilot config this screen fetched.
+      const onNow = sent(a.current_enabled)
+        ? a.current_enabled
+        : ap
+          ? ap.enabled && ap.reply_mode !== "off"
+          : null;
+      const audienceNow = sent(a.current_audience) ? a.current_audience : (ap?.reply_audience ?? null);
       const now =
-        !ap
+        onNow === null
           ? unknown
-          : ap.reply_mode === "off" || !ap.enabled
+          : !onNow
             ? t("agent.diff.replies_off")
             : t("agent.diff.replies_on").replace(
                 "{audience}",
-                t(AUDIENCE_KEY[ap.reply_audience] ?? "adv.act.aud_all_except_trolls"),
-              );
+                t(AUDIENCE_KEY[audienceNow ?? ""] ?? "adv.act.aud_all_except_trolls"),
+              ) +
+              (sent(a.current_replies_per_day)
+                ? ` · ${t("adv.act.up_to")} ${fmtInt(a.current_replies_per_day, locale)}× ${t("adv.act.per_day")}`
+                : "");
       return {
         now: [{ text: now }],
         next: [
@@ -399,7 +495,7 @@ export function buildActionDiff(
       };
     }
     case "voice_rule": {
-      const n = snap.voiceRules;
+      const n = sent(a.current_rules_count) ? a.current_rules_count : snap.voiceRules;
       return {
         now: [{ text: n === null ? unknown : t("agent.diff.rules_n").replace("{n}", fmtInt(n, locale)) }],
         next: [
@@ -427,19 +523,26 @@ export function buildActionDiff(
           : a.format_kind === "rubric"
             ? `${t("adv.act.fmt_rubric")}: ${a.rubric_name ?? ""}`
             : `${t("adv.act.fmt_poll")}: ${a.question ?? ""}`;
-      return { now: [{ text: t("agent.diff.format_now") }], next: [{ text: what, mark: true }] };
+      // Only the backend knows which recurring format is on; absent ⇒ the
+      // catalog's "no recurring format" line, which is what apply() assumes.
+      const running = sent(a.current_format_kind) ? FORMAT_KEY[a.current_format_kind] : null;
+      return {
+        now: [{ text: running ? t(running) : t("agent.diff.format_now") }],
+        next: [{ text: what, mark: true }],
+      };
     }
     case "automation": {
-      const nowText = !ap
-        ? unknown
-        : ap.enabled
-          ? t("agent.diff.autom_on")
-          : t("agent.diff.autom_off");
+      const pausedNow = sent(a.current_paused) ? a.current_paused : null;
+      const runningNow = pausedNow !== null ? !pausedNow : sent(a.current_enabled) ? a.current_enabled : ap ? ap.enabled : null;
+      const nowText =
+        runningNow === null ? unknown : runningNow ? t("agent.diff.autom_on") : t("agent.diff.autom_off");
       if (a.control_kind === "quiet_hours") {
-        const cur =
-          ap && ap.quiet_start_hour != null && ap.quiet_end_hour != null
+        const win = sent(a.current_hours) && a.current_hours.length === 2 ? a.current_hours : null;
+        const cur = win
+          ? t("agent.diff.quiet_cur").replace("{w}", `${hh(win[0])}${MINUS}${hh(win[1])}`)
+          : ap && ap.quiet_start_hour != null && ap.quiet_end_hour != null
             ? t("agent.diff.quiet_cur").replace("{w}", `${hh(ap.quiet_start_hour)}${MINUS}${hh(ap.quiet_end_hour)}`)
-            : ap
+            : ap || sent(a.current_hours)
               ? t("agent.diff.quiet_none")
               : unknown;
         return {
@@ -465,11 +568,11 @@ export function buildActionDiff(
     }
     case "best_time_routine": {
       const now =
-        snap.scenarios === null
+        routinesNow === null
           ? unknown
-          : snap.scenarios === 0
+          : routinesNow === 0
             ? t("agent.diff.routine_none")
-            : t("agent.diff.routine_n").replace("{n}", fmtInt(snap.scenarios, locale));
+            : t("agent.diff.routine_n").replace("{n}", fmtInt(routinesNow, locale));
       const blocks = a.blocks.map((b) => (BLOCK_LABEL_KEY[b] ? t(BLOCK_LABEL_KEY[b]) : b)).join(" · ");
       return {
         now: [{ text: now }],
@@ -479,51 +582,31 @@ export function buildActionDiff(
         ],
       };
     }
-    case "topics_list":
+    case "topics_list": {
+      // The list itself when the backend sends it; otherwise the generic line —
+      // this screen never fetches the topic list, so it cannot name it.
+      const have = sent(a.current_topics) ? a.current_topics : null;
       return {
-        now: [{ text: t("agent.diff.topics_now") }],
+        now: [
+          {
+            text: have === null ? t("agent.diff.topics_now") : have.length === 0 ? t("agent.diff.topics_none") : have.join(" · "),
+          },
+        ],
         next: [{ text: a.topics.join(" · "), mark: true }],
       };
-  }
-}
-
-// ── conversations (the rail's history list) ──────────────────────────────────
-
-// The backend keeps ONE ever-growing conversation per account (§5.2 of the
-// project SPEC — no conversation ids yet), so the rail's «Диалоги» list is
-// derived from the persisted turns, not invented: consecutive turns separated by
-// less than SESSION_GAP_MS read as one sitting. Nothing is fabricated — every
-// row maps to real stored turns, and clicking one loads exactly those.
-const SESSION_GAP_MS = 6 * 3600_000;
-
-export type AgentSession = {
-  /** Index of the first entry of this session in the flat history array. */
-  start: number;
-  /** Exclusive end index. */
-  end: number;
-  title: string;
-  at: string;
-};
-
-export function groupSessions(entries: AdvisorHistoryEntry[]): AgentSession[] {
-  const out: AgentSession[] = [];
-  let start = 0;
-  for (let i = 0; i < entries.length; i++) {
-    const prev = i > 0 ? new Date(entries[i - 1].created_at).getTime() : 0;
-    const cur = new Date(entries[i].created_at).getTime();
-    if (i > 0 && Number.isFinite(prev) && Number.isFinite(cur) && cur - prev > SESSION_GAP_MS) {
-      out.push({ start, end: i, title: entries[start].question, at: entries[start].created_at });
-      start = i;
     }
   }
-  if (entries.length > 0) {
-    out.push({ start, end: entries.length, title: entries[start].question, at: entries[start].created_at });
-  }
-  // Newest sitting first, like the эталон's list.
-  return out.reverse();
 }
 
-/** "Today, 14:32" / "9 July" — the session row's second line. */
+// ── the conversation row ─────────────────────────────────────────────────────
+// Phase 1 has NO multi-conversation model: the backend keeps ONE ever-growing
+// conversation per account (no conversation ids), so the rail's «Диалоги» panel
+// shows exactly one row — the live conversation, titled by its first question
+// and marked aria-current. There is no «+ New» and nothing to switch to; an
+// earlier build grouped the flat history into pseudo-sittings by time gaps,
+// which invented a structure the server does not have.
+
+/** "Today, 14:32" / "9 July" — the conversation row's second line. */
 export function sessionStamp(iso: string, locale: string, t: T): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
