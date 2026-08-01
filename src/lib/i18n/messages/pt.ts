@@ -1037,7 +1037,7 @@ export const pt: Partial<Record<MessageKey, string>> = {
   "onboarding.trust2":
     "Por padrão, nada é postado até você aprovar — você mantém o controle.",
   "onboarding.trust3": "Desconecte quando quiser — seus dados vão com você.",
-  "onboarding.choose_eyebrow": "Passo 2 de 3 · Sua voz",
+  "onboarding.choose_eyebrow": "Passo 3 de 4 · Sua voz",
   "onboarding.choose_title": "Como o Pennedly deve aprender sua voz?",
   "onboarding.choose_sub":
     "É o que faz os rascunhos soarem como você e não como um robô. Escolha uma — você sempre pode refinar depois.",
@@ -1054,7 +1054,7 @@ export const pt: Partial<Record<MessageKey, string>> = {
   "onboarding.analyze_step1": "Lendo seus posts recentes",
   "onboarding.analyze_step2": "Destilando seus temas e seu ritmo",
   "onboarding.analyze_step3": "Escrevendo sua voz",
-  "onboarding.scratch_eyebrow": "Passo 2 de 3 · A partir de uma descrição",
+  "onboarding.scratch_eyebrow": "Passo 3 de 4 · A partir de uma descrição",
   "onboarding.optional": "opcional",
   "onboarding.preview_run": "Prévia da voz",
   "onboarding.done_title_set": "Tudo pronto, {name}.",

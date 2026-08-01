@@ -1037,7 +1037,7 @@ export const fr: Partial<Record<MessageKey, string>> = {
   "onboarding.trust2":
     "Par défaut, rien n'est publié tant que tu ne l'approuves pas — tu gardes le contrôle.",
   "onboarding.trust3": "Déconnecte quand tu veux — tes données partent avec toi.",
-  "onboarding.choose_eyebrow": "Étape 2 sur 3 · Ta voix",
+  "onboarding.choose_eyebrow": "Étape 3 sur 4 · Ta voix",
   "onboarding.choose_title": "Comment Pennedly doit-il apprendre ta voix ?",
   "onboarding.choose_sub":
     "C'est ce qui fait que les brouillons te ressemblent et ne sonnent pas robot. Choisis-en une — tu pourras toujours l'affiner ensuite.",
@@ -1054,7 +1054,7 @@ export const fr: Partial<Record<MessageKey, string>> = {
   "onboarding.analyze_step1": "Lecture de tes posts récents",
   "onboarding.analyze_step2": "Distillation de tes thèmes et de ton rythme",
   "onboarding.analyze_step3": "Écriture de ta voix",
-  "onboarding.scratch_eyebrow": "Étape 2 sur 3 · À partir d'une description",
+  "onboarding.scratch_eyebrow": "Étape 3 sur 4 · À partir d'une description",
   "onboarding.optional": "optionnel",
   "onboarding.preview_run": "Aperçu de la voix",
   "onboarding.done_title_set": "Tout est prêt, {name}.",

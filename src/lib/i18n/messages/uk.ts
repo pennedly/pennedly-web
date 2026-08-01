@@ -1034,7 +1034,7 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "onboarding.trust2":
     "За замовчуванням нічого не постить, поки ти не схвалиш — усе під твоїм контролем.",
   "onboarding.trust3": "Відключай будь-коли — твої дані йдуть з тобою.",
-  "onboarding.choose_eyebrow": "Крок 2 з 3 · Твій голос",
+  "onboarding.choose_eyebrow": "Крок 3 з 4 · Твій голос",
   "onboarding.choose_title": "Як Pennedly має вивчити твій голос?",
   "onboarding.choose_sub":
     "Саме це робить чернетки схожими на тебе, а не на робота. Обери одне — завжди можна доопрацювати пізніше.",
@@ -1051,7 +1051,7 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "onboarding.analyze_step1": "Читаю твої недавні пости",
   "onboarding.analyze_step2": "Виокремлюю твої теми й ритм",
   "onboarding.analyze_step3": "Пишу твій голос",
-  "onboarding.scratch_eyebrow": "Крок 2 з 3 · З опису",
+  "onboarding.scratch_eyebrow": "Крок 3 з 4 · З опису",
   "onboarding.optional": "необов'язково",
   "onboarding.preview_run": "Перегляд голосу",
   "onboarding.done_title_set": "Усе готово, {name}.",

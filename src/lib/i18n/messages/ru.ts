@@ -1871,7 +1871,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "onboarding.connected": "Подключён",
   "onboarding.followers_count": "{n} подписчиков",
   "onboarding.connect_failed": "Не получилось подключить аккаунт. Попробуй ещё раз.",
-  "onboarding.choose_eyebrow": "Шаг 2 из 3 · Твой голос",
+  "onboarding.choose_eyebrow": "Шаг 3 из 4 · Твой голос",
   "onboarding.choose_title": "Как Pennedly выучит твой голос?",
   "onboarding.choose_sub":
     "Именно это делает черновики похожими на тебя, а не на робота. Выбери одно, потом всегда можно поправить.",
@@ -1895,7 +1895,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "onboarding.analyze_step1": "Читаю недавние посты",
   "onboarding.analyze_step2": "Нахожу темы, к которым ты возвращаешься",
   "onboarding.analyze_step3": "Улавливаю, как ты звучишь",
-  "onboarding.scratch_eyebrow": "Шаг 2 из 3 · Создать с нуля",
+  "onboarding.scratch_eyebrow": "Шаг 3 из 4 · Создать с нуля",
   "onboarding.optional": "необязательно",
   "onboarding.preview_run": "Запустить настройку по-настоящему",
   "onboarding.preview_pill": "Превью · ничего не сохраняется",

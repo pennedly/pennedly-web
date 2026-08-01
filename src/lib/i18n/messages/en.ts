@@ -1897,7 +1897,7 @@ export const en = {
   "onboarding.connected": "Connected",
   "onboarding.followers_count": "{n} followers",
   "onboarding.connect_failed": "We couldn't connect that account. Please try again.",
-  "onboarding.choose_eyebrow": "Step 2 of 3 · Your voice",
+  "onboarding.choose_eyebrow": "Step 3 of 4 · Your voice",
   "onboarding.choose_title": "How should Pennedly learn your voice?",
   "onboarding.choose_sub":
     "This is what makes drafts sound like you and not a robot. Pick one; you can always refine it later.",
@@ -1921,7 +1921,7 @@ export const en = {
   "onboarding.analyze_step1": "Reading your recent posts",
   "onboarding.analyze_step2": "Finding the themes you return to",
   "onboarding.analyze_step3": "Distilling how you sound",
-  "onboarding.scratch_eyebrow": "Step 2 of 3 · Build from scratch",
+  "onboarding.scratch_eyebrow": "Step 3 of 4 · Build from scratch",
   "onboarding.optional": "optional",
   "onboarding.preview_run": "Run setup for real",
   "onboarding.preview_pill": "Preview · nothing is saved",
