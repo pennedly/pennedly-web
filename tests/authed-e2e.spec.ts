@@ -445,3 +445,102 @@ test("agent: an applied action can be undone when the journal allows it", async 
   expect(rollbackCalls).toHaveLength(1);
   expect(rollbackCalls[0]).toContain(`/applied-changes/${JOURNAL_ENTRY}/rollback`);
 });
+
+// ── Structured error codes → localized copy (backend `AppError.code`) ─────────
+// The backend answers failures with `{detail, code, params}`; `detail` is still
+// an English sentence and used to be what the SPA showed, in all eight locales.
+// These lock the replacement: the code picks an `error.code.<code>` string, the
+// `params` land in its `{…}` placeholders, and an untranslated code degrades to
+// the screen's own copy — never back to the English detail.
+//
+// Russian is the reading locale here precisely because English would hide the
+// bug: an untranslated string and a correct one look identical in `en`.
+
+/** Seed an explicit locale pick. `adoptServerLocale` leaves an explicit choice
+ *  alone, so this beats ME.locale ("en") the way a real user's pick does. */
+async function readInRussian(page: import("@playwright/test").Page) {
+  await page.addInitScript(() => window.localStorage.setItem("pennedly.locale", "ru"));
+}
+
+const TRANSLATE_RATE_LIMITED_EN = "Too many translation requests — please try again shortly.";
+
+test("error codes: a 429 with params renders the localized sentence, number and all", async ({
+  page,
+  context,
+}) => {
+  await readInRussian(page);
+
+  // The scenario journal's only read. 429 + a code the catalogue knows + the
+  // delay the sentence interpolates.
+  await context.route(/\/api\/scenarios\/\d+\/activity(\?|$)/, (route) =>
+    route.fulfill({
+      status: 429,
+      headers: { "Retry-After": "42" },
+      json: {
+        detail: TRANSLATE_RATE_LIMITED_EN,
+        code: "rate_limited",
+        params: { retry_after: 42 },
+      },
+    }),
+  );
+
+  await page.goto("/app/scenarios/3/activity", { waitUntil: "domcontentloaded" });
+
+  // ru `error.code.rate_limited`, with params.retry_after substituted.
+  await expect(page.getByText("Ты немного торопишься. Попробуй через 42 с.")).toBeVisible({
+    timeout: 15_000,
+  });
+  // Not the raw English detail, and not an unsubstituted placeholder.
+  await expect(page.getByText(TRANSLATE_RATE_LIMITED_EN)).toHaveCount(0);
+  await expect(page.getByText("{retry_after}")).toHaveCount(0);
+});
+
+test("error codes: a code we don't translate falls back to the screen's own copy", async ({
+  page,
+  context,
+}) => {
+  await readInRussian(page);
+
+  await context.route(/\/api\/scenarios\/\d+\/activity(\?|$)/, (route) =>
+    route.fulfill({
+      status: 409,
+      json: {
+        detail: "some future backend condition nobody has translated",
+        code: "a_code_from_a_newer_backend",
+      },
+    }),
+  );
+
+  await page.goto("/app/scenarios/3/activity", { waitUntil: "domcontentloaded" });
+
+  await expect(page.getByText("Не удалось загрузить активность.")).toBeVisible({ timeout: 15_000 });
+  await expect(
+    page.getByText("some future backend condition nobody has translated"),
+  ).toHaveCount(0);
+});
+
+test("error codes: a failed disconnect toasts the translated reason, not `503: [object Object]`", async ({
+  page,
+  context,
+}) => {
+  await readInRussian(page);
+
+  // Meta refused the call — a code with no params, so the sentence is fixed.
+  await context.route(/\/api\/accounts\/\d+\/disconnect$/, (route) =>
+    route.fulfill({
+      status: 502,
+      json: { detail: "Threads API: could not confirm", code: "threads_api_error" },
+    }),
+  );
+
+  await page.goto("/app/settings", { waitUntil: "domcontentloaded" });
+
+  await expect(page.getByText("@mara_threads").first()).toBeVisible({ timeout: 15_000 });
+  await page.getByRole("button", { name: /^отключить$/i }).click();
+  await page.getByRole("button", { name: /^Отключить$/ }).click();
+
+  await expect(
+    page.getByText("Threads не подтвердил действие. Попробуй ещё раз через минуту."),
+  ).toBeVisible();
+  await expect(page.getByText("Threads API: could not confirm")).toHaveCount(0);
+});

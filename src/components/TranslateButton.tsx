@@ -12,6 +12,7 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { translateText } from "@/lib/api";
+import { friendlyErrorText } from "@/lib/errors";
 import { captureEvent } from "@/lib/analytics";
 import { useTranslation } from "@/lib/i18n";
 import { IcGlobe } from "@/components/icons";
@@ -66,7 +67,9 @@ export function TranslateButton({ text, source = "unknown", className = "" }: Pr
       const t = await translateText(text, lang);
       setResult(t);
     } catch (e) {
-      setError(String(e));
+      // `String(e)` used to leak the raw English reason ("Too many translation
+      // requests — please try again shortly. (429)") into eight locales.
+      setError(friendlyErrorText(e));
     } finally {
       setLoading(null);
     }

@@ -32,6 +32,7 @@ import {
   skipOnboarding,
   startThreadsConnect,
 } from "@/lib/api";
+import { errorCodeText, friendlyErrorText } from "@/lib/errors";
 import { captureEvent } from "@/lib/analytics";
 import { getSelectedAccountId, setSelectedAccountId } from "@/lib/account";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
@@ -122,17 +123,16 @@ function errMsg(e: unknown, t: (k: MessageKey) => string): string {
   // Friendly copy, not transport internals (B7): the old form surfaced
   // «502: <!DOCTYPE html>…» (a proxy error page) and «TypeError: Failed to
   // fetch» verbatim in the onboarding banner.
+  //
+  // The backend now names the failure (`code`), so the specific 4xx reasons
+  // this used to echo in English — quota, "tell us how you write", "not enough
+  // posts to learn from" — come back translated. What's left without a code
+  // collapses to this screen's own copy rather than to a raw detail string.
+  const coded = errorCodeText(e);
+  if (coded !== null) return coded;
   if (e instanceof ApiError) {
-    const d =
-      typeof e.detail === "object" && e.detail !== null && "detail" in (e.detail as Record<string, unknown>)
-        ? (e.detail as { detail: unknown }).detail
-        : e.detail;
-    const s = typeof d === "string" ? d.trim() : "";
-    // A short, clean 4xx detail is a real message worth showing (quota text,
-    // validation). Anything else — 5xx, HTML error pages, empty/object
-    // bodies — collapses to human copy.
-    if (e.status < 500 && s && s.length <= 200 && !s.includes("<")) return s;
-    return t("onboarding.err_server");
+    if (e.status >= 500) return t("onboarding.err_server");
+    return friendlyErrorText(e);
   }
   // Non-ApiError on a fetch path = the request never got an answer
   // (offline, DNS, CORS, timeout).

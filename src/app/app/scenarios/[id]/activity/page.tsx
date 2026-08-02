@@ -11,6 +11,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
 import { ApiError, clearTokens, confirmScenarioDraft, fetchScenarioActivity, getTokens, skipScenarioDraft } from "@/lib/api";
+import { errorCodeText } from "@/lib/errors";
 import { useTranslation } from "@/lib/i18n";
 import { AppTopbar } from "@/components/AppTopbar";
 import { Spinner } from "@/components/ui/feedback";
@@ -45,7 +46,11 @@ export default function ScenarioActivityPage() {
 
   const [data, setData] = useState<ScenarioActivity | null>(null);
   const [loading, setLoading] = useState(!demo);
-  const [error, setError] = useState<string | null>(null);
+  // Two pieces, because they answer different questions: `failed` decides which
+  // branch renders, `errorText` is the server's own reason when it sent a code
+  // we can translate (otherwise the screen's generic line stands).
+  const [failed, setFailed] = useState(false);
+  const [errorText, setErrorText] = useState<string | null>(null);
 
   useEffect(() => {
     if (demo) return;
@@ -64,7 +69,10 @@ export default function ScenarioActivityPage() {
           router.push("/app/login");
           return;
         }
-        if (alive) setError(String(e));
+        if (alive) {
+          setFailed(true);
+          setErrorText(errorCodeText(e));
+        }
       } finally {
         if (alive) setLoading(false);
       }
@@ -115,9 +123,9 @@ export default function ScenarioActivityPage() {
         <div className="grid place-items-center py-20">
           <Spinner label={t("a11y.loading")} />
         </div>
-      ) : error ? (
+      ) : failed ? (
         <div className="rounded-lg border border-border border-l-[3px] border-l-danger bg-surface px-4 py-3.5 text-small text-text-muted shadow-sm">
-          {t("scenarios.activity.error")}
+          {errorText ?? t("scenarios.activity.error")}
         </div>
       ) : hasContent ? (
         <ActivityJournal

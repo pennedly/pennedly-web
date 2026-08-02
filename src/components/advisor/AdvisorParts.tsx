@@ -16,6 +16,7 @@
 import { type ReactNode, useState } from "react";
 
 import { ApiError } from "@/lib/api";
+import { friendlyErrorText } from "@/lib/errors";
 import { cn } from "@/lib/cn";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import {
@@ -314,7 +315,7 @@ export function ActionCard({ a }: { a: AdvisorActionCardData }) {
       setState("applied");
     } catch (e) {
       const client = e instanceof ApiError && e.status >= 400 && e.status < 500;
-      setErrText(client ? (e as ApiError).message : null);
+      setErrText(client ? friendlyErrorText(e) : null);
       setState("error");
     }
   };

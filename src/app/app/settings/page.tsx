@@ -22,6 +22,7 @@ import {
   getTokens,
   setMyLocale,
 } from "@/lib/api";
+import { friendlyErrorText } from "@/lib/errors";
 import { invalidateAccountData } from "@/lib/account-data";
 import {
   getSelectedAccountId,
@@ -194,10 +195,7 @@ export default function SettingsPage() {
       setConfirmId(null);
       toast(`${t("settings.disconnect_toast")} · @${a.username ?? a.id}`);
     } catch (e) {
-      toast(
-        e instanceof ApiError ? `${e.status}: ${String(e.detail)}` : String(e),
-        "error",
-      );
+      toast(friendlyErrorText(e), "error");
     } finally {
       setBusyId(null);
     }

@@ -44,6 +44,7 @@ import {
   refreshStats,
   rollbackAppliedChange,
 } from "@/lib/api";
+import { errorCodeText, friendlyErrorText } from "@/lib/errors";
 import { useSelectedAccountId } from "@/lib/account";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { nextOccurrence } from "@/lib/schedule";
@@ -323,12 +324,17 @@ export default function AdvisorPage() {
       }
       // 409 = the profile lost its Threads connection. One fix, not a retry.
       const disconnected = e instanceof ApiError && e.status === 409;
+      // "Busy, retry in N s" is this screen's own copy (it also promises the
+      // conversation is untouched), so it stays ahead of the generic
+      // `model_unavailable` sentence. Below it: the backend's error code when
+      // there is one, then the status family — never the raw English detail.
       const detail =
         e instanceof ApiError && e.status === 503 && e.retryAfter != null
           ? t("agent.err.busy").replace("{s}", String(e.retryAfter))
-          : e instanceof ApiError && e.status >= 400 && e.status < 500
-            ? e.message
-            : null;
+          : (errorCodeText(e) ??
+            (e instanceof ApiError && e.status >= 400 && e.status < 500
+              ? friendlyErrorText(e)
+              : null));
       setTurns((prev) => {
         const next = [...prev];
         next[next.length - 1] = {

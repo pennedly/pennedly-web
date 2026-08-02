@@ -14,6 +14,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 
 import { ApiError } from "@/lib/api";
+import { friendlyErrorText } from "@/lib/errors";
 import { cn } from "@/lib/cn";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import {
@@ -359,7 +360,7 @@ export function ActionCard({ a }: { a: AgentActionView }) {
       if (a.resolveUndo) setUndoId(await a.resolveUndo().catch(() => null));
     } catch (e) {
       const client = e instanceof ApiError && e.status >= 400 && e.status < 500;
-      setErrText(client ? (e as ApiError).message : null);
+      setErrText(client ? friendlyErrorText(e) : null);
       setState("error");
     }
   };
