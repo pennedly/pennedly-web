@@ -3325,6 +3325,8 @@ export const en = {
   "agent.rail.refresh": "Refresh",
   "agent.rail.conversations": "Conversations",
   "agent.rail.no_conversations": "No conversations yet",
+  "agent.rail.new_conversation": "+ New",
+  "agent.rail.fresh_conversation": "New conversation",
   "agent.rail.applied": "Applied by the agent",
   "agent.rail.no_applied": "Nothing applied yet",
   "agent.rail.sheet_title": "Agent panels",

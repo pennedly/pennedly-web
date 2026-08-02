@@ -3271,6 +3271,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "agent.rail.refresh": "Обновить",
   "agent.rail.conversations": "Диалоги",
   "agent.rail.no_conversations": "Диалогов пока нет",
+  "agent.rail.new_conversation": "+ Новый",
+  "agent.rail.fresh_conversation": "Новый диалог",
   "agent.rail.applied": "Применено агентом",
   "agent.rail.no_applied": "Пока ничего не применено",
   "agent.rail.sheet_title": "Панели агента",

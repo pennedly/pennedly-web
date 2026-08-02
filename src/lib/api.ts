@@ -13,6 +13,7 @@
 
 import type {
   AccountsList,
+  AdvisorConversationsResponse,
   AdvisorData,
   AdvisorHistoryResponse,
   AdvisorMessage,
@@ -768,6 +769,11 @@ export async function generateIdeas(
 export async function chatAdvisor(
   accountId: number,
   messages: AdvisorMessage[],
+  // Which thread to file this turn in. `{}` continues the account's newest
+  // one (the backend's default); pass the id the screen is showing, or
+  // `newConversation` after «+ Новый». Never both — the backend 422s, on
+  // purpose, rather than guess and lose the question in another thread.
+  thread: { conversationId?: number | null; newConversation?: boolean } = {},
 ): Promise<AdvisorResponse> {
   return fetchApi<AdvisorResponse>(`/api/accounts/${accountId}/advisor`, {
     method: "POST",
@@ -776,16 +782,37 @@ export async function chatAdvisor(
       // Minutes to ADD to UTC for the viewer's local time, so "best times"
       // land in the author's own clock (matches the /stats convention).
       tz_offset: -new Date().getTimezoneOffset(),
+      ...(thread.newConversation
+        ? { new_conversation: true }
+        : thread.conversationId != null
+          ? { conversation_id: thread.conversationId }
+          : {}),
     }),
   });
 }
 
-// The account's persisted advisor history — hydrates the chat screen on
-// load. Read-only, no rate limit (a cheap DB read, not an LLM call).
+// One thread of the account's persisted advisor history — hydrates the chat
+// screen on load. Without an id the newest thread comes back (and names
+// itself). Read-only, no rate limit (a cheap DB read, not an LLM call).
 export async function fetchAdvisorHistory(
   accountId: number,
+  conversationId?: number | null,
 ): Promise<AdvisorHistoryResponse> {
-  return fetchApi<AdvisorHistoryResponse>(`/api/accounts/${accountId}/advisor/history`);
+  const q = conversationId != null ? `?conversation_id=${conversationId}` : "";
+  return fetchApi<AdvisorHistoryResponse>(
+    `/api/accounts/${accountId}/advisor/history${q}`,
+  );
+}
+
+// The account's advisor threads, newest activity first — the rail's «Диалоги»
+// panel. There is no create call: a thread materializes with its first
+// question (`newConversation` above), so «+ Новый» is pure client state.
+export async function fetchAdvisorConversations(
+  accountId: number,
+): Promise<AdvisorConversationsResponse> {
+  return fetchApi<AdvisorConversationsResponse>(
+    `/api/accounts/${accountId}/advisor/conversations`,
+  );
 }
 
 export async function generatePostBatch(

@@ -317,12 +317,15 @@ export default function AgentGallery() {
         </Section>
 
         <h2 className="mb-3 mt-8 text-h3 font-semibold">Right rail (§8)</h2>
-        <Section title="signals · the one conversation · applied — 320px">
+        <Section title="signals · threads (current + switchable) · applied — 320px">
           <div className="max-w-[320px]">
             <div style={{ display: "contents" }}>
               <Rail
                 signals={signals}
-                conversation={demo.conversation}
+                conversations={demo.conversations}
+                activeConversationId={demo.activeConversationId}
+                onOpenConversation={() => {}}
+                onNewConversation={() => {}}
                 receipts={demo.receipts.map((r) => ({
                   id: r.id,
                   title: r.summary,
@@ -333,9 +336,29 @@ export default function AgentGallery() {
             </div>
           </div>
         </Section>
+        <Section title="a fresh thread — «+ Новый» pressed, nothing asked yet">
+          <div className="max-w-[320px]">
+            <Rail
+              signals={signals}
+              conversations={[
+                { id: null, title: t("agent.rail.fresh_conversation"), stamp: "" },
+                ...demo.conversations,
+              ]}
+              activeConversationId={null}
+              onOpenConversation={() => {}}
+              onNewConversation={() => {}}
+              receipts={[]}
+            />
+          </div>
+        </Section>
         <Section title="empty rail — no conversations, nothing applied">
           <div className="max-w-[320px]">
-            <Rail signals={signals} conversation={null} receipts={[]} />
+            <Rail
+              signals={signals}
+              conversations={[]}
+              activeConversationId={null}
+              receipts={[]}
+            />
           </div>
         </Section>
       </div>

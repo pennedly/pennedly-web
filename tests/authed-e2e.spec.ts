@@ -249,3 +249,111 @@ test("publish flow: open the dialog, confirm, see the success toast", async ({ p
   // Success toast from the mocked POST /api/drafts/{id}/publish.
   await expect(page.getByText("Published to Threads")).toBeVisible();
 });
+
+// ── Agent threads (phase 2) ───────────────────────────────────────────────────
+// The rail lists stored conversations and «+ New» starts one. What the code
+// cannot show: clicking another thread must LOAD it, and the next question must
+// be filed in the thread on screen — not in whatever the server thinks is
+// newest. Both are asserted through the request bodies the screen actually
+// sends.
+const THREAD_A = 11; // the newest thread — hydrated on mount
+const THREAD_B = 7; // an older one, reachable from the rail
+
+function advisorReply(text: string, conversationId: number) {
+  return {
+    reply: text,
+    model: "test-model",
+    grounded_in: [],
+    grounded: [],
+    chips: [],
+    suggestions: [],
+    actions: [],
+    prompt_tokens: 1,
+    completion_tokens: 1,
+    conversation_id: conversationId,
+  };
+}
+
+test("agent: switch threads in the rail, and the next question lands in the open one", async ({
+  page,
+  context,
+}) => {
+  const ok = (data: unknown) => (route: Route) => route.fulfill({ status: 200, json: data as object });
+  // The screen's own reads beyond the shared shell mocks.
+  const summary = {
+    posts: 3, views: 1000, likes: 10, comments: 2,
+    avg_views: 333, avg_likes: 3, avg_comments: 1,
+    tier_counts: { viral: 0, good: 1, mid: 2, flop: 0, settling: 0 },
+  };
+  await context.route(/\/api\/accounts\/\d+\/stats(\?|$)/, ok({
+    period: "7d", current: summary, previous: null, deltas: null,
+    series: [], top_posts: [], by_hour: [], by_weekday: [], heatmap: [],
+    refreshed_at: new Date().toISOString(),
+  }));
+  await context.route(/\/api\/accounts\/\d+\/user-rules$/, ok({ rules: [] }));
+  await context.route(/\/api\/accounts\/\d+\/applied-changes(\?|$)/, ok({ entries: [], count: 0 }));
+  await context.route(/\/api\/accounts\/\d+\/advisor\/conversations$/, ok({
+    conversations: [
+      { id: THREAD_A, title: "Why did views drop?", last_at: new Date().toISOString(), exchanges: 1 },
+      { id: THREAD_B, title: "Set up auto-replies", last_at: new Date(Date.now() - 864e5).toISOString(), exchanges: 1 },
+    ],
+  }));
+
+  // History is served per thread: no id (cold mount) → the newest.
+  await context.route(/\/api\/accounts\/\d+\/advisor\/history(\?|$)/, async (route) => {
+    const url = new URL(route.request().url());
+    const asked = url.searchParams.get("conversation_id");
+    const id = asked ? Number(asked) : THREAD_A;
+    const question = id === THREAD_A ? "Why did views drop?" : "Set up auto-replies";
+    await route.fulfill({
+      status: 200,
+      json: {
+        conversation_id: id,
+        entries: [
+          {
+            question,
+            reply: advisorReply(`answer for ${id}`, id),
+            created_at: new Date().toISOString(),
+          },
+        ],
+      },
+    });
+  });
+
+  const sentBodies: Record<string, unknown>[] = [];
+  await context.route(/\/api\/accounts\/\d+\/advisor$/, async (route) => {
+    const body = JSON.parse(route.request().postData() ?? "{}");
+    sentBodies.push(body);
+    await route.fulfill({
+      status: 200,
+      json: advisorReply("noted", body.new_conversation ? 99 : (body.conversation_id ?? THREAD_A)),
+    });
+  });
+
+  await page.goto("/app/advisor", { waitUntil: "domcontentloaded" });
+
+  // Cold mount hydrates the NEWEST thread and lists both.
+  await expect(page.getByText("answer for 11")).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole("button", { name: /Set up auto-replies/ })).toBeVisible();
+
+  // Switching loads the older thread's turns.
+  await page.getByRole("button", { name: /Set up auto-replies/ }).click();
+  await expect(page.getByText("answer for 7")).toBeVisible();
+
+  // A question now belongs to THREAD_B — not to the newest one.
+  await page.getByRole("textbox").first().fill("and after that?");
+  await page.keyboard.press("Enter");
+  await expect(page.getByText("noted")).toBeVisible();
+  expect(sentBodies.at(-1)).toMatchObject({ conversation_id: THREAD_B });
+  expect(sentBodies.at(-1)).not.toHaveProperty("new_conversation");
+
+  // «+ New» clears the stream and the next question opens a thread instead of
+  // appending to the one that was on screen.
+  await page.getByRole("button", { name: /\+ New/ }).click();
+  await expect(page.getByText("answer for 7")).toBeHidden();
+  await page.getByRole("textbox").first().fill("fresh start");
+  await page.keyboard.press("Enter");
+  await expect(page.getByText("noted")).toBeVisible();
+  expect(sentBodies.at(-1)).toMatchObject({ new_conversation: true });
+  expect(sentBodies.at(-1)).not.toHaveProperty("conversation_id");
+});

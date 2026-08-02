@@ -663,10 +663,15 @@ export function Composer({
 
 // ── right rail (§8) ──────────────────────────────────────────────────────────
 
-/** The one live conversation, or null before the first question. Phase 1 keeps
- *  a single server-side conversation per account, so there is nothing to switch
- *  between and no «+ New» — the row exists to name what the agent is reading. */
-export type RailConversation = { title: string; stamp: string };
+/** One stored thread in the rail's list. `id` is null only for a thread that
+ *  exists on screen but not yet on the server — the fresh stream right after
+ *  «+ Новый», before its first question is answered (the server materializes a
+ *  thread WITH its first exchange, so there is nothing to point at until then). */
+export type RailConversation = {
+  id: number | null;
+  title: string;
+  stamp: string;
+};
 export type RailReceipt = {
   id: number;
   title: string;
@@ -676,13 +681,22 @@ export type RailReceipt = {
 
 export function Rail({
   signals,
-  conversation,
+  conversations,
+  activeConversationId,
+  onOpenConversation,
+  onNewConversation,
   receipts,
   onRefreshSignals,
   refreshing,
 }: {
   signals: AgentSignal[];
-  conversation: RailConversation | null;
+  /** Newest activity first; the first entry may be the unsaved fresh stream. */
+  conversations: RailConversation[];
+  /** Which row reads as current. `null` = the unsaved fresh stream. */
+  activeConversationId: number | null;
+  onOpenConversation?: (id: number) => void;
+  /** Absent → «+ Новый» is not offered (the gallery's static frames). */
+  onNewConversation?: () => void;
   receipts: RailReceipt[];
   onRefreshSignals?: () => void;
   refreshing?: boolean;
@@ -716,16 +730,45 @@ export function Rail({
         <div className="ag-panel-hd">
           <IcBubble size={13} />
           {t("agent.rail.conversations")}
+          {onNewConversation ? (
+            // «+ Новый» clears the stream; it creates nothing server-side (§8).
+            <button type="button" className="act" onClick={onNewConversation}>
+              {t("agent.rail.new_conversation")}
+            </button>
+          ) : null}
         </div>
-        {conversation === null ? (
+        {conversations.length === 0 ? (
           <div className="ag-panel-empty">{t("agent.rail.no_conversations")}</div>
         ) : (
-          // Not a button: there is nowhere else to go. aria-current still marks
-          // it as the one in view, per the эталон's active row.
-          <div className="ag-conv" aria-current="true">
-            <span className="ag-conv-t">{conversation.title}</span>
-            <span className="ag-conv-m">{conversation.stamp}</span>
-          </div>
+          conversations.map((c) => {
+            const current = c.id === activeConversationId;
+            // The current row and the not-yet-saved one have nowhere to go, so
+            // they render as plain rows; aria-current marks the one in view.
+            const body = (
+              <>
+                <span className="ag-conv-t">{c.title}</span>
+                <span className="ag-conv-m">{c.stamp}</span>
+              </>
+            );
+            return current || c.id === null || !onOpenConversation ? (
+              <div
+                key={c.id ?? "fresh"}
+                className="ag-conv"
+                {...(current ? { "aria-current": "true" as const } : {})}
+              >
+                {body}
+              </div>
+            ) : (
+              <button
+                key={c.id}
+                type="button"
+                className="ag-conv"
+                onClick={() => onOpenConversation(c.id as number)}
+              >
+                {body}
+              </button>
+            );
+          })
         )}
       </div>
 

@@ -36,8 +36,10 @@ export type AgentDemo = {
   receipts: AppliedChangeEntry[];
   /** The account state the action-card diffs read their «Now» side from. */
   snapshot: AgentSnapshot;
-  /** The one live conversation the rail names (phase 1 has no second one). */
-  conversation: { title: string; stamp: string };
+  /** The rail's thread list — two, so review mode shows both the current row
+   *  and a switchable one (phase 2). */
+  conversations: { id: number | null; title: string; stamp: string }[];
+  activeConversationId: number | null;
   freshness: string;
   rangeLabel: string;
   turns: (state: AgentDemoState) => AgentTurnData[];
@@ -208,7 +210,11 @@ export function AGENT_DEMO(t: T, locale: LocaleCode): AgentDemo {
     brief,
     receipts,
     snapshot,
-    conversation: { title: t("agent.demo.q1"), stamp: `${t("appliedChanges.today")}, 14:32` },
+    conversations: [
+      { id: 1, title: t("agent.demo.q1"), stamp: `${t("appliedChanges.today")}, 14:32` },
+      { id: 2, title: t("agent.demo.q2"), stamp: t("appliedChanges.yesterday") },
+    ],
+    activeConversationId: 1,
     freshness: t("agent.demo.fresh"),
     rangeLabel: `${t("agent.brief.window_7d")} · ${t("agent.demo.fresh")}`,
     turns: (state) => {

@@ -522,14 +522,18 @@ export type AdvisorResponse = {
   actions: AdvisorActionData[];
   prompt_tokens: number;
   completion_tokens: number;
+  // Which stored thread this exchange landed in. The screen pins its next turn
+  // to it, so two tabs can't drift onto each other's idea of "newest".
+  // OPTIONAL: null when the (fail-soft) history write didn't land, and absent
+  // entirely on a backend that predates threads.
+  conversation_id?: number | null;
 };
 
 // One persisted question + reply from the advisor's history (GET
 // .../advisor/history) — hydrates a chat screen on load so the conversation
 // survives a navigation/new session. `reply` is the exact same shape
 // `chatAdvisor`/`chatAccountAdvisor` return, so hydration reuses the live
-// turn-building logic verbatim. v1: one ever-growing conversation per
-// account/portfolio, no conversation id / multiple threads.
+// turn-building logic verbatim.
 export type AdvisorHistoryEntry = {
   question: string;
   reply: AdvisorResponse;
@@ -538,6 +542,24 @@ export type AdvisorHistoryEntry = {
 
 export type AdvisorHistoryResponse = {
   entries: AdvisorHistoryEntry[];
+  // The thread these entries came from. A read without an explicit id serves
+  // the NEWEST thread and names it here, so the screen knows what it is
+  // showing. Absent on a pre-threads backend.
+  conversation_id?: number | null;
+};
+
+// One row of the rail's «Диалоги» panel (GET .../advisor/conversations).
+// `title` is the thread's first question — derived, never stored, so it can't
+// drift from the conversation it names.
+export type AdvisorConversation = {
+  id: number;
+  title: string;
+  last_at: string;
+  exchanges: number;
+};
+
+export type AdvisorConversationsResponse = {
+  conversations: AdvisorConversation[];
 };
 
 // What POST /accounts/{id}/advisor/apply returns after applying an action.

@@ -31,6 +31,7 @@ import {
   applyAdvisorAction,
   chatAdvisor,
   clearTokens,
+  fetchAdvisorConversations,
   fetchAdvisorHistory,
   fetchAppliedChanges,
   fetchAutopilot,
@@ -83,7 +84,7 @@ import {
   type AgentTurnData,
 } from "@/components/advisor/agent-data";
 import { AGENT_DEMO } from "@/components/advisor/agent-demo";
-import type { AdvisorActionData, AdvisorHistoryEntry, AdvisorMessage, AdvisorResponse, AppliedChangeEntry } from "@/lib/types";
+import type { AdvisorActionData, AdvisorConversation, AdvisorHistoryEntry, AdvisorMessage, AdvisorResponse, AppliedChangeEntry } from "@/lib/types";
 import { useDemoParam } from "@/lib/query";
 
 const IS_DEV = process.env.NODE_ENV === "development";
@@ -124,6 +125,14 @@ export default function AdvisorPage() {
   const [input, setInput] = useState("");
   const [thinkStep, setThinkStep] = useState(0);
   const [historyLoaded, setHistoryLoaded] = useState(false);
+  // Threads (phase 2). `activeConversationId` is the thread on screen; null
+  // means "not a stored thread yet" — either a brand-new account or the empty
+  // stream right after «+ Новый». `startNewThread` distinguishes those two: on
+  // the first the backend's default (continue the newest) is right, on the
+  // second it would silently file the question back into the old thread.
+  const [conversations, setConversations] = useState<AdvisorConversation[]>([]);
+  const [activeConversationId, setActiveConversationId] = useState<number | null>(null);
+  const [startNewThread, setStartNewThread] = useState(false);
   const [showJump, setShowJump] = useState(false);
   const [railOpen, setRailOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -258,12 +267,25 @@ export default function AdvisorPage() {
     setTurns((prev) => [...prev, { user: q, reply: null, status: "thinking", createdAt: new Date().toISOString() }]);
 
     try {
-      const res = await chatAdvisor(accountId, messages);
+      const res = await chatAdvisor(
+        accountId,
+        messages,
+        startNewThread
+          ? { newConversation: true }
+          : { conversationId: activeConversationId },
+      );
       setTurns((prev) => {
         const next = [...prev];
         next[next.length - 1] = { user: q, reply: res, status: "done", createdAt: new Date().toISOString() };
         return next;
       });
+      // The reply names the thread it landed in — pin it, so the turn after
+      // this one continues here even if the write opened a fresh thread.
+      if (res.conversation_id != null) {
+        setActiveConversationId(res.conversation_id);
+        setStartNewThread(false);
+      }
+      void loadConversations(accountId);
       // An answer may have changed nothing, but the freshness stamp and the
       // signal volumes are what the next turn is judged against — keep them live.
       void loadSignals(accountId);
@@ -307,10 +329,15 @@ export default function AdvisorPage() {
     }
     let cancelled = false;
     setHistoryLoaded(false);
+    // The newest thread + the list of them. Pin the id we actually rendered:
+    // the next question then continues THIS thread rather than whatever is
+    // newest by the time it is sent (another tab may have started one).
     fetchAdvisorHistory(accountId)
       .then((hist) => {
         if (cancelled) return;
         setHistory(hist.entries);
+        setActiveConversationId(hist.conversation_id ?? null);
+        setStartNewThread(false);
         setTurns(
           hist.entries.map((e) => ({
             user: e.question,
@@ -326,10 +353,61 @@ export default function AdvisorPage() {
       .finally(() => {
         if (!cancelled) setHistoryLoaded(true);
       });
+    void loadConversations(accountId);
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountId, allow]);
+
+  // The rail's thread list. Fail-soft like every other rail read: a failure
+  // leaves the panel as it was rather than blanking a working screen.
+  const loadConversations = useCallback(async (id: number) => {
+    try {
+      const res = await fetchAdvisorConversations(id);
+      setConversations(res.conversations);
+    } catch {
+      /* keep whatever the panel already shows */
+    }
+  }, []);
+
+  /** Open a stored thread from the rail: its turns replace the stream. */
+  const openConversation = useCallback(
+    async (id: number) => {
+      if (accountId === null || id === activeConversationId) return;
+      setHistoryLoaded(false);
+      try {
+        const hist = await fetchAdvisorHistory(accountId, id);
+        setHistory(hist.entries);
+        setActiveConversationId(hist.conversation_id ?? id);
+        setStartNewThread(false);
+        setTurns(
+          hist.entries.map((e) => ({
+            user: e.question,
+            reply: e.reply,
+            status: "done" as const,
+            createdAt: e.created_at,
+          })),
+        );
+        atBottomRef.current = true;
+      } catch {
+        /* fail-soft — the stream stays on the thread it was showing */
+      } finally {
+        setHistoryLoaded(true);
+      }
+    },
+    [accountId, activeConversationId],
+  );
+
+  /** «+ Новый»: clears the stream only. Nothing is created server-side until
+   *  the first question is answered (§8), so this is pure client state. */
+  const newConversation = useCallback(() => {
+    setTurns([]);
+    setHistory([]);
+    setActiveConversationId(null);
+    setStartNewThread(true);
+    atBottomRef.current = true;
+  }, []);
 
   function retryLast() {
     const last = turns[turns.length - 1];
@@ -373,20 +451,31 @@ export default function AdvisorPage() {
     { icon: "replies", label: t("agent.chip.replies") },
   ];
 
-  // ONE conversation per account (§8, phase 1): titled by its first question,
-  // stamped with when that question was asked. `turns` covers a question asked
-  // in this session too, before the history endpoint has it.
-  const firstTurn = history[0] ?? null;
-  const railConversation: RailConversation | null = demo
-    ? demo.conversation
-    : firstTurn
-      ? { title: firstTurn.question, stamp: sessionStamp(firstTurn.created_at, locale, t) }
-      : turns.length > 0
-        ? {
-            title: turns[0].user,
-            stamp: turns[0].createdAt ? sessionStamp(turns[0].createdAt, locale, t) : "",
-          }
-        : null;
+  // The rail's thread list (§8): stored threads, newest first, each titled by
+  // its first question. A thread only exists server-side once its first
+  // question is ANSWERED, so a stream that has no id yet is prepended here —
+  // otherwise «+ Новый» would look like nothing happened, and a first question
+  // in flight would have no row of its own.
+  const railConversations: RailConversation[] = demo
+    ? demo.conversations
+    : [
+        ...(activeConversationId === null && (startNewThread || turns.length > 0)
+          ? [
+              {
+                id: null,
+                title: turns[0]?.user || t("agent.rail.fresh_conversation"),
+                stamp: turns[0]?.createdAt
+                  ? sessionStamp(turns[0].createdAt, locale, t)
+                  : "",
+              } satisfies RailConversation,
+            ]
+          : []),
+        ...conversations.map((c) => ({
+          id: c.id,
+          title: c.title,
+          stamp: sessionStamp(c.last_at, locale, t),
+        })),
+      ];
 
   const railReceipts: RailReceipt[] = (demo ? demo.receipts : receipts.slice(0, 6)).map((r) => ({
     id: r.id,
@@ -432,7 +521,14 @@ export default function AdvisorPage() {
   const rail = (
     <Rail
       signals={signals}
-      conversation={railConversation}
+      conversations={railConversations}
+      activeConversationId={demo ? demo.activeConversationId : activeConversationId}
+      onOpenConversation={demo ? undefined : openConversation}
+      // Nothing to start a thread from before the first one exists, and review
+      // mode has no server to start one on.
+      onNewConversation={
+        demo || railConversations.length === 0 ? undefined : newConversation
+      }
       receipts={railReceipts}
       onRefreshSignals={demo ? undefined : refreshData}
       refreshing={refreshing}

@@ -2197,6 +2197,8 @@ export const de: Partial<Record<MessageKey, string>> = {
   "agent.rail.refresh": "Aktualisieren",
   "agent.rail.conversations": "Unterhaltungen",
   "agent.rail.no_conversations": "Noch keine Unterhaltungen",
+  "agent.rail.new_conversation": "+ Neu",
+  "agent.rail.fresh_conversation": "Neue Unterhaltung",
   "agent.rail.applied": "Vom Agenten angewendet",
   "agent.rail.no_applied": "Noch nichts angewendet",
   "agent.rail.sheet_title": "Agent-Panels",
