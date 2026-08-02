@@ -1784,6 +1784,110 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "error.toast_server": "У нас сбой на сервере. Попробуй ещё раз через минуту",
   "error.toast_generic": "Что-то пошло не так. Попробуй ещё раз",
   "error.toast_network": "Не получилось связаться с сервером. Проверь соединение и попробуй снова",
+
+  // ── Коды ошибок бэкенда (AppError.code, см. lib/errors.ts) ────
+  "error.code.post_quota_exhausted":
+    "Ты израсходовал все {limit} генераций постов в этом месяце. Счётчик обнулится в начале следующего.",
+  "error.code.reply_quota_exhausted":
+    "Ты израсходовал все {limit} генераций ответов в этом месяце. Счётчик обнулится в начале следующего.",
+  "error.code.token_budget_exhausted":
+    "Бюджет на ИИ в этом месяце исчерпан. Он обновится в начале следующего.",
+  "error.code.quota_exceeded":
+    "Ты упёрся в месячный лимит: использовано {used} из {limit}. Обновится в начале следующего месяца.",
+  "error.code.image_quota_daily": "Лимит картинок на сегодня исчерпан. Попробуй завтра.",
+
+  "error.code.generation_rate_limited":
+    "Слишком много генераций подряд. Попробуй через {retry_after} с.",
+  "error.code.translate_rate_limited":
+    "Слишком много переводов подряд. Попробуй через {retry_after} с.",
+  "error.code.signin_rate_limited":
+    "Слишком много попыток входа. Попробуй через {retry_after} с.",
+  "error.code.rate_limited": "Ты немного торопишься. Попробуй через {retry_after} с.",
+  "error.code.voice_test_exhausted":
+    "Бесплатные проверки голоса закончились. Зарегистрируйся, чтобы продолжить.",
+  "error.code.waitlist_already_joined": "Ты уже в списке, мы напишем.",
+  "error.code.threads_rate_limited":
+    "Threads нас притормаживает. Попробуй через {retry_after} с.",
+
+  "error.code.upload_too_large": "Файл слишком большой. Предел — {max_bytes} МБ.",
+  "error.code.media_storage_full":
+    "Хранилище медиа заполнено ({cap_bytes} МБ). Удали то, что больше не нужно.",
+  "error.code.unsupported_media_type":
+    "С таким типом файла мы не работаем. Попробуй JPEG, PNG или MP4.",
+
+  "error.code.magic_link_invalid": "Ссылка больше не действует. Запроси новую.",
+  "error.code.email_code_invalid": "Код неверный или устарел. Запроси новый.",
+  "error.code.signin_link_expired": "Ссылка для входа истекла. Войди ещё раз.",
+  "error.code.account_disconnected":
+    "Профиль потерял связь с Threads. Подключи его заново, чтобы продолжить.",
+  "error.code.threads_credentials_unavailable":
+    "Не получается достучаться до Threads для этого профиля. Подключи его заново.",
+
+  "error.code.model_unavailable":
+    "Модель сейчас недоступна. Попробуй через {retry_after} с.",
+  "error.code.email_delivery_failed": "Письмо не ушло. Попробуй ещё раз через минуту.",
+  "error.code.stats_refresh_failed":
+    "Сейчас не получилось обновить статистику. Попробуй через минуту.",
+  "error.code.threads_api_error":
+    "Threads не подтвердил действие. Попробуй ещё раз через минуту.",
+  "error.code.image_generation_failed":
+    "Картинка не получилась. Попробуй ещё раз или измени запрос.",
+
+  "error.code.draft_already_approved": "Черновик уже одобрен.",
+  "error.code.draft_not_pending": "Черновик ушёл дальше, он больше не ждёт твоего решения.",
+  "error.code.draft_not_approved": "Сначала одобри черновик.",
+  "error.code.draft_already_published": "Это уже опубликовано в Threads, изменить нельзя.",
+  "error.code.draft_already_rejected": "Черновик уже отклонён.",
+  "error.code.draft_publish_in_progress": "Публикация уже идёт. Дай ей секунду.",
+  "error.code.comment_already_replied": "На этот комментарий ты уже ответил.",
+  "error.code.mention_already_replied": "На это упоминание ты уже ответил.",
+  "error.code.mention_not_awaiting_reply": "Это упоминание больше не ждёт ответа.",
+  "error.code.post_already_deleted": "Пост уже удалён.",
+
+  "error.code.voice_not_editable":
+    "В этой версии голоса нет редактируемых разделов. Пересобери голос, чтобы править его по частям.",
+  "error.code.voice_fix_stale":
+    "Текст изменился после того, как правку предложили. Прогони проверку заново.",
+  "error.code.voice_rule_limit_reached":
+    "Ты дошёл до предела в {limit} правил голоса. Удали одно, чтобы добавить новое.",
+  "error.code.voice_copy_destination_not_empty":
+    "У профиля-получателя уже есть голос. Очисти его или выбери другой профиль.",
+  "error.code.voice_copy_source_empty":
+    "У профиля-источника пока нет голоса, копировать нечего.",
+  "error.code.reactive_already_on": "Эта автоматическая реакция уже включена.",
+  "error.code.format_already_on": "Этот формат постов уже включён.",
+  "error.code.change_already_rolled_back": "Это изменение уже отменено.",
+  "error.code.change_not_rollbackable": "Здесь нечего отменять.",
+  "error.code.change_superseded":
+    "После применения что-то поменялось, отмена затёрла бы более свежую версию.",
+  "error.code.audit_already_decided": "По этим пунктам решение уже принято.",
+
+  "error.code.text_empty": "Здесь не может быть пусто.",
+  "error.code.onboarding_input_missing":
+    "Расскажи хотя бы, как ты пишешь, или выбери пару тем.",
+  "error.code.voice_extraction_no_posts":
+    "Не нашлось достаточно постов, чтобы выучить твой голос.",
+  "error.code.voice_copy_same_account":
+    "Выбери два разных профиля: источник и получатель не могут совпадать.",
+  "error.code.translation_failed": "Не получилось перевести. Попробуй текст покороче.",
+  "error.code.schedule_too_soon":
+    "Выбери время хотя бы через {min_minutes} минут от текущего.",
+  "error.code.too_many_images": "Слишком много картинок, здесь предел — {max}.",
+  "error.code.alt_text_too_long": "Alt-текст слишком длинный. Уложись в {max} символов.",
+  "error.code.thread_too_many_parts":
+    "Слишком много частей для одной цепочки. Предел — {max}.",
+  "error.code.thread_part_too_long":
+    "Одна из частей цепочки слишком длинная. Уложись в {max} символов на часть.",
+  "error.code.link_preview_url_invalid": "Это не похоже на рабочую ссылку.",
+  "error.code.link_preview_unavailable": "Со страницы нечего показать в превью.",
+  "error.code.generation_failed":
+    "В этот раз текст не получился. Попробуй ещё раз или поправь задание.",
+  "error.code.voice_test_failed":
+    "Из этих постов не вышло собрать голос. Добавь ещё несколько.",
+  "error.code.scenario_preview_failed":
+    "Не получилось собрать превью. Попробуй через минуту.",
+  "error.code.scenario_run_failed":
+    "Сейчас не получилось запустить рутину. Попробуй через минуту.",
   "settings.title": "Настройки",
   "settings.account": "Аккаунт",
   "settings.email": "Email",

@@ -1199,6 +1199,102 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "error.toast_server": "У нас сбій на сервері. Спробуй ще раз через хвилину",
   "error.toast_generic": "Щось пішло не так. Спробуй ще раз",
   "error.toast_network": "Не вдалося зв'язатися із сервером. Перевір з'єднання й спробуй знову",
+
+  "error.code.post_quota_exhausted":
+    "Ліміт у {limit} генерацій постів на цей місяць вичерпано. Лічильник скидається на початку наступного місяця.",
+  "error.code.reply_quota_exhausted":
+    "Ліміт у {limit} генерацій відповідей на цей місяць вичерпано. Лічильник скидається на початку наступного місяця.",
+  "error.code.token_budget_exhausted":
+    "Бюджет ШІ на цей місяць вичерпано. Він оновиться на початку наступного місяця.",
+  "error.code.quota_exceeded":
+    "Досягнуто місячного ліміту — використано {used} з {limit}. Він оновиться на початку наступного місяця.",
+  "error.code.image_quota_daily": "Досягнуто денного ліміту зображень. Спробуй завтра.",
+  "error.code.generation_rate_limited":
+    "Забагато генерацій одразу. Спробуй через {retry_after} с.",
+  "error.code.translate_rate_limited":
+    "Забагато перекладів одразу. Спробуй через {retry_after} с.",
+  "error.code.signin_rate_limited":
+    "Забагато спроб входу. Спробуй через {retry_after} с.",
+  "error.code.rate_limited": "Трохи забагато запитів поспіль. Спробуй через {retry_after} с.",
+  "error.code.voice_test_exhausted":
+    "Безкоштовний тест голосу вичерпано. Зареєструйся, щоб продовжити.",
+  "error.code.waitlist_already_joined": "Ти вже у списку очікування — скоро напишемо.",
+  "error.code.threads_rate_limited":
+    "Threads обмежує кількість запитів. Спробуй через {retry_after} с.",
+  "error.code.upload_too_large": "Цей файл завеликий. Ліміт — {max_bytes} МБ.",
+  "error.code.media_storage_full":
+    "Сховище медіа заповнене ({cap_bytes} МБ). Видали щось непотрібне, щоб звільнити місце.",
+  "error.code.unsupported_media_type":
+    "Такий тип файлу не підтримується. Спробуй JPEG, PNG або MP4.",
+  "error.code.magic_link_invalid": "Це посилання вже недійсне. Запроси нове.",
+  "error.code.email_code_invalid": "Цей код неправильний або застарів. Запроси новий.",
+  "error.code.signin_link_expired": "Термін дії посилання для входу минув. Увійди ще раз.",
+  "error.code.account_disconnected":
+    "Цей профіль втратив з'єднання з Threads. Перепідключи його, щоб продовжити.",
+  "error.code.threads_credentials_unavailable":
+    "Не вдається достукатися до Threads для цього профілю. Перепідключи його, щоб продовжити.",
+  "error.code.model_unavailable":
+    "Модель зараз недоступна. Спробуй через {retry_after} с.",
+  "error.code.email_delivery_failed":
+    "Не вдалося надіслати лист. Спробуй ще раз за мить.",
+  "error.code.stats_refresh_failed":
+    "Не вдалося оновити статистику. Спробуй ще раз за мить.",
+  "error.code.threads_api_error": "Threads не підтвердив дію. Спробуй ще раз за мить.",
+  "error.code.image_generation_failed":
+    "Зображення не вийшло. Спробуй ще раз або зміни опис.",
+  "error.code.draft_already_approved": "Цю чернетку вже схвалено.",
+  "error.code.draft_not_pending": "Ця чернетка вже рухається далі — вона більше не чекає на тебе.",
+  "error.code.draft_not_approved": "Спершу схвали цю чернетку.",
+  "error.code.draft_already_published":
+    "Це вже опубліковано в Threads, тож змінити не вийде.",
+  "error.code.draft_already_rejected": "Цю чернетку вже відхилено.",
+  "error.code.draft_publish_in_progress": "Це якраз публікується. Зачекай трохи.",
+  "error.code.comment_already_replied": "Ти вже відповів на цей коментар.",
+  "error.code.mention_already_replied": "Ти вже відповів на цю згадку.",
+  "error.code.mention_not_awaiting_reply": "Ця згадка більше не чекає на відповідь.",
+  "error.code.post_already_deleted": "Цей пост уже видалено.",
+  "error.code.voice_not_editable":
+    "У цій версії голосу немає розділів для редагування. Витягни голос заново, щоб його редагувати.",
+  "error.code.voice_fix_stale":
+    "Текст змінився після того, як запропонували цю правку. Запусти перевірку ще раз.",
+  "error.code.voice_rule_limit_reached":
+    "Досягнуто ліміту в {limit} правил голосу. Прибери одне, щоб додати нове.",
+  "error.code.voice_copy_destination_not_empty":
+    "У профілі призначення вже є голос. Спершу очисти його або обери інший профіль.",
+  "error.code.voice_copy_source_empty": "У профілі-джерелі поки немає голосу для копіювання.",
+  "error.code.reactive_already_on": "Ця автоматична реакція вже увімкнена.",
+  "error.code.format_already_on": "Цей формат публікації вже увімкнений.",
+  "error.code.change_already_rolled_back": "Цю зміну вже скасовано.",
+  "error.code.change_not_rollbackable": "Цю зміну нема чим скасовувати.",
+  "error.code.change_superseded":
+    "Після цієї зміни щось іще змінилося, тож відкат перезаписав би новішу версію.",
+  "error.code.audit_already_decided": "Рішення за цими пунктами вже прийнято.",
+  "error.code.text_empty": "Це поле не може бути порожнім.",
+  "error.code.onboarding_input_missing":
+    "Розкажи хоча б, як ти пишеш, або обери кілька тем.",
+  "error.code.voice_extraction_no_posts":
+    "Не вдалося знайти достатньо постів, щоб визначити твій голос.",
+  "error.code.voice_copy_same_account":
+    "Обери два різні профілі — джерело й призначення не можуть збігатися.",
+  "error.code.translation_failed": "Не вдалося перекласти текст. Спробуй коротший фрагмент.",
+  "error.code.schedule_too_soon": "Обери час хоча б за {min_minutes} хв від зараз.",
+  "error.code.too_many_images": "Забагато зображень — тут можна максимум {max}.",
+  "error.code.alt_text_too_long": "Альтернативний текст задовгий. Вклади його у {max} символів.",
+  "error.code.thread_too_many_parts":
+    "Забагато частин для одного треду. Ліміт — {max}.",
+  "error.code.thread_part_too_long":
+    "Одна з частин треду задовга. Вклади кожну у {max} символів.",
+  "error.code.link_preview_url_invalid": "Це не схоже на робоче посилання.",
+  "error.code.link_preview_unavailable": "З цієї сторінки нема чого показати в перегляді.",
+  "error.code.generation_failed":
+    "Текст цього разу не вийшов. Спробуй ще раз або скоригуй бриф.",
+  "error.code.voice_test_failed":
+    "Не вдалося зчитати голос із цих постів. Спробуй вставити ще кілька.",
+  "error.code.scenario_preview_failed":
+    "Не вдалося зібрати попередній перегляд. Спробуй ще раз за мить.",
+  "error.code.scenario_run_failed":
+    "Не вдалося запустити цей сценарій зараз. Спробуй ще раз за мить.",
+
   "settings.title": "Налаштування",
   "settings.account": "Акаунт",
   "settings.email": "Електронна пошта",

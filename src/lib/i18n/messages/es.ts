@@ -1201,6 +1201,124 @@ export const es: Partial<Record<MessageKey, string>> = {
   "error.toast_server": "Algo no funcionó de nuestro lado. Intenta de nuevo en un momento",
   "error.toast_generic": "Algo salió mal. Intenta de nuevo",
   "error.toast_network": "No pudimos conectar con el servidor. Verifica tu conexión e intenta de nuevo",
+
+  // ── Backend error codes (AppError.code → one sentence, see lib/errors.ts) ──
+  // Mirrors the backend catalogue in `pennedly/errors.py` 1:1. A code beats the
+  // status fallback above. `{…}` placeholders are the server's `params`; every
+  // one of them MUST survive translation (the parity check enforces it), and a
+  // sentence whose param goes missing falls back to the status line instead.
+  // `{max_bytes}`/`{cap_bytes}` render as megabytes — keep the unit in the copy.
+
+  // Quotas and spend ceilings
+  "error.code.post_quota_exhausted":
+    "Ya usaste tus {limit} generaciones de publicaciones de este mes. El contador se reinicia al empezar el próximo mes.",
+  "error.code.reply_quota_exhausted":
+    "Ya usaste tus {limit} generaciones de respuestas de este mes. El contador se reinicia al empezar el próximo mes.",
+  "error.code.token_budget_exhausted":
+    "El presupuesto de IA de este mes se agotó. Se reinicia al empezar el próximo mes.",
+  "error.code.quota_exceeded":
+    "Llegaste a un límite mensual: usaste {used} de {limit}. Se reinicia al empezar el próximo mes.",
+  "error.code.image_quota_daily": "Llegaste al límite de imágenes de hoy. Intenta de nuevo mañana.",
+
+  // Bursts — you're going faster than we allow
+  "error.code.generation_rate_limited":
+    "Demasiadas generaciones a la vez. Intenta de nuevo en {retry_after} s.",
+  "error.code.translate_rate_limited":
+    "Demasiadas traducciones a la vez. Intenta de nuevo en {retry_after} s.",
+  "error.code.signin_rate_limited":
+    "Demasiados intentos de inicio de sesión. Intenta de nuevo en {retry_after} s.",
+  "error.code.rate_limited": "Vas un poco rápido. Intenta de nuevo en {retry_after} s.",
+  "error.code.voice_test_exhausted":
+    "Ya usaste la prueba de voz gratuita. Regístrate para seguir.",
+  "error.code.waitlist_already_joined": "Ya estás en la lista, te avisaremos.",
+  "error.code.threads_rate_limited":
+    "Threads nos está limitando el ritmo. Intenta de nuevo en {retry_after} s.",
+
+  // Uploads
+  "error.code.upload_too_large": "Ese archivo es demasiado grande. El límite es {max_bytes} MB.",
+  "error.code.media_storage_full":
+    "Tu almacenamiento de contenido está lleno ({cap_bytes} MB). Borra algo que ya no necesites.",
+  "error.code.unsupported_media_type":
+    "No podemos trabajar con ese tipo de archivo. Prueba con un JPEG, PNG o MP4.",
+
+  // Session and connection
+  "error.code.magic_link_invalid": "Ese enlace ya no es válido. Pide uno nuevo.",
+  "error.code.email_code_invalid": "Ese código es incorrecto o expiró. Pide uno nuevo.",
+  "error.code.signin_link_expired": "Ese enlace de inicio de sesión expiró. Inicia sesión de nuevo.",
+  "error.code.account_disconnected":
+    "Este perfil perdió la conexión con Threads. Reconéctalo para seguir.",
+  "error.code.threads_credentials_unavailable":
+    "No podemos conectar con Threads para este perfil. Reconéctalo para seguir.",
+
+  // Upstream trouble
+  "error.code.model_unavailable":
+    "El modelo no está disponible ahora mismo. Intenta de nuevo en {retry_after} s.",
+  "error.code.email_delivery_failed":
+    "No pudimos enviar ese correo. Intenta de nuevo en un momento.",
+  "error.code.stats_refresh_failed":
+    "No pudimos actualizar las estadísticas ahora mismo. Intenta de nuevo en un momento.",
+  "error.code.threads_api_error": "Threads no confirmó eso. Intenta de nuevo en un momento.",
+  "error.code.image_generation_failed":
+    "La imagen no salió bien. Intenta de nuevo, o cambia el texto del prompt.",
+
+  // Draft and queue lifecycle
+  "error.code.draft_already_approved": "Este borrador ya está aprobado.",
+  "error.code.draft_not_pending": "Este borrador ya avanzó, ya no está esperando tu revisión.",
+  "error.code.draft_not_approved": "Aprueba este borrador primero.",
+  "error.code.draft_already_published":
+    "Este ya está publicado en Threads, así que no se puede cambiar.",
+  "error.code.draft_already_rejected": "Este borrador ya está rechazado.",
+  "error.code.draft_publish_in_progress": "Este se está publicando ahora mismo. Dale un segundo.",
+  "error.code.comment_already_replied": "Ya respondiste a este comentario.",
+  "error.code.mention_already_replied": "Ya respondiste a esta mención.",
+  "error.code.mention_not_awaiting_reply": "Esta mención ya no está esperando una respuesta.",
+  "error.code.post_already_deleted": "Esta publicación ya está eliminada.",
+
+  // Voice, rules, advisor changes
+  "error.code.voice_not_editable":
+    "Esta versión de voz no tiene secciones editables. Vuelve a extraer tu voz para poder editarla.",
+  "error.code.voice_fix_stale":
+    "El texto cambió después de que se sugiriera esta corrección. Vuelve a ejecutar la revisión.",
+  "error.code.voice_rule_limit_reached":
+    "Llegaste al límite de {limit} reglas de voz. Elimina una para agregar otra.",
+  "error.code.voice_copy_destination_not_empty":
+    "El perfil de destino ya tiene una voz. Bórrala primero, o elige otro perfil.",
+  "error.code.voice_copy_source_empty": "El perfil de origen todavía no tiene una voz para copiar.",
+  "error.code.reactive_already_on": "Esta reacción automática ya está activada.",
+  "error.code.format_already_on": "Este formato de publicación ya está activado.",
+  "error.code.change_already_rolled_back": "Este cambio ya está deshecho.",
+  "error.code.change_not_rollbackable": "No hay nada que deshacer en este cambio.",
+  "error.code.change_superseded":
+    "Algo cambió después de aplicar esto, así que deshacerlo sobrescribiría la versión más reciente.",
+  "error.code.audit_already_decided": "Ya tomaste una decisión sobre estos elementos.",
+
+  // What the user typed
+  "error.code.text_empty": "Esto no puede estar vacío.",
+  "error.code.onboarding_input_missing":
+    "Cuéntanos al menos cómo escribes, o elige algunos temas.",
+  "error.code.voice_extraction_no_posts":
+    "No encontramos suficientes publicaciones para aprender tu voz.",
+  "error.code.voice_copy_same_account":
+    "Elige dos perfiles distintos, el de origen y el de destino no pueden ser el mismo.",
+  "error.code.translation_failed": "No pudimos traducir eso. Prueba con un texto más corto.",
+  "error.code.schedule_too_soon": "Elige una hora al menos {min_minutes} minutos a partir de ahora.",
+  "error.code.too_many_images": "Demasiadas imágenes, el límite aquí es {max}.",
+  "error.code.alt_text_too_long": "El texto alternativo es muy largo. Mantenlo bajo {max} caracteres.",
+  "error.code.thread_too_many_parts":
+    "Son demasiadas partes para un hilo. El límite es {max}.",
+  "error.code.thread_part_too_long":
+    "Una parte del hilo es muy larga. Mantén cada una bajo {max} caracteres.",
+  "error.code.link_preview_url_invalid": "Eso no parece un enlace que funcione.",
+  "error.code.link_preview_unavailable": "Esa página no nos dio nada para mostrar en la vista previa.",
+  "error.code.generation_failed":
+    "El texto no salió bien esta vez. Intenta de nuevo, o ajusta el brief.",
+  "error.code.voice_test_failed":
+    "No pudimos identificar una voz en esas publicaciones. Prueba pegando algunas más.",
+  "error.code.scenario_preview_failed":
+    "No pudimos armar una vista previa. Intenta de nuevo en un momento.",
+  "error.code.scenario_run_failed":
+    "No pudimos ejecutar esta rutina ahora mismo. Intenta de nuevo en un momento.",
+
   "settings.title": "Ajustes",
   "settings.account": "Cuenta",
   "settings.email": "Correo electrónico",

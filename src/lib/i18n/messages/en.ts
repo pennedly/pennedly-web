@@ -1810,6 +1810,123 @@ export const en = {
   "error.toast_generic": "Something went wrong. Try again",
   "error.toast_network": "Couldn't reach the server. Check your connection and try again",
 
+  // ── Backend error codes (AppError.code → one sentence, see lib/errors.ts) ──
+  // Mirrors the backend catalogue in `pennedly/errors.py` 1:1. A code beats the
+  // status fallback above. `{…}` placeholders are the server's `params`; every
+  // one of them MUST survive translation (the parity check enforces it), and a
+  // sentence whose param goes missing falls back to the status line instead.
+  // `{max_bytes}`/`{cap_bytes}` render as megabytes — keep the unit in the copy.
+
+  // Quotas and spend ceilings
+  "error.code.post_quota_exhausted":
+    "You've used all {limit} post generations this month. The count resets at the start of next month.",
+  "error.code.reply_quota_exhausted":
+    "You've used all {limit} reply generations this month. The count resets at the start of next month.",
+  "error.code.token_budget_exhausted":
+    "This month's AI budget is spent. It resets at the start of next month.",
+  "error.code.quota_exceeded":
+    "You've hit a monthly limit — {used} of {limit} used. It resets at the start of next month.",
+  "error.code.image_quota_daily": "You've hit today's image limit. Try again tomorrow.",
+
+  // Bursts — you're going faster than we allow
+  "error.code.generation_rate_limited":
+    "Too many generations at once. Try again in {retry_after} s.",
+  "error.code.translate_rate_limited":
+    "Too many translations at once. Try again in {retry_after} s.",
+  "error.code.signin_rate_limited":
+    "Too many sign-in attempts. Try again in {retry_after} s.",
+  "error.code.rate_limited": "You're going a bit fast. Try again in {retry_after} s.",
+  "error.code.voice_test_exhausted":
+    "You've used up the free voice test. Sign up to keep going.",
+  "error.code.waitlist_already_joined": "You're already on the list — we'll be in touch.",
+  "error.code.threads_rate_limited":
+    "Threads is throttling us. Try again in {retry_after} s.",
+
+  // Uploads
+  "error.code.upload_too_large": "That file is too big. The limit is {max_bytes} MB.",
+  "error.code.media_storage_full":
+    "Your media storage is full ({cap_bytes} MB). Delete something you no longer need.",
+  "error.code.unsupported_media_type":
+    "We can't work with that file type. Try a JPEG, PNG or MP4.",
+
+  // Session and connection
+  "error.code.magic_link_invalid": "That link is no longer valid. Request a new one.",
+  "error.code.email_code_invalid": "That code is wrong or expired. Ask for a new one.",
+  "error.code.signin_link_expired": "That sign-in link expired. Sign in again.",
+  "error.code.account_disconnected":
+    "This profile lost its Threads connection. Reconnect it to carry on.",
+  "error.code.threads_credentials_unavailable":
+    "We can't reach Threads for this profile. Reconnect it to carry on.",
+
+  // Upstream trouble
+  "error.code.model_unavailable":
+    "The model is unavailable right now. Try again in {retry_after} s.",
+  "error.code.email_delivery_failed":
+    "We couldn't send that email. Try again in a moment.",
+  "error.code.stats_refresh_failed":
+    "Couldn't refresh the stats right now. Try again in a moment.",
+  "error.code.threads_api_error": "Threads didn't confirm that. Try again in a moment.",
+  "error.code.image_generation_failed":
+    "The image didn't come out. Try again, or reword the prompt.",
+
+  // Draft and queue lifecycle
+  "error.code.draft_already_approved": "This draft is already approved.",
+  "error.code.draft_not_pending": "This draft has moved on — it's not waiting for you any more.",
+  "error.code.draft_not_approved": "Approve this draft first.",
+  "error.code.draft_already_published":
+    "This one is already live on Threads, so it can't be changed.",
+  "error.code.draft_already_rejected": "This draft is already rejected.",
+  "error.code.draft_publish_in_progress": "This one is publishing right now. Give it a second.",
+  "error.code.comment_already_replied": "You've already replied to this comment.",
+  "error.code.mention_already_replied": "You've already replied to this mention.",
+  "error.code.mention_not_awaiting_reply": "This mention is no longer waiting for a reply.",
+  "error.code.post_already_deleted": "This post is already deleted.",
+
+  // Voice, rules, advisor changes
+  "error.code.voice_not_editable":
+    "This voice version has no editable sections. Re-extract your voice to edit it.",
+  "error.code.voice_fix_stale":
+    "The text changed after this fix was suggested. Run the check again.",
+  "error.code.voice_rule_limit_reached":
+    "You've reached the limit of {limit} voice rules. Remove one to add another.",
+  "error.code.voice_copy_destination_not_empty":
+    "The destination profile already has a voice. Clear it first, or pick another profile.",
+  "error.code.voice_copy_source_empty": "The source profile has no voice to copy yet.",
+  "error.code.reactive_already_on": "This automatic reaction is already on.",
+  "error.code.format_already_on": "This posting format is already on.",
+  "error.code.change_already_rolled_back": "This change is already undone.",
+  "error.code.change_not_rollbackable": "There's nothing to undo for this change.",
+  "error.code.change_superseded":
+    "Something changed after this was applied, so undoing it would overwrite the newer version.",
+  "error.code.audit_already_decided": "You've already decided on these items.",
+
+  // What the user typed
+  "error.code.text_empty": "This can't be empty.",
+  "error.code.onboarding_input_missing":
+    "Tell us at least how you write, or pick a few topics.",
+  "error.code.voice_extraction_no_posts":
+    "We couldn't find enough posts to learn your voice from.",
+  "error.code.voice_copy_same_account":
+    "Pick two different profiles — source and destination can't be the same.",
+  "error.code.translation_failed": "We couldn't translate that. Try a shorter piece of text.",
+  "error.code.schedule_too_soon": "Pick a time at least {min_minutes} minutes from now.",
+  "error.code.too_many_images": "Too many images — {max} is the limit here.",
+  "error.code.alt_text_too_long": "The alt text is too long. Keep it under {max} characters.",
+  "error.code.thread_too_many_parts":
+    "That's too many parts for one thread. The limit is {max}.",
+  "error.code.thread_part_too_long":
+    "One part of the thread is too long. Keep each under {max} characters.",
+  "error.code.link_preview_url_invalid": "That doesn't look like a working link.",
+  "error.code.link_preview_unavailable": "That page gave us nothing to preview.",
+  "error.code.generation_failed":
+    "The text didn't come out this time. Try again, or adjust the brief.",
+  "error.code.voice_test_failed":
+    "We couldn't read a voice out of those posts. Try pasting a few more.",
+  "error.code.scenario_preview_failed":
+    "Couldn't put a preview together. Try again in a moment.",
+  "error.code.scenario_run_failed":
+    "Couldn't run this routine right now. Try again in a moment.",
+
   "settings.title": "Settings",
   "settings.account": "Account",
   "settings.email": "Email",

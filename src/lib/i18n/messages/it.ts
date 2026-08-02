@@ -1201,6 +1201,111 @@ export const it: Partial<Record<MessageKey, string>> = {
   "error.toast_server": "Qualcosa non ha funzionato da parte nostra. Riprova tra un momento",
   "error.toast_generic": "Qualcosa è andato storto. Riprova",
   "error.toast_network": "Non siamo riusciti a raggiungere il server. Controlla la tua connessione e riprova",
+
+  // ── Codici di errore backend ─────────────────────────────────────
+  "error.code.post_quota_exhausted":
+    "Hai usato tutte le {limit} generazioni di post di questo mese. Il conteggio si azzera all'inizio del mese prossimo.",
+  "error.code.reply_quota_exhausted":
+    "Hai usato tutte le {limit} generazioni di risposte di questo mese. Il conteggio si azzera all'inizio del mese prossimo.",
+  "error.code.token_budget_exhausted":
+    "Il budget AI di questo mese è esaurito. Si azzera all'inizio del mese prossimo.",
+  "error.code.quota_exceeded":
+    "Hai raggiunto un limite mensile — {used} di {limit} usati. Si azzera all'inizio del mese prossimo.",
+  "error.code.image_quota_daily": "Hai raggiunto il limite di immagini di oggi. Riprova domani.",
+
+  "error.code.generation_rate_limited":
+    "Troppe generazioni insieme. Riprova tra {retry_after} s.",
+  "error.code.translate_rate_limited":
+    "Troppe traduzioni insieme. Riprova tra {retry_after} s.",
+  "error.code.signin_rate_limited":
+    "Troppi tentativi di accesso. Riprova tra {retry_after} s.",
+  "error.code.rate_limited": "Stai andando un po' veloce. Riprova tra {retry_after} s.",
+  "error.code.voice_test_exhausted":
+    "Hai esaurito il test vocale gratuito. Registrati per continuare.",
+  "error.code.waitlist_already_joined": "Sei già in lista — ti contatteremo.",
+  "error.code.threads_rate_limited":
+    "Threads ci sta limitando. Riprova tra {retry_after} s.",
+
+  "error.code.upload_too_large": "Questo file è troppo grande. Il limite è {max_bytes} MB.",
+  "error.code.media_storage_full":
+    "Il tuo spazio media è pieno ({cap_bytes} MB). Elimina qualcosa che non ti serve più.",
+  "error.code.unsupported_media_type":
+    "Non possiamo usare questo tipo di file. Prova con un JPEG, PNG o MP4.",
+
+  "error.code.magic_link_invalid": "Questo link non è più valido. Richiedine uno nuovo.",
+  "error.code.email_code_invalid": "Questo codice è sbagliato o scaduto. Richiedine uno nuovo.",
+  "error.code.signin_link_expired": "Questo link di accesso è scaduto. Accedi di nuovo.",
+  "error.code.account_disconnected":
+    "Questo profilo ha perso la connessione con Threads. Ricollegalo per continuare.",
+  "error.code.threads_credentials_unavailable":
+    "Non riusciamo a raggiungere Threads per questo profilo. Ricollegalo per continuare.",
+
+  "error.code.model_unavailable":
+    "Il modello non è disponibile in questo momento. Riprova tra {retry_after} s.",
+  "error.code.email_delivery_failed":
+    "Non siamo riusciti a inviare quell'email. Riprova tra un momento.",
+  "error.code.stats_refresh_failed":
+    "Non siamo riusciti ad aggiornare le statistiche in questo momento. Riprova tra un momento.",
+  "error.code.threads_api_error": "Threads non l'ha confermato. Riprova tra un momento.",
+  "error.code.image_generation_failed":
+    "L'immagine non è venuta bene. Riprova, oppure riformula il prompt.",
+
+  "error.code.draft_already_approved": "Questa bozza è già approvata.",
+  "error.code.draft_not_pending": "Questa bozza è andata avanti — non è più in attesa di te.",
+  "error.code.draft_not_approved": "Approva prima questa bozza.",
+  "error.code.draft_already_published":
+    "Questo è già pubblicato su Threads, quindi non può essere modificato.",
+  "error.code.draft_already_rejected": "Questa bozza è già stata rifiutata.",
+  "error.code.draft_publish_in_progress": "Questo si sta pubblicando proprio ora. Dagli un secondo.",
+  "error.code.comment_already_replied": "Hai già risposto a questo commento.",
+  "error.code.mention_already_replied": "Hai già risposto a questa menzione.",
+  "error.code.mention_not_awaiting_reply": "Questa menzione non è più in attesa di risposta.",
+  "error.code.post_already_deleted": "Questo post è già stato eliminato.",
+
+  "error.code.voice_not_editable":
+    "Questa versione della voce non ha sezioni modificabili. Estrai di nuovo la tua voce per modificarla.",
+  "error.code.voice_fix_stale":
+    "Il testo è cambiato dopo che questa correzione è stata suggerita. Esegui di nuovo il controllo.",
+  "error.code.voice_rule_limit_reached":
+    "Hai raggiunto il limite di {limit} regole vocali. Rimuovine una per aggiungerne un'altra.",
+  "error.code.voice_copy_destination_not_empty":
+    "Il profilo di destinazione ha già una voce. Svuotala prima, oppure scegli un altro profilo.",
+  "error.code.voice_copy_source_empty": "Il profilo di origine non ha ancora una voce da copiare.",
+  "error.code.reactive_already_on": "Questa reazione automatica è già attiva.",
+  "error.code.format_already_on": "Questo formato di pubblicazione è già attivo.",
+  "error.code.change_already_rolled_back": "Questa modifica è già stata annullata.",
+  "error.code.change_not_rollbackable": "Non c'è nulla da annullare per questa modifica.",
+  "error.code.change_superseded":
+    "Qualcosa è cambiato dopo l'applicazione, quindi annullarla sovrascriverebbe la versione più recente.",
+  "error.code.audit_already_decided": "Hai già deciso su questi elementi.",
+
+  "error.code.text_empty": "Questo non può essere vuoto.",
+  "error.code.onboarding_input_missing":
+    "Raccontaci almeno come scrivi, oppure scegli qualche argomento.",
+  "error.code.voice_extraction_no_posts":
+    "Non abbiamo trovato abbastanza post per imparare la tua voce.",
+  "error.code.voice_copy_same_account":
+    "Scegli due profili diversi — origine e destinazione non possono coincidere.",
+  "error.code.translation_failed": "Non siamo riusciti a tradurlo. Prova con un testo più breve.",
+  "error.code.schedule_too_soon": "Scegli un orario tra almeno {min_minutes} minuti da adesso.",
+  "error.code.too_many_images": "Troppe immagini — il limite qui è {max}.",
+  "error.code.alt_text_too_long":
+    "Il testo alternativo è troppo lungo. Mantienilo sotto i {max} caratteri.",
+  "error.code.thread_too_many_parts":
+    "Sono troppe parti per un unico thread. Il limite è {max}.",
+  "error.code.thread_part_too_long":
+    "Una parte del thread è troppo lunga. Mantieni ciascuna sotto i {max} caratteri.",
+  "error.code.link_preview_url_invalid": "Non sembra un link funzionante.",
+  "error.code.link_preview_unavailable": "Quella pagina non ci ha dato nulla da mostrare in anteprima.",
+  "error.code.generation_failed":
+    "Il testo non è venuto bene questa volta. Riprova, oppure modifica il brief.",
+  "error.code.voice_test_failed":
+    "Non siamo riusciti a leggere una voce da quei post. Prova a incollarne qualcuno in più.",
+  "error.code.scenario_preview_failed":
+    "Non siamo riusciti a creare un'anteprima. Riprova tra un momento.",
+  "error.code.scenario_run_failed":
+    "Non siamo riusciti a eseguire questa routine in questo momento. Riprova tra un momento.",
+
   "settings.title": "Impostazioni",
   "settings.account": "Account",
   "settings.email": "Email",

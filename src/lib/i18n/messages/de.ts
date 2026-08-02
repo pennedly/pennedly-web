@@ -1208,6 +1208,109 @@ export const de: Partial<Record<MessageKey, string>> = {
   "error.toast_server": "Bei uns ist etwas schiefgelaufen. Versuche es gleich erneut",
   "error.toast_generic": "Etwas ist schiefgelaufen. Versuche es erneut",
   "error.toast_network": "Konnte den Server nicht erreichen. Überprüfe deine Verbindung und versuche es erneut",
+
+  "error.code.post_quota_exhausted":
+    "Du hast diesen Monat schon alle {limit} Post-Generierungen genutzt. Der Zähler setzt sich am Anfang des nächsten Monats zurück.",
+  "error.code.reply_quota_exhausted":
+    "Du hast diesen Monat schon alle {limit} Antwort-Generierungen genutzt. Der Zähler setzt sich am Anfang des nächsten Monats zurück.",
+  "error.code.token_budget_exhausted":
+    "Das KI-Budget für diesen Monat ist aufgebraucht. Es setzt sich am Anfang des nächsten Monats zurück.",
+  "error.code.quota_exceeded":
+    "Du hast ein monatliches Limit erreicht: {used} von {limit} genutzt. Es setzt sich am Anfang des nächsten Monats zurück.",
+  "error.code.image_quota_daily": "Du hast dein heutiges Bilder-Limit erreicht. Versuch es morgen erneut.",
+
+  "error.code.generation_rate_limited":
+    "Zu viele Generierungen auf einmal. Versuch es in {retry_after} s erneut.",
+  "error.code.translate_rate_limited":
+    "Zu viele Übersetzungen auf einmal. Versuch es in {retry_after} s erneut.",
+  "error.code.signin_rate_limited":
+    "Zu viele Anmeldeversuche. Versuch es in {retry_after} s erneut.",
+  "error.code.rate_limited": "Du bist gerade etwas zu schnell unterwegs. Versuch es in {retry_after} s erneut.",
+  "error.code.voice_test_exhausted":
+    "Du hast den kostenlosen Voice-Test aufgebraucht. Registrier dich, um weiterzumachen.",
+  "error.code.waitlist_already_joined": "Du stehst schon auf der Liste, wir melden uns.",
+  "error.code.threads_rate_limited":
+    "Threads bremst uns gerade aus. Versuch es in {retry_after} s erneut.",
+
+  "error.code.upload_too_large": "Die Datei ist zu groß. Das Limit liegt bei {max_bytes} MB.",
+  "error.code.media_storage_full":
+    "Dein Medienspeicher ist voll ({cap_bytes} MB). Lösch etwas, das du nicht mehr brauchst.",
+  "error.code.unsupported_media_type":
+    "Mit diesem Dateityp können wir nichts anfangen. Versuch es mit JPEG, PNG oder MP4.",
+
+  "error.code.magic_link_invalid": "Der Link ist nicht mehr gültig. Fordere einen neuen an.",
+  "error.code.email_code_invalid": "Der Code ist falsch oder abgelaufen. Fordere einen neuen an.",
+  "error.code.signin_link_expired": "Der Anmeldelink ist abgelaufen. Melde dich erneut an.",
+  "error.code.account_disconnected":
+    "Dieses Profil hat die Verbindung zu Threads verloren. Verbinde es neu, um weiterzumachen.",
+  "error.code.threads_credentials_unavailable":
+    "Wir erreichen Threads für dieses Profil gerade nicht. Verbinde es neu, um weiterzumachen.",
+
+  "error.code.model_unavailable":
+    "Das Modell ist gerade nicht verfügbar. Versuch es in {retry_after} s erneut.",
+  "error.code.email_delivery_failed":
+    "Wir konnten diese E-Mail nicht senden. Versuch es gleich noch mal.",
+  "error.code.stats_refresh_failed":
+    "Die Statistik ließ sich gerade nicht aktualisieren. Versuch es gleich noch mal.",
+  "error.code.threads_api_error": "Threads hat das nicht bestätigt. Versuch es gleich noch mal.",
+  "error.code.image_generation_failed":
+    "Das Bild ist nicht gelungen. Versuch es erneut oder formuliere den Prompt anders.",
+
+  "error.code.draft_already_approved": "Dieser Entwurf ist schon freigegeben.",
+  "error.code.draft_not_pending": "Dieser Entwurf ist schon weiter, er wartet nicht mehr auf dich.",
+  "error.code.draft_not_approved": "Gib diesen Entwurf zuerst frei.",
+  "error.code.draft_already_published":
+    "Das ist schon live auf Threads und lässt sich nicht mehr ändern.",
+  "error.code.draft_already_rejected": "Dieser Entwurf ist schon abgelehnt.",
+  "error.code.draft_publish_in_progress": "Das wird gerade veröffentlicht. Gib ihm einen Moment.",
+  "error.code.comment_already_replied": "Du hast auf diesen Kommentar schon geantwortet.",
+  "error.code.mention_already_replied": "Du hast auf diese Erwähnung schon geantwortet.",
+  "error.code.mention_not_awaiting_reply": "Diese Erwähnung wartet nicht mehr auf eine Antwort.",
+  "error.code.post_already_deleted": "Dieser Post ist schon gelöscht.",
+
+  "error.code.voice_not_editable":
+    "Diese Voice-Version hat keine bearbeitbaren Abschnitte. Extrahiere deine Voice neu, um sie zu bearbeiten.",
+  "error.code.voice_fix_stale":
+    "Der Text hat sich geändert, seit dieser Fix vorgeschlagen wurde. Führ die Prüfung noch mal aus.",
+  "error.code.voice_rule_limit_reached":
+    "Du hast das Limit von {limit} Voice-Regeln erreicht. Entferne eine, um eine neue hinzuzufügen.",
+  "error.code.voice_copy_destination_not_empty":
+    "Das Zielprofil hat schon eine Voice. Lösch sie zuerst oder wähle ein anderes Profil.",
+  "error.code.voice_copy_source_empty": "Das Quellprofil hat noch keine Voice zum Kopieren.",
+  "error.code.reactive_already_on": "Diese automatische Reaktion ist schon an.",
+  "error.code.format_already_on": "Dieses Post-Format ist schon an.",
+  "error.code.change_already_rolled_back": "Diese Änderung ist schon rückgängig gemacht.",
+  "error.code.change_not_rollbackable": "Für diese Änderung gibt es nichts rückgängig zu machen.",
+  "error.code.change_superseded":
+    "Danach hat sich etwas geändert, ein Rückgängigmachen würde die neuere Version überschreiben.",
+  "error.code.audit_already_decided": "Du hast über diese Punkte schon entschieden.",
+
+  "error.code.text_empty": "Das darf nicht leer sein.",
+  "error.code.onboarding_input_missing":
+    "Erzähl uns zumindest, wie du schreibst, oder wähle ein paar Themen.",
+  "error.code.voice_extraction_no_posts":
+    "Wir haben nicht genug Posts gefunden, um deine Voice daraus zu lernen.",
+  "error.code.voice_copy_same_account":
+    "Wähle zwei unterschiedliche Profile, Quelle und Ziel dürfen nicht dieselben sein.",
+  "error.code.translation_failed": "Das konnten wir nicht übersetzen. Versuch es mit einem kürzeren Text.",
+  "error.code.schedule_too_soon": "Wähle eine Zeit, die mindestens {min_minutes} Minuten in der Zukunft liegt.",
+  "error.code.too_many_images": "Zu viele Bilder, das Limit liegt hier bei {max}.",
+  "error.code.alt_text_too_long": "Der Alt-Text ist zu lang. Halte ihn unter {max} Zeichen.",
+  "error.code.thread_too_many_parts":
+    "Das sind zu viele Teile für einen Thread. Das Limit liegt bei {max}.",
+  "error.code.thread_part_too_long":
+    "Ein Teil des Threads ist zu lang. Halte jeden unter {max} Zeichen.",
+  "error.code.link_preview_url_invalid": "Das sieht nicht nach einem funktionierenden Link aus.",
+  "error.code.link_preview_unavailable": "Diese Seite hat uns nichts zum Vorschauen geliefert.",
+  "error.code.generation_failed":
+    "Der Text ist diesmal nicht gelungen. Versuch es erneut oder passe das Briefing an.",
+  "error.code.voice_test_failed":
+    "Aus diesen Posts konnten wir keine Voice herauslesen. Füg noch ein paar mehr ein.",
+  "error.code.scenario_preview_failed":
+    "Die Vorschau ließ sich nicht zusammenstellen. Versuch es gleich noch mal.",
+  "error.code.scenario_run_failed":
+    "Diese Routine ließ sich gerade nicht ausführen. Versuch es gleich noch mal.",
+
   "settings.title": "Einstellungen",
   "settings.account": "Konto",
   "settings.email": "E-Mail",
