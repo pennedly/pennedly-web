@@ -149,3 +149,12 @@ export function useTranslation() {
 export function tr(key: MessageKey): string {
   return lookup(current, key);
 }
+
+/** Lookup for a key assembled at RUNTIME from server data — today only
+ *  `error.code.<code>` (see lib/errors.ts), where TypeScript cannot prove the
+ *  key exists because the backend picked it. Returns null when `en` doesn't
+ *  have it, so a code we haven't translated yet falls back to the caller's own
+ *  copy instead of rendering `undefined`. */
+export function trIfExists(key: string): string | null {
+  return key in en ? lookup(current, key as MessageKey) : null;
+}

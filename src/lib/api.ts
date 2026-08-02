@@ -187,9 +187,22 @@ export async function logout(): Promise<void> {
   }
 }
 
+/** The scalar values the backend sends for `{name}` placeholders in a
+ *  translated error sentence. Scalars only, by contract (see the backend's
+ *  `pennedly/errors.py`) — anything richer is dropped on read. */
+export type ApiErrorParams = Record<string, string | number>;
+
 export class ApiError extends Error {
   status: number;
   detail: unknown;
+  /** The backend's stable machine code for this failure (`AppError.code`, e.g.
+   *  "post_quota_exhausted"), when the body carries one. It's the key the SPA
+   *  looks up in its i18n catalogue — see `lib/errors.ts`. null on the plain
+   *  `HTTPException` bodies that still ship only `detail`. */
+  code: string | null = null;
+  /** Values to interpolate into that translated sentence (a limit, a count, a
+   *  retry delay). null when the body omits `params` or carries nothing usable. */
+  params: ApiErrorParams | null = null;
   /** Seconds from the response's `Retry-After` header, when the server sent one
    *  (the advisor's 503 "model busy" does). null when absent or unparseable —
    *  callers that don't care are unaffected. */
@@ -207,6 +220,24 @@ export class ApiError extends Error {
     super(reason ? `${reason} (${status})` : `API ${status}`);
     this.status = status;
     this.detail = detail;
+    // `code`/`params` are additive fields next to `detail` — read them the same
+    // defensive way, so a plain-`detail` body, a string body (a proxy's HTML
+    // error page) or an array all leave both null instead of throwing.
+    if (detail && typeof detail === "object" && !Array.isArray(detail)) {
+      const body = detail as { code?: unknown; params?: unknown };
+      if (typeof body.code === "string" && body.code) this.code = body.code;
+      if (body.params && typeof body.params === "object" && !Array.isArray(body.params)) {
+        const out: ApiErrorParams = {};
+        for (const [k, v] of Object.entries(body.params as Record<string, unknown>)) {
+          // Guard the contract rather than trusting it: a nested object or null
+          // would stringify to "[object Object]" inside a user-facing sentence.
+          if (typeof v === "string" || (typeof v === "number" && Number.isFinite(v))) {
+            out[k] = v;
+          }
+        }
+        if (Object.keys(out).length > 0) this.params = out;
+      }
+    }
   }
 }
 
