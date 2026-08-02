@@ -42,6 +42,7 @@ import {
   fetchUserRules,
   getTokens,
   refreshStats,
+  rollbackAppliedChange,
 } from "@/lib/api";
 import { useSelectedAccountId } from "@/lib/account";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
@@ -237,6 +238,31 @@ export default function AdvisorPage() {
           setReceipts(fresh.entries.filter((e) => e.source === "advisor_action"));
           void loadSignals(id);
         },
+        // The apply endpoint returns no journal id, so find the entry it just
+        // wrote: the newest advisor_action of this kind that the backend still
+        // reports as rollbackable. `rollbackable` is the authority — a kind with
+        // no inverse, or one already superseded, yields null and no button.
+        resolveUndo: demo
+          ? undefined
+          : async () => {
+              const fresh = await fetchAppliedChanges(id, { limit: 12 });
+              const mine = fresh.entries.find(
+                (e) =>
+                  e.source === "advisor_action" &&
+                  e.kind === act.type &&
+                  e.rollbackable &&
+                  e.rolled_back_at === null,
+              );
+              return mine?.id ?? null;
+            },
+        onUndo: demo
+          ? undefined
+          : async (entryId: number) => {
+              await rollbackAppliedChange(id, entryId);
+              const fresh = await fetchAppliedChanges(id, { limit: 12 });
+              setReceipts(fresh.entries.filter((e) => e.source === "advisor_action"));
+              void loadSignals(id);
+            },
       })),
     [demo, snapshot, locale, t, router, loadSignals],
   );

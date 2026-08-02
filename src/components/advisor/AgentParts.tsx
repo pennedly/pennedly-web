@@ -238,11 +238,9 @@ const CTRL_META: Record<string, { kind: MessageKey; cta: MessageKey; done: Messa
 // schedule_post auto-publishes, reactive/format land as drafts. The pill has to
 // tell the truth about the code, so the code wins.)
 //
-// The эталон's live pill reads «Сразу · можно отменить». Phase 1 has NO
-// rollback: applied_changes_rollback.py gives `advisor_action` no safe inverse,
-// so `rollbackable` is false for every card this screen can apply. The pill
-// says «Сразу» only, and the applied row offers the deep link, not an Undo that
-// could never run.
+// The эталон's live pill reads «Сразу · можно отменить», and since phase 3 that
+// is true — for the kinds that HAVE an inverse (ACT_UNDOABLE below). It stays
+// «Сразу» alone for schedule_post, which publishes: nothing can unpublish it.
 const ACT_MODE: Record<ActionType, "review" | "live"> = {
   routine: "review",
   best_time_routine: "review",
@@ -255,6 +253,20 @@ const ACT_MODE: Record<ActionType, "review" | "live"> = {
   topics_list: "live",
 };
 
+// Which kinds the backend can undo (rollback_inverses.py, phase 3). It drives
+// the pill's «можно отменить» half; whether the button actually appears is
+// decided per ENTRY by the journal's own `rollbackable`, never by this list —
+// a change somebody has since edited is superseded and offers no undo.
+// schedule_post is absent on purpose: it has already published.
+const ACT_UNDOABLE: ReadonlySet<ActionType> = new Set<ActionType>([
+  "auto_replies",
+  "automation",
+  "voice_rule",
+  "topics_list",
+  "reactive",
+  "format",
+]);
+
 export type AgentActionView = {
   action: AdvisorActionData;
   diff: ActionDiff;
@@ -265,6 +277,16 @@ export type AgentActionView = {
   /** Runs after a successful apply — refreshes the rail's receipts and signals
    *  so the journal shows the change that just landed. */
   onApplied?: () => Promise<void>;
+  /** Finds THIS apply's journal entry and reports whether it can still be undone.
+   *  The apply endpoint returns no journal id, so the screen re-reads the trail
+   *  and matches the newest advisor_action entry created after the click. Absent
+   *  (or resolving to null) → no Undo is offered, which is also what a
+   *  superseded entry produces. */
+  resolveUndo?: () => Promise<number | null>;
+  /** Undo the entry `resolveUndo` found. A failure leaves the check row as it
+   *  was, with the undo gone: the change stands, and the journal screen is the
+   *  place to retry. */
+  onUndo?: (entryId: number) => Promise<void>;
   /** A card replayed from an older conversation whose condition no longer holds. */
   stale?: boolean;
   /** Review-only: open the card straight into one state so /gallery can show all
@@ -291,6 +313,30 @@ export function ActionCard({ a }: { a: AgentActionView }) {
   const [doneAt, setDoneAt] = useState<string>(
     a.initialState === "applied" ? new Date().toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }) : "",
   );
+  // The journal entry this apply produced, once found and still undoable.
+  // null = no undo on offer (not undoable, superseded, or the lookup failed).
+  const [undoId, setUndoId] = useState<number | null>(null);
+  const [undoing, setUndoing] = useState(false);
+  const [undone, setUndone] = useState(false);
+
+  // A card that MOUNTS already applied (a review frame, or a turn replayed into
+  // that state) never runs `apply`, so its undo lookup happens here instead.
+  const resolveUndo = a.resolveUndo;
+  const mountedApplied = a.initialState === "applied";
+  useEffect(() => {
+    if (!mountedApplied || !resolveUndo) return;
+    let cancelled = false;
+    resolveUndo()
+      .then((id) => {
+        if (!cancelled) setUndoId(id);
+      })
+      .catch(() => {
+        /* no undo offered — the change simply stands */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [mountedApplied, resolveUndo]);
 
   if (dismissed) return null;
 
@@ -308,6 +354,9 @@ export function ActionCard({ a }: { a: AgentActionView }) {
       setDoneAt(new Date().toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }));
       setState("applied");
       if (a.onApplied) await a.onApplied().catch(() => {});
+      // Only after the journal has the entry can we know whether this one is
+      // undoable — hence the lookup here rather than a guess from the type.
+      if (a.resolveUndo) setUndoId(await a.resolveUndo().catch(() => null));
     } catch (e) {
       const client = e instanceof ApiError && e.status >= 400 && e.status < 500;
       setErrText(client ? (e as ApiError).message : null);
@@ -316,17 +365,51 @@ export function ActionCard({ a }: { a: AgentActionView }) {
   };
 
   // Applied → the card collapses into a 48px check row (§5.2). The trailing
-  // slot is the deep link to where the change now lives: phase 1 has no undo.
+  // slot holds the deep link to where the change now lives, plus «Отменить»
+  // when the journal says this entry is still undoable (§5.2, phase 3).
   if (state === "applied") {
+    const undo = async () => {
+      if (undoId === null || !a.onUndo) return;
+      setUndoing(true);
+      try {
+        await a.onUndo(undoId);
+        setUndone(true);
+        if (a.onApplied) await a.onApplied().catch(() => {});
+      } catch {
+        // Most likely a 409: something moved since, so the undo is off the
+        // table. Drop the button rather than invite a click that keeps failing.
+        setUndoId(null);
+      } finally {
+        setUndoing(false);
+      }
+    };
     return (
       <div className="ag-act ag-act--done">
         <div className="ag-done-row">
           <IcCheck size={16} />
           <span>
-            <span className="ag-done-t">{t(ctrl?.done ?? meta.done)}</span>
-            <span className="ag-done-m">{doneAt ? `${t("agent.act.applied_at")} ${doneAt}` : ""}</span>
+            <span className="ag-done-t">
+              {undone ? t("agent.act.undone") : t(ctrl?.done ?? meta.done)}
+            </span>
+            <span className="ag-done-m">
+              {undone
+                ? t("agent.act.undone_hint")
+                : doneAt
+                  ? `${t("agent.act.applied_at")} ${doneAt}`
+                  : ""}
+            </span>
           </span>
           <span className="un">
+            {undoId !== null && !undone ? (
+              <button
+                type="button"
+                className="ag-btn ag-btn--ghost ag-btn--sm"
+                onClick={undo}
+                disabled={undoing}
+              >
+                {undoing ? t("agent.act.undoing") : t("agent.act.undo")}
+              </button>
+            ) : null}
             <button type="button" className="ag-btn ag-btn--ghost ag-btn--sm" onClick={a.onOpen}>
               {t(meta.link)}
               <IcExternal size={14} />
@@ -350,7 +433,13 @@ export function ActionCard({ a }: { a: AgentActionView }) {
         </div>
         <span className={cn("ag-mode", mode === "review" ? "ag-mode--review" : "ag-mode--live")}>
           {mode === "review" ? <IcCheck size={11} /> : <IcBolt size={11} />}
-          {t(mode === "review" ? "agent.mode.review" : "agent.mode.live")}
+          {t(
+            mode === "review"
+              ? "agent.mode.review"
+              : ACT_UNDOABLE.has(type)
+                ? "agent.mode.live_undoable"
+                : "agent.mode.live",
+          )}
         </span>
       </div>
 

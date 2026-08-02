@@ -357,3 +357,91 @@ test("agent: switch threads in the rail, and the next question lands in the open
   expect(sentBodies.at(-1)).toMatchObject({ new_conversation: true });
   expect(sentBodies.at(-1)).not.toHaveProperty("conversation_id");
 });
+
+// ── Undo an applied advisor action (phase 3) ─────────────────────────────────
+// The apply endpoint returns no journal id, so the screen re-reads the trail and
+// matches its own entry. What must hold: Undo appears only when the journal says
+// `rollbackable`, and pressing it POSTs the rollback for THAT entry id.
+const JOURNAL_ENTRY = 4242;
+
+test("agent: an applied action can be undone when the journal allows it", async ({
+  page,
+  context,
+}) => {
+  const ok = (data: unknown) => (route: Route) => route.fulfill({ status: 200, json: data as object });
+  await context.route(/\/api\/accounts\/\d+\/stats(\?|$)/, ok({
+    period: "7d",
+    current: { posts: 3, views: 1000, likes: 10, comments: 2, avg_views: 333, avg_likes: 3, avg_comments: 1, tier_counts: { viral: 0, good: 1, mid: 2, flop: 0, settling: 0 } },
+    previous: null, deltas: null, series: [], top_posts: [], by_hour: [], by_weekday: [], heatmap: [],
+    refreshed_at: new Date().toISOString(),
+  }));
+  await context.route(/\/api\/accounts\/\d+\/user-rules$/, ok({ rules: [] }));
+  await context.route(/\/api\/accounts\/\d+\/advisor\/conversations$/, ok({ conversations: [] }));
+
+  // An action card arrives via the persisted history, so no question is needed.
+  await context.route(/\/api\/accounts\/\d+\/advisor\/history(\?|$)/, ok({
+    conversation_id: 1,
+    entries: [{
+      question: "Turn on auto-replies",
+      created_at: new Date().toISOString(),
+      reply: {
+        reply: "Here you go.", model: "m", grounded_in: [], grounded: [], chips: [], suggestions: [],
+        prompt_tokens: 1, completion_tokens: 1, conversation_id: 1,
+        actions: [{
+          type: "auto_replies", title: "Auto-reply to questions only", audience: "questions",
+          replies_per_day: 10, skip_low_value: true, topic: "", times_per_day: 0, hours_preview: [],
+          rule_text: "", rule_kind: "", brief: "", weekday: 0, hour: 0, reactive_kind: "",
+          comment_text: "", format_kind: "", rubric_name: "", rubric_idea: "", question: "",
+          options: [], control_kind: "", quiet_start: null, quiet_end: null, blocks: [],
+          topics: [], account: null,
+        }],
+      },
+    }],
+  }));
+
+  // The journal is empty until the apply lands, then carries one undoable entry.
+  let applied = false;
+  let rolledBack = false;
+  await context.route(/\/api\/accounts\/\d+\/applied-changes(\?|$)/, async (route) => {
+    if (route.request().method() !== "GET") return route.fallback();
+    const entries = applied
+      ? [{
+          id: JOURNAL_ENTRY, source: "advisor_action", kind: "auto_replies",
+          summary: "Auto-replies are on", payload: {}, actor: "user",
+          rollbackable: !rolledBack, rollback_reason: null,
+          rolled_back_at: rolledBack ? new Date().toISOString() : null,
+          created_at: new Date().toISOString(),
+        }]
+      : [];
+    await route.fulfill({ status: 200, json: { entries, count: entries.length } });
+  });
+  await context.route(/\/api\/accounts\/\d+\/advisor\/apply$/, async (route) => {
+    applied = true;
+    await route.fulfill({ status: 200, json: { kind: "auto_replies", name: "Auto-replies are on", scenario_id: null } });
+  });
+
+  const rollbackCalls: string[] = [];
+  await context.route(/\/api\/accounts\/\d+\/applied-changes\/\d+\/rollback$/, async (route) => {
+    rollbackCalls.push(route.request().url());
+    rolledBack = true;
+    await route.fulfill({ status: 200, json: { entry: { id: JOURNAL_ENTRY, source: "advisor_action", kind: "auto_replies", summary: "Auto-replies are on", payload: {}, actor: "user", rollbackable: false, rollback_reason: null, rolled_back_at: new Date().toISOString(), created_at: new Date().toISOString() }, reverted: { kind: "advisor_autopilot" } } });
+  });
+
+  await page.goto("/app/advisor", { waitUntil: "domcontentloaded" });
+
+  // The card carries the honest pill now that this kind really is undoable.
+  await expect(page.getByText("Applies now · undoable")).toBeVisible({ timeout: 15_000 });
+
+  await page.getByRole("button", { name: /^Turn on$/ }).click();
+  // The same summary also lands in the rail's journal — .first() is the card.
+  await expect(page.getByText("Auto-replies are on").first()).toBeVisible();
+
+  // Undo shows up only because the journal reported the entry rollbackable.
+  const undo = page.getByRole("button", { name: /^Undo$/ });
+  await expect(undo).toBeVisible();
+  await undo.click();
+
+  await expect(page.getByText("Change undone")).toBeVisible();
+  expect(rollbackCalls).toHaveLength(1);
+  expect(rollbackCalls[0]).toContain(`/applied-changes/${JOURNAL_ENTRY}/rollback`);
+});

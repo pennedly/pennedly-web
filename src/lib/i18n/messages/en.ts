@@ -3277,6 +3277,11 @@ export const en = {
   // Action card: mode pill + the «Now → After» diff.
   "agent.mode.review": "Needs review",
   "agent.mode.live": "Applies now",
+  "agent.mode.live_undoable": "Applies now · undoable",
+  "agent.act.undo": "Undo",
+  "agent.act.undoing": "Undoing…",
+  "agent.act.undone": "Change undone",
+  "agent.act.undone_hint": "Settings are back as they were",
   "agent.diff.now": "Now",
   "agent.diff.next": "After",
   "agent.diff.unknown": "Couldn't read the current setting",

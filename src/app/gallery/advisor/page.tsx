@@ -238,6 +238,19 @@ export default function AgentGallery() {
             <ActionCard a={view(ACTIONS[1], { initialState: "applied" })} />
           </Col>
         </Section>
+        <Section title="applied + undoable · the journal still allows «Отменить» (§5.2, phase 3)">
+          <Col>
+            <ActionCard
+              a={view(ACTIONS[1], {
+                initialState: "applied",
+                // Stands in for the journal lookup the live screen does; a real
+                // entry that was superseded resolves to null and shows no button.
+                resolveUndo: async () => 1,
+                onUndo: async () => new Promise<void>((r) => setTimeout(r, 500)),
+              })}
+            />
+          </Col>
+        </Section>
         <Section title="failed · the point is that NOTHING changed (§5.2)">
           <Col>
             <ActionCard a={view(ACTIONS[1], { initialState: "error" })} />
