@@ -301,8 +301,13 @@ function FollowerLine({ series }: { series: number[] }) {
   const pts = series.map((v, i) => ({ x: x(i), y: y(v) }));
   const curve = smoothLinePath(pts);
   const area = smoothAreaPath(pts, H);
+  // Sized in CSS, not in geometry attributes: `height="auto"` is SVG2 sizing that
+  // no browser implements, so Chrome rejected the attribute outright and logged
+  // `<svg> attribute height: Expected length, "auto"` on every render of this
+  // chart. `w-full h-auto` is the same intent in CSS (which wins over
+  // presentation attributes anyway), leaving the viewBox to supply the ratio.
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="auto" role="img" aria-label={t("a11y.followers_chart")} className="mt-4 block">
+    <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={t("a11y.followers_chart")} className="mt-4 block h-auto w-full">
       <path d={area} fill="var(--color-accent)" fillOpacity="0.1" />
       <path d={curve} fill="none" stroke="var(--color-accent)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
       <circle cx={x(n - 1)} cy={y(series[n - 1])} r="3.6" fill="var(--color-accent)" stroke="var(--color-surface)" strokeWidth="2" />
