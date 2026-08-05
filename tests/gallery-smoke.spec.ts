@@ -78,6 +78,25 @@ test("gallery dark toggle flips the theme (a real click works)", async ({ page }
   await page.goto("/gallery/media", { waitUntil: "domcontentloaded" });
   const html = page.locator("html");
   await expect(html).not.toHaveClass(/\bdark\b/);
+
+  // The button is server-rendered, so it is clickable (visible, stable, enabled)
+  // BEFORE React attaches its onClick. Playwright's actionability checks cannot
+  // see that gap, so a click landing inside it is silently swallowed, and the
+  // assertion below then waits out its timeout on a theme that never flipped —
+  // which is exactly how this test failed on a cold `next dev` compile. Every
+  // other click in this suite is gated behind client-rendered content, so none
+  // of them can hit the window; this one is the exception and waits explicitly.
+  // React stamps `__reactProps$…` onto a DOM node when it hydrates it, so that
+  // key is the signal, and it returns immediately once hydration has happened.
+  await page.waitForFunction(
+    () =>
+      [...document.querySelectorAll("button")]
+        .filter((b) => b.textContent?.trim() === "Dark")
+        .some((b) => Object.keys(b).some((k) => k.startsWith("__reactProps$"))),
+    undefined,
+    { timeout: 15_000 },
+  );
+
   await page.getByRole("button", { name: /^Dark$/ }).click();
   await expect(html).toHaveClass(/\bdark\b/);
 });
