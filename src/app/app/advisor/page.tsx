@@ -86,7 +86,7 @@ import {
   type AgentTurnData,
 } from "@/components/advisor/agent-data";
 import { AGENT_DEMO } from "@/components/advisor/agent-demo";
-import type { AdvisorActionData, AdvisorConversation, AdvisorHistoryEntry, AdvisorMessage, AdvisorResponse, AppliedChangeEntry } from "@/lib/types";
+import type { AdvisorActionData, AdvisorConversation, AdvisorHistoryEntry, AdvisorMessage, AdvisorResponse, AppliedChangeEntry, ApplyActionResponse } from "@/lib/types";
 import { useDemoParam } from "@/lib/query";
 
 const IS_DEV = process.env.NODE_ENV === "development";
@@ -224,9 +224,12 @@ export default function AdvisorPage() {
         onApply: async () => {
           if (demo) {
             await new Promise((r) => setTimeout(r, 700));
-            return;
+            return null;
           }
-          await applyAction(id, act);
+          // The response names the journal row this apply wrote — that id, not a
+          // search, is what «Отменить» acts on below.
+          const res = await applyAction(id, act);
+          return res.change_id ?? null;
         },
         onOpen: () => {
           if (!demo) router.push(openTargetFor(act));
@@ -239,22 +242,18 @@ export default function AdvisorPage() {
           setReceipts(fresh.entries.filter((e) => e.source === "advisor_action"));
           void loadSignals(id);
         },
-        // The apply endpoint returns no journal id, so find the entry it just
-        // wrote: the newest advisor_action of this kind that the backend still
-        // reports as rollbackable. `rollbackable` is the authority — a kind with
-        // no inverse, or one already superseded, yields null and no button.
+        // Is THAT entry — the one the apply named — still undoable? Looked up by
+        // id, never by kind: two applies of one kind leave two live entries the
+        // journal can't tell apart, and matching on kind picked whichever was
+        // newest, which is somebody else's change. `rollbackable` stays the
+        // authority for whether the button appears at all — a kind with no
+        // inverse, or one already superseded, yields null.
         resolveUndo: demo
           ? undefined
-          : async () => {
+          : async (changeId: number) => {
               const fresh = await fetchAppliedChanges(id, { limit: 12 });
-              const mine = fresh.entries.find(
-                (e) =>
-                  e.source === "advisor_action" &&
-                  e.kind === act.type &&
-                  e.rollbackable &&
-                  e.rolled_back_at === null,
-              );
-              return mine?.id ?? null;
+              const mine = fresh.entries.find((e) => e.id === changeId);
+              return mine && mine.rollbackable && mine.rolled_back_at === null ? mine.id : null;
             },
         onUndo: demo
           ? undefined
@@ -792,7 +791,7 @@ function openTargetFor(a: AdvisorActionData): string {
 }
 
 /** The apply call — the exact wire shape each action type expects. */
-function applyAction(accountId: number, act: AdvisorActionData): Promise<unknown> {
+function applyAction(accountId: number, act: AdvisorActionData): Promise<ApplyActionResponse> {
   switch (act.type) {
     case "auto_replies":
       return applyAdvisorAction(accountId, {

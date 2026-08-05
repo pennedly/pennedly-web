@@ -273,17 +273,20 @@ export type AgentActionView = {
   diff: ActionDiff;
   /** Only when there is a real side effect; otherwise the line is absent (§5). */
   warn?: string | null;
-  onApply: () => Promise<void>;
+  /** Applies the change. Resolves with the journal id the apply wrote — the
+   *  handle every undo below acts on — or null when no entry describes it (the
+   *  trail write is fail-soft), in which case no Undo is offered. */
+  onApply: () => Promise<number | null>;
   onOpen: () => void;
   /** Runs after a successful apply — refreshes the rail's receipts and signals
    *  so the journal shows the change that just landed. */
   onApplied?: () => Promise<void>;
-  /** Finds THIS apply's journal entry and reports whether it can still be undone.
-   *  The apply endpoint returns no journal id, so the screen re-reads the trail
-   *  and matches the newest advisor_action entry created after the click. Absent
-   *  (or resolving to null) → no Undo is offered, which is also what a
-   *  superseded entry produces. */
-  resolveUndo?: () => Promise<number | null>;
+  /** Reports whether the entry `onApply` named can still be undone. Takes that
+   *  id: the card never searches the trail for «the newest entry of this kind»,
+   *  which is a guess the moment two applies share a kind. Absent (or resolving
+   *  to null) → no Undo is offered, which is also what a superseded entry
+   *  produces. */
+  resolveUndo?: (changeId: number) => Promise<number | null>;
   /** Undo the entry `resolveUndo` found. A failure leaves the check row as it
    *  was, with the undo gone: the change stands, and the journal screen is the
    *  place to retry. */
@@ -293,6 +296,11 @@ export type AgentActionView = {
   /** Review-only: open the card straight into one state so /gallery can show all
    *  four without clicking through them. Never set by the live screen. */
   initialState?: "proposed" | "applying" | "applied" | "error";
+  /** Review-only: the journal id a card that MOUNTS applied would have been
+   *  handed, so /gallery can show the undoable check row. Never set by the live
+   *  screen — there the id comes from the apply that just ran, and a card mounted
+   *  applied has no apply of its own to name an entry. */
+  initialUndoId?: number;
 };
 
 function DiffSide({ runs }: { runs: DiffRun[] }) {
@@ -314,30 +322,15 @@ export function ActionCard({ a }: { a: AgentActionView }) {
   const [doneAt, setDoneAt] = useState<string>(
     a.initialState === "applied" ? new Date().toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }) : "",
   );
-  // The journal entry this apply produced, once found and still undoable.
+  // The journal entry this apply produced, once confirmed still undoable.
   // null = no undo on offer (not undoable, superseded, or the lookup failed).
-  const [undoId, setUndoId] = useState<number | null>(null);
+  // A card that MOUNTS applied (a review frame) ran no apply of its own, so only
+  // the review-only `initialUndoId` can put an id here.
+  const [undoId, setUndoId] = useState<number | null>(
+    a.initialState === "applied" ? (a.initialUndoId ?? null) : null,
+  );
   const [undoing, setUndoing] = useState(false);
   const [undone, setUndone] = useState(false);
-
-  // A card that MOUNTS already applied (a review frame, or a turn replayed into
-  // that state) never runs `apply`, so its undo lookup happens here instead.
-  const resolveUndo = a.resolveUndo;
-  const mountedApplied = a.initialState === "applied";
-  useEffect(() => {
-    if (!mountedApplied || !resolveUndo) return;
-    let cancelled = false;
-    resolveUndo()
-      .then((id) => {
-        if (!cancelled) setUndoId(id);
-      })
-      .catch(() => {
-        /* no undo offered — the change simply stands */
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [mountedApplied, resolveUndo]);
 
   if (dismissed) return null;
 
@@ -351,13 +344,16 @@ export function ActionCard({ a }: { a: AgentActionView }) {
     setErrText(null);
     setState("applying");
     try {
-      await a.onApply();
+      const changeId = await a.onApply();
       setDoneAt(new Date().toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }));
       setState("applied");
       if (a.onApplied) await a.onApplied().catch(() => {});
-      // Only after the journal has the entry can we know whether this one is
-      // undoable — hence the lookup here rather than a guess from the type.
-      if (a.resolveUndo) setUndoId(await a.resolveUndo().catch(() => null));
+      // The apply named its own journal entry; ask whether THAT one is still
+      // undoable. No id (the trail write failed) → no undo: there is no entry to
+      // act on, and the nearest one of the same kind is a different change.
+      if (changeId !== null && a.resolveUndo) {
+        setUndoId(await a.resolveUndo(changeId).catch(() => null));
+      }
     } catch (e) {
       const client = e instanceof ApiError && e.status >= 400 && e.status < 500;
       setErrText(client ? friendlyErrorText(e) : null);

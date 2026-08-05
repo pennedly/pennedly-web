@@ -571,6 +571,11 @@ export type ApplyActionResponse = {
   // Present only for "schedule_post" (the generated+scheduled draft); null otherwise.
   draft_id?: number | null;
   scheduled_at?: string | null;
+  // The applied-changes row THIS apply wrote — the handle for «Отменить», so an
+  // undo names its own entry instead of searching the journal for the newest one
+  // of the same kind (two applies of one kind leave two indistinguishable live
+  // entries). Null/absent = no row describes this apply → offer no undo.
+  change_id?: number | null;
 };
 
 export type BatchGenerateError = {

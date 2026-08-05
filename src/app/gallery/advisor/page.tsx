@@ -96,7 +96,7 @@ export default function AgentGallery() {
         : a.type === "schedule_post"
           ? t("adv.act.sched_quota")
           : null,
-    onApply: () => new Promise<void>((r) => setTimeout(r, 700)),
+    onApply: () => new Promise<number | null>((r) => setTimeout(() => r(null), 700)),
     onOpen: () => {},
     onApplied: async () => {},
     ...extra,
@@ -243,9 +243,9 @@ export default function AgentGallery() {
             <ActionCard
               a={view(ACTIONS[1], {
                 initialState: "applied",
-                // Stands in for the journal lookup the live screen does; a real
+                // Stands in for the journal id the live apply hands back; a real
                 // entry that was superseded resolves to null and shows no button.
-                resolveUndo: async () => 1,
+                initialUndoId: 1,
                 onUndo: async () => new Promise<void>((r) => setTimeout(r, 500)),
               })}
             />
