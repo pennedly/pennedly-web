@@ -286,26 +286,28 @@ export function Sidebar() {
                     <Link
                       href={it.href}
                       aria-current={active ? "page" : undefined}
-                      className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-small capitalize transition-colors ${
+                      className={`flex flex-col gap-1 rounded-md px-3 py-2 text-small capitalize transition-colors ${
                         active
                           ? "bg-surface-2 font-semibold text-text"
                           : "font-medium text-text-muted hover:bg-surface-2 hover:text-text"
                       }`}
                     >
-                      <Icon size={16} className="shrink-0" />
-                      <span className="truncate">{t(it.label)}</span>
+                      <span className="flex min-h-[18px] items-center gap-2.5">
+                        <Icon size={16} className="shrink-0" />
+                        <span className="min-w-0 flex-1 whitespace-nowrap">{t(it.label)}</span>
+                        {it.badgeKey && (counts[it.badgeKey] ?? 0) > 0 && (
+                          <span
+                            className={`ml-auto inline-flex h-[18px] min-w-[20px] shrink-0 items-center justify-center rounded-full border border-border bg-surface-2 px-1.5 text-caption font-semibold tabular-nums ${
+                              active ? "text-text" : "text-text-subtle"
+                            }`}
+                          >
+                            {counts[it.badgeKey]}
+                          </span>
+                        )}
+                      </span>
                       {hintHrefs.includes(it.href) && !visited.includes(it.href) && (
-                        <span className="ml-auto inline-flex shrink-0 items-center rounded-full border border-accent/[0.28] bg-[color-mix(in_srgb,var(--color-accent)_12%,var(--color-surface))] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.03em] text-accent">
+                        <span className="ml-[26px] inline-flex w-fit shrink-0 items-center rounded-full border border-accent/[0.28] bg-[color-mix(in_srgb,var(--color-accent)_12%,var(--color-surface))] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.03em] text-accent">
                           {t("nav.start_here")}
-                        </span>
-                      )}
-                      {it.badgeKey && (counts[it.badgeKey] ?? 0) > 0 && (
-                        <span
-                          className={`ml-auto inline-flex h-[18px] min-w-[20px] items-center justify-center rounded-full border border-border bg-surface-2 px-1.5 text-caption font-semibold tabular-nums ${
-                            active ? "text-text" : "text-text-subtle"
-                          }`}
-                        >
-                          {counts[it.badgeKey]}
                         </span>
                       )}
                     </Link>
