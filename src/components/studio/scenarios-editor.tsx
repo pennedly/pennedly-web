@@ -18,7 +18,7 @@ import { useRef, useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
-import { useTranslation, type MessageKey } from "@/lib/i18n";
+import { useTranslation, getLocale, pluralUnit, type MessageKey } from "@/lib/i18n";
 import {
   IcAlert,
   IcArrowLeft,
@@ -1218,7 +1218,8 @@ function condSummary(t: T, form: FormState): string {
   const parts: string[] = [];
   if (form.condNoPostToday) parts.push(t("scenarios.rc.condsum_no_post"));
   if (form.cooldownOn) parts.push(t("scenarios.rc.condsum_cooldown").replace("{n}", String(form.cooldownValue)).replace("{unit}", form.cooldownUnit === "days" ? t("scenarios.rc.unit_days_word") : t("scenarios.rc.unit_hours_word")));
-  if (form.maxFiresOn) parts.push(t("scenarios.rc.condsum_max").replace("{n}", String(form.maxFires)));
+  if (form.maxFiresOn)
+    parts.push(t("scenarios.rc.condsum_max").replace("{n}", String(form.maxFires)).replace("{u}", pluralUnit(getLocale(), "times", form.maxFires)));
   return parts.join(t("scenarios.rc.condsum_join"));
 }
 

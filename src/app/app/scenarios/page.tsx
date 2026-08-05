@@ -41,7 +41,7 @@ import {
 import { friendlyErrorText } from "@/lib/errors";
 import { useSelectedAccountId } from "@/lib/account";
 import { cn } from "@/lib/cn";
-import { pluralKey, useTranslation, type MessageKey } from "@/lib/i18n";
+import { pluralKey, pluralUnit, useTranslation, type MessageKey } from "@/lib/i18n";
 import { useTesterGuard } from "@/lib/tester";
 import { useDemoParam } from "@/lib/query";
 import { AppTopbar, HeaderPill } from "@/components/AppTopbar";
@@ -682,7 +682,11 @@ export default function ScenariosPage() {
     const quoted = group.scenarios.map((s) => `**«${s.name}»**`);
     const names = quoted.length <= 1 ? quoted.join("") : `${quoted.slice(0, -1).join(", ")} ${t("common.and")} ${quoted[quoted.length - 1]}`;
     const title = t(pluralKey(locale, n, { one: "scenarios.tip.conflict_title_one", few: "scenarios.tip.conflict_title_few", many: "scenarios.tip.conflict_title_many" })).replace("{n}", String(n));
-    const body = t("scenarios.tip.conflict_body").replace("{names}", names).replace("{time}", time).replace("{cap}", String(cap));
+    const body = t("scenarios.tip.conflict_body")
+      .replace("{names}", names)
+      .replace("{time}", time)
+      .replace("{cap}", String(cap))
+      .replace("{u}", pluralUnit(locale, "posts", cap));
     return { id: `conflict:${group.hour}`, title, body };
   }
   const conflictActions: TipAdvice["actions"] = [
@@ -966,13 +970,13 @@ export default function ScenariosPage() {
   // resolved shape and POST-create it (OFF) on each selected account.
   async function applyToAccounts(s: Scenario, ids: number[]) {
     if (demoOn) {
-      toast(t("scenarios.apply_done").replace("{n}", String(ids.length)));
+      toast(t("scenarios.apply_done").replace("{n}", String(ids.length)).replace("{u}", pluralUnit(locale, "accounts", ids.length)));
       return;
     }
     try {
       const body = scenarioToCreateBody(s);
       for (const id of ids) await createScenario(id, { ...body, enabled: false });
-      toast(t("scenarios.apply_done").replace("{n}", String(ids.length)));
+      toast(t("scenarios.apply_done").replace("{n}", String(ids.length)).replace("{u}", pluralUnit(locale, "accounts", ids.length)));
     } catch (e) {
       toast(friendlyErrorText(e), "error");
     }
@@ -1382,7 +1386,14 @@ export default function ScenariosPage() {
             tone="accent"
             count={activeCount}
             zero="idle"
-            label={activeCount > 0 ? t("scenarios.active").replace("{n}", String(activeCount)) : t("scenarios.all_off")}
+            label={
+              activeCount > 0
+                ? t(pluralKey(locale, activeCount, { one: "scenarios.active_one", many: "scenarios.active_many" })).replace(
+                    "{n}",
+                    String(activeCount),
+                  )
+                : t("scenarios.all_off")
+            }
           />
         }
         actions={

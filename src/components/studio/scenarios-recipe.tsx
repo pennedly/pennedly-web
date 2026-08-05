@@ -16,7 +16,7 @@
 import { type ReactNode, useState } from "react";
 
 import { cn } from "@/lib/cn";
-import { useTranslation, type MessageKey } from "@/lib/i18n";
+import { useTranslation, pluralUnit, type MessageKey } from "@/lib/i18n";
 import { localHourToUtc, localUtcOffsetLabel } from "@/lib/timezone";
 import {
   IcBolt,
@@ -1132,7 +1132,7 @@ export function BigTextModal({
   onChange: (v: string) => void;
   onClose: () => void;
 }) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const m = BT_META[field];
   return (
     // Full-VIEWPORT overlay (fixed, not absolute-within-.rce) so the scrim/blur
@@ -1169,7 +1169,9 @@ export function BigTextModal({
               {t("scenarios.bo.bt.count").replace("{n}", String(value.length)).replace("{max}", "500")}
             </span>
           ) : (
-            <span className="text-caption tabular-nums text-text-subtle">{t("scenarios.rc.bt.count").replace("{n}", String(value.length))}</span>
+            <span className="text-caption tabular-nums text-text-subtle">
+              {t("scenarios.rc.bt.count").replace("{n}", String(value.length)).replace("{u}", pluralUnit(locale, "characters", value.length))}
+            </span>
           )}
           <span className="flex-1" />
           <Button variant="secondary" size="sm" onClick={onClose}>

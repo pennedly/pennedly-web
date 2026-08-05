@@ -35,7 +35,7 @@ import {
 import { errorCodeText, friendlyErrorText } from "@/lib/errors";
 import { captureEvent } from "@/lib/analytics";
 import { getSelectedAccountId, setSelectedAccountId } from "@/lib/account";
-import { useTranslation, type MessageKey } from "@/lib/i18n";
+import { useTranslation, pluralKey, pluralUnit, type MessageKey } from "@/lib/i18n";
 import {
   TweaksPanel,
   TweakSection,
@@ -327,7 +327,7 @@ function ConnectStep({
   onConnect: () => void;
   onContinue: () => void;
 }) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const trust: { Icon: (p: IconProps) => ReactNode; key: MessageKey }[] = [
     { Icon: IcEye, key: "onboarding.trust1" },
     { Icon: IcCheck, key: "onboarding.trust2" },
@@ -355,7 +355,9 @@ function ConnectStep({
               <div className="mt-0.5 truncate text-caption text-text-subtle">
                 @{account.username}
                 {account.followers_count != null &&
-                  ` · ${t("onboarding.followers_count").replace("{n}", fmt(account.followers_count))}`}
+                  ` · ${t("onboarding.followers_count")
+                    .replace("{n}", fmt(account.followers_count))
+                    .replace("{u}", pluralUnit(locale, "followers", account.followers_count))}`}
               </div>
             )}
           </div>
@@ -545,7 +547,7 @@ function ChooseStep({
   // the page polls the status and the card unlocks by itself.
   importing?: boolean;
 }) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const handle = account?.username ? `@${account.username}` : "your account";
   const modes: {
     id: "analyze" | "scratch";
@@ -632,7 +634,7 @@ function ChooseStep({
                   )}
                   {disabled && (
                     <span className="inline-flex shrink-0 items-center gap-[5px] whitespace-nowrap rounded-full border border-border bg-surface px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.03em] text-text-muted">
-                      <IcLock size={12} /> {t("onboarding.choice_locked").replace("{need}", String(MIN_POSTS))}
+                      <IcLock size={12} /> {t("onboarding.choice_locked").replace("{need}", String(MIN_POSTS)).replace("{u}", pluralUnit(locale, "posts", MIN_POSTS))}
                     </span>
                   )}
                 </span>
@@ -1309,7 +1311,7 @@ export default function OnboardingPage() {
   const [write, setWrite] = useState<string[]>([]);
   const [avoid, setAvoid] = useState<string[]>([]);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
 
   useEffect(() => {
     if (!getTokens()) return;
@@ -1510,7 +1512,13 @@ export default function OnboardingPage() {
     if (!enoughPosts && !importing) {
       setMode(null); // the preset effect re-fills with "scratch"
       setError(
-        t("onboarding.import_too_few")
+        t(
+          pluralKey(locale, postCount, {
+            one: "onboarding.import_too_few_one",
+            few: "onboarding.import_too_few_few",
+            many: "onboarding.import_too_few_many",
+          }),
+        )
           .replace("{need}", String(MIN_POSTS))
           .replace("{have}", String(postCount)),
       );
@@ -1620,7 +1628,13 @@ export default function OnboardingPage() {
       setAwaitingImport(false);
       setMode(null); // never leave a locked card "selected" — preset → scratch
       setError(
-        t("onboarding.import_too_few")
+        t(
+          pluralKey(locale, postCount, {
+            one: "onboarding.import_too_few_one",
+            few: "onboarding.import_too_few_few",
+            many: "onboarding.import_too_few_many",
+          }),
+        )
           .replace("{need}", String(MIN_POSTS))
           .replace("{have}", String(postCount)),
       );

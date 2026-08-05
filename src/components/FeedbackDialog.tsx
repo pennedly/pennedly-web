@@ -26,7 +26,7 @@ import { submitFeedback } from "@/lib/api";
 import { getSelectedAccountId } from "@/lib/account";
 import { APP_VERSION } from "@/lib/version";
 import { captureEvent } from "@/lib/analytics";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, pluralKey } from "@/lib/i18n";
 import { Spinner } from "@/components/ui/feedback";
 import { IcCheck, IcMail, IcAlert } from "@/components/icons";
 import "@/components/feedback-dialog.css";
@@ -204,7 +204,10 @@ export function FeedbackDialog({
               left === 0 ? "text-danger" : "text-text-subtle"
             }`}
           >
-            {t("feedback.count").replace("{n}", String(left))}
+            {t(pluralKey(locale, left, { one: "feedback.count_one", few: "feedback.count_few", many: "feedback.count_many" })).replace(
+              "{n}",
+              String(left),
+            )}
           </p>
         )}
 

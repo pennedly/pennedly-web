@@ -20,7 +20,7 @@ import Link from "next/link";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/cn";
-import { pluralKey, useTranslation } from "@/lib/i18n";
+import { pluralKey, pluralUnit, useTranslation } from "@/lib/i18n";
 import { localHourToUtc, localUtcOffsetLabel } from "@/lib/timezone";
 import {
   IcArrowUp,
@@ -1087,7 +1087,7 @@ export function WhenSegment({
   onDate: (which: "from" | "to", v: string) => void;
   onThreshold: (v: string) => void;
 }) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const MODES: { key: WhenMode; label: MessageKey }[] = [
     { key: "daily", label: "scenarios.when.daily" },
     { key: "every_n_days", label: "scenarios.when.every_n" },
@@ -1164,7 +1164,9 @@ export function WhenSegment({
             value={nDays}
             onChange={(e) => onNDays(Math.min(90, Math.max(1, Number(e.target.value) || 1)))}
           />
-          <span className="text-text-subtle">{t("scenarios.sched.every_n_unit").replace("{n}", String(nDays))}</span>
+          <span className="text-text-subtle">
+            {t("scenarios.sched.every_n_unit").replace("{n}", String(nDays)).replace("{u}", pluralUnit(locale, "days", nDays))}
+          </span>
         </div>
       )}
 
@@ -1568,7 +1570,7 @@ export function ScenarioPreview({
   runResult?: ScenarioRunNow | null;
   onRunNow?: () => void;
 }) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-2">
@@ -1594,7 +1596,9 @@ export function ScenarioPreview({
       {state !== "empty" && state !== "loading" && (
         <p className="inline-flex items-start gap-1.5 px-1 text-caption leading-relaxed text-text-subtle">
           <IcSparkle size={12} className="mt-0.5 shrink-0" />
-          {t("scenarios.primed_on").replace("{n}", String(primedCount ?? 6))}
+          {t(
+            pluralKey(locale, primedCount ?? 6, { one: "scenarios.primed_on_one", few: "scenarios.primed_on_few", many: "scenarios.primed_on_many" }),
+          ).replace("{n}", String(primedCount ?? 6))}
         </p>
       )}
 

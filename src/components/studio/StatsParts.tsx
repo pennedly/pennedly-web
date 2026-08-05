@@ -9,7 +9,7 @@
 import { type ReactNode } from "react";
 
 import { cn } from "@/lib/cn";
-import { pluralUnit, useTranslation, type MessageKey } from "@/lib/i18n";
+import { pluralKey, pluralUnit, useTranslation, type MessageKey } from "@/lib/i18n";
 import { smoothAreaPath, smoothLinePath } from "@/lib/chart";
 import { IcArrowDown, IcArrowRight, IcArrowUp, IcBubble, IcChart, IcEye, IcHeart, IcLock, IcNib, IcSparkle } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -578,7 +578,9 @@ export function HeatmapPanel({ cap, cells }: { cap: string; cells: HeatCellRow[]
             // Posts published 00:00–05:59 have no column in this grid — say how
             // many instead of letting them vanish from the panel.
             <p className="mt-2.5 text-caption text-text-subtle">
-              {t("stats.heat_offgrid").replace("{n}", String(offGrid))}
+              {t(
+                pluralKey(locale, offGrid, { one: "stats.heat_offgrid_one", few: "stats.heat_offgrid_few", many: "stats.heat_offgrid_many" }),
+              ).replace("{n}", String(offGrid))}
             </p>
           )}
           <div className="mt-3 flex items-center justify-end gap-1.5 text-caption text-text-subtle">

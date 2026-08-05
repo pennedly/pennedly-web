@@ -29,7 +29,12 @@ type Unit =
   | "profiles"
   | "brands"
   | "changes"
-  | "published_posts";
+  | "published_posts"
+  | "characters"
+  | "accounts"
+  | "followers"
+  | "sources"
+  | "times";
 
 // `other` mirrors the plain plural already in the message catalogs; `one`
 // (and `few`/`many` for ru/uk) are the additions that make counts grammatical.
@@ -94,15 +99,18 @@ const UNITS: Record<Unit, Record<LocaleCode, PluralForms>> = {
     it: { one: "audit", other: "audit" },
     pt: { one: "auditoria", other: "auditorias" },
   },
+  // `proposals` deliberately mirrors "proposal(s)" — the word `audit.prop.count`
+  // actually renders — not "suggestion(s)"; the advisor's own suggestion copy
+  // (`adv.*`) is a separate, unrelated string family and doesn't use this unit.
   proposals: {
-    en: { one: "suggestion", other: "suggestions" },
+    en: { one: "proposal", other: "proposals" },
     ru: { one: "предложение", few: "предложения", many: "предложений", other: "предложений" },
     uk: { one: "пропозиція", few: "пропозиції", many: "пропозицій", other: "пропозицій" },
     de: { one: "Vorschlag", other: "Vorschläge" },
-    es: { one: "sugerencia", other: "sugerencias" },
-    fr: { one: "suggestion", other: "suggestions" },
-    it: { one: "suggerimento", other: "suggerimenti" },
-    pt: { one: "sugestão", other: "sugestões" },
+    es: { one: "propuesta", other: "propuestas" },
+    fr: { one: "proposition", other: "propositions" },
+    it: { one: "proposta", other: "proposte" },
+    pt: { one: "proposta", other: "propostas" },
   },
   items: {
     en: { one: "item", other: "items" },
@@ -155,6 +163,56 @@ const UNITS: Record<Unit, Record<LocaleCode, PluralForms>> = {
     fr: { one: "post publié", other: "posts publiés" },
     it: { one: "post pubblicato", other: "post pubblicati" },
     pt: { one: "post publicado", other: "posts publicados" },
+  },
+  characters: {
+    en: { one: "character", other: "characters" },
+    ru: { one: "символ", few: "символа", many: "символов", other: "символов" },
+    uk: { one: "символ", few: "символи", many: "символів", other: "символів" },
+    de: { one: "Zeichen", other: "Zeichen" },
+    es: { one: "carácter", other: "caracteres" },
+    fr: { one: "caractère", other: "caractères" },
+    it: { one: "carattere", other: "caratteri" },
+    pt: { one: "caractere", other: "caracteres" },
+  },
+  accounts: {
+    en: { one: "account", other: "accounts" },
+    ru: { one: "аккаунт", few: "аккаунта", many: "аккаунтов", other: "аккаунтов" },
+    uk: { one: "акаунт", few: "акаунти", many: "акаунтів", other: "акаунтів" },
+    de: { one: "Konto", other: "Konten" },
+    es: { one: "cuenta", other: "cuentas" },
+    fr: { one: "compte", other: "comptes" },
+    it: { one: "account", other: "account" },
+    pt: { one: "conta", other: "contas" },
+  },
+  followers: {
+    en: { one: "follower", other: "followers" },
+    ru: { one: "подписчик", few: "подписчика", many: "подписчиков", other: "подписчиков" },
+    uk: { one: "підписник", few: "підписники", many: "підписників", other: "підписників" },
+    de: { one: "Follower", other: "Follower" },
+    es: { one: "seguidor", other: "seguidores" },
+    fr: { one: "abonné", other: "abonnés" },
+    it: { one: "follower", other: "follower" },
+    pt: { one: "seguidor", other: "seguidores" },
+  },
+  sources: {
+    en: { one: "source", other: "sources" },
+    ru: { one: "источник", few: "источника", many: "источников", other: "источников" },
+    uk: { one: "джерело", few: "джерела", many: "джерел", other: "джерел" },
+    de: { one: "Quelle", other: "Quellen" },
+    es: { one: "fuente", other: "fuentes" },
+    fr: { one: "source", other: "sources" },
+    it: { one: "fonte", other: "fonti" },
+    pt: { one: "fonte", other: "fontes" },
+  },
+  times: {
+    en: { one: "time", other: "times" },
+    ru: { one: "раз", few: "раза", many: "раз", other: "раз" },
+    uk: { one: "раз", few: "рази", many: "разів", other: "разів" },
+    de: { one: "Mal", other: "Mal" },
+    es: { one: "vez", other: "veces" },
+    fr: { one: "fois", other: "fois" },
+    it: { one: "volta", other: "volte" },
+    pt: { one: "vez", other: "vezes" },
   },
 };
 

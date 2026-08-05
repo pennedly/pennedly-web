@@ -20,7 +20,7 @@ import {
 } from "@/lib/api";
 import { friendlyErrorText } from "@/lib/errors";
 import { captureEvent } from "@/lib/analytics";
-import { useTranslation, type MessageKey } from "@/lib/i18n";
+import { useTranslation, pluralKey, type MessageKey } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/feedback";
@@ -128,7 +128,7 @@ export function AntiRobotPanel({
   tw?: AntiRobotTweaks;
   onCounts?: (c: { on: number; total: number }) => void;
 }) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [rules, setRules] = useState<StyleRule[] | null>(null);
   const [userRules, setUserRules] = useState<UserRule[] | null>(null);
   const [pending, setPending] = useState<Set<string>>(new Set());
@@ -344,7 +344,7 @@ export function AntiRobotPanel({
             <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 text-small text-text-muted">
               <span>{fill(t("style_rules.stat_builtin"), { on: builtinOn, total: builtinTotal })}</span>
               <span className="h-[3px] w-[3px] rounded-full bg-text-subtle" />
-              <span>{fill(t("style_rules.stat_own"), { n: ownCount })}</span>
+              <span>{fill(t(pluralKey(locale, ownCount, { one: "style_rules.stat_own_one", many: "style_rules.stat_own_many" })), { n: ownCount })}</span>
             </div>
           </div>
 

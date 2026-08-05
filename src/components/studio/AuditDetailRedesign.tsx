@@ -11,7 +11,7 @@
 import { useState, type ReactNode } from "react";
 
 import { cn } from "@/lib/cn";
-import { useTranslation, type MessageKey } from "@/lib/i18n";
+import { useTranslation, getLocale, pluralKey, pluralUnit, type MessageKey } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import {
   IcArrowDown, IcArrowLeft, IcArrowRight, IcArrowUp, IcChart, IcCheck, IcChevDown,
@@ -102,7 +102,7 @@ function VerdictHeader({ m, initials, name, handle, reviewCount, onBack, t }: {
           <div className="min-w-0">
             <div className="text-small font-semibold leading-[1.2]">{name} <span className="text-caption text-text-subtle">{handle}</span></div>
             <div className="mt-0.5 inline-flex items-center gap-1.5 text-caption tabular-nums text-text-subtle">
-              <IcClock size={12} /> {v.period}<span className="mx-0.5 inline-block h-[3px] w-[3px] rounded-full bg-ink-400" />{t("audit.detail.in_analysis").replace("{n}", String(v.posts))}
+              <IcClock size={12} /> {v.period}<span className="mx-0.5 inline-block h-[3px] w-[3px] rounded-full bg-ink-400" />{t("audit.detail.in_analysis").replace("{n}", String(v.posts)).replace("{u}", pluralUnit(getLocale(), "posts", v.posts))}
             </div>
           </div>
           <span className="flex-1" />
@@ -126,7 +126,9 @@ function VerdictHeader({ m, initials, name, handle, reviewCount, onBack, t }: {
 
 function LoopStrip({ loop, t }: { loop: NonNullable<AuditDetailModel["loop"]>; t: (k: MessageKey) => string }) {
   const body = t("audit.loop.text").replace("{window}", loop.window).replace("{up}", loop.up).replace("{metric}", loop.metric);
-  const rolled = t("audit.loop.rolled").replace("{n}", String(loop.rolled));
+  const rolled = t(
+    pluralKey(getLocale(), loop.rolled, { one: "audit.loop.rolled_one", few: "audit.loop.rolled_few", many: "audit.loop.rolled_many" }),
+  ).replace("{n}", String(loop.rolled));
   return (
     <div className="flex items-center gap-3 rounded-lg border border-accent/25 bg-accent/[0.06] px-4 py-[13px] max-md:flex-wrap">
       <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-accent/25 bg-accent/[0.13] text-accent"><IcRepeat size={16} /></span>
@@ -304,12 +306,15 @@ function DimGroup({ dim, props, top, h, t }: { dim: { key: AuditDim; ico: string
 export function AuditDetailRedesign({ model, initials, name, handle, onBack, h }: {
   model: AuditDetailModel; initials: string; name: string; handle: string; onBack: () => void; h: AuditDetailHandlers;
 }) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const total = model.proposals.length;
   const applied = model.proposals.filter((p) => p.status === "applied").length;
   const rejected = model.proposals.filter((p) => p.status === "rejected").length;
   const undecided = total - applied - rejected;
-  const count = t("audit.prop.count").replace("{total}", String(total)).replace("{applied}", String(applied)) + (rejected > 0 ? t("audit.prop.count_rej").replace("{rejected}", String(rejected)) : "");
+  const count = t("audit.prop.count")
+    .replace("{total}", String(total))
+    .replace("{applied}", String(applied))
+    .replace("{u}", pluralUnit(locale, "proposals", total)) + (rejected > 0 ? t("audit.prop.count_rej").replace("{rejected}", String(rejected)) : "");
   const groups = AUDIT_DIMS.map((dim, idx) => ({ dim, top: idx === 0, props: model.proposals.filter((p) => p.dim === dim.key) })).filter((g) => g.props.length > 0);
   return (
     <div className="flex flex-col gap-4 md:gap-5">

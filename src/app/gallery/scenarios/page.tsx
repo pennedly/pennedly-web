@@ -57,7 +57,7 @@ import { ReplyAudienceGallery } from "@/components/studio/ReplyAudienceGallery";
 import { AUDIENCE_PRESETS, type ReplyAudience, mergeAudiencePrompt } from "@/components/studio/reply-audience";
 import { Badge, InheritChip, StatusBadge } from "@/components/studio/Badges";
 import { IcReplies, IcRepeat, IcSliders, IcSwap } from "@/components/icons";
-import { pluralKey, useTranslation, type MessageKey } from "@/lib/i18n";
+import { pluralKey, pluralUnit, useTranslation, type MessageKey } from "@/lib/i18n";
 import { cn } from "@/lib/cn";
 import type { Scenario, ScenarioPreset, ScenarioPreview as ScenarioPreviewT } from "@/lib/types";
 
@@ -537,7 +537,8 @@ export default function ScenariosGallery() {
     body: t("scenarios.tip.conflict_body")
       .replace("{names}", `${conflictNames.slice(0, -1).join(", ")} ${t("common.and")} ${conflictNames[conflictNames.length - 1]}`)
       .replace("{time}", "8:00")
-      .replace("{cap}", "1"),
+      .replace("{cap}", "1")
+      .replace("{u}", pluralUnit(locale, "posts", 1)),
     actions: [
       { key: "spread", label: t("scenarios.tip.conflict_spread"), icon: "spread" },
       { key: "raise", label: t("scenarios.tip.conflict_raise"), icon: "up" },

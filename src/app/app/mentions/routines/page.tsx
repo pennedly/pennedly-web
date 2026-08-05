@@ -11,7 +11,7 @@ import "@/components/studio/mention-routines.css";
 import "@/components/studio/publish-mode.css";
 import { ApiError, clearTokens, fetchMe, fetchScenarios, getTokens, setScenarioEnabled } from "@/lib/api";
 import { useSelectedAccountId } from "@/lib/account";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, pluralKey } from "@/lib/i18n";
 import { useTesterGuard } from "@/lib/tester";
 import { useDemoParam } from "@/lib/query";
 import { HERO_FADE_STYLE } from "@/lib/useHeaderReveal";
@@ -143,7 +143,11 @@ export default function MentionRoutinesPage() {
             tone="accent"
             count={activeRoutines}
             zero="idle"
-            label={t("mr.hub.count").replace("{total}", String(shownRoutines.length)).replace("{on}", String(activeRoutines))}
+            label={t(
+              pluralKey(locale, shownRoutines.length, { one: "mr.hub.count_one", few: "mr.hub.count_few", many: "mr.hub.count_many" }),
+            )
+              .replace("{total}", String(shownRoutines.length))
+              .replace("{on}", String(activeRoutines))}
           />
         }
       />

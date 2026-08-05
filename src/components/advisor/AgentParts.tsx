@@ -16,7 +16,7 @@ import Link from "next/link";
 import { ApiError } from "@/lib/api";
 import { friendlyErrorText } from "@/lib/errors";
 import { cn } from "@/lib/cn";
-import { useTranslation, type MessageKey } from "@/lib/i18n";
+import { useTranslation, pluralUnit, type MessageKey } from "@/lib/i18n";
 import {
   IcAdvisor,
   IcAlert,
@@ -524,7 +524,7 @@ export function ThinkingSteps({ step }: { step: number }) {
 export type ThinData = { title: string; body: string; have: number; need: number; scopeLabel: string };
 
 export function ThinDataBlock({ d }: { d: ThinData }) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const pct = d.need > 0 ? Math.max(0, Math.min(100, Math.round((d.have / d.need) * 100))) : 0;
   return (
     <div className="ag-thin">
@@ -534,7 +534,12 @@ export function ThinDataBlock({ d }: { d: ThinData }) {
       </div>
       <p>{d.body}</p>
       <div className="ag-gauge">
-        <span>{t("agent.thin.gauge").replace("{have}", String(d.have)).replace("{need}", String(d.need))}</span>
+        <span>
+          {t("agent.thin.gauge")
+            .replace("{have}", String(d.have))
+            .replace("{need}", String(d.need))
+            .replace("{u}", pluralUnit(locale, "sources", d.need))}
+        </span>
         <span className="ag-gauge-bar">
           <i style={{ width: `${pct}%` }} />
         </span>

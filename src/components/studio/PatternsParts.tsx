@@ -9,7 +9,7 @@
 import { type ReactNode } from "react";
 
 import { cn } from "@/lib/cn";
-import { useTranslation, type MessageKey } from "@/lib/i18n";
+import { useTranslation, pluralKey, pluralUnit, type MessageKey } from "@/lib/i18n";
 import { buttonClasses } from "@/components/ui/button";
 import { IcCheck, IcNib, IcStudy, IcTweak } from "@/components/icons";
 import type { PatternCardModel } from "@/components/studio/patterns-demo";
@@ -23,7 +23,7 @@ function withVar(s: string, vars: Record<string, string | number>): string {
 
 // ─────────────────────────────── EmptyView ──────────────────────────────────
 export function EmptyView({ have, need }: { have: number; need: number }) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   return (
     <div className="flex flex-col items-center rounded-lg border border-dashed border-border bg-surface/50 px-7 py-[60px] text-center">
       <span className="mb-[18px] grid h-[54px] w-[54px] place-items-center rounded-lg border border-border bg-surface-2 text-text-subtle">
@@ -35,7 +35,7 @@ export function EmptyView({ have, need }: { have: number; need: number }) {
         <div className="h-2 overflow-hidden rounded-full border border-border bg-surface-2">
           <span className="block h-full rounded-full bg-accent" style={{ width: `${Math.min(100, (have / need) * 100)}%` }} />
         </div>
-        <div className="mt-[9px] text-caption text-text-subtle">{withVar(t("patterns.of_posts"), { have, need })}</div>
+        <div className="mt-[9px] text-caption text-text-subtle">{withVar(t("patterns.of_posts"), { have, need }).replace("{u}", pluralUnit(locale, "posts", need))}</div>
       </div>
     </div>
   );
@@ -43,7 +43,7 @@ export function EmptyView({ have, need }: { have: number; need: number }) {
 
 // ─────────────────────────────── IdleView ───────────────────────────────────
 export function IdleView({ postsAnalyzed, onRun }: { postsAnalyzed: number; onRun: () => void }) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   return (
     <div className="flex flex-col items-center rounded-2xl border border-border bg-surface px-10 pb-9 pt-10 text-center shadow-sm max-md:px-6">
       <span className="mb-5 grid h-14 w-14 place-items-center rounded-lg border border-border bg-surface-2 text-text">
@@ -55,7 +55,10 @@ export function IdleView({ postsAnalyzed, onRun }: { postsAnalyzed: number; onRu
         <IcStudy size={18} /> {t("patterns.run_study")}
       </button>
       <div className="mt-[18px] flex items-center gap-2.5 text-caption text-text-subtle max-md:flex-wrap max-md:justify-center">
-        {withVar(t("patterns.idle_scope"), { n: postsAnalyzed })}
+        {withVar(
+          t(pluralKey(locale, postsAnalyzed, { one: "patterns.idle_scope_one", few: "patterns.idle_scope_few", many: "patterns.idle_scope_many" })),
+          { n: postsAnalyzed },
+        )}
         <span className="h-1 w-1 rounded-full bg-text-subtle" />
         {t("patterns.idle_time")}
       </div>
@@ -100,12 +103,14 @@ export function RunningView({ step }: { step: number }) {
 
 // ─────────────────────────────── ResultsHead ────────────────────────────────
 export function ResultsHead({ count, postsAnalyzed, onRerun }: { count: number; postsAnalyzed: number; onRerun: () => void }) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   return (
     <div className="flex flex-wrap items-end justify-between gap-4">
       <div>
         <div className="text-h2 font-semibold tracking-[-0.01em]">{withVar(t("patterns.found"), { n: count })}</div>
-        <div className="mt-1 text-small text-text-subtle">{withVar(t("patterns.study_cap"), { n: postsAnalyzed })}</div>
+        <div className="mt-1 text-small text-text-subtle">
+          {withVar(t(pluralKey(locale, postsAnalyzed, { one: "patterns.study_cap_one", many: "patterns.study_cap_many" })), { n: postsAnalyzed })}
+        </div>
       </div>
       <button onClick={onRerun} className={buttonClasses({ variant: "secondary", size: "sm" })}>
         <IcTweak size={15} /> {t("patterns.rerun")}

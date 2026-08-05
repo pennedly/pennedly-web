@@ -15,7 +15,7 @@ import { type ReactNode } from "react";
 
 import { cn } from "@/lib/cn";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
-import { pluralUnit } from "@/lib/i18n/plurals";
+import { pluralKey, pluralUnit } from "@/lib/i18n/plurals";
 import type { LocaleCode } from "@/lib/i18n/locales";
 import { Avatar } from "@/components/ui/avatar";
 import { ConnectThreadsButton } from "@/components/ConnectThreadsButton";
@@ -146,7 +146,9 @@ export function PortfolioTotals({ totals }: { totals: OverviewTotals }) {
         <span className="text-caption font-semibold uppercase tracking-[0.04em] text-text-subtle">{acrossN}</span>
         {totals.importing_count > 0 && (
           <span className="text-caption font-semibold text-accent">
-            {t("overview.strip.importing").replace("{n}", String(totals.importing_count))}
+            {t(
+              pluralKey(locale, totals.importing_count, { one: "overview.strip.importing_one", many: "overview.strip.importing_many" }),
+            ).replace("{n}", String(totals.importing_count))}
           </span>
         )}
       </div>

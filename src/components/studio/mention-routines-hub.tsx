@@ -21,7 +21,7 @@ import {
   IcSwap,
   IcWand,
 } from "@/components/icons";
-import type { MessageKey } from "@/lib/i18n";
+import { pluralKey, type LocaleCode, type MessageKey } from "@/lib/i18n";
 import type { MRoutine } from "@/components/studio/mention-routines";
 
 type T = (k: MessageKey) => string;
@@ -179,7 +179,11 @@ export function MentionRoutinesHub({
       <div className="mr-hubhead">
         <span className="mh-t">{t("mr.hub.title")}</span>
         <span className="mh-s">
-          {t("mr.hub.count").replace("{total}", String(routines.length)).replace("{on}", String(on))}
+          {t(
+            pluralKey(locale as LocaleCode, routines.length, { one: "mr.hub.count_one", few: "mr.hub.count_few", many: "mr.hub.count_many" }),
+          )
+            .replace("{total}", String(routines.length))
+            .replace("{on}", String(on))}
         </span>
       </div>
       <button type="button" className="mr-addcard" onClick={onCreate}>
