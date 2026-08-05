@@ -10,6 +10,8 @@
 
 import { useState, KeyboardEvent } from "react";
 
+import { useTranslation } from "@/lib/i18n";
+
 type Variant = "default" | "danger";
 
 type Props = {
@@ -37,14 +39,16 @@ type Props = {
 export function TagInput({
   items,
   onChange,
-  placeholder = "add an item and press enter",
+  placeholder,
   variant = "default",
   commitOnComma = true,
   flagged,
   onFlaggedClick,
   readOnly = false,
 }: Props) {
+  const { t } = useTranslation();
   const [input, setInput] = useState("");
+  const effectivePlaceholder = placeholder ?? t("tag_input.placeholder");
 
   function commit(raw: string) {
     const value = raw.trim();
@@ -120,8 +124,8 @@ export function TagInput({
               <button
                 type="button"
                 onClick={() => onFlaggedClick?.(item)}
-                title="Click to see what this conflicts with"
-                aria-label={`${item} — has a conflict`}
+                title={t("tag_input.conflict_hint")}
+                aria-label={t("tag_input.conflict_aria").replace("{item}", item)}
                 className="text-amber-600 dark:text-amber-400 leading-none hover:scale-110 transition-transform"
               >
                 ⚠
@@ -133,7 +137,7 @@ export function TagInput({
                 type="button"
                 onClick={() => removeAt(idx)}
                 className="ml-0.5 text-current opacity-50 hover:opacity-100 text-xs leading-none"
-                aria-label={`remove ${item}`}
+                aria-label={t("tag_input.remove_aria").replace("{item}", item)}
               >
                 ×
               </button>
@@ -151,7 +155,7 @@ export function TagInput({
             const t = e.clipboardData.getData("text");
             if (onPaste(t)) e.preventDefault();
           }}
-          placeholder={items.length === 0 ? placeholder : ""}
+          placeholder={items.length === 0 ? effectivePlaceholder : ""}
           className="flex-1 min-w-[140px] bg-transparent text-sm outline-none py-0.5 px-1"
         />
       )}
@@ -160,7 +164,7 @@ export function TagInput({
         // as a blank box. Show the (already-translated) placeholder as
         // muted static text — same hint the editor shows, same position.
         <span className="text-sm text-text-subtle py-0.5 px-1">
-          {placeholder}
+          {effectivePlaceholder}
         </span>
       )}
     </div>

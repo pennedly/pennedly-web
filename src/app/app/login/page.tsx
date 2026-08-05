@@ -281,6 +281,7 @@ function OtpInput({
   error: boolean;
   onComplete: (v: string) => void;
 }) {
+  const { t } = useTranslation();
   const refs = useRef<(HTMLInputElement | null)[]>([]);
   function setDigit(i: number, d: string): string {
     const next = value.split("");
@@ -338,7 +339,7 @@ function OtpInput({
           }}
           inputMode="numeric"
           maxLength={1}
-          aria-label={`Digit ${i + 1}`}
+          aria-label={t("login.otp_digit_aria").replace("{n}", String(i + 1))}
           autoFocus={i === 0}
           value={value[i] || ""}
           onChange={(e) => handleChange(i, e.target.value)}

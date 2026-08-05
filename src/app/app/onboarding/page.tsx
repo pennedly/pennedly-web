@@ -776,6 +776,7 @@ function ChipInput({
   suggestions: string[];
   tone?: "avoid";
 }) {
+  const { t } = useTranslation();
   const [text, setText] = useState("");
   function add(v?: string) {
     const tt = (v ?? text).trim();
@@ -804,7 +805,7 @@ function ChipInput({
             {v}
             <button
               type="button"
-              aria-label={`Remove ${v}`}
+              aria-label={t("onboarding.chip_remove_aria").replace("{item}", v)}
               onClick={() => remove(v)}
               className="grid h-4 w-4 place-items-center rounded-full text-text-subtle transition-colors hover:bg-[color-mix(in_srgb,var(--color-text)_10%,transparent)] hover:text-text"
             >

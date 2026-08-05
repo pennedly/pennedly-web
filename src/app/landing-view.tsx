@@ -513,7 +513,7 @@ function WaitlistForm({ source = "hero" }: { source?: "hero" | "footer" }) {
             setEmail(e.target.value);
             if (failed) setState("idle");
           }}
-          placeholder="you@email.com"
+          placeholder={t("landing.waitlist_email_placeholder")}
           aria-invalid={failed || undefined}
           // 16px hard, not the 15px body token: anything smaller and Safari on
           // iPhone zooms the page on focus.
