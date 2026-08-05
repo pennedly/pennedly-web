@@ -10,6 +10,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 
 import { mediaUrl, translateText } from "@/lib/api";
 import { cn } from "@/lib/cn";
+import { errorCodeText } from "@/lib/errors";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import type { LanguageCode } from "@/lib/types";
 import { Button, buttonClasses } from "@/components/ui/button";
@@ -394,13 +395,17 @@ export function ReplyImage({ c, h }: { c: ReplyComment; h: ReplyHandlers }) {
     if (!REPLY_IMG_TYPES.includes(f.type)) return setErr(t("studio.image_bad_type"));
     if (f.size > 8 * 1024 * 1024) return setErr(t("studio.image_too_large"));
     setUploading(true);
+    const prev = media;
     try {
       const { url } = await h.onUploadImage(f);
       const next = [{ url }];
       setMedia(next);
       await h.onSetMedia(c, next);
-    } catch {
-      setErr(t("studio.image_failed"));
+    } catch (e) {
+      // Revert like `remove()` below: the server owns what's attached, so a
+      // failed attach must not leave a thumbnail the reply won't publish with.
+      setMedia(prev);
+      setErr(errorCodeText(e) ?? t("studio.image_failed"));
     } finally {
       setUploading(false);
     }
@@ -420,13 +425,15 @@ export function ReplyImage({ c, h }: { c: ReplyComment; h: ReplyHandlers }) {
   }
 
   async function saveAlt(alt: string) {
+    const prev = media;
     const next = media.map((m, i) => (i === 0 ? { ...m, alt: alt || null } : m));
     setMedia(next);
     setAltOpen(false);
     try {
       await h.onSetMedia(c, next);
-    } catch {
-      setErr(t("studio.image_failed"));
+    } catch (e) {
+      setMedia(prev); // the alt text didn't save — don't keep showing it as saved
+      setErr(errorCodeText(e) ?? t("studio.image_failed"));
     }
   }
 

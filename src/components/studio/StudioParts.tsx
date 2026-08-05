@@ -10,6 +10,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { mediaUrl } from "@/lib/api";
+import { errorCodeText } from "@/lib/errors";
 import { extractFirstUrl } from "@/lib/links";
 import { cn } from "@/lib/cn";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
@@ -395,13 +396,20 @@ export function DraftCard({
       return;
     }
     setUploading(true);
+    const prev = media;
     try {
       const { url } = await h.onUploadImage(file);
       const next = [...media, { url }];
       setMedia(next);
       await h.onSetMedia(card, next);
-    } catch {
-      setMediaError(t("studio.image_failed"));
+    } catch (e) {
+      // Revert: the attach is what the server stores, so leaving the thumbnail
+      // up after it failed showed an image the draft doesn't have — and the
+      // post then published without it. Same revert every other media handler
+      // here already does. `errorCodeText` surfaces the server's own reason
+      // (quota reached / too many images) when it sent one.
+      setMedia(prev);
+      setMediaError(errorCodeText(e) ?? t("studio.image_failed"));
     } finally {
       setUploading(false);
     }
@@ -455,12 +463,14 @@ export function DraftCard({
       return;
     }
     setVideoUploading(true);
+    const prev = video;
     try {
       const { url } = await h.onUploadImage(file); // same upload endpoint
       setVideo({ url });
       await h.onSetVideo(card, { url });
-    } catch {
-      setMediaError(t("studio.video_failed"));
+    } catch (e) {
+      setVideo(prev); // revert — same reason as onPickFile above
+      setMediaError(errorCodeText(e) ?? t("studio.video_failed"));
     } finally {
       setVideoUploading(false);
     }
