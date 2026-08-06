@@ -5,6 +5,7 @@ import { LegalLayout, type LegalDoc } from "@/components/legal/LegalLayout";
 export const metadata: Metadata = {
   title: "Data Deletion — Pennedly",
   description: "How to remove your data from Pennedly, what gets deleted, and when.",
+  alternates: { canonical: "/data-deletion" },
 };
 
 // New route (Meta App Review requires a reachable data-deletion page). Content

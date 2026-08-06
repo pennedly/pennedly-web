@@ -15,7 +15,7 @@
 // you can ship a feature in en first and translate to others later
 // at any pace.
 
-import { useCallback, useMemo, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
 
 import { en, type MessageKey } from "./messages/en";
 import { ru } from "./messages/ru";
@@ -116,6 +116,20 @@ function getServerSnapshot(): LocaleCode {
 
 export function useLocale(): LocaleCode {
   return useSyncExternalStore(subscribe, () => current, getServerSnapshot);
+}
+
+/** Keeps `<html lang>` in step with the active locale. Server-rendered markup
+ *  always ships `lang="en"` (this dictionary switches client-side, no routing —
+ *  see the file header), so without this a screen reader reads Russian copy
+ *  with an English voice and crawlers only ever see `en`. Call once from a
+ *  root-mounted client component (providers.tsx) rather than sprinkling this
+ *  effect per page — it fires on mount (setting the real locale as soon as
+ *  localStorage/navigator.language resolve) and again on every locale switch. */
+export function useSyncHtmlLang(): void {
+  const locale = useLocale();
+  useEffect(() => {
+    document.documentElement.lang = locale;
+  }, [locale]);
 }
 
 // Translation ── ────────────────────────────────────────────────

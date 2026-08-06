@@ -5,6 +5,7 @@ import { LegalLayout, type LegalDoc } from "@/components/legal/LegalLayout";
 export const metadata: Metadata = {
   title: "Privacy Policy — Pennedly",
   description: "How Pennedly collects, uses, and protects your data.",
+  alternates: { canonical: "/privacy" },
 };
 
 // Real, reviewed privacy content rendered through the design's legal template.

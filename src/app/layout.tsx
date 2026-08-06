@@ -20,9 +20,14 @@ const DESCRIPTION =
   "Your drafting partner for Threads — write in your own voice, and you keep the final say.";
 
 export const metadata: Metadata = {
-  // Resolves relative URLs (incl. the opengraph-image card) to absolute ones.
-  // The landing lives at the root of app.pennedly.com (Q20).
-  metadataBase: new URL("https://app.pennedly.com"),
+  // Resolves relative URLs (incl. the opengraph-image card and every public
+  // page's canonical) to absolute ones. pennedly.com is the marketing domain —
+  // the public pages (landing, terms, privacy, data-deletion) canonicalize
+  // there, not to app.pennedly.com, so the two hosts (same Next app, served by
+  // hostname) don't split ranking signal between them. The /app and /gallery
+  // trees opt out of indexing entirely (see their own layouts), so they never
+  // need a canonical of their own.
+  metadataBase: new URL("https://pennedly.com"),
   title: "Pennedly",
   description: DESCRIPTION,
   openGraph: {

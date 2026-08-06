@@ -5,6 +5,7 @@ import { LegalLayout, type LegalDoc } from "@/components/legal/LegalLayout";
 export const metadata: Metadata = {
   title: "Terms of Service — Pennedly",
   description: "The terms governing your use of Pennedly.",
+  alternates: { canonical: "/terms" },
 };
 
 // Real, reviewed terms reflecting how Pennedly actually works (a drafting
