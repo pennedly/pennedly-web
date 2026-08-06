@@ -23,6 +23,7 @@ import {
   fetchMe,
   fetchMyAccounts,
   fetchOnboardingStatus,
+  fetchRoleBook,
   getTokens,
   onboardingAnalyze,
   onboardingAnalyzePreview,
@@ -74,7 +75,7 @@ import { Button, buttonClasses } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/feedback";
 import { fmt } from "@/components/studio/FeedParts";
 import { cn } from "@/lib/cn";
-import type { ConnectedAccount, OnboardingPreview, OnboardingStatus } from "@/lib/types";
+import type { ConnectedAccount, OnboardingPreview, OnboardingStatus, RoleBookSections } from "@/lib/types";
 
 type Stage = "loading" | "connect" | "goals" | "choose" | "analyze" | "scratch" | "done";
 type Mode = "analyze" | "scratch" | null;
@@ -940,6 +941,48 @@ const PREVIEW_VOICE = {
   themes: ["The craft of writing", "Building in public", "Creative courage", "Writing for the right hundred people"],
   traits: ["Plain words over clever ones", "Opens on a concrete moment", "Short paragraphs, one idea each", "Dry humour, usually self-directed"],
 };
+// Same sample voice, shaped as RoleBookSections — feeds the demo's REAL (non-preview)
+// done step so ?demo=1 / /gallery reviewers can see the voice-summary cards there too.
+const DEMO_VOICE_SECTIONS: RoleBookSections = {
+  intro: PREVIEW_VOICE.summary,
+  themes_include: PREVIEW_VOICE.themes.map((label) => ({ label })),
+  voice_characteristics: PREVIEW_VOICE.traits.map((text) => ({ text })),
+};
+
+// Voice summary / themes / "how you sound" cards — shared by the tester-only
+// preview result and the real done step (below), so a real user gets the
+// same rich recap of the voice that was just built, not just a checkmark.
+function VoiceCards({ summary, themes, traits }: { summary: string; themes: string[]; traits: string[] }) {
+  const { t } = useTranslation();
+  return (
+    <div className="mt-[22px] flex flex-col gap-[18px]">
+      <div>
+        <div className="mb-2 text-caption font-semibold uppercase tracking-[0.05em] text-text-subtle">{t("onboarding.pv_summary_cap")}</div>
+        <p className="rounded-md border border-border bg-surface-2 px-4 py-3.5 text-pretty text-body leading-relaxed text-text">{summary}</p>
+      </div>
+      <div>
+        <div className="mb-2 text-caption font-semibold uppercase tracking-[0.05em] text-text-subtle">{t("onboarding.pv_themes_cap")}</div>
+        <div className="flex flex-wrap gap-2">
+          {themes.map((x) => (
+            <span key={x} className="whitespace-nowrap rounded-full border border-border bg-surface-2 px-3 py-[5px] text-small font-medium text-text">
+              {x}
+            </span>
+          ))}
+        </div>
+      </div>
+      <div>
+        <div className="mb-2 text-caption font-semibold uppercase tracking-[0.05em] text-text-subtle">{t("onboarding.pv_sound_cap")}</div>
+        <ul className="flex flex-col gap-2">
+          {traits.map((x) => (
+            <li key={x} className="flex items-start gap-[9px] text-small leading-snug text-text">
+              <IcCheck size={14} className="mt-0.5 shrink-0 text-success" /> {x}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
 
 function PreviewResult({
   account,
@@ -967,32 +1010,7 @@ function PreviewResult({
         <h1 className="mt-4 text-balance text-h1 font-semibold leading-[1.6] tracking-[-0.015em] max-[560px]:text-h2">{t("onboarding.preview_would_title")}</h1>
         <StepSub center>{t("onboarding.preview_would_sub").replace("{src}", src)}</StepSub>
       </div>
-      <div className="mt-[22px] flex flex-col gap-[18px]">
-        <div>
-          <div className="mb-2 text-caption font-semibold uppercase tracking-[0.05em] text-text-subtle">{t("onboarding.pv_summary_cap")}</div>
-          <p className="rounded-md border border-border bg-surface-2 px-4 py-3.5 text-pretty text-body leading-relaxed text-text">{summary}</p>
-        </div>
-        <div>
-          <div className="mb-2 text-caption font-semibold uppercase tracking-[0.05em] text-text-subtle">{t("onboarding.pv_themes_cap")}</div>
-          <div className="flex flex-wrap gap-2">
-            {themes.map((x) => (
-              <span key={x} className="whitespace-nowrap rounded-full border border-border bg-surface-2 px-3 py-[5px] text-small font-medium text-text">
-                {x}
-              </span>
-            ))}
-          </div>
-        </div>
-        <div>
-          <div className="mb-2 text-caption font-semibold uppercase tracking-[0.05em] text-text-subtle">{t("onboarding.pv_sound_cap")}</div>
-          <ul className="flex flex-col gap-2">
-            {traits.map((x) => (
-              <li key={x} className="flex items-start gap-[9px] text-small leading-snug text-text">
-                <IcCheck size={14} className="mt-0.5 shrink-0 text-success" /> {x}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
+      <VoiceCards summary={summary} themes={themes} traits={traits} />
       <div className="mt-[26px] flex items-center gap-3">
         <BackLink href="/app/settings">
           <IcArrowLeft size={15} /> {t("onboarding.back_to_settings")}
@@ -1013,6 +1031,7 @@ function DoneStep({
   mode,
   preview,
   previewResult,
+  voiceSections,
   onGo,
 }: {
   account: ConnectedAccount | null;
@@ -1020,6 +1039,7 @@ function DoneStep({
   mode: Mode;
   preview: boolean;
   previewResult?: OnboardingPreview | null;
+  voiceSections?: RoleBookSections | null;
   onGo: () => void;
 }) {
   const { t } = useTranslation();
@@ -1068,6 +1088,14 @@ function DoneStep({
           {mode && <IcCheck size={17} className="ml-auto shrink-0 text-success" />}
         </div>
       </div>
+
+      {mode && voiceSections && (
+        <VoiceCards
+          summary={voiceSections.intro || ""}
+          themes={voiceSections.themes_include?.map((x) => x.label) ?? []}
+          traits={voiceSections.voice_characteristics?.map((x) => (x.label ? `${x.label}: ${x.text}` : x.text)) ?? []}
+        />
+      )}
 
       <div className="mt-6 flex items-center gap-3">
         <BackLink href="/app/role-book">{t("onboarding.refine_voice")}</BackLink>
@@ -1280,7 +1308,14 @@ function OnboardingDemo({ tw }: { tw: ObTweaks }) {
           onBack={() => setStage("choose")}
         />
       ) : (
-        <DoneStep account={DEMO_ACCOUNT} connected={connected} mode={mode} preview={tw.preview} onGo={() => router.replace("/app")} />
+        <DoneStep
+          account={DEMO_ACCOUNT}
+          connected={connected}
+          mode={mode}
+          preview={tw.preview}
+          voiceSections={DEMO_VOICE_SECTIONS}
+          onGo={() => router.replace("/app")}
+        />
       )}
     </Frame>
   );
@@ -1302,6 +1337,11 @@ export default function OnboardingPage() {
   const [alreadySetUp, setAlreadySetUp] = useState(false);
   const [preview, setPreview] = useState(false);
   const [previewResult, setPreviewResult] = useState<OnboardingPreview | null>(null);
+  // Real (non-preview) done step recap: fetched once the real analyze/from-scratch
+  // call lands, so the done screen can show the same voice-summary/themes/traits
+  // cards as the tester preview instead of a bare two-line recap. Fire-and-forget
+  // (the done screen must never block on it) — null just omits the cards.
+  const [voiceSections, setVoiceSections] = useState<RoleBookSections | null>(null);
   const [mode, setMode] = useState<Mode>(null);
   const [anIndex, setAnIndex] = useState(0);
   const [analyzeSlow, setAnalyzeSlow] = useState(false);
@@ -1573,6 +1613,9 @@ export default function OnboardingPage() {
       setAnIndex(n);
       setMode("analyze");
       setStage("done");
+      void fetchRoleBook(accountId)
+        .then((rb) => setVoiceSections(rb.sections))
+        .catch(() => {});
     } catch (e) {
       if (e instanceof AnalyzeTimeout) {
         setError(t("onboarding.analyze_timeout"));
@@ -1664,6 +1707,9 @@ export default function OnboardingPage() {
       await onboardingFromScratch(accountId, payload);
       setMode("scratch");
       setStage("done");
+      void fetchRoleBook(accountId)
+        .then((rb) => setVoiceSections(rb.sections))
+        .catch(() => {});
     } catch (e) {
       setError(errMsg(e, t));
     } finally {
@@ -1780,6 +1826,7 @@ export default function OnboardingPage() {
               mode={mode}
               preview={preview}
               previewResult={previewResult}
+              voiceSections={voiceSections}
               onGo={() => router.replace("/app")}
             />
           )}

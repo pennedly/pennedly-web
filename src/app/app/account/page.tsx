@@ -155,7 +155,11 @@ export default function AccountDashboardPage() {
         const ob = await fetchOnboardingStatus(justConnected.id);
         if (!alive) return;
         if (ob.needs_onboarding && !ob.onboarding_skipped) {
-          router.replace("/app/onboarding");
+          // Carry threads_connected=1 forward: without it the wizard's boot
+          // effect can't tell this apart from a plain revisit and skips both
+          // the connect banner AND the goals stage straight to "choose" —
+          // the bug that made the 2026-08-01 goals step unreachable in prod.
+          router.replace("/app/onboarding?threads_connected=1");
           return;
         }
         if (!alive) return;
