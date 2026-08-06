@@ -112,13 +112,48 @@ const EASE = "cubic-bezier(0.2,0.7,0.3,1)";
 
 // Sample seed content (not user data) — mirrors onboarding-data.jsx. Per the
 // design handoff, starter lines + topic suggestions are sample content.
-const STARTERS = [
-  "Warm but direct. Short sentences, plain words, the occasional dry joke. I write like I'm talking to one smart friend.",
-  "Curious and a little contrarian. I ask questions more than I give answers, and I'd rather be honest than polished.",
+//
+// These are TRANSLATED, not English literals, and the reason is the data, not
+// the decoration: a picked topic chip goes straight into `themes_include` →
+// `seed_topics_from_themes` → the account's real `topics` rows, which then
+// steer every generated post. A Russian author who taps a suggestion should get
+// «Строю на виду», not "Building in public" sitting in their topic list. The
+// starter lines land in `intro` the same way. Whatever the user SEES is what
+// they picked, so that is what we store.
+const STARTER_KEYS: MessageKey[] = ["onboarding.starter_warm", "onboarding.starter_curious"];
+const TOPIC_WRITE_KEYS: MessageKey[] = [
+  "onboarding.topic_writing",
+  "onboarding.topic_building",
+  "onboarding.topic_productivity",
+  "onboarding.topic_design",
+  "onboarding.topic_books",
+  "onboarding.topic_startups",
+  "onboarding.topic_creativity",
 ];
-const TOPICS_WRITE = ["Writing craft", "Building in public", "Productivity", "Design", "Books & reading", "Startups", "Creativity"];
-const TOPICS_AVOID = ["Politics", "Crypto", "Hustle culture", "Personal drama", "Engagement bait"];
+const TOPIC_AVOID_KEYS: MessageKey[] = [
+  "onboarding.avoid_politics",
+  "onboarding.avoid_crypto",
+  "onboarding.avoid_hustle",
+  "onboarding.avoid_drama",
+  "onboarding.avoid_bait",
+];
 const MIN_POSTS = 15;
+
+/** The sentence for a `threads_error` code the backend redirected back with.
+ *
+ *  Meta's own outcomes deserve their own words: a cancel on Meta's consent
+ *  screen invites a retry, a hit account ceiling says a retry won't help. The
+ *  rest (`state`, `config`, `exchange`) are our bugs to fix, not the visitor's
+ *  to act on, so they keep the generic line. Mirrors the account dashboard,
+ *  which already split out `account_limit`. */
+function connectErrorText(code: string, t: (k: MessageKey) => string): string {
+  // The backend passes Meta's own `error` value through when the user declines,
+  // and only falls back to "denied" when Meta sent none — so both spellings of
+  // the same outcome have to map here (threads_oauth.py: `error or "denied"`).
+  if (code === "denied" || code === "access_denied") return t("onboarding.connect_denied");
+  if (code === "account_limit") return t("accounts.connect_limit");
+  return t("onboarding.connect_failed");
+}
 
 function errMsg(e: unknown, t: (k: MessageKey) => string): string {
   // Friendly copy, not transport internals (B7): the old form surfaced
@@ -872,7 +907,15 @@ function ScratchStep({
 }) {
   const { t } = useTranslation();
   const taRef = useRef<HTMLTextAreaElement>(null);
-  const ready = desc.trim().length > 0 && write.length > 0;
+  const starters = STARTER_KEYS.map((k) => t(k));
+  const topicsWrite = TOPIC_WRITE_KEYS.map((k) => t(k));
+  const topicsAvoid = TOPIC_AVOID_KEYS.map((k) => t(k));
+  // A description OR one topic is enough — the same floor the backend enforces
+  // (ONBOARDING_INPUT_MISSING fires only when BOTH are empty). The button used
+  // to demand both AND say nothing about it, so someone who had written a
+  // paragraph about their voice sat in front of a dead grey button.
+  const enough = desc.trim().length > 0 || write.length > 0;
+  const [missing, setMissing] = useState(false);
   return (
     <div style={RISE}>
       <div className="text-caption font-semibold uppercase tracking-[0.06em] text-accent">{t("onboarding.scratch_eyebrow")}</div>
@@ -892,12 +935,13 @@ function ScratchStep({
           className="min-h-[92px] w-full resize-y rounded-md border border-border bg-surface px-3 py-[11px] text-small leading-relaxed text-text outline-none transition-[border-color,box-shadow] duration-[120ms] placeholder:text-text-subtle focus:border-accent focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-accent)_18%,transparent)] max-md:text-[16px]"
         />
         <div className="mt-[9px] flex flex-wrap gap-[7px]">
-          {STARTERS.map((s, i) => (
+          {starters.map((s, i) => (
             <button
               key={i}
               type="button"
               onClick={() => {
                 setDesc(s);
+                setMissing(false);
                 taRef.current?.focus();
               }}
               className="max-w-full rounded-full border border-dashed border-border bg-surface px-3 py-1.5 text-left text-caption text-text-muted transition-colors duration-[120ms] hover:border-[color-mix(in_srgb,var(--color-text)_20%,var(--color-border))] hover:bg-surface-2 hover:text-text"
@@ -910,7 +954,15 @@ function ScratchStep({
 
       <div className="mt-5">
         <label className="mb-2 block text-small font-semibold">{t("onboarding.form_themes_label")}</label>
-        <ChipInput value={write} onChange={setWrite} placeholder={t("onboarding.form_themes_ph")} suggestions={TOPICS_WRITE} />
+        <ChipInput
+          value={write}
+          onChange={(v) => {
+            setWrite(v);
+            if (v.length > 0) setMissing(false);
+          }}
+          placeholder={t("onboarding.form_themes_ph")}
+          suggestions={topicsWrite}
+        />
       </div>
 
       <div className="mt-5">
@@ -918,7 +970,7 @@ function ScratchStep({
           {t("onboarding.form_exclude_label")}
           <span className="ml-1.5 font-normal text-text-subtle">{t("onboarding.optional")}</span>
         </label>
-        <ChipInput value={avoid} onChange={setAvoid} placeholder={t("onboarding.form_exclude_ph")} suggestions={TOPICS_AVOID} tone="avoid" />
+        <ChipInput value={avoid} onChange={setAvoid} placeholder={t("onboarding.form_exclude_ph")} suggestions={topicsAvoid} tone="avoid" />
       </div>
 
       <div className="mt-6 flex items-center gap-3">
@@ -926,10 +978,35 @@ function ScratchStep({
           <IcArrowLeft size={15} /> {t("onboarding.back")}
         </BackLink>
         <span className="flex-1" />
-        <Button variant="primary" size="lg" className="active:translate-y-[0.5px] max-[560px]:w-full" loading={busy} disabled={busy || !ready} onClick={onCreate}>
+        <Button
+          variant="primary"
+          size="lg"
+          className="active:translate-y-[0.5px] max-[560px]:w-full"
+          loading={busy}
+          disabled={busy}
+          onClick={() => {
+            if (!enough) {
+              setMissing(true);
+              return;
+            }
+            setMissing(false);
+            onCreate();
+          }}
+        >
           {t("onboarding.create_cta")} <IcArrowRight size={17} />
         </Button>
       </div>
+      {/* Says what the button needs BEFORE it's pressed, and answers the press
+          when it still isn't there. */}
+      <p
+        aria-live="polite"
+        className={cn(
+          "mt-2 text-right text-caption max-[560px]:text-left",
+          missing ? "text-danger" : "text-text-subtle",
+        )}
+      >
+        {missing ? t("onboarding.error_empty") : t("onboarding.create_hint")}
+      </p>
     </div>
   );
 }
@@ -1251,7 +1328,11 @@ function OnboardingDemo({ tw }: { tw: ObTweaks }) {
     timer.current = setTimeout(tick, 1100);
   }
 
-  const showSkip = firstRun && !tw.preview && stage !== "done" && stage !== "analyze";
+  // `connected` is the demo's stand-in for the live flow's `accountId !== null`.
+  // Without it the demo showed "Skip for now" on an unconnected connect step —
+  // an affordance the live flow deliberately hides there (B6) — so a state
+  // review signed off on a screen no user ever sees.
+  const showSkip = connected && firstRun && !tw.preview && stage !== "done" && stage !== "analyze";
   const showBack = (!firstRun || tw.preview) && stage !== "analyze";
   const wide = stage === "scratch" || (stage === "done" && tw.preview);
 
@@ -1410,10 +1491,13 @@ export default function OnboardingPage() {
     }
     (async () => {
       try {
+        // Before the account branch, not inside it: `account_limit` comes back
+        // precisely when the tenant ALREADY has accounts, and the old placement
+        // (inside `active.length === 0`) swallowed it every single time.
+        if (connectErr) setError(connectErrorText(connectErr, t));
         const list = await fetchMyAccounts();
         const active = list.accounts.filter((a) => a.disconnected_at === null);
         if (active.length === 0) {
-          if (connectErr) setError(t("onboarding.connect_failed"));
           setStage("connect");
           return;
         }
@@ -1448,6 +1532,25 @@ export default function OnboardingPage() {
   }, [tw.demo]);
 
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
+
+  // Wizard funnel. One event per stage the user actually reaches (the very
+  // first one included), so a drop-off has a step name attached instead of
+  // being invisible between "clicked connect" and "finished". `loading` is a
+  // spinner, not a step; the ?demo=1 walkthrough never leaves it, which is also
+  // what keeps tester runs out of the numbers.
+  const seenStage = useRef<Stage | null>(null);
+  useEffect(() => {
+    if (stage === "loading" || stage === seenStage.current) return;
+    seenStage.current = stage;
+    captureEvent("onboarding.step_viewed", { stage });
+    // The done step is the end of the wizard however it was reached — voice
+    // built, or explicitly skipped. `preview` is a tester dry run that saves
+    // nothing, so it isn't a completion.
+    if (stage === "done" && !preview) {
+      captureEvent("onboarding.completed", { mode: mode ?? "skipped" });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stage]);
 
   const enoughPosts = status?.can_analyze ?? false;
   const postCount = status?.post_count ?? 0;
