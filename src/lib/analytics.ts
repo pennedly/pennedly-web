@@ -7,6 +7,16 @@
 import posthog from "posthog-js";
 
 let _initialized = false;
+// Events captured before init, replayed the moment it lands.
+//
+// React commits child effects BEFORE parent ones, so anything a page fires from
+// its own mount effect runs while AnalyticsProvider (the parent) still hasn't
+// called initAnalytics() — `landing.viewed`, the head of the funnel, was
+// dropped every single time. Buffering costs nothing and makes the ordering
+// stop mattering. Consent is untouched: the replay goes through posthog.capture
+// exactly like a live call, so an opted-out visitor still sends nothing.
+const _pending: { event: string; properties: Record<string, unknown> }[] = [];
+const PENDING_CAP = 20; // no key configured → init never lands → don't grow forever
 const CONSENT_KEY = "pennedly.consent"; // "accepted" | "declined"
 // localStorage is per-ORIGIN, so a choice made on pennedly.com never reached
 // app.pennedly.com (and vice versa) — the banner re-asked on every subdomain.
@@ -86,8 +96,12 @@ export function initAnalytics(): void {
     },
   });
   _initialized = true;
-  // Honor a prior "accepted" decision across reloads.
+  // Honor a prior "accepted" decision across reloads. Before the replay, so a
+  // returning visitor's buffered events actually go out.
   if (analyticsConsent() === "accepted") posthog.opt_in_capturing();
+  for (const { event, properties } of _pending.splice(0)) {
+    posthog.capture(event, properties);
+  }
 }
 
 /** Cookie-banner "Accept": start capturing + remember the choice. */
@@ -124,6 +138,9 @@ export function captureEvent(
   properties: Record<string, unknown> = {}
 ): void {
   if (typeof window === "undefined") return;
-  if (!_initialized) return;
+  if (!_initialized) {
+    if (_pending.length < PENDING_CAP) _pending.push({ event, properties });
+    return;
+  }
   posthog.capture(event, properties);
 }
