@@ -28,30 +28,39 @@ export function CookieConsent() {
 
   if (!show) return null;
 
+  // Compact corner card, not a full-width strip — the strip used to sit
+  // centered above the hero waitlist form and could clip its bottom edge on
+  // a tall ru heading. A 320px card anchored bottom-right lives in its own
+  // column of the two-column hero grid, so it can never overlap the form:
+  // they're separated on the X axis, not just Y. Class name is the
+  // prefixed `pnd-consent` (not `cookie-banner`/`consent-banner`) — generic
+  // names like that match ad-blocker cosmetic filter lists (EasyList Cookie
+  // List) and get display:none'd for a slice of real visitors.
   return (
     <div
       role="dialog"
       aria-label={t("consent.title")}
-      className="fixed inset-x-3 bottom-3 z-50 mx-auto max-w-2xl rounded-lg border border-border bg-surface p-4 shadow-lg max-md:inset-x-2 max-md:bottom-2"
+      className="pnd-consent fixed bottom-5 right-5 z-50 w-[320px] rounded-lg border border-border bg-surface p-4 shadow-lg max-[560px]:inset-x-3 max-[560px]:bottom-3 max-[560px]:w-auto max-[560px]:right-auto"
+      style={{ animation: "pnd-consent-in var(--duration-slow) var(--ease-entrance) both" }}
     >
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-small text-text-muted">
+      <div className="flex flex-col gap-3">
+        <p className="text-small leading-[1.5] text-text-muted">
           {t("consent.text")}{" "}
           <Link
             href="/privacy"
-            className="underline underline-offset-2 hover:text-text"
+            className="text-text underline underline-offset-2 hover:text-accent"
           >
             {t("consent.learn")}
           </Link>
         </p>
-        <div className="flex shrink-0 gap-2">
+        <div className="flex justify-end gap-2">
           <button
             type="button"
             onClick={() => {
               declineAnalyticsConsent();
               setShow(false);
             }}
-            className="rounded-md border border-border px-3 py-1.5 text-small text-text-muted transition-colors hover:bg-surface-2 hover:text-text"
+            className="inline-flex h-8 items-center rounded-md border border-border px-[13px] text-small text-text-muted transition-colors hover:bg-surface-2 hover:text-text max-[560px]:flex-1 max-[560px]:justify-center"
           >
             {t("consent.decline")}
           </button>
@@ -61,7 +70,7 @@ export function CookieConsent() {
               grantAnalyticsConsent();
               setShow(false);
             }}
-            className="rounded-md bg-text px-3 py-1.5 text-small font-medium text-bg transition-opacity hover:opacity-90"
+            className="inline-flex h-8 items-center rounded-md bg-text px-[13px] text-small font-medium text-bg transition-opacity hover:opacity-90 max-[560px]:flex-1 max-[560px]:justify-center"
           >
             {t("consent.accept")}
           </button>

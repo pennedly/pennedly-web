@@ -251,6 +251,12 @@
 @keyframes pop-in { from { transform: scale(0.82); } to { transform: none; } }
 /* Login view/alert entrance (login.css view-in). */
 @keyframes view-in { from { transform: translateY(6px); } to { transform: none; } }
+/* Cookie-consent corner card entrance (CookieConsent.tsx) — the one deliberate
+   opacity+transform combo in this file. Safe here because the card only ever
+   mounts as a direct result of a foreground state change (never behind a
+   hidden-tab delay), so the interrupted-mid-animation risk that keeps the
+   rest of this file transform-only doesn't apply. */
+@keyframes pnd-consent-in { from { transform: translateY(10px); opacity: 0; } to { transform: none; opacity: 1; } }
 /* §3.7 skeleton shimmer — surface-2 base with a moving ink-tinted sheen.
    Disabled automatically by the reduced-motion rule above. */
 @keyframes shimmer { from { background-position: 220% 0; } to { background-position: -120% 0; } }

@@ -94,8 +94,8 @@ const FEATURES: {
   descKey: MessageKey;
   span: "wide" | "full" | "";
 }[] = [
-  { Ico: IcVoice, titleKey: "landing.feat_viral_title", descKey: "landing.feat_viral_desc", span: "wide" },
-  { Ico: IcReplies, titleKey: "landing.feat_replies_title", descKey: "landing.feat_replies_desc", span: "" },
+  { Ico: IcVoice, titleKey: "landing.feat_viral_title", descKey: "landing.feat_viral_desc", span: "" },
+  { Ico: IcReplies, titleKey: "landing.feat_replies_title", descKey: "landing.feat_replies_desc", span: "wide" },
   { Ico: IcAudit, titleKey: "landing.feat_audits_title", descKey: "landing.feat_audits_desc", span: "" },
   { Ico: IcChart, titleKey: "landing.feat_analytics_title", descKey: "landing.feat_analytics_desc", span: "" },
   { Ico: IcBolt, titleKey: "landing.feat_autopilot_title", descKey: "landing.feat_autopilot_desc", span: "" },
@@ -226,13 +226,18 @@ function StudioWindow() {
               <IcVoice size={12} /> {SAMPLE.toneTag}
             </span>
           </div>
-          <div className="mt-auto flex items-center gap-2 pt-4">
-            <span className="text-caption text-text-subtle">{SAMPLE.composeNote}</span>
-            <span className="flex-1" />
-            <span className="inline-flex h-[30px] items-center gap-1.5 rounded-sm border border-border bg-surface px-[11px] text-caption font-medium text-text-muted">
+          {/* ≤560px: the note and the two buttons used to fight for one row —
+              on de/ru the composeNote + "Bearbeiten"/"Freigeben" overran the
+              ~221px available and the window's overflow:hidden clipped
+              Approve. Wrapping puts the note on its own line so the buttons
+              only ever compete with each other. */}
+          <div className="mt-auto flex items-center gap-2 pt-4 max-[560px]:flex-wrap">
+            <span className="text-caption text-text-subtle max-[560px]:basis-full">{SAMPLE.composeNote}</span>
+            <span className="flex-1 max-[560px]:hidden" />
+            <span className="inline-flex h-[30px] items-center gap-1.5 rounded-sm border border-border bg-surface px-[11px] text-caption font-medium text-text-muted max-[560px]:px-[9px]">
               <IcPencil size={13} /> {t("landing.spec_edit")}
             </span>
-            <span className="inline-flex h-[30px] items-center gap-1.5 rounded-sm border border-primary bg-primary px-3 text-caption font-semibold text-primary-foreground">
+            <span className="inline-flex h-[30px] items-center gap-1.5 rounded-sm border border-primary bg-primary px-3 text-caption font-semibold text-primary-foreground max-[560px]:px-[9px]">
               <IcCheck size={13} /> {t("landing.spec_approve")}
             </span>
           </div>
@@ -704,20 +709,22 @@ function LandingContent({ showSample }: { showSample: boolean }) {
                 </li>
               ))}
             </ul>
-            <p
-              className={cn(
-                "mt-3.5 max-w-[44ch] text-small text-text-subtle [text-wrap:pretty]",
-                !showSample && "min-[881px]:mx-auto",
-              )}
-            >
-              {t("landing.founder")}
-            </p>
+            {/* Proof line — the one thing on the page a competitor can't
+                copy, so it earns more weight than a quiet caption: its own
+                hairline-bordered row, body-size text, no accent color (this
+                isn't a slogan, it's a fact). */}
+            <div className="mt-6 flex items-center justify-center gap-3 border-y border-border py-[18px]">
+              <BrandMark size={22} radius={7} className="shrink-0" />
+              <span className="text-body font-medium text-text [text-wrap:pretty]">{t("landing.founder")}</span>
+            </div>
           </div>
           {showSample && <StudioWindow />}
         </div>
       </section>
 
       <VoiceTestSection />
+
+      <WhyPennedlySection />
 
       {/* Features (bento) */}
       <section className="shrink-0 border-t border-border py-[52px] pb-[60px]">
@@ -772,8 +779,6 @@ function LandingContent({ showSample }: { showSample: boolean }) {
           </div>
         </div>
       </section>
-
-      <WhyPennedlySection />
 
       {/* Final CTA — the page used to run straight from "В чём разница" into the
           footer with no second signup chance below the hero. Same WaitlistForm,
