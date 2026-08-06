@@ -678,6 +678,14 @@ function LandingContent({ showSample }: { showSample: boolean }) {
             </p>
             <p
               className={cn(
+                "mt-2 max-w-[46ch] text-h3 font-[450] leading-[1.5] text-text-muted [text-wrap:pretty]",
+                !showSample && "min-[881px]:mx-auto",
+              )}
+            >
+              {t("landing.lead_head2")}
+            </p>
+            <p
+              className={cn(
                 "mt-3.5 max-w-[46ch] text-h3 font-medium text-text",
                 !showSample && "min-[881px]:mx-auto",
               )}
