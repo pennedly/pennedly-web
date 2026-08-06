@@ -8,12 +8,43 @@ import posthog from "posthog-js";
 
 let _initialized = false;
 const CONSENT_KEY = "pennedly.consent"; // "accepted" | "declined"
+// localStorage is per-ORIGIN, so a choice made on pennedly.com never reached
+// app.pennedly.com (and vice versa) — the banner re-asked on every subdomain.
+// The cookie carries the choice across *.pennedly.com; localStorage stays as
+// the fallback for origins where a domain cookie can't apply (localhost).
+const CONSENT_COOKIE = "pennedly_consent";
+const CONSENT_MAX_AGE = 60 * 60 * 24 * 365; // re-ask after a year (GDPR-friendly)
+
+function consentCookieDomain(): string {
+  const host = window.location.hostname;
+  return host === "pennedly.com" || host.endsWith(".pennedly.com")
+    ? "; Domain=.pennedly.com"
+    : "";
+}
+
+function readConsentCookie(): "accepted" | "declined" | null {
+  const m = document.cookie.match(/(?:^|;\s*)pennedly_consent=(accepted|declined)(?:;|$)/);
+  return m ? (m[1] as "accepted" | "declined") : null;
+}
+
+function writeConsent(value: "accepted" | "declined"): void {
+  window.localStorage.setItem(CONSENT_KEY, value);
+  const secure = window.location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `${CONSENT_COOKIE}=${value}; Max-Age=${CONSENT_MAX_AGE}; Path=/${consentCookieDomain()}; SameSite=Lax${secure}`;
+}
 
 /** The user's stored analytics-consent choice, or null if undecided. */
 export function analyticsConsent(): "accepted" | "declined" | null {
   if (typeof window === "undefined") return null;
+  const fromCookie = readConsentCookie();
+  if (fromCookie) return fromCookie;
   const v = window.localStorage.getItem(CONSENT_KEY);
-  return v === "accepted" || v === "declined" ? v : null;
+  if (v === "accepted" || v === "declined") {
+    // Migrate a pre-cookie choice so the OTHER subdomain stops re-asking too.
+    writeConsent(v);
+    return v;
+  }
+  return null;
 }
 
 // Strip auth secrets that can ride a URL (magic-link token / OAuth handoff /
@@ -62,14 +93,14 @@ export function initAnalytics(): void {
 /** Cookie-banner "Accept": start capturing + remember the choice. */
 export function grantAnalyticsConsent(): void {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(CONSENT_KEY, "accepted");
+  writeConsent("accepted");
   if (_initialized) posthog.opt_in_capturing();
 }
 
 /** Cookie-banner "Decline": stay opted out + remember the choice. */
 export function declineAnalyticsConsent(): void {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(CONSENT_KEY, "declined");
+  writeConsent("declined");
   if (_initialized) posthog.opt_out_capturing();
 }
 
