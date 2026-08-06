@@ -24,8 +24,9 @@
 import Link from "next/link";
 import { Fragment, useEffect, useState, type ReactNode } from "react";
 
-import { fetchMe, getTokens, joinWaitlist, voiceTest } from "@/lib/api";
+import { ApiError, fetchMe, getTokens, joinWaitlist, voiceTest } from "@/lib/api";
 import { captureEvent } from "@/lib/analytics";
+import { errorCodeText } from "@/lib/errors";
 import { cn } from "@/lib/cn";
 import {
   TweaksPanel,
@@ -57,6 +58,7 @@ import {
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { AccountFace } from "@/components/ui/avatar";
+import { Skeleton, SkeletonText } from "@/components/ui/feedback";
 
 const CONTACT_EMAIL = "hello@pennedly.com";
 
@@ -254,13 +256,26 @@ function VoiceTestSection() {
   const [draft, setDraft] = useState("");
   const [samples, setSamples] = useState<{ comment: string; reply: string }[] | null>(null);
   const [busy, setBusy] = useState(false);
-  const [failed, setFailed] = useState(false);
+  // The server's sentence when it named the failure (quota used up, no voice
+  // found in those posts), this section's generic line otherwise. It used to be
+  // a bare boolean, so `error.code.voice_test_exhausted` — the one message that
+  // tells the visitor signing up is the way forward — was unreachable.
+  const [errorText, setErrorText] = useState<string | null>(null);
+  // Neither button is disabled (same call as WaitlistForm above): a greyed-out
+  // pair is the first thing a visitor meets in this section, and it says
+  // nothing. The click answers instead, in the hint line under the Run button.
+  const [needsPost, setNeedsPost] = useState(false);
 
   function addPost() {
     const v = draft.trim();
-    if (!v || posts.length >= VT_CAP) return;
+    if (!v) {
+      setNeedsPost(true);
+      return;
+    }
+    if (posts.length >= VT_CAP) return;
     setPosts((p) => [...p, v]);
     setDraft("");
+    setNeedsPost(false);
     setSamples(null); // editing the input invalidates a previously shown result
   }
   function removePost(i: number) {
@@ -272,25 +287,33 @@ function VoiceTestSection() {
     // Fold a not-yet-added draft into the cards first, so the compose field
     // clears — no dangling half-typed input is left behind after the run.
     const all = [...posts, ...(draft.trim() ? [draft.trim()] : [])].slice(0, 10);
-    if (all.length === 0 || busy) return;
+    if (busy) return;
+    if (all.length === 0) {
+      setNeedsPost(true);
+      return;
+    }
     if (draft.trim()) {
       setPosts(all);
       setDraft("");
     }
+    setNeedsPost(false);
     setBusy(true);
-    setFailed(false);
+    setErrorText(null);
+    captureEvent("voicetest.started", { posts: all.length });
     try {
       const r = await voiceTest(all);
       setSamples(r.samples);
-    } catch {
-      setFailed(true);
+      captureEvent("voicetest.succeeded", { posts: all.length });
+    } catch (e) {
+      setErrorText(errorCodeText(e) ?? t("landing.vt_error"));
       setSamples(null);
+      captureEvent("voicetest.failed", {
+        reason: e instanceof ApiError ? e.code ?? `http_${e.status}` : "network",
+      });
     } finally {
       setBusy(false);
     }
   }
-
-  const canRun = posts.length > 0 || draft.trim().length > 0;
 
   return (
     <section className="shrink-0 border-t border-border py-[52px]">
@@ -334,19 +357,25 @@ function VoiceTestSection() {
                 <div className="flex flex-col gap-[11px]">
                   <textarea
                     value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
+                    onChange={(e) => {
+                      setDraft(e.target.value);
+                      if (needsPost) setNeedsPost(false);
+                    }}
                     onKeyDown={(e) => {
                       if ((e.metaKey || e.ctrlKey) && e.key === "Enter") addPost();
                     }}
                     placeholder={t("landing.vt_compose_ph")}
                     rows={2}
-                    className="min-h-16 w-full resize-y rounded-lg border border-border bg-surface px-3.5 py-3 text-[16px] leading-[1.55] text-text placeholder:text-text-subtle focus:border-accent focus:outline-none focus:ring-[3px] focus:ring-accent/[0.18]"
+                    aria-invalid={needsPost || undefined}
+                    className={cn(
+                      "min-h-16 w-full resize-y rounded-lg border bg-surface px-3.5 py-3 text-[16px] leading-[1.55] text-text placeholder:text-text-subtle focus:outline-none focus:ring-[3px] focus:ring-accent/[0.18]",
+                      needsPost ? "border-danger focus:border-danger" : "border-border focus:border-accent",
+                    )}
                   />
                   <button
                     type="button"
                     onClick={addPost}
-                    disabled={!draft.trim()}
-                    className="inline-flex items-center gap-[7px] self-start rounded-md border border-dashed border-accent/40 bg-accent/[0.06] px-[15px] py-2.5 text-small font-semibold text-accent transition-colors hover:border-accent hover:bg-accent/[0.12] disabled:opacity-50 max-md:min-h-[46px] max-md:w-full max-md:justify-center"
+                    className="inline-flex items-center gap-[7px] self-start rounded-md border border-dashed border-accent/40 bg-accent/[0.06] px-[15px] py-2.5 text-small font-semibold text-accent transition-colors hover:border-accent hover:bg-accent/[0.12] max-md:min-h-[46px] max-md:w-full max-md:justify-center"
                   >
                     <IcPlus size={15} /> {t("landing.vt_add")}
                   </button>
@@ -356,17 +385,40 @@ function VoiceTestSection() {
                 <button
                   type="button"
                   onClick={run}
-                  disabled={busy || !canRun}
+                  disabled={busy}
                   data-fx="btnprimary"
                   className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-primary px-[22px] text-body font-medium text-primary-foreground transition-[background-color,transform] duration-[180ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] hover:bg-[color-mix(in_srgb,var(--color-primary)_88%,var(--color-bg))] active:translate-y-[0.5px] disabled:opacity-50"
                 >
                   {busy ? t("landing.vt_running") : t("landing.vt_cta")}
                 </button>
-                <span className="text-small text-text-subtle">{t("landing.vt_hint")}</span>
+                <span
+                  aria-live="polite"
+                  className={cn("text-small", needsPost ? "text-danger" : "text-text-subtle")}
+                >
+                  {needsPost ? t("landing.vt_need_post") : t("landing.vt_hint")}
+                </span>
               </div>
             </>
           )}
-          {failed && <p className="mt-4 text-small text-danger">{t("landing.vt_error")}</p>}
+          {/* The run takes up to a minute. Without this the only sign of life was
+              the button's own label, so the section read as frozen. Same skeleton
+              primitives the app screens use, shaped like the result cards below. */}
+          {busy && (
+            <div className="mt-6">
+              <p className="sr-only" role="status">
+                {t("landing.vt_running")}
+              </p>
+              <ul className="flex flex-col gap-3" aria-hidden>
+                {[0, 1].map((i) => (
+                  <li key={i} className="rounded-lg border border-border bg-surface p-4 shadow-sm">
+                    <Skeleton className="h-3 w-40" />
+                    <SkeletonText lines={2} className="mt-3.5" />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {errorText && <p className="mt-4 text-small text-danger">{errorText}</p>}
           {samples && samples.length > 0 && (
             <div className="mt-6">
               <button
@@ -934,11 +986,18 @@ export default function LandingView() {
   // mount we render the plain page, which is also the correct SSR output.
   const [params, setParams] = useState<URLSearchParams | null>(null);
   useEffect(() => {
+    let sp = new URLSearchParams();
     try {
-      setParams(new URLSearchParams(window.location.search));
+      sp = new URLSearchParams(window.location.search);
     } catch {
       /* no-op */
     }
+    setParams(sp);
+    // Head of the funnel — every later step (voice test, waitlist, sign-in) is
+    // measured against this one. The Tweaks viewport preview re-loads this same
+    // route inside an iframe (?frame=1) and testers open ?demo=1: neither is a
+    // visitor, so neither counts.
+    if (sp.get("frame") !== "1" && sp.get("demo") !== "1") captureEvent("landing.viewed");
   }, []);
 
   if (params?.get("frame") === "1") return <FramedLanding params={params} />;
