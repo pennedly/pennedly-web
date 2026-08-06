@@ -349,7 +349,7 @@ function Frame({
 // ─────────────────────────── Shared stage header bits ───────────────────────
 function StepTitle({ children, center }: { children: ReactNode; center?: boolean }) {
   return (
-    <h1 className={cn("mt-2.5 text-balance text-h1 font-semibold leading-[1.6] tracking-[-0.015em] max-[560px]:text-h2", center && "text-center")}>
+    <h1 className={cn("mt-2.5 text-balance text-h1 font-semibold tracking-[-0.015em] max-[560px]:text-h2", center && "text-center")}>
       {children}
     </h1>
   );
@@ -1109,7 +1109,7 @@ function PreviewResult({
         <span className="inline-flex items-center gap-[7px] rounded-full border bg-surface px-[11px] py-[5px] pl-[9px] text-small text-accent" style={{ borderColor: "color-mix(in srgb, var(--color-accent) 30%, var(--color-border))" }}>
           <span className="h-[7px] w-[7px] rounded-full bg-accent" /> {t("onboarding.preview_pill_done")}
         </span>
-        <h1 className="mt-4 text-balance text-h1 font-semibold leading-[1.6] tracking-[-0.015em] max-[560px]:text-h2">{t("onboarding.preview_would_title")}</h1>
+        <h1 className="mt-4 text-balance text-h1 font-semibold tracking-[-0.015em] max-[560px]:text-h2">{t("onboarding.preview_would_title")}</h1>
         <StepSub center>{t("onboarding.preview_would_sub").replace("{src}", src)}</StepSub>
       </div>
       <VoiceCards summary={summary} themes={themes} traits={traits} />
@@ -1162,7 +1162,7 @@ function DoneStep({
         >
           <IcCheck size={30} />
         </span>
-        <h1 className="mx-auto max-w-[42ch] text-balance text-h1 font-semibold leading-[1.6] tracking-[-0.015em] max-[560px]:text-h2">
+        <h1 className="mx-auto max-w-[42ch] text-balance text-h1 font-semibold tracking-[-0.015em] max-[560px]:text-h2">
           {connected ? t("onboarding.done_title_set").replace("{name}", first) : t("onboarding.done_title_skip")}
         </h1>
         <StepSub center>{connected ? t("onboarding.done_sub_set").replace("{handle}", handle) : t("onboarding.done_sub_skip")}</StepSub>

@@ -631,8 +631,7 @@ function LandingContent({ showSample }: { showSample: boolean }) {
             <ThemeToggle />
             <Link
               href="/app/login"
-              data-fx="btnprimary"
-              className="inline-flex h-10 items-center whitespace-nowrap rounded-md bg-primary px-4 text-small font-medium text-primary-foreground transition-[background-color,transform] duration-[120ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] hover:bg-[color-mix(in_srgb,var(--color-primary)_88%,var(--color-bg))] active:translate-y-[0.5px]"
+              className="inline-flex h-10 items-center whitespace-nowrap rounded-md border border-border bg-surface px-4 text-small font-medium text-text transition-[background-color,transform] duration-[120ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] hover:bg-surface-2 active:translate-y-[0.5px]"
             >
               {t("landing.sign_in")}
             </Link>
