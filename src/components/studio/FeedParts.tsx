@@ -618,7 +618,13 @@ function FeedLightbox({ media, start, onClose }: { media: FeedPic[]; start: numb
   }, [media.length, onClose]);
   const m = media[Math.min(i, media.length - 1)];
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-black/90 backdrop-blur-sm" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex flex-col bg-black/90 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-label={t("feed.media_viewer")}
+      onClick={onClose}
+    >
       <div className="flex items-center gap-3 px-4 py-3.5 text-white" onClick={(e) => e.stopPropagation()}>
         <button
           type="button"

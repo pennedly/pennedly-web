@@ -186,15 +186,22 @@ export function ConnectNetworkDialog({
 // ma-pick-head title + close → ma-pick-s subtitle → the ma-prefixed picker
 // rows, inside the shared m-scrim/m-sheet chrome.)
 export function ConnectNetworkSheet({ t, nav, onClose }: { t: T; nav: Nav; onClose: () => void }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
   return (
     <>
-      <button className="m-scrim" type="button" aria-label="" onClick={onClose} />
-      <div className="m-sheet" role="dialog" aria-modal="true">
+      <button className="m-scrim" type="button" tabIndex={-1} aria-hidden onClick={onClose} />
+      <div className="m-sheet" role="dialog" aria-modal="true" aria-label={t("acc.pick_sheet_t")}>
         <div style={{ padding: "8px 14px 22px" }}>
           <div className="m-sheet-grip" />
           <div className="ma-pick-head">
             <div className="ma-pick-t">{t("acc.pick_sheet_t")}</div>
-            <button className="m-sheet-close" type="button" onClick={onClose}>
+            <button className="m-sheet-close" type="button" aria-label={t("a11y.close")} onClick={onClose}>
               <IcX size={16} />
             </button>
           </div>

@@ -570,6 +570,7 @@ function FreeformRow({
           <input
             value={draft}
             autoFocus
+            aria-label={t("a11y.edit_own_rule")}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && draft.trim()) {
@@ -587,6 +588,7 @@ function FreeformRow({
             size="sm"
             variant="primary"
             disabled={!draft.trim()}
+            aria-label={t("common.save")}
             onClick={() => {
               onEdit(rule.id, draft.trim());
               setEditing(false);

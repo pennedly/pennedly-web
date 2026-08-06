@@ -1048,12 +1048,12 @@ export function Topbar({ data, t, plural, dark, nav }: { data: MeAccountResponse
             </>
           ) : null}
         </div>
-        <span className="acc-ib" style={{ cursor: "pointer" }} onClick={() => { nav.toggleTheme(); setThemeDark((d) => !d); }}>
+        <button type="button" className="acc-ib" aria-label={t("a11y.toggle_theme")} onClick={() => { nav.toggleTheme(); setThemeDark((d) => !d); }}>
           {isDark ? <IcSun size={16} /> : <IcMoon size={16} />}
-        </span>
-        <span className="acc-ib" style={{ cursor: "pointer" }} onClick={() => nav.go("/app/account/settings")}>
+        </button>
+        <button type="button" className="acc-ib" aria-label={t("acc.nav_settings")} onClick={() => nav.go("/app/account/settings")}>
           <IcSettings size={16} />
-        </span>
+        </button>
       </div>
     </div>
   );
@@ -1091,16 +1091,18 @@ export function ScreenTopbar({
   return (
     <div className="acc-top">
       <nav className="acc-crumb">
-        <a className="acc-crumb-seg" style={{ cursor: "pointer" }} onClick={() => nav.go("/app/account")}>
+        {/* A plain <a> with no href is invisible to keyboard/AT nav — a real
+            <button> gets tab order + Enter/Space activation for free. */}
+        <button type="button" className="acc-crumb-seg" onClick={() => nav.go("/app/account")}>
           <AcctMark mono={acctMono} />
           <span className="acc-crumb-txt">{t("acc.crumb_account")}</span>
-        </a>
+        </button>
         <span className="acc-crumb-sep">
           <IcChevRight size={14} />
         </span>
-        <a className="acc-crumb-seg acc-crumb-seg--current">
+        <span className="acc-crumb-seg acc-crumb-seg--current" aria-current="page">
           <span className="acc-crumb-txt">{pageLabel}</span>
-        </a>
+        </span>
       </nav>
       <div className="acc-top-actions">
         {pill ? (
@@ -1109,9 +1111,9 @@ export function ScreenTopbar({
             {pill}
           </span>
         ) : null}
-        <span className="acc-ib" style={{ cursor: "pointer" }} onClick={() => { nav.toggleTheme(); setThemeDark((d) => !d); }}>
+        <button type="button" className="acc-ib" aria-label={t("a11y.toggle_theme")} onClick={() => { nav.toggleTheme(); setThemeDark((d) => !d); }}>
           {isDark ? <IcSun size={16} /> : <IcMoon size={16} />}
-        </span>
+        </button>
       </div>
     </div>
   );

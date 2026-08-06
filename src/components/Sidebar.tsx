@@ -219,6 +219,17 @@ export function Sidebar() {
     setMobileNavOpen(false);
   }, [pathname]);
 
+  // The drawer scrims the whole page like a modal — Escape should close it,
+  // same as every other overlay in the app.
+  useEffect(() => {
+    if (!navOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMobileNavOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [navOpen]);
+
   // Demo review (?demo=1) shows the full tester nav so every item is reviewable;
   // the real app gates Replies/Mentions/Autopilot on me.is_tester.
   const isTester = demoParam ? true : (me?.is_tester ?? false);
@@ -353,6 +364,9 @@ export function Sidebar() {
             // Эталон (mobile/pennedly-mobile.css .m-drawer): width min(82%, 312px)
             // on --color-surface — the panel reads as a sheet over the page, not
             // as the page itself. We were 24px narrower and used the page bg.
+            role="dialog"
+            aria-modal="true"
+            aria-label={t("a11y.main_nav")}
             className="relative flex w-[min(82%,312px)] flex-col border-r border-border bg-surface px-3.5 py-4 shadow-lg"
             style={{ animation: "drawer-in 0.22s var(--ease-entrance)" }}
           >

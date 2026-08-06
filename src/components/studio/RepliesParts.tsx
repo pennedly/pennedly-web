@@ -704,6 +704,7 @@ export function CommentCard({
               <>
                 <textarea
                   autoFocus
+                  aria-label={t("a11y.edit_reply")}
                   value={editBuffer}
                   onChange={(e) => setEditBuffer(e.target.value)}
                   onKeyDown={(e) => {

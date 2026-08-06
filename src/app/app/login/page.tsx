@@ -87,6 +87,7 @@ function LangSwitch() {
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="listbox"
         aria-expanded={open}
+        aria-label={t("a11y.change_language")}
         className="inline-flex h-9 items-center gap-[7px] rounded-md border border-border bg-surface px-2.5 text-small font-medium text-text-muted transition-colors duration-[120ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] hover:bg-surface-2 hover:text-text"
       >
         <IcGlobe size={15} />

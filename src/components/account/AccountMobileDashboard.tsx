@@ -141,15 +141,22 @@ function SwitcherRow({ p, active, t, nav, onDone }: { p: AccountProfile; active:
 function SwitcherSheet({ data, t, nav, onClose }: { data: MeAccountResponse; t: T; nav: Nav; onClose: () => void }) {
   const multi = data.scope.show_brand_level;
   const selected = useSelectedAccountId();
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
   return (
     <>
-      <button className="m-scrim" type="button" aria-label="" onClick={onClose} />
-      <div className="m-sheet" role="dialog" aria-modal="true">
+      <button className="m-scrim" type="button" tabIndex={-1} aria-hidden onClick={onClose} />
+      <div className="m-sheet" role="dialog" aria-modal="true" aria-label={t("acc.sw_all")}>
         <div className="m-sheet-body">
           <div className="m-sheet-grip" />
           <div className="m-sheet-head">
             <div className="m-sheet-title">{t("acc.sw_all")}</div>
-            <button className="m-sheet-close" type="button" onClick={onClose}>
+            <button className="m-sheet-close" type="button" aria-label={t("a11y.close")} onClick={onClose}>
               <IcX size={16} />
             </button>
           </div>
@@ -198,13 +205,15 @@ const NAV_ICONS: Record<string, (p: { size?: number }) => React.JSX.Element> = {
 function NavRow({ icon, label, active, badge, extraCls, onClick }: { icon: string; label: string; active?: boolean; badge?: number; extraCls?: string; onClick?: () => void }) {
   const NavIc = NAV_ICONS[icon] ?? IcOverview;
   return (
-    <a className={`m-navrow${active ? " m-navrow--active" : ""}${extraCls ? ` ${extraCls}` : ""}`} style={{ cursor: "pointer" }} aria-current={active ? "page" : undefined} onClick={onClick}>
+    // A plain <a> with no href is invisible to keyboard/AT nav (not in the tab
+    // order, no Enter/Space activation) — a real <button> gets both for free.
+    <button type="button" className={`m-navrow${active ? " m-navrow--active" : ""}${extraCls ? ` ${extraCls}` : ""}`} aria-current={active ? "page" : undefined} onClick={onClick}>
       <span className="m-navrow-ic">
         <NavIc size={20} />
       </span>
       <span className="m-navrow-lbl">{label}</span>
       {badge ? <span className="m-navrow-badge">{badge}</span> : null}
-    </a>
+    </button>
   );
 }
 
@@ -212,10 +221,17 @@ function NavDrawer({ data, t, nav, onClose, onOpenLogin, active = "dashboard" }:
   const multi = data.scope.brands_count >= 2;
   const go = (route: string) => { onClose(); nav.go(route); };
   const id = useChromeIdentity(data.tenant.name);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
   return (
     <>
-      <button className="m-scrim" type="button" aria-label="" onClick={onClose} />
-      <aside className="m-drawer" role="dialog" aria-label={t("a11y.account_menu")}>
+      <button className="m-scrim" type="button" tabIndex={-1} aria-hidden onClick={onClose} />
+      <aside className="m-drawer" role="dialog" aria-modal="true" aria-label={t("a11y.account_menu")}>
         <div className="m-drawer-head">
           <div className="m-drawer-brand">
             <span className="m-brand-mark">
@@ -226,7 +242,7 @@ function NavDrawer({ data, t, nav, onClose, onOpenLogin, active = "dashboard" }:
               <div className="bs">{t("acc.account_word")}</div>
             </div>
           </div>
-          <button className="m-drawer-close" type="button" onClick={onClose}>
+          <button className="m-drawer-close" type="button" aria-label={t("a11y.close")} onClick={onClose}>
             <IcX size={16} />
           </button>
         </div>
@@ -274,10 +290,17 @@ function NavDrawer({ data, t, nav, onClose, onOpenLogin, active = "dashboard" }:
 function LoginSheet({ data, t, nav, onClose }: { data: MeAccountResponse; t: T; nav: Nav; onClose: () => void }) {
   const done = (fn: () => void) => { onClose(); fn(); };
   const id = useChromeIdentity(data.tenant.name);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
   return (
     <>
-      <button className="m-scrim" type="button" aria-label="" onClick={onClose} />
-      <div className="m-sheet" role="dialog" aria-modal="true">
+      <button className="m-scrim" type="button" tabIndex={-1} aria-hidden onClick={onClose} />
+      <div className="m-sheet" role="dialog" aria-modal="true" aria-label={t("acc.account_word")}>
         <div className="m-sheet-body">
           <div className="m-sheet-grip" />
           <div className="ma-login-head">
@@ -285,7 +308,7 @@ function LoginSheet({ data, t, nav, onClose }: { data: MeAccountResponse; t: T; 
               <div className="ma-login-email">{id.email}</div>
               <span className="ma-login-plan">{data.tenant.plan_tier}</span>
             </div>
-            <button className="m-sheet-close" type="button" onClick={onClose}>
+            <button className="m-sheet-close" type="button" aria-label={t("a11y.close")} onClick={onClose}>
               <IcX size={16} />
             </button>
           </div>
