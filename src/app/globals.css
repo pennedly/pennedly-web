@@ -85,7 +85,7 @@
   --color-border:             #dcd9d2;   /* hairlines, input outlines */
   --color-text:               #171717;   /* ink-900 */
   --color-text-muted:         #565550;   /* ink-600 — secondary text */
-  --color-text-subtle:        #6f6e69;   /* placeholders, captions (AA) */
+  --color-text-subtle:        #6b6a65;   /* placeholders, captions — 4.64:1 on bg (AA) */
 
   --color-primary:            #171717;   /* primary action = ink */
   --color-primary-foreground: #ededed;   /* paper on ink */

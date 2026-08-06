@@ -72,7 +72,7 @@ export default function Image() {
             paddingTop: 26,
           }}
         >
-          <span style={{ fontSize: 25, color: "#6f6e69" }}>app.pennedly.com</span>
+          <span style={{ fontSize: 25, color: "#6b6a65" }}>app.pennedly.com</span>
           <div style={{ display: "flex", alignItems: "center" }}>
             <span
               style={{
