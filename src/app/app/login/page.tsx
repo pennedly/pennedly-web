@@ -51,6 +51,10 @@ const RADIAL =
   "radial-gradient(120% 75% at 50% -8%, color-mix(in srgb, var(--color-surface) 55%, transparent) 0%, transparent 58%), var(--color-bg)";
 // Q20: legal pages live on app.pennedly.com — pin consent links there.
 const APP_ORIGIN = "https://app.pennedly.com";
+// The way out. Someone who lands here without an invite has no door to open and
+// nothing to click — the brand mark is the only thing on the card that can lead
+// anywhere, so it leads to the marketing site (where the waitlist form is).
+const SITE_ORIGIN = "https://pennedly.com";
 const EMAIL_RE = /\S+@\S+\.\S+/;
 const VIEW_IN = { animation: "view-in var(--duration-base) var(--ease-entrance) both" } as const;
 const IS_DEV = process.env.NODE_ENV === "development";
@@ -132,9 +136,16 @@ function LangSwitch() {
 
 // ───────────────────────────── Card pieces ──────────────────────────────────
 function LoginHeader({ title, sub }: { title: string; sub: string }) {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col items-center text-center">
-      <BrandMark size={52} radius={14} className="shadow-sm" />
+      <a
+        href={SITE_ORIGIN}
+        aria-label={t("login.back_to_site")}
+        className="rounded-[14px] transition-opacity hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+      >
+        <BrandMark size={52} radius={14} className="shadow-sm" />
+      </a>
       <h1 className="mt-[18px] text-h2 font-semibold tracking-[-0.012em]">{title}</h1>
       <p className="mt-[7px] max-w-[34ch] text-pretty text-small leading-[1.5] text-text-muted">{sub}</p>
     </div>
@@ -265,6 +276,16 @@ function EmailForm({
           {t("login.consent_privacy")}
         </a>
         .
+      </p>
+
+      {/* Says the same thing the landing's status pill says, in the one place
+          where a stranger can otherwise only guess: signing in is open, but a
+          Threads account still needs an invite while Meta verification runs. */}
+      <p className="mx-auto mt-4 max-w-[34ch] text-center text-caption leading-[1.5] text-text-subtle">
+        {t("login.beta_note")}{" "}
+        <a href={SITE_ORIGIN} className="underline decoration-border underline-offset-2 hover:text-text hover:decoration-text-subtle">
+          {t("login.beta_link")}
+        </a>
       </p>
     </div>
   );

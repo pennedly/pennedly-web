@@ -8,7 +8,7 @@
 // drives every state (account / feed-state / drafts / density / dark) on mock
 // content so the redesign can be reviewed state-by-state.
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -102,6 +102,10 @@ export default function Studio() {
   const [draftsLoading, setDraftsLoading] = useState(true);
   const [edits, setEdits] = useState<Record<number, string>>({});
   const [tab, setTab] = useState<StudioStatus>("ready");
+  // Set the moment the user picks a tab themselves, so the auto-pick below
+  // never overrides a deliberate choice. Reset per account — a different
+  // account is a different board.
+  const tabPickedByUser = useRef(false);
   const [composerText, setComposerText] = useState("");
   const [generating, setGenerating] = useState(false);
   // Starts at the default and adopts the saved choice after mount: the server
@@ -244,6 +248,7 @@ export default function Studio() {
     }
     if (accountId === null) return; // still resolving — keep the skeleton up
     setDraftsLoading(true);
+    tabPickedByUser.current = false;
     // Clear the voice-state pill while switching accounts so it shows a neutral
     // placeholder (voiceReady === null renders no pill) instead of the previous
     // account's "Voice active"/"not set" until this account's status resolves.
@@ -263,6 +268,13 @@ export default function Studio() {
         setNeedsVoiceSetup(false);
         const list = await listDrafts(accountId, { contentType: "threads_post", limit: 50 });
         setDrafts(list.drafts);
+        // Straight out of onboarding there is nothing to approve, and "Ready to
+        // publish" then greets the very first user with «approve drafts and
+        // they line up here» — advice about drafts they don't have, and no
+        // button. "Drafts" empty is the one that says what to do next and hands
+        // them the composer. Only when the board is completely empty, and never
+        // over a tab the user chose.
+        if (list.drafts.length === 0 && !tabPickedByUser.current) setTab("draft");
       } catch (e) {
         if (e instanceof ApiError && e.status === 401) {
           clearTokens();
@@ -779,7 +791,14 @@ export default function Studio() {
               disabled={!demoOn && accountId === null}
             />
 
-            <FilterTabs active={tab} counts={counts} onChange={setTab} />
+            <FilterTabs
+              active={tab}
+              counts={counts}
+              onChange={(next) => {
+                tabPickedByUser.current = true;
+                setTab(next);
+              }}
+            />
 
             <div className={density === "compact" ? "flex flex-col gap-2.5" : "flex flex-col gap-3.5"}>
               {feedState === "Loading" || (!demoOn && (draftsLoading || accountId === null)) ? (
