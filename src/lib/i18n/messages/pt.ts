@@ -1007,6 +1007,7 @@ export const pt: Partial<Record<MessageKey, string>> = {
   "onboarding.avoid_drama": "Dramas pessoais",
   "onboarding.avoid_bait": "Isca de engajamento",
   "onboarding.step_connect": "Conectar",
+  "onboarding.step_progress": "{n} de 4",
   "onboarding.step_personalize": "Personalizar",
   "onboarding.goals_eyebrow": "Passo 2 de 4 · Personalizar",
   "onboarding.goals_title": "O que mais importa para você?",

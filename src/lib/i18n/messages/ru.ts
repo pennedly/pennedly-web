@@ -1960,6 +1960,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "settings.lang_toast": "Язык обновлён",
   "settings.disconnect_toast": "Аккаунт отключён",
   "onboarding.step_connect": "Подключение",
+  "onboarding.step_progress": "{n} из 4",
   "onboarding.step_personalize": "Настройка",
   "onboarding.goals_eyebrow": "Шаг 2 из 4 · Настройка",
   "onboarding.goals_title": "Что для тебя важнее всего?",

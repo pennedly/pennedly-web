@@ -211,40 +211,65 @@ function Stepper({ current }: { current: number }) {
     "onboarding.step_done",
   ];
   return (
-    <div className="mb-[26px] flex items-center gap-2" aria-label={t("a11y.onboarding_progress")}>
-      {steps.map((s, i) => {
-        const state = i === current ? "current" : i < current ? "done" : "todo";
-        return (
-          <div key={s} className="flex items-center gap-2">
-            {i > 0 && (
-              <span className={cn("h-px w-7 shrink-0 max-[560px]:w-4", i <= current ? "bg-success" : "bg-border")} />
-            )}
-            <div className="flex items-center gap-[9px]">
-              <span
-                className={cn(
-                  "grid h-[26px] w-[26px] shrink-0 place-items-center rounded-full border text-caption font-semibold tabular-nums transition-colors duration-[180ms] ease-[cubic-bezier(0.2,0.7,0.3,1)]",
-                  state === "current"
-                    ? "border-text bg-text text-bg"
-                    : state === "done"
-                      ? "border-success bg-success text-success-foreground"
-                      : "border-border bg-surface text-text-subtle",
-                )}
-              >
-                {state === "done" ? <IcCheck size={14} /> : i + 1}
-              </span>
-              <span
-                className={cn(
-                  "whitespace-nowrap text-small transition-colors duration-[180ms] max-[560px]:hidden",
-                  state === "current" ? "font-semibold text-text" : state === "done" ? "text-text-muted" : "font-medium text-text-subtle",
-                )}
-              >
-                {t(s)}
-              </span>
+    <>
+      {/* Desktop/tablet — dots + connecting lines + full labels. Hidden at
+          ≤560px in favor of the compact track below (same threshold that
+          used to just hide .step-label and leave bare dots). */}
+      {/* Tailwind v4 compiles max-[Npx]: as an EXCLUSIVE `width < Npx` (not the
+          classic inclusive max-width), so this has to read max-[561px] — not
+          max-[560px] — to exactly complement the mobile block's
+          min-[561px]:hidden below. max-[560px] left a real gap: at exactly
+          560px neither side's `hidden` fired and both steppers rendered. */}
+      <div className="mb-[26px] flex items-center gap-2 max-[561px]:hidden" aria-label={t("a11y.onboarding_progress")}>
+        {steps.map((s, i) => {
+          const state = i === current ? "current" : i < current ? "done" : "todo";
+          return (
+            <div key={s} className="flex items-center gap-2">
+              {i > 0 && <span className={cn("h-px w-7 shrink-0", i <= current ? "bg-success" : "bg-border")} />}
+              <div className="flex items-center gap-[9px]">
+                <span
+                  className={cn(
+                    "grid h-[26px] w-[26px] shrink-0 place-items-center rounded-full border text-caption font-semibold tabular-nums transition-colors duration-[180ms] ease-[cubic-bezier(0.2,0.7,0.3,1)]",
+                    state === "current"
+                      ? "border-text bg-text text-bg"
+                      : state === "done"
+                        ? "border-success bg-success text-success-foreground"
+                        : "border-border bg-surface text-text-subtle",
+                  )}
+                >
+                  {state === "done" ? <IcCheck size={14} /> : i + 1}
+                </span>
+                <span
+                  className={cn(
+                    "whitespace-nowrap text-small transition-colors duration-[180ms]",
+                    state === "current" ? "font-semibold text-text" : state === "done" ? "text-text-muted" : "font-medium text-text-subtle",
+                  )}
+                >
+                  {t(s)}
+                </span>
+              </div>
             </div>
-          </div>
-        );
-      })}
-    </div>
+          );
+        })}
+      </div>
+      {/* Compact mobile stepper (≤560px) — a 4-segment track + "N of 4 ·
+          Name" instead of bare dots, so the card below doesn't jump: same
+          26px row height + 26px margin-bottom as the desktop variant. */}
+      <div className="mb-[26px] flex h-[26px] items-center gap-2.5 min-[561px]:hidden" aria-label={t("a11y.onboarding_progress")}>
+        <div className="flex shrink-0 items-center gap-1">
+          {steps.map((_, i) => (
+            <span key={i} className={cn("h-1 w-[18px] rounded-[2px]", i <= current ? "bg-accent" : "bg-border")} />
+          ))}
+        </div>
+        <span className="flex min-w-0 items-baseline gap-[5px] whitespace-nowrap text-caption">
+          <span className="font-medium tabular-nums text-text-muted">
+            {t("onboarding.step_progress").replace("{n}", String(current + 1))}
+          </span>
+          <span className="text-text-subtle">·</span>
+          <span className="overflow-hidden text-ellipsis font-semibold text-accent">{t(steps[current])}</span>
+        </span>
+      </div>
+    </>
   );
 }
 

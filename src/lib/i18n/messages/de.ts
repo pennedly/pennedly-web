@@ -1013,6 +1013,7 @@ export const de: Partial<Record<MessageKey, string>> = {
   "onboarding.avoid_drama": "Privates Drama",
   "onboarding.avoid_bait": "Engagement-Bait",
   "onboarding.step_connect": "Verbinden",
+  "onboarding.step_progress": "{n} von 4",
   "onboarding.step_personalize": "Einrichten",
   "onboarding.goals_eyebrow": "Schritt 2 von 4 · Einrichten",
   "onboarding.goals_title": "Was ist dir am wichtigsten?",

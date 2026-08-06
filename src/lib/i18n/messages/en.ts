@@ -1999,6 +1999,7 @@ export const en = {
   "settings.lang_toast": "Language updated",
   "settings.disconnect_toast": "Account disconnected",
   "onboarding.step_connect": "Connect",
+  "onboarding.step_progress": "{n} of 4",
   "onboarding.step_personalize": "Personalize",
   "onboarding.goals_eyebrow": "Step 2 of 4 · Personalize",
   "onboarding.goals_title": "What matters most to you?",

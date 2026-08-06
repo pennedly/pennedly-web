@@ -1006,6 +1006,7 @@ export const es: Partial<Record<MessageKey, string>> = {
   "onboarding.avoid_drama": "Dramas personales",
   "onboarding.avoid_bait": "Cebo de interacción",
   "onboarding.step_connect": "Conectar",
+  "onboarding.step_progress": "{n} de 4",
   "onboarding.step_personalize": "Personalizar",
   "onboarding.goals_eyebrow": "Paso 2 de 4 · Personalizar",
   "onboarding.goals_title": "¿Qué es lo que más te importa?",

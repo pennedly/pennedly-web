@@ -1004,6 +1004,7 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "onboarding.avoid_drama": "Особисті драми",
   "onboarding.avoid_bait": "Клікбейт заради реакцій",
   "onboarding.step_connect": "Підключення",
+  "onboarding.step_progress": "{n} з 4",
   "onboarding.step_personalize": "Налаштування",
   "onboarding.goals_eyebrow": "Крок 2 з 4 · Налаштування",
   "onboarding.goals_title": "Що для тебе найважливіше?",
