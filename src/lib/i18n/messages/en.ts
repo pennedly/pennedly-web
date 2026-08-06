@@ -96,6 +96,9 @@ export const en = {
   "login.consent_terms": "Terms",
   "login.consent_and": "and",
   "login.consent_privacy": "Privacy Policy",
+  "login.back_to_site": "Pennedly home page",
+  "login.beta_note": "Pennedly is in invite-only beta. Not on the list yet?",
+  "login.beta_link": "Join the waitlist",
   "login.code_sent_to": "We sent a 6-digit code to",
   "login.verify": "Sign in",
   "login.code_invalid": "That code didn't match. Double-check it and try again.",
@@ -138,10 +141,10 @@ export const en = {
   "landing.vt_eyebrow": "Try it free",
   "landing.vt_title": "Hear it in your own voice",
   "landing.vt_sub": "Paste a few of your posts and watch Pennedly draft replies that sound like you. No signup.",
-  "landing.vt_placeholder": "Paste 3-5 of your posts here, one per paragraph…",
   "landing.vt_cta": "Show me my voice",
   "landing.vt_running": "Reading your voice…",
   "landing.vt_hint": "Free · nothing is saved",
+  "landing.vt_need_post": "Paste one of your posts first.",
   "landing.vt_error": "Couldn't run the voice test. Try again in a moment.",
   "landing.vt_to": "Replying to:",
   "landing.vt_restart": "Edit posts",
@@ -208,8 +211,6 @@ export const en = {
   "landing.spec_voice": "In your voice",
   "landing.spec_edit": "Edit",
   "landing.spec_approve": "Approve",
-  "landing.spec_text":
-    "Consistency beats talent. Show up every day and you quietly out-grow everyone waiting for inspiration.",
 
   // ── Studio (/app — pixel-perfect redesign) ──────────────────────
   "studio.composer_placeholder": "What do you want to write about? A topic, a hot take, a link…",
@@ -1543,17 +1544,6 @@ export const en = {
   "feed.error_sub": "Something went wrong loading your feed. Give it another try.",
 
   // ── Onboarding ────────────────────────────────────────────────
-  "onboarding.title": "Set up your voice",
-  "onboarding.subtitle":
-    "Pennedly writes in your voice. Let's define it. Pick how to start.",
-  "onboarding.connect_title": "First, connect your Threads account",
-  "onboarding.connect_body":
-    "Pennedly drafts for a connected account. Connect one to begin.",
-  "onboarding.analyze_title": "Analyze my posts",
-  "onboarding.analyze_body":
-    "Pennedly reads your recent Threads posts and builds your voice automatically.",
-  "onboarding.analyze_cta": "Analyze my posts",
-  "onboarding.analyze_count": "posts ready to analyze",
   "onboarding.analyze_none": "No posts yet. Build from scratch instead.",
   "onboarding.analyze_slow": "This is taking longer than usual — go back",
   "onboarding.err_network": "No connection. Check your internet and try again.",
@@ -1564,14 +1554,9 @@ export const en = {
   "onboarding.import_too_few_many": "The import finished: only {have} posts found (need {need}). Start from scratch — the option unlocks once you post more.",
   "onboarding.analyze_new_hint": "New account with almost no posts? Pick “Start from scratch”.",
   "onboarding.import_wait_note": "Importing your posts — {have} so far",
-  "onboarding.analyze_locked_one": "Need {need} post to analyze. You have {have}.",
-  "onboarding.analyze_locked_few": "Need {need} posts to analyze. You have {have}.",
-  "onboarding.analyze_locked_many": "Need {need} posts to analyze. You have {have}.",
-  "onboarding.analyzing": "Analyzing your posts…",
   "onboarding.scratch_title": "Tell Pennedly how you write.",
   "onboarding.scratch_body":
     "A few lines is plenty. This becomes the starting point for your voice; edit it anytime.",
-  "onboarding.scratch_cta": "Build from scratch",
   "onboarding.skip": "Skip for now, set up my voice later",
   "onboarding.form_intro_label": "Describe your voice",
   "onboarding.form_intro_ph":
@@ -1582,9 +1567,25 @@ export const en = {
   "onboarding.form_exclude_ph": "Anything Pennedly should never touch…",
   "onboarding.chip_remove_aria": "Remove {item}",
   "onboarding.create_cta": "Create my voice",
-  "onboarding.creating": "Creating…",
   "onboarding.back": "Back",
   "onboarding.error_empty": "Add at least a voice description or one topic.",
+  "onboarding.create_hint": "A description or one topic is enough to start.",
+  "onboarding.starter_warm":
+    "Warm but direct. Short sentences, plain words, the occasional dry joke. I write like I'm talking to one smart friend.",
+  "onboarding.starter_curious":
+    "Curious and a little contrarian. I ask questions more than I give answers, and I'd rather be honest than polished.",
+  "onboarding.topic_writing": "Writing craft",
+  "onboarding.topic_building": "Building in public",
+  "onboarding.topic_productivity": "Productivity",
+  "onboarding.topic_design": "Design",
+  "onboarding.topic_books": "Books & reading",
+  "onboarding.topic_startups": "Startups",
+  "onboarding.topic_creativity": "Creativity",
+  "onboarding.avoid_politics": "Politics",
+  "onboarding.avoid_crypto": "Crypto",
+  "onboarding.avoid_hustle": "Hustle culture",
+  "onboarding.avoid_drama": "Personal drama",
+  "onboarding.avoid_bait": "Engagement bait",
 
   // ── Stats (analytics) ─────────────────────────────────────────
   "dashboard.nav.stats": "stats",
@@ -1997,26 +1998,6 @@ export const en = {
   "settings.tester_tag": "Tester",
   "settings.lang_toast": "Language updated",
   "settings.disconnect_toast": "Account disconnected",
-  "onboarding.already_setup":
-    "Your voice is already set up. Going through this again replaces it (the previous version is kept).",
-  "onboarding.preview_banner":
-    "Preview mode: nothing is saved to your account. Run it for real, see the result, then it's discarded.",
-  "onboarding.preview_result_title": "Voice preview",
-  "onboarding.preview_not_saved":
-    "This is only a preview. Nothing was saved to your account.",
-  "onboarding.preview_posts_analyzed": "Posts analyzed:",
-  "onboarding.preview_would_topics": "Topics that would be created:",
-  "onboarding.preview_full_rolebook":
-    "Full role-book (what generation would use)",
-  "onboarding.preview_back": "← Back / run again",
-  "onboarding.exit": "Back",
-  "onboarding.sec_intro": "Intro",
-  "onboarding.sec_themes": "Topics",
-  "onboarding.sec_exclude": "Avoid",
-  "onboarding.sec_voice": "Voice",
-  "onboarding.sec_do": "Do",
-  "onboarding.sec_dont": "Don't",
-  "onboarding.sec_examples": "Examples",
   "onboarding.step_connect": "Connect",
   "onboarding.step_personalize": "Personalize",
   "onboarding.goals_eyebrow": "Step 2 of 4 · Personalize",
@@ -2050,13 +2031,15 @@ export const en = {
   "onboarding.connected": "Connected",
   "onboarding.followers_count": "{n} {u}",
   "onboarding.connect_failed": "We couldn't connect that account. Please try again.",
+  "onboarding.connect_denied":
+    "You canceled on the Threads screen, so nothing was connected. Try again whenever you're ready.",
   "onboarding.choose_eyebrow": "Step 3 of 4 · Your voice",
   "onboarding.choose_title": "How should Pennedly learn your voice?",
   "onboarding.choose_sub":
     "This is what makes drafts sound like you and not a robot. Pick one; you can always refine it later.",
-  "onboarding.mode_analyze_title": "Analyse my posts",
+  "onboarding.mode_analyze_title": "Analyze my posts",
   "onboarding.mode_analyze_desc":
-    "Pennedly reads {handle}'s recent posts and distils your themes, rhythm, and the things you'd never say.",
+    "Pennedly reads {handle}'s recent posts and distills your themes, rhythm, and the things you'd never say.",
   "onboarding.mode_analyze_meta": "Takes about a minute",
   "onboarding.mode_scratch_title": "Build from scratch",
   "onboarding.mode_scratch_desc":
@@ -2096,7 +2079,7 @@ export const en = {
   "onboarding.recap_voice": "Your voice",
   "onboarding.recap_account": "Connected account",
   "onboarding.recap_account_later": "Add later in Settings",
-  "onboarding.voice_analyzed": "Analysed from your posts",
+  "onboarding.voice_analyzed": "Analyzed from your posts",
   "onboarding.voice_scratch": "Built from your description",
   "onboarding.voice_later": "Set up later",
   "onboarding.refine_voice": "Refine your voice",

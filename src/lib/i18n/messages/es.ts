@@ -303,6 +303,9 @@ export const es: Partial<Record<MessageKey, string>> = {
   "login.consent_terms": "Términos",
   "login.consent_and": "y la",
   "login.consent_privacy": "Política de privacidad",
+  "login.back_to_site": "Página principal de Pennedly",
+  "login.beta_note": "Pennedly está en beta por invitación. ¿Todavía no estás en la lista?",
+  "login.beta_link": "Únete a la lista",
   "login.code_sent_to": "Introduce el código que enviamos a",
   "login.verify": "iniciar sesión",
   "login.code_invalid":
@@ -964,29 +967,15 @@ export const es: Partial<Record<MessageKey, string>> = {
   "feed.autoreply_toast_off": "Auto-respuestas inactivas para esta publicación",
 
   // ── Onboarding ─────────────────────────────────────────────────
-  "onboarding.title": "Configura tu voz",
-  "onboarding.analyze_locked_one": "Se necesita {need} publicación para analizar; tienes {have}",
-  "onboarding.analyze_locked_few": "Se necesitan {need} publicaciones para analizar; tienes {have}",
-  "onboarding.analyze_locked_many": "Se necesitan {need} publicaciones para analizar; tienes {have}",
   "onboarding.connect_failed": "No pudimos conectar esa cuenta. Inténtalo de nuevo.",
+  "onboarding.connect_denied":
+    "Cancelaste en la pantalla de Threads, así que no se conectó nada. Inténtalo de nuevo cuando quieras.",
   "onboarding.connected": "Conectado",
   "onboarding.followers_count": "{n} {u}",
-  "onboarding.subtitle":
-    "Pennedly escribe con tu voz. Vamos a definirla — elige por dónde empezar.",
-  "onboarding.connect_title": "Primero, conecta tu cuenta de Threads",
-  "onboarding.connect_body":
-    "Pennedly redacta para una cuenta conectada. Conecta una para empezar.",
-  "onboarding.analyze_title": "Analizar mis publicaciones",
-  "onboarding.analyze_body":
-    "Pennedly lee tus publicaciones recientes de Threads y construye tu voz automáticamente.",
-  "onboarding.analyze_cta": "Analizar mis publicaciones",
-  "onboarding.analyze_count": "publicaciones listas para analizar",
   "onboarding.analyze_none": "Aún no hay publicaciones — mejor construye desde cero.",
-  "onboarding.analyzing": "Analizando tus publicaciones…",
   "onboarding.scratch_title": "Construir desde cero",
   "onboarding.scratch_body":
     "¿Cuenta nueva? Describe tu voz y tus temas, y empieza a publicar enseguida.",
-  "onboarding.scratch_cta": "Construir desde cero",
   "onboarding.skip": "Omitir por ahora — configuro mi voz más tarde",
   "onboarding.form_intro_label": "Describe tu voz",
   "onboarding.form_intro_ph":
@@ -997,29 +986,25 @@ export const es: Partial<Record<MessageKey, string>> = {
   "onboarding.form_exclude_ph": "añade un tema a evitar",
   "onboarding.chip_remove_aria": "Quitar {item}",
   "onboarding.create_cta": "Crear mi voz",
-  "onboarding.creating": "Creando…",
   "onboarding.back": "Atrás",
   "onboarding.error_empty": "Añade al menos una descripción de voz o un tema.",
-  "onboarding.already_setup":
-    "Tu voz ya está configurada — volver a pasar por aquí la reemplaza (se conserva la versión anterior).",
-  "onboarding.preview_banner":
-    "Modo vista previa — no se guarda nada en tu cuenta. Se ejecuta de verdad, ves el resultado y luego se descarta.",
-  "onboarding.preview_result_title": "Vista previa de la voz",
-  "onboarding.preview_not_saved":
-    "Esto es solo una vista previa — no se guardó nada en tu cuenta.",
-  "onboarding.preview_posts_analyzed": "Publicaciones analizadas:",
-  "onboarding.preview_would_topics": "Temas que se crearían:",
-  "onboarding.preview_full_rolebook":
-    "Rolebook completo (lo que usaría la generación)",
-  "onboarding.preview_back": "← Atrás / ejecutar de nuevo",
-  "onboarding.exit": "Atrás",
-  "onboarding.sec_intro": "Introducción",
-  "onboarding.sec_themes": "Temas",
-  "onboarding.sec_exclude": "Evitar",
-  "onboarding.sec_voice": "Voz",
-  "onboarding.sec_do": "Hacer",
-  "onboarding.sec_dont": "No hacer",
-  "onboarding.sec_examples": "Ejemplos",
+  "onboarding.create_hint": "Basta con una descripción o un tema.",
+  "onboarding.starter_warm":
+    "Cálido pero directo. Frases cortas, palabras sencillas, algún chiste seco de vez en cuando. Escribo como si hablara con un amigo listo.",
+  "onboarding.starter_curious":
+    "Curioso y un poco a contracorriente. Pregunto más de lo que respondo, y prefiero ser honesto antes que pulido.",
+  "onboarding.topic_writing": "Oficio de escribir",
+  "onboarding.topic_building": "Construir en público",
+  "onboarding.topic_productivity": "Productividad",
+  "onboarding.topic_design": "Diseño",
+  "onboarding.topic_books": "Libros y lectura",
+  "onboarding.topic_startups": "Startups",
+  "onboarding.topic_creativity": "Creatividad",
+  "onboarding.avoid_politics": "Política",
+  "onboarding.avoid_crypto": "Cripto",
+  "onboarding.avoid_hustle": "Cultura del hustle",
+  "onboarding.avoid_drama": "Dramas personales",
+  "onboarding.avoid_bait": "Cebo de interacción",
   "onboarding.step_connect": "Conectar",
   "onboarding.step_personalize": "Personalizar",
   "onboarding.goals_eyebrow": "Paso 2 de 4 · Personalizar",
@@ -1390,10 +1375,10 @@ export const es: Partial<Record<MessageKey, string>> = {
   "landing.vt_eyebrow": "Pruébalo gratis",
   "landing.vt_title": "Escúchalo con tu propia voz",
   "landing.vt_sub": "Pega algunos de tus posts y mira cómo Pennedly redacta respuestas que suenan a ti. Sin registro.",
-  "landing.vt_placeholder": "Pega aquí 3-5 de tus posts, uno por párrafo…",
   "landing.vt_cta": "Muéstrame mi voz",
   "landing.vt_running": "Leyendo tu voz…",
   "landing.vt_hint": "Gratis · no se guarda nada",
+  "landing.vt_need_post": "Primero pega una de tus publicaciones.",
   "landing.vt_error": "No se pudo ejecutar la prueba. Inténtalo de nuevo en un momento.",
   "landing.vt_to": "Respondiendo a:",
   "landing.vt_restart": "Editar publicaciones",
@@ -1464,8 +1449,6 @@ export const es: Partial<Record<MessageKey, string>> = {
   "landing.spec_voice": "Con tu voz",
   "landing.spec_edit": "Editar",
   "landing.spec_approve": "Aprobar",
-  "landing.spec_text":
-    "La constancia gana al talento. Aparece cada día y, sin ruido, superas a todos los que esperan a la inspiración.",
   "studio.composer_placeholder":
     "¿Sobre qué quieres escribir? Un tema, una opinión, un enlace…",
   "studio.chip_lesson": "Una lección de esta semana",

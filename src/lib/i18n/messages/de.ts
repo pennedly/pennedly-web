@@ -304,6 +304,9 @@ export const de: Partial<Record<MessageKey, string>> = {
   "login.consent_terms": "Nutzungsbedingungen",
   "login.consent_and": "und der",
   "login.consent_privacy": "Datenschutzerklärung",
+  "login.back_to_site": "Pennedly-Startseite",
+  "login.beta_note": "Pennedly ist in der Beta nur mit Einladung. Noch nicht auf der Liste?",
+  "login.beta_link": "Auf die Warteliste",
   "login.code_sent_to": "Gib den Code ein, den wir gesendet haben an",
   "login.verify": "anmelden",
   "login.code_invalid":
@@ -970,29 +973,15 @@ export const de: Partial<Record<MessageKey, string>> = {
   "feed.autoreply_toast_off": "Auto-Antworten für diesen Beitrag aus",
 
   // ── Onboarding ─────────────────────────────────────────────────
-  "onboarding.title": "Richte deine Stimme ein",
-  "onboarding.analyze_locked_one": "Zum Analysieren brauchst du {need} Beitrag — du hast {have}",
-  "onboarding.analyze_locked_few": "Zum Analysieren brauchst du {need} Beiträge — du hast {have}",
-  "onboarding.analyze_locked_many": "Zum Analysieren brauchst du {need} Beiträge — du hast {have}",
   "onboarding.connect_failed": "Dieses Konto konnte nicht verbunden werden. Bitte versuche es erneut.",
+  "onboarding.connect_denied":
+    "Du hast auf der Threads-Seite abgebrochen, deshalb wurde nichts verbunden. Versuch es erneut, wann immer du willst.",
   "onboarding.connected": "Verbunden",
   "onboarding.followers_count": "{n} {u}",
-  "onboarding.subtitle":
-    "Pennedly schreibt in deiner Stimme. Lass sie uns definieren — wähle, wie du starten willst.",
-  "onboarding.connect_title": "Verbinde zuerst dein Threads-Konto",
-  "onboarding.connect_body":
-    "Pennedly entwirft für ein verbundenes Konto. Verbinde eines, um zu beginnen.",
-  "onboarding.analyze_title": "Meine Beiträge analysieren",
-  "onboarding.analyze_body":
-    "Pennedly liest deine aktuellen Threads-Beiträge und baut deine Stimme automatisch auf.",
-  "onboarding.analyze_cta": "Meine Beiträge analysieren",
-  "onboarding.analyze_count": "Beiträge bereit zur Analyse",
   "onboarding.analyze_none": "Noch keine Beiträge — baue stattdessen von Grund auf.",
-  "onboarding.analyzing": "Analysiere deine Beiträge…",
   "onboarding.scratch_title": "Von Grund auf bauen",
   "onboarding.scratch_body":
     "Neues Konto? Beschreibe deine Stimme und Themen und leg sofort los.",
-  "onboarding.scratch_cta": "Von Grund auf bauen",
   "onboarding.skip": "Erst mal überspringen — Stimme später einrichten",
   "onboarding.form_intro_label": "Beschreibe deine Stimme",
   "onboarding.form_intro_ph":
@@ -1003,30 +992,26 @@ export const de: Partial<Record<MessageKey, string>> = {
   "onboarding.form_exclude_ph": "ein zu vermeidendes Thema hinzufügen",
   "onboarding.chip_remove_aria": "{item} entfernen",
   "onboarding.create_cta": "Meine Stimme erstellen",
-  "onboarding.creating": "Erstelle…",
   "onboarding.back": "Zurück",
   "onboarding.error_empty":
     "Füge mindestens eine Stimm-Beschreibung oder ein Thema hinzu.",
-  "onboarding.already_setup":
-    "Deine Stimme ist bereits eingerichtet — das hier erneut zu durchlaufen ersetzt sie (die vorherige Version bleibt erhalten).",
-  "onboarding.preview_banner":
-    "Vorschau-Modus — nichts wird in deinem Konto gespeichert. Echt ausführen, Ergebnis ansehen, dann wird es verworfen.",
-  "onboarding.preview_result_title": "Stimm-Vorschau",
-  "onboarding.preview_not_saved":
-    "Das ist nur eine Vorschau — nichts wurde in deinem Konto gespeichert.",
-  "onboarding.preview_posts_analyzed": "Analysierte Beiträge:",
-  "onboarding.preview_would_topics": "Themen, die erstellt würden:",
-  "onboarding.preview_full_rolebook":
-    "Vollständiges Rollenbuch (was die Generierung nutzen würde)",
-  "onboarding.preview_back": "← Zurück / erneut ausführen",
-  "onboarding.exit": "Zurück",
-  "onboarding.sec_intro": "Einleitung",
-  "onboarding.sec_themes": "Themen",
-  "onboarding.sec_exclude": "Vermeiden",
-  "onboarding.sec_voice": "Stimme",
-  "onboarding.sec_do": "Tun",
-  "onboarding.sec_dont": "Nicht tun",
-  "onboarding.sec_examples": "Beispiele",
+  "onboarding.create_hint": "Eine Beschreibung oder ein Thema reicht zum Start.",
+  "onboarding.starter_warm":
+    "Warm, aber direkt. Kurze Sätze, einfache Worte, ab und zu ein trockener Witz. Ich schreibe, als würde ich mit einem klugen Freund reden.",
+  "onboarding.starter_curious":
+    "Neugierig und ein bisschen widerborstig. Ich stelle mehr Fragen, als ich Antworten gebe, und bin lieber ehrlich als glatt.",
+  "onboarding.topic_writing": "Handwerk Schreiben",
+  "onboarding.topic_building": "Building in Public",
+  "onboarding.topic_productivity": "Produktivität",
+  "onboarding.topic_design": "Design",
+  "onboarding.topic_books": "Bücher & Lesen",
+  "onboarding.topic_startups": "Startups",
+  "onboarding.topic_creativity": "Kreativität",
+  "onboarding.avoid_politics": "Politik",
+  "onboarding.avoid_crypto": "Krypto",
+  "onboarding.avoid_hustle": "Hustle-Kultur",
+  "onboarding.avoid_drama": "Privates Drama",
+  "onboarding.avoid_bait": "Engagement-Bait",
   "onboarding.step_connect": "Verbinden",
   "onboarding.step_personalize": "Einrichten",
   "onboarding.goals_eyebrow": "Schritt 2 von 4 · Einrichten",
@@ -1382,10 +1367,10 @@ export const de: Partial<Record<MessageKey, string>> = {
   "landing.vt_eyebrow": "Kostenlos testen",
   "landing.vt_title": "Hör es in deiner eigenen Stimme",
   "landing.vt_sub": "Füge ein paar deiner Posts ein und sieh, wie Pennedly Antworten in deiner Stimme entwirft. Ohne Anmeldung.",
-  "landing.vt_placeholder": "Füge hier 3-5 deiner Posts ein, einen pro Absatz…",
   "landing.vt_cta": "Zeig mir meine Stimme",
   "landing.vt_running": "Lese deine Stimme…",
   "landing.vt_hint": "Kostenlos · nichts wird gespeichert",
+  "landing.vt_need_post": "Füge zuerst einen deiner Beiträge ein.",
   "landing.vt_error": "Der Voice-Test ist fehlgeschlagen. Versuche es gleich noch einmal.",
   "landing.vt_to": "Antwort auf:",
   "landing.vt_restart": "Beiträge bearbeiten",
@@ -1456,8 +1441,6 @@ export const de: Partial<Record<MessageKey, string>> = {
   "landing.spec_voice": "In deiner Stimme",
   "landing.spec_edit": "Bearbeiten",
   "landing.spec_approve": "Freigeben",
-  "landing.spec_text":
-    "Beständigkeit schlägt Talent. Sei jeden Tag da, und du wächst still an allen vorbei, die auf Inspiration warten.",
   "studio.composer_placeholder":
     "Worüber willst du schreiben? Ein Thema, eine steile These, ein Link…",
   "studio.chip_lesson": "Eine Lektion aus dieser Woche",

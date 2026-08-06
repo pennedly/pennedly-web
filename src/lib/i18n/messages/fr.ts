@@ -304,6 +304,9 @@ export const fr: Partial<Record<MessageKey, string>> = {
   "login.consent_terms": "Conditions",
   "login.consent_and": "et la",
   "login.consent_privacy": "Politique de confidentialité",
+  "login.back_to_site": "Page d'accueil Pennedly",
+  "login.beta_note": "Pennedly est en bêta sur invitation. Pas encore sur la liste ?",
+  "login.beta_link": "Rejoins la liste d'attente",
   "login.code_sent_to": "Saisis le code envoyé à",
   "login.verify": "se connecter",
   "login.code_invalid":
@@ -965,29 +968,15 @@ export const fr: Partial<Record<MessageKey, string>> = {
   "feed.autoreply_toast_off": "Auto-réponses inactives pour ce post",
 
   // ── Onboarding ─────────────────────────────────────────────────
-  "onboarding.title": "Configure ta voix",
-  "onboarding.analyze_locked_one": "Il faut {need} post pour analyser — tu en as {have}",
-  "onboarding.analyze_locked_few": "Il faut {need} posts pour analyser — tu en as {have}",
-  "onboarding.analyze_locked_many": "Il faut {need} posts pour analyser — tu en as {have}",
   "onboarding.connect_failed": "Impossible de connecter ce compte. Réessaie.",
+  "onboarding.connect_denied":
+    "Tu as annulé sur l'écran Threads, donc rien n'a été connecté. Réessaie quand tu veux.",
   "onboarding.connected": "Connecté",
   "onboarding.followers_count": "{n} {u}",
-  "onboarding.subtitle":
-    "Pennedly écrit dans ta voix. Définissons-la — choisis par où commencer.",
-  "onboarding.connect_title": "D'abord, connecte ton compte Threads",
-  "onboarding.connect_body":
-    "Pennedly rédige pour un compte connecté. Connectes-en un pour commencer.",
-  "onboarding.analyze_title": "Analyser mes posts",
-  "onboarding.analyze_body":
-    "Pennedly lit tes posts Threads récents et construit ta voix automatiquement.",
-  "onboarding.analyze_cta": "Analyser mes posts",
-  "onboarding.analyze_count": "posts prêts à analyser",
   "onboarding.analyze_none": "Aucun post pour l'instant — construis plutôt de zéro.",
-  "onboarding.analyzing": "Analyse de tes posts…",
   "onboarding.scratch_title": "Construire de zéro",
   "onboarding.scratch_body":
     "Compte neuf ? Décris ta voix et tes sujets, et commence à publier tout de suite.",
-  "onboarding.scratch_cta": "Construire de zéro",
   "onboarding.skip": "Passer pour l'instant — configurer ma voix plus tard",
   "onboarding.form_intro_label": "Décris ta voix",
   "onboarding.form_intro_ph":
@@ -998,29 +987,25 @@ export const fr: Partial<Record<MessageKey, string>> = {
   "onboarding.form_exclude_ph": "ajoute un sujet à éviter",
   "onboarding.chip_remove_aria": "Retirer {item}",
   "onboarding.create_cta": "Créer ma voix",
-  "onboarding.creating": "Création…",
   "onboarding.back": "Retour",
   "onboarding.error_empty": "Ajoute au moins une description de voix ou un sujet.",
-  "onboarding.already_setup":
-    "Ta voix est déjà configurée — repasser par ici la remplace (la version précédente est conservée).",
-  "onboarding.preview_banner":
-    "Mode aperçu — rien n'est enregistré sur ton compte. On l'exécute pour de vrai, tu vois le résultat, puis c'est jeté.",
-  "onboarding.preview_result_title": "Aperçu de la voix",
-  "onboarding.preview_not_saved":
-    "Ce n'est qu'un aperçu — rien n'a été enregistré sur ton compte.",
-  "onboarding.preview_posts_analyzed": "Posts analysés :",
-  "onboarding.preview_would_topics": "Sujets qui seraient créés :",
-  "onboarding.preview_full_rolebook":
-    "Rolebook complet (ce que la génération utiliserait)",
-  "onboarding.preview_back": "← Retour / relancer",
-  "onboarding.exit": "Retour",
-  "onboarding.sec_intro": "Intro",
-  "onboarding.sec_themes": "Sujets",
-  "onboarding.sec_exclude": "Éviter",
-  "onboarding.sec_voice": "Voix",
-  "onboarding.sec_do": "Faire",
-  "onboarding.sec_dont": "Ne pas faire",
-  "onboarding.sec_examples": "Exemples",
+  "onboarding.create_hint": "Une description ou un sujet suffit pour commencer.",
+  "onboarding.starter_warm":
+    "Chaleureux mais direct. Phrases courtes, mots simples, une blague pince-sans-rire de temps en temps. J'écris comme si je parlais à un ami intelligent.",
+  "onboarding.starter_curious":
+    "Curieux et un peu à contre-courant. Je pose plus de questions que je ne donne de réponses, et je préfère être honnête que lisse.",
+  "onboarding.topic_writing": "L'art d'écrire",
+  "onboarding.topic_building": "Construire en public",
+  "onboarding.topic_productivity": "Productivité",
+  "onboarding.topic_design": "Design",
+  "onboarding.topic_books": "Livres et lecture",
+  "onboarding.topic_startups": "Startups",
+  "onboarding.topic_creativity": "Créativité",
+  "onboarding.avoid_politics": "Politique",
+  "onboarding.avoid_crypto": "Crypto",
+  "onboarding.avoid_hustle": "Culture du hustle",
+  "onboarding.avoid_drama": "Drames personnels",
+  "onboarding.avoid_bait": "Appâts à engagement",
   "onboarding.step_connect": "Connexion",
   "onboarding.step_personalize": "Personnaliser",
   "onboarding.goals_eyebrow": "Étape 2 sur 4 · Personnaliser",
@@ -1382,10 +1367,10 @@ export const fr: Partial<Record<MessageKey, string>> = {
   "landing.vt_eyebrow": "Essayez gratuitement",
   "landing.vt_title": "Entendez-le dans votre voix",
   "landing.vt_sub": "Collez quelques-uns de vos posts et voyez Pennedly rédiger des réponses qui vous ressemblent. Sans inscription.",
-  "landing.vt_placeholder": "Collez ici 3-5 de vos posts, un par paragraphe…",
   "landing.vt_cta": "Montrez-moi ma voix",
   "landing.vt_running": "Lecture de votre voix…",
   "landing.vt_hint": "Gratuit · rien n'est enregistré",
+  "landing.vt_need_post": "Collez d'abord un de vos posts.",
   "landing.vt_error": "Le test n'a pas pu s'exécuter. Réessayez dans un instant.",
   "landing.vt_to": "En réponse à :",
   "landing.vt_restart": "Modifier les posts",
@@ -1456,8 +1441,6 @@ export const fr: Partial<Record<MessageKey, string>> = {
   "landing.spec_voice": "Dans ta voix",
   "landing.spec_edit": "Modifier",
   "landing.spec_approve": "Approuver",
-  "landing.spec_text":
-    "La régularité bat le talent. Publie chaque jour et tu dépasses tranquillement tous ceux qui attendent l'inspiration.",
 
   // ── Studio ─────────────────────────────────────────────────────
   "studio.composer_placeholder":

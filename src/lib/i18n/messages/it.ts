@@ -304,6 +304,9 @@ export const it: Partial<Record<MessageKey, string>> = {
   "login.consent_terms": "Termini",
   "login.consent_and": "e l'",
   "login.consent_privacy": "Informativa sulla privacy",
+  "login.back_to_site": "Home page di Pennedly",
+  "login.beta_note": "Pennedly è in beta su invito. Non sei ancora in lista?",
+  "login.beta_link": "Iscriviti alla lista",
   "login.code_sent_to": "Inserisci il codice inviato a",
   "login.verify": "accedi",
   "login.code_invalid": "Codice non valido o scaduto — richiedine uno nuovo.",
@@ -964,29 +967,15 @@ export const it: Partial<Record<MessageKey, string>> = {
   "feed.autoreply_toast_off": "Auto-risposte inattive per questo post",
 
   // ── Onboarding ─────────────────────────────────────────────────
-  "onboarding.title": "Configura la tua voce",
-  "onboarding.analyze_locked_one": "Serve {need} post per analizzare — ne hai {have}",
-  "onboarding.analyze_locked_few": "Servono {need} post per analizzare — ne hai {have}",
-  "onboarding.analyze_locked_many": "Servono {need} post per analizzare — ne hai {have}",
   "onboarding.connect_failed": "Non è stato possibile collegare questo account. Riprova.",
+  "onboarding.connect_denied":
+    "Hai annullato nella schermata di Threads, quindi non è stato collegato nulla. Riprova quando vuoi.",
   "onboarding.connected": "Collegato",
   "onboarding.followers_count": "{n} {u}",
-  "onboarding.subtitle":
-    "Pennedly scrive nella tua voce. Definiamola — scegli da dove iniziare.",
-  "onboarding.connect_title": "Prima, collega il tuo account Threads",
-  "onboarding.connect_body":
-    "Pennedly scrive per un account collegato. Collegane uno per iniziare.",
-  "onboarding.analyze_title": "Analizza i miei post",
-  "onboarding.analyze_body":
-    "Pennedly legge i tuoi post Threads recenti e costruisce la tua voce automaticamente.",
-  "onboarding.analyze_cta": "Analizza i miei post",
-  "onboarding.analyze_count": "post pronti da analizzare",
   "onboarding.analyze_none": "Ancora nessun post — costruisci invece da zero.",
-  "onboarding.analyzing": "Analizzo i tuoi post…",
   "onboarding.scratch_title": "Costruisci da zero",
   "onboarding.scratch_body":
     "Account nuovo? Descrivi la tua voce e i tuoi argomenti, e inizia a pubblicare subito.",
-  "onboarding.scratch_cta": "Costruisci da zero",
   "onboarding.skip": "Salta per ora — configuro la voce più tardi",
   "onboarding.form_intro_label": "Descrivi la tua voce",
   "onboarding.form_intro_ph":
@@ -997,29 +986,25 @@ export const it: Partial<Record<MessageKey, string>> = {
   "onboarding.form_exclude_ph": "aggiungi un argomento da evitare",
   "onboarding.chip_remove_aria": "Rimuovi {item}",
   "onboarding.create_cta": "Crea la mia voce",
-  "onboarding.creating": "Creo…",
   "onboarding.back": "Indietro",
   "onboarding.error_empty": "Aggiungi almeno una descrizione di voce o un argomento.",
-  "onboarding.already_setup":
-    "La tua voce è già configurata — ripassare di qui la sostituisce (la versione precedente è conservata).",
-  "onboarding.preview_banner":
-    "Modalità anteprima — niente viene salvato sul tuo account. Si esegue davvero, vedi il risultato, poi viene scartato.",
-  "onboarding.preview_result_title": "Anteprima della voce",
-  "onboarding.preview_not_saved":
-    "Questa è solo un'anteprima — niente è stato salvato sul tuo account.",
-  "onboarding.preview_posts_analyzed": "Post analizzati:",
-  "onboarding.preview_would_topics": "Argomenti che verrebbero creati:",
-  "onboarding.preview_full_rolebook":
-    "Rolebook completo (cosa userebbe la generazione)",
-  "onboarding.preview_back": "← Indietro / riesegui",
-  "onboarding.exit": "Indietro",
-  "onboarding.sec_intro": "Introduzione",
-  "onboarding.sec_themes": "Argomenti",
-  "onboarding.sec_exclude": "Evita",
-  "onboarding.sec_voice": "Voce",
-  "onboarding.sec_do": "Fare",
-  "onboarding.sec_dont": "Non fare",
-  "onboarding.sec_examples": "Esempi",
+  "onboarding.create_hint": "Basta una descrizione o un argomento per iniziare.",
+  "onboarding.starter_warm":
+    "Caldo ma diretto. Frasi brevi, parole semplici, ogni tanto una battuta secca. Scrivo come se parlassi con un amico sveglio.",
+  "onboarding.starter_curious":
+    "Curioso e un po' controcorrente. Faccio più domande di quante risposte dia, e preferisco essere onesto che levigato.",
+  "onboarding.topic_writing": "Mestiere della scrittura",
+  "onboarding.topic_building": "Costruire in pubblico",
+  "onboarding.topic_productivity": "Produttività",
+  "onboarding.topic_design": "Design",
+  "onboarding.topic_books": "Libri e lettura",
+  "onboarding.topic_startups": "Startup",
+  "onboarding.topic_creativity": "Creatività",
+  "onboarding.avoid_politics": "Politica",
+  "onboarding.avoid_crypto": "Cripto",
+  "onboarding.avoid_hustle": "Cultura dell'hustle",
+  "onboarding.avoid_drama": "Drammi personali",
+  "onboarding.avoid_bait": "Esche per interazioni",
   "onboarding.step_connect": "Collega",
   "onboarding.step_personalize": "Personalizza",
   "onboarding.goals_eyebrow": "Passo 2 di 4 · Personalizza",
@@ -1381,10 +1366,10 @@ export const it: Partial<Record<MessageKey, string>> = {
   "landing.vt_eyebrow": "Provalo gratis",
   "landing.vt_title": "Sentilo con la tua voce",
   "landing.vt_sub": "Incolla qualche tuo post e guarda Pennedly scrivere risposte che suonano come te. Senza registrazione.",
-  "landing.vt_placeholder": "Incolla qui 3-5 tuoi post, uno per paragrafo…",
   "landing.vt_cta": "Mostrami la mia voce",
   "landing.vt_running": "Leggo la tua voce…",
   "landing.vt_hint": "Gratis · niente viene salvato",
+  "landing.vt_need_post": "Prima incolla uno dei tuoi post.",
   "landing.vt_error": "Impossibile eseguire il test. Riprova tra un momento.",
   "landing.vt_to": "In risposta a:",
   "landing.vt_restart": "Modifica i post",
@@ -1455,8 +1440,6 @@ export const it: Partial<Record<MessageKey, string>> = {
   "landing.spec_voice": "Nella tua voce",
   "landing.spec_edit": "Modifica",
   "landing.spec_approve": "Approva",
-  "landing.spec_text":
-    "La costanza batte il talento. Presentati ogni giorno e supererai in silenzio tutti quelli che aspettano l'ispirazione.",
 
   // ── Studio ─────────────────────────────────────────────────────
   "studio.composer_placeholder":
