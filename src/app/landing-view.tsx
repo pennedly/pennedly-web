@@ -384,6 +384,14 @@ function VoiceTestSection() {
                   </li>
                 ))}
               </ul>
+              {/* Peak-interest CTA: the visitor just watched Pennedly answer in
+                  their own voice — the only affordance used to be "change
+                  posts". Reuses the hero's exact WaitlistForm, tagged with its
+                  own source for the funnel. */}
+              <div className="mx-auto mt-7 w-full max-w-[440px] text-center">
+                <p className="mb-3.5 text-small text-text-muted [text-wrap:pretty]">{t("landing.vt_waitlist_lead")}</p>
+                <WaitlistForm source="voice_test" />
+              </div>
             </div>
           )}
         </div>
@@ -445,7 +453,7 @@ function WhyPennedlySection() {
 //
 // `locale` rides along so the announcement email is written in the language
 // they read the page in; `source` records which CTA earned the signup.
-function WaitlistForm({ source = "hero" }: { source?: "hero" | "footer" }) {
+function WaitlistForm({ source = "hero" }: { source?: "hero" | "footer" | "voice_test" }) {
   const { t, locale } = useTranslation();
   const [email, setEmail] = useState("");
   const [state, setState] = useState<"idle" | "busy" | "sent" | "error">("idle");
@@ -714,6 +722,18 @@ function LandingContent({ showSample }: { showSample: boolean }) {
       </section>
 
       <WhyPennedlySection />
+
+      {/* Final CTA — the page used to run straight from "В чём разница" into the
+          footer with no second signup chance below the hero. Same WaitlistForm,
+          its own source for the funnel. */}
+      <section className="shrink-0 border-t border-border py-[52px]">
+        <div className={cn(WRAP, "flex flex-col items-center text-center")}>
+          <p className="max-w-[42ch] text-h3 font-[450] leading-[1.5] text-text [text-wrap:pretty]">{t("landing.footer_waitlist_lead")}</p>
+          <div className="mx-auto mt-6 w-full max-w-[440px]">
+            <WaitlistForm source="footer" />
+          </div>
+        </div>
+      </section>
 
       {/* Footer */}
       <footer className="shrink-0 border-t border-border pb-[30px] pt-6">

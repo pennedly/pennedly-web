@@ -1403,7 +1403,7 @@ export async function submitFeedback(
 export async function joinWaitlist(
   email: string,
   locale: string,
-  source: "hero" | "footer" = "hero",
+  source: "hero" | "footer" | "voice_test" = "hero",
 ): Promise<WaitlistResponse> {
   return fetchApi<WaitlistResponse>("/api/waitlist", {
     method: "POST",

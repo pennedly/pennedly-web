@@ -1387,6 +1387,7 @@ export const pt: Partial<Record<MessageKey, string>> = {
   "landing.vt_remove": "Remover post",
   "landing.vt_cap": "É o máximo — remova um para adicionar outro.",
   "landing.vt_compose_ph": "Cole um post e toque em Adicionar…",
+  "landing.vt_waitlist_lead": "Essa é a sua voz. Deixe seu email e seja um dos primeiros a saber quando o Pennedly abrir.",
   "landing.status": "Em desenvolvimento · beta por convite",
   "landing.trust1": "Somente leitura no início",
   "landing.trust2": "Nada é publicado sem a sua aprovação",
@@ -1441,6 +1442,7 @@ export const pt: Partial<Record<MessageKey, string>> = {
   "landing.feat_accounts_title": "Todas as contas, num só lugar",
   "landing.feat_accounts_desc":
     "Toque todas as suas contas do Threads a partir de um único espaço tranquilo.",
+  "landing.footer_waitlist_lead": "Quer entrar? Deixe seu email e avisamos quando abrirmos.",
   "landing.footer_privacy": "Política de Privacidade",
   "landing.footer_terms": "Termos de Serviço",
   "landing.footer_data": "Exclusão de dados",

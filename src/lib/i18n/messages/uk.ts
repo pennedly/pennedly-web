@@ -1380,6 +1380,7 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "landing.vt_remove": "Видалити допис",
   "landing.vt_cap": "Це максимум — видаліть один, щоб додати ще.",
   "landing.vt_compose_ph": "Вставте допис і натисніть «Додати»…",
+  "landing.vt_waitlist_lead": "Це твій голос. Залиш пошту і дізнайся першим, коли відкриємо доступ.",
   "landing.status": "У розробці · бета за запрошеннями",
   "landing.trust1": "Спочатку лише читання",
   "landing.trust2": "Нічого не публікується без твого схвалення",
@@ -1434,6 +1435,7 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "landing.feat_accounts_title": "Усі акаунти в одному місці",
   "landing.feat_accounts_desc":
     "Веди всі свої Threads-акаунти з одного спокійного місця.",
+  "landing.footer_waitlist_lead": "Хочеш приєднатися? Залиш пошту, і ми напишемо, коли відкриємо доступ.",
   "landing.footer_privacy": "Політика конфіденційності",
   "landing.footer_terms": "Умови використання",
   "landing.footer_data": "Видалення даних",
