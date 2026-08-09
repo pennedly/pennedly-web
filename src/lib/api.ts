@@ -42,6 +42,9 @@ import type {
   EngagementHistory,
   MediaItem,
   MediaUploadResponse,
+  McpTokenScope,
+  McpTokensResponse,
+  CreateMcpTokenResponse,
   FeedResponse,
   FollowerHistory,
   FromScratchInput,
@@ -624,6 +627,33 @@ export async function deleteAccount(): Promise<{
 // caller turns it into a downloadable file.
 export async function exportAccountData(): Promise<unknown> {
   return fetchApi("/api/me/export");
+}
+
+// ── MCP personal API tokens (§7.17, /app/settings "Connect your AI
+// assistant") ────────────────────────────────────────────────────────────
+
+// The caller's tokens, newest first, revoked ones included.
+export async function fetchMcpTokens(): Promise<McpTokensResponse> {
+  return fetchApi("/api/me/mcp-tokens");
+}
+
+// Mint one token. `scope` defaults server-side to 'read' too — the UI just
+// mirrors that default, never silently upgrades it. The response's `token`
+// is the only time the plaintext exists; the caller must show it once and
+// never persist or log it.
+export async function createMcpToken(
+  name: string,
+  scope: McpTokenScope = "read",
+): Promise<CreateMcpTokenResponse> {
+  return fetchApi("/api/me/mcp-tokens", {
+    method: "POST",
+    body: JSON.stringify({ name, scope }),
+  });
+}
+
+// Revoke one of the caller's tokens. The next MCP request using it fails.
+export async function revokeMcpToken(tokenId: number): Promise<void> {
+  await fetchApi(`/api/me/mcp-tokens/${tokenId}`, { method: "DELETE" });
 }
 
 // Kick off the Threads OAuth connect. Returns the Meta authorize URL the

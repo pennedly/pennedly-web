@@ -82,6 +82,40 @@ export type AccountsList = {
   accounts: ConnectedAccount[];
 };
 
+// ── MCP personal API tokens (§7.17) ───────────────────────────────────────
+// A user's own tokens for connecting an outside AI agent (Claude Desktop,
+// Cursor, …) to their Pennedly account over MCP. Mirrors api/me.py's
+// McpTokenSummary / CreateMcpTokenResponse. Read-only by default; a token
+// never exposes its plaintext or hash again after creation.
+export type McpTokenScope = "read" | "read_write";
+
+export type McpTokenSummary = {
+  id: number;
+  name: string;
+  scope: McpTokenScope;
+  created_at: string;
+  // Null until the token's first MCP request.
+  last_used_at: string | null;
+  // Set once revoked. The row stays listed (greyed, not hidden) so "I revoked
+  // that on the 3rd" stays answerable.
+  revoked_at: string | null;
+};
+
+export type McpTokensResponse = {
+  tokens: McpTokenSummary[];
+};
+
+// The ONE response that carries the plaintext token — shown once, never
+// re-fetchable. The caller must display it with a one-time warning and drop
+// it from state once the user dismisses it.
+export type CreateMcpTokenResponse = {
+  id: number;
+  name: string;
+  scope: McpTokenScope;
+  created_at: string;
+  token: string;
+};
+
 // Response from GET /api/threads/oauth/start — the Meta authorize URL the
 // browser should navigate to, plus the CSRF state (already persisted
 // server-side; returned for debugging/telemetry only).
@@ -1779,10 +1813,13 @@ export type LintResult = {
 // account, newest first. Mirrors api/applied_changes.py AppliedChangeEntry.
 // `payload` is the structured truth (raw applied input + result refs) — the UI
 // translates it into human facts, never shows raw JSON. `actor`: 'user' = a
-// person clicked «Применить» (→ «вы»); 'auto' = Pennedly applied it (→ «Pennedly»).
+// person clicked «Применить» (→ «вы»); 'auto' = Pennedly applied it (→
+// «Pennedly»); 'mcp' = the user's own AI agent applied it over the MCP
+// integration (→ «твой ИИ-агент», §7.17) — checked first server-side so an
+// agent-driven apply never reads back as the person's own click.
 // `rollbackable` is always false in the read-only first release.
 export type AppliedChangeSource = "advisor_action" | "voice_lint" | "audit";
-export type AppliedChangeActor = "user" | "auto";
+export type AppliedChangeActor = "user" | "auto" | "mcp";
 
 // Why a rollback is unavailable (when rollbackable is false and not yet rolled
 // back): "superseded" = replaced by a newer change; "irreversible" = no safe

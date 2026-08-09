@@ -27,6 +27,7 @@ import {
   IcFilter,
   IcNib,
   IcReload,
+  IcRobot,
   IcUndo,
 } from "@/components/icons";
 import { Button, buttonClasses } from "@/components/ui/button";
@@ -34,7 +35,7 @@ import { cn } from "@/lib/cn";
 import { type MessageKey, useTranslation } from "@/lib/i18n";
 import { pluralUnit } from "@/lib/i18n/plurals";
 import type { LocaleCode } from "@/lib/i18n/locales";
-import type { AppliedChangeEntry, AppliedChangeRollbackReason, AppliedChangeSource } from "@/lib/types";
+import type { AppliedChangeActor, AppliedChangeEntry, AppliedChangeRollbackReason, AppliedChangeSource } from "@/lib/types";
 
 type Filter = "all" | AppliedChangeSource;
 
@@ -49,7 +50,7 @@ export function sampleAppliedChanges(): AppliedChangeEntry[] {
     source: AppliedChangeSource,
     kind: string,
     summary: string,
-    actor: "user" | "auto",
+    actor: AppliedChangeActor,
     agoMs: number,
     rb: { rollbackable?: boolean; reason?: AppliedChangeRollbackReason | null; done?: number } = {},
   ): AppliedChangeEntry => ({
@@ -65,6 +66,7 @@ export function sampleAppliedChanges(): AppliedChangeEntry[] {
     created_at: new Date(now - agoMs).toISOString(),
   });
   return [
+    mk(11, "advisor_action", "voice_rule", "Правило голоса: без канцелярита", "mcp", 1 * H, { rollbackable: true }),
     mk(10, "voice_lint", "set_intro", "Voice fix: set_intro → intro", "auto", 5 * H, { rollbackable: true }),
     mk(9, "audit", "post_ending", "Заканчивать пост на мысли", "user", 7 * H, { rollbackable: true }),
     mk(8, "advisor_action", "routine", "Посты про рыбалку", "user", 2 * H, { reason: "later" }),
@@ -271,9 +273,24 @@ function RollbackConfirm({ entry, busy, error, onCancel, onConfirm, t }: { entry
   );
 }
 
+// The actor pill's label + icon — the row's who-did-this tell. 'mcp' gets
+// IcRobot (the user's OWN agent, distinct from Pennedly's own automation)
+// so «твой ИИ-агент» reads differently from «Pennedly» at a glance, not only
+// by text.
+function actorLabel(actor: AppliedChangeActor, t: (k: MessageKey) => string): string {
+  if (actor === "mcp") return t("appliedChanges.actor.mcp");
+  if (actor === "auto") return t("appliedChanges.actor.auto");
+  return t("appliedChanges.actor.you");
+}
+function actorAppliedByLabel(actor: AppliedChangeActor, t: (k: MessageKey) => string): string {
+  if (actor === "mcp") return t("appliedChanges.appliedByMcp");
+  if (actor === "auto") return t("appliedChanges.appliedByAuto");
+  return t("appliedChanges.appliedByYou");
+}
+
 function Row({ e, open, onToggle, t, locale, onRollback }: { e: AppliedChangeEntry; open: boolean; onToggle: () => void; t: (k: MessageKey) => string; locale: string; onRollback?: (e: AppliedChangeEntry) => void }) {
   const reverted = !!e.rolled_back_at;
-  const actorMeta = e.actor === "auto" ? t("appliedChanges.appliedByAuto") : t("appliedChanges.appliedByYou");
+  const actorMeta = actorAppliedByLabel(e.actor, t);
   return (
     <div className={cn("border-t border-border first:border-t-0")}>
       <button
@@ -292,8 +309,9 @@ function Row({ e, open, onToggle, t, locale, onRollback }: { e: AppliedChangeEnt
             {t("appliedChanges.rolledBackBadge")}
           </span>
         ) : (
-          <span className="shrink-0 whitespace-nowrap rounded-full border border-border bg-surface px-2 py-0.5 font-mono text-[10px] tracking-[0.02em] text-text-subtle max-[640px]:hidden">
-            {e.actor === "auto" ? t("appliedChanges.actor.auto") : t("appliedChanges.actor.you")}
+          <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-border bg-surface px-2 py-0.5 font-mono text-[10px] tracking-[0.02em] text-text-subtle max-[640px]:hidden">
+            {e.actor === "mcp" && <IcRobot size={11} className="shrink-0 opacity-80" />}
+            {actorLabel(e.actor, t)}
           </span>
         )}
         <span className="shrink-0 whitespace-nowrap text-caption tabular-nums text-text-subtle max-[640px]:order-2 max-[640px]:ml-auto">{rowTime(e.created_at, locale, t)}</span>
