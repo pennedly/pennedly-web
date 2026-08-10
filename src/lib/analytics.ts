@@ -70,7 +70,7 @@ export function initAnalytics(): void {
   if (typeof window === "undefined") return;
   const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
   const host =
-    process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://eu.i.posthog.com";
+    process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com";
   if (!key) {
     console.info("[analytics] disabled — NEXT_PUBLIC_POSTHOG_KEY missing");
     return;
@@ -96,6 +96,9 @@ export function initAnalytics(): void {
     },
   });
   _initialized = true;
+  // Tags every event so a future shared project (or a cross-product query)
+  // can still tell Pennedly's events apart.
+  posthog.register({ app: "pennedly" });
   // Honor a prior "accepted" decision across reloads. Before the replay, so a
   // returning visitor's buffered events actually go out.
   if (analyticsConsent() === "accepted") posthog.opt_in_capturing();
@@ -123,7 +126,7 @@ export function identify(userId: number, tenantId: number): void {
   if (!_initialized) return;
   // Identify by an opaque id only — no raw email to the analytics store (GDPR
   // data-minimization; the email↔id map stays in our DB).
-  posthog.identify(`user:${userId}`, { tenant_id: tenantId });
+  posthog.identify(`pennedly:user:${userId}`, { tenant_id: tenantId });
   posthog.group("tenant", String(tenantId));
 }
 
