@@ -209,3 +209,52 @@
 .adv-hero h3 { font-size: var(--text-h3); font-weight: 600; letter-spacing: -0.008em; margin: 0 0 7px; color: var(--color-text); }
 .adv-hero p { font-size: var(--text-small); color: var(--color-text-muted); margin: 0; max-width: 46ch; line-height: 1.55; }
 .adv-hero-cap { font-size: var(--text-caption); font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--color-text-subtle); margin: 0 auto 10px; text-align: center; }
+
+/* ═══════════════════════ settings: MCP tokens ═══════════════════════ */
+.acc-card2-headrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; }
+.acc-mcp-empty { display: flex; flex-direction: column; gap: 4px; padding: 16px 2px 8px; }
+.acc-mcp-empty-t { font-size: var(--text-small); font-weight: 600; color: var(--color-text); }
+.acc-mcp-empty-s { font-size: var(--text-caption); color: var(--color-text-subtle); line-height: 1.5; }
+.acc-mcp-list { display: flex; flex-direction: column; }
+.acc-mcp-row { display: flex; align-items: flex-start; gap: 13px; padding: 13px 0; border-bottom: 1px solid var(--color-border); min-width: 0; }
+.acc-mcp-list > .acc-mcp-row:last-child { border-bottom: none; }
+.acc-mcp-row--revoked { opacity: .55; }
+.acc-mcp-ico { flex: 0 0 auto; width: 36px; height: 36px; border-radius: var(--radius-md); background: var(--color-surface-2); border: 1px solid var(--color-border); display: grid; place-items: center; color: var(--color-text-muted); margin-top: 1px; }
+.acc-mcp-body { flex: 1 1 auto; min-width: 0; }
+.acc-mcp-name-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
+.acc-mcp-name { font-size: var(--text-small); font-weight: 600; color: var(--color-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.acc-mcp-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; font-size: var(--text-caption); color: var(--color-text-subtle); }
+.acc-mcp-meta .dot { width: 3px; height: 3px; border-radius: 9999px; background: var(--color-text-subtle); opacity: .6; flex: 0 0 auto; }
+.acc-mcp-act { flex: 0 0 auto; margin-left: auto; align-self: center; }
+.acc-scope-badge { display: inline-flex; align-items: center; flex: 0 0 auto; font-size: var(--text-caption); font-weight: 600; padding: 3px 9px; border-radius: var(--radius-full); white-space: nowrap; }
+.acc-scope-badge--read { background: var(--color-surface-2); color: var(--color-text-muted); border: 1px solid var(--color-border); }
+.acc-scope-badge--write { background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface)); color: var(--color-accent); border: 1px solid color-mix(in srgb, var(--color-accent) 28%, transparent); }
+.acc-revoked-badge { display: inline-flex; align-items: center; flex: 0 0 auto; font-family: var(--font-mono); font-size: 10.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; padding: 3px 8px; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--color-danger) 10%, var(--color-surface)); color: var(--color-danger); border: 1px solid color-mix(in srgb, var(--color-danger) 24%, transparent); }
+@container accpage (max-width: 460px) { .acc-mcp-row { flex-wrap: wrap; } .acc-mcp-act { margin-left: 49px; } }
+.acc-mcp-revoke-confirm { margin-top: 10px; padding: 12px 13px; border-radius: var(--radius-md); background: color-mix(in srgb, var(--color-danger) 6%, var(--color-surface)); border: 1px solid color-mix(in srgb, var(--color-danger) 28%, var(--color-border)); }
+.acc-mcp-revoke-confirm-t { font-size: var(--text-small); font-weight: 600; color: var(--color-text); }
+.acc-mcp-revoke-confirm-s { font-size: var(--text-caption); color: var(--color-text-muted); margin-top: 4px; line-height: 1.5; }
+.acc-mcp-revoke-confirm-act { display: flex; gap: 9px; margin-top: 11px; }
+.acc-mcp-form { display: flex; flex-direction: column; gap: 14px; padding: 4px 2px 6px; }
+.acc-scope-toggle { display: inline-flex; padding: 3px; border-radius: var(--radius-md); background: var(--color-surface-2); border: 1px solid var(--color-border); gap: 2px; width: fit-content; max-width: 100%; }
+.acc-scope-opt { flex: 0 0 auto; padding: 7px 13px; border-radius: calc(var(--radius-md) - 3px); font-size: var(--text-small); font-weight: 500; color: var(--color-text-muted); cursor: pointer; white-space: nowrap; background: transparent; border: none; font-family: inherit; }
+.acc-scope-opt--active { background: var(--color-surface); color: var(--color-text); box-shadow: var(--shadow-sm); font-weight: 600; }
+.acc-mcp-form-actions { display: flex; align-items: center; gap: 9px; }
+.acc-mcp-reveal { display: flex; flex-direction: column; gap: 12px; padding: 4px 2px 2px; }
+.acc-mcp-reveal-t { font-size: var(--text-small); font-weight: 600; color: var(--color-text); }
+.acc-mcp-reveal-s { font-size: var(--text-caption); color: var(--color-text-subtle); margin-top: 2px; }
+.acc-tokval { display: flex; align-items: center; gap: 9px; min-width: 0; padding: 10px 11px; border-radius: var(--radius-md); background: var(--color-surface-2); border: 1px solid var(--color-border); }
+.acc-tokval > svg { flex: 0 0 auto; color: var(--color-text-subtle); }
+.acc-tokval code { flex: 1 1 auto; min-width: 0; font-family: var(--font-mono); font-size: 12.5px; color: var(--color-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: none; border: none; padding: 0; }
+.acc-copy-btn { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: var(--radius-sm); border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text-muted); font-size: var(--text-caption); font-weight: 500; cursor: pointer; font-family: inherit; }
+.acc-copy-btn:hover { background: var(--color-surface-2); color: var(--color-text); }
+.acc-mcp-warn { display: flex; gap: 10px; padding: 11px 13px; border-radius: var(--radius-md); background: color-mix(in srgb, var(--color-warning) 10%, var(--color-surface)); border: 1px solid color-mix(in srgb, var(--color-warning) 26%, transparent); color: var(--color-text-muted); font-size: var(--text-caption); line-height: 1.5; }
+.acc-mcp-warn svg { flex: 0 0 auto; color: var(--color-warning); margin-top: 1px; }
+.acc-mcp-connect { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--color-border); }
+.acc-mcp-connect-t { font-size: var(--text-small); font-weight: 600; color: var(--color-text); }
+.acc-mcp-connect-s { font-size: var(--text-caption); color: var(--color-text-subtle); margin-top: 3px; margin-bottom: 12px; line-height: 1.5; }
+.acc-mcp-field-lab { font-size: var(--text-caption); font-weight: 600; color: var(--color-text-subtle); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 6px; }
+.acc-mcp-field-lab + .acc-tokval { margin-bottom: 14px; }
+.acc-codeblock { border-radius: var(--radius-md); background: var(--color-surface-2); border: 1px solid var(--color-border); overflow: hidden; }
+.acc-codeblock-head { display: flex; align-items: center; justify-content: flex-end; padding: 8px 10px; border-bottom: 1px solid var(--color-border); }
+.acc-codeblock pre { margin: 0; padding: 14px; font-family: var(--font-mono); font-size: 12px; line-height: 1.6; color: var(--color-text); overflow-x: auto; white-space: pre; }

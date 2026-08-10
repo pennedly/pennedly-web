@@ -105,6 +105,33 @@
       deleteConfirmS: "Будут удалены аккаунт, все бренды и профили, посты, черновики и статистика. Это необратимо.",
       deleteTypeLab: "Для подтверждения введите", deleteTypeWord: "УДАЛИТЬ", deleteCancel: "Отмена", deleteGo: "Удалить навсегда",
       deleting: "Удаляем аккаунт…", deletingNote: "Отзываем доступы и стираем данные.",
+      // ── MCP tokens ──
+      mcpCap: "MCP-токены",
+      mcpHint: "Персональный токен даёт внешнему ИИ-агенту (например, Claude Desktop) доступ к вашему аккаунту Pennedly через MCP.",
+      mcpCreateBtn: "Создать токен",
+      mcpEmptyT: "Пока нет ни одного токена",
+      mcpEmptyS: "Создайте токен, чтобы подключить ИИ-агента к аккаунту.",
+      mcpScopeRead: "Только чтение", mcpScopeWrite: "Чтение и запись",
+      mcpLastUsed: "Использован", mcpNeverUsed: "Ещё не использовался",
+      mcpRevokedBadge: "ОТОЗВАН",
+      mcpRevokeBtn: "Отозвать",
+      mcpRevokeConfirmT: "Отозвать этот токен?",
+      mcpRevokeConfirmS: "Агент сразу потеряет доступ к аккаунту. Отменить нельзя — токен останется в списке с пометкой «Отозван».",
+      mcpRevokeCancel: "Отмена", mcpRevokeGo: "Отозвать токен",
+      mcpFormNameLab: "Название", mcpFormNamePh: "Например, Claude Desktop",
+      mcpFormNameHint: "Чтобы отличать токены между собой.",
+      mcpFormScopeLab: "Доступ",
+      mcpFormScopeHint: "По умолчанию — только чтение. Разрешайте запись только доверенным агентам.",
+      mcpFormCancel: "Отмена", mcpFormCreate: "Создать токен",
+      mcpRevealT: "Токен создан",
+      mcpRevealS: "Скопируйте его сейчас — второй раз мы его не покажем.",
+      mcpCopy: "Копировать",
+      mcpRevealWarn: "Мы храним только хеш токена и не сможем показать его снова. Потеряете — отзовите и создайте новый.",
+      mcpRevealDone: "Я сохранил токен",
+      mcpConnectCap: "Как подключить",
+      mcpConnectS: "Адрес MCP-сервера Pennedly и готовый конфиг для Claude Desktop.",
+      mcpServerLab: "Адрес сервера", mcpConfigLab: "Конфиг для Claude Desktop",
+      mcpTokenPlaceholder: "ВАШ_ТОКЕН",
       // ── portfolio advisor chat (/app/account/advisor) ──
       advChatScope: "По всему портфелю", advPill: "На основе всего портфеля",
       advPinnedCap: "Сводка портфеля", advAskPort: "Спросите о портфеле…", advOpenFull: "Открыть советника",
@@ -165,6 +192,32 @@
       deleteConfirmS: "Gelöscht werden Konto, alle Marken und Profile, Beiträge, Entwürfe und Statistiken. Dieser Schritt ist endgültig.",
       deleteTypeLab: "Zum Bestätigen tippe", deleteTypeWord: "LÖSCHEN", deleteCancel: "Abbrechen", deleteGo: "Endgültig löschen",
       deleting: "Konto wird gelöscht…", deletingNote: "Zugänge werden entzogen, Daten gelöscht.",
+      mcpCap: "MCP-Token",
+      mcpHint: "Ein persönlicher Token gibt einem externen KI-Agenten (z. B. Claude Desktop) über MCP Zugriff auf dein Pennedly-Konto.",
+      mcpCreateBtn: "Token erstellen",
+      mcpEmptyT: "Noch kein Token vorhanden",
+      mcpEmptyS: "Erstelle einen Token, um einen KI-Agenten mit dem Konto zu verbinden.",
+      mcpScopeRead: "Nur Lesen", mcpScopeWrite: "Lesen & Schreiben",
+      mcpLastUsed: "Zuletzt genutzt", mcpNeverUsed: "Noch nie genutzt",
+      mcpRevokedBadge: "WIDERRUFEN",
+      mcpRevokeBtn: "Widerrufen",
+      mcpRevokeConfirmT: "Diesen Token widerrufen?",
+      mcpRevokeConfirmS: "Der Agent verliert sofort den Zugriff. Das lässt sich nicht rückgängig machen — der Token bleibt mit dem Vermerk „Widerrufen“ in der Liste.",
+      mcpRevokeCancel: "Abbrechen", mcpRevokeGo: "Token widerrufen",
+      mcpFormNameLab: "Name", mcpFormNamePh: "Zum Beispiel Claude Desktop",
+      mcpFormNameHint: "Damit du Tokens auseinanderhalten kannst.",
+      mcpFormScopeLab: "Zugriff",
+      mcpFormScopeHint: "Standard: nur Lesen. Schreibzugriff nur für vertrauenswürdige Agenten.",
+      mcpFormCancel: "Abbrechen", mcpFormCreate: "Token erstellen",
+      mcpRevealT: "Token erstellt",
+      mcpRevealS: "Kopiere ihn jetzt — ein zweites Mal zeigen wir ihn nicht.",
+      mcpCopy: "Kopieren",
+      mcpRevealWarn: "Wir speichern nur den Hash des Tokens und können ihn nicht erneut anzeigen. Bei Verlust: widerrufen und neu erstellen.",
+      mcpRevealDone: "Ich habe den Token gespeichert",
+      mcpConnectCap: "So verbindest du dich",
+      mcpConnectS: "Adresse des Pennedly-MCP-Servers und fertige Konfiguration für Claude Desktop.",
+      mcpServerLab: "Serveradresse", mcpConfigLab: "Konfiguration für Claude Desktop",
+      mcpTokenPlaceholder: "DEIN_TOKEN",
       advChatScope: "Über das gesamte Portfolio", advPill: "Basiert aufs Portfolio",
       advPinnedCap: "Portfolio-Überblick", advAskPort: "Frag zu deinem Portfolio…", advOpenFull: "Berater öffnen",
       advTry: "Frag zum Beispiel", advReading: "Lese Portfolio-Statistiken…",
@@ -389,6 +442,23 @@
     { code: "PT", native: "Português", ru: "Португальский", de: "Portugiesisch" },
   ];
 
+  // ── MCP tokens (/app/account/settings) — personal tokens for external AI
+  //    agents (e.g. Claude Desktop) to reach the account over MCP. Revoked
+  //    tokens stay in the list (never deleted) so "I revoked it on the 3rd"
+  //    stays verifiable. ──
+  const MCP_TOKENS = [
+    { id: "t1", name: "Claude Desktop", scope: "read", revoked: false,
+      created: { ru: "Создан 3 июня", de: "Erstellt am 3. Juni" },
+      lastUsed: { ru: "сегодня", de: "heute" } },
+    { id: "t2", name: "Локальный агент — тест", scope: "write", revoked: false,
+      created: { ru: "Создан вчера", de: "Erstellt gestern" },
+      lastUsed: null },
+    { id: "t3", name: "Старый ключ ноутбука", scope: "read", revoked: true,
+      created: { ru: "Создан 12 мая", de: "Erstellt am 12. Mai" },
+      lastUsed: { ru: "28 мая", de: "28. Mai" },
+      revokedOn: { ru: "Отозван 30 мая", de: "Widerrufen am 30. Mai" } },
+  ];
+
   // ── portfolio advisor chat — reuses the /app/advisor vocabulary (chip tones,
   //    suggestion cards, sources line); scope = data across ALL portfolio
   //    profiles. Hero verdict is the pinned ADVISOR[mode] summary above. ──
@@ -510,7 +580,7 @@
   window.ACCT = {
     LOCALES, NETWORKS, ACCOUNT, LOGINS, T,
     PROFILES, BRANDS, TOTALS, TASKS, ADVISOR,
-    LOCALE_NAMES, ADVISOR_CHAT,
+    LOCALE_NAMES, ADVISOR_CHAT, MCP_TOKENS,
     L, I18N_LONG,
   };
 })();

@@ -24,6 +24,8 @@
     shield: "<path d='M12 3.2l7 2.8v5c0 4.4-3 7.8-7 9.8-4-2-7-5.4-7-9.8V6z'/>",
     globe: "<circle cx='12' cy='12' r='8.5'/><path d='M3.5 12h17M12 3.5c2.5 2.2 2.5 14.8 0 17M12 3.5c-2.5 2.2-2.5 14.8 0 17'/>",
     "arrow-left": "<path d='M19 12H5M11 6l-6 6 6 6'/>",
+    copy: "<rect x='9' y='9' width='11' height='11' rx='2'/><path d='M15 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3'/>",
+    key: "<circle cx='8' cy='16' r='4'/><path d='M11 13 20 4'/><path d='M15.5 8.5 18 11'/>",
   };
   function xic(n, s) {
     s = s || 14;
@@ -76,9 +78,9 @@
   }
 
   // ═══════════════════ Account Settings ═══════════════════
-  function card2(h, d, body, danger) {
+  function card2(h, d, body, danger, headAction) {
     return "<section class='acc-card2" + (danger ? " acc-card2--danger" : "") + "'>"
-      + "<div class='acc-card2-head'><div class='acc-card2-h'>" + h + "</div>" + (d ? "<div class='acc-card2-d'>" + d + "</div>" : "") + "</div>"
+      + "<div class='acc-card2-head'><div class='acc-card2-headrow'><div class='acc-card2-h'>" + h + "</div>" + (headAction || "") + "</div>" + (d ? "<div class='acc-card2-d'>" + d + "</div>" : "") + "</div>"
       + "<div class='acc-card2-body'>" + body + "</div></section>";
   }
 
@@ -146,6 +148,70 @@
     return card2(t.dangerCap, null, row + extra, true);
   }
 
+  function scopeBadge(t, scope) {
+    return "<span class='acc-scope-badge acc-scope-badge--" + scope + "'>" + (scope === "write" ? t.mcpScopeWrite : t.mcpScopeRead) + "</span>";
+  }
+  function mcpRow(lang, tok, confirmId) {
+    var t = T(lang);
+    var revoked = !!tok.revoked;
+    var meta = "<span>" + L(tok.created, lang) + "</span><span class='dot'></span><span>"
+      + (revoked ? L(tok.revokedOn, lang) : (tok.lastUsed ? t.mcpLastUsed + " " + L(tok.lastUsed, lang) : t.mcpNeverUsed)) + "</span>";
+    var act = revoked ? "" : "<span class='acc-mcp-act'><button class='btn btn--ghost btn--sm'>" + t.mcpRevokeBtn + "</button></span>";
+    var row = "<div class='acc-mcp-row" + (revoked ? " acc-mcp-row--revoked" : "") + "'>"
+      + "<span class='acc-mcp-ico'>" + xic("key", 17) + "</span>"
+      + "<div class='acc-mcp-body'><div class='acc-mcp-name-row'><span class='acc-mcp-name'>" + tok.name + "</span>"
+      + (revoked ? "<span class='acc-revoked-badge'>" + t.mcpRevokedBadge + "</span>" : scopeBadge(t, tok.scope))
+      + "</div><div class='acc-mcp-meta'>" + meta + "</div></div>" + act + "</div>";
+    if (confirmId === tok.id) {
+      row += "<div class='acc-mcp-revoke-confirm'><div class='acc-mcp-revoke-confirm-t'>" + t.mcpRevokeConfirmT + "</div>"
+        + "<div class='acc-mcp-revoke-confirm-s'>" + t.mcpRevokeConfirmS + "</div>"
+        + "<div class='acc-mcp-revoke-confirm-act'><button class='btn btn--ghost btn--sm'>" + t.mcpRevokeCancel + "</button><button class='btn btn--danger btn--sm'>" + xic("trash", 15) + t.mcpRevokeGo + "</button></div></div>";
+    }
+    return row;
+  }
+  function mcpList(lang, tokens, confirmId) {
+    var t = T(lang);
+    if (!tokens || !tokens.length) return "<div class='acc-mcp-empty'><div class='acc-mcp-empty-t'>" + t.mcpEmptyT + "</div><div class='acc-mcp-empty-s'>" + t.mcpEmptyS + "</div></div>";
+    return "<div class='acc-mcp-list'>" + tokens.map(function (tok) { return mcpRow(lang, tok, confirmId); }).join("") + "</div>";
+  }
+  function mcpForm(lang) {
+    var t = T(lang);
+    return "<div class='acc-mcp-form'>"
+      + "<div class='acc-set-field' style='margin-top:0'><label class='field-label'>" + t.mcpFormNameLab + "</label><input class='field' placeholder='" + t.mcpFormNamePh + "'/><div class='field-hint'>" + t.mcpFormNameHint + "</div></div>"
+      + "<div><label class='field-label'>" + t.mcpFormScopeLab + "</label><div class='acc-scope-toggle' role='radiogroup'><button class='acc-scope-opt acc-scope-opt--active' role='radio' aria-checked='true'>" + t.mcpScopeRead + "</button><button class='acc-scope-opt' role='radio' aria-checked='false'>" + t.mcpScopeWrite + "</button></div><div class='field-hint'>" + t.mcpFormScopeHint + "</div></div>"
+      + "<div class='acc-mcp-form-actions'><button class='btn btn--ghost btn--sm'>" + t.mcpFormCancel + "</button><button class='btn btn--primary btn--sm'>" + xic("plus", 15) + t.mcpFormCreate + "</button></div>"
+      + "</div>";
+  }
+  function mcpReveal(lang, value) {
+    var t = T(lang);
+    return "<div class='acc-mcp-reveal'>"
+      + "<div><div class='acc-mcp-reveal-t'>" + t.mcpRevealT + "</div><div class='acc-mcp-reveal-s'>" + t.mcpRevealS + "</div></div>"
+      + "<div class='acc-tokval'>" + xic("key", 15) + "<code>" + value + "</code><button class='acc-copy-btn'>" + xic("copy", 13) + t.mcpCopy + "</button></div>"
+      + "<div class='acc-mcp-warn'>" + xic("alert", 15) + "<span>" + t.mcpRevealWarn + "</span></div>"
+      + "<div class='acc-mcp-form-actions'><button class='btn btn--primary btn--sm'>" + xic("check", 15) + t.mcpRevealDone + "</button></div>"
+      + "</div>";
+  }
+  function mcpConnect(lang) {
+    var t = T(lang);
+    var cfg = "{\n  \"mcpServers\": {\n    \"pennedly\": {\n      \"url\": \"https://api.pennedly.com/mcp\",\n      \"headers\": { \"Authorization\": \"Bearer " + t.mcpTokenPlaceholder + "\" }\n    }\n  }\n}";
+    return "<div class='acc-mcp-connect'>"
+      + "<div class='acc-mcp-connect-t'>" + t.mcpConnectCap + "</div><div class='acc-mcp-connect-s'>" + t.mcpConnectS + "</div>"
+      + "<div class='acc-mcp-field-lab'>" + t.mcpServerLab + "</div>"
+      + "<div class='acc-tokval'>" + xic("external", 15) + "<code>https://api.pennedly.com/mcp</code><button class='acc-copy-btn'>" + xic("copy", 13) + t.mcpCopy + "</button></div>"
+      + "<div class='acc-mcp-field-lab'>" + t.mcpConfigLab + "</div>"
+      + "<div class='acc-codeblock'><div class='acc-codeblock-head'><button class='acc-copy-btn'>" + xic("copy", 13) + t.mcpCopy + "</button></div><pre>" + cfg + "</pre></div>"
+      + "</div>";
+  }
+  function settingsMcpCard(lang, opts) {
+    opts = opts || {}; var t = T(lang); var view = opts.view || "list";
+    var headBtn = view === "list" ? "<button class='btn btn--secondary btn--sm'>" + xic("plus", 15) + t.mcpCreateBtn + "</button>" : "";
+    var body;
+    if (view === "create") body = mcpForm(lang);
+    else if (view === "reveal") body = mcpReveal(lang, opts.tokenValue || "pnd_mcp_live_8f2a91c3e0b74dd1a6f2c9e0b3a7d5f1");
+    else body = mcpList(lang, opts.tokens != null ? opts.tokens : C.MCP_TOKENS, opts.confirmId);
+    body += mcpConnect(lang);
+    return card2(t.mcpCap, t.mcpHint, body, false, headBtn);
+  }
   function skelCard2(lines) {
     var b = "";
     for (var i = 0; i < lines; i++) b += "<div class='acc-set-skel' style='height:44px;margin-top:10px'></div>";
@@ -153,7 +219,7 @@
   }
   function settingsSkeleton() {
     return "<div class='acc-page'><div class='acc-pagehead'><div class='acc-set-skel' style='width:210px;height:26px'></div><div class='acc-set-skel' style='width:340px;height:12px;margin-top:12px'></div></div>"
-      + skelCard2(3) + skelCard2(4) + skelCard2(1) + skelCard2(1) + "</div>";
+      + skelCard2(3) + skelCard2(4) + skelCard2(1) + skelCard2(2) + skelCard2(1) + "</div>";
   }
 
   function settingsBody(lang, opts) {
@@ -164,6 +230,7 @@
       + settingsAccountCard(lang)
       + settingsLangCard(lang, opts.activeLang || "RU")
       + settingsDataCard(lang, opts.exportState || "idle")
+      + settingsMcpCard(lang, opts.mcp || {})
       + settingsDangerCard(lang, opts.delState || "idle")
       + "</div>";
   }
@@ -251,6 +318,7 @@
   window.ACCX = {
     xic, crumb, topbar, shell, backButton, backRow,
     card2, settingsAccountCard, settingsLangCard, settingsDataCard, settingsDangerCard, settingsSkeleton, settingsBody,
+    scopeBadge, mcpRow, mcpList, mcpForm, mcpReveal, mcpConnect, settingsMcpCard,
     chatPinned, userMsg, aiMsg, aiTurn, chatChip, chipsRow, sourcesRow, suggestCard, composer, starters, thinking, thinRow, errorRow, heroEmpty, advisorChat,
     set,
   };

@@ -79,6 +79,9 @@ export const IcRobot = (p: IconProps) => <Svg {...p}><rect x="5" y="8" width="14
 /* settings — ported from settings-icons.jsx */
 export const IcUnlink = (p: IconProps) => <Svg {...p}><path d="M9 15l-2 2a3.5 3.5 0 0 1-5-5l2-2M15 9l2-2a3.5 3.5 0 0 1 5 5l-2 2M8 4v2M4 8H2M20 16h2M16 20v-2" /></Svg>;
 export const IcCopy = (p: IconProps) => <Svg {...p}><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M15 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3" /></Svg>;
+// Key — MCP token row/reveal icon (§7.17), ported literally from the CD
+// эталон's account-screens.js `XP.key` path.
+export const IcKey = (p: IconProps) => <Svg {...p}><circle cx="8" cy="16" r="4" /><path d="M11 13 20 4" /><path d="M15.5 8.5 18 11" /></Svg>;
 export const IcLogout = (p: IconProps) => <Svg {...p}><path d="M14 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-2" /><path d="M10 12h10M17 9l3 3-3 3" /></Svg>;
 export const IcFlask = (p: IconProps) => <Svg {...p}><path d="M9 3h6M10 3v6L5.5 17a2 2 0 0 0 1.8 3h9.4a2 2 0 0 0 1.8-3L14 9V3" /><path d="M8.2 14h7.6" /></Svg>;
 

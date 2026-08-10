@@ -14,7 +14,7 @@
 // real <Input>/<Button>. Container-query responsive, so the SAME cards serve the
 // desktop shell and the mobile shell with no separate layout.
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -22,12 +22,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/field";
 import { resetAccountsPresenceForSignedOutUser } from "@/lib/accounts";
 import {
+  IcAlert,
   IcArchive,
   IcArrowLeft,
   IcAudit,
   IcCheck,
   IcChevRight,
+  IcCopy,
+  IcExternal,
+  IcKey,
   IcMail,
+  IcPlus,
   IcStar,
   IcTrash,
 } from "@/components/icons";
@@ -42,7 +47,8 @@ import { patchMeCache } from "@/lib/account-data";
 import { LOCALES } from "@/lib/i18n/locales";
 import { setLocale, useLocale } from "@/lib/i18n";
 import type { LocaleCode } from "@/lib/i18n/locales";
-import type { Me, MeAccountResponse } from "@/lib/types";
+import { formatMcpDate, MCP_CONFIG_SNIPPET, MCP_ENDPOINT, useMcpTokens } from "@/lib/use-mcp-tokens";
+import type { Me, MeAccountResponse, McpTokenScope, McpTokenSummary } from "@/lib/types";
 
 import {
   AcctMark,
@@ -54,21 +60,29 @@ import type { Plural, T } from "./AccountDashboard";
 import { AccountMobileShell } from "./AccountMobileDashboard";
 
 // ── card shell (the эталон .acc-card2) ───────────────────────────────────────
+// `headAction` is the эталон's 5th `card2(h, d, body, danger, headAction)`
+// param — an optional control (the MCP card's "Create token" button) that
+// sits in the header next to the title, inside `.acc-card2-headrow`.
 function Card2({
   h,
   d,
   danger,
+  headAction,
   children,
 }: {
   h: string;
   d?: string;
   danger?: boolean;
+  headAction?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <section className={`acc-card2${danger ? " acc-card2--danger" : ""}`}>
       <div className="acc-card2-head">
-        <div className="acc-card2-h">{h}</div>
+        <div className="acc-card2-headrow">
+          <div className="acc-card2-h">{h}</div>
+          {headAction}
+        </div>
         {d ? <div className="acc-card2-d">{d}</div> : null}
       </div>
       <div className="acc-card2-body">{children}</div>
@@ -388,6 +402,275 @@ function DangerCard({ t }: { t: T }) {
   );
 }
 
+// ── MCP personal tokens (§7.17) ───────────────────────────────────────────────
+// 1:1 port of the эталон's settingsMcpCard/mcpRow/mcpForm/mcpReveal/mcpConnect
+// (account-screens.js). Fetch/create/revoke logic lives in the shared
+// `useMcpTokens` hook (also used by the old /app/settings screen) so the two
+// screens never carry two independently-maintained copies of that logic —
+// this component only owns the card's own view state (list vs. create-form)
+// and markup.
+function ScopeBadge({ scope, t }: { scope: McpTokenScope; t: T }) {
+  return (
+    <span className={`acc-scope-badge acc-scope-badge--${scope}`}>
+      {scope === "read_write" ? t("settings.mcp.scope.read_write") : t("settings.mcp.scope.read")}
+    </span>
+  );
+}
+
+function McpRow({
+  tok,
+  t,
+  locale,
+  confirming,
+  revoking,
+  onRevokeClick,
+  onCancelRevoke,
+  onConfirmRevoke,
+}: {
+  tok: McpTokenSummary;
+  t: T;
+  locale: string;
+  confirming: boolean;
+  revoking: boolean;
+  onRevokeClick: () => void;
+  onCancelRevoke: () => void;
+  onConfirmRevoke: () => void;
+}) {
+  const revoked = !!tok.revoked_at;
+  return (
+    <>
+      <div className={`acc-mcp-row${revoked ? " acc-mcp-row--revoked" : ""}`}>
+        <span className="acc-mcp-ico">
+          <IcKey size={17} />
+        </span>
+        <div className="acc-mcp-body">
+          <div className="acc-mcp-name-row">
+            <span className="acc-mcp-name">{tok.name}</span>
+            {revoked ? (
+              <span className="acc-revoked-badge">{t("settings.mcp.revoked_badge")}</span>
+            ) : (
+              <ScopeBadge scope={tok.scope} t={t} />
+            )}
+          </div>
+          <div className="acc-mcp-meta">
+            <span>
+              {t("settings.mcp.created_label")} {formatMcpDate(tok.created_at, locale)}
+            </span>
+            <span className="dot" />
+            <span>
+              {revoked
+                ? `${t("settings.mcp.revoked_label")} ${formatMcpDate(tok.revoked_at!, locale)}`
+                : tok.last_used_at
+                  ? `${t("settings.mcp.last_used_label")} ${formatMcpDate(tok.last_used_at, locale)}`
+                  : t("settings.mcp.last_used_never")}
+            </span>
+          </div>
+        </div>
+        {revoked ? null : (
+          <span className="acc-mcp-act">
+            <Button variant="ghost" size="sm" onClick={onRevokeClick}>
+              {t("settings.mcp.revoke_btn")}
+            </Button>
+          </span>
+        )}
+      </div>
+      {confirming ? (
+        <div className="acc-mcp-revoke-confirm">
+          <div className="acc-mcp-revoke-confirm-t">{t("acc.mcp_revoke_confirm_t")}</div>
+          <div className="acc-mcp-revoke-confirm-s">{t("acc.mcp_revoke_confirm_s")}</div>
+          <div className="acc-mcp-revoke-confirm-act">
+            <Button variant="ghost" size="sm" onClick={onCancelRevoke} disabled={revoking}>
+              {t("common.cancel")}
+            </Button>
+            <Button variant="danger" size="sm" icon={<IcTrash size={15} />} loading={revoking} onClick={onConfirmRevoke}>
+              {t("acc.mcp_revoke_go")}
+            </Button>
+          </div>
+        </div>
+      ) : null}
+    </>
+  );
+}
+
+function McpConnect({ t, copied, onCopy }: { t: T; copied: string | null; onCopy: (text: string, which: string) => void }) {
+  return (
+    <div className="acc-mcp-connect">
+      <div className="acc-mcp-connect-t">{t("settings.mcp.connect_title")}</div>
+      <div className="acc-mcp-connect-s">{t("acc.mcp_connect_s")}</div>
+      <div className="acc-mcp-field-lab">{t("settings.mcp.connect_endpoint_label")}</div>
+      <div className="acc-tokval">
+        <IcExternal size={15} />
+        <code>{MCP_ENDPOINT}</code>
+        <button type="button" className="acc-copy-btn" onClick={() => onCopy(MCP_ENDPOINT, "endpoint")}>
+          {copied === "endpoint" ? <IcCheck size={13} /> : <IcCopy size={13} />}
+          {t("acc.mcp_copy")}
+        </button>
+      </div>
+      <div className="acc-mcp-field-lab">{t("acc.mcp_config_label")}</div>
+      <div className="acc-codeblock">
+        <div className="acc-codeblock-head">
+          <button type="button" className="acc-copy-btn" onClick={() => onCopy(MCP_CONFIG_SNIPPET, "config")}>
+            {copied === "config" ? <IcCheck size={13} /> : <IcCopy size={13} />}
+            {t("acc.mcp_copy")}
+          </button>
+        </div>
+        <pre>{MCP_CONFIG_SNIPPET}</pre>
+      </div>
+    </div>
+  );
+}
+
+function McpCard({ t, demoTokens }: { t: T; demoTokens?: McpTokenSummary[] | null }) {
+  const locale = useLocale();
+  const mcp = useMcpTokens({ demoTokens: demoTokens ?? null });
+  const [creatingView, setCreatingView] = useState(false);
+
+  // A successful create swaps the card into the one-time reveal panel — land
+  // back on the list (not the form) once the user dismisses it.
+  useEffect(() => {
+    if (mcp.reveal) setCreatingView(false);
+  }, [mcp.reveal]);
+
+  function openForm() {
+    mcp.resetForm();
+    setCreatingView(true);
+  }
+  function cancelForm() {
+    mcp.resetForm();
+    setCreatingView(false);
+  }
+
+  const view: "list" | "create" | "reveal" = mcp.reveal ? "reveal" : creatingView ? "create" : "list";
+
+  const headAction =
+    view === "list" ? (
+      <Button variant="secondary" size="sm" icon={<IcPlus size={15} />} onClick={openForm}>
+        {t("settings.mcp.create_btn")}
+      </Button>
+    ) : null;
+
+  let body: React.ReactNode;
+  if (view === "create") {
+    body = (
+      <div className="acc-mcp-form">
+        <div className="acc-set-field" style={{ marginTop: 0 }}>
+          <label className="field-label" htmlFor="acc-mcp-name">
+            {t("settings.mcp.name_label")}
+          </label>
+          <Input
+            id="acc-mcp-name"
+            value={mcp.name}
+            onChange={(e) => mcp.setName(e.target.value)}
+            placeholder={t("settings.mcp.name_placeholder")}
+            maxLength={80}
+            aria-label={t("settings.mcp.name_label")}
+          />
+          <div className="field-hint">{t("acc.mcp_form_name_hint")}</div>
+        </div>
+        <div>
+          <label className="field-label">{t("settings.mcp.scope_label")}</label>
+          <div className="acc-scope-toggle" role="radiogroup" aria-label={t("settings.mcp.scope_label")}>
+            {(["read", "read_write"] as const).map((s) => (
+              <button
+                key={s}
+                type="button"
+                role="radio"
+                aria-checked={mcp.scope === s}
+                className={`acc-scope-opt${mcp.scope === s ? " acc-scope-opt--active" : ""}`}
+                onClick={() => mcp.setScope(s)}
+              >
+                {s === "read" ? t("settings.mcp.scope.read") : t("settings.mcp.scope.read_write")}
+              </button>
+            ))}
+          </div>
+          <div className="field-hint">{t("acc.mcp_form_scope_hint")}</div>
+        </div>
+        {mcp.createError ? <p className="field-hint" style={{ color: "var(--color-danger)" }}>{mcp.createError}</p> : null}
+        <div className="acc-mcp-form-actions">
+          <Button variant="ghost" size="sm" onClick={cancelForm} disabled={mcp.creating}>
+            {t("common.cancel")}
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            icon={<IcPlus size={15} />}
+            loading={mcp.creating}
+            disabled={mcp.creating || !mcp.name.trim()}
+            onClick={() => mcp.create()}
+          >
+            {t("settings.mcp.create_btn")}
+          </Button>
+        </div>
+      </div>
+    );
+  } else if (view === "reveal" && mcp.reveal) {
+    body = (
+      <div className="acc-mcp-reveal">
+        <div>
+          <div className="acc-mcp-reveal-t">{t("acc.mcp_reveal_t")}</div>
+          <div className="acc-mcp-reveal-s">{t("acc.mcp_reveal_s")}</div>
+        </div>
+        <div className="acc-tokval">
+          <IcKey size={15} />
+          <code>{mcp.reveal.token}</code>
+          <button type="button" className="acc-copy-btn" onClick={() => mcp.copy(mcp.reveal!.token, "token")}>
+            {mcp.copied === "token" ? <IcCheck size={13} /> : <IcCopy size={13} />}
+            {t("acc.mcp_copy")}
+          </button>
+        </div>
+        <div className="acc-mcp-warn">
+          <IcAlert size={15} />
+          <span>{t("acc.mcp_reveal_warn")}</span>
+        </div>
+        <div className="acc-mcp-form-actions">
+          <Button variant="primary" size="sm" icon={<IcCheck size={15} />} onClick={() => mcp.dismissReveal()}>
+            {t("acc.mcp_reveal_done")}
+          </Button>
+        </div>
+      </div>
+    );
+  } else if (!mcp.loaded) {
+    body = (
+      <div className="acc-mcp-list">
+        <div className="acc-set-skel" style={{ height: 56 }} />
+        <div className="acc-set-skel" style={{ height: 56, marginTop: 10 }} />
+      </div>
+    );
+  } else if (mcp.tokens.length === 0) {
+    body = (
+      <div className="acc-mcp-empty">
+        <div className="acc-mcp-empty-t">{t("settings.mcp.empty.title")}</div>
+        <div className="acc-mcp-empty-s">{t("acc.mcp_empty_s")}</div>
+      </div>
+    );
+  } else {
+    body = (
+      <div className="acc-mcp-list">
+        {mcp.tokens.map((tok) => (
+          <McpRow
+            key={tok.id}
+            tok={tok}
+            t={t}
+            locale={locale}
+            confirming={mcp.revokeConfirmId === tok.id}
+            revoking={mcp.revokingId === tok.id}
+            onRevokeClick={() => mcp.setRevokeConfirmId(tok.id)}
+            onCancelRevoke={() => mcp.setRevokeConfirmId(null)}
+            onConfirmRevoke={() => mcp.revoke(tok)}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <Card2 h={t("acc.mcp_cap")} d={t("acc.mcp_hint")} headAction={headAction}>
+      {body}
+      <McpConnect t={t} copied={mcp.copied} onCopy={mcp.copy} />
+    </Card2>
+  );
+}
+
 // ── the settings body (head + 4 cards) — shared desktop + mobile ─────────────
 // «История изменений» — a quiet link row into the applied-changes journal (the
 // design's `.ch-entryrow`): what Pennedly applied for you by a one-click.
@@ -409,7 +692,17 @@ function HistoryLinkCard({ t }: { t: T }) {
   );
 }
 
-function SettingsBody({ me, t, noHead }: { me: Me; t: T; noHead?: boolean }) {
+function SettingsBody({
+  me,
+  t,
+  noHead,
+  mcpDemoTokens,
+}: {
+  me: Me;
+  t: T;
+  noHead?: boolean;
+  mcpDemoTokens?: McpTokenSummary[] | null;
+}) {
   return (
     <div className="acc-page">
       {noHead ? null : (
@@ -422,6 +715,7 @@ function SettingsBody({ me, t, noHead }: { me: Me; t: T; noHead?: boolean }) {
       <HistoryLinkCard t={t} />
       <LanguageCard t={t} />
       <DataCard t={t} />
+      <McpCard t={t} demoTokens={mcpDemoTokens} />
       <DangerCard t={t} />
     </div>
   );
@@ -433,11 +727,16 @@ export function AccountSettings({
   me,
   t,
   dark,
+  mcpDemoTokens,
 }: {
   data: MeAccountResponse;
   me: Me;
   t: T;
   dark?: boolean;
+  // Non-null (even []) renders the MCP card offline on sample tokens instead
+  // of fetching — the real `/app/account/settings` page passes this only
+  // behind `?demo=1`; /gallery passes it always (no auth, no backend there).
+  mcpDemoTokens?: McpTokenSummary[] | null;
 }) {
   const nav = useAccountNav();
   return (
@@ -445,7 +744,7 @@ export function AccountSettings({
       <Sidebar data={data} t={t} nav={nav} active="settings" />
       <div className="acc-mainwrap" style={{ minWidth: 0, display: "flex", flexDirection: "column", gap: 18 }}>
         <ScreenTopbar page="settings" tenantName={data.tenant.name} t={t} nav={nav} dark={dark} />
-        <SettingsBody me={me} t={t} />
+        <SettingsBody me={me} t={t} mcpDemoTokens={mcpDemoTokens} />
       </div>
     </div>
   );
@@ -458,16 +757,18 @@ export function AccountMobileSettings({
   t,
   plural,
   dark,
+  mcpDemoTokens,
 }: {
   data: MeAccountResponse;
   me: Me;
   t: T;
   plural: Plural;
   dark?: boolean;
+  mcpDemoTokens?: McpTokenSummary[] | null;
 }) {
   return (
     <AccountMobileShell data={data} t={t} plural={plural} title={t("acc.nav_settings")} active="settings" dark={dark}>
-      <SettingsBody me={me} t={t} noHead />
+      <SettingsBody me={me} t={t} noHead mcpDemoTokens={mcpDemoTokens} />
     </AccountMobileShell>
   );
 }
@@ -500,6 +801,7 @@ function SettingsSkeletonBody({ noHead }: { noHead?: boolean }) {
       <SkelCard lines={3} />
       <SkelCard lines={4} />
       <SkelCard lines={1} />
+      <SkelCard lines={2} />
       <SkelCard lines={1} />
     </div>
   );

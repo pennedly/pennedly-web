@@ -38,3 +38,8 @@ export const DEMO_MCP_TOKENS: McpTokenSummary[] = [
   { id: 2, name: "Cursor", scope: "read", created_at: daysAgo(10), last_used_at: null, revoked_at: null },
   { id: 3, name: "Old test token", scope: "read", created_at: daysAgo(60), last_used_at: daysAgo(40), revoked_at: daysAgo(5) },
 ];
+
+// A stable empty-array reference for the "Empty" demo tweak — `useMcpTokens`
+// takes this as an effect dependency, so a fresh `[]` literal on every render
+// would refetch/reset in a loop.
+export const EMPTY_MCP_TOKENS: McpTokenSummary[] = [];

@@ -8,21 +8,18 @@
 // number) are omitted rather than faked.
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import {
   ApiError,
   clearTokens,
-  createMcpToken,
   deleteAccount,
   disconnectAccount,
   exportAccountData,
-  fetchMcpTokens,
   fetchMe,
   fetchMyAccounts,
   getTokens,
-  revokeMcpToken,
   setMyLocale,
 } from "@/lib/api";
 import { friendlyErrorText } from "@/lib/errors";
@@ -50,28 +47,11 @@ import { ConnectThreadsButton } from "@/components/ConnectThreadsButton";
 import { cn } from "@/lib/cn";
 import { IcCheck, IcCopy, IcEye, IcFlask, IcInfo, IcRobot, IcScan, IcStar, IcUnlink, IcVoice } from "@/components/icons";
 import { TweaksPanel, TweakSection, TweakToggle, TweakRadio, useTweaks } from "@/components/tweaks/TweaksPanel";
-import { DEMO_ACCOUNTS, DEMO_MCP_TOKENS, DEMO_ME, SET_TWEAK_DEFAULTS } from "@/components/studio/settings-demo";
-import type { ConnectedAccount, CreateMcpTokenResponse, McpTokenScope, McpTokenSummary, Me } from "@/lib/types";
+import { DEMO_ACCOUNTS, DEMO_ME, DEMO_MCP_TOKENS, EMPTY_MCP_TOKENS, SET_TWEAK_DEFAULTS } from "@/components/studio/settings-demo";
+import { MCP_ENDPOINT, MCP_CONFIG_SNIPPET, useMcpTokens } from "@/lib/use-mcp-tokens";
+import type { ConnectedAccount, McpTokenSummary, Me } from "@/lib/types";
 import { useDemoParam } from "@/lib/query";
 import { HERO_FADE_STYLE } from "@/lib/useHeaderReveal";
-
-// MCP (§7.17) — the fixed prod endpoint + the Claude Desktop config shape
-// (via `mcp-remote`, since Desktop's own config only speaks stdio). Shown
-// with a placeholder token; the real one only ever appears in the one-time
-// reveal panel below, never folded into this snippet.
-const MCP_ENDPOINT = "https://api.pennedly.com/mcp";
-const MCP_CONFIG_SNIPPET = JSON.stringify(
-  {
-    mcpServers: {
-      pennedly: {
-        command: "npx",
-        args: ["-y", "mcp-remote", MCP_ENDPOINT, "--header", "Authorization: Bearer <YOUR_TOKEN>"],
-      },
-    },
-  },
-  null,
-  2,
-);
 
 const IS_DEV = process.env.NODE_ENV === "development";
 const SET_STATES = ["Default", "Disconnect", "Loading"];
@@ -101,20 +81,16 @@ export default function SettingsPage() {
   const demoOn = allow;
   const [tw, setTw] = useTweaks(SET_TWEAK_DEFAULTS);
 
-  // MCP personal tokens (§7.17) — a separate small load from `me`/`accounts`
-  // so a hiccup fetching tokens never blocks the rest of the page.
-  const [mcpTokens, setMcpTokens] = useState<McpTokenSummary[]>([]);
-  const [mcpLoaded, setMcpLoaded] = useState(false);
-  const [mcpName, setMcpName] = useState("");
-  const [mcpScope, setMcpScope] = useState<McpTokenScope>("read");
-  const [mcpCreating, setMcpCreating] = useState(false);
-  const [mcpCreateError, setMcpCreateError] = useState<string | null>(null);
-  // The plaintext token exists here ONLY between creation and the user
-  // dismissing the panel — never persisted, never logged, never re-fetched.
-  const [mcpReveal, setMcpReveal] = useState<CreateMcpTokenResponse | null>(null);
-  const [mcpRevokeConfirmId, setMcpRevokeConfirmId] = useState<number | null>(null);
-  const [mcpRevokingId, setMcpRevokingId] = useState<number | null>(null);
-  const [mcpCopied, setMcpCopied] = useState<"token" | "config" | null>(null);
+  // MCP personal tokens (§7.17) — logic lives in the shared `useMcpTokens`
+  // hook (also used by the account-dashboard Settings screen) so create/
+  // revoke/fetch never drift into two copies. `mcpDemoTokens` must stay
+  // referentially stable across renders (it's an effect dependency inside the
+  // hook) — memoized here off the two Tweaks values that can change it.
+  const mcpDemoTokens = useMemo(
+    () => (!demoOn ? null : tw.mcp === "Empty" ? EMPTY_MCP_TOKENS : DEMO_MCP_TOKENS),
+    [demoOn, tw.mcp],
+  );
+  const mcp = useMcpTokens({ demoTokens: mcpDemoTokens });
 
   function toast(message: string, tone: Toast["tone"] = "success") {
     const id = Date.now() + Math.random();
@@ -167,15 +143,6 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (demoParam) return;
-    if (!getTokens()) return;
-    fetchMcpTokens()
-      .then((r) => setMcpTokens(r.tokens))
-      .catch(() => {})
-      .finally(() => setMcpLoaded(true));
-  }, [demoParam]);
-
-  useEffect(() => {
-    if (demoParam) return;
     if (!getTokens()) {
       router.push("/app/login");
       return;
@@ -212,9 +179,7 @@ export default function SettingsPage() {
     setAccounts(DEMO_ACCOUNTS);
     setConfirmId(tw.state === "Disconnect" ? DEMO_ACCOUNTS[1].id : null);
     setLoaded(true);
-    setMcpTokens(tw.mcp === "Empty" ? [] : DEMO_MCP_TOKENS);
-    setMcpLoaded(true);
-  }, [demoOn, tw.state, tw.mcp]);
+  }, [demoOn, tw.state]);
 
   function pickLocale(code: LocaleCode, name: string) {
     setLocale(code);
@@ -253,64 +218,19 @@ export default function SettingsPage() {
     return new Date(iso).toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" });
   }
 
-  function copyMcp(text: string, which: "token" | "config") {
-    navigator.clipboard?.writeText(text).catch(() => {});
-    setMcpCopied(which);
-    setTimeout(() => setMcpCopied((v) => (v === which ? null : v)), 1800);
+
+  // Thin wrappers: the fetch/create/revoke logic itself lives in
+  // `useMcpTokens` (shared with the account-dashboard Settings screen) — this
+  // page only adds its own toast feedback on revoke, matching prior behavior.
+  function onCreateMcpToken(e: React.FormEvent) {
+    void mcp.create(e);
   }
 
-  async function onCreateMcpToken(e: React.FormEvent) {
-    e.preventDefault();
-    const name = mcpName.trim();
-    if (!name || mcpCreating) return;
-    setMcpCreating(true);
-    setMcpCreateError(null);
-    captureEvent("ui.mcp_token_create", { scope: mcpScope });
-    if (demoOn) {
-      const id = Math.max(0, ...mcpTokens.map((x) => x.id)) + 1;
-      const created_at = new Date().toISOString();
-      setMcpTokens((list) => [{ id, name, scope: mcpScope, created_at, last_used_at: null, revoked_at: null }, ...list]);
-      setMcpReveal({ id, name, scope: mcpScope, created_at, token: `pnd_mcp_demo_${Math.random().toString(36).slice(2, 18)}` });
-      setMcpName("");
-      setMcpScope("read");
-      setMcpCreating(false);
-      return;
-    }
-    try {
-      const created = await createMcpToken(name, mcpScope);
-      setMcpTokens((list) => [
-        { id: created.id, name: created.name, scope: created.scope, created_at: created.created_at, last_used_at: null, revoked_at: null },
-        ...list,
-      ]);
-      setMcpReveal(created);
-      setMcpName("");
-      setMcpScope("read");
-    } catch (err) {
-      setMcpCreateError(friendlyErrorText(err));
-    } finally {
-      setMcpCreating(false);
-    }
-  }
-
-  async function onRevokeMcpToken(tok: McpTokenSummary) {
-    if (demoOn) {
-      setMcpTokens((list) => list.map((x) => (x.id === tok.id ? { ...x, revoked_at: new Date().toISOString() } : x)));
-      setMcpRevokeConfirmId(null);
-      toast(t("settings.mcp.revoke_toast"));
-      return;
-    }
-    setMcpRevokingId(tok.id);
-    captureEvent("ui.mcp_token_revoke", { token_id: tok.id });
-    try {
-      await revokeMcpToken(tok.id);
-      setMcpTokens((list) => list.map((x) => (x.id === tok.id ? { ...x, revoked_at: new Date().toISOString() } : x)));
-      setMcpRevokeConfirmId(null);
-      toast(t("settings.mcp.revoke_toast"));
-    } catch (err) {
-      toast(friendlyErrorText(err), "error");
-    } finally {
-      setMcpRevokingId(null);
-    }
+  function onRevokeMcpToken(tok: McpTokenSummary) {
+    void mcp.revoke(tok, {
+      onDone: () => toast(t("settings.mcp.revoke_toast")),
+      onError: (msg) => toast(msg, "error"),
+    });
   }
 
   const selectedId = getSelectedAccountId();
@@ -480,12 +400,12 @@ export default function SettingsPage() {
               </div>
 
               <div className="mt-4">
-                {!mcpLoaded ? (
+                {!mcp.loaded ? (
                   <div className="flex flex-col gap-2.5">
                     <Skeleton className="h-14 w-full rounded-md" />
                     <Skeleton className="h-14 w-full rounded-md" />
                   </div>
-                ) : mcpTokens.length === 0 ? (
+                ) : mcp.tokens.length === 0 ? (
                   <div className="flex flex-col items-center rounded-md border border-dashed border-border bg-surface/50 px-5 py-7 text-center">
                     <span className="mb-2.5 grid h-10 w-10 place-items-center rounded-md border border-accent/24 bg-accent/[0.11] text-accent">
                       <IcRobot size={18} />
@@ -495,7 +415,7 @@ export default function SettingsPage() {
                   </div>
                 ) : (
                   <div className="flex flex-col gap-2.5">
-                    {mcpTokens.map((tok) => {
+                    {mcp.tokens.map((tok) => {
                       const revoked = !!tok.revoked_at;
                       return (
                         <div
@@ -526,7 +446,7 @@ export default function SettingsPage() {
                             </div>
                           </div>
                           {!revoked &&
-                            (mcpRevokeConfirmId === tok.id ? (
+                            (mcp.revokeConfirmId === tok.id ? (
                               <div className="flex shrink-0 items-center gap-2 max-md:w-full max-md:flex-wrap max-md:justify-end">
                                 <span className="text-caption text-text-subtle max-md:basis-full">
                                   {t("settings.mcp.revoke_confirm_q").replace("{name}", tok.name)}
@@ -534,8 +454,8 @@ export default function SettingsPage() {
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  onClick={() => setMcpRevokeConfirmId(null)}
-                                  disabled={mcpRevokingId === tok.id}
+                                  onClick={() => mcp.setRevokeConfirmId(null)}
+                                  disabled={mcp.revokingId === tok.id}
                                 >
                                   {t("common.cancel")}
                                 </Button>
@@ -543,15 +463,15 @@ export default function SettingsPage() {
                                   size="sm"
                                   variant="danger"
                                   onClick={() => onRevokeMcpToken(tok)}
-                                  loading={mcpRevokingId === tok.id}
-                                  disabled={mcpRevokingId === tok.id}
+                                  loading={mcp.revokingId === tok.id}
+                                  disabled={mcp.revokingId === tok.id}
                                   icon={<IcUnlink size={14} />}
                                 >
-                                  {mcpRevokingId === tok.id ? t("settings.mcp.revoking") : t("settings.mcp.revoke_do")}
+                                  {mcp.revokingId === tok.id ? t("settings.mcp.revoking") : t("settings.mcp.revoke_do")}
                                 </Button>
                               </div>
                             ) : (
-                              <Button size="sm" variant="ghost" onClick={() => setMcpRevokeConfirmId(tok.id)}>
+                              <Button size="sm" variant="ghost" onClick={() => mcp.setRevokeConfirmId(tok.id)}>
                                 {t("settings.mcp.revoke_btn")}
                               </Button>
                             ))}
@@ -564,7 +484,7 @@ export default function SettingsPage() {
 
               {/* One-time plaintext reveal — gone from state once dismissed, never
                   re-fetchable, never logged. */}
-              {mcpReveal && (
+              {mcp.reveal && (
                 <div className="mt-4 rounded-md border border-warning/26 bg-warning/[0.06] p-4">
                   <div className="flex items-start gap-2.5">
                     <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-warning/26 bg-warning/12 text-warning">
@@ -577,20 +497,20 @@ export default function SettingsPage() {
                   </div>
                   <div className="mt-3 flex items-center gap-2">
                     <code className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap rounded-md border border-border bg-surface px-3 py-2 font-mono text-caption">
-                      {mcpReveal.token}
+                      {mcp.reveal.token}
                     </code>
                     <Button
                       size="sm"
                       variant="secondary"
-                      icon={mcpCopied === "token" ? <IcCheck size={14} /> : <IcCopy size={14} />}
-                      onClick={() => copyMcp(mcpReveal.token, "token")}
+                      icon={mcp.copied === "token" ? <IcCheck size={14} /> : <IcCopy size={14} />}
+                      onClick={() => mcp.copy(mcp.reveal!.token, "token")}
                       className="shrink-0"
                     >
-                      {mcpCopied === "token" ? t("settings.mcp.copied") : t("settings.mcp.reveal_copy")}
+                      {mcp.copied === "token" ? t("settings.mcp.copied") : t("settings.mcp.reveal_copy")}
                     </Button>
                   </div>
                   <div className="mt-3 flex justify-end">
-                    <Button size="sm" variant="primary" onClick={() => setMcpReveal(null)}>
+                    <Button size="sm" variant="primary" onClick={() => mcp.dismissReveal()}>
                       {t("settings.mcp.reveal_done")}
                     </Button>
                   </div>
@@ -603,8 +523,8 @@ export default function SettingsPage() {
                   <FieldLabel htmlFor="mcp-token-name">{t("settings.mcp.name_label")}</FieldLabel>
                   <Input
                     id="mcp-token-name"
-                    value={mcpName}
-                    onChange={(e) => setMcpName(e.target.value)}
+                    value={mcp.name}
+                    onChange={(e) => mcp.setName(e.target.value)}
                     placeholder={t("settings.mcp.name_placeholder")}
                     maxLength={80}
                   />
@@ -613,14 +533,14 @@ export default function SettingsPage() {
                   <FieldLabel>{t("settings.mcp.scope_label")}</FieldLabel>
                   <div role="radiogroup" className="flex gap-1.5">
                     {(["read", "read_write"] as const).map((s) => {
-                      const active = mcpScope === s;
+                      const active = mcp.scope === s;
                       return (
                         <button
                           key={s}
                           type="button"
                           role="radio"
                           aria-checked={active}
-                          onClick={() => setMcpScope(s)}
+                          onClick={() => mcp.setScope(s)}
                           className={cn(
                             "h-10 whitespace-nowrap rounded-md border px-3 text-small font-medium transition-colors",
                             active
@@ -637,17 +557,17 @@ export default function SettingsPage() {
                 <Button
                   type="submit"
                   variant="primary"
-                  loading={mcpCreating}
-                  disabled={mcpCreating || !mcpName.trim()}
+                  loading={mcp.creating}
+                  disabled={mcp.creating || !mcp.name.trim()}
                   className="shrink-0 max-md:w-full"
                 >
-                  {mcpCreating ? t("settings.mcp.creating") : t("settings.mcp.create_btn")}
+                  {mcp.creating ? t("settings.mcp.creating") : t("settings.mcp.create_btn")}
                 </Button>
               </form>
               <p className="mt-1.5 text-caption text-text-subtle">
-                {mcpScope === "read_write" ? t("settings.mcp.scope.read_write_desc") : t("settings.mcp.scope.read_desc")}
+                {mcp.scope === "read_write" ? t("settings.mcp.scope.read_write_desc") : t("settings.mcp.scope.read_desc")}
               </p>
-              {mcpCreateError && <p className="mt-1.5 text-caption text-danger">{mcpCreateError}</p>}
+              {mcp.createError && <p className="mt-1.5 text-caption text-danger">{mcp.createError}</p>}
 
               {/* How to connect */}
               <div className="mt-5 rounded-md border border-border bg-surface-2 p-4">
@@ -664,10 +584,10 @@ export default function SettingsPage() {
                   <Button
                     size="sm"
                     variant="secondary"
-                    icon={mcpCopied === "config" ? <IcCheck size={14} /> : <IcCopy size={14} />}
-                    onClick={() => copyMcp(MCP_CONFIG_SNIPPET, "config")}
+                    icon={mcp.copied === "config" ? <IcCheck size={14} /> : <IcCopy size={14} />}
+                    onClick={() => mcp.copy(MCP_CONFIG_SNIPPET, "config")}
                   >
-                    {mcpCopied === "config" ? t("settings.mcp.copied") : t("settings.mcp.connect_copy_config")}
+                    {mcp.copied === "config" ? t("settings.mcp.copied") : t("settings.mcp.connect_copy_config")}
                   </Button>
                 </div>
               </div>

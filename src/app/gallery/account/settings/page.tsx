@@ -19,6 +19,7 @@ import "@/components/account/account-screens-mobile.css";
 
 import { AccountSettings, AccountMobileSettings, AccountSettingsSkeleton } from "@/components/account/AccountSettings";
 import { DEMO_ME, DEMO_MULTI_BRAND, DEMO_SINGLE_BRAND, demoT } from "@/components/account/account-demo";
+import { DEMO_MCP_TOKENS } from "@/components/studio/settings-demo";
 
 const demoPlural = (u: "profiles" | "brands" | "drafts" | "audits", n: number) => pluralUnit("ru", u, n);
 
@@ -53,20 +54,27 @@ export default function AccountSettingsGallery() {
 
         <Section title="Desktop · single brand">
           <div className="hidden md:block">
-            <AccountSettings data={DEMO_SINGLE_BRAND} me={DEMO_ME} t={demoT} dark={dark} />
+            <AccountSettings data={DEMO_SINGLE_BRAND} me={DEMO_ME} t={demoT} dark={dark} mcpDemoTokens={DEMO_MCP_TOKENS} />
           </div>
           <p className="text-caption text-text-subtle md:hidden">Resize ≥ 768px to see the desktop shell.</p>
         </Section>
 
         <Section title="Desktop · 2+ brands (Brands nav row)">
           <div className="hidden md:block">
-            <AccountSettings data={DEMO_MULTI_BRAND} me={DEMO_ME} t={demoT} dark={dark} />
+            <AccountSettings data={DEMO_MULTI_BRAND} me={DEMO_ME} t={demoT} dark={dark} mcpDemoTokens={DEMO_MCP_TOKENS} />
           </div>
         </Section>
 
         <Section title="Mobile (≤ 600px)">
           <div className="mx-auto max-w-[420px]">
-            <AccountMobileSettings data={DEMO_MULTI_BRAND} me={DEMO_ME} t={demoT} plural={demoPlural} dark={dark} />
+            <AccountMobileSettings
+              data={DEMO_MULTI_BRAND}
+              me={DEMO_ME}
+              t={demoT}
+              plural={demoPlural}
+              dark={dark}
+              mcpDemoTokens={DEMO_MCP_TOKENS}
+            />
           </div>
         </Section>
 

@@ -24,11 +24,21 @@ import { AppFooter } from "@/components/AppFooter";
 import { useAccountData } from "@/lib/use-account-data";
 import { pluralUnit, useTranslation } from "@/lib/i18n";
 import { ErrorBanner } from "@/components/ui/error-banner";
+import { useDemoParam } from "@/lib/query";
+import { DEMO_MCP_TOKENS } from "@/components/studio/settings-demo";
+
+const IS_DEV = process.env.NODE_ENV === "development";
 
 export default function AccountSettingsPage() {
   const { t, locale } = useTranslation();
   // Shared cache: re-visiting from the dashboard/advisor renders instantly.
   const { me, data, phase } = useAccountData();
+  // ?demo=1 (dev only): the real MCP card on sample tokens instead of a
+  // backend fetch, so all its states (active/never-used/revoked) are
+  // reviewable without a live account — same convention as
+  // /app/account/history.
+  const demoParam = useDemoParam();
+  const mcpDemoTokens = demoParam && IS_DEV ? DEMO_MCP_TOKENS : null;
 
   const wrap = "mx-auto w-full max-w-[1180px] px-4 py-5 md:px-6 md:py-6";
 
@@ -72,10 +82,10 @@ export default function AccountSettingsPage() {
       <div className="flex-1">
         <div className={wrap}>
           <div className="hidden md:block">
-            <AccountSettings data={data} me={me} t={tt} />
+            <AccountSettings data={data} me={me} t={tt} mcpDemoTokens={mcpDemoTokens} />
           </div>
           <div className="md:hidden">
-            <AccountMobileSettings data={data} me={me} t={tt} plural={plural} />
+            <AccountMobileSettings data={data} me={me} t={tt} plural={plural} mcpDemoTokens={mcpDemoTokens} />
           </div>
         </div>
       </div>

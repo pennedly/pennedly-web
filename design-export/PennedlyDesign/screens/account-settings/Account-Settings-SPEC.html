@@ -135,12 +135,13 @@ td.val{font-family:var(--font-mono); font-size:12px; color:var(--text);}
     <a href="#s3"><span class="n">3</span> Карточка аккаунта</a>
     <a href="#s4"><span class="n">4</span> Язык интерфейса <em>8 локалей</em></a>
     <a href="#s5"><span class="n">5</span> Данные · экспорт <em>GET</em></a>
-    <a href="#s6"><span class="n">6</span> Удаление · опасная зона <em>DELETE</em></a>
-    <a href="#s7"><span class="n">7</span> Навигация · крошка</a>
-    <a href="#s8"><span class="n">8</span> Состояния · загрузка · de</a>
-    <a href="#s9"><span class="n">9</span> Данные · контракт</a>
-    <a href="#s10"><span class="n">10</span> Web ↔ Mobile</a>
-    <a href="#s11"><span class="n">11</span> Чек-лист</a>
+    <a href="#s6"><span class="n">6</span> MCP-токены <em>7 состояний</em></a>
+    <a href="#s7"><span class="n">7</span> Удаление · опасная зона <em>DELETE</em></a>
+    <a href="#s8"><span class="n">8</span> Навигация · крошка</a>
+    <a href="#s9"><span class="n">9</span> Состояния · загрузка · de</a>
+    <a href="#s10"><span class="n">10</span> Данные · контракт</a>
+    <a href="#s11"><span class="n">11</span> Web ↔ Mobile</a>
+    <a href="#s12"><span class="n">12</span> Чек-лист</a>
   </nav>
   <div class="meta">
     Экран: <b>Настройки аккаунта</b><br>
@@ -149,6 +150,7 @@ td.val{font-family:var(--font-mono); font-size:12px; color:var(--text);}
     Уровень: <b>аккаунт</b> (не профиль)<br>
     Ширина: <code>--content-reading</code> 720<br>
     Действия: <code>GET /api/me/export</code> · <code>DELETE /api/me</code><br>
+    MCP: <code>GET/POST /api/me/mcp-tokens</code> · <code>DELETE .../:id</code><br>
     Локаль ревью: <b>ru</b> · стресс: <b>de</b> (8 локалей)<br>
     Mobile: <a href="Account-Settings-Mobile-SPEC.html">Account-Settings-Mobile-SPEC.html</a><br>
     История изменений: Applied-Changes-SPEC.html<br>
@@ -161,11 +163,12 @@ td.val{font-family:var(--font-mono); font-size:12px; color:var(--text);}
   <div class="doc-head">
     <p class="kicker">Pennedly · Спецификация · Экран уровня аккаунта</p>
     <h1 class="title">Настройки аккаунта <span>/app/account/settings</span></h1>
-    <p class="lede">Настройки <b>уровня аккаунта</b> в хроме <a class="link" href="../account/Account-Dashboard-SPEC.html">дашборда аккаунта</a> — сайдбар аккаунта (пункт <b>Настройки</b> активен) + топбар с крошкой <b>«Аккаунт › Настройки»</b>. Отдельно от профильных настроек (те живут внутри каждого профиля). Секция аккаунта: <b>имя, email, язык интерфейса, тариф (PRO)</b>, плюс работа с данными — <b>экспорт</b> и <b>удаление аккаунта</b>. Оба действия маппятся на <b>реальные</b> ручки: экспорт → <code>GET /api/me/export</code>, удаление → <code>DELETE /api/me</code> (нового бэкенда не требуется). У пользователя <b>один логин</b> — мульти-логина и управления аккаунтами здесь нет. Всё на токенах ДС (светлая + тёмная); текст русский, раскладка держит 8 локалей (эталон длины — немецкий).</p>
+    <p class="lede">Настройки <b>уровня аккаунта</b> в хроме <a class="link" href="../account/Account-Dashboard-SPEC.html">дашборда аккаунта</a> — сайдбар аккаунта (пункт <b>Настройки</b> активен) + топбар с крошкой <b>«Аккаунт › Настройки»</b>. Отдельно от профильных настроек (те живут внутри каждого профиля). Секция аккаунта: <b>имя, email, язык интерфейса, тариф (PRO)</b>, плюс управление <b>MCP-токенами</b> для внешних ИИ-агентов, экспорт данных и удаление аккаунта. Все три маппятся на <b>реальные</b> ручки: MCP-токены → <code>/api/me/mcp-tokens</code>, экспорт → <code>GET /api/me/export</code>, удаление → <code>DELETE /api/me</code> (нового бэкенда не требуется). У пользователя <b>один логин</b> — мульти-логина и управления аккаунтами здесь нет. Всё на токенах ДС (светлая + тёмная); текст русский, раскладка держит 8 локалей (эталон длины — немецкий).</p>
     <div class="filerow">
       <span class="chip chip--new">+ AccountSettings</span>
       <span class="chip chip--new">+ LanguageGrid</span>
       <span class="chip chip--new">+ DataExport</span>
+      <span class="chip chip--new">+ McpTokens</span>
       <span class="chip chip--new">+ DeleteAccount</span>
       <span class="chip">account-screens.css</span>
       <span class="chip">account.css</span>
@@ -231,34 +234,50 @@ td.val{font-family:var(--font-mono); font-size:12px; color:var(--text);}
 
   <!-- 6 -->
   <section id="s6">
-    <h2><span class="h2n">6</span><span class="stg">DELETE /api/me</span>Удаление · опасная зона</h2>
+    <h2><span class="h2n">6</span><span class="stg">mcp-tokens</span>MCP-токены</h2>
+    <p class="section-note">Персональный токен даёт внешнему ИИ-агенту (например, Claude Desktop) доступ к аккаунту по MCP. Создание показывает секрет один раз; отозванные токены <b>остаются в списке</b> с пометкой «Отозван» — так «я отозвал его 3-го» всегда можно проверить.</p>
+    <div class="note"><b>Реальные ручки.</b> Список/создание → <code>GET/POST /api/me/mcp-tokens</code>, отзыв → <code>DELETE /api/me/mcp-tokens/:id</code>. Формат JSON-конфига в блоке «Как подключить» ориентировочный — сверить с бэкендом MCP-интеграции перед разработкой.</div>
+    <h3>6.1 — Список: пусто · активные · отозванный</h3>
+    <p class="section-note">Пустой список — до первого токена. Ниже — активные токены (бейдж scope, даты создания/использования) и один отозванный (приглушён, бейдж «ОТОЗВАН», остаётся в истории). Блок «Как подключить» — адрес сервера и JSON-конфиг с плейсхолдером — виден всегда, вне зависимости от списка.</p>
+    <div class="frames" id="f-mcp-list"></div>
+    <h3>6.2 — Создание → одноразовый показ токена</h3>
+    <p class="section-note">Форма создания: название + переключатель доступа (по умолчанию «Только чтение», явный выбор для записи). После создания — токен показан <b>один раз</b> плейнтекстом, с копированием и явным предупреждением; «Я сохранил токен» закрывает панель и возвращает к списку.</p>
+    <div class="frames" id="f-mcp-create"></div>
+    <h3>6.3 — Подтверждение отзыва (инлайн)</h3>
+    <p class="section-note">Отзыв — лёгкое разрушительное действие: подтверждение инлайн под строкой токена, не полноэкранная модалка.</p>
+    <div class="frames" id="f-mcp-revoke"></div>
+  </section>
+
+  <!-- 7 -->
+  <section id="s7">
+    <h2><span class="h2n">7</span><span class="stg">DELETE /api/me</span>Удаление · опасная зона</h2>
     <p class="section-note">Danger-карточка. Удаление аккаунта необратимо и маппится на <code>DELETE /api/me</code>. Двухшаговая защита: <b>idle</b> (danger-кнопка) → <b>confirm</b> (inline-блок: заголовок, что именно удалится, ввод слова «УДАЛИТЬ» для подтверждения, Отмена + danger «Удалить навсегда») → <b>deleting</b> (спиннер «Удаляем аккаунт…»).</p>
     <div class="frames" id="f-delete"></div>
     <div class="note danger"><b>Необратимо и требует явного подтверждения.</b> Удаляются аккаунт, все бренды и профили, посты, черновики и статистика. Кнопка «Удалить навсегда» активна только после ввода слова подтверждения.</div>
   </section>
 
-  <!-- 7 -->
-  <section id="s7">
-    <h2><span class="h2n">7</span>Навигация · крошка «Аккаунт › Настройки»</h2>
+  <!-- 8 -->
+  <section id="s8">
+    <h2><span class="h2n">8</span>Навигация · крошка «Аккаунт › Настройки»</h2>
     <p class="section-note">Крошка в топбаре: сегмент <b>«Аккаунт»</b> (заполненный квадрат) возвращает на <a class="link" href="../account/Account-Dashboard-SPEC.html">дашборд аккаунта</a>, текущий сегмент — <b>«Настройки»</b>. Это внутриэкранная часть навигации #7; полный разбор паттернов Аккаунт↔Профиль и кнопки «назад на дашборд» — в <a class="link" href="../../system/Navigation-SPEC.html">Navigation-SPEC.html</a>.</p>
     <div class="frames" id="f-nav"></div>
   </section>
 
-  <!-- 8 -->
-  <section id="s8">
-    <h2><span class="h2n">8</span>Состояния · загрузка · немецкая длина</h2>
+  <!-- 9 -->
+  <section id="s9">
+    <h2><span class="h2n">9</span>Состояния · загрузка · немецкая длина</h2>
     <div class="statebar"><span class="st">ready</span><span class="st">loading</span><span class="st">export: preparing/ready</span><span class="st">delete: confirm/deleting</span><span class="st">немецкий</span></div>
-    <h3>8.1 — Загрузка (скелет)</h3>
+    <h3>9.1 — Загрузка (скелет)</h3>
     <p class="section-note">Скелет повторяет раскладку: интро + четыре карточки с шиммером.</p>
     <div class="frames" id="f-skel"></div>
-    <h3>8.2 — Немецкая длина (стресс самой длинной локали)</h3>
+    <h3>9.2 — Немецкая длина (стресс самой длинной локали)</h3>
     <p class="section-note">«Kontoeinstellungen», «Konto unwiderruflich löschen?», «Erneut versuchen» — самые длинные подписи; усекаются/переносятся по правилам, сетка держится.</p>
     <div class="frames" id="f-de"></div>
   </section>
 
-  <!-- 9 -->
-  <section id="s9">
-    <h2><span class="h2n">9</span>Данные · контракт</h2>
+  <!-- 10 -->
+  <section id="s10">
+    <h2><span class="h2n">10</span>Данные · контракт</h2>
     <div class="tbl-wrap"><table>
       <thead><tr><th style="width:150px;">Ключ</th><th>Поля</th><th>Действие</th></tr></thead>
       <tbody>
@@ -266,6 +285,7 @@ td.val{font-family:var(--font-mono); font-size:12px; color:var(--text);}
         <tr><td><code>locale</code></td><td class="val">одна из 8: en·ru·uk·de·es·fr·it·pt</td><td>Сетка языка; выбор → запись локали интерфейса</td></tr>
         <tr><td><code>export</code></td><td class="val">—</td><td><code>GET /api/me/export</code> → архив по портфелю; ссылка на почту (idle→preparing→ready)</td></tr>
         <tr><td><code>delete</code></td><td class="val">confirm-word</td><td><code>DELETE /api/me</code> → необратимо (idle→confirm→deleting)</td></tr>
+        <tr><td><code>mcp_tokens</code></td><td class="val">id, name, scope(read|write), created_at, last_used_at, revoked_at</td><td><code>GET/POST /api/me/mcp-tokens</code> · <code>DELETE /api/me/mcp-tokens/:id</code> → секрет показывается один раз; отозванные остаются в списке</td></tr>
       </tbody>
     </table></div>
     <div class="tbl-wrap"><table id="i18n-tbl">
@@ -278,9 +298,9 @@ td.val{font-family:var(--font-mono); font-size:12px; color:var(--text);}
     </ul>
   </section>
 
-  <!-- 10 -->
-  <section id="s10">
-    <h2><span class="h2n">10</span>Web ↔ Mobile</h2>
+  <!-- 11 -->
+  <section id="s11">
+    <h2><span class="h2n">11</span>Web ↔ Mobile</h2>
     <p class="section-note">Брейкпоинты те же, что у дашборда: <b>880</b> (сайдбар → drawer) · <b>720</b>/<b>600</b> (карточки в один столбец, язык в один столбец). Полный телефонный проход — <a class="link" href="Account-Settings-Mobile-SPEC.html">Account-Settings-Mobile-SPEC.html</a>.</p>
     <div class="two">
       <div class="pane web"><h4>Десктоп ( &gt; 880 )</h4>
@@ -298,15 +318,16 @@ td.val{font-family:var(--font-mono); font-size:12px; color:var(--text);}
     </div>
   </section>
 
-  <!-- 11 -->
-  <section id="s11">
-    <h2><span class="h2n">11</span>Чек-лист</h2>
+  <!-- 12 -->
+  <section id="s12">
+    <h2><span class="h2n">12</span>Чек-лист</h2>
     <ul class="check">
       <li>Хром <b>дашборда аккаунта</b>: сайдбар (Настройки активны) + крошка «Аккаунт › Настройки»; отдельно от профильных настроек.</li>
       <li>Секция аккаунта = <b>имя (edit) · email · язык · тариф/PRO</b>; <b>один логин</b> — без мульти-логина.</li>
       <li>Язык интерфейса — <b>8 локалей</b> моно-код-бейджами (не флаги); активная с чернильной рамкой + галочкой.</li>
       <li>Экспорт → <code>GET /api/me/export</code>; состояния idle → preparing → ready; endpoint-тег на строке.</li>
       <li>Удаление → <code>DELETE /api/me</code>; двухшаговое подтверждение с вводом слова; состояние deleting.</li>
+      <li><b>MCP-токены</b>: пусто → активные (scope-бейдж, даты) → отозванный остаётся в списке с пометкой «ОТОЗВАН»; создание (имя + доступ, по умолчанию read-only) → одноразовый показ секрета; отзыв — инлайн-подтверждение; блок «Как подключить» виден всегда.</li>
       <li>Крошка «Аккаунт» → дашборд; полная навигация #7 — в Navigation-SPEC.</li>
       <li>Светлая + тёмная на токенах; загрузка-скелет; немецкая длина без слома сетки (правило 1–2).</li>
     </ul>
@@ -349,22 +370,33 @@ td.val{font-family:var(--font-mono); font-size:12px; color:var(--text);}
     col('idle → preparing → ready (светлая)', page(X.settingsDataCard(L,'idle')+X.settingsDataCard(L,'preparing')+X.settingsDataCard(L,'ready')), false) +
     col('idle → preparing → ready (тёмная)', page(X.settingsDataCard(L,'idle')+X.settingsDataCard(L,'preparing')+X.settingsDataCard(L,'ready')), true));
 
-  // §6 delete states
+  // §6 MCP tokens
+  ACC.set('f-mcp-list',
+    col('Пусто · активные · отозванный (светлая)', page(X.settingsMcpCard(L,{tokens:[]}) + X.settingsMcpCard(L,{tokens:A.MCP_TOKENS})), false) +
+    col('Пусто · активные · отозванный (тёмная)', page(X.settingsMcpCard(L,{tokens:[]}) + X.settingsMcpCard(L,{tokens:A.MCP_TOKENS})), true));
+  ACC.set('f-mcp-create',
+    col('Создание → одноразовый показ (светлая)', page(X.settingsMcpCard(L,{view:'create'}) + X.settingsMcpCard(L,{view:'reveal'})), false) +
+    col('Создание → одноразовый показ (тёмная)', page(X.settingsMcpCard(L,{view:'create'}) + X.settingsMcpCard(L,{view:'reveal'})), true));
+  ACC.set('f-mcp-revoke',
+    col('Подтверждение отзыва (светлая)', page(X.settingsMcpCard(L,{tokens:A.MCP_TOKENS, confirmId:A.MCP_TOKENS[0].id})), false) +
+    col('Подтверждение отзыва (тёмная)', page(X.settingsMcpCard(L,{tokens:A.MCP_TOKENS, confirmId:A.MCP_TOKENS[0].id})), true));
+
+  // §7 delete states
   ACC.set('f-delete',
     col('idle → confirm → deleting (светлая)', page(X.settingsDangerCard(L,'idle')+X.settingsDangerCard(L,'confirm')+X.settingsDangerCard(L,'deleting')), false) +
     col('idle → confirm → deleting (тёмная)', page(X.settingsDangerCard(L,'idle')+X.settingsDangerCard(L,'confirm')+X.settingsDangerCard(L,'deleting')), true));
 
-  // §7 crumb
+  // §8 crumb
   ACC.set('f-nav', rowOf(
     col('Светлая · крошка «Аккаунт › Настройки»', X.topbar(L,{crumbSegs:CRUMB}), false, 'frame--pad14'),
     col('Тёмная · крошка', X.topbar(L,{crumbSegs:CRUMB, dark:true}), true, 'frame--pad14')));
 
-  // §8 skeleton + german
+  // §9 skeleton + german
   ACC.set('f-skel',
     col('Светлая · загрузка', X.settingsSkeleton(), false, 'frame--pad14'));
   ACC.set('f-de',
     col('Немецкий (de) · светлая', screen('de',false,{}), false, 'frame--pad14') +
-    col('Немецкий (de) · тёмная · confirm+export ready', screen('de',true,{exportState:'ready', delState:'confirm'}), true, 'frame--pad14'));
+    col('Немецкий (de) · тёмная · confirm+export ready+mcp create', screen('de',true,{exportState:'ready', delState:'confirm', mcp:{view:'create'}}), true, 'frame--pad14'));
 
   // i18n table
   var I18N = [
@@ -373,7 +405,9 @@ td.val{font-family:var(--font-mono); font-size:12px; color:var(--text);}
     { key:'exportT', en:'Export data', ru:A.T.ru.exportT, de:A.T.de.exportT },
     { key:'deleteConfirmT', en:'Delete account permanently?', ru:A.T.ru.deleteConfirmT, de:A.T.de.deleteConfirmT },
     { key:'exportBtn', en:'Export', ru:A.T.ru.exportBtn, de:A.T.de.exportBtn },
-    { key:'deleteGo', en:'Delete forever', ru:A.T.ru.deleteGo, de:A.T.de.deleteGo }
+    { key:'deleteGo', en:'Delete forever', ru:A.T.ru.deleteGo, de:A.T.de.deleteGo },
+    { key:'mcpCap', en:'MCP tokens', ru:A.T.ru.mcpCap, de:A.T.de.mcpCap },
+    { key:'mcpRevokeConfirmT', en:'Revoke this token?', ru:A.T.ru.mcpRevokeConfirmT, de:A.T.de.mcpRevokeConfirmT }
   ];
   var tb = document.querySelector('#i18n-tbl tbody');
   if(tb){ tb.innerHTML = I18N.map(function(r){ return '<tr><td><code>'+r.key+'</code></td><td>'+r.en+'</td><td>'+r.ru+'</td><td>'+r.de+'</td></tr>'; }).join(''); }
