@@ -57,6 +57,7 @@ import {
 } from "@/components/icons";
 import { useTranslation, type MessageKey } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { LEGAL_OPERATOR } from "@/components/legal/LegalLayout";
 import { AccountFace } from "@/components/ui/avatar";
 import { Skeleton, SkeletonText } from "@/components/ui/feedback";
 
@@ -826,6 +827,9 @@ function LandingContent({ showSample }: { showSample: boolean }) {
             ))}
           </nav>
         </div>
+        <p className={cn(WRAP, "mt-3.5 text-small text-text-subtle [text-wrap:pretty]")}>
+          {t("landing.footer_operator")} {LEGAL_OPERATOR.registryName}, {LEGAL_OPERATOR.city}. {LEGAL_OPERATOR.regs.join(", ")}.
+        </p>
       </footer>
     </>
   );

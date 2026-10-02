@@ -28,8 +28,10 @@ export type LegalBlock =
 
 // Operator of record (factual legal-entity disclosure — keep verbatim). Shown
 // as the design's `.operator` identity card.
-const LEGAL_OPERATOR = {
+export const LEGAL_OPERATOR = {
   name: 'Fundacja Rozwoju Przedsiębiorczości "Twój StartUp"',
+  // Exact KRS spelling: Meta's business verification matches the site against it.
+  registryName: 'FUNDACJA ROZWOJU PRZEDSIĘBIORCZOŚCI "TWÓJ STARTUP"',
   regs: ["KRS 0000442857", "NIP 5213641211", "REGON 14643346700000"],
   city: "ul. Żurawia 6/12 lok. 766, 00-503 Warszawa, Poland",
 };

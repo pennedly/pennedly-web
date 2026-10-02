@@ -208,6 +208,7 @@ export const en = {
   "landing.footer_privacy": "Privacy Policy",
   "landing.footer_terms": "Terms of Service",
   "landing.footer_data": "Data Deletion",
+  "landing.footer_operator": "Pennedly is operated by",
   "landing.spec_draft": "Draft",
   "landing.spec_voice": "In your voice",
   "landing.spec_edit": "Edit",

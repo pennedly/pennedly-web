@@ -1474,6 +1474,7 @@ export const de: Partial<Record<MessageKey, string>> = {
   "landing.footer_privacy": "Datenschutzerklärung",
   "landing.footer_terms": "Nutzungsbedingungen",
   "landing.footer_data": "Datenlöschung",
+  "landing.footer_operator": "Pennedly wird betrieben von",
   "landing.spec_draft": "Entwurf",
   "landing.spec_voice": "In deiner Stimme",
   "landing.spec_edit": "Bearbeiten",

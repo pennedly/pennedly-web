@@ -1462,6 +1462,7 @@ export const uk: Partial<Record<MessageKey, string>> = {
   "landing.footer_privacy": "Політика конфіденційності",
   "landing.footer_terms": "Умови використання",
   "landing.footer_data": "Видалення даних",
+  "landing.footer_operator": "Оператор сервісу Pennedly:",
   "landing.spec_draft": "Чернетка",
   "landing.spec_voice": "Твоїм голосом",
   "landing.spec_edit": "Правити",

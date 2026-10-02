@@ -208,6 +208,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "landing.footer_privacy": "Политика конфиденциальности",
   "landing.footer_terms": "Условия использования",
   "landing.footer_data": "Удаление данных",
+  "landing.footer_operator": "Оператор сервиса Pennedly:",
   "landing.spec_draft": "Черновик",
   "landing.spec_voice": "Твоим голосом",
   "landing.spec_edit": "Править",

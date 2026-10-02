@@ -1482,6 +1482,7 @@ export const es: Partial<Record<MessageKey, string>> = {
   "landing.footer_privacy": "Política de privacidad",
   "landing.footer_terms": "Términos de servicio",
   "landing.footer_data": "Eliminación de datos",
+  "landing.footer_operator": "Pennedly es operado por",
   "landing.spec_draft": "Borrador",
   "landing.spec_voice": "Con tu voz",
   "landing.spec_edit": "Editar",
