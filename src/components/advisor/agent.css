@@ -122,7 +122,8 @@
 
 /* ───────────── suggestion card (hands off to composer) ───────────── */
 .ag-sug{display:flex;gap:13px;align-items:flex-start;padding:13px 15px;border:1px solid var(--color-border);border-radius:var(--radius-lg);background:var(--color-surface);box-shadow:var(--shadow-sm)}
-.ag-sug + .ag-sug,.ag-act + .ag-sug,.ag-sug + .ag-act,.ag-act + .ag-act{margin-top:10px}
+.ag-sug + .ag-sug,.ag-act + .ag-sug,.ag-sug + .ag-act,.ag-act + .ag-act,
+.ag-act-grp + .ag-act-grp,.ag-act-grp + .ag-act,.ag-act-grp + .ag-sug,.ag-act + .ag-act-grp,.ag-sug + .ag-act-grp{margin-top:10px}
 .ag-sug-ico{width:34px;height:34px;border-radius:10px;flex:0 0 34px;display:grid;place-items:center;background:var(--color-surface-2);border:1px solid var(--color-border);color:var(--color-text-muted)}
 .ag-sug-b{flex:1 1 auto;min-width:0}
 .ag-sug-t{font-size:var(--text-small);font-weight:600;color:var(--color-text);line-height:1.45}
@@ -167,6 +168,11 @@
 .ag-done-t{display:block;font-weight:600}
 .ag-done-m{display:block;color:var(--color-text-subtle);font-size:12.5px;margin-top:1px}
 .ag-done-row .un{margin-left:auto;flex:0 0 auto}
+.ag-act-grp{display:flex;flex-direction:column;gap:11px}
+.ag-quiet{padding-left:2px}
+.ag-quietlink{display:inline-flex;align-items:center;gap:6px;font-size:var(--text-caption);font-weight:500;color:var(--color-text-muted);text-decoration:none;padding:6px 10px;border-radius:var(--radius-md)}
+.ag-quietlink:hover{background:var(--color-surface-2);color:var(--color-text)}
+.ag-quietlink svg{flex:0 0 auto;opacity:.8}
 .ag-spin{width:14px;height:14px;border:2px solid color-mix(in srgb,currentColor 28%,transparent);border-top-color:currentColor;border-radius:50%;animation:ag-spin .7s linear infinite;flex:0 0 14px}
 @keyframes ag-spin{to{transform:rotate(360deg)}}
 

@@ -3685,6 +3685,7 @@ export const en = {
   "appliedChanges.pageheadDesc": "Everything Pennedly applied for you with one click: from the Agent, the Voice check and the Audit. Newest first.",
   "appliedChanges.entryTitle": "Change history",
   "appliedChanges.entrySub": "What Pennedly applied for you with one click.",
+  "appliedChanges.agentLink": "What I applied for you",
   "appliedChanges.source.agent": "Agent",
   "appliedChanges.source.voice": "Voice check",
   "appliedChanges.source.audit": "Audit",

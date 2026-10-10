@@ -3584,6 +3584,7 @@ export const fr: Partial<Record<MessageKey, string>> = {
   "appliedChanges.pageheadDesc": "Tout ce que Pennedly a appliqué pour toi en un clic : depuis l'Agent, le Voice check et l'Audit. Le plus récent d'abord.",
   "appliedChanges.entryTitle": "Historique des changements",
   "appliedChanges.entrySub": "Ce que Pennedly a appliqué pour toi en un clic.",
+  "appliedChanges.agentLink": "Ce que j'ai appliqué pour toi",
   "appliedChanges.source.agent": "Agent",
   "appliedChanges.source.voice": "Voice check",
   "appliedChanges.source.audit": "Audit",

@@ -3614,6 +3614,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   "appliedChanges.pageheadDesc": "Всё, что Pennedly применил за тебя одним кликом: из Агента, проверки Голоса и Аудита. Свежие сверху.",
   "appliedChanges.entryTitle": "История изменений",
   "appliedChanges.entrySub": "Что Pennedly применил за тебя одним кликом.",
+  "appliedChanges.agentLink": "Что я применил за тебя",
   "appliedChanges.source.agent": "Агент",
   "appliedChanges.source.voice": "Проверка голоса",
   "appliedChanges.source.audit": "Аудит",

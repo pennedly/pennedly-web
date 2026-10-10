@@ -22,6 +22,7 @@ import {
   IcAlert,
   IcArrowDown,
   IcArrowUp,
+  IcAudit,
   IcBolt,
   IcBubble,
   IcCalendar,
@@ -381,6 +382,7 @@ export function ActionCard({ a }: { a: AgentActionView }) {
       }
     };
     return (
+      <div className="ag-act-grp">
       <div className="ag-act ag-act--done">
         <div className="ag-done-row">
           <IcCheck size={16} />
@@ -413,6 +415,15 @@ export function ActionCard({ a }: { a: AgentActionView }) {
             </button>
           </span>
         </div>
+      </div>
+      {/* Quiet entry into the applied-changes journal (design SPEC
+          Applied-Changes-History §02, `.ch-quietlink`). */}
+      <div className="ag-quiet">
+        <Link href="/app/account/history" className="ag-quietlink">
+          <IcAudit size={14} />
+          {t("appliedChanges.agentLink")}
+        </Link>
+      </div>
       </div>
     );
   }
